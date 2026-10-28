@@ -11,7 +11,7 @@
     "docker:logs": "docker compose logs -f game-sauce",
     "dev": "node --watch src/server.js",
     "seed": "node scripts/seed.js",
-    "test": "node --test \"tests/**/*.test.js\""
+    "test": "node scripts/run-tests.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",
