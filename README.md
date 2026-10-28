@@ -431,7 +431,10 @@ Notes:
 | `GAMESAUCE_SECRET_KEY` | key for encrypting stored provider credentials (recommended in production) |
 | `GAMESAUCE_COOKIE_SECURE=1` | Secure cookies (only with HTTPS) |
 | `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` behind a reverse proxy |
-| `GAMESAUCE_SESSION_HOURS` | session lifetime (default 336 = 14 days) |
+| `GAMESAUCE_SESSION_HOURS` | lifetime of a "keep me signed in" session (default 336 = 14 days) |
+| `GAMESAUCE_SHORT_SESSION_HOURS` | lifetime of a browser-only session, when the box is unticked (default 12) |
+| `GAMESAUCE_IDLE_MINUTES` | sign browser-only sessions out after this many idle minutes (default 120; 0 = off) |
+| `GAMESAUCE_IDLE_MINUTES_PERSISTENT` | same, for "keep me signed in" sessions (default 0 = off) |
 | `SS_DEV_ID` / `SS_DEV_PASSWORD` / `SS_USER` / `SS_PASSWORD` | ScreenScraper without using the UI (per-user values; beat the shared default) |
 | `SS_DEV_ID_SHARED` / `SS_DEV_PASSWORD_SHARED` | Shared ScreenScraper dev pair baked in by whoever distributes the app — fills Developer ID/password for everyone out of the box at a shared, slower quota; any typed-in pair wins |
 | `TGDB_API_KEY` | TheGamesDB without using the UI |

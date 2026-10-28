@@ -22,7 +22,9 @@ function readCookie(req, name) {
 
 export function sessionCookie(token, maxAgeSeconds) {
   const secure = process.env.GAMESAUCE_COOKIE_SECURE === '1' ? '; Secure' : '';
-  return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure}`;
+  // No Max-Age (null) = session cookie, dropped when the browser closes.
+  const age = maxAgeSeconds ? `; Max-Age=${maxAgeSeconds}` : '';
+  return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax${age}${secure}`;
 }
 
 export function clearCookie() {
@@ -116,7 +118,9 @@ router.post('/login', async (req, res) => {
   }
 
   clearLoginFailures(key);
-  const { token, expires_in } = await createSession(user.id, { userAgent: req.headers['user-agent'], ip });
+  // "Keep me signed in": omitted/true = persistent (as before); false = browser-only.
+  const persistent = req.body?.remember !== false;
+  const { token, expires_in } = await createSession(user.id, { userAgent: req.headers['user-agent'], ip, persistent });
   audit(user, 'login.success', { ip });
 
   res.setHeader('Set-Cookie', sessionCookie(token, expires_in));
@@ -145,10 +149,11 @@ router.post('/password', requireAuth, async (req, res, next) => {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
+    // setPassword drops all sessions; re-issue one of the same kind for this browser.
+    const cur = db.prepare('SELECT persistent FROM sessions WHERE id = ?').get(req.user.session_id);
     await setPassword(user.id, next_);
-    // setPassword drops all sessions; re-issue one for this browser.
     const { token, expires_in } = await createSession(user.id, {
-      userAgent: req.headers['user-agent'], ip: clientIp(req)
+      userAgent: req.headers['user-agent'], ip: clientIp(req), persistent: cur?.persistent !== 0
     });
     audit(req.user, 'password.changed', { ip: clientIp(req) });
     res.setHeader('Set-Cookie', sessionCookie(token, expires_in));

@@ -2641,6 +2641,8 @@ $('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...
 const authState = { user: null };
 
 function showLogin(message = '') {
+  // Remember the last choice of the "keep me signed in" box on this browser.
+  try { const r = $('#login-remember'); if (r) r.checked = localStorage.getItem('gamesauce_remember') !== '0'; } catch { /* private mode */ }
   authState.user = null;
   $('#app').classList.add('hidden');
   $('#auth-screen').classList.remove('hidden');
@@ -2692,12 +2694,14 @@ $('#login-form').addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: $('#login-username').value.trim(),
-        password: $('#login-password').value
+        password: $('#login-password').value,
+        remember: $('#login-remember')?.checked !== false
       })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Sign in failed');
     $('#login-password').value = '';
+    try { localStorage.setItem('gamesauce_remember', $('#login-remember')?.checked === false ? '0' : '1'); } catch { /* private mode */ }
     if (data.token) sessionStorage.setItem('gamesauce_token', data.token);
     showApp(data.user);
   } catch (err) {

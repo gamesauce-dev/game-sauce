@@ -55,6 +55,10 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   locked_until TEXT
 );
 `);
+// Older databases: sessions without the flag were all persistent logins.
+if (!db.prepare('PRAGMA table_info(sessions)').all().some((c) => c.name === 'persistent')) {
+  db.exec('ALTER TABLE sessions ADD COLUMN persistent INTEGER NOT NULL DEFAULT 1');
+}
 }
 
 // Created at import time as well, so any entry point that pulls in auth.js
@@ -98,25 +102,47 @@ export async function bootstrapAdmin() {
 
 /* ──────────────────────────── sessions ──────────────────────────── */
 
-const SESSION_TTL_HOURS = Number(process.env.GAMESAUCE_SESSION_HOURS || 24 * 14);
+/* Two kinds of session, chosen by the "Keep me signed in" box at login:
+ *  - persistent (ticked):   14-day cookie (GAMESAUCE_SESSION_HOURS), no idle limit by default.
+ *  - browser-only (unticked): cookie with no Max-Age, so it disappears when the browser closes;
+ *    the server also expires it after GAMESAUCE_SHORT_SESSION_HOURS (default 12).
+ * Idle timeout: GAMESAUCE_IDLE_MINUTES (default 120) signs out browser-only sessions after that
+ * long without any API activity; GAMESAUCE_IDLE_MINUTES_PERSISTENT (default 0 = off) does the
+ * same for persistent ones. Env is read per call so it can be changed without code edits. */
+const numEnv = (name, dflt) => { const v = Number(process.env[name]); return Number.isFinite(v) && process.env[name] !== undefined && process.env[name] !== '' ? v : dflt; };
+const sessionHours = (persistent) => (persistent ? numEnv('GAMESAUCE_SESSION_HOURS', 24 * 14) : numEnv('GAMESAUCE_SHORT_SESSION_HOURS', 12));
+const idleMinutes = (persistent) => (persistent ? numEnv('GAMESAUCE_IDLE_MINUTES_PERSISTENT', 0) : numEnv('GAMESAUCE_IDLE_MINUTES', 120));
 
-export async function createSession(userId, { userAgent, ip } = {}) {
+export async function createSession(userId, { userAgent, ip, persistent = true } = {}) {
   const token = randomToken(32);
+  const hours = sessionHours(persistent);
   db.prepare(`
-    INSERT INTO sessions (user_id, token_hash, user_agent, ip, expires_at)
-    VALUES (?, ?, ?, ?, datetime('now', ?))
-  `).run(userId, hashToken(token), (userAgent || '').slice(0, 200), ip || null, `+${SESSION_TTL_HOURS} hours`);
+    INSERT INTO sessions (user_id, token_hash, user_agent, ip, expires_at, persistent)
+    VALUES (?, ?, ?, ?, datetime('now', ?), ?)
+  `).run(userId, hashToken(token), (userAgent || '').slice(0, 200), ip || null, `+${hours} hours`, persistent ? 1 : 0);
   db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(userId);
-  return { token, expires_in: SESSION_TTL_HOURS * 3600 };
+  // expires_in = null means "session cookie": the browser drops it when it closes.
+  return { token, expires_in: persistent ? hours * 3600 : null, persistent };
 }
 
 export function findSession(token) {
   if (!token) return null;
-  return db.prepare(`
-    SELECT s.id AS session_id, s.expires_at, u.id, u.username, u.display_name, u.role, u.disabled
+  const row = db.prepare(`
+    SELECT s.id AS session_id, s.expires_at, s.last_seen_at, s.persistent,
+           u.id, u.username, u.display_name, u.role, u.disabled
     FROM sessions s JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ? AND s.expires_at > datetime('now')
-  `).get(hashToken(token)) || null;
+  `).get(hashToken(token));
+  if (!row) return null;
+  const idle = idleMinutes(row.persistent !== 0);
+  if (idle > 0) {
+    const last = Date.parse(String(row.last_seen_at).replace(' ', 'T') + 'Z');
+    if (Number.isFinite(last) && Date.now() - last > idle * 60000) {
+      db.prepare('DELETE FROM sessions WHERE id = ?').run(row.session_id); // idle too long: gone for good
+      return null;
+    }
+  }
+  return row;
 }
 
 export function touchSession(sessionId) {
