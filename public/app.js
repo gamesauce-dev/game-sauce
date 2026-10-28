@@ -363,6 +363,8 @@ async function loadLibrary() {
     !state.hidden && !orphanOnly && !unmatchedOnly;
   $('#lib-overview')?.classList.toggle('hidden', !isHome);
   $('#lib-recent-wrap')?.classList.toggle('hidden', !isHome);
+  if (!isHome) $('#lib-played-wrap')?.classList.add('hidden');
+  else renderPlayedRow();
   const statsP = isHome ? renderOverview().catch(() => {}) : Promise.resolve();
 
   const PAGE = 200; // server caps at 500; further pages load on scroll (see below)
@@ -549,12 +551,26 @@ async function renderOverview() {
   }
 }
 
+/** "Continue playing": this user's recently played games, newest first. */
+async function renderPlayedRow() {
+  const wrap = $('#lib-played-wrap');
+  const row = $('#played-row');
+  if (!wrap || !row) return;
+  try {
+    const { items } = await api('/roms/recently-played?limit=12');
+    if (!items.length) { wrap.classList.add('hidden'); row.innerHTML = ''; return; }
+    wrap.classList.remove('hidden');
+    row.innerHTML = items.map(cardHtml).join('');
+    bindCards(row);
+  } catch { wrap.classList.add('hidden'); /* decorative: never break the home page */ }
+}
+
 /** Shared tile wiring for the main grid and the recent row. */
 function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      state.nav = { el: card.closest('#grid, #recent-row') || root };
+      state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
       openDetail(Number(card.dataset.rom));
     }
   }));
@@ -562,7 +578,7 @@ function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('click', (e) => {
     const id = Number(card.dataset.rom);
     // The recent row is browse-only: no bulk-select checkboxes there.
-    const inRecent = root.id === 'recent-row';
+    const inRecent = root.id === 'recent-row' || root.id === 'played-row';
     // In select mode a tile tap toggles selection instead of opening detail.
     const selectBox = e.target.closest('[data-select]');
     if ((state.selectMode || selectBox) && !inRecent) {
@@ -593,7 +609,7 @@ function bindCards(root) {
     const openBtn = e.target.closest('[data-open-rom]');
     if (openBtn) return; // handled by its own listener, don't double-open
     // Prev/next walks the list this tile lives in (main grid or the recently-added row).
-    state.nav = { el: card.closest('#grid, #recent-row') || root };
+    state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
     openDetail(id);
   }));
 
@@ -673,6 +689,8 @@ function closePlayer() {
   if (host) host.innerHTML = '';
   $('#player-scrim')?.classList.add('hidden');
   if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  // The game just played moves to the front of "Continue playing".
+  if (state.view === 'library' && !$('#lib-played-wrap')?.closest('.hidden')) renderPlayedRow?.();
 }
 
 async function openPlayer(rom) {

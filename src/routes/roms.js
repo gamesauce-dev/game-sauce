@@ -432,6 +432,31 @@ router.get('/facets', (req, res) => {
   res.json({ platforms, families, sources, genres, regions, tags, stats });
 });
 
+// Must be registered before '/:id', or "recently-played" would be read as a ROM id.
+/* Games this user played in the browser most recently, one entry per game, newest first.
+ * Built from the existing play log (downloads.kind = 'play'); another user's plays never show.
+ * Hidden games and games that cannot be played any more are left out. */
+router.get('/recently-played', (req, res) => {
+  const lim = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
+  const rows = db.prepare(`
+    SELECT ${ROM_COLUMNS}, MAX(d.id) AS last_play_id, MAX(d.created_at) AS last_played_at, COUNT(*) AS plays
+    FROM downloads d
+    JOIN roms r ON r.id = d.rom_id
+    JOIN platforms p ON p.id = r.platform_id
+    LEFT JOIN sources s ON s.id = r.source_id
+    WHERE d.kind = 'play' AND d.user_id = ? AND r.hidden = 0 AND r.missing = 0
+    GROUP BY r.id
+    ORDER BY last_play_id DESC
+    LIMIT ?
+  `).all(req.user.id, lim * 3); // over-fetch: some may no longer be playable
+  const items = withTags(rows)
+    .map((r) => ({ ...r, playable: playableCore(r.platform, r.release_year, r.play_override) || null }))
+    .filter((r) => r.playable)
+    .slice(0, lim)
+    .map((r) => ({ ...r, playable_core: r.playable }));
+  res.json({ items });
+});
+
 /* ------------------------------------------------------------ detail */
 
 router.get('/:id', (req, res) => {
