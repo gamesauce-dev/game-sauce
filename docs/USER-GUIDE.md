@@ -51,6 +51,10 @@ delete-from-disk. Imported copies in `storage/roms` are removed together with th
 
 ![The Library](screenshots/library.png)
 
+Picking a platform shows its name above the tiles:
+
+![One platform selected](screenshots/platform.png)
+
 - **Sidebar:** your name, settings (⚙) and sign out (⏻) sit under the logo. Below are Library,
   Collections, Sources, Add ROMs and Emulators, then every platform with a count, grouped by
   family. Click a platform to filter; it stays selected when you refresh the page.

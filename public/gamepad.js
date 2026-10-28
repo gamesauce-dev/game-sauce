@@ -209,7 +209,7 @@
       legend = document.createElement('div');
       legend.id = 'gp-legend';
       legend.setAttribute('aria-hidden', 'true');
-      legend.innerHTML = '<b>◀▲▼▶</b> move <span>·</span> <b>A</b> select <span>·</span> <b>B</b> back <span>·</span> <b>X</b> play <span>·</span> <b>Y</b> search <span>·</span> <b>LB/RB</b> prev/next';
+      legend.innerHTML = '<b>◀▲▼▶</b> move <span>·</span> <b>A</b> select <span>·</span> <b>B</b> back <span>·</span> <b>X</b> play <span>·</span> <b>Y</b> search <span>·</span> <b>LB/RB</b> prev/next <span>·</span> in a game: hold <b>Select+Start</b> to close';
       document.body.appendChild(legend);
     }
     legend.classList.toggle('on', on);

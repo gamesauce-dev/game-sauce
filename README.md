@@ -24,8 +24,12 @@ Express + SQLite on the server, a single static page on the client, no build ste
   avoids wrong covers.
 - **Verifies dumps** against No-Intro / Redump DATs and shows have/want reports.
 - **Collections, favourites, hidden games, users and roles, an activity log.**
-- **Backups and restore** built in: download or schedule them, and restore with a safety copy.
-- **Controller friendly:** navigate the whole interface with a gamepad.
+- **Backups and restore** built in: download them or schedule them to a folder, and restore from
+  a file or straight from the server list. A safety backup is taken first and the replaced data is kept.
+- **Controller friendly:** navigate the whole interface with a gamepad, and hold Select + Start to
+  close a running game.
+- **Tidy Library home:** search and filters on one line, compact collapsible rows for *Continue
+  playing* and *Recently added*, and a heading with the platform name when you filter.
 - **Scales** from 1080p to 4K, with a retro-neon sign-in screen.
 
 <details>
@@ -33,9 +37,10 @@ Express + SQLite on the server, a single static page on the client, no build ste
 
 | | |
 |---|---|
-| ![Game details](docs/screenshots/detail.png) | ![Backups and restore](docs/screenshots/backups.png) |
-| ![Sources](docs/screenshots/sources.png) | ![Gamepad navigation](docs/screenshots/gamepad.png) |
-| ![Settings](docs/screenshots/settings.png) | ![Emulator guide](docs/screenshots/emulators.png) |
+| ![One platform](docs/screenshots/platform.png) | ![Game details](docs/screenshots/detail.png) |
+| ![Backups and restore](docs/screenshots/backups.png) | ![Gamepad navigation](docs/screenshots/gamepad.png) |
+| ![Sources](docs/screenshots/sources.png) | ![Settings](docs/screenshots/settings.png) |
+| ![Emulator guide](docs/screenshots/emulators.png) | |
 
 ![Sign-in screen](docs/screenshots/login.png)
 
