@@ -20,7 +20,7 @@
   const FIRST_REPEAT = 380;   // ms before a held direction starts repeating
   const REPEAT = 130;         // ms between repeats
 
-  const FOCUSABLE = 'button:not([disabled]), a[href], input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE = 'button:not([disabled]):not([tabindex="-1"]), a[href]:not([tabindex="-1"]), input:not([type="hidden"]):not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
 
   let raf = 0, active = false;
   let prev = { buttons: [], dirs: {} };

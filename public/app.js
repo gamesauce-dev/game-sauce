@@ -327,7 +327,7 @@ function cardHtml(rom) {
         <span class="card-select" data-select="${rom.id}" role="checkbox" title="Select for bulk delete"></span>
         <span class="card-badge" style="background:${rom.platform_accent}cc">${esc(rom.platform_short)}</span>
         ${rom.playable ? '<img class="card-play" src="/logo.svg" alt="" title="Playable in the browser" />' : ''}
-        ${rom.playable && !rom.missing ? `<button type="button" class="card-playbtn" data-play="${rom.id}" title="Play in browser" aria-label="Play ${esc(rom.title)} in browser">▶</button>` : ''}
+        ${rom.playable && !rom.missing ? `<button type="button" class="card-playbtn" tabindex="-1" data-play="${rom.id}" title="Play in browser" aria-label="Play ${esc(rom.title)} in browser">▶</button>` : ''}
         ${rom.missing ? '<span class="card-missing">missing</span>' : ''}
         ${rom.dat_status && rom.dat_status !== 'not-in-dat' ? `<span class="badge-dat ${rom.dat_status === 'verified' ? '' : rom.dat_status}" title="DAT: ${rom.dat_status}">${rom.dat_status}</span>` : ''}
         <span class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" title="Favourite">★</span>

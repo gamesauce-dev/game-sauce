@@ -907,3 +907,37 @@ a.btn:hover { text-decoration: none; }
 .auth-card .brand-name { text-shadow: 0 0 0.8571rem rgba(255, 61, 168, .55); }
 .auth-card .btn-primary { box-shadow: 0 0 1.1429rem rgba(124, 92, 255, .55); }
 @media (prefers-reduced-motion: reduce) { .auth-card { box-shadow: 0 0 1.7143rem rgba(255, 61, 168, .2); } }
+
+/* ───────────────────────── gamepad navigation ───────────────────────── */
+/* A strong focus ring only while a controller is driving (body.gp-active) and for keyboard users
+   (:focus-visible), never for mouse clicks. Tiles get the ring on their cover. */
+body.gp-active :focus, :focus-visible { outline: 3px solid #22d3ee; outline-offset: 3px; border-radius: 0.5714rem; }
+body.gp-active .card:focus { outline: none; }
+body.gp-active .card:focus .card-cover,
+.card:focus-visible .card-cover { outline: 3px solid #22d3ee; outline-offset: 3px; box-shadow: 0 0 1.4286rem rgba(34, 211, 238, .55); }
+body.gp-active .card:focus { transform: translateY(-3px); transition: transform .1s; }
+body.gp-active .nav-item:focus, body.gp-active .plat-item:focus { background: var(--panel-2); }
+body.gp-active { cursor: none; }
+
+#gp-legend {
+  position: fixed; left: 50%; bottom: 1.1429rem; transform: translate(-50%, 140%); z-index: 400;
+  display: flex; gap: 0.5714rem; align-items: center; white-space: nowrap;
+  padding: 0.5714rem 1.1429rem; border-radius: 999px; font-size: 0.9286rem; color: #cbd5e1;
+  background: rgba(10, 8, 24, .92); border: 1px solid rgba(34, 211, 238, .55);
+  box-shadow: 0 0 1.1429rem rgba(34, 211, 238, .3); transition: transform .2s ease; pointer-events: none;
+}
+#gp-legend.on { transform: translate(-50%, 0); }
+#gp-legend b { color: #fff; background: rgba(124, 92, 255, .6); border-radius: 0.4286rem; padding: 0.0714rem 0.5rem; font-weight: 700; }
+#gp-legend span { color: #64748b; }
+@media (max-width: 900px) { #gp-legend { display: none; } }
+
+/* The cover clips its own overflow, so an outline on it is cut off. Draw the focus ring on the
+   card's own box instead (the card does not clip), hugging the cover. */
+body.gp-active .card:focus .card-cover, .card:focus-visible .card-cover { outline: none; }
+body.gp-active .card:focus, .card:focus-visible { outline: none; }
+body.gp-active .card:focus::before, .card:focus-visible::before {
+  content: ''; position: absolute; z-index: 3; pointer-events: none;
+  inset: -5px -5px auto -5px; aspect-ratio: 3 / 4; border-radius: calc(var(--radius) + 4px);
+  border: 3px solid #22d3ee; box-shadow: 0 0 1.4286rem rgba(34, 211, 238, .6), inset 0 0 0.7143rem rgba(34, 211, 238, .25);
+}
+.card { position: relative; }
