@@ -251,6 +251,19 @@
         </form>
       </div>
 
+      <div class="panel hidden" id="mod-controller">
+        <h3>Controller</h3>
+        <p class="hint">Which button is <b>A</b>? Xbox-style pads put A at the bottom; Nintendo-style pads
+          (Switch, many 8BitDo) put A on the right. <b>Automatic</b> picks by the controller's name.
+          This is remembered on this browser only.</p>
+        <select id="pad-layout" aria-label="Controller button layout">
+          <option value="auto">Automatic</option>
+          <option value="xbox">Xbox layout (A at the bottom)</option>
+          <option value="nintendo">Nintendo layout (A on the right)</option>
+        </select>
+        <p class="hint" id="pad-layout-now" style="margin-top:8px"></p>
+      </div>
+
       <div class="panel hidden" id="mod-sessions">
         <h3>Active sessions</h3>
         <div id="session-list" class="counts"></div>

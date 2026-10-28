@@ -306,6 +306,11 @@ Plug in or pair a gamepad and press any button. A legend appears at the bottom o
 | **Y** | Jump to search |
 | **LB / RB** | Previous / next game in the open panel; otherwise previous / next section |
 
+**Which button is A?** Browsers number buttons by position, and Xbox and Nintendo pads label them
+differently (Xbox A is at the bottom, Nintendo A is on the right). game-sauce picks the layout from the
+controller's name, so a Switch Pro or similar pad puts **A** on the right button. If it guesses wrong,
+open **Settings → Controller** and choose Xbox or Nintendo layout; the choice is remembered on that browser.
+
 While a game is running in the player the controller belongs to the game and the interface ignores
 it, with one exception: **hold Select + Start for about a second** to close the game. A progress bar
 shows while you hold, and no other button is intercepted, so the game never loses a press. Moving the mouse or pressing a key hides the legend. The sign-in screen is not controller-driven.

@@ -2961,6 +2961,7 @@ $('#settings-gear')?.addEventListener('click', () => setView('settings'));
 const SETTINGS_MODULES = [
   { id: 'password', label: 'Change password', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', ico: '💻', adminOnly: false },
+  { id: 'controller', label: 'Controller', ico: '🎮', adminOnly: false },
   { id: 'providers', label: 'Metadata providers', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   ico: '👥', adminOnly: true },
   { id: 'platforms', label: 'Platforms',       ico: '🕹', adminOnly: true },
@@ -3143,8 +3144,23 @@ function showSettingsModule(id) {
   const panel = $(`#mod-${id}`);
   if (!panel) return;
   panel.classList.remove('hidden');
+  if (id === 'controller') initPadLayoutPanel();
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
   panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function initPadLayoutPanel() {
+  const sel = $('#pad-layout'); if (!sel) return;
+  try { sel.value = localStorage.getItem('gamesauce_pad_layout') || 'auto'; } catch { /* private mode */ }
+  const now = () => {
+    const nav = window.gamepadNav;
+    const pad = (navigator.getGamepads ? [...navigator.getGamepads()] : []).find((p) => p && p.connected);
+    const eff = nav ? nav.layoutFor(pad) : 'xbox';
+    $('#pad-layout-now').textContent = (pad ? 'Detected: ' + pad.id.slice(0, 60) + '. ' : 'No controller detected yet (press a button on it). ')
+      + 'Using the ' + (eff === 'nintendo' ? 'Nintendo' : 'Xbox') + ' layout.';
+  };
+  sel.onchange = () => { try { localStorage.setItem('gamesauce_pad_layout', sel.value); } catch { /* ignore */ } now(); toast('Controller layout saved'); };
+  now();
 }
 
 async function loadSettings() {

@@ -20,6 +20,20 @@
   if (!navigator.getGamepads) return;
 
   const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, SELECT: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+  // Browsers number face buttons by POSITION (0 = bottom, 1 = right, 2 = left, 3 = top). Xbox-style pads
+  // label the bottom one A; Nintendo-style pads label the RIGHT one A. 'auto' picks by the pad's name.
+  const LAYOUT_KEY = 'gamesauce_pad_layout';
+  const NINTENDO_RE = /nintendo|switch|joy-?con|057e/i;
+  function layoutPref() { try { return localStorage.getItem(LAYOUT_KEY) || 'auto'; } catch { return 'auto'; } }
+  function layoutFor(pad) {
+    const pref = layoutPref();
+    if (pref === 'xbox' || pref === 'nintendo') return pref;
+    return pad && NINTENDO_RE.test(pad.id || '') ? 'nintendo' : 'xbox';
+  }
+  // Which physical button index triggers each action under a layout.
+  function faceMap(layout) {
+    return layout === 'nintendo' ? { A: 1, B: 0, X: 3, Y: 2 } : { A: 0, B: 1, X: 2, Y: 3 };
+  }
   const EXIT_HOLD = 1000;     // ms Select + Start must be held to close a running game
   const STICK = 0.6;          // dead-zone before the stick counts as a press
   const FIRST_REPEAT = 380;   // ms before a held direction starts repeating
@@ -212,6 +226,10 @@
       legend.innerHTML = '<b>◀▲▼▶</b> move <span>·</span> <b>A</b> select <span>·</span> <b>B</b> back <span>·</span> <b>X</b> play <span>·</span> <b>Y</b> search <span>·</span> <b>LB/RB</b> prev/next <span>·</span> in a game: hold <b>Select+Start</b> to close';
       document.body.appendChild(legend);
     }
+    // The legend names buttons the way the player's pad labels them, so it must follow the layout.
+    // Nintendo pads: select = right button (A), back = bottom (B), play = top (X), search = left (Y):
+    // the LABELS stay the same, only the physical positions differ, so nothing needs rewording.
+    legend.dataset.layout = layoutFor(readPad());
     legend.classList.toggle('on', on);
     document.body.classList.toggle('gp-active', on);
   }
@@ -266,10 +284,11 @@
         else if (now - heldSince[dir] > FIRST_REPEAT && now - lastRepeat[dir] > REPEAT) { lastRepeat[dir] = now; move(dir); }
       }
     }
-    if (edge(BTN.A)) { any = true; activate(); }
-    if (edge(BTN.B)) { any = true; back(); }
-    if (edge(BTN.X)) { any = true; playFocused(); }
-    if (edge(BTN.Y)) { any = true; focusSearch(); }
+    const F = faceMap(layoutFor(p));
+    if (edge(F.A)) { any = true; activate(); }
+    if (edge(F.B)) { any = true; back(); }
+    if (edge(F.X)) { any = true; playFocused(); }
+    if (edge(F.Y)) { any = true; focusSearch(); }
     if (edge(BTN.LB)) { any = true; shoulder(-1); }
     if (edge(BTN.RB)) { any = true; shoulder(1); }
 
@@ -289,5 +308,5 @@
   window.addEventListener('mousemove', quiet, { passive: true });
   window.addEventListener('keydown', (e) => { if (!e.isTrusted || e.key === 'Escape') return; quiet(); }, true);
 
-  window.gamepadNav = { move, activate, back, shoulder, playFocused, focusSearch, currentRoot };
+  window.gamepadNav = { layoutFor, faceMap, move, activate, back, shoulder, playFocused, focusSearch, currentRoot };
 })();
