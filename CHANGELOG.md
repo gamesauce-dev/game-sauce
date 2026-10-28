@@ -4,7 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
-Nothing yet.
+### Deployment
+- Prebuilt Docker image published to `ghcr.io/gamesauce-dev/game-sauce` on every push to `main` (see `docs/DEPLOYMENT.md` 3.4a).
+- README status badges for tests, image build and licence.
 
 ## [0.1.0] - 2026-10-28 (first public release)
 

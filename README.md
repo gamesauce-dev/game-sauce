@@ -1,5 +1,9 @@
 # game-sauce
 
+[![Tests](https://github.com/gamesauce-dev/game-sauce/actions/workflows/test.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/test.yml)
+[![Docker image](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A self-hosted ROM manager: scan folders in place, catalogue your library, enrich it with
 metadata and artwork, and download ROMs back out. Express + SQLite on the server, a single
 static page on the client, no build step.

@@ -116,6 +116,20 @@ Then `docker compose up -d` and in the UI: **Sources → Add folder → Browse**
 `/roms/...`. The `:ro` suffix means the container physically cannot modify your
 files even if asked to.
 
+### 3.4a Use the prebuilt image (no building on the server)
+
+Every push to `main` publishes an image to GitHub's registry, so the server does not need
+the source or a build step. Create a folder with just a `docker-compose.yml` and a `.env`
+(copy `env.example`), and replace the `build:` line of the service with:
+
+```yaml
+    image: ghcr.io/gamesauce-dev/game-sauce:latest
+```
+
+Then `docker compose pull && docker compose up -d`. To update later, run the same two
+commands. Pin a version instead of `latest` (for example `:v0.1.1`) if you want updates to
+be deliberate. The image is built for `linux/amd64` (typical PCs, servers and Proxmox VMs).
+
 ### 3.5a Running on Proxmox
 
 - **Use a VM (simplest).** A small Debian or Ubuntu VM with Docker Engine behaves like any
