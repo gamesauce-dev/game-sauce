@@ -321,7 +321,7 @@ export function listDatfiles() {
               WHERE e.datfile_id = d.id
               AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_entry_id = e.id)) AS missing_count
     FROM datfiles d LEFT JOIN platforms p ON p.slug = d.platform_slug
-    ORDER BY d.imported_at DESC
+    ORDER BY d.imported_at DESC, d.id DESC
   `).all();
 }
 

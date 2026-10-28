@@ -239,7 +239,8 @@ test('a ROM can be filtered by its DAT status', async () => {
 
 test('have/want reports each DAT entry against what the library holds', async () => {
   const list = await call('/api/dats');
-  const datfile = list.body.items[0];
+  // Two imports can share a timestamp second; use the one that owns the entries.
+  const datfile = list.body.items.find((d) => d.roms_matched > 0) || list.body.items[0];
   assert.ok(datfile, 'a DAT is imported');
   assert.equal(datfile.roms_matched, 2);
   assert.equal(datfile.missing_count, 1, 'one DAT entry has no matching ROM');
