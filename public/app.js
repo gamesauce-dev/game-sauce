@@ -1659,7 +1659,7 @@ $('#add-source').addEventListener('click', () => showAddSource(''));
 $('#cancel-source').addEventListener('click', () => {
   $('#add-source-panel').classList.add('hidden');
   $('#browser').classList.add('hidden');
-  $('#browse-source').textContent = 'Browse…';
+  $('#browse-source').classList.remove('is-on');
 });
 
 $('#create-source').addEventListener('click', async () => {
@@ -1720,8 +1720,11 @@ $('#scan-all').addEventListener('click', async (e) => {
 });
 
 $('#browse-source').addEventListener('click', async () => {
-  $('#browser').classList.remove('hidden');
-  $('#browse-source').textContent = 'Hide browser';
+  // Toggle; the button keeps its label so the Path row never changes width.
+  const br = $('#browser');
+  if (!br.classList.contains('hidden')) { br.classList.add('hidden'); $('#browse-source').classList.remove('is-on'); return; }
+  br.classList.remove('hidden');
+  $('#browse-source').classList.add('is-on');
   await browseTo($('#source-path').value.trim() || null);
 });
 
@@ -1767,13 +1770,13 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
       const chosen = $('#source-path').value.trim() || data.path;
       $('#source-path').value = chosen;
       browser.classList.add('hidden');
-      $('#browse-source').textContent = 'Browse…';
+      $('#browse-source').classList.remove('is-on');
       toast(`Path selected: ${chosen}`);
       $('#source-name')?.focus();
     };
     $('#browser-cancel').onclick = () => {
       browser.classList.add('hidden');
-      $('#browse-source').textContent = 'Browse…';
+      $('#browse-source').classList.remove('is-on');
     };
 
     // Keep the legacy affordance too: clicking the current path selects it.

@@ -44,6 +44,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Add a folder no longer jumps** when you open the folder browser: the page keeps room for its scroll bar, and the Browse button keeps its label (it highlights while open and toggles the browser) instead of changing to "Hide browser".
 - **Custom platforms now work everywhere:** adding a source (or uploading / re-filing a ROM) with a platform you created yourself was refused with "Platform is required". The check only knew the built-in list; it now accepts any platform in the library.
 - **Duplicate finder no longer pairs different volumes, discs or numbered sequels.** Two games whose file names differ by a number (Volume 2 / Volume 3, Disc 1 / Disc 2, Part 1 / Part 2, Game 3 / Game 4) or a roman numeral (II / III) are kept apart even when a metadata provider gave them the same title. Regional and revision copies of the same volume are still found.
 - **Removing a source did nothing:** the Remove popup's buttons never closed it or acted. It now shows its own buttons, and Cancel, Escape and clicking outside all close it.
