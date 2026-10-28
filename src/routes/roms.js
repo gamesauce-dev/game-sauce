@@ -8,6 +8,7 @@ import { parseFilename, sortTitle } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
+import { canDownload } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
@@ -510,6 +511,10 @@ router.get('/:id/media/:kind', (req, res) => {
 /* --------------------------------------------------------- download */
 
 router.get('/:id/download', (req, res) => {
+  // Members can play in the browser, but only download the file when an admin has allowed it.
+  if (!canDownload(req.user)) {
+    return res.status(403).json({ error: 'Downloads are turned off for member accounts. Ask the admin, or play it in the browser.' });
+  }
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!fs.existsSync(rom.storage_path)) {

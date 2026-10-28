@@ -284,6 +284,11 @@
 
       <div class="panel hidden" id="mod-users">
         <h3>User accounts <span class="pill warn admin-only">admin</span></h3>
+        <label class="policy-row">
+          <input type="checkbox" id="policy-members-download" />
+          <span><b>Let members download ROM files</b>
+            <small>Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.</small></span>
+        </label>
         <div id="user-list" class="counts"></div>
         <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr auto;display:grid;gap:10px;align-items:end">
           <label class="field"><span>Username</span><input name="username" required /></label>
@@ -666,6 +671,16 @@
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="modal-title">
     <h3 class="modal-title" id="modal-title"></h3>
     <p class="modal-body" id="modal-body"></p>
+    <div class="modal-input hidden" id="modal-input-wrap">
+      <label class="field"><span id="modal-input-label">New password</span>
+        <input id="modal-input" type="text" autocomplete="off" spellcheck="false" />
+      </label>
+      <div class="modal-input-row">
+        <button type="button" class="btn btn-sm" id="modal-input-gen">Generate</button>
+        <button type="button" class="btn btn-sm" id="modal-input-copy">Copy</button>
+        <span class="hint" id="modal-input-hint"></span>
+      </div>
+    </div>
     <div class="modal-check hidden" id="modal-check-wrap">
       <label><input type="checkbox" id="modal-check" /> <span id="modal-check-label"></span></label>
     </div>

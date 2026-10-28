@@ -110,6 +110,52 @@ function confirmDialog({ title = 'Are you sure?', body = '', okLabel = 'Confirm'
 }
 
 /**
+ * In-app "set a password" dialog for an admin resetting someone else's. Shows the password in plain text
+ * on purpose (the admin has to pass it on), with Generate and Copy. Resolves the password or null.
+ */
+function passwordDialog({ username }) {
+  const scrim = $('#modal-scrim'), okBtn = $('#modal-ok'), cancelBtn = $('#modal-cancel');
+  const wrap = $('#modal-input-wrap'), input = $('#modal-input'), hint = $('#modal-input-hint');
+  $('#modal-title').textContent = 'Reset password';
+  $('#modal-body').textContent = `Set a new password for ${username}. They are signed out everywhere and any sign-in lockout is cleared. Tell them the new password; they can change it under Settings → Change password.`;
+  $('#modal-check-wrap').classList.add('hidden');
+  wrap.classList.remove('hidden');
+  input.value = ''; hint.textContent = 'At least 10 characters, with a letter and a number.';
+  okBtn.textContent = 'Set password'; okBtn.classList.add('btn-primary'); okBtn.classList.remove('btn-danger');
+  const generate = () => {
+    const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = crypto.getRandomValues(new Uint32Array(14));
+    input.value = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('') + '7';
+  };
+  return new Promise((resolve) => {
+    const done = (value) => {
+      scrim.classList.add('hidden'); wrap.classList.add('hidden'); input.value = '';
+      okBtn.onclick = cancelBtn.onclick = scrim.onclick = input.onkeydown = null;
+      $('#modal-input-gen').onclick = $('#modal-input-copy').onclick = null;
+      document.removeEventListener('keydown', onKey);
+      resolve(value);
+    };
+    const submit = () => {
+      const v = input.value;
+      if (v.length < 10 || !/[a-zA-Z]/.test(v) || !/[0-9]/.test(v)) { hint.textContent = 'Needs at least 10 characters, with a letter and a number.'; input.focus(); return; }
+      done(v);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') done(null); };
+    okBtn.onclick = submit; cancelBtn.onclick = () => done(null);
+    scrim.onclick = (e) => { if (e.target === scrim) done(null); };
+    input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
+    $('#modal-input-gen').onclick = () => { generate(); hint.textContent = 'Generated. Copy it before you set it.'; };
+    $('#modal-input-copy').onclick = async () => {
+      if (!input.value) return;
+      try { await navigator.clipboard.writeText(input.value); hint.textContent = 'Copied.'; } catch { input.select(); hint.textContent = 'Press Ctrl+C to copy.'; }
+    };
+    document.addEventListener('keydown', onKey);
+    scrim.classList.remove('hidden');
+    input.focus();
+  });
+}
+
+/**
  * In-app choice dialog: same chrome as confirmDialog, but N named buttons
  * instead of OK/Cancel. Resolves the chosen id, or null on Cancel/scrim/Esc.
  * Used where a native confirm() abused "OK vs Cancel" to mean two different
@@ -602,7 +648,7 @@ async function renderPlayedRow() {
   const row = $('#played-row');
   if (!wrap || !row) return;
   try {
-    const { items } = await api('/roms/recently-played?limit=6');
+    const { items } = await api('/roms/recently-played?limit=12');
     if (!items.length) { wrap.classList.add('hidden'); row.innerHTML = ''; return; }
     wrap.classList.remove('hidden');
     row.innerHTML = items.map(cardHtml).join('');
@@ -1096,7 +1142,7 @@ async function openDetail(id) {
     </div>
 
     <div class="detail-actions">
-      <a class="btn btn-primary" href="/api/roms/${rom.id}/download" download>↓ Download</a>
+      ${authState.user?.can_download === false ? '' : `<a class="btn btn-primary" href="/api/roms/${rom.id}/download" download>↓ Download</a>`}
       ${rom.playable ? `<button class="btn" data-act="play" title="Play in the browser — no install, BIOS-free platforms only">▶ Play in browser${rom.platform === 'mame' ? ' (best effort)' : ''}</button>` : ''}
       <button class="btn" data-act="favorite">${rom.favorite ? '★ Favourited' : '☆ Favourite'}</button>
       <button class="btn" data-act="addcoll" title="Add this game to a collection">＋ Collection</button>
@@ -3224,6 +3270,17 @@ async function loadSettings() {
 
 async function loadUsersForModule() {
   if (authState.user?.role !== 'admin') return;
+  try {
+    const pol = await api('/auth/policy');
+    const box = $('#policy-members-download');
+    if (box) {
+      box.checked = !!pol.members_can_download;
+      box.onchange = async () => {
+        try { const r = await api('/auth/policy', { method: 'PUT', body: JSON.stringify({ members_can_download: box.checked }) }); box.checked = r.members_can_download; toast(r.members_can_download ? 'Members can now download ROM files' : 'Members can no longer download ROM files'); }
+        catch (err) { box.checked = !box.checked; toast(err.message, true); }
+      };
+    }
+  } catch { /* the list below still works */ }
   const { items: users } = await api('/auth/users');
   $('#user-list').innerHTML = users.map((u) => `
     <div class="user-list-row" data-user="${u.id}">
@@ -3231,6 +3288,7 @@ async function loadUsersForModule() {
         <div>${esc(u.username)} ${u.role === 'admin' ? '<span class="pill accent">admin</span>' : ''} ${u.disabled ? '<span class="pill bad">disabled</span>' : ''}</div>
         <div class="sub">${u.active_sessions} session(s) · last login ${u.last_login_at ? `${esc(u.last_login_at)} UTC` : 'never'}</div>
       </div>
+      <button class="btn btn-sm" data-act="reset-password" title="Set a new password for this user" ${u.id === (authState.user?.id) ? 'hidden' : ''}>Reset password</button>
       <button class="btn btn-sm" data-act="toggle-user">${u.disabled ? 'Enable' : 'Disable'}</button>
       <button class="btn btn-sm btn-danger" data-act="delete-user" ${u.id === (authState.user?.id) ? 'disabled' : ''}>Delete</button>
     </div>`).join('');
@@ -3239,6 +3297,13 @@ async function loadUsersForModule() {
     $('[data-act="toggle-user"]', row)?.addEventListener('click', async () => {
       const disabled = row.textContent.includes('disabled');
       try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ disabled: !disabled }) }); loadUsersForModule(); }
+      catch (err) { toast(err.message, true); }
+    });
+    $('[data-act="reset-password"]', row)?.addEventListener('click', async () => {
+      const name = $('.grow > div', row).firstChild.textContent.trim();
+      const pw = await passwordDialog({ username: name });
+      if (!pw) return;
+      try { await api(`/auth/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(`Password reset for ${name}`); loadUsersForModule(); }
       catch (err) { toast(err.message, true); }
     });
     $('[data-act="delete-user"]', row)?.addEventListener('click', async () => {

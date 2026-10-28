@@ -570,7 +570,7 @@ test('emulator vault cross-filesystem moves fall back to copy (EXDEV)', async ()
 
 test('stats expose per-user favourites, recent-12 and the top download', async () => {
   const { body } = await get('/api/stats');
-  assert.ok(Array.isArray(body.recent) && body.recent.length <= 12);
+  assert.ok(Array.isArray(body.recent) && body.recent.length <= 16);
   assert.ok(body.mine && typeof body.mine.favorites === 'number');
 
   // Upload + favourite + download a ROM, then the stats must reflect it.

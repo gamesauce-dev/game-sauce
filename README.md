@@ -4,8 +4,9 @@
 [![Docker image](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A self-hosted ROM manager: scan folders in place, catalogue your library, enrich it with
-metadata and artwork, play many older games in the browser, and download ROMs back out.
+A self-hosted ROM manager for **your own collection**: scan folders in place, catalogue your
+library, enrich it with metadata and artwork, play many older games in the browser, and download
+ROMs back out. Built for a household: you run it, and you give accounts to the people you trust.
 Express + SQLite on the server, a single static page on the client, no build step.
 
 ![The Library](docs/screenshots/library.png)
@@ -562,7 +563,9 @@ sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI ru
 ## Notes and limits
 
 - Auth covers the API, but there is no TLS here: put it behind a reverse proxy for HTTPS.
-- No self-service signup, password-reset email or 2FA.
+- No self-service signup, password-reset email or 2FA. An admin can set a new password for any user
+  (**Settings → User accounts → Reset password**).
+- Members cannot download ROM files unless an admin allows it (`PUT /api/auth/policy`). Admins always can.
 - DAT import covers verification and canonical titles, plus a per-DAT **Have/want** report
   (`Missing` / `Have` / `All` tabs with search and paging) that shows which DAT entries your
   library does not yet hold. Admin-only, like the rest of the DAT tooling.
@@ -616,7 +619,9 @@ DELETE /api/auth/sessions[?all=1]   revoke other devices (or all)
 GET    /api/auth/users              admin
 POST   /api/auth/users              admin  { username, password, role }
 PATCH  /api/auth/users/:id          admin  { disabled?, role?, display_name? }
-POST   /api/auth/users/:id/password admin
+POST   /api/auth/users/:id/password admin  { password }  (signs the user out everywhere, clears a lockout)
+GET    /api/auth/policy             any signed-in user
+PUT    /api/auth/policy             admin  { members_can_download: true|false }
 DELETE /api/auth/users/:id          admin
 GET    /api/auth/audit?limit=       admin
 ```
@@ -632,7 +637,14 @@ this publicly you want a reverse proxy with TLS in front.
 
 game-sauce manages files **you already own**. It ships no ROMs, BIOS files or emulator
 binaries, and it does not download games. You are responsible for only cataloguing dumps
-you are legally entitled to have. Metadata and artwork come from third-party services
+you are legally entitled to have.
+
+**Who it is for.** A personal or household library: one owner (the admin), and accounts the admin
+creates for family and friends they trust. There is no public sign-up, and it is not meant to be a
+public ROM site. Please keep it on your home network, or reach it through a VPN such as WireGuard or
+Tailscale, rather than exposing it to the internet. Member accounts can browse and play in the browser;
+**downloading the ROM files is off for members** unless the admin turns it on in
+**Settings → User accounts**. Metadata and artwork come from third-party services
 (ScreenScraper, TheGamesDB, IGDB, SteamGridDB) under their own terms; bring your own keys.
 In-browser play loads [EmulatorJS](https://emulatorjs.org/) (GPLv3) from its CDN at runtime;
 it is not bundled with this project.

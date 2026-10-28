@@ -2,7 +2,8 @@
 
 game-sauce is your self-hosted ROM library. It catalogues ROMs where they already live, fetches
 covers and details, verifies dumps against No-Intro/Redump DATs, lets you play many older games
-in the browser, and lets you download files back out. This guide covers everyday use. Server
+in the browser, and lets you download files back out. It is made for a personal or household
+library: one admin, plus accounts for the people they trust. This guide covers everyday use. Server
 setup lives in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 **Contents:** [Concepts](#1-concepts-read-this-once) · [First run](#2-first-run) ·
@@ -88,7 +89,7 @@ Click any tile.
 - **‹ 3 / 24 ›** at the top steps to the previous or next game without closing the panel (the
   **←** and **→** keys do the same). It walks the list you opened the game from: the library grid,
   the Recently added or Continue playing row, or a collection.
-- **Actions:** **Download**, **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
+- **Actions:** **Download** (hidden for members unless the admin allows it), **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
   **Hide**, **Refresh metadata**, **Upload cover**, **Delete**.
 - **Browser play: on/off** switches the Play button for this game only. A dot (•) means you have
   overridden the default. This is how you turn off a game that will not start, or turn on one that
@@ -235,7 +236,7 @@ Click **⚙** under the logo. Members see **Change password** and **Active sessi
 | Tile | What it does |
 |------|--------------|
 | Metadata providers | Credentials for ScreenScraper, TheGamesDB, IGDB, SteamGridDB |
-| User accounts | Create users, set roles, disable accounts, reset passwords |
+| User accounts | Create users, set roles, disable accounts, **reset a forgotten password**, and the **Let members download ROM files** switch |
 | Platforms | The platform catalogue; add your own |
 | Coverage | How much of the library has metadata and covers |
 | Database maintenance | Orphans, missing files, clear covers by platform |
@@ -288,8 +289,13 @@ Otherwise the page tells you to restart it yourself to finish.
   on a shared computer: you are signed out when the browser closes, after 12 hours, or after 2
   hours without activity.
 - **⚙ → Active sessions** lists where you are signed in and lets you sign others out.
-- Admins can create and disable users. Non-admins never see sources, DAT tools, providers, user
-  management, backups or the activity log.
+- Admins can create and disable users and reset a forgotten password (**⚙ → User accounts →
+  Reset password**; tell the person the new one, and they can change it under **Change password**).
+  Non-admins never see sources, DAT tools, providers, user management, backups or the activity log.
+- **Members can browse and play, but not download ROM files**, unless the admin ticks **Let members
+  download ROM files** under **⚙ → User accounts**. This keeps a shared server a household library.
+- Keep it on your home network, or reach it through a VPN (WireGuard, Tailscale). It is not meant
+  to be exposed to the internet or used as a public ROM site.
 - If the app is reachable beyond your home network, put it behind HTTPS and set
   `GAMESAUCE_COOKIE_SECURE=1`. See [DEPLOYMENT.md](DEPLOYMENT.md#6-security-checklist-do-before-exposing-beyond-your-lan).
 

@@ -248,6 +248,12 @@ export function clearLoginFailures(key) {
   db.prepare('DELETE FROM login_attempts WHERE key = ?').run(key);
 }
 
+/** Forget every failed-login record for a username (any address): used when an admin resets a password. */
+export function clearLoginFailuresForUser(username) {
+  db.prepare("DELETE FROM login_attempts WHERE key LIKE ? ESCAPE '\\'")
+    .run(String(username).toLowerCase().replace(/[\\%_]/g, '\\$&') + '|%');
+}
+
 /* ──────────────────────────── audit log ──────────────────────────── */
 
 export function audit(user, action, { target = null, detail = null, ip = null } = {}) {
@@ -293,6 +299,7 @@ export function describeAudit(entry) {
   if (a === 'sessions.revoked') return `${who} signed out ${detail?.all ? 'all devices' : 'other devices'}`;
   if (a === 'user.created') return `${who} created user ${t}${detail?.role ? ` (${detail.role})` : ''}`;
   if (a === 'user.deleted') return `${who} deleted user ${t || 'unknown'}`;
+  if (a === 'policy.changed') return `${who} ${detail?.members_can_download ? 'allowed' : 'turned off'} ROM downloads for members`;
   if (a === 'user.password_reset') return `${who} reset a password for user ${t || 'unknown'}`;
   if (a === 'user.updated') {
     const bits = [];

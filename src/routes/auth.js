@@ -1,8 +1,9 @@
 import {
   createSession, createUser, deleteUser, describeAudit, destroyAllSessions, destroySession,
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
-  audit, loginLockRemaining, recordLoginFailure, clearLoginFailures
+  audit, loginLockRemaining, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser
 } from '../auth.js';
+import { canDownload, membersCanDownload, setMembersCanDownload } from '../lib/policy.js';
 import db from '../db.js';
 import express from 'express';
 
@@ -81,9 +82,23 @@ router.get('/me', (req, res) => {
       id: req.user.id,
       username: req.user.username,
       display_name: req.user.display_name,
-      role: req.user.role
+      role: req.user.role,
+      can_download: canDownload(req.user)
     }
   });
+});
+
+/** Server-wide switches. Anyone signed in can read them; only an admin can change them. */
+router.get('/policy', requireAuth, (req, res) => {
+  res.json({ members_can_download: membersCanDownload() });
+});
+router.put('/policy', requireAdmin, (req, res) => {
+  if (typeof req.body?.members_can_download !== 'boolean') {
+    return res.status(400).json({ error: 'members_can_download must be true or false' });
+  }
+  const now = setMembersCanDownload(req.body.members_can_download, req.user.id);
+  audit(req.user, 'policy.changed', { detail: { members_can_download: now }, ip: clientIp(req) });
+  res.json({ members_can_download: now });
 });
 
 router.post('/login', async (req, res) => {
@@ -127,7 +142,7 @@ router.post('/login', async (req, res) => {
   res.json({
     token,
     expires_in,
-    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role }
+    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, can_download: canDownload(user) }
   });
 });
 
@@ -207,11 +222,16 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
   res.json(listUsers().find((u) => u.id === id));
 });
 
+/** Admin sets a new password for another user (they forgot it, or are locked out). Signs them out everywhere. */
 router.post('/users/:id/password', requireAdmin, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
+    if (id === req.user.id) return res.status(409).json({ error: 'Use Change password for your own account' });
+    const target = listUsers().find((u) => u.id === id);
+    if (!target) return res.status(404).json({ error: 'User not found' });
     await setPassword(id, String(req.body?.password || ''));
-    audit(req.user, 'user.password_reset', { target: String(id), ip: clientIp(req) });
+    clearLoginFailuresForUser(target.username); // a lockout from failed attempts should not outlive the reset
+    audit(req.user, 'user.password_reset', { target: target.username, ip: clientIp(req) });
     res.json({ ok: true });
   } catch (err) { next(err); }
 });

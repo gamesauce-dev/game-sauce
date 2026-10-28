@@ -310,12 +310,18 @@ docker compose start
 
 ## 6. Security checklist (do before exposing beyond your LAN)
 
+game-sauce is meant for a personal or household library. The safest setup is to keep it on your home
+network and reach it from outside through a **VPN** (WireGuard, Tailscale and similar) instead of
+forwarding a port to the internet. It is not designed to be a public site.
+
 - [ ] Strong unique admin password (min 10 chars, letter + number enforced)
 - [ ] `GAMESAUCE_SECRET_KEY` set to a random 32-byte value
 - [ ] HTTPS via reverse proxy + `GAMESAUCE_COOKIE_SECURE=1`
 - [ ] Bind mounts to ROM folders use `:ro`
 - [ ] `data/` backups are private (they hold password/token hashes)
-- [ ] Non-admin users created per person (Account → Users); never share the admin
+- [ ] Non-admin users created per person (Settings → User accounts); never share the admin
+- [ ] Leave **Let members download ROM files** off unless you really want members to copy files
+- [ ] Forgotten password? Settings → User accounts → **Reset password** (the user is signed out everywhere)
 
 ---
 

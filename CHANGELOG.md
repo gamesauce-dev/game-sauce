@@ -11,6 +11,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - The controller focus ring on the first row of the Library grid is no longer cut off at the top.
 
 ### Added
+- **Let members download ROM files** switch (Settings → User accounts). Off by default: members can browse and play in the browser, and the Download button is hidden for them; admins always can. Refused downloads are not counted, and changes are audited.
+- **Reset password** for admins on every other user (Settings → User accounts): sets a new password, signs that user out everywhere and clears any sign-in lockout. A built-in Generate and Copy makes a strong one. The password is never written to the activity log.
+- **More tiles in the home boxes:** the *Continue playing* and *Recently added* boxes now show as many games as fit on their one line (up to 12 and 16) instead of a fixed 6 and 9.
 - **Proxmox LXC installer is now documented up front:** README has a "Option P" deployment section with the one-line command, the settings table and day-to-day commands; the "experimental" label is gone now that it has been run on real hardware.
 - **Controller layout:** Nintendo-style pads (Switch Pro, many 8BitDo) now have A on the right button and B at the bottom, picked automatically from the controller's name. **Settings → Controller** lets you force Xbox or Nintendo layout.
 - **Restore…** button on every backup kept on the server, so there is no need to download and re-upload it.

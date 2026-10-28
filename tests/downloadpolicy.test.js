@@ -1,0 +1,109 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'gamesauce-dlpolicy-test-'));
+process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
+process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
+process.env.GAMESAUCE_ADMIN_USER = 'dpadmin';
+process.env.GAMESAUCE_ADMIN_PASSWORD = 'dp-admin-password-1';
+
+let server, base, db, adminTok, memberTok, romId;
+const ROM_BYTES = Buffer.from('not really a rom, just bytes');
+
+const call = async (p, { token, method = 'GET', body } = {}) => {
+  const res = await fetch(base + p, {
+    method,
+    headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const ct = res.headers.get('content-type') || '';
+  return { status: res.status, body: ct.includes('json') ? await res.json().catch(() => null) : await res.arrayBuffer() };
+};
+const login = async (u, p) => (await call('/api/auth/login', { method: 'POST', body: { username: u, password: p } })).body.token;
+
+before(async () => {
+  const { prepareApp } = await import('../src/app.js');
+  const { app } = await prepareApp();
+  db = (await import('../src/db.js')).default;
+  await new Promise((r) => { server = app.listen(0, '127.0.0.1', r); });
+  base = `http://127.0.0.1:${server.address().port}`;
+  adminTok = await login('dpadmin', 'dp-admin-password-1');
+  await call('/api/auth/users', { method: 'POST', token: adminTok, body: { username: 'dpmember', password: 'dp-member-pass-12', role: 'user' } });
+  memberTok = await login('dpmember', 'dp-member-pass-12');
+
+  const file = path.join(TMP, 'game.nes');
+  fs.writeFileSync(file, ROM_BYTES);
+  const nes = db.prepare("SELECT id FROM platforms WHERE slug = 'nes'").get().id;
+  romId = db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES ('Test Game','test game','game.nes',?,?,?,'dp1')")
+    .run(nes, file, ROM_BYTES.length).lastInsertRowid;
+});
+after(async () => {
+  await new Promise((r) => server?.close(r));
+  db?.close();
+  try { fs.rmSync(TMP, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }); } catch { /* best effort */ }
+});
+
+test('by default members cannot download ROM files, admins can', async () => {
+  assert.equal((await call('/api/auth/policy', { token: memberTok })).body.members_can_download, false);
+  const m = await call(`/api/roms/${romId}/download`, { token: memberTok });
+  assert.equal(m.status, 403);
+  assert.match(m.body.error, /turned off for member accounts/);
+  const a = await call(`/api/roms/${romId}/download`, { token: adminTok });
+  assert.equal(a.status, 200);
+  assert.equal(Buffer.from(a.body).toString(), ROM_BYTES.toString(), 'the admin gets the real file');
+});
+
+test('a refused download is not counted as a download', async () => {
+  const n = () => db.prepare("SELECT COUNT(*) AS n FROM downloads WHERE kind = 'download'").get().n;
+  const before = n();
+  await call(`/api/roms/${romId}/download`, { token: memberTok });
+  assert.equal(n(), before);
+});
+
+test('/me tells the interface whether to show the Download button', async () => {
+  assert.equal((await call('/api/auth/me', { token: memberTok })).body.user.can_download, false);
+  assert.equal((await call('/api/auth/me', { token: adminTok })).body.user.can_download, true);
+});
+
+test('members can still play in the browser while downloads are off', async () => {
+  const r = await call(`/api/roms/${romId}/play/game.nes`, { token: memberTok });
+  assert.notEqual(r.status, 403, 'play is not blocked by the download switch');
+});
+
+test('only an admin can flip the switch, and it must be a real boolean', async () => {
+  assert.equal((await call('/api/auth/policy', { method: 'PUT', token: memberTok, body: { members_can_download: true } })).status, 403);
+  assert.equal((await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: 'yes' } })).status, 400);
+  assert.equal((await call('/api/auth/policy', { token: memberTok })).body.members_can_download, false, 'still off');
+});
+
+test('turning it on lets members download, turning it off stops them again', async () => {
+  const on = await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: true } });
+  assert.equal(on.body.members_can_download, true);
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 200);
+  assert.equal((await call('/api/auth/me', { token: memberTok })).body.user.can_download, true);
+
+  await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: false } });
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 403);
+});
+
+test('the switch survives a restart (it is stored, not in memory)', async () => {
+  await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: true } });
+  const { membersCanDownload } = await import('../src/lib/policy.js');
+  assert.equal(membersCanDownload(), true);
+  assert.equal(db.prepare("SELECT value FROM app_settings WHERE key = 'policy.members_can_download'").get().value, '1');
+});
+
+test('changes are audited in plain English', async () => {
+  const log = await call('/api/auth/audit?limit=20', { token: adminTok });
+  const row = log.body.items.find((e) => e.action === 'policy.changed');
+  assert.ok(row, 'policy change is in the audit log');
+  assert.match(row.summary, /ROM downloads for members/);
+});
+
+test('anonymous requests are refused', async () => {
+  assert.equal((await call(`/api/roms/${romId}/download`)).status, 401);
+  assert.equal((await call('/api/auth/policy')).status, 401);
+});

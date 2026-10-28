@@ -1006,12 +1006,12 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
   box-shadow: 0 0 0.8571rem rgba(255, 61, 168, .2), inset 0 0 0.8571rem rgba(255, 61, 168, .05); }
 .strip.collapsed { padding-bottom: 0.2857rem; }
 .strip.collapsed .strip-head { margin-bottom: 0; }
-/* One row, never a scroll bar: as many tiles as fit (the lists are capped at 6 and 9),
-   each between 5.4 and 7.4rem wide; the rest wrap into zero-height rows and stay hidden. */
+/* One row, never a scroll bar: as many tiles as fit (up to 12 played / 16 recent are loaded),
+   the rest wrap into zero-height rows and stay hidden. A lone full-width box shows more tiles. */
 .strip .recent-row {
   display: grid; grid-auto-flow: row; overflow: hidden; scroll-snap-type: none;
   /* tracks are counted at the 4.6rem minimum, then stretch to share the width: tiles end up 4.6 to 9.2rem wide */
-  grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr)); grid-template-rows: auto; grid-auto-rows: 0;
+  grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr)); grid-template-rows: auto; grid-auto-rows: 0;
   column-gap: 0.5714rem; row-gap: 0; padding: 0.4286rem 0.4286rem 0; margin: 0 -0.4286rem;
 }
 .strip .recent-row .card { max-height: none; }
@@ -1026,3 +1026,13 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .home-divider { display: none; border: 0; height: 1px; margin: 0.2857rem 0 0.8571rem; flex: 0 0 auto;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55) 12%, rgba(255, 255, 255, .55) 88%, transparent); }
 .main:has(.strips > .strip:not(.hidden)) .home-divider { display: block; }
+
+/* password dialog (admin resets a user's password) */
+.modal-input { margin: 0.7143rem 0 0.2857rem; }
+.modal-input input { width: 100%; font-family: ui-monospace, Consolas, monospace; letter-spacing: .02em; }
+.modal-input-row { display: flex; align-items: center; gap: 0.5714rem; margin-top: 0.5714rem; flex-wrap: wrap; }
+.modal-input-row .hint { margin: 0; flex: 1 1 10rem; font-size: 0.8571rem; }
+
+.policy-row { display: flex; gap: 0.7143rem; align-items: flex-start; margin: 0 0 0.8571rem; padding: 0.7143rem 0.8571rem; border: 1px solid var(--line-2); border-radius: 0.7143rem; background: var(--panel); cursor: pointer; }
+.policy-row input { margin-top: 0.2143rem; }
+.policy-row small { display: block; color: var(--dim); font-weight: 400; margin-top: 0.1429rem; line-height: 1.4; }
