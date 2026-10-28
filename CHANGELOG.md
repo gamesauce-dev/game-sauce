@@ -25,6 +25,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Fixed
+- The animated sign-in background now shows after signing out too, not only after a page refresh.
 - The installer now prints the update command with its full path (`/usr/local/bin/game-sauce-update`), which `pct exec` needs.
 - Refreshing the page now keeps you where you were: the same section, platform, search, filters, sort order and open Settings tile. (A fresh sign-in still starts on the Library home.)
 - Signing out and back in now always lands on the Library, instead of the last view you had open (for example Settings).

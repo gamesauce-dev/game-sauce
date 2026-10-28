@@ -22,6 +22,7 @@
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2); // cap: a 4K screen at 3x would be wasteful
     w = canvas.clientWidth; h = canvas.clientHeight;
+    if (!w || !h) return false; // not laid out yet (hidden or just shown): the caller retries
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const n = Math.round(Math.min(120, (w * h) / 14000));
@@ -30,6 +31,7 @@
       tw: Math.random() * Math.PI * 2, sp: 0.4 + Math.random() * 1.4
     }));
     draw(0);
+    return true;
   }
 
   function draw(dt) {
@@ -125,6 +127,8 @@
 
   function frame(now) {
     if (!running) return;
+    // Safety net: if the first measurement happened before layout, measure again as soon as it is visible.
+    if ((!w || !h || canvas.clientWidth !== w || canvas.clientHeight !== h) && !resize()) { raf = requestAnimationFrame(frame); return; }
     const dt = last ? Math.min(now - last, 60) : 16;
     last = now;
     draw(dt);
@@ -135,7 +139,10 @@
     if (running) return;
     canvas.hidden = false;
     resize();
-    if (reduce && reduce.matches) { draw(0); return; } // one still frame, no animation
+    if (reduce && reduce.matches) { // one still frame, no animation
+      if (!w || !h) requestAnimationFrame(() => { resize(); });
+      return;
+    }
     running = true; last = 0;
     raf = requestAnimationFrame(frame);
   }

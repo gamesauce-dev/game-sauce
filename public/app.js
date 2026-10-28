@@ -2834,12 +2834,14 @@ $('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...
 const authState = { user: null };
 
 function showLogin(message = '') {
-  window.neonBg?.start(); // animated retro-neon backdrop, only while this screen is up
   // Remember the last choice of the "keep me signed in" box on this browser.
   try { const r = $('#login-remember'); if (r) r.checked = localStorage.getItem('gamesauce_remember') !== '0'; } catch { /* private mode */ }
   authState.user = null;
   $('#app').classList.add('hidden');
   $('#auth-screen').classList.remove('hidden');
+  // Start the backdrop only now that the screen is visible: a canvas inside a hidden (display:none)
+  // element measures 0x0, which left the sign-out screen blank until the page was refreshed.
+  window.neonBg?.start();
   const err = $('#login-error');
   if (message) { err.textContent = message; err.classList.remove('hidden'); }
   else err.classList.add('hidden');
