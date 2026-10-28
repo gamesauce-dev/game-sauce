@@ -24,8 +24,19 @@ export function setMembersCanDownload(on, userId = null) {
   return membersCanDownload();
 }
 
-/** Can this user download ROM files? Admins always can. */
+/**
+ * Can this user download ROM files? Admins always can. Otherwise a per-person setting wins
+ * (download_override: 1 = allowed, 0 = never), and with none the server-wide default decides.
+ */
 export function canDownload(user) {
   if (!user) return false;
-  return user.role === 'admin' || membersCanDownload();
+  if (user.role === 'admin') return true;
+  if (user.download_override === 1) return true;
+  if (user.download_override === 0) return false;
+  return membersCanDownload();
+}
+
+/** 'allow' | 'deny' | 'default' for display and the API. */
+export function downloadSetting(user) {
+  return user?.download_override === 1 ? 'allow' : user?.download_override === 0 ? 'deny' : 'default';
 }

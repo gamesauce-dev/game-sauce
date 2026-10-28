@@ -227,7 +227,9 @@ ${c_ok}✔ game-sauce is running${c_off}
   Password    $ADMIN_PASS
               (also stored in /etc/game-sauce.env inside the container — change it after signing in)
 
-  Container   pct enter $CTID
+  Container   pct enter $CTID   (opens a root shell, no password needed)
+              Proxmox's Console tab shows a "login:" prompt: that is normal. The container has no root
+              password on purpose, so use "pct enter $CTID" from this node instead.
   Logs        pct exec $CTID -- journalctl -u game-sauce -f
   Update      pct exec $CTID -- /usr/local/bin/game-sauce-update
   Data        /var/lib/game-sauce  (database + imported files — back this up)

@@ -73,6 +73,14 @@ export function createApp() {
 
   api.use('/auth', authRouter);
 
+  // Duplicate finder (read-only, admin): see src/lib/duplicates.js. Hiding the extras uses /roms/bulk/hide.
+  api.get('/admin/duplicates', requireAuth, requireAdmin, async (req, res) => {
+    const { findDuplicates } = await import('./lib/duplicates.js');
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    res.json(findDuplicates({ platform: req.query.platform ? String(req.query.platform) : null, limit, offset }));
+  });
+
   // Admin health report (read-only): see src/lib/health.js.
   api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {
     const { collectHealth, collectSummary, diagnosticsText } = await import('./lib/health.js');

@@ -3,7 +3,7 @@ import {
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
   audit, loginLockRemaining, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser
 } from '../auth.js';
-import { canDownload, membersCanDownload, setMembersCanDownload } from '../lib/policy.js';
+import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload } from '../lib/policy.js';
 import db from '../db.js';
 import express from 'express';
 
@@ -49,6 +49,7 @@ export function attachUser(req, res, next) {
       req.user = {
         id: session.id, username: session.username,
         display_name: session.display_name, role: session.role,
+        download_override: session.download_override,
         session_id: session.session_id
       };
       req.sessionToken = token;
@@ -212,6 +213,12 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
   if (req.body?.role !== undefined) {
     const role = req.body.role === 'admin' ? 'admin' : 'user';
     db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
+  }
+
+  if (req.body?.download !== undefined) {
+    const v = req.body.download;
+    if (!['allow', 'deny', 'default'].includes(v)) return res.status(400).json({ error: "download must be 'allow', 'deny' or 'default'" });
+    db.prepare('UPDATE users SET download_override = ? WHERE id = ?').run(v === 'allow' ? 1 : v === 'deny' ? 0 : null, id);
   }
 
   if (req.body?.display_name !== undefined) {

@@ -26,6 +26,7 @@ Express + SQLite on the server, a single static page on the client, no build ste
 - **Verifies dumps** against No-Intro / Redump DATs and shows have/want reports.
 - **Collections, favourites, hidden games, users and roles, an activity log.**
 - **Runs on PCs and ARM:** the Docker image is published for amd64 and arm64 (Raspberry Pi 4/5, ARM servers).
+- **Duplicate finder** (Settings → Duplicate finder): groups different versions of one game (USA / Europe / Japan, revisions, arcade clones), suggests the best copy to keep, and can hide the rest. Nothing is deleted.
 - **Health page** (Settings → Health): disk space, database, source reachability, last backup, providers, plus a copy-and-paste report with no secrets for bug reports.
 - **One-command Proxmox install:** a single line on the node creates a ready-to-use LXC (no Docker), or use the
   Docker image on any other machine. See [Deployment](#deployment).
@@ -570,7 +571,7 @@ sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI ru
 - Requests that change data are refused when they come from another website (CSRF check), and each user is rate limited (see the environment table).
 - No self-service signup, password-reset email or 2FA. An admin can set a new password for any user
   (**Settings → User accounts → Reset password**).
-- Members cannot download ROM files unless an admin allows it (`PUT /api/auth/policy`). Admins always can.
+- Members cannot download ROM files unless an admin allows it, either for everyone (`PUT /api/auth/policy`) or per person (`PATCH /api/auth/users/:id { download: "allow" | "deny" | "default" }`). Admins always can.
 - DAT import covers verification and canonical titles, plus a per-DAT **Have/want** report
   (`Missing` / `Have` / `All` tabs with search and paging) that shows which DAT entries your
   library does not yet hold. Admin-only, like the rest of the DAT tooling.
@@ -625,6 +626,7 @@ GET    /api/auth/users              admin
 POST   /api/auth/users              admin  { username, password, role }
 PATCH  /api/auth/users/:id          admin  { disabled?, role?, display_name? }
 POST   /api/auth/users/:id/password admin  { password }  (signs the user out everywhere, clears a lockout)
+GET    /api/admin/duplicates?platform=&limit=&offset=  admin  (groups of versions of the same game; read-only)
 GET    /api/admin/health            admin  (status, summary, shareable diagnostics text)
 GET    /api/auth/policy             any signed-in user
 PUT    /api/auth/policy             admin  { members_can_download: true|false }

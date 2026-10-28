@@ -107,3 +107,60 @@ test('anonymous requests are refused', async () => {
   assert.equal((await call(`/api/roms/${romId}/download`)).status, 401);
   assert.equal((await call('/api/auth/policy')).status, 401);
 });
+
+/* ───────────────────── per-person downloads ───────────────────── */
+
+test('a personal "always allowed" beats the server default, and "never" beats it the other way', async () => {
+  await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: false } });
+  const users = (await call('/api/auth/users', { token: adminTok })).body.items;
+  const mem = users.find((u) => u.username === 'dpmember');
+  assert.equal(mem.download, 'default', 'new members follow the default');
+  assert.ok(!('download_override' in mem), 'the raw column is not exposed');
+
+  // default off + personal allow -> can download
+  let r = await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'allow' } });
+  assert.equal(r.status, 200); assert.equal(r.body.download, 'allow');
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 200);
+  assert.equal((await call('/api/auth/me', { token: memberTok })).body.user.can_download, true);
+
+  // default on + personal deny -> cannot
+  await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: true } });
+  r = await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'deny' } });
+  assert.equal(r.body.download, 'deny');
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 403);
+  assert.equal((await call('/api/auth/me', { token: memberTok })).body.user.can_download, false);
+
+  // back to default: follows the (now on) switch again
+  await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'default' } });
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 200);
+  await call('/api/auth/policy', { method: 'PUT', token: adminTok, body: { members_can_download: false } });
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 403);
+});
+
+test('the personal setting takes effect straight away, without signing out and in', async () => {
+  const mem = (await call('/api/auth/users', { token: adminTok })).body.items.find((u) => u.username === 'dpmember');
+  await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'allow' } });
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 200);
+  await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'default' } });
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: memberTok })).status, 403);
+});
+
+test('only admins can change it, only valid values are accepted, admins always can download', async () => {
+  const users = (await call('/api/auth/users', { token: adminTok })).body.items;
+  const mem = users.find((u) => u.username === 'dpmember');
+  const adm = users.find((u) => u.username === 'dpadmin');
+  assert.equal((await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: memberTok, body: { download: 'allow' } })).status, 403, 'a member cannot grant themselves access');
+  assert.equal((await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'sometimes' } })).status, 400);
+  await call(`/api/auth/users/${adm.id}`, { method: 'PATCH', token: adminTok, body: { download: 'deny' } });
+  assert.equal((await call(`/api/roms/${romId}/download`, { token: adminTok })).status, 200, 'an admin is never locked out of downloads');
+  await call(`/api/auth/users/${adm.id}`, { method: 'PATCH', token: adminTok, body: { download: 'default' } });
+});
+
+test('personal download changes are audited in plain English', async () => {
+  const mem = (await call('/api/auth/users', { token: adminTok })).body.items.find((u) => u.username === 'dpmember');
+  await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'deny' } });
+  const log = (await call('/api/auth/audit?limit=10', { token: adminTok })).body.items;
+  const row = log.find((e) => e.action === 'user.updated' && /downloads never allowed/.test(e.summary));
+  assert.ok(row, 'summary says what changed: ' + log.map((e) => e.summary).slice(0, 3).join(' | '));
+  await call(`/api/auth/users/${mem.id}`, { method: 'PATCH', token: adminTok, body: { download: 'default' } });
+});

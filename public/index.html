@@ -278,6 +278,19 @@
         <div id="health-checks" class="health-checks"></div>
       </div>
 
+      <div class="panel hidden" id="mod-duplicates">
+        <h3>Duplicate finder <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Games you hold in more than one version (a USA and a Europe copy, a revision, an arcade clone). One copy per group is suggested; <b>Hide the others</b> tucks the rest away. Nothing is deleted and no file on disk is touched, and hidden games can be brought back from the Hidden filter.</p>
+        <div class="dup-top">
+          <select id="dup-platform" class="select" aria-label="Platform"><option value="">All platforms</option></select>
+          <span id="dup-summary" class="hint" style="margin:0"></span>
+          <button class="btn btn-sm" id="dup-refresh">↻ Scan again</button>
+          <button class="btn btn-sm btn-primary hidden" id="dup-hide-all">Hide the others in this list</button>
+        </div>
+        <div id="dup-list" class="dup-list"></div>
+        <button class="btn btn-sm hidden" id="dup-more">Show more</button>
+      </div>
+
       <div class="panel hidden" id="mod-sessions">
         <h3>Active sessions</h3>
         <div id="session-list" class="counts"></div>
@@ -300,7 +313,7 @@
         <label class="policy-row">
           <input type="checkbox" id="policy-members-download" />
           <span><b>Let members download ROM files</b>
-            <small>Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.</small></span>
+            <small>The default for everyone who has no personal setting below. Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.</small></span>
         </label>
         <div id="user-list" class="counts"></div>
         <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr auto;display:grid;gap:10px;align-items:end">

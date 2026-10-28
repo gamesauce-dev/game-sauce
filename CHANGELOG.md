@@ -11,6 +11,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Duplicate finder** (Settings → Duplicate finder, admin): groups the different versions of one game on a platform (USA, Europe, Japan, revisions; arcade clones are grouped under their parent using the MAME name list), suggests one copy to keep (DAT-verified first, a favourite is protected, then region and revision), and offers **Hide the others**. Reversible: nothing is deleted and no file is touched. Platform filter and paging included.
+- **Downloads per person:** each member can be set to Default, Always allowed or Never (Settings → User accounts). It beats the server-wide switch, takes effect immediately, and is audited. Admins can always download.
+- **Proxmox installer** now explains the Console tab's `login:` prompt (the container has no root password on purpose; use `pct enter <id>`).
 - **Health page** (Settings → Health, admin): database integrity, disk space, source folders reachable, last scan, backups (none, stale, failed), providers, encryption key location, and a **Copy report** button with no secrets, tokens or folder paths.
 - **ARM64 Docker image:** the published image is now multi-architecture (amd64 and arm64: Raspberry Pi 4/5, ARM servers).
 - **CONTRIBUTING.md** with what the project will and won't accept, how to run it and test it.

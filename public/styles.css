@@ -1057,3 +1057,24 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 
 /* once a real cover has loaded, the initials placeholder must not ghost through it */
 .card-fallback.has-cover { display: none; }
+
+.dl-pick { display: inline-flex; align-items: center; gap: 0.4286rem; color: var(--dim); font-size: 0.8571rem; }
+.dl-pick select { font-size: 0.8571rem; padding: 0.2857rem 0.4286rem; }
+
+/* duplicate finder */
+.dup-top { display: flex; align-items: center; gap: 0.7143rem; flex-wrap: wrap; margin-bottom: 0.8571rem; }
+.dup-top .hint { flex: 1 1 12rem; }
+.dup-list { display: grid; gap: 0.7143rem; margin-bottom: 0.8571rem; }
+.dup-group { border: 1px solid var(--line-2); border-radius: 0.7143rem; background: var(--panel); padding: 0.7143rem 0.8571rem; }
+.dup-head { display: flex; align-items: center; gap: 0.5714rem; margin-bottom: 0.5714rem; }
+.dup-head .grow { flex: 1; }
+.dup-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.5714rem; }
+.dup-item { display: flex; gap: 0.7143rem; padding: 0.5rem; border: 1px solid var(--line-2); border-radius: 0.5714rem; cursor: pointer; background: var(--bg-2, #0d0e14); }
+.dup-item:hover { border-color: #7c5cff; }
+.dup-item.keep { border-color: #4ade80; box-shadow: inset 0 0 0 1px rgba(74, 222, 128, .25); }
+.dup-cover { width: 3.4rem; aspect-ratio: 3 / 4; flex: 0 0 auto; border-radius: 0.3571rem; overflow: hidden; background: #12141a; }
+.dup-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dup-meta { min-width: 0; }
+.dup-file { font-weight: 600; word-break: break-word; font-size: 0.9286rem; }
+.dup-meta .sub { color: var(--muted); margin-top: 0.1429rem; font-size: 0.8571rem; }
+.dup-keep { color: #4ade80; font-size: 0.8571rem; margin-top: 0.2857rem; }

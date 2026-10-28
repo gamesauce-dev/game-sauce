@@ -55,6 +55,10 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   locked_until TEXT
 );
 `);
+// Per-person download permission: NULL = follow the server-wide default, 1 = always allowed, 0 = never.
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'download_override')) {
+  db.exec('ALTER TABLE users ADD COLUMN download_override INTEGER');
+}
 // Older databases: sessions without the flag were all persistent logins.
 if (!db.prepare('PRAGMA table_info(sessions)').all().some((c) => c.name === 'persistent')) {
   db.exec('ALTER TABLE sessions ADD COLUMN persistent INTEGER NOT NULL DEFAULT 1');
@@ -129,7 +133,7 @@ export function findSession(token) {
   if (!token) return null;
   const row = db.prepare(`
     SELECT s.id AS session_id, s.expires_at, s.last_seen_at, s.persistent,
-           u.id, u.username, u.display_name, u.role, u.disabled
+           u.id, u.username, u.display_name, u.role, u.disabled, u.download_override
     FROM sessions s JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ? AND s.expires_at > datetime('now')
   `).get(hashToken(token));
@@ -170,10 +174,13 @@ export function purgeExpiredSessions() {
 
 export function listUsers() {
   return db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at,
+    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override,
            (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > datetime('now')) AS active_sessions
     FROM users u ORDER BY u.username
-  `).all().map((u) => ({ ...u, disabled: Boolean(u.disabled) }));
+  `).all().map(({ download_override, ...u }) => ({
+    ...u, disabled: Boolean(u.disabled),
+    download: download_override === 1 ? 'allow' : download_override === 0 ? 'deny' : 'default'
+  }));
 }
 
 export async function createUser({ username, password, display_name = null, role = 'user' }) {
@@ -303,6 +310,9 @@ export function describeAudit(entry) {
   if (a === 'user.password_reset') return `${who} reset a password for user ${t || 'unknown'}`;
   if (a === 'user.updated') {
     const bits = [];
+    if (detail && typeof detail === 'object' && detail.download !== undefined) {
+      bits.push(detail.download === 'allow' ? 'downloads always allowed' : detail.download === 'deny' ? 'downloads never allowed' : 'downloads follow the default');
+    }
     if (detail && typeof detail === 'object') {
       if (detail.disabled === true) bits.push('disabled');
       if (detail.disabled === false) bits.push('re-enabled');

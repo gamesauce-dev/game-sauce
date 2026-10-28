@@ -3022,6 +3022,7 @@ const SETTINGS_MODULES = [
   { id: 'audit',     label: 'Activity log',    ico: '📜', adminOnly: true },
   { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true },
   { id: 'backup',    label: 'Backups',         ico: '🛟', adminOnly: true },
+  { id: 'duplicates', label: 'Duplicate finder', ico: '🧬', adminOnly: true },
   { id: 'health',    label: 'Health',          ico: '🩺', adminOnly: true }
 ];
 
@@ -3199,9 +3200,73 @@ function showSettingsModule(id) {
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
   if (id === 'health') loadHealth();
+  if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
   panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
+
+/* Duplicate finder: groups of different versions of one game, with a suggested keeper. */
+const dupState = { offset: 0, groups: [], total: 0, extra: 0, platformsLoaded: false };
+async function loadDuplicates(reset = true) {
+  const list = $('#dup-list'), summary = $('#dup-summary');
+  if (reset) { dupState.offset = 0; dupState.groups = []; list.innerHTML = '<div class="side-empty">Looking…</div>'; summary.textContent = ''; }
+  try {
+    if (!dupState.platformsLoaded) {
+      const plats = await api('/platforms');
+      const sel = $('#dup-platform');
+      (plats.items || plats).filter((p) => (p.count ?? 0) > 0).forEach((p) => sel.insertAdjacentHTML('beforeend', `<option value="${esc(p.slug)}">${esc(p.name)}</option>`));
+      dupState.platformsLoaded = true;
+    }
+    const q = new URLSearchParams({ limit: '50', offset: String(dupState.offset) });
+    if ($('#dup-platform').value) q.set('platform', $('#dup-platform').value);
+    const r = await api('/admin/duplicates?' + q);
+    dupState.total = r.total; dupState.extra = r.extra;
+    dupState.groups = reset ? r.groups : dupState.groups.concat(r.groups);
+    renderDuplicates();
+  } catch (err) { list.innerHTML = `<div class="side-empty">${esc(err.message)}</div>`; }
+}
+function renderDuplicates() {
+  const list = $('#dup-list');
+  const g = dupState.groups;
+  $('#dup-summary').textContent = dupState.total ? `${dupState.total} game${dupState.total === 1 ? '' : 's'} with more than one version (${dupState.extra} extra cop${dupState.extra === 1 ? 'y' : 'ies'})` : '';
+  $('#dup-hide-all').classList.toggle('hidden', !g.length);
+  $('#dup-more').classList.toggle('hidden', g.length >= dupState.total);
+  if (!g.length) { list.innerHTML = '<div class="side-empty">No duplicates found. Every game appears once.</div>'; return; }
+  const size = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+  list.innerHTML = g.map((grp, gi) => `
+    <div class="dup-group" data-gi="${gi}">
+      <div class="dup-head"><b>${esc(grp.title)}</b> <span class="pill">${esc(grp.platform_short || grp.platform)}</span>
+        <span class="grow"></span>
+        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one">Hide the others</button></div>
+      <div class="dup-items">${grp.items.map((it) => `
+        <div class="dup-item ${it.keep ? 'keep' : ''}" data-dup-open="${it.id}" title="Open this game">
+          <div class="dup-cover">${it.cover_url ? `<img loading="lazy" src="${esc(it.cover_url)}" alt="" />` : ''}</div>
+          <div class="dup-meta">
+            <div class="dup-file">${esc(it.filename)}</div>
+            <div class="sub">${[it.region, it.revision ? 'rev ' + it.revision : '', it.year, size(it.size_bytes), it.dat_status && it.dat_status !== 'not-in-dat' ? 'DAT: ' + it.dat_status : ''].filter(Boolean).map(esc).join(' · ')}</div>
+            ${it.keep ? `<div class="dup-keep">✓ Suggested to keep: ${esc(it.why)}</div>` : ''}
+          </div>
+        </div>`).join('')}</div>
+    </div>`).join('');
+}
+async function hideDuplicateExtras(groups) {
+  const ids = groups.flatMap((grp) => grp.items.filter((i) => !i.keep).map((i) => i.id));
+  if (!ids.length) return;
+  const ok = await confirmDialog({ title: `Hide ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}?`, body: 'Only the suggested copy of each game stays visible. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
+  if (!ok) return;
+  try { await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: true }) }); toast(`Hid ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}`); loadDuplicates(true); loadPlatforms(); }
+  catch (err) { toast(err.message, true); }
+}
+document.addEventListener('click', (e) => {
+  const open = e.target.closest('[data-dup-open]');
+  if (open) { state.nav = null; openDetail(Number(open.dataset.dupOpen)); return; }
+  const one = e.target.closest('[data-dup-hide]');
+  if (one) { e.stopPropagation(); hideDuplicateExtras([dupState.groups[Number(one.dataset.dupHide)]]); return; }
+  if (e.target.closest('#dup-hide-all')) hideDuplicateExtras(dupState.groups);
+  if (e.target.closest('#dup-refresh')) loadDuplicates(true);
+  if (e.target.closest('#dup-more')) { dupState.offset = dupState.groups.length; loadDuplicates(false); }
+});
+document.addEventListener('change', (e) => { if (e.target.id === 'dup-platform') loadDuplicates(true); });
 
 let healthText = '';
 async function loadHealth() {
@@ -3329,6 +3394,8 @@ async function loadUsersForModule() {
         <div>${esc(u.username)} ${u.role === 'admin' ? '<span class="pill accent">admin</span>' : ''} ${u.disabled ? '<span class="pill bad">disabled</span>' : ''}</div>
         <div class="sub">${u.active_sessions} session(s) · last login ${u.last_login_at ? `${esc(u.last_login_at)} UTC` : 'never'}</div>
       </div>
+      ${u.role === 'admin' ? '' : `<label class="dl-pick" title="Whether this person can download ROM files. 'Default' follows the switch above."><span>Downloads</span>
+        <select class="select" data-act="download-setting"><option value="default" ${u.download === 'default' ? 'selected' : ''}>Default</option><option value="allow" ${u.download === 'allow' ? 'selected' : ''}>Always allowed</option><option value="deny" ${u.download === 'deny' ? 'selected' : ''}>Never</option></select></label>`}
       <button class="btn btn-sm" data-act="reset-password" title="Set a new password for this user" ${u.id === (authState.user?.id) ? 'hidden' : ''}>Reset password</button>
       <button class="btn btn-sm" data-act="toggle-user">${u.disabled ? 'Enable' : 'Disable'}</button>
       <button class="btn btn-sm btn-danger" data-act="delete-user" ${u.id === (authState.user?.id) ? 'disabled' : ''}>Delete</button>
@@ -3339,6 +3406,13 @@ async function loadUsersForModule() {
       const disabled = row.textContent.includes('disabled');
       try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ disabled: !disabled }) }); loadUsersForModule(); }
       catch (err) { toast(err.message, true); }
+    });
+    $('[data-act="download-setting"]', row)?.addEventListener('change', async (e) => {
+      const name = $('.grow > div', row).firstChild.textContent.trim();
+      try {
+        await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ download: e.target.value }) });
+        toast(e.target.value === 'allow' ? `${name} can always download` : e.target.value === 'deny' ? `${name} can never download` : `${name} follows the default`);
+      } catch (err) { toast(err.message, true); loadUsersForModule(); }
     });
     $('[data-act="reset-password"]', row)?.addEventListener('click', async () => {
       const name = $('.grow > div', row).firstChild.textContent.trim();

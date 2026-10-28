@@ -236,7 +236,8 @@ Click **⚙** under the logo. Members see **Change password** and **Active sessi
 | Tile | What it does |
 |------|--------------|
 | Metadata providers | Credentials for ScreenScraper, TheGamesDB, IGDB, SteamGridDB |
-| User accounts | Create users, set roles, disable accounts, **reset a forgotten password**, and the **Let members download ROM files** switch |
+| User accounts | Create users, set roles, disable accounts, **reset a forgotten password**, the **Let members download ROM files** default, and a **Downloads** choice per person (Default / Always allowed / Never) |
+| Duplicate finder | Finds games you hold in several versions, suggests which to keep, and hides the others (see below) |
 | Platforms | The platform catalogue; add your own |
 | Coverage | How much of the library has metadata and covers |
 | Database maintenance | Orphans, missing files, clear covers by platform |
@@ -293,8 +294,10 @@ Otherwise the page tells you to restart it yourself to finish.
 - Admins can create and disable users and reset a forgotten password (**⚙ → User accounts →
   Reset password**; tell the person the new one, and they can change it under **Change password**).
   Non-admins never see sources, DAT tools, providers, user management, backups or the activity log.
-- **Members can browse and play, but not download ROM files**, unless the admin ticks **Let members
-  download ROM files** under **⚙ → User accounts**. This keeps a shared server a household library.
+- **Members can browse and play, but not download ROM files**, unless the admin allows it: tick **Let
+  members download ROM files** under **⚙ → User accounts** for everyone, or use the **Downloads** choice
+  on one person's row (**Always allowed** or **Never**, which beat the default). This keeps a shared
+  server a household library.
 - Keep it on your home network, or reach it through a VPN (WireGuard, Tailscale). It is not meant
   to be exposed to the internet or used as a public ROM site.
 - If the app is reachable beyond your home network, put it behind HTTPS and set
