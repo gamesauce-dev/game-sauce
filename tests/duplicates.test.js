@@ -149,3 +149,47 @@ test('results are paged', async () => {
   assert.equal(p1.total, 6); assert.equal(p1.groups.length, 4); assert.equal(p2.groups.length, 2);
   assert.equal(new Set([...p1.groups, ...p2.groups].map((g) => g.key)).size, 6, 'no repeats across pages');
 });
+
+/* ───── numbers in the file name keep different volumes / discs / sequels apart ───── */
+
+test('volumes are not duplicates, even when a provider gave both the same stored title', async () => {
+  // Reported case: "Volume 2" and "Volume 3" were listed as duplicates of each other.
+  const v2 = rom('xbox', 'Woody Woodpecker and Friends Volume 2 (USA).iso');
+  const v3 = rom('xbox', 'Woody Woodpecker and Friends Volume 3 (USA).iso');
+  db.prepare("UPDATE roms SET title = 'Woody Woodpecker and Friends', sort_title = 'woody woodpecker and friends' WHERE id IN (?, ?)").run(v2, v3);
+  const r = (await call('/api/admin/duplicates?platform=xbox')).body;
+  assert.equal(r.total, 0, 'two different volumes are two different games');
+
+  // ...while a genuine regional pair of the same volume is still found
+  rom('xbox', 'Woody Woodpecker and Friends Volume 2 (Europe).iso');
+  const id = db.prepare("SELECT id FROM roms WHERE filename = 'Woody Woodpecker and Friends Volume 2 (Europe).iso'").get().id;
+  db.prepare("UPDATE roms SET title = 'Woody Woodpecker and Friends', sort_title = 'woody woodpecker and friends' WHERE id = ?").run(id);
+  const r2 = (await call('/api/admin/duplicates?platform=xbox')).body;
+  assert.equal(r2.total, 1);
+  assert.deepEqual(r2.groups[0].items.map((i) => i.filename).sort(), ['Woody Woodpecker and Friends Volume 2 (Europe).iso', 'Woody Woodpecker and Friends Volume 2 (USA).iso']);
+});
+
+test('discs, parts and numbered sequels with an identical stored title stay separate', async () => {
+  // each family gets its own stored title, as real games would (a Disc 1 and a Part 1 are not the same game anyway)
+  const mk = (fn, title) => { const id = rom('psp', fn); db.prepare('UPDATE roms SET title = ?, sort_title = ? WHERE id = ?').run(title, title.toLowerCase(), id); return id; };
+  mk('Alpha Quest (Disc 1).iso', 'Alpha Quest'); mk('Alpha Quest (Disc 2).iso', 'Alpha Quest');
+  mk('Beta Saga Part 1.iso', 'Beta Saga'); mk('Beta Saga Part 2.iso', 'Beta Saga');
+  mk('Gamma Run 3.iso', 'Gamma Run'); mk('Gamma Run 4.iso', 'Gamma Run');
+  const groups = (await call('/api/admin/duplicates?platform=psp')).body.groups.filter((g) => /Alpha Quest|Beta Saga|Gamma Run/.test(g.title));
+  assert.equal(groups.length, 0, 'none of them are duplicates of each other');
+  // a real duplicate of one of them is still caught
+  mk('Alpha Quest (Disc 1) (Europe).iso', 'Alpha Quest');
+  const again = (await call('/api/admin/duplicates?platform=psp')).body.groups.filter((g) => /Alpha Quest/.test(g.title));
+  assert.equal(again.length, 1);
+  assert.equal(again[0].items.length, 2, 'only the two Disc 1 copies are grouped');
+});
+
+test('roman numerals count too, and a year or region tag does not', async () => {
+  const { distinguishers } = await import('../src/lib/duplicates.js');
+  assert.notEqual(distinguishers('Street Brawl II (USA).sfc'), distinguishers('Street Brawl III (USA).sfc'));
+  assert.equal(distinguishers('Street Brawl II (USA).sfc'), distinguishers('Street Brawl II (Europe) (Rev A).sfc'));
+  assert.equal(distinguishers('Pitfall (1982) (USA).bin'), distinguishers('Pitfall (Europe).bin'));
+  assert.notEqual(distinguishers('Woody Volume 2 (USA).iso'), distinguishers('Woody Volume 3 (USA).iso'));
+  assert.equal(distinguishers('Super Street Fighter II Turbo (USA).sfc'), distinguishers('Super Street Fighter II Turbo (Europe).sfc'), 'the reported true duplicate still matches');
+  assert.equal(distinguishers('Mixed Words (USA).sfc'), '', 'words like "mix" are not mistaken for numerals');
+});

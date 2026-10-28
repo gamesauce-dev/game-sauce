@@ -4,12 +4,26 @@
 // It only reads. Hiding is reversible and nothing here ever touches a file on disk.
 import path from 'node:path';
 import db from '../db.js';
-import { sortTitle } from './metadata.js';
+import { parseFilename, sortTitle } from './metadata.js';
 
 const REGION_RANK = ['USA', 'World', 'Europe', 'Australia', 'Canada', 'Japan'];
 const ARCADE = new Set(['arcade', 'mame', 'fba']);
 
 const stem = (filename) => path.basename(String(filename || '')).replace(/\.(zip|7z)$/i, '').toLowerCase();
+
+/**
+ * What tells two games apart even when their stored titles are identical: the numbers in the file's own
+ * name (Volume 2 vs Volume 3, Disc 1 vs Disc 2, Part 1 vs Part 2, "Game 2" vs "Game 3") and roman numerals.
+ * Metadata providers and DATs sometimes give sequels or volumes the same title, so the stored title
+ * alone is not trustworthy. Region and revision tags are already stripped by parseFilename, and a
+ * four-digit year is ignored. Two files only count as the same game when these signatures agree.
+ */
+export function distinguishers(filename) {
+  const title = parseFilename(String(filename || '')).title.toLowerCase();
+  const nums = (title.replace(/\b(19|20)\d{2}\b/g, ' ').match(/\d+/g) || []).map((n) => String(Number(n)));
+  const roman = (title.match(/\b[ivxlcdm]{2,6}\b/g) || []).filter((w) => /^m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$/.test(w));
+  return [...nums, ...roman].sort().join(',');
+}
 
 /** Arcade sets: clones of one game share their parent's short name, so group by that. */
 function arcadeParent(row, names) {
@@ -61,9 +75,9 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {})
     let key;
     if (ARCADE.has(r.platform_slug)) {
       const parent = arcadeParent(r, names);
-      key = parent ? `a|${parent}` : `t|${r.platform_id}|${sortTitle(r.title)}`;
+      key = parent ? `a|${parent}` : `t|${r.platform_id}|${sortTitle(r.title)}|${distinguishers(r.filename)}`;
     } else {
-      key = `t|${r.platform_id}|${r.sort_title || sortTitle(r.title)}`;
+      key = `t|${r.platform_id}|${r.sort_title || sortTitle(r.title)}|${distinguishers(r.filename)}`;
     }
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(r);
