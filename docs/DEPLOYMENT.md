@@ -153,7 +153,7 @@ path on the left must already exist inside that LXC/VM. Update with
 - **LXC works with options.** In the container's *Options → Features*, enable **nesting**
   (and **keyctl**). Without them Docker commonly fails with cgroup or permission errors.
   Unprivileged LXCs are the most fragile; a privileged one is easier but less isolated.
-- **One-command install (no Docker) — experimental, not yet tested on real hardware; read the script first.** On the Proxmox node, as root:
+- **One-command install (no Docker, recommended on Proxmox).** Read the script first if you like. On the Proxmox node, as root:
   `bash -c "$(curl -fsSL https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/proxmox-lxc.sh)"`
   creates an unprivileged Debian 12 container, installs Node 22, generates an admin password
   and runs game-sauce as a systemd service. Options (CTID, RAM, DISK, STORAGE, BRIDGE, APP_PORT,

@@ -24,6 +24,8 @@ Express + SQLite on the server, a single static page on the client, no build ste
   avoids wrong covers.
 - **Verifies dumps** against No-Intro / Redump DATs and shows have/want reports.
 - **Collections, favourites, hidden games, users and roles, an activity log.**
+- **One-command Proxmox install:** a single line on the node creates a ready-to-use LXC (no Docker), or use the
+  Docker image on any other machine. See [Deployment](#deployment).
 - **Backups and restore** built in: download them or schedule them to a folder, and restore from
   a file or straight from the server list. A safety backup is taken first and the replaced data is kept.
 - **Controller friendly:** navigate the whole interface with a gamepad, and hold Select + Start to
@@ -343,6 +345,52 @@ DELETE /api/collections/:id/roms/:romId
 ## Deployment
 
 The app is one Node process plus one SQLite file — no separate database, no build step.
+
+| I have… | Use |
+|---------|-----|
+| **Proxmox VE** | [Option P: one-command LXC installer](#option-p--proxmox-lxc-one-command-no-docker) |
+| Any PC or server with Docker | [Option A: Docker](#option-a--docker-recommended-for-another-pcserver-works-on-windows--linux--macos) |
+| Just Node on Windows / Linux / macOS | [Option B: bare Node](#option-b--bare-node-windows-11-linux-macos) |
+
+### Option P — Proxmox LXC (one command, no Docker)
+
+On the **Proxmox node**, as root:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/proxmox-lxc.sh)"
+```
+
+It shows what it is about to do and asks before it does it, then creates a small unprivileged
+Debian 12 container, installs Node 22 and game-sauce, generates an admin password (printed once at
+the end), and runs the app as a systemd service that starts on boot. Open `http://<container-ip>:8765`.
+Read the script first if you like: [`install/proxmox-lxc.sh`](install/proxmox-lxc.sh).
+
+Everything has a default. Override any of these by putting them in front of the command, for example
+`CTID=120 RAM=2048 DISK=16 ROMS=/mnt/pve/nas/roms bash -c "..."`:
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `CTID` | next free id | Container id |
+| `CT_NAME` | `game-sauce` | Container hostname |
+| `CORES` / `RAM` / `DISK` | 2 / 1024 MB / 8 GB | Resources |
+| `STORAGE` / `TEMPLATE_STORAGE` | `local-lvm` / `local` | Where the disk and the Debian template live |
+| `BRIDGE` | `vmbr0` | Network bridge (DHCP) |
+| `APP_PORT` | `8765` | Web port |
+| `ROMS` | none | Host folder to bind-mount **read-only** at `/roms` in the container |
+| `YES=1` | off | Skip the confirmation prompt |
+
+Day to day:
+
+```bash
+pct exec <id> -- /usr/local/bin/game-sauce-update      # update to the latest version
+pct exec <id> -- systemctl restart game-sauce          # restart
+pct exec <id> -- journalctl -u game-sauce -n 50        # logs
+```
+
+Data lives in `/var/lib/game-sauce` inside the container and the settings in `/etc/game-sauce.env`;
+include the container in your normal Proxmox backups, and use **Settings → Backups** for app-level ones.
+Add your ROM folder as a *Source* (point it at `/roms` if you used `ROMS=`). More detail:
+[Deployment → Proxmox](docs/DEPLOYMENT.md#35a-running-on-proxmox).
 
 ### Option A — Docker (recommended for another PC/Server, works on Windows / Linux / macOS)
 

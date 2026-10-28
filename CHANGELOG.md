@@ -4,7 +4,14 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Calmer Library home:** *Continue playing* shows 6 games and *Recently added* shows 9, each in its own neon rounded box on a single line (no scroll bar), with a white divider before the main grid. Short windows start with the boxes collapsed.
+
+### Fixed
+- The controller focus ring on the first row of the Library grid is no longer cut off at the top.
+
 ### Added
+- **Proxmox LXC installer is now documented up front:** README has a "Option P" deployment section with the one-line command, the settings table and day-to-day commands; the "experimental" label is gone now that it has been run on real hardware.
 - **Controller layout:** Nintendo-style pads (Switch Pro, many 8BitDo) now have A on the right button and B at the bottom, picked automatically from the controller's name. **Settings → Controller** lets you force Xbox or Nintendo layout.
 - **Restore…** button on every backup kept on the server, so there is no need to download and re-upload it.
 - **Close a running game with the controller:** hold Select + Start for a second (a progress bar shows). No other button is taken from the game.

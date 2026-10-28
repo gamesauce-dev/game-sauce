@@ -270,7 +270,8 @@ button.overview-card {
 
 /* ───────────────────────── grid ───────────────────────── */
 .grid {
-  display: grid; gap: 1.1429rem 1rem; overflow-y: auto; padding-bottom: 1.7143rem;
+  display: grid; gap: 1.1429rem 1rem; overflow-y: auto; padding: 0.6429rem 0.5714rem 1.7143rem;
+  /* top/side padding gives the controller focus ring (drawn 5px outside the tile) room so it is not clipped */
   grid-template-columns: repeat(auto-fill, minmax(11.2857rem, 1fr));
   /* Cards stretch to the tallest in their row; the cover fills that height. */
   align-items: stretch;
@@ -992,3 +993,36 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .lib-heading h2 { margin: 0; font-size: 1.3571rem; font-weight: 700; letter-spacing: -.2px; }
 .lib-heading .lib-sub { color: var(--dim); font-size: 0.9286rem; }
 .lib-heading .lib-clear { margin-left: auto; }
+
+/* ───────── home rows as neon boxes: Continue playing (6) and Recently added (9) ───────── */
+.strips { margin: 0 0 0.2857rem; }
+.strip {
+  border: 1px solid rgba(124, 92, 255, .65); border-radius: 0.8571rem; padding: 0.5714rem 0.8571rem 0.7143rem;
+  background: rgba(124, 92, 255, .05);
+  box-shadow: 0 0 0.8571rem rgba(124, 92, 255, .22), inset 0 0 0.8571rem rgba(124, 92, 255, .06);
+  margin: 0 0 0.7143rem; min-width: 0;
+}
+.strip[data-strip="recent"] { border-color: rgba(255, 61, 168, .6); background: rgba(255, 61, 168, .04);
+  box-shadow: 0 0 0.8571rem rgba(255, 61, 168, .2), inset 0 0 0.8571rem rgba(255, 61, 168, .05); }
+.strip.collapsed { padding-bottom: 0.2857rem; }
+.strip.collapsed .strip-head { margin-bottom: 0; }
+/* One row, never a scroll bar: as many tiles as fit (the lists are capped at 6 and 9),
+   each between 5.4 and 7.4rem wide; the rest wrap into zero-height rows and stay hidden. */
+.strip .recent-row {
+  display: grid; grid-auto-flow: row; overflow: hidden; scroll-snap-type: none;
+  /* tracks are counted at the 4.6rem minimum, then stretch to share the width: tiles end up 4.6 to 9.2rem wide */
+  grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr)); grid-template-rows: auto; grid-auto-rows: 0;
+  column-gap: 0.5714rem; row-gap: 0; padding: 0.4286rem 0.4286rem 0; margin: 0 -0.4286rem;
+}
+.strip .recent-row .card { max-height: none; }
+/* Side by side only when all 6 + 9 tiles fit (about 1480px and up); otherwise the boxes stack and use the full width each. */
+@media (min-width: 1480px) {
+  .strips { grid-auto-flow: row; grid-auto-columns: unset; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 0 0.8571rem; }
+  .strips:has(> .strip.hidden) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 1479px) { .strips { display: block; } }
+.strip .recent-row .card:focus { z-index: 2; }
+/* white divider between the home rows and the main grid, only while the rows are showing */
+.home-divider { display: none; border: 0; height: 1px; margin: 0.2857rem 0 0.8571rem; flex: 0 0 auto;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55) 12%, rgba(255, 255, 255, .55) 88%, transparent); }
+.main:has(.strips > .strip:not(.hidden)) .home-divider { display: block; }

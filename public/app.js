@@ -570,7 +570,13 @@ async function renderOverview() {
 
 /* Collapsible home rows. The open/closed choice is remembered per browser. */
 const STRIP_KEY = 'gamesauce_strips';
-function stripState() { try { return JSON.parse(localStorage.getItem(STRIP_KEY) || '{}'); } catch { return {}; } }
+function stripState() {
+  let st = {};
+  try { st = JSON.parse(localStorage.getItem(STRIP_KEY) || '{}'); } catch { /* ignore */ }
+  // Until the user chooses, start collapsed on short windows so the main grid keeps its room.
+  if (window.innerHeight < 860) for (const k of ['played', 'recent']) if (!st[k]) st[k] = 'closed';
+  return st;
+}
 function applyStrips() {
   const st = stripState();
   $$('.strip').forEach((el) => {
@@ -596,7 +602,7 @@ async function renderPlayedRow() {
   const row = $('#played-row');
   if (!wrap || !row) return;
   try {
-    const { items } = await api('/roms/recently-played?limit=12');
+    const { items } = await api('/roms/recently-played?limit=6');
     if (!items.length) { wrap.classList.add('hidden'); row.innerHTML = ''; return; }
     wrap.classList.remove('hidden');
     row.innerHTML = items.map(cardHtml).join('');
