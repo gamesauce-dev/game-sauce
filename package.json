@@ -1,0 +1,29 @@
+{
+  "name": "game-sauce",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted ROM manager: ingest, catalog, metadata, download",
+  "scripts": {
+    "start": "node src/server.js",
+    "docker:build": "docker build -t game-sauce:latest .",
+    "docker:up": "docker compose up -d --build",
+    "docker:logs": "docker compose logs -f game-sauce",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "saxen": "^11.2.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@11.10.0": true
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  },
+  "license": "MIT"
+}

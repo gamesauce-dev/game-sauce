@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>game-sauce — ROM library</title>
+<link rel="stylesheet" href="/styles.css?v=9" />
+<link rel="icon" href="/logo.svg" type="image/svg+xml" />
+</head>
+<body>
+
+<!-- ───────────── sign in ───────────── -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="brand" style="justify-content:center;margin-bottom:18px">
+      <img class="brand-logo" src="/logo.svg" alt="game-sauce logo" />
+      <div>
+        <div class="brand-name">game<span class="saucy">-sauce</span></div>
+        <div class="brand-sub">self-hosted library</div>
+      </div>
+    </div>
+    <form id="login-form" class="auth-form">
+      <label class="field">
+        <span>Username</span>
+        <input id="login-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <button class="btn btn-primary" type="submit" id="login-submit" style="justify-content:center">Sign in</button>
+      <p class="auth-error hidden" id="login-error"></p>
+    </form>
+  </div>
+</div>
+
+<div class="app hidden" id="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="/logo.svg" alt="game-sauce logo" />
+      <div>
+        <div class="brand-name">game<span class="saucy">-sauce</span></div>
+        <div class="brand-sub">self-hosted library</div>
+      </div>
+    </div>
+
+    <div class="side-footer">
+      <div id="storage-usage" class="usage"></div>
+      <div class="user-row">
+        <div class="avatar" id="user-avatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="user-name">—</div>
+          <div class="user-role" id="user-role"></div>
+        </div>
+        <button class="btn btn-sm btn-ghost" id="settings-gear" title="Settings">⚙</button>
+        <button class="btn btn-sm btn-ghost" id="logout" title="Sign out">⏻</button>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item is-active" data-view="library">
+        <span class="nav-ico">▦</span> Library
+      </button>
+      <button class="nav-item" data-view="collections">
+        <span class="nav-ico">◫</span> Collections
+      </button>
+      <button class="nav-item" data-view="sources">
+        <span class="nav-ico">🗀</span> Sources
+      </button>
+      <button class="nav-item" data-view="upload">
+        <span class="nav-ico">↑</span> Add ROMs
+      </button>
+      <button class="nav-item" data-view="emulators">
+        <span class="nav-ico">🎮</span> Emulators
+      </button>
+    </nav>
+
+    <div class="side-section">
+      <div class="side-label">Platforms</div>
+      <div id="platform-list" class="platform-list">
+        <div class="side-empty">loading…</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <main class="main">
+
+    <!-- ───────────── library ───────────── -->
+    <section class="view" id="view-library">
+      <header class="toolbar">
+        <div class="search-wrap">
+          <span class="search-ico">⌕</span>
+          <input id="search" class="search" type="search" placeholder="Search titles, developers, genres…" autocomplete="off" />
+        </div>
+        <div class="toolbar-right">
+          <select id="sort" class="select" title="Sort">
+            <option value="title">Title A–Z</option>
+            <option value="-title">Title Z–A</option>
+            <option value="added">Recently added</option>
+            <option value="-added">Oldest added</option>
+            <option value="year">Year ↑</option>
+            <option value="-year">Year ↓</option>
+            <option value="rating">Rating ↓</option>
+            <option value="-size">Size ↓</option>
+          </select>
+          <button class="btn btn-sm" id="bulk-enrich" title="Fetch metadata for ROMs that have none yet">✦ Fetch metadata</button>
+          <button class="btn btn-sm hidden" id="bulk-addcoll-top" title="Add the selected tiles to a collection">＋ Collection (<span id="bulk-addcoll-top-count">0</span>)</button>
+          <button class="btn btn-sm btn-danger hidden" id="bulk-delete-top" title="Delete the selected tiles">🗑 Delete (<span id="bulk-delete-top-count">0</span>)</button>
+          <button class="btn btn-sm btn-ghost hidden" id="bulk-cancel-top" title="Exit selection mode">✕ Cancel</button>
+          <div class="segmented" id="density">
+            <button data-density="comfortable" class="is-active" title="Comfortable grid">▦</button>
+            <button data-density="compact" title="Dense grid">▤</button>
+          </div>
+        </div>
+      </header>
+
+      <div id="lib-overview" class="overview hidden"></div>
+
+      <div id="lib-recent-wrap" class="hidden">
+        <div class="recent-head">
+          <span class="section-label" style="margin:0">Recently added</span>
+        </div>
+        <div id="recent-row" class="recent-row"></div>
+      </div>
+
+    <div class="filter-row">
+    <div class="filter-toggles">
+          <button class="toggle-pill" data-toggle="favorite" title="Show favourites only">★ Favourites</button>
+          <button class="toggle-pill" data-toggle="hidden" title="Show hidden ROMs only">◌ Hidden</button>
+          <button class="toggle-pill" data-toggle="orphan" title="Show only ROMs with no valid source (leftovers)">⛁ Orphans</button>
+          <button class="toggle-pill" data-toggle="unmatched" title="Show only ROMs no provider has ever matched — the manual-identify worklist">○ Needs match</button>
+          <button class="toggle-pill" data-action="select" id="select-toggle" title="Select tiles to delete several at once">☐ Select</button>
+        </div>
+        <div class="bulk-bar hidden" id="bulk-bar">
+          <span id="bulk-count">0 selected</span>
+          <button class="btn btn-sm" id="bulk-selectall" title="Select every ROM matching the current filters, including ones not scrolled into view yet">Select all</button>
+          <button class="btn btn-sm hidden" id="bulk-addcoll">＋ Add to collection</button>
+          <button class="btn btn-sm btn-danger" id="bulk-delete-btn">Delete selected</button>
+          <button class="btn btn-sm btn-ghost" id="bulk-clear">Clear</button>
+          <button class="btn btn-sm btn-ghost" id="bulk-cancel">Done</button>
+        </div>
+        <div id="active-filters" class="chips"></div>
+        <div class="count" id="result-count"></div>
+      </div>
+
+      <div id="grid" class="grid"></div>
+      <div id="empty" class="empty hidden">
+        <div class="empty-ico">🕹</div>
+        <h2>No ROMs match</h2>
+        <p>Try clearing the search or filters — or add some ROMs.</p>
+        <button class="btn btn-primary" data-view="upload">Add ROMs</button>
+      </div>
+    </section>
+
+    <!-- ───────────── collections ───────────── -->
+    <section class="view hidden" id="view-collections">
+      <header class="toolbar">
+        <h1 class="page-title">Collections</h1>
+        <button class="btn btn-primary" id="new-collection">New collection</button>
+      </header>
+      <div id="collections" class="collections"></div>
+    </section>
+
+    <!-- ───────────── upload ───────────── -->
+    <section class="view hidden" id="view-upload">
+      <header class="toolbar">
+        <h1 class="page-title">Add ROMs</h1>
+      </header>
+
+      <div class="panel" style="max-width:760px;margin-bottom:14px">
+        <h3>How adding ROMs works here</h3>
+        <p class="hint">Add ROMs <strong>copies the file into the library</strong> — it does not link
+          or watch the original location. Pick files (or a folder of files) in the dropzone below;
+          each file is hashed, deduplicated and stored under
+          <code>storage/roms/&lt;platform&gt;/&lt;sha1&gt;</code>. Nothing is ever executed or
+          auto-run. Want game-sauce to <strong>watch your existing folders without moving
+          anything</strong>? Use <strong>Sources</strong> instead — those stay exactly where they
+          are and only get re-scanned.</p>
+      </div>
+
+      <div class="upload-layout">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" multiple hidden />
+          <input type="file" id="folder-input" webkitdirectory hidden />
+          <div class="dz-ico">⤒</div>
+          <div class="dz-title">Drop ROM files or a folder here</div>
+          <div class="dz-sub">or <button class="link" id="browse">browse files</button> · <button class="link" id="browse-folder">browse a folder</button> — hashed on upload (CRC32 + MD5 + SHA1), duplicates rejected</div>
+        </div>
+
+        <div class="panel">
+          <h3>Options</h3>
+          <label class="field">
+            <span>Platform</span>
+            <select id="upload-platform" class="select wide">
+              <option value="auto">Detect from extension</option>
+            </select>
+          </label>
+          <label class="field checkbox">
+            <input type="checkbox" id="upload-enrich" checked />
+            <span>Fetch metadata from configured providers</span>
+          </label>
+          <p class="hint">With no provider credentials set, the library falls back to parsing the filename: title, region, revision and year are still extracted.</p>
+        </div>
+      </div>
+
+      <div id="upload-progress" class="progress-list"></div>
+      <div id="upload-results" class="results"></div>
+    </section>
+
+    <!-- ───────────── settings hub ───────────── -->
+    <section class="view hidden" id="view-settings">
+      <header class="toolbar">
+        <h1 class="page-title">Settings</h1>
+      </header>
+
+      <!-- Tile grid: role-dependent modules. Standard users get password +
+           their own providers; admins get those plus users, platforms, coverage,
+           and database maintenance. Each tile opens a module below. -->
+      <div class="tile-grid" id="settings-tiles"></div>
+
+      <!-- Module targets (all hidden; the tile click reveals one). -->
+      <div class="panel hidden" id="mod-password">
+        <h3>Change password</h3>
+        <form class="edit-form" id="password-form">
+          <label class="field"><span>Current password</span>
+            <input type="password" name="current_password" autocomplete="current-password" required />
+          </label>
+          <label class="field"><span>New password</span>
+            <input type="password" name="new_password" autocomplete="new-password" required />
+          </label>
+          <p class="hint">At least 10 characters, with a letter and a number. Changing it signs
+            out every other device.</p>
+          <button class="btn btn-primary" type="submit">Update password</button>
+        </form>
+      </div>
+
+      <div class="panel hidden" id="mod-sessions">
+        <h3>Active sessions</h3>
+        <div id="session-list" class="counts"></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-sm" id="revoke-others">Sign out other devices</button>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="mod-providers">
+        <h3>Metadata providers <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">
+          These are the server-wide credentials used for enrichment.
+          Save and test them here; environment variables still win over anything stored.</p>
+        <div id="provider-forms"></div>
+        <p class="hint" id="encryption-note"></p>
+      </div>
+
+      <div class="panel hidden" id="mod-users">
+        <h3>User accounts <span class="pill warn admin-only">admin</span></h3>
+        <div id="user-list" class="counts"></div>
+        <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr auto;display:grid;gap:10px;align-items:end">
+          <label class="field"><span>Username</span><input name="username" required /></label>
+          <label class="field"><span>Password</span><input name="password" type="password" required /></label>
+          <label class="field"><span>Role</span>
+            <select name="role"><option value="user">User</option><option value="admin">Admin</option></select>
+          </label>
+          <button class="btn btn-primary" type="submit">Add user</button>
+        </form>
+      </div>
+
+      <div class="panel hidden" id="mod-platforms">
+        <h3>Platforms <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">
+          The built-in catalogue covers the common systems; arcade oddities (Model 2/3, NAOMI,
+          Atomiswave…) ship seeded too. Add your own here — name, slug, file extensions, and the
+          ScreenScraper / TheGamesDB ids if you know them (leave blank when unsure; matching and
+          scanning still work, enrichment just skips that provider). Changes apply immediately —
+          no rebuild, no restart.
+        </p>
+        <!-- Order per request: [Add platform button] → [details form] → [listing].
+             The button is uppermost (right under the module header copy). -->
+        <div style="display:flex;gap:8px;margin:10px 0 14px">
+          <button class="btn btn-primary" id="platform-add-toggle">+ Add platform</button>
+        </div>
+        <form id="platform-add-form" class="edit-form hidden" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
+          <label class="field"><span>Name *</span><input name="name" required placeholder="Sega Model 2" /></label>
+          <label class="field"><span>Slug * <span class="note">(letters/digits, used in URLs)</span></span><input name="slug" required placeholder="segamodel2" /></label>
+          <label class="field"><span>Short name</span><input name="short_name" placeholder="M2" /></label>
+          <label class="field"><span>Family</span><input name="family" placeholder="Sega" /></label>
+          <label class="field"><span>Extensions (comma separated)</span><input name="extensions" placeholder="zip, 7z, chd" /></label>
+          <label class="field"><span>ScreenScraper id</span><input name="screenscraper_id" inputmode="numeric" placeholder="130" /></label>
+          <label class="field"><span>TheGamesDB id</span><input name="tgdb_id" inputmode="numeric" placeholder="" /></label>
+          <label class="field"><span>Accent colour</span><input name="accent" placeholder="#5e35b1" /></label>
+          <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" type="submit">Add platform</button>
+            <button class="btn btn-sm btn-ghost" type="button" id="platform-add-cancel">Cancel</button>
+            <span class="hint" id="platform-admin-msg"></span>
+          </div>
+        </form>
+        <div id="platform-admin-list" class="results" style="margin-top:14px"></div>
+      </div>
+
+      <div class="panel hidden" id="mod-coverage">
+        <h3>Coverage <span class="pill warn admin-only">admin</span></h3>
+        <div id="meta-counts" class="counts"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn" id="enrich-missing-covers">Fetch missing covers</button>
+          <button class="btn" id="check-ss-systems">Verify platform ids</button>
+        </div>
+        <p class="hint" id="ss-quota"></p>
+      </div>
+
+      <div class="panel hidden" id="mod-db">
+        <h3>Database maintenance <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">
+          ROMs can outlive their folder: removing a source with “keep ROMs”, or deleting a
+          source whose ROMs were already imported, leaves <strong>orphaned</strong> rows with no
+          valid source. They still appear in the library and in the platform list. Missing files
+          (drive offline) are different — those still have a source and will re-appear on rescan.
+        </p>
+        <div id="db-health" class="counts"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-sm" id="db-health-refresh">Re-check</button>
+          <button class="btn btn-sm" id="db-show-orphans">Show orphans</button>
+          <button class="btn btn-sm btn-danger" id="db-purge-orphans">Delete orphans…</button>
+          <span class="clear-covers-tool" style="display:inline-flex;gap:8px;align-items:center">
+            <select id="db-clear-covers-platform" class="select" style="max-width:220px" title="Platform whose cover art to remove"></select>
+            <button class="btn btn-sm btn-danger" id="db-clear-covers" title="Removes cover art only — titles and files stay">Clear covers…</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="mod-audit">
+        <h3>Activity log <span class="pill warn admin-only">admin</span></h3>
+        <div class="audit-filters">
+          <select id="audit-user" class="select" title="Filter by user"><option value="">All users</option></select>
+          <input id="audit-action" class="search" type="search" placeholder="Filter action… e.g. roms, login, delete" title="Substring match on the raw action" />
+          <input id="audit-since" type="date" class="select" title="From date" />
+          <input id="audit-until" type="date" class="select" title="To date" />
+          <button class="btn btn-sm" id="audit-apply">Filter</button>
+          <button class="btn btn-sm btn-ghost" id="audit-clear">Clear</button>
+        </div>
+        <div class="hint" id="audit-count"></div>
+        <div id="audit-list" class="audit"></div>
+      </div>
+
+      <div class="panel hidden" id="mod-dat">
+        <h3>DAT files (offline verification) <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">
+          A No-Intro or Redump <code>.dat</code> lists every known-good dump with its size, CRC32,
+          MD5 and SHA1. Importing one lets game-sauce verify each ROM locally — no API calls — and
+          replace a guessed filename with the canonical title, region and revision.
+        </p>
+        <div id="dat-coverage" class="coverage-bar-wrap"></div>
+        <div id="dat-list" class="sources" style="margin-top:14px"></div>
+
+        <!-- have/want report: what the selected DAT lists vs what you own -->
+        <div id="have-want" class="hidden" style="margin-top:18px">
+          <div class="hw-head">
+            <h3 id="hw-title" style="margin:0">Have / want</h3>
+            <button class="btn btn-sm btn-ghost" id="hw-close">✕ Close</button>
+          </div>
+          <p class="hint" id="hw-summary" style="margin:8px 0"></p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <div class="segmented" id="hw-tabs">
+              <button data-hw="missing" class="is-active">Missing</button>
+              <button data-hw="have">Have</button>
+              <button data-hw="all">All</button>
+            </div>
+            <div class="search-wrap" style="max-width:280px;flex:1">
+              <span class="search-ico">⌕</span>
+              <input id="hw-search" class="search" type="search" placeholder="Filter this DAT…" autocomplete="off" />
+            </div>
+          </div>
+          <div id="hw-list" class="results"></div>
+          <button class="btn btn-sm" id="hw-more" style="margin-top:8px">Show more</button>
+        </div>
+
+        <div class="dat-import" style="margin-top:14px">
+          <label class="field">
+            <span>Import a DAT</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input type="file" id="dat-file" accept=".dat,.xml" class="file-input" />
+              <select id="dat-platform" class="select" style="min-width:220px">
+                <option value="auto">Detect platform from the DAT name</option>
+              </select>
+              <button class="btn btn-primary" id="dat-upload">Import</button>
+            </div>
+          </label>
+          <p class="hint">The file is parsed as a stream and only the catalogue is kept — the DAT
+            itself is not stored. Re-importing a newer version adds only the entries it is missing.</p>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn" id="dat-rematch">Re-match library against DATs</button>
+          <button class="btn" id="dat-rematch-force" title="Also replace titles you edited by hand">Re-match and overwrite titles</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── sources ───────────── -->
+    <section class="view hidden" id="view-sources">
+      <header class="toolbar">
+        <h1 class="page-title">Sources</h1>
+      </header>
+
+      <!-- Buttons live under the explanation, before the list — the user asked
+           for actions next to the copy, not parked at the top toolbar. -->
+      <div class="panel" style="max-width:100%;margin:0 0 14px">
+        <h3>Monitored folders, not copies</h3>
+        <p class="hint">Sources are <strong>folders game-sauce watches in place</strong>. ROMs stay
+          exactly where they are on your disks — the scan only records the path, size, date and
+          hashes, then pulls metadata. Use this for your multi-drive collection. Use
+          <strong>Add ROMs</strong> only when you want to <strong>import and store a copy</strong>
+          inside game-sauce.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="scan-all">↻ Scan all</button>
+          <button class="btn btn-primary" id="add-source">Add folder</button>
+        </div>
+      </div>
+
+      <!-- Two-column layout: sources list (narrow) left, Add-a-folder panel right,
+           both top-aligned so the add form is visible without scrolling past the
+           entire list. -->
+      <div class="sources-layout">
+        <div id="sources-list" class="sources"></div>
+
+        <div id="add-source-panel" class="panel">
+          <h3>Add a folder</h3>
+          <label class="field">
+            <span>Path</span>
+            <div style="display:flex;gap:8px">
+              <input id="source-path" placeholder="D:\ROMs\PlayStation 4" />
+              <button class="btn" id="browse-source">Browse…</button>
+            </div>
+          </label>
+
+          <!-- Folder browser lives INSIDE Add-a-folder, right under Path:
+               no separate overlay, no scrolling to find it. -->
+          <div id="browser" class="browser" style="margin:0 0 12px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px">
+            <div class="browser-head">
+              <button class="btn btn-sm" id="browser-up">↑ Up</button>
+              <span class="mono" id="browser-path"></span>
+            </div>
+            <div id="browser-dirs" class="browser-dirs"></div>
+            <div class="browser-foot">
+              <button class="btn btn-sm btn-primary" id="browser-use">Use this folder</button>
+              <button class="btn btn-sm btn-ghost" id="browser-cancel">Cancel</button>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>Name (optional)</span>
+            <input id="source-name" placeholder="Defaults to the folder name" />
+          </label>
+          <p class="hint" style="margin:-4px 0 12px">Just a label for the Sources list and filter chips
+            (e.g. “PS4 drive”, “NAS ROMs”) — it never renames your folder and doesn’t affect scanning.</p>
+          <label class="field">
+            <span>Platform *</span>
+            <select id="source-platform" class="select wide" required>
+            </select>
+          </label>
+          <p class="hint">Required: every ROM in this folder is filed under this platform.
+            Point one source per console — no guessing, no mixed folders.</p>
+          <label class="field checkbox">
+            <input type="checkbox" id="source-recursive" checked />
+            <span>Scan subfolders recursively</span>
+          </label>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" id="create-source">Add and scan</button>
+            <button class="btn btn-ghost" id="cancel-source">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── emulators ───────────── -->
+    <section class="view hidden" id="view-emulators">
+      <header class="toolbar">
+        <h1 class="page-title">Emulators</h1>
+        <div class="toolbar-right">
+          <button class="btn btn-sm" id="emu-refresh-latest">↻ Check latest releases</button>
+        </div>
+      </header>
+
+      <div class="panel" style="max-width:980px;margin-bottom:14px">
+        <h3>How this works</h3>
+        <p class="hint" style="margin-bottom:0">
+          One recommended emulator per popular platform, with links to the official site and
+          download page — game-sauce never bundles binaries.
+          The <strong>vault</strong> below holds <em>your own</em> emulator installers:
+          upload one manually, or save the official GitHub release with one click and the server
+          downloads it into <code>storage/emulators</code> for safekeeping.
+          Latest-release checks hit the GitHub API live (10-minute cache); nightly-only projects
+          report that instead of a version number.
+        </p>
+      </div>
+
+      <div id="emu-guide" class="emu-guide"></div>
+
+      <div class="panel" style="margin-top:16px;max-width:980px">
+        <h3>Vault <span class="pill warn admin-only">admin writes</span></h3>
+        <p class="hint" style="margin-top:0">Your stored installers. Anyone signed in can download;
+          only admins can add or remove. Saving a newer release keeps the old one —
+          delete the stale row when you're happy with the new build.</p>
+        <div class="emu-vault-filters">
+          <input id="emu-vault-q" class="search" type="search" placeholder="Search vault… name, version, OS" title="Filter stored installers" />
+        </div>
+        <div id="emu-vault" class="results"></div>
+        <form id="emu-upload-form" class="edit-form admin-only" style="margin-top:12px;grid-template-columns:1fr 1fr 1fr;gap:10px;display:grid">
+          <label class="field"><span>Installer file *</span><input type="file" name="file" required /></label>
+          <label class="field"><span>Display name</span><input name="name" placeholder="Dolphin for Windows" /></label>
+          <label class="field"><span>Platform *</span><select name="platform_slug" id="emu-upload-platform" required><option value="">— pick one —</option></select></label>
+          <label class="field"><span>Version</span><input name="version" placeholder="2506" /></label>
+          <label class="field"><span>OS</span><input name="os" placeholder="Windows x64" /></label>
+          <label class="field"><span>Notes</span><input name="notes" placeholder="beta installer, tested" /></label>
+          <div style="grid-column:1/-1">
+            <button class="btn btn-primary btn-sm" type="submit">Upload to vault</button>
+            <span class="hint" id="emu-upload-msg"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ───────────── detail drawer ───────────── -->
+<div class="drawer-scrim hidden" id="scrim"></div>
+<aside class="drawer hidden" id="drawer">
+  <button class="drawer-close" id="drawer-close">✕</button>
+  <div id="drawer-body"></div>
+</aside>
+
+<!-- ───────────── in-browser player overlay ───────────── -->
+<div class="player-scrim hidden" id="player-scrim">
+  <div class="player-box" role="dialog" aria-modal="true" aria-labelledby="player-title">
+    <div class="player-head">
+      <span id="player-title">Play</span>
+      <button class="drawer-close" id="player-close" style="position:static">✕</button>
+    </div>
+    <div id="player-game"></div>
+    <p class="hint" style="margin:10px 0 0" id="player-hint">Save states and in-game saves are stored on your server, under your account only.
+      For the full experience (shaders, netplay) grab the vault emulator.</p>
+  </div>
+</div>
+
+<!-- ───────────── add-to-collection dialog ───────────── -->
+<div class="modal-scrim hidden" id="addcoll-scrim">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addcoll-title">
+    <h3 class="modal-title" id="addcoll-title">Add to collection</h3>
+    <p class="modal-body" id="addcoll-sub"></p>
+    <div class="results" id="addcoll-list" style="margin-top:10px"></div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button type="button" class="btn btn-sm" id="addcoll-new">＋ New collection…</button>
+      <button type="button" class="btn btn-ghost" id="addcoll-cancel">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── new collection dialog ───────────── -->
+<div class="modal-scrim hidden" id="collection-scrim">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="collection-modal-title">
+    <h3 class="modal-title" id="collection-modal-title">New collection</h3>
+    <form id="collection-form" class="edit-form" style="gap:10px">
+      <label class="field"><span>Name *</span>
+        <input id="collection-name" name="name" maxlength="80" placeholder="Co-op nights" required autocomplete="off" />
+      </label>
+      <label class="field"><span>Description (optional)</span>
+        <input id="collection-desc" name="description" maxlength="200" placeholder="What is this set for?" autocomplete="off" />
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="collection-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="collection-create">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ───────────── in-app confirm dialog ───────────── -->
+<div class="modal-scrim hidden" id="modal-scrim">
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 class="modal-title" id="modal-title"></h3>
+    <p class="modal-body" id="modal-body"></p>
+    <div class="modal-check hidden" id="modal-check-wrap">
+      <label><input type="checkbox" id="modal-check" /> <span id="modal-check-label"></span></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn" id="modal-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

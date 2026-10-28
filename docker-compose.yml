@@ -1,0 +1,65 @@
+services:
+  game-sauce:
+    # Builds from the Dockerfile in this folder. On the target PC/Server you
+    # copy this folder over and run `docker compose up -d --build` — no image
+    # registry needed for a first test deploy. (The Dockerfile pins Node 22 LTS
+    # rather than Node 24: more better-sqlite3 prebuilds exist for 22, so the
+    # build usually skips compiling SQLite from source. A C++ toolchain is still
+    # installed as a belt-and-braces fallback.)
+    build: .
+    image: game-sauce:latest
+    container_name: game-sauce
+    # Proper signal handling / zombie reaping for Node.
+    init: true
+    restart: unless-stopped
+    # Binds LAN-wide so other devices can reach it. Use "127.0.0.1:8765:8080"
+    # instead if the server itself is the only client.
+    ports:
+      - "${HOST_PORT:-8765}:8080"
+    # Optional .env file in the same folder (see README "Deployment" for vars).
+    # Compose ignores it silently if absent; values below are the fallbacks.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8080"
+      # Create the first admin on first boot. Change these before going live.
+      # Prefer putting real values in .env instead of editing this file.
+      GAMESAUCE_ADMIN_USER: "${GAMESAUCE_ADMIN_USER:-admin}"
+      GAMESAUCE_ADMIN_PASSWORD: "${GAMESAUCE_ADMIN_PASSWORD:-change-me-please-1}"
+      # Move the credential-encryption key out of the data dir (recommended).
+      GAMESAUCE_SECRET_KEY: "${GAMESAUCE_SECRET_KEY:-}"
+      # Shared ScreenScraper dev pair (optional): fills Developer ID/password
+      # for everyone so scraping works out of the box at a shared, slower
+      # quota. Any user who types their own pair in the UI uses theirs instead.
+      SS_DEV_ID_SHARED: "${SS_DEV_ID_SHARED:-}"
+      SS_DEV_PASSWORD_SHARED: "${SS_DEV_PASSWORD_SHARED:-}"
+      # Optional extra providers — all filled per deployment, same override
+      # semantics (env wins, UI can still type its own where supported).
+      IGDB_CLIENT_ID: "${IGDB_CLIENT_ID:-}"
+      IGDB_CLIENT_SECRET: "${IGDB_CLIENT_SECRET:-}"
+      SGDB_API_KEY: "${SGDB_API_KEY:-}"
+      # Behind a reverse proxy with TLS, also set:
+      # GAMESAUCE_COOKIE_SECURE: "1"
+      # GAMESAUCE_TRUST_PROXY: "1"
+    volumes:
+      # Database + secret.key (keep this volume private; it holds password + token hashes).
+      - gs-data:/app/data
+      # Imported ROMs, cached covers/media, uploaded DATs.
+      - gs-storage:/app/storage
+      # Optional: scan ROM folders that live on the host, read-only.
+      # The container then cannot modify your files even if asked to.
+      - /mnt/external/games/roms:/roms:ro
+      # Example (Windows server): - C:/ROMs:/roms:ro
+      # Then add /roms/... as a source in the UI.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  gs-data:
+  gs-storage:

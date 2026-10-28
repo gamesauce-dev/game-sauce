@@ -1,0 +1,30 @@
+# Dependencies (rebuilt on install / in Docker)
+node_modules/
+
+# Runtime state — never commit these
+data/
+storage/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+secret.key
+
+# Local config
+.env
+
+# Logs / scratch
+*.log
+server-live.log
+npm-debug.log*
+
+# Dev / demo artefacts
+shots/
+sample-dats/
+demo-roms/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Play</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #game { width: 100%; height: 100%; }
+  #picker { position: fixed; inset: 0; background: #0b0b12; color: #e8e8f0; font: 14px system-ui, sans-serif;
+            display: flex; flex-direction: column; align-items: center; padding: 20px; overflow: auto; z-index: 5; }
+  #picker h2 { margin: 6px 0 4px; font-size: 18px; }
+  #picker p { margin: 0 0 14px; color: #9a9ab0; font-size: 12.5px; }
+  .slot { display: flex; align-items: center; gap: 12px; width: min(520px, 100%); margin: 0 0 8px; padding: 8px;
+          background: #161622; border: 1px solid #2a2a3c; border-radius: 8px; }
+  .slot img, .slot .noshot { width: 96px; height: 72px; object-fit: cover; border-radius: 4px; background: #000; flex: 0 0 96px; }
+  .slot .meta { flex: 1; font-size: 12.5px; color: #9a9ab0; }
+  .slot .warn { color: #ffb347; font-size: 11.5px; margin-top: 2px; }
+  .slot .meta b { display: block; color: #e8e8f0; font-size: 13.5px; }
+  button { font: inherit; cursor: pointer; border: 1px solid #3a3a52; background: #22223a; color: #e8e8f0; border-radius: 6px; padding: 7px 12px; }
+  button:hover { border-color: #ff3d68; }
+  button.primary { background: #ff3d68; border-color: #ff3d68; color: #fff; }
+  #msg { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); background: #161622; border: 1px solid #2a2a3c;
+         color: #e8e8f0; padding: 6px 12px; border-radius: 6px; font: 12.5px system-ui, sans-serif; z-index: 9; display: none; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="msg"></div>
+<script>
+  // Same-origin iframe: every request below carries the session cookie, so no
+  // token ever appears in a URL. Params come from the parent opener.
+  // Saves are per signed-in user (server scopes by session): states via
+  // /api/roms/:id/saves, battery (in-game) saves loaded on start.
+  const q = new URLSearchParams(location.search);
+  const romId = q.get('id');
+  const api = '/api/roms/' + encodeURIComponent(romId) + '/saves';
+  const core = q.get('core') || '';
+
+  function flash(text) {
+    const m = document.getElementById('msg');
+    m.textContent = text; m.style.display = 'block';
+    clearTimeout(flash.t); flash.t = setTimeout(() => { m.style.display = 'none'; }, 2500);
+  }
+  const fetchBytes = async (url) => {
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return new Uint8Array(await r.arrayBuffer());
+  };
+  const upload = async (url, method, bytes, extra) => {
+    const r = await fetch(url, { method, credentials: 'same-origin', body: bytes,
+      headers: { 'Content-Type': 'application/octet-stream' }, ...extra });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  };
+  const fmtDate = (s) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString();
+  async function listSaves() {
+    try { return (await (await fetch(api, { credentials: 'same-origin' })).json()).items || []; }
+    catch { return []; }
+  }
+  // Current EmulatorJS build (CDN 'latest' moves). States are tagged "<system>@<version>"
+  // when saved; a different tag on load means the state may not restore.
+  let ejsVersion = '';
+  const versionReady = fetch('https://cdn.emulatorjs.org/latest/data/version.json')
+    .then((r) => r.json()).then((j) => { ejsVersion = String(j.version || ''); }).catch(() => {});
+  const tag = () => core + (ejsVersion ? '@' + ejsVersion : '');
+  function mismatch(s) {
+    const [c, v] = String(s.core || '').split('@');
+    if (c && core && c !== core) return 'Saved for a different system core (' + c + ').';
+    if (v && ejsVersion && v !== ejsVersion) return 'Saved with EmulatorJS ' + v + '; current is ' + ejsVersion + '. It may fail to load or glitch.';
+    if (!v) return 'Saved before version tracking; compatibility unknown.';
+    return '';
+  }
+  const notify = () => { try { parent.postMessage({ type: 'saves-changed', rom: Number(romId) }, location.origin); } catch {} };
+
+  /* ── picker: choose a state (start-up, or mid-game via Load State) ── */
+  function pickState(states, { allowNew }) {
+    return new Promise((resolve) => {
+      const el = document.createElement('div');
+      el.id = 'picker';
+      el.innerHTML = '<h2>Your save states</h2><p>Only you can see these. In-game (battery) saves load automatically.</p>';
+      const done = (v) => { el.remove(); resolve(v); };
+      states.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'slot';
+        row.innerHTML = (s.has_screenshot ? '<img alt="" src="' + api + '/' + s.id + '/screenshot">' : '<div class="noshot"></div>') +
+          '<div class="meta"><b>' + (i === 0 ? 'Latest — ' : '') + fmtDate(s.updated_at) + '</b>' +
+          Math.round(s.size_bytes / 1024) + ' KB' + (mismatch(s) ? '<div class="warn">⚠ ' + mismatch(s) + '</div>' : '') + '</div>';
+        const b = document.createElement('button');
+        b.textContent = 'Load'; if (i === 0) b.className = 'primary';
+        b.onclick = () => {
+          if (mismatch(s) && b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Load anyway'; return; }
+          done(s);
+        };
+        row.appendChild(b);
+        el.appendChild(row);
+      });
+      const n = document.createElement('button');
+      n.textContent = allowNew ? 'Start new game' : 'Cancel';
+      n.style.marginTop = '8px';
+      n.onclick = () => done(null);
+      el.appendChild(n);
+      document.body.appendChild(el);
+    });
+  }
+
+  async function boot() {
+    await Promise.race([versionReady, new Promise((r) => setTimeout(r, 2500))]);
+    const all = romId ? await listSaves() : [];
+    const states = all.filter((s) => s.kind === 'state');
+    const battery = all.find((s) => s.kind === 'battery');
+    let startState = null;
+    if (states.length) startState = await pickState(states, { allowNew: true });
+
+    window.EJS_player = '#game';
+    window.EJS_gameUrl = q.get('rom') || '';
+    window.EJS_gameName = q.get('title') || 'game';
+    // SYSTEM id ('segaMD', 'nes', …) — never a core filename.
+    window.EJS_core = core;
+    // 'latest' channel, not 'stable': carries the upstream gamepad-index fix
+    // (Chrome/Brave leaving slot 0 empty broke all pad input on stable).
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/latest/data/';
+    window.EJS_startOnLoaded = true;
+    window.EJS_color = '#ff3d68';
+    window.EJS_alignStartButton = 'center';
+    // Never use the browser's own IndexedDB slots: saves live on the server, per user.
+    window.EJS_defaultOptions = { 'save-state-location': 'download' };
+    if (startState) window.EJS_loadStateURL = api + '/' + startState.id + '/file';
+
+    if (romId) {
+      // Save state button -> server (screenshot attached as a second request).
+      window.EJS_onSaveState = async ({ state, screenshot }) => {
+        try {
+          const r = await upload(api + '?kind=state&core=' + encodeURIComponent(tag()), 'POST', state);
+          if (screenshot) await upload(api + '/' + r.id + '/screenshot', 'PUT', screenshot).catch(() => {});
+          flash('State saved to your account'); notify();
+        } catch (e) { flash('Save failed: ' + e.message); }
+      };
+      // Load State button -> pick from your server-side states.
+      window.EJS_onLoadState = async () => {
+        const list = (await listSaves()).filter((s) => s.kind === 'state');
+        if (!list.length) return flash('No saved states yet');
+        const pick = await pickState(list, { allowNew: false });
+        if (!pick) return;
+        try {
+          window.EJS_emulator.gameManager.loadState(await fetchBytes(api + '/' + pick.id + '/file'));
+          flash('State loaded');
+        } catch (e) { flash('Load failed: ' + e.message); }
+      };
+      // Battery (in-game) saves: periodic autosave to server, only when changed.
+      window.EJS_fixedSaveInterval = 30000;
+      window.EJS_onSaveUpdate = async ({ save }) => {
+        try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); notify(); }
+        catch { /* next change retries */ }
+      };
+      window.EJS_onSaveSave = async ({ save }) => {
+        try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); flash('In-game save stored'); notify(); }
+        catch (e) { flash('Save failed: ' + e.message); }
+      };
+      window.EJS_onLoadSave = async () => {
+        if (!battery) return flash('No in-game save yet');
+        try { await restoreBattery(); flash('In-game save loaded'); } catch (e) { flash('Load failed: ' + e.message); }
+      };
+      async function restoreBattery() {
+        const gm = window.EJS_emulator.gameManager;
+        const bytes = await fetchBytes(api + '/' + battery.id + '/file');
+        const path = gm.getSaveFilePath();
+        let cp = '';
+        const parts = path.split('/');
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (!parts[i]) continue;
+          cp += '/' + parts[i];
+          if (!gm.FS.analyzePath(cp).exists) gm.FS.mkdir(cp);
+        }
+        if (gm.FS.analyzePath(path).exists) gm.FS.unlink(path);
+        gm.FS.writeFile(path, bytes);
+        gm.loadSaveFiles();
+      }
+      // Restore battery on boot (skipped if a full state is being loaded — it contains it).
+      if (battery && !startState) {
+        window.EJS_onGameStart = () => { setTimeout(() => restoreBattery().catch(() => {}), 300); };
+      }
+    }
+
+    const s = document.createElement('script');
+    s.src = 'https://cdn.emulatorjs.org/latest/data/loader.js';
+    document.body.appendChild(s);
+  }
+  boot();
+  // Browsers gate the Gamepad API behind a user gesture: the required Play
+  // click inside the frame counts, so pads work without extra prompts.
+</script>
+</body>
+</html>

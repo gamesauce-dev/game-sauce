@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>game-sauce logo options</title>
+<style>
+  body { margin: 0; background: #0b0c10; color: #e8eaf0;
+    font-family: ui-sans-serif, system-ui, sans-serif; padding: 32px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { color: #9aa3b2; max-width: 720px; line-height: 1.55; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px; margin-top: 24px; }
+  .card { background: #15181f; border: 1px solid #232833; border-radius: 14px;
+    padding: 22px; text-align: center; }
+  .card.current { border-color: #ff3d68; }
+  .card img { width: 120px; height: 120px; }
+  .card h2 { font-size: 15px; margin: 14px 0 4px; }
+  .card .tag { display: inline-block; font-size: 11px; color: #ff8fa5;
+    border: 1px solid #ff3d68; border-radius: 999px; padding: 2px 10px; margin-bottom: 8px; }
+  .card p { font-size: 12.5px; }
+  .row { display: flex; gap: 10px; align-items: center; justify-content: center;
+    background: #101218; border: 1px solid #232833; border-radius: 10px;
+    padding: 10px; margin-top: 12px; }
+  .row img { width: 54px; height: 54px; }
+  .row .name { font-size: 21px; font-weight: 700; }
+  .row .name .s { background: linear-gradient(90deg,#ff7a3c,#ff3d68 55%,#7c5cff);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  code { color: #a78bfa; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>game-sauce logo options</h1>
+  <p>Same sidebar size you asked for (54px) plus the login-screen context. The controller-as-face
+  idea is in all three — only the mood changes. Tell me which one and I'll make it
+  <code>logo.svg</code>.</p>
+  <div class="grid">
+    <div class="card current">
+      <div class="tag">current</div>
+      <img src="/logo.svg" alt="current logo" />
+      <h2>Current — sunny gamepad + drip</h2>
+      <p>White pad on the sunset gradient, gold sauce drip. Friendly, colourful.</p>
+      <div class="row"><img src="/logo.svg" alt="" /><span class="name">game<span class="s">-sauce</span></span></div>
+    </div>
+    <div class="card">
+      <div class="tag">option A</div>
+      <img src="/logo-alt-a.svg" alt="option A" />
+      <h2>A — sleepy pad face</h2>
+      <p>Same sunset gradient, but the pad is the face: D-pad + buttons as eyes, big grin with a gold drip smile.</p>
+      <div class="row"><img src="/logo-alt-a.svg" alt="" /><span class="name">game<span class="s">-sauce</span></span></div>
+    </div>
+    <div class="card">
+      <div class="tag">option B</div>
+      <img src="/logo-alt-b.svg" alt="option B" />
+      <h2>B — neon night face</h2>
+      <p>Dark tile, neon pad outline, glowing eyes, mint grin. Most "gamer", least colourful at small sizes.</p>
+      <div class="row"><img src="/logo-alt-b.svg" alt="" /><span class="name">game<span class="s">-sauce</span></span></div>
+    </div>
+    <div class="card">
+      <div class="tag">option C</div>
+      <img src="/logo-alt-c.svg" alt="option C" />
+      <h2>C — sauce-drop face</h2>
+      <p>The drop is the head: sunset gradient drop, white D-pad + button eyes, smile. Reads best as a tiny favicon.</p>
+      <div class="row"><img src="/logo-alt-c.svg" alt="" /><span class="name">game<span class="s">-sauce</span></span></div>
+    </div>
+  </div>
+</body>
+</html>
