@@ -2672,8 +2672,12 @@ function showApp(user) {
   // and tiles stay hidden for members; renderSettingsTiles filters by role.
   $$('#view-settings .admin-only').forEach((el) => el.classList.toggle('hidden', !isAdmin));
 
+  // Every sign-in starts on the Library home. Signing out only hides the app, so without
+  // this you would land back on whatever view (e.g. Settings) was open before.
+  try { closeDrawer(); } catch { /* drawer not open */ }
+  closePlayer?.();
+  setView('library');
   loadPlatforms();
-  loadLibrary();
 }
 
 $('#login-form').addEventListener('submit', async (e) => {
@@ -2716,6 +2720,9 @@ $('#logout').addEventListener('click', async () => {
   if (!ok) return;
   try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch { /* ignore */ }
   sessionStorage.removeItem('gamesauce_token');
+  try { closeDrawer(); } catch { /* drawer not open */ }
+  closePlayer?.();
+  activeSettingsModule = null;
   showLogin();
 });
 
