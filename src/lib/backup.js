@@ -8,8 +8,7 @@
 //   manifest.json    app/schema version, date, counts, what is and is not inside
 //
 // The tar is written by hand (ustar) and streamed through gzip, so a backup never has to
-// fit in memory and the app needs no extra dependency. Restore is not built yet; the
-// manual steps are in docs/DEPLOYMENT.md.
+// fit in memory and the app needs no extra dependency. Restore lives in lib/restore.js.
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -17,6 +16,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import db from '../db.js';
 import { rootDir } from './storage.js';
+import { tarHeader, tarPad as pad } from './tar.js';
 
 const dataDir = () => process.env.GAMESAUCE_DATA_DIR || path.resolve('data');
 export const defaultBackupDir = () => process.env.GAMESAUCE_BACKUP_DIR || path.join(dataDir(), 'backups');
@@ -75,40 +75,6 @@ export function saveBackupSettings({ interval_hours, keep, dir }) {
   setMeta('backup_dir', chosen || null);
   return getBackupSettings();
 }
-
-/* ───────────────────────────── tar writer ───────────────────────────── */
-
-const octal = (n, width) => n.toString(8).padStart(width - 1, '0') + '\0';
-
-function tarHeader(name, size, mtimeSec) {
-  if (size > 0o77777777777) throw new Error(`${name} is too large for a tar entry`);
-  let prefix = '';
-  let base = name;
-  if (Buffer.byteLength(base) > 100) {
-    const cut = base.lastIndexOf('/', 155);
-    if (cut <= 0) throw new Error(`Path too long for a tar entry: ${name}`);
-    prefix = base.slice(0, cut);
-    base = base.slice(cut + 1);
-    if (Buffer.byteLength(base) > 100 || Buffer.byteLength(prefix) > 155) throw new Error(`Path too long for a tar entry: ${name}`);
-  }
-  const b = Buffer.alloc(512);
-  b.write(base, 0, 100, 'utf8');
-  b.write(octal(0o644, 8), 100, 8, 'ascii');
-  b.write(octal(0, 8), 108, 8, 'ascii');
-  b.write(octal(0, 8), 116, 8, 'ascii');
-  b.write(octal(size, 12), 124, 12, 'ascii');
-  b.write(octal(mtimeSec, 12), 136, 12, 'ascii');
-  b.fill(0x20, 148, 156); // checksum field counts as spaces while summing
-  b.write('0', 156, 1, 'ascii'); // regular file
-  b.write('ustar\0', 257, 6, 'ascii');
-  b.write('00', 263, 2, 'ascii');
-  b.write(prefix, 345, 155, 'utf8');
-  let sum = 0;
-  for (let i = 0; i < 512; i++) sum += b[i];
-  b.write(sum.toString(8).padStart(6, '0') + '\0 ', 148, 8, 'ascii');
-  return b;
-}
-const pad = (size) => (size % 512 === 0 ? null : Buffer.alloc(512 - (size % 512)));
 
 async function* fileEntries(root, rel = '') {
   let list;

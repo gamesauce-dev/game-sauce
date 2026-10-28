@@ -1,5 +1,9 @@
 import express from 'express';
 import fs from 'node:fs';
+import path from 'node:path';
+import multer from 'multer';
+import { stageRestore, applyRestore, cancelPending, pendingRestore, lastRestore, appSchemaVersion, restartSupported, clearStaging, MAX_RESTORE_BYTES } from '../lib/restore.js';
+import { audit } from '../auth.js';
 import { pipeline } from 'node:stream/promises';
 import {
   backupPath, backupRunning, createBackupStream, deleteBackup, getBackupSettings,
@@ -50,5 +54,46 @@ router.get('/files/:name', (req, res) => {
 router.delete('/files/:name', (req, res, next) => {
   try { res.json({ removed: deleteBackup(req.params.name) }); } catch (err) { next(err); }
 });
+
+/* ───────────────────────────── restore ───────────────────────────── */
+
+// Uploads land in the data folder (not the OS temp dir, which may be a small tmpfs).
+const restoreUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const dir = path.resolve(process.env.GAMESAUCE_DATA_DIR || 'data', 'restore-upload');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => cb(null, `upload-${Date.now()}.tar.gz`)
+  }),
+  limits: { fileSize: MAX_RESTORE_BYTES }
+});
+
+router.get('/restore/status', (req, res) => {
+  res.json({ restart_supported: restartSupported(), schema_version: appSchemaVersion(), pending: pendingRestore(), last: lastRestore() });
+});
+
+// Step 1: upload and CHECK a backup. Changes nothing; returns what is inside it.
+router.post('/restore/inspect', restoreUpload.single('backup'), async (req, res, next) => {
+  const file = req.file?.path;
+  try {
+    if (!file) return res.status(400).json({ error: 'Choose a backup file to upload' });
+    res.json(await stageRestore(file));
+  } catch (err) { next(err); }
+  finally { if (file) { try { fs.unlinkSync(file); } catch { /* already removed */ } } }
+});
+
+// Step 2: apply the staged backup. A safety backup of the current state is taken first.
+router.post('/restore/apply', async (req, res, next) => {
+  try {
+    if (req.body?.confirm !== 'RESTORE') return res.status(400).json({ error: 'Type RESTORE to confirm' });
+    const out = await applyRestore(req.body?.token);
+    audit(req.user, 'backup.restore', { detail: { safety_backup: out.safety_backup, restarting: out.restarting } });
+    res.json(out);
+  } catch (err) { next(err); }
+});
+
+router.post('/restore/cancel', (req, res) => { cancelPending(); res.json({ ok: true }); });
 
 export default router;

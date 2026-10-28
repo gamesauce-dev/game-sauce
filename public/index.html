@@ -383,10 +383,19 @@
 
         <div class="section-label" style="margin-top:14px">Backups on the server</div>
         <div id="backup-list" class="results" style="margin-top:8px"></div>
-        <p class="hint" style="margin-top:12px">
-          <strong>Restoring</strong> is not built into the app yet. See <em>docs/DEPLOYMENT.md → Backup</em>
-          for the manual steps.
+        <div class="section-label" style="margin-top:18px">Restore from a backup</div>
+        <p class="hint" style="margin:6px 0 10px">
+          Upload a backup file to check what is inside it first. Nothing changes until you confirm. Before
+          anything is replaced, a safety backup of the current data is saved in the folder above, and the data
+          being replaced is kept (not deleted) so a restore can be undone. The server restarts and everyone
+          signs in again afterwards.
         </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="file" id="restore-file" accept=".gz,.tgz,application/gzip" class="file-input" />
+          <button class="btn" id="restore-inspect">Check this backup</button>
+        </div>
+        <div id="restore-result" class="panel hidden" style="margin-top:12px;padding:12px"></div>
+        <p class="hint" id="restore-last" style="margin-top:10px"></p>
       </div>
 
       <div class="panel hidden" id="mod-dat">

@@ -1,3 +1,4 @@
+import './lib/restore-boot.js'; // MUST stay first: applies a staged restore before the database opens
 import { prepareApp } from './app.js';
 import { startBackupScheduler } from './lib/backup.js';
 

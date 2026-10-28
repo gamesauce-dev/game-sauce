@@ -2945,6 +2945,88 @@ $('#backup-run')?.addEventListener('click', async (e) => {
   finally { btn.disabled = false; btn.textContent = label; }
 });
 
+/* ── Restore ── */
+let restoreStaged = null;
+
+async function loadRestoreStatus() {
+  try {
+    const s = await api('/backup/restore/status');
+    const last = s.last;
+    $('#restore-last').innerHTML = last
+      ? `Last restore: ${esc(new Date(last.at).toLocaleString())}${last.backup_created_at ? ` (backup of ${esc(new Date(last.backup_created_at).toLocaleString())})` : ''}. The data it replaced is kept in <code>${esc(last.previous_data_kept_in)}</code>.`
+      : '';
+  } catch { /* status is informational */ }
+}
+
+$('#restore-inspect')?.addEventListener('click', async (e) => {
+  const file = $('#restore-file').files?.[0];
+  if (!file) return toast('Choose a backup file first', true);
+  const btn = e.currentTarget; btn.disabled = true; const label = btn.textContent; btn.textContent = 'Checking…';
+  const box = $('#restore-result');
+  try {
+    const fd = new FormData(); fd.append('backup', file);
+    const res = await fetch('/api/backup/restore/inspect', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('gamesauce_token') || ''}` }, body: fd
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'That file could not be read');
+    restoreStaged = data;
+    const c = data.counts, now = data.current_counts;
+    const row = (name, a, b) => `<tr><td>${name}</td><td><b>${a ?? '—'}</b></td><td style="color:var(--dim)">${b ?? '—'}</td></tr>`;
+    box.classList.remove('hidden');
+    box.innerHTML = `
+      <div style="font-weight:650;margin-bottom:6px">This backup is valid</div>
+      <div class="hint" style="margin:0 0 8px">Made ${esc(data.manifest.created_at ? new Date(data.manifest.created_at).toLocaleString() : 'at an unknown time')} · game-sauce ${esc(data.manifest.app_version || '?')}</div>
+      <table style="border-collapse:collapse;font-size:13px;margin-bottom:8px">
+        <tr style="color:var(--dim)"><td></td><td style="padding-right:24px">In the backup</td><td>On the server now</td></tr>
+        ${row('ROMs', c.roms, now.roms)}${row('Users', c.users, now.users)}${row('Collections', c.collections, now.collections)}${row('Saves', c.saves, now.saves)}
+      </table>
+      ${data.warnings.map((w) => `<p class="hint" style="color:var(--warn);margin:4px 0">⚠ ${esc(w)}</p>`).join('')}
+      ${data.restart_supported ? '' : '<p class="hint" style="color:var(--warn);margin:4px 0">⚠ This server cannot restart itself (it is not running under systemd or Docker). After you confirm, restart game-sauce yourself to finish the restore.</p>'}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+        <input id="restore-confirm" class="select" placeholder="Type RESTORE to confirm" autocomplete="off" style="width:220px" />
+        <button class="btn btn-danger" id="restore-apply">Restore this backup</button>
+        <button class="btn btn-ghost" id="restore-cancel">Cancel</button>
+      </div>`;
+    $('#restore-cancel').onclick = async () => { try { await api('/backup/restore/cancel', { method: 'POST', body: '{}' }); } catch { /* none */ } restoreStaged = null; box.classList.add('hidden'); box.innerHTML = ''; };
+    $('#restore-apply').onclick = async () => {
+      if ($('#restore-confirm').value.trim() !== 'RESTORE') return toast('Type RESTORE (capitals) to confirm', true);
+      const ok = await confirmDialog({
+        title: 'Replace the current data with this backup?',
+        body: 'A safety backup of the current data is saved first, and the data being replaced is kept. The server will restart and everyone will need to sign in again.',
+        okLabel: 'Restore', danger: true
+      });
+      if (!ok) return;
+      try {
+        const r = await api('/backup/restore/apply', { method: 'POST', body: JSON.stringify({ token: restoreStaged.token, confirm: 'RESTORE' }) });
+        box.innerHTML = r.restarting
+          ? `<div style="font-weight:650">Restoring…</div><p class="hint">Safety backup saved as <code>${esc(r.safety_backup)}</code>. The server is restarting; this page will reload when it is back.</p>`
+          : `<div style="font-weight:650">Ready to finish</div><p class="hint">Safety backup saved as <code>${esc(r.safety_backup)}</code>. <strong>Restart game-sauce now</strong> (for example <code>systemctl restart game-sauce</code> or <code>docker compose restart</code>) to complete the restore.</p>`;
+        if (r.restarting) waitForServerThenReload();
+      } catch (err) { toast(err.message, true); }
+    };
+  } catch (err) {
+    box.classList.add('hidden');
+    toast(err.message, true);
+  } finally { btn.disabled = false; btn.textContent = label; }
+});
+
+// After a restore the server goes away briefly; poll health, then reload to the sign-in page.
+function waitForServerThenReload() {
+  sessionStorage.removeItem('gamesauce_token');
+  let tries = 0, wentDown = false;
+  const t = setInterval(async () => {
+    tries++;
+    try {
+      const r = await fetch('/api/health', { cache: 'no-store' });
+      if (r.ok && wentDown) { clearInterval(t); location.reload(); return; }
+      if (r.ok && tries > 25) { clearInterval(t); location.reload(); }
+    } catch { wentDown = true; }
+    if (tries > 120) clearInterval(t);
+  }, 1000);
+}
+
 function showSettingsModule(id) {
   // Only one module at a time.
   $$('#view-settings .panel').forEach((p) => p.classList.add('hidden'));
@@ -2954,7 +3036,7 @@ function showSettingsModule(id) {
   const panel = $(`#mod-${id}`);
   if (!panel) return;
   panel.classList.remove('hidden');
-  if (id === 'backup') loadBackups().catch((err) => toast(err.message, true));
+  if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
   panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
