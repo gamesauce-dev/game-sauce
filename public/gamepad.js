@@ -116,7 +116,7 @@
     if (ae && ae !== document.body && root.contains(ae) && visible(ae)) return false;
     let target = null;
     if (root.id === 'drawer') {
-      target = $('[data-act="play"]', root) || $('.detail-actions .btn-primary', root) || null;
+      target = $('[data-act="play"]', root) || $('.detail-actions .ibtn-primary', root) || null;
     } else if (root.classList.contains('modal-scrim')) {
       target = $('.btn-primary, .btn-danger', root);
     } else if (root.id === 'app') {

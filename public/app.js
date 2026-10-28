@@ -1084,6 +1084,25 @@ document.addEventListener('keydown', (e) => {
   stepDetail(e.key === 'ArrowRight' ? 1 : -1);
 });
 
+/* Detail-window action icons (24px grid, 1.8 stroke). */
+const _ic = (p, fill) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const _star = 'M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9z';
+const ICON = {
+  download: _ic('<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>'),
+  play: _ic('<path d="M7 4.5v15l12-7.5z"/>', true),
+  star: _ic(`<path d="${_star}"/>`),
+  starFill: _ic(`<path d="${_star}"/>`, true),
+  collection: _ic('<rect x="3.5" y="6" width="13" height="13" rx="2.5"/><path d="M8 3.5h10.5A2 2 0 0 1 20.5 5.5V16"/><path d="M10 9.5v6M7 12.5h6"/>'),
+  gamepad: _ic('<path d="M7 7h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.6 2.6 0 0 1-4.4 1.2L14 15.5h-4l-2.2 2.1a2.6 2.6 0 0 1-4.4-1.2l-.8-4A4.5 4.5 0 0 1 7 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="12.5" r=".6" fill="currentColor"/>'),
+  gamepadOff: _ic('<path d="M7 7h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.6 2.6 0 0 1-4.4 1.2L14 15.5h-4l-2.2 2.1a2.6 2.6 0 0 1-4.4-1.2l-.8-4A4.5 4.5 0 0 1 7 7z" opacity=".55"/><path d="M3 3l18 18"/>'),
+  eye: _ic('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'),
+  eyeOff: _ic('<path d="M10.6 5.7A9 9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3 3.8M6.5 7.2A15.7 15.7 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/>'),
+  refresh: _ic('<path d="M20 11a8 8 0 0 0-14.3-4.5L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.5L20 15.5"/><path d="M20 20v-4.5h-4.5"/>'),
+  image: _ic('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4.5 4"/>'),
+  undo: _ic('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>'),
+  trash: _ic('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>')
+};
+
 async function openDetail(id) {
   const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
   state.openRomId = id;
@@ -1146,17 +1165,17 @@ async function openDetail(id) {
     </div>
 
     <div class="detail-actions">
-      ${authState.user?.can_download === false ? '' : `<a class="btn btn-primary" href="/api/roms/${rom.id}/download" download>↓ Download</a>`}
-      ${rom.playable ? `<button class="btn" data-act="play" title="Play in the browser — no install, BIOS-free platforms only">▶ Play in browser${rom.platform === 'mame' ? ' (best effort)' : ''}</button>` : ''}
-      <button class="btn" data-act="favorite">${rom.favorite ? '★ Favourited' : '☆ Favourite'}</button>
-      <button class="btn" data-act="addcoll" title="Add this game to a collection">＋ Collection</button>
-      ${rom.play_capable ? `<button class="btn" data-act="playtoggle" title="Show or hide the Play in browser button for this game only${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}">${rom.playable ? '▶ Browser play: on' : '▷ Browser play: off'}${rom.play_override !== null && rom.play_override !== undefined ? ' •' : ''}</button>` : ''}
-      <button class="btn" data-act="hide">${rom.hidden ? '◉ Unhide' : '◌ Hide'}</button>
-      <button class="btn" data-act="refresh" title="Re-run metadata lookup">↻ Refresh metadata</button>
-      <button class="btn" data-act="cover-upload" title="Use your own image as this game's cover (JPEG, PNG or WebP, up to 8 MB)">🖼 ${rom.cover_locked ? 'Change cover' : 'Upload cover'}</button>
-      ${rom.cover_locked ? '<button class="btn" data-act="cover-reset" title="Remove your cover and go back to automatic covers">↺ Auto cover</button>' : ''}
+      ${authState.user?.can_download === false ? '' : `<a class="ibtn ibtn-primary" href="/api/roms/${rom.id}/download" download data-tip="Download ROM" aria-label="Download ROM">${ICON.download}</a>`}
+      ${rom.playable ? `<button class="ibtn ibtn-play" data-act="play" data-tip="Play in browser${rom.platform === 'mame' ? ' (best effort)' : ''}" aria-label="Play in browser">${ICON.play}</button>` : ''}
+      <button class="ibtn${rom.favorite ? ' is-on fav' : ''}" data-act="favorite" data-tip="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
+      <button class="ibtn" data-act="addcoll" data-tip="Add to a collection" aria-label="Add to collection">${ICON.collection}</button>
+      ${rom.play_capable ? `<button class="ibtn${rom.playable ? ' is-on' : ''}" data-act="playtoggle" data-tip="Browser play: ${rom.playable ? 'on' : 'off'} for this game (click to switch)${rom.play_override !== null && rom.play_override !== undefined ? ' — overrides the default' : ''}" aria-label="Toggle browser play">${rom.playable ? ICON.gamepad : ICON.gamepadOff}</button>` : ''}
+      <button class="ibtn" data-act="hide" data-tip="${rom.hidden ? 'Unhide this game' : 'Hide this game'}" aria-label="Hide or unhide">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
+      <button class="ibtn" data-act="refresh" data-tip="Refresh metadata" aria-label="Refresh metadata">${ICON.refresh}</button>
+      <button class="ibtn" data-act="cover-upload" data-tip="${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'} (JPEG, PNG or WebP, up to 8 MB)" aria-label="Upload cover">${ICON.image}</button>
+      ${rom.cover_locked ? `<button class="ibtn" data-act="cover-reset" data-tip="Back to automatic cover" aria-label="Auto cover">${ICON.undo}</button>` : ''}
       <input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
-      <button class="btn btn-danger btn-sm" data-act="delete">Delete</button>
+      <button class="ibtn ibtn-danger" data-act="delete" data-tip="Delete from library" aria-label="Delete">${ICON.trash}</button>
     </div>
 
     <div class="section-label">Identify this game</div>
@@ -1293,17 +1312,18 @@ async function openDetail(id) {
   });
 
   $('[data-act="refresh"]', drawer).addEventListener('click', async (e) => {
-    e.target.disabled = true;
-    e.target.textContent = '↻ Looking up…';
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.classList.add('spin');
     try {
       const r = await api(`/metadata/${id}/refresh`, { method: 'POST' });
       toast(r.updated ? `Metadata updated from ${r.source}` : `No match: ${r.reason}`, !r.updated);
       if (r.updated) await refresh();
-      else e.target.textContent = '↻ Refresh metadata';
     } catch (err) {
       toast(err.message, true);
     } finally {
-      e.target.disabled = false;
+      btn.disabled = false;
+      btn.classList.remove('spin');
     }
   });
 
