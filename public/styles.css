@@ -876,3 +876,19 @@ button.result-row:hover { border-color: var(--accent); }
 a.btn { text-decoration: none; display: inline-flex; align-items: center; color: var(--text); }
 a.btn.btn-primary { color: #fff; }
 a.btn:hover { text-decoration: none; }
+
+/* Prev/next + counter sit on top of cover art: solid, high-contrast, readable on any image. */
+.drawer-navbtn {
+  width: 2.5714rem; height: 2.5714rem; font-size: 1.8571rem; padding: 0 0 0.2143rem;
+  background: var(--accent); color: #fff; border: 2px solid rgba(255, 255, 255, .85);
+  box-shadow: 0 0.2143rem 0.7143rem rgba(0, 0, 0, .6), 0 0 0 1px rgba(0, 0, 0, .35);
+}
+.drawer-navbtn:hover:not(:disabled) { background: var(--accent-2); color: #fff; border-color: #fff; transform: scale(1.06); }
+.drawer-navbtn:disabled { opacity: .45; background: #3a3f4d; border-color: rgba(255, 255, 255, .35); box-shadow: none; }
+.drawer-pos {
+  font-size: 1.1429rem; font-weight: 800; color: #fff; letter-spacing: .02em; min-width: 0;
+  padding: 0.3571rem 0.9286rem; border-radius: 999px; background: var(--accent);
+  border: 2px solid rgba(255, 255, 255, .85); box-shadow: 0 0.2143rem 0.7143rem rgba(0, 0, 0, .6), 0 0 0 1px rgba(0, 0, 0, .35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+}
+.drawer-nav { right: 3.9286rem; gap: 0.5714rem; }
