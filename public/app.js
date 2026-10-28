@@ -2795,6 +2795,7 @@ $('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...
 const authState = { user: null };
 
 function showLogin(message = '') {
+  window.neonBg?.start(); // animated retro-neon backdrop, only while this screen is up
   // Remember the last choice of the "keep me signed in" box on this browser.
   try { const r = $('#login-remember'); if (r) r.checked = localStorage.getItem('gamesauce_remember') !== '0'; } catch { /* private mode */ }
   authState.user = null;
@@ -2807,6 +2808,7 @@ function showLogin(message = '') {
 }
 
 function showApp(user, { restore = false } = {}) {
+  window.neonBg?.stop();
   authState.user = user;
   $('#auth-screen').classList.add('hidden');
   $('#app').classList.remove('hidden');
