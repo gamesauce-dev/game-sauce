@@ -1104,3 +1104,14 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .dup-meta .sub { color: var(--muted); margin-top: 0.1429rem; font-size: 0.8571rem; }
 .dup-keep { color: #4ade80; font-size: 0.8571rem; margin-top: 0.2857rem; }
 .detail-actions .ibtn:first-child[data-tip]:hover::after { left: 0; transform: none; }
+
+/* Detail drawer prev / counter / next: squared, light-weight, green, centred above the cover. */
+.drawer-nav { right: auto; left: 50%; transform: translateX(-50%); top: 1.1rem; gap: 0.4rem; }
+.drawer-navbtn, .drawer-pos {
+  height: 2.1429rem; border-radius: 0.5rem; background: #1f8f5b; color: #fff;
+  border: 1px solid #3fc88a; box-shadow: 0 0.14rem 0.5rem rgba(0, 0, 0, .45); text-shadow: none; font-weight: 400;
+}
+.drawer-navbtn { width: 2.1429rem; font-size: 1.5rem; padding: 0 0 0.15rem; }
+.drawer-navbtn:hover:not(:disabled) { background: #26a96c; border-color: #6fe0ab; transform: none; }
+.drawer-navbtn:disabled { background: #1f8f5b; border-color: #3fc88a; opacity: .4; box-shadow: none; }
+.drawer-pos { display: inline-flex; align-items: center; font-size: 0.95rem; letter-spacing: .02em; padding: 0 0.9rem; min-width: 5rem; justify-content: center; }
