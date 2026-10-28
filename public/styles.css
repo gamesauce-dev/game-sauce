@@ -871,3 +871,8 @@ button.result-row:hover { border-color: var(--accent); }
 .drawer-navbtn:disabled { opacity: .35; cursor: default; }
 .drawer-pos { font-size: 0.8214rem; color: var(--dim); min-width: 4.2857rem; text-align: center; font-variant-numeric: tabular-nums; }
 .card.nav-current .card-cover { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Links styled as buttons (backup downloads): no underline, button colours. */
+a.btn { text-decoration: none; display: inline-flex; align-items: center; color: var(--text); }
+a.btn.btn-primary { color: #fff; }
+a.btn:hover { text-decoration: none; }

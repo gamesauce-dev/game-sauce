@@ -431,6 +431,7 @@ Notes:
 | `GAMESAUCE_SECRET_KEY` | key for encrypting stored provider credentials (recommended in production) |
 | `GAMESAUCE_COOKIE_SECURE=1` | Secure cookies (only with HTTPS) |
 | `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` behind a reverse proxy |
+| `GAMESAUCE_BACKUP_DIR` | default folder for server-side backups (default `data/backups`; can also be set in Settings → Backups) |
 | `GAMESAUCE_SESSION_HOURS` | lifetime of a "keep me signed in" session (default 336 = 14 days) |
 | `GAMESAUCE_SHORT_SESSION_HOURS` | lifetime of a browser-only session, when the box is unticked (default 12) |
 | `GAMESAUCE_IDLE_MINUTES` | sign browser-only sessions out after this many idle minutes (default 120; 0 = off) |

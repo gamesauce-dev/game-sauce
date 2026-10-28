@@ -230,6 +230,47 @@ or NSSM; Linux → a systemd unit; macOS → launchd.
 
 ## 5. Backup
 
+### 5.1 Built-in backups (Settings → Backups, admin only)
+
+- **Download a backup now:** one `.tar.gz` straight to your browser.
+- **Scheduled backups:** pick off / 6 h / 12 h / daily / weekly, how many to keep, and a folder on
+  the server (default `data/backups`; `GAMESAUCE_BACKUP_DIR` changes the default). Point it at a NAS
+  mount or a second disk, because a backup beside the database does not survive losing the disk.
+- **What is inside:** a consistent copy of the database (taken safely while the app runs), the
+  encryption key `secret.key`, every player's save states, and a `manifest.json`.
+- **What is not:** imported ROMs (`storage/roms`), covers and media. Back up `storage/` separately if you
+  use Add ROMs imports; scanned folders are never touched. Covers can be re-fetched.
+- **Handle with care:** it holds password hashes and the key that protects your provider credentials.
+  If you set `GAMESAUCE_SECRET_KEY`, the key is *not* in the archive. Keep that value somewhere safe.
+
+### 5.2 Restoring by hand (an in-app restore is not built yet)
+
+Stop game-sauce first, so nothing writes while you replace files.
+
+```bash
+# 1. Unpack somewhere temporary and look at manifest.json
+mkdir /tmp/gs-restore && tar -xzf game-sauce-backup-XXXX.tar.gz -C /tmp/gs-restore
+cat /tmp/gs-restore/manifest.json
+
+# 2. Native / Proxmox LXC install (data in /var/lib/game-sauce):
+systemctl stop game-sauce
+mv /var/lib/game-sauce/data /var/lib/game-sauce/data.old
+mkdir -p /var/lib/game-sauce/data /var/lib/game-sauce/storage/saves
+cp /tmp/gs-restore/gamesauce.db /tmp/gs-restore/secret.key /var/lib/game-sauce/data/
+cp -r /tmp/gs-restore/saves/. /var/lib/game-sauce/storage/saves/ 2>/dev/null || true
+chown -R gamesauce:gamesauce /var/lib/game-sauce
+systemctl start game-sauce
+```
+
+For Docker, do the same with the `gs-data` and `gs-storage` volumes (stop the container, copy
+`gamesauce.db` and `secret.key` into the data volume, and the `saves/` folder into the storage
+volume, then start it). A backup from an *older* version is upgraded automatically on start; one from a
+*newer* version than the app cannot be used, so update the app first.
+
+Everyone has to sign in again after a restore (sessions are not part of a backup).
+
+### 5.3 Copying the folders yourself
+
 Back up these two things and you can rebuild everything else:
 
 1. `data/` — `gamesauce.db` (+ `secret.key` if you didn't set `GAMESAUCE_SECRET_KEY`)

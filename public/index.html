@@ -346,6 +346,49 @@
         <div id="audit-list" class="audit"></div>
       </div>
 
+      <div class="panel hidden" id="mod-backup">
+        <h3>Backups <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">
+          A backup is one <code>.tar.gz</code> with a consistent copy of the database, the encryption key
+          and every player's save states. <strong>Imported ROMs, covers and media are not included</strong>
+          (your ROM folders are never touched). It contains password hashes and the key that protects your
+          provider credentials, so store it as carefully as the server itself.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px">
+          <a class="btn btn-primary" id="backup-download" href="/api/backup/download" download>↓ Download a backup now</a>
+          <button class="btn" id="backup-run">Save one to the server folder now</button>
+        </div>
+
+        <div class="section-label">Scheduled backups</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:8px 0">
+          <label class="field" style="margin:0"><span>Run</span>
+            <select id="backup-interval" class="select">
+              <option value="0">Never (manual only)</option>
+              <option value="6">Every 6 hours</option>
+              <option value="12">Every 12 hours</option>
+              <option value="24">Daily</option>
+              <option value="168">Weekly</option>
+            </select>
+          </label>
+          <label class="field" style="margin:0"><span>Keep the newest</span>
+            <input id="backup-keep" class="select" type="number" min="1" max="365" value="7" style="width:90px" />
+          </label>
+          <label class="field" style="margin:0;flex:1;min-width:240px"><span>Folder on the server</span>
+            <input id="backup-dir" class="select" type="text" placeholder="" autocomplete="off" style="width:100%" />
+          </label>
+          <button class="btn btn-primary" id="backup-save">Save settings</button>
+        </div>
+        <p class="hint" id="backup-hint"></p>
+        <p class="hint" id="backup-status"></p>
+
+        <div class="section-label" style="margin-top:14px">Backups on the server</div>
+        <div id="backup-list" class="results" style="margin-top:8px"></div>
+        <p class="hint" style="margin-top:12px">
+          <strong>Restoring</strong> is not built into the app yet. See <em>docs/DEPLOYMENT.md → Backup</em>
+          for the manual steps.
+        </p>
+      </div>
+
       <div class="panel hidden" id="mod-dat">
         <h3>DAT files (offline verification) <span class="pill warn admin-only">admin</span></h3>
         <p class="hint" style="margin-top:0">

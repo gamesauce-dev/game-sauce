@@ -9,6 +9,7 @@ import collectionsRouter from './routes/collections.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
 import datsRouter from './routes/dats.js';
+import backupRouter from './routes/backup.js';
 import emulatorsRouter from './routes/emulators.js';
 import authRouter, {
   attachUser, requireAdmin, requireAuth, sessionCookie
@@ -293,6 +294,8 @@ export function createApp() {
   // safe for any signed-in user.
   api.use('/sources', requireAdmin, sourcesRouter);
   api.use('/dats', requireAdmin, datsRouter);
+  // Backups hold the encryption key and password hashes: admin only.
+  api.use('/backup', requireAdmin, backupRouter);
 
   // Back-compat: earlier builds mounted the DAT router at /api/datfiles.
   api.use('/datfiles', requireAdmin, datsRouter);

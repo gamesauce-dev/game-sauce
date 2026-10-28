@@ -2876,7 +2876,8 @@ const SETTINGS_MODULES = [
   { id: 'coverage',  label: 'Coverage',        ico: '📊', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    ico: '📜', adminOnly: true },
-  { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true }
+  { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true },
+  { id: 'backup',    label: 'Backups',         ico: '🛟', adminOnly: true }
 ];
 
 
@@ -2895,6 +2896,55 @@ function renderSettingsTiles() {
   $$('[data-mod]', wrap).forEach((t) => t.addEventListener('click', () => showSettingsModule(t.dataset.mod)));
 }
 
+/* ── Backups module ── */
+async function loadBackups() {
+  const data = await api('/backup');
+  const s = data.settings;
+  $('#backup-interval').value = String(s.interval_hours);
+  $('#backup-keep').value = s.keep;
+  $('#backup-dir').value = s.dir;
+  $('#backup-dir').placeholder = s.default_dir;
+  $('#backup-hint').innerHTML = (s.dir ? '' : `Using the default folder <code>${esc(s.default_dir)}</code>. `)
+    + 'Point the folder at a network share or a mounted disk so backups survive the machine itself. '
+    + (s.key_in_env ? '<strong>The encryption key comes from <code>GAMESAUCE_SECRET_KEY</code> and is not in backups — keep it somewhere safe.</strong>' : '');
+  $('#backup-status').innerHTML = [
+    s.last_at ? `Last scheduled/server backup: ${esc(new Date(s.last_at).toLocaleString())}.` : 'No server backup has run yet.',
+    s.last_error ? `<span style="color:var(--warn)">Last error: ${esc(s.last_error)}</span>` : ''
+  ].filter(Boolean).join(' ');
+  $('#backup-list').innerHTML = data.items.length ? data.items.map((b) => `
+    <div class="result-row ok" style="gap:10px">
+      <span class="status"></span>
+      <span class="name">${esc(b.name)} <span class="note">· ${fmtBytes(b.size)}</span></span>
+      <a class="btn btn-sm" href="/api/backup/files/${encodeURIComponent(b.name)}" download>Download</a>
+      <button class="btn btn-sm btn-danger" data-bk-del="${esc(b.name)}">Delete</button>
+    </div>`).join('') : '<div class="side-empty">No backups in the server folder yet.</div>';
+  $$('[data-bk-del]').forEach((b) => b.addEventListener('click', async () => {
+    const ok = await confirmDialog({ title: 'Delete this backup?', body: b.dataset.bkDel, okLabel: 'Delete', danger: true });
+    if (!ok) return;
+    await api(`/backup/files/${encodeURIComponent(b.dataset.bkDel)}`, { method: 'DELETE' });
+    loadBackups();
+  }));
+}
+
+$('#backup-save')?.addEventListener('click', async () => {
+  try {
+    await api('/backup/settings', { method: 'PUT', body: JSON.stringify({
+      interval_hours: Number($('#backup-interval').value), keep: Number($('#backup-keep').value), dir: $('#backup-dir').value.trim()
+    }) });
+    toast('Backup settings saved');
+    loadBackups();
+  } catch (err) { toast(err.message, true); }
+});
+$('#backup-run')?.addEventListener('click', async (e) => {
+  const btn = e.currentTarget; btn.disabled = true; const label = btn.textContent; btn.textContent = 'Backing up…';
+  try {
+    const r = await api('/backup/run', { method: 'POST', body: '{}' });
+    toast(`Saved ${r.name} (${fmtBytes(r.size)})${r.pruned?.length ? `, removed ${r.pruned.length} old` : ''}`);
+    loadBackups();
+  } catch (err) { toast(err.message, true); }
+  finally { btn.disabled = false; btn.textContent = label; }
+});
+
 function showSettingsModule(id) {
   // Only one module at a time.
   $$('#view-settings .panel').forEach((p) => p.classList.add('hidden'));
@@ -2904,6 +2954,7 @@ function showSettingsModule(id) {
   const panel = $(`#mod-${id}`);
   if (!panel) return;
   panel.classList.remove('hidden');
+  if (id === 'backup') loadBackups().catch((err) => toast(err.message, true));
   panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 

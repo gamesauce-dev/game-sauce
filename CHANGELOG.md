@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Added
+- **Backups** (Settings → Backups, admin only): download a backup any time, or schedule them (6 h / 12 h / daily / weekly, keep the newest N, choose the folder). Each backup is a single `.tar.gz` with a consistent database copy, the encryption key, every user's saves and a manifest; imported ROMs, covers and media are left out. Restore is manual for now (see `docs/DEPLOYMENT.md` §5.2).
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Security
