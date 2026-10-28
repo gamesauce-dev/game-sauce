@@ -130,6 +130,21 @@ Then `docker compose pull && docker compose up -d`. To update later, run the sam
 commands. Pin a version instead of `latest` (for example `:v0.1.1`) if you want updates to
 be deliberate. The image is built for `linux/amd64` (typical PCs, servers and Proxmox VMs).
 
+#### Already have a Docker LXC or VM (arr-stack style)?
+
+Use the ready-made compose file; it needs no source and no build:
+
+```bash
+mkdir -p ~/game-sauce && cd ~/game-sauce
+curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/docker-compose.ghcr.yml
+nano docker-compose.yml        # set GAMESAUCE_ADMIN_PASSWORD (10+ characters, with a number)
+docker compose up -d           # then open http://<host-ip>:8765
+```
+
+To scan ROMs, bind-mount the folder read-only (uncomment the `/mnt/roms:/roms:ro` line); the
+path on the left must already exist inside that LXC/VM. Update with
+`docker compose pull && docker compose up -d`.
+
 ### 3.5a Running on Proxmox
 
 - **Use a VM (simplest).** A small Debian or Ubuntu VM with Docker Engine behaves like any
@@ -138,6 +153,11 @@ be deliberate. The image is built for `linux/amd64` (typical PCs, servers and Pr
 - **LXC works with options.** In the container's *Options → Features*, enable **nesting**
   (and **keyctl**). Without them Docker commonly fails with cgroup or permission errors.
   Unprivileged LXCs are the most fragile; a privileged one is easier but less isolated.
+- **One-command install (no Docker) — experimental, not yet tested on real hardware; read the script first.** On the Proxmox node, as root:
+  `bash -c "$(curl -fsSL https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/proxmox-lxc.sh)"`
+  creates an unprivileged Debian 12 container, installs Node 22, generates an admin password
+  and runs game-sauce as a systemd service. Options (CTID, RAM, DISK, STORAGE, BRIDGE, APP_PORT,
+  ROMS) are listed at the top of the script. Update later with `pct exec <id> -- game-sauce-update`.
 - **ROM folders.** The guest can only mount paths it can see. Share the ROM folder into the
   VM or container (NFS/SMB mount, or a Proxmox bind mount for LXC), then map that path in the
   `volumes:` block of `docker-compose.yml` as read-only (see 3.4).

@@ -1,0 +1,37 @@
+# game-sauce from the prebuilt image — for a host that already runs Docker
+# (for example your existing Docker LXC or arr-stack box). No source, no build step.
+#
+#   mkdir -p ~/game-sauce && cd ~/game-sauce
+#   curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/docker-compose.ghcr.yml
+#   nano docker-compose.yml     # set GAMESAUCE_ADMIN_PASSWORD below (10+ chars, with a number)
+#   docker compose up -d
+#
+# Open http://<host-ip>:8765 . Update later with: docker compose pull && docker compose up -d
+services:
+  game-sauce:
+    image: ghcr.io/gamesauce-dev/game-sauce:latest
+    container_name: game-sauce
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8765}:8080"
+    environment:
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      # First-boot admin account (used once, when no users exist yet).
+      GAMESAUCE_ADMIN_USER: "admin"
+      GAMESAUCE_ADMIN_PASSWORD: "change-me-please-1"
+    volumes:
+      - gs-data:/app/data
+      - gs-storage:/app/storage
+      # Your ROM folders, read-only, as the container sees them. The path on the LEFT must
+      # exist inside the Docker LXC (bind-mount or NFS/SMB-mount it there first).
+      # - /mnt/roms:/roms:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  gs-data:
+  gs-storage:
