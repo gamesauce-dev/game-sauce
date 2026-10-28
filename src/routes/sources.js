@@ -37,7 +37,7 @@ router.post('/', (req, res) => {
   if (!stat.isDirectory()) return res.status(400).json({ error: 'Path must be a folder' });
 
   const hint = req.body?.platform_hint || req.body?.platform || null;
-  if (!hint || hint === 'auto' || !PLATFORM_SLUGS.has(hint)) {
+  if (!hint || hint === 'auto' || !(PLATFORM_SLUGS.has(hint) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(hint)))) {
     return res.status(400).json({ error: 'Platform is required: pick the platform this folder holds (no auto-detect)' });
   }
 

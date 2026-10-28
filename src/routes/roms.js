@@ -766,7 +766,7 @@ router.patch('/:id', (req, res) => {
     params.sort_title = sortTitle(req.body.title);
   }
 
-  if (req.body.platform !== undefined && PLATFORM_SLUGS.has(req.body.platform)) {
+  if (req.body.platform !== undefined && (PLATFORM_SLUGS.has(req.body.platform) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(req.body.platform)))) {
     sets.push('platform_id = (SELECT id FROM platforms WHERE slug = @platform)');
     params.platform = req.body.platform;
   }
@@ -904,7 +904,7 @@ router.post('/upload', upload.array('roms', 50), async (req, res, next) => {
       // Explicit choice wins; otherwise only an unambiguous extension is trusted,
       // and anything ambiguous is parked under "other" for the user to re-file.
       const platformSlug =
-        req.body?.platform && PLATFORM_SLUGS.has(req.body.platform) && req.body.platform !== 'auto'
+        req.body?.platform && (PLATFORM_SLUGS.has(req.body.platform) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(req.body.platform))) && req.body.platform !== 'auto'
           ? req.body.platform
           : (detectPlatform(file.originalname) || 'other');
 

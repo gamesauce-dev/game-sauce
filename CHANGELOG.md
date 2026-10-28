@@ -43,6 +43,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Calmer Library home:** *Continue playing* and *Recently added* each sit in their own neon rounded box on a single line (no scroll bar), with a white divider before the main grid. Short windows start with the boxes collapsed.
 
 ### Fixed
+- **Custom platforms now work everywhere:** adding a source (or uploading / re-filing a ROM) with a platform you created yourself was refused with "Platform is required". The check only knew the built-in list; it now accepts any platform in the library.
 - **Duplicate finder no longer pairs different volumes, discs or numbered sequels.** Two games whose file names differ by a number (Volume 2 / Volume 3, Disc 1 / Disc 2, Part 1 / Part 2, Game 3 / Game 4) or a roman numeral (II / III) are kept apart even when a metadata provider gave them the same title. Regional and revision copies of the same volume are still found.
 - **Removing a source did nothing:** the Remove popup's buttons never closed it or acted. It now shows its own buttons, and Cancel, Escape and clicking outside all close it.
 - **Disable on a source** now works, and toggles back to Enable (it always sent "disable" before, so a disabled source could not be re-enabled from the button).
