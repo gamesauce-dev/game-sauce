@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Security
+- **Upload library upgraded:** multer 1.x to 2.5 (the 1.x line has known vulnerabilities and is no longer patched). It handles ROM, cover, DAT and backup uploads; behaviour is unchanged and all tests pass. `npm audit` now reports no problems in the shipped dependencies.
 - **Cross-site request check:** requests that change data are refused when the browser says they came from another website or address (CSRF). Scripts and `curl` are unaffected. Behind a reverse proxy set `GAMESAUCE_TRUST_PROXY=1`, or list the address in `GAMESAUCE_ALLOWED_ORIGINS`.
 - **Rate limiting:** each signed-in user is capped at 900 requests a minute, with tighter caps for metadata lookups, downloads, uploads and backup/restore (`GAMESAUCE_RATE_LIMIT`, 0 = off). Cover art and the health check are never counted. Returns `429` with `Retry-After`.
 - Login has a **Keep me signed in on this computer** box. Unticked, the session cookie disappears when the browser closes and the session also ends after 12 hours.
