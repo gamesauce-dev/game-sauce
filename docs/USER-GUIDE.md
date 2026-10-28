@@ -1,9 +1,17 @@
 # game-sauce — User Guide
 
-game-sauce is your self-hosted ROM library: it catalogues ROMs where they already
-live, fetches covers and details, verifies dumps against No-Intro/Redump DATs, and
-lets you download back out. This guide covers everyday use. Deployment and server
-setup live in [DEPLOYMENT.md](DEPLOYMENT.md).
+game-sauce is your self-hosted ROM library. It catalogues ROMs where they already live, fetches
+covers and details, verifies dumps against No-Intro/Redump DATs, lets you play many older games
+in the browser, and lets you download files back out. This guide covers everyday use. Server
+setup lives in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+**Contents:** [Concepts](#1-concepts-read-this-once) · [First run](#2-first-run) ·
+[Library](#3-library) · [Game details](#4-game-details) · [Playing in the browser](#5-playing-in-the-browser) ·
+[Sources](#6-sources-watch-folders-in-place) · [Add ROMs](#7-add-roms-import-copies) ·
+[Metadata](#8-metadata-and-covers) · [MAME](#9-mame) · [DAT files](#10-dat-verification-offline) ·
+[Collections](#11-collections-favourites-hidden) · [Emulators](#12-emulators) ·
+[Settings](#13-settings) · [Backups and restore](#14-backups-and-restore-admin) ·
+[Signing in](#15-signing-in-and-security) · [Controller](#16-using-a-controller) · [Tips](#17-tips-and-limits)
 
 ---
 
@@ -11,179 +19,293 @@ setup live in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 | Term | Meaning |
 |------|---------|
-| **Source** | A folder game-sauce *watches in place*. Files stay exactly where they are; the scan only records path + size + date + hashes, then fetches metadata. Best for a big collection you already organise. |
-| **Add ROMs** | *Import a copy* into game-sauce (`storage/roms/…`). Your original stays put. Best for one-off additions. |
-| **Platform hint** | Forces every file in a source folder to one platform. Leave on *auto* to let folder names (`PlayStation 5`, `Xbox 360`) and extensions decide. |
-| **Orphan** | A catalogue row whose source folder is gone (source removed with "keep ROMs"). Still listed, can never be re-scanned → purge it. Different from **missing** (file temporarily unreachable, e.g. unplugged drive — it will re-appear on rescan). |
-| **Needs match** | A ROM no provider has ever matched — the manual-identify worklist. |
-| **DAT** | A No-Intro / Redump catalogue of known-good dumps. Importing one lets game-sauce verify each ROM locally and use canonical titles. |
+| **Source** | A folder game-sauce watches *in place*. Files stay exactly where they are; a scan records path, size, date and hashes, then fetches metadata. Best for a big collection you already organise. |
+| **Add ROMs** | Imports a *copy* into game-sauce (`storage/roms/…`). Your original stays put. Best for one-off additions. |
+| **Platform** | Every source is tied to one platform (you pick it; there is no guessing). |
+| **Missing** | A file that could not be reached at the last scan (for example an unplugged drive). It is flagged, never deleted, and clears itself on the next scan that finds it. |
+| **Orphan** | A catalogue row whose source folder is gone (a source removed with "keep ROMs"). It can never be re-scanned, so purge it. |
+| **Needs match** | A ROM no provider has ever matched: your manual-identify worklist. |
+| **DAT** | A No-Intro / Redump catalogue of known-good dumps, used to verify ROMs locally. |
 
-Deleting a ROM from the library **never deletes your file** unless you explicitly
-tick delete-from-disk. Imported copies in `storage/roms` *are* removed with their row.
+Deleting a ROM from the library **never deletes your file** unless you explicitly tick
+delete-from-disk. Imported copies in `storage/roms` are removed together with their row.
 
 ---
 
-## 2. First run (5 minutes)
+## 2. First run
 
-1. Sign in with the admin account (created on first boot from env, or generated
-   and printed in the server log).
-2. **Sources → Add folder → Browse** to your ROM folder (or type the path),
-   give it a **Name** if you like (just a label — `PS4 drive`, `NAS ROMs`),
-   leave **Platform hint** on auto, **Add and scan**.
-3. Wait for the scan, then open the **Library** — covers arrive as enrichment runs.
-4. **Metadata → Accounts**: add TheGamesDB key and/or IGDB credentials for
-   better matches (ScreenScraper needs forum-approved dev credentials; the other
-   two take minutes).
-5. Press **Fetch missing covers** and let it work through the library (25 per run).
+1. Sign in with the admin account. It is created on first start from `GAMESAUCE_ADMIN_USER` /
+   `GAMESAUCE_ADMIN_PASSWORD`, or the installer shows you a generated password. Change the
+   password under **⚙ → Change password**.
+2. **Sources → Add a folder.** Browse to your ROM folder, pick the **platform** it holds, and add it.
+   The scan shows a live progress bar. New games are enriched with metadata as they arrive.
+3. Open the **Library**. Covers appear as metadata is fetched.
+4. **⚙ → Metadata providers:** add a TheGamesDB key and/or IGDB credentials for better matches
+   (ScreenScraper needs developer credentials you request on its forum).
+5. Press **Fetch metadata** in the Library and let it run; it works through everything in one go.
+6. Set up **backups** (⚙ → Backups) before you do much else. See [section 14](#14-backups-and-restore-admin).
 
 ---
 
 ## 3. Library
 
-- **Sidebar:** `ALL PLATFORMS` + collapsible family headings (Nintendo, Sega,
-  Sony…) with per-platform counts. Families collapse/expand; platforms filter.
-- **Search** matches title, filename and genre. **★ Favourites**, **◌ Hidden**,
-  **⛁ Orphans**, **○ Needs match** pills filter the grid. **☐ Select** enables
-  multi-select bulk delete.
-- **Cards** show cover (or title initials fallback), platform colour badge, and
-  status dots. **Density** toggles comfortable/compact grid.
-- **Counts** in the footer: total size, missing files, orphaned rows, ROMs still
-  needing a match.
+![The Library](screenshots/library.png)
 
-### ROM detail (click any tile)
-
-- Cover, title, platform, region, revision, serial/version, size, hashes
-  (CRC32/MD5/SHA1), file path, source, DAT verdict, genre, players, rating.
-- Actions: **Identify** (manual match), **Refresh metadata**, **Favourite**,
-  **Hide**, **Download**, **Delete**, **Upload cover** (custom art).
-- **Identify drawer:** type a query → pick platform/provider → preview candidates
-  with `art ✓` flags → **Use this** applies title + art + fields.
+- **Sidebar:** your name, settings (⚙) and sign out (⏻) sit under the logo. Below are Library,
+  Collections, Sources, Add ROMs and Emulators, then every platform with a count, grouped by
+  family. Click a platform to filter; it stays selected when you refresh the page.
+- **Home page rows:** **Continue playing** (games *you* played in the browser, newest first) and
+  **Recently added**. They appear when no filters are active.
+- **Search** matches title, developer, publisher and genre. The **★ Favourites**, **○ Hidden**,
+  **⛁ Orphans** and **○ Needs match** pills filter the grid. **☐ Select** turns on multi-select.
+- **Selecting:** **Select all** selects every game matching the current filters (not only the tiles
+  on screen). Then add them to a collection or delete them. Check the count before you delete.
+- **Tiles** show the cover (or initials), a platform badge and a ▶ button on playable games.
+  The grid loads more tiles as you scroll. **Density** switches comfortable / compact.
+- **Refreshing the page** keeps your place: section, platform, search, filters, sort and the open
+  Settings tile. A fresh sign-in always starts at the Library home.
+- **Screen sizes:** the interface scales with the window, from 1080p to 4K.
 
 ---
 
-## 4. Sources (watch folders in place)
+## 4. Game details
 
-**Sources → Add folder:**
+Click any tile.
 
-1. **Path** — type it or **Browse…** (click a folder to select it, chevron/double-click to drill in, **Use this folder** to confirm).
-2. **Name (optional)** — label only. Defaults to the folder name.
-3. **Platform hint** — auto-detect, or force one platform for a single-console drive. Grouped by family, A–Z.
-4. **Recursive** — scan subfolders too (on by default).
-5. **Add and scan** — incremental: only new/changed files are hashed.
+![Game details](screenshots/detail.png)
 
-Per-source cards show ROM count, size, missing count, last scan. Actions:
-**↻ Scan**, **Disable/Enable**, **Remove** (choose keep or purge its ROM rows).
-
-Drives that vanish are flagged **missing**, never deleted — reconnect and rescan.
-
----
-
-## 5. Add ROMs (import copies)
-
-1. **Add ROMs** → drop files (or a whole folder) in the zone.
-2. Pick a platform or leave on auto-detect; untick enrichment to skip lookups.
-3. game-sauce hashes each file, rejects duplicates ("duplicate of …"), and moves
-   a copy to `storage/roms/<platform>/<sha1>/…`.
+- **‹ 3 / 24 ›** at the top steps to the previous or next game without closing the panel (the
+  **←** and **→** keys do the same). It walks the list you opened the game from: the library grid,
+  the Recently added or Continue playing row, or a collection.
+- **Actions:** **Download**, **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
+  **Hide**, **Refresh metadata**, **Upload cover**, **Delete**.
+- **Browser play: on/off** switches the Play button for this game only. A dot (•) means you have
+  overridden the default. This is how you turn off a game that will not start, or turn on one that
+  was hidden by the MAME year cut-off.
+- **Upload cover** lets you use your own image (JPEG, PNG or WebP, up to 8 MB). The file is checked
+  by its content, not its name. Your cover is kept when metadata is refreshed. **↺ Auto cover**
+  removes it and goes back to automatic covers.
+- **My saves** lists your save states and in-game saves for this game, with a delete button each.
+- **Identify this game** searches a provider by title so you can pick the right match and apply
+  its cover and details. The ★ in the provider drop-down sets your default provider.
+- The detail section lists platform, source, year, developer, hashes, file path, DAT check and more.
 
 ---
 
-## 6. Metadata & accounts
+## 5. Playing in the browser
 
-**Metadata → Accounts** — one card per provider:
+Games on platforms that need no BIOS (many consoles from the 8-bit and 16-bit eras) have a ▶
+button. It runs the game in your browser using [EmulatorJS](https://emulatorjs.org/), loaded from
+its CDN while you play; the ROM never leaves your server except to your own browser.
+
+- The player opens full-screen. **✕** closes it. Gamepads work (press a button once inside the frame).
+- **Saves are per user and stored on the server.** Use the player's *Save state* button, and
+  *Load state* to pick from your saved states (with screenshots). In-game saves (such as RPG save
+  slots) are stored automatically about every 30 seconds when they change and are restored when you
+  start the game again.
+- If a state was made with a different EmulatorJS version you get a ⚠ warning before loading it,
+  because it may not restore. Use **Load anyway** to try.
+- Platforms that need a BIOS (PlayStation, Saturn, Dreamcast and similar) are not offered. Use a
+  desktop emulator from the **Emulators** guide for those.
+
+---
+
+## 6. Sources (watch folders in place)
+
+**Sources → Add a folder:**
+
+1. **Path:** type it or **Browse…**.
+2. **Name (optional):** a label only.
+3. **Platform:** required. It tells game-sauce what every file in the folder is.
+4. **Recursive:** scan subfolders too (on by default).
+5. **Add and scan:** a progress bar shows the phase (finding files, importing, fetching metadata),
+   a counter such as `312 / 886`, the added / unchanged / failed counts and the current file. If
+   you refresh the page during a scan the bar comes back.
+
+Each source card shows its ROM count, size, missing count and last scan, with **↻ Scan**,
+**Disable/Enable** and **Remove** (keep the ROM rows, or remove them too). A scan never aborts
+because of one bad file: failures are counted and the first error is reported.
+
+Drives that vanish are flagged **missing**, not deleted. Reconnect and rescan; the flag clears.
+
+---
+
+## 7. Add ROMs (import copies)
+
+1. **Add ROMs →** drop files or a folder into the zone.
+2. Choose a platform (or leave auto-detect, which only trusts unambiguous file extensions).
+   Untick metadata lookup to skip it.
+3. game-sauce hashes each file, skips duplicates ("duplicate of …"), and keeps a copy under
+   `storage/roms/<platform>/<sha1>/…`.
+
+---
+
+## 8. Metadata and covers
+
+**⚙ → Metadata providers** (admin) has one card per provider:
 
 | Provider | Needs | Best for |
 |----------|-------|----------|
-| ScreenScraper | Dev ID + password (forum approval — required unless the server has a shared pair set up) + user + password | Retro systems, deep catalogue |
-| TheGamesDB | Free API key (minutes) | Broad coverage, fast setup |
-| IGDB | Twitch Client ID + Secret (minutes) | Modern systems (PS4/5, Switch, Xbox One/Series) |
-| SteamGridDB | Free API key | Cover-art fallback when a match has no art |
+| ScreenScraper | Developer ID + password (forum approval) plus your account | Retro systems, matches by file hash or name |
+| TheGamesDB | Free API key | Broad coverage, quick setup |
+| IGDB | Twitch Client ID and Secret | Modern systems |
+| SteamGridDB | Free API key | Cover art when nothing else has any |
 
-Each card: **Save**, **Test connection** (real API call), and quota display where
-the provider reports one. Credentials are encrypted at rest (AES-256-GCM); set
-`GAMESAUCE_SECRET_KEY` so the key lives outside the data dir. `Test connection`
-on a fresh key reports green before any lookup runs.
+Each card has **Save** and **Test connection**. Credentials are encrypted at rest; set
+`GAMESAUCE_SECRET_KEY` to keep the key outside the data folder. Providers are system-wide and
+admin-only: members never see them.
 
-**Coverage panel:** totals (enriched / filename-only / never looked up / missing)
-plus **Fetch missing covers** (25 per press — repeat until done) and
-**Verify platform ids** (checks every ScreenScraper system id resolves).
-
-**Platforms (admin):** full catalogue grouped by family with slug, extensions,
-provider ids. Add your own system (arcade boards, homebrew targets…) — provider
-ids optional. Editing/deleting takes effect immediately: the next scan and lookup
-read the database. Deleting a platform that still has ROMs moves them to Other
-(with a confirmation count).
+- **Fetch metadata** (Library toolbar, admin) walks the whole library 25 games at a time without
+  you clicking again. Click the button again to stop. **Fetch missing covers** (⚙ → Coverage) does
+  the same for games without art.
+- **Identify this game** in the detail panel fixes a wrong or missing match by hand.
+- **Clear covers** (⚙ → Database maintenance) removes cover art for one platform, for example after
+  a bad batch of matches. It never removes covers you uploaded yourself.
 
 ---
 
-## 7. Emulators
+## 9. MAME
 
-**Emulators** (sidebar) recommends one emulator per popular platform — NES through
-PS4, handhelds, arcade — with links to the official site and download page, a
-BIOS/keys warning where one is needed, and a **Check latest releases** button
-that queries each project's GitHub for its newest published release (10-minute
-cache; nightly-only projects say so instead of showing a version). Pick your OS
-asset from the dropdown and, as an admin, **Save to vault**: the server downloads
-the official release into `storage/emulators` so the installer lives alongside
-your library. You can also upload an installer by hand. Anyone signed in can see
-the guide and download from the vault; only admins can add or remove entries.
-game-sauce never ships emulator binaries — every vault file got there by an
-explicit admin action.
+MAME zips are named for the machine (`sf2.zip`), not the game, so title searches would match the
+wrong games. game-sauce handles this in three steps:
 
----
+1. **Only `.zip` files** are accepted for a MAME source or upload.
+2. **Import a name list.** Make one with `mame -listxml > mame.xml` (or use a ProgettoSnaps list),
+   then **⚙ → DAT files → Import a DAT** and choose it. Titles, years and developers are applied
+   to your MAME games, and new ones are named automatically. Use a list from the same MAME version
+   as your romset; games newer than the list keep their zip name.
+3. **Fetch metadata.** With real titles, TheGamesDB and IGDB can find covers, and only exact
+   title matches with art are accepted so wrong covers are not applied.
 
-## 8. DAT verification (offline)
-
-A `.dat` lists every known-good dump with exact size + hashes. Import one per
-system (**Metadata → DAT files → Import DAT**) and game-sauce matches each ROM
-by SHA1 → CRC32+size → CRC32, then:
-
-- marks it **verified** (exact), **variant** (same hash family, different bytes — hack/translation), or **not-in-dat**
-- replaces filename-guessed titles with canonical title + region + revision, unless you edited the title by hand (then it only marks the verdict; **Re-check** with *force* to override)
-
-**Have/want:** per DAT, `Missing / Have / All` tabs show which entries you own
-and which you're missing — a shopping list for your set. **Re-check** re-runs
-matching after new imports; deleting a DAT keeps your titles.
+**Browser play for MAME is best effort.** The browser core is old, so early arcade games run and
+later hardware (Neo Geo, 1990s 3D boards, Cave shooters) mostly does not. By default MAME games
+newer than 1990 get no Play button (`GAMESAUCE_MAME_PLAY_MAX_YEAR` changes the year, `9999` turns
+the cut-off off). You can override any single game from its detail panel. For everything else, use
+desktop MAME.
 
 ---
 
-## 8. Database maintenance (admin)
+## 10. DAT verification (offline)
 
-**Metadata → Database maintenance** shows library ROMs, hidden, missing files,
-orphaned rows, never-enriched, imported/seed rows. **Show orphans** jumps to the
-filtered library; **Delete orphans…** purges them (catalogue rows always go;
-imported copies optionally; your own files never).
+A `.dat` lists every known-good dump with its size and hashes. Import one per system
+(**⚙ → DAT files**) and game-sauce matches each ROM by SHA1, then CRC32 + size, and marks it
+**verified**, **bad** or **variant**. Verified and bad badges show on tiles; games not found in any
+DAT show nothing. Canonical titles replace filename guesses unless you edited the title by hand.
 
----
-
-## 9. Collections, hidden, favourites
-
-- **Collections:** group ROMs into sets ("Co-op nights"). Create from the
-  Collections view, add from any ROM detail.
-- **Hide** removes a tile from the default view without deleting it
-  (◌ Hidden pill reveals them). Useful for duplicates, BIOS files, variants.
-- **★ Favourite** pins essentials to the favourites filter.
+**Have / want** shows, per DAT, which entries you own and which you are missing. **Re-match**
+re-runs matching after importing new DATs.
 
 ---
 
-## 10. Users & account (admin)
+## 11. Collections, favourites, hidden
 
-**Account → Users** (admin): create logins per person (`user` or `admin` role),
-disable accounts (kills sessions), reset passwords. The last admin cannot be
-removed. Every mutation is recorded in the **audit log** (who did what, when,
-from where), visible on the Account view. Non-admins never see Sources, DAT
-tooling, platform management, user management, or the audit log.
-
-Change your own password from **Account**. Sessions last 30 days; sign out from
-the sidebar ⏻ button.
+- **Collections** group games into sets. Create one in the Collections view, add games from the
+  detail panel (**＋ Collection**) or in bulk. A game can be in several collections. Open a
+  collection to remove games from it (**✕ Remove**) or delete the collection. Games always stay in
+  the library.
+- **★ Favourite** is per user.
+- **Hide** removes a tile from the default view without deleting it; the **○ Hidden** pill shows them.
 
 ---
 
-## 11. Keyboard, tips & limits
+## 12. Emulators
 
-- Search matches title, filename and genre — a short unique word beats a full filename with tags.
-- Identify with **All platforms** first; providers disagree about which system a game belongs to.
-- `○ Needs match` + **Fetch missing covers** is the loop: enrich all, then hand-match the leftovers.
-- Filename tags in `(...)`/`[...]` are parsed for region/revision/serial — `!p`/`[!]` flags mark bad dumps.
-- Enrichment runs serially with gaps (providers rate-limit); 25 per bulk run is deliberate.
-- Covers are cached in `storage/media` — deleting the row deletes its cached art.
-- DAT import cap is 512 MB (`GAMESAUCE_MAX_DAT`); parsing streams so 40 MB DATs are fine.
+The **Emulators** section recommends one emulator per popular platform, with official links, a
+BIOS note (none / optional / required), and a **Check latest releases** button. Admins can **Save to
+vault** to keep the official installer on your server, or upload one by hand. Anyone signed in can
+download from the vault. game-sauce never bundles emulator binaries.
+
+---
+
+## 13. Settings
+
+Click **⚙** under the logo. Members see **Change password** and **Active sessions**. Admins also get:
+
+| Tile | What it does |
+|------|--------------|
+| Metadata providers | Credentials for ScreenScraper, TheGamesDB, IGDB, SteamGridDB |
+| User accounts | Create users, set roles, disable accounts, reset passwords |
+| Platforms | The platform catalogue; add your own |
+| Coverage | How much of the library has metadata and covers |
+| Database maintenance | Orphans, missing files, clear covers by platform |
+| Activity log | Who did what, with filters |
+| DAT files | Import DATs and MAME name lists; have/want reports |
+| Backups | Download, schedule and restore backups |
+
+Only one tile's panel is open at a time.
+
+---
+
+## 14. Backups and restore (admin)
+
+**⚙ → Backups.**
+
+![Backups](screenshots/backups.png)
+
+- **Download a backup now** gives you one `.tar.gz`. **Save one to the server folder now** writes
+  it to the server instead.
+- **Scheduled backups:** off, every 6 or 12 hours, daily or weekly. Choose how many to keep and the
+  folder on the server. Point the folder at a network share or a second disk so a backup survives
+  the machine itself.
+- **What is inside:** a consistent copy of the database (taken safely while the app runs), the
+  encryption key (`secret.key`), every user's saves and a manifest. **Not included:** imported
+  ROMs, covers and media. Back up `storage/` separately if you rely on Add ROMs imports.
+- **Keep backups safe.** They contain password hashes and the key that protects your provider
+  credentials. If you set `GAMESAUCE_SECRET_KEY`, the key is *not* in the backup; store it separately.
+
+**Restoring:**
+
+1. Choose the backup file and click **Check this backup**. The app unpacks it and shows what is
+   inside beside what is on the server now, plus any warnings. **Nothing changes yet.**
+2. Type `RESTORE` and confirm.
+3. A safety backup of the current data is saved first. The server then restarts and swaps the data
+   in, and everyone signs in again.
+4. The data that was replaced is kept in `data/pre-restore-<time>/`, not deleted, so a restore can
+   be undone by hand.
+
+It refuses damaged or half-downloaded files, backups from a newer game-sauce, and backups with no
+admin account. The restart needs the server to run under systemd or Docker (the installer does).
+Otherwise the page tells you to restart it yourself to finish.
+
+---
+
+## 15. Signing in and security
+
+- The sign-in box **Keep me signed in on this computer** is ticked by default (14 days). Untick it
+  on a shared computer: you are signed out when the browser closes, after 12 hours, or after 2
+  hours without activity.
+- **⚙ → Active sessions** lists where you are signed in and lets you sign others out.
+- Admins can create and disable users. Non-admins never see sources, DAT tools, providers, user
+  management, backups or the activity log.
+- If the app is reachable beyond your home network, put it behind HTTPS and set
+  `GAMESAUCE_COOKIE_SECURE=1`. See [DEPLOYMENT.md](DEPLOYMENT.md#6-security-checklist-do-before-exposing-beyond-your-lan).
+
+---
+
+## 16. Using a controller
+
+Plug in or pair a gamepad and press any button. A legend appears at the bottom of the screen.
+
+| Control | Action |
+|---------|--------|
+| D-pad / left stick | Move the highlight |
+| **A** | Select / open |
+| **B** | Back (closes a panel or dialog, then returns to the Library) |
+| **X** | Play the highlighted game in the browser |
+| **Y** | Jump to search |
+| **LB / RB** | Previous / next game in the open panel; otherwise previous / next section |
+
+While a game is running in the player the controller belongs to the game and the interface ignores
+it. Moving the mouse or pressing a key hides the legend. The sign-in screen is not controller-driven.
+
+---
+
+## 17. Tips and limits
+
+- A short unique word finds a game faster than a full filename.
+- **Needs match** plus **Fetch metadata** is the loop: enrich everything, then hand-match the leftovers.
+- Filename tags in `(...)` / `[...]` are read for region and revision.
+- Enrichment runs one game at a time with gaps because providers rate-limit.
+- Covers are cached in `storage/media`; deleting a game deletes its cached art.
+- The DAT import limit is 512 MB (`GAMESAUCE_MAX_DAT`); a MAME list of about 400 MB fits.
+- The animated sign-in background switches itself off if your system asks for reduced motion.

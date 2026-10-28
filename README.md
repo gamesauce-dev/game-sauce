@@ -5,10 +5,43 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A self-hosted ROM manager: scan folders in place, catalogue your library, enrich it with
-metadata and artwork, and download ROMs back out. Express + SQLite on the server, a single
-static page on the client, no build step.
+metadata and artwork, play many older games in the browser, and download ROMs back out.
+Express + SQLite on the server, a single static page on the client, no build step.
 
-**Guides:** [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md)
+![The Library](docs/screenshots/library.png)
+
+**Guides:** [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md)
+
+## What it does
+
+- **Scans folders in place.** Your files are catalogued where they are and never moved, renamed or
+  deleted. A live progress bar shows each scan; one bad file never stops it.
+- **Fetches metadata and covers** from ScreenScraper, TheGamesDB, IGDB and SteamGridDB, or lets you
+  upload your own cover.
+- **Plays in the browser** (EmulatorJS) for platforms that need no BIOS, with **per-user save states**
+  and in-game saves stored on your server. A **Continue playing** row remembers where you were.
+- **MAME aware:** import a `-listxml` name list to turn `sf2.zip` into real titles; strict matching
+  avoids wrong covers.
+- **Verifies dumps** against No-Intro / Redump DATs and shows have/want reports.
+- **Collections, favourites, hidden games, users and roles, an activity log.**
+- **Backups and restore** built in: download or schedule them, and restore with a safety copy.
+- **Controller friendly:** navigate the whole interface with a gamepad.
+- **Scales** from 1080p to 4K, with a retro-neon sign-in screen.
+
+<details>
+<summary>More screenshots</summary>
+
+| | |
+|---|---|
+| ![Game details](docs/screenshots/detail.png) | ![Backups and restore](docs/screenshots/backups.png) |
+| ![Sources](docs/screenshots/sources.png) | ![Gamepad navigation](docs/screenshots/gamepad.png) |
+| ![Settings](docs/screenshots/settings.png) | ![Emulator guide](docs/screenshots/emulators.png) |
+
+![Sign-in screen](docs/screenshots/login.png)
+
+</details>
+
+> Screenshots show the built-in demo data (`npm run seed`); the placeholder covers are generated, not real artwork.
 
 ```bash
 npm install
@@ -429,6 +462,10 @@ Notes:
 | `GAMESAUCE_STORAGE_DIR` | where imported ROMs + cached media live (default `./storage`) |
 | `GAMESAUCE_ADMIN_USER` / `GAMESAUCE_ADMIN_PASSWORD` | first-run admin (min 10 chars, letter + number) |
 | `GAMESAUCE_SECRET_KEY` | key for encrypting stored provider credentials (recommended in production) |
+| `GAMESAUCE_RESTART` | how a restore restarts the server: `exit` (let systemd/Docker restart it; the default when either is detected) or `manual` (you restart it yourself) |
+| `GAMESAUCE_MAX_RESTORE` | largest backup file the restore page accepts, bytes (default 2 GB) |
+| `GAMESAUCE_MAX_STATES` | save states kept per user per game (default 10) |
+| `GAMESAUCE_MAME_PLAY_MAX_YEAR` | MAME games newer than this get no browser Play button (default 1990; `9999` turns the cut-off off) |
 | `GAMESAUCE_COOKIE_SECURE=1` | Secure cookies (only with HTTPS) |
 | `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` behind a reverse proxy |
 | `GAMESAUCE_BACKUP_DIR` | default folder for server-side backups (default `data/backups`; can also be set in Settings → Backups) |
@@ -454,7 +491,7 @@ the shared default.
 npm test
 ```
 
-96 tests: filename parsing, CRC32 against a known vector, platform resolution (hints, folder
+The suite covers: filename parsing, CRC32 against a known vector, platform resolution (hints, folder
 names, ambiguous extensions), folder walking (sidecars, junk files, ignore globs), the HTTP API
 end to end — scanning preserves original paths, rescans are idempotent, missing files are flagged
 not deleted, deleting an in-place ROM leaves the file on disk — and the auth layer: anonymous
@@ -464,7 +501,10 @@ cover hash normalisation, bad-dump flags, platform inference from DAT names, str
 SHA1 and CRC32+size matching, canonical-title adoption, hand-edited titles surviving a rematch,
 coverage counts, and deleting a DAT without losing titles. Settings tests cover AES-GCM
 round-tripping, tamper detection, masked secrets, clearing a value, admin-only access, and
-environment-pinned fields being refused.
+environment-pinned fields being refused. Further tests cover the scan progress and error handling,
+per-user save states, backups (read back with an independent `tar`, including a real restart that
+restores a backup), custom covers (content-sniffed, kept across refreshes), recently played,
+sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI runs it on Node 20 and 22.
 
 ## Notes and limits
 

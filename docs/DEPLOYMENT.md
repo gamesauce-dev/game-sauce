@@ -243,9 +243,31 @@ or NSSM; Linux → a systemd unit; macOS → launchd.
 - **Handle with care:** it holds password hashes and the key that protects your provider credentials.
   If you set `GAMESAUCE_SECRET_KEY`, the key is *not* in the archive. Keep that value somewhere safe.
 
-### 5.2 Restoring by hand (an in-app restore is not built yet)
+### 5.2 Restoring
 
-Stop game-sauce first, so nothing writes while you replace files.
+**In the app (Settings → Backups → Restore from a backup, admin only):**
+
+1. Upload the backup and click **Check this backup**. It is unpacked into a holding area and
+   verified (archive, manifest, database integrity, schema version, an admin account exists).
+   You see what is inside next to what is on the server now. **Nothing changes yet.**
+2. Type `RESTORE` and confirm. A **safety backup** of the current data is saved to the backup
+   folder first.
+3. The server exits and starts again; before the database opens, the swap happens. The data being
+   replaced is moved to `data/pre-restore-<time>/` (database, key and saves), not deleted. If the
+   swap fails part-way the previous files are put back.
+4. Everyone signs in again (sessions are not restored).
+
+The restart needs a supervisor that starts the process again: **systemd** (the Proxmox installer
+sets this up, with `Restart=on-failure`), **Docker** (`restart: unless-stopped`), or
+`GAMESAUCE_RESTART=exit` under another supervisor. With none of these the page tells you to restart
+game-sauce yourself to finish. A pending restore is applied on the next start either way.
+Backups from a newer game-sauce than the server are refused; older ones are upgraded on start.
+`GAMESAUCE_MAX_RESTORE` (default 2 GB) caps the upload.
+
+To undo a restore, stop game-sauce and copy the files from `data/pre-restore-<time>/` back (or
+restore the safety backup the same way).
+
+**By hand** (if the app will not start): stop game-sauce first, so nothing writes while you replace files.
 
 ```bash
 # 1. Unpack somewhere temporary and look at manifest.json
