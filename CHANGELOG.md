@@ -42,6 +42,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Calmer Library home:** *Continue playing* and *Recently added* each sit in their own neon rounded box on a single line (no scroll bar), with a white divider before the main grid. Short windows start with the boxes collapsed.
 
 ### Fixed
+- **Removing a source did nothing:** the Remove popup's buttons never closed it or acted. It now shows its own buttons, and Cancel, Escape and clicking outside all close it.
+- **Disable on a source** now works, and toggles back to Enable (it always sent "disable" before, so a disabled source could not be re-enabled from the button).
 - A real cover no longer lets the initials placeholder show through it.
 - The controller focus ring on the first row of the Library grid is no longer cut off at the top.
 - The animated sign-in background now shows after signing out too, not only after a page refresh.

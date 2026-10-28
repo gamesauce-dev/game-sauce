@@ -168,7 +168,8 @@ function confirmChoice({ title = 'Choose', body = '', choices = [] } = {}) {
   const okBtn = $('#modal-ok');
   const cancelBtn = $('#modal-cancel');
   const checkWrap = $('#modal-check-wrap');
-  const actions = $('.modal-actions');
+  // Scoped to this dialog: other popups (collections) have their own .modal-actions earlier in the page.
+  const actions = $('.modal-actions', scrim);
 
   titleEl.textContent = title;
   bodyEl.textContent = body;
@@ -177,15 +178,18 @@ function confirmChoice({ title = 'Choose', body = '', choices = [] } = {}) {
   // Swap the stock OK/Cancel for one button per choice + a cancel.
   const original = [...actions.children];
   actions.innerHTML = '';
+  // onKey must live out here: cleanup() uses it, and a variable declared inside the Promise below is
+  // not visible to it. (That scope slip made cleanup throw, so the popup never closed or answered.)
+  let onKey = null;
   const cleanup = () => {
+    scrim.classList.add('hidden'); // close first, so a failure below can never leave the popup stuck
+    scrim.onclick = null;
+    if (onKey) document.removeEventListener('keydown', onKey);
     actions.innerHTML = '';
     for (const el of original) actions.appendChild(el);
-    document.removeEventListener('keydown', onKey);
-    scrim.classList.add('hidden');
-    scrim.onclick = null;
   };
   return new Promise((resolve) => {
-    const onKey = (e) => { if (e.key === 'Escape') { cleanup(); resolve(null); } };
+    onKey = (e) => { if (e.key === 'Escape') { cleanup(); resolve(null); } };
     for (const c of choices) {
       const b = document.createElement('button');
       b.className = `btn${c.danger ? ' btn-danger' : ''}`;
@@ -1584,9 +1588,13 @@ async function loadSources() {
     });
 
     $('[data-act="toggle"]', card).addEventListener('click', async () => {
-      const enabled = $('.source-card', card)?.classList.contains('is-off') ? 1 : 0;
-      await api(`/sources/${id}`, { method: 'PATCH', body: JSON.stringify({ enabled: !enabled }) });
-      loadSources();
+      // `card` IS the .source-card, so look at its own class (searching inside it finds nothing).
+      const isOff = card.classList.contains('is-off');
+      try {
+        await api(`/sources/${id}`, { method: 'PATCH', body: JSON.stringify({ enabled: isOff }) });
+        toast(isOff ? 'Source enabled' : 'Source disabled');
+        loadSources();
+      } catch (err) { toast(err.message, true); }
     });
 
     $('[data-act="remove"]', card).addEventListener('click', async () => {
