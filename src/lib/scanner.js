@@ -24,7 +24,7 @@ export function resolvePlatform({ filename, relativePath, sourceHint }) {
   const ext = (filename.split('.').pop() || '').toLowerCase();
 
   // 1. An explicit hint on the source always wins — the user told us.
-  if (sourceHint && PLATFORM_BY_SLUG.has(sourceHint)) {
+  if (sourceHint && (PLATFORM_BY_SLUG.has(sourceHint) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(sourceHint)))) {
     return { slug: sourceHint, confidence: 'hint' };
   }
 
@@ -84,6 +84,13 @@ export function walkSource(source) {
   const ignoreGlobs = source.ignore_globs ? String(source.ignore_globs).split(',') : [];
   const found = [];
   const seen = [];
+  // Extensions of user-created platforms (the built-in list doesn't know them).
+  const customExts = new Set();
+  try {
+    for (const r of db.prepare('SELECT extensions FROM platforms').all()) {
+      for (const e of String(r.extensions || '').split(',')) if (e.trim()) customExts.add(e.trim().toLowerCase());
+    }
+  } catch { /* table missing in odd test setups */ }
 
   const visit = (dir, depth) => {
     let entries;
@@ -115,7 +122,7 @@ export function walkSource(source) {
       if (matchIgnore(rel, ignoreGlobs)) continue;
 
       const ext = lower.split('.').pop() || '';
-      if (!ALL_EXTENSIONS.has(ext)) continue;
+      if (!ALL_EXTENSIONS.has(ext) && !customExts.has(ext)) continue;
       // Strict platforms (MAME = .zip only): ignore anything else in the folder.
       if (source.platform_hint && !extensionAllowed(source.platform_hint, entry.name)) continue;
 

@@ -274,3 +274,17 @@ test('metadata provider status is reported and inert without credentials', async
   assert.equal(r.body.updated, false);
   assert.match(r.body.reason, /no provider/);
 });
+
+test('a source on a user-created platform scans into that platform (custom extension too)', async () => {
+  const mk = await json('/api/platforms', { method: 'POST', body: JSON.stringify({ slug: 'mysys', name: 'My System', extensions: ['zzz'] }) });
+  assert.equal(mk.status, 201);
+  const root = makeLibrary({ 'Cool Game.zzz': 'custom-bytes-'.repeat(8), 'Other Game.sfc': 'sfc-bytes-'.repeat(8) });
+  const src = await json('/api/sources', { method: 'POST', body: JSON.stringify({ path: root, platform_hint: 'mysys' }) });
+  assert.equal(src.status, 201);
+  const scan = await json(`/api/sources/${src.body.id}/scan`, { method: 'POST', body: JSON.stringify({}) });
+  assert.equal(scan.status, 200);
+  assert.equal(scan.body.added, 2);
+  const plats = await json('/api/platforms');
+  const mine = plats.body.items.find((p) => p.slug === 'mysys');
+  assert.equal(mine.count, 2);
+});
