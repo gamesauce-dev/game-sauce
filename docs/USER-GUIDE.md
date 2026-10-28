@@ -60,8 +60,8 @@ Picking a platform shows its name above the tiles:
   Collections, Sources, Add ROMs and Emulators, then every platform with a count, grouped by
   family. Click a platform to filter; it stays selected when you refresh the page.
 - **Home page rows:** **Continue playing** (games *you* played in the browser, newest first) and
-  **Recently added**. They appear when no filters are active, each in its own neon box: the last
-  6 games you played and the 9 newest additions, on one line with no scroll bar. The boxes sit side by
+  **Recently added**. They appear when no filters are active, each in its own neon box: your
+  recent games and the newest additions, as many as fit on one line, with no scroll bar. The boxes sit side by
   side on wide screens and stack on narrower ones, with a white divider before the main grid. Click a
   box's heading (▾) to collapse it; the choice is remembered in your browser. On short windows (under
   about 860px high) they start collapsed so the grid keeps its room.
@@ -243,6 +243,7 @@ Click **⚙** under the logo. Members see **Change password** and **Active sessi
 | Activity log | Who did what, with filters |
 | DAT files | Import DATs and MAME name lists; have/want reports |
 | Backups | Download, schedule and restore backups |
+| Health | Is everything OK? Disk space, database, source folders, last backup, metadata providers. **Copy report** gives a plain-text summary with no passwords, keys or folder paths, handy for bug reports |
 
 Only one tile's panel is open at a time.
 

@@ -380,7 +380,7 @@ function cardHtml(rom) {
   // Only real files get an <img>. A failed load leaves the initials fallback
   // underneath rather than an empty box.
   const cover = rom.cover_url
-    ? `<img loading="lazy" src="${esc(rom.cover_url)}" alt="" onerror="this.style.display='none'" />`
+    ? `<img loading="lazy" src="${esc(rom.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />`
     : '';
   return `
     <div class="card" data-rom="${rom.id}" role="button" tabindex="0">
@@ -1131,7 +1131,7 @@ async function openDetail(id) {
   $('#drawer-body').innerHTML = `
     <div class="detail-cover" style="background:linear-gradient(160deg,${rom.platform_accent}22,#12141a)">
       <div class="card-fallback">${esc(initials)}</div>
-      ${rom.cover_url ? `<img src="${esc(rom.cover_url)}" alt="" onerror="this.style.display='none'" />` : ''}
+      ${rom.cover_url ? `<img src="${esc(rom.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
     </div>
 
     <div class="detail-head">
@@ -3021,7 +3021,8 @@ const SETTINGS_MODULES = [
   { id: 'db',        label: 'Database maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    ico: '📜', adminOnly: true },
   { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true },
-  { id: 'backup',    label: 'Backups',         ico: '🛟', adminOnly: true }
+  { id: 'backup',    label: 'Backups',         ico: '🛟', adminOnly: true },
+  { id: 'health',    label: 'Health',          ico: '🩺', adminOnly: true }
 ];
 
 
@@ -3197,9 +3198,49 @@ function showSettingsModule(id) {
   if (!panel) return;
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
+  if (id === 'health') loadHealth();
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
   panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
+
+let healthText = '';
+async function loadHealth() {
+  const overall = $('#health-overall'), checks = $('#health-checks'), sum = $('#health-summary');
+  overall.className = 'health-overall'; overall.textContent = 'Checking…'; checks.innerHTML = ''; sum.innerHTML = '';
+  try {
+    const h = await api('/admin/health');
+    healthText = h.diagnostics || '';
+    const words = { ok: 'Everything looks healthy', warn: 'Working, with things to look at', bad: 'Something needs attention' };
+    overall.className = 'health-overall ' + h.status;
+    overall.innerHTML = `<span class="dot"></span>${words[h.status] || h.status}`;
+    const s = h.summary || {};
+    const gb = (n) => (n >= 1073741824 ? (n / 1073741824).toFixed(1) + ' GB' : Math.round(n / 1048576) + ' MB');
+    const up = s.uptime_s >= 3600 ? Math.floor(s.uptime_s / 3600) + ' h ' + Math.floor((s.uptime_s % 3600) / 60) + ' min' : Math.floor(s.uptime_s / 60) + ' min';
+    sum.innerHTML = [
+      ['Version', s.version], ['Up for', up], ['ROMs', s.roms], ['With covers', s.with_covers],
+      ['Missing files', s.missing_files], ['Sources', s.sources], ['Users', s.users],
+      ['Imported storage', gb(s.storage_bytes || 0)], ['Memory', (s.memory_mb || 0) + ' MB'], ['Node', s.node]
+    ].map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(String(v ?? '–'))}</b></div>`).join('');
+    const icon = { ok: '✓', warn: '!', bad: '✕' };
+    const order = { bad: 0, warn: 1, ok: 2 };
+    checks.innerHTML = [...h.checks].sort((a, b) => order[a.status] - order[b.status]).map((c) => `
+      <div class="health-row ${c.status}">
+        <span class="health-ico">${icon[c.status]}</span>
+        <div><b>${esc(c.label)}</b><div class="sub">${esc(c.detail)}</div></div>
+      </div>`).join('');
+  } catch (err) {
+    overall.className = 'health-overall bad';
+    overall.textContent = 'Could not run the health check: ' + err.message;
+  }
+}
+document.addEventListener('click', async (e) => {
+  if (e.target.closest('#health-refresh')) loadHealth();
+  if (e.target.closest('#health-copy')) {
+    if (!healthText) return;
+    try { await navigator.clipboard.writeText(healthText); toast('Health report copied'); }
+    catch { toast('Could not copy automatically; select the text and copy it', true); }
+  }
+});
 
 function initPadLayoutPanel() {
   const sel = $('#pad-layout'); if (!sel) return;

@@ -128,7 +128,10 @@ the source or a build step. Create a folder with just a `docker-compose.yml` and
 
 Then `docker compose pull && docker compose up -d`. To update later, run the same two
 commands. Pin a version instead of `latest` (for example `:v0.1.1`) if you want updates to
-be deliberate. The image is built for `linux/amd64` (typical PCs, servers and Proxmox VMs).
+be deliberate. The image is multi-architecture: `linux/amd64` (typical PCs, servers and Proxmox VMs) and
+`linux/arm64` (Raspberry Pi 4/5, Apple-silicon and other ARM servers); Docker picks the right one
+automatically. The ARM build is produced by CI but has had little testing on real ARM hardware, so
+please report anything odd.
 
 #### Already have a Docker LXC or VM (arr-stack style)?
 
@@ -320,6 +323,8 @@ forwarding a port to the internet. It is not designed to be a public site.
 - [ ] Bind mounts to ROM folders use `:ro`
 - [ ] `data/` backups are private (they hold password/token hashes)
 - [ ] Non-admin users created per person (Settings → User accounts); never share the admin
+- [ ] Behind a reverse proxy: set `GAMESAUCE_TRUST_PROXY=1` (and `GAMESAUCE_ALLOWED_ORIGINS=https://your.address` if changes are refused with "Blocked: this request came from a different address")
+- [ ] Check **Settings → Health** after install and after changes: it flags a nearly full disk, an unplugged source folder, and missing or failed backups
 - [ ] Leave **Let members download ROM files** off unless you really want members to copy files
 - [ ] Forgotten password? Settings → User accounts → **Reset password** (the user is signed out everywhere)
 

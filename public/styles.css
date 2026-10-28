@@ -1036,3 +1036,24 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .policy-row { display: flex; gap: 0.7143rem; align-items: flex-start; margin: 0 0 0.8571rem; padding: 0.7143rem 0.8571rem; border: 1px solid var(--line-2); border-radius: 0.7143rem; background: var(--panel); cursor: pointer; }
 .policy-row input { margin-top: 0.2143rem; }
 .policy-row small { display: block; color: var(--dim); font-weight: 400; margin-top: 0.1429rem; line-height: 1.4; }
+
+/* health page */
+.health-top { display: flex; align-items: center; justify-content: space-between; gap: 0.8571rem; flex-wrap: wrap; margin-bottom: 0.8571rem; }
+.health-actions { display: flex; gap: 0.5714rem; }
+.health-overall { display: flex; align-items: center; gap: 0.5714rem; font-weight: 700; font-size: 1.1429rem; }
+.health-overall .dot { width: 0.8571rem; height: 0.8571rem; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0.7143rem #4ade80; }
+.health-overall.warn .dot { background: #fbbf24; box-shadow: 0 0 0.7143rem #fbbf24; }
+.health-overall.bad .dot { background: #f87171; box-shadow: 0 0 0.7143rem #f87171; }
+.health-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.5714rem; margin-bottom: 1rem; }
+.health-summary > div { background: var(--panel); border: 1px solid var(--line-2); border-radius: 0.5714rem; padding: 0.5rem 0.7143rem; }
+.health-summary span { display: block; color: var(--dim); font-size: 0.7857rem; text-transform: uppercase; letter-spacing: .05em; }
+.health-summary b { font-size: 0.9643rem; word-break: break-word; }
+.health-checks { display: grid; gap: 0.4286rem; }
+.health-row { display: flex; gap: 0.7143rem; align-items: flex-start; padding: 0.6429rem 0.8571rem; border: 1px solid var(--line-2); border-left-width: 3px; border-radius: 0.5714rem; background: var(--panel); }
+.health-row .sub { color: var(--muted); margin-top: 0.1429rem; line-height: 1.4; }
+.health-row.ok { border-left-color: #4ade80; } .health-row.warn { border-left-color: #fbbf24; } .health-row.bad { border-left-color: #f87171; }
+.health-ico { width: 1.4286rem; height: 1.4286rem; border-radius: 50%; display: grid; place-items: center; font-size: 0.8571rem; font-weight: 800; flex: 0 0 auto; color: #0b0b12; background: #4ade80; }
+.health-row.warn .health-ico { background: #fbbf24; } .health-row.bad .health-ico { background: #f87171; }
+
+/* once a real cover has loaded, the initials placeholder must not ghost through it */
+.card-fallback.has-cover { display: none; }

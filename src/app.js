@@ -15,6 +15,7 @@ import authRouter, {
   attachUser, requireAdmin, requireAuth, sessionCookie
 } from './routes/auth.js';
 import { audit, bootstrapAdmin, initAuthTables, purgeExpiredSessions } from './auth.js';
+import { originGuard, rateLimit } from './lib/guard.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
 // admin catalogue below needs extensions as an array and must be auditable,
@@ -59,6 +60,10 @@ export function createApp() {
 
   const api = express.Router();
 
+  // Cross-site request check, then per-user rate limits (see src/lib/guard.js).
+  api.use(originGuard({ trustProxy: process.env.GAMESAUCE_TRUST_PROXY === '1' }));
+  api.use(rateLimit());
+
   // Public: health and the auth surface. Everything else needs a session.
   api.get('/health', (req, res) => {
     const { roms } = db.prepare('SELECT COUNT(*) AS roms FROM roms').get();
@@ -67,6 +72,14 @@ export function createApp() {
   });
 
   api.use('/auth', authRouter);
+
+  // Admin health report (read-only): see src/lib/health.js.
+  api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {
+    const { collectHealth, collectSummary, diagnosticsText } = await import('./lib/health.js');
+    const report = collectHealth();
+    const summary = collectSummary();
+    res.json({ ...report, summary, diagnostics: diagnosticsText(report, summary), checked_at: new Date().toISOString() });
+  });
 
   api.use(requireAuth);
 

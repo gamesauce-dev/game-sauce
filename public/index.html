@@ -265,6 +265,19 @@
         <p class="hint" id="pad-layout-now" style="margin-top:8px"></p>
       </div>
 
+      <div class="panel hidden" id="mod-health">
+        <h3>Health <span class="pill warn admin-only">admin</span></h3>
+        <div class="health-top">
+          <div id="health-overall" class="health-overall"></div>
+          <div class="health-actions">
+            <button class="btn btn-sm" id="health-refresh">↻ Check again</button>
+            <button class="btn btn-sm" id="health-copy" title="Copy a plain-text report with no passwords, keys or folder paths, handy for bug reports">⧉ Copy report</button>
+          </div>
+        </div>
+        <div id="health-summary" class="health-summary"></div>
+        <div id="health-checks" class="health-checks"></div>
+      </div>
+
       <div class="panel hidden" id="mod-sessions">
         <h3>Active sessions</h3>
         <div id="session-list" class="counts"></div>

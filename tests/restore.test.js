@@ -13,6 +13,7 @@ const DATA = path.join(TMP, 'data');
 const STORAGE = path.join(TMP, 'storage');
 process.env.GAMESAUCE_DATA_DIR = DATA;
 process.env.GAMESAUCE_STORAGE_DIR = STORAGE;
+process.env.GAMESAUCE_RATE_LIMIT_HEAVY = '0'; // these tests make many restore calls in a second
 process.env.GAMESAUCE_ADMIN_USER = 'rsadmin';
 process.env.GAMESAUCE_ADMIN_PASSWORD = 'rs-admin-password-1';
 process.env.GAMESAUCE_BACKUP_DIR = path.join(TMP, 'backups');

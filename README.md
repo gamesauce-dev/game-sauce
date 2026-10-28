@@ -11,7 +11,7 @@ Express + SQLite on the server, a single static page on the client, no build ste
 
 ![The Library](docs/screenshots/library.png)
 
-**Guides:** [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md)
+**Guides:** [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 ## What it does
 
@@ -25,6 +25,8 @@ Express + SQLite on the server, a single static page on the client, no build ste
   avoids wrong covers.
 - **Verifies dumps** against No-Intro / Redump DATs and shows have/want reports.
 - **Collections, favourites, hidden games, users and roles, an activity log.**
+- **Runs on PCs and ARM:** the Docker image is published for amd64 and arm64 (Raspberry Pi 4/5, ARM servers).
+- **Health page** (Settings → Health): disk space, database, source reachability, last backup, providers, plus a copy-and-paste report with no secrets for bug reports.
 - **One-command Proxmox install:** a single line on the node creates a ready-to-use LXC (no Docker), or use the
   Docker image on any other machine. See [Deployment](#deployment).
 - **Backups and restore** built in: download them or schedule them to a folder, and restore from
@@ -521,7 +523,9 @@ Notes:
 | `GAMESAUCE_MAX_STATES` | save states kept per user per game (default 10) |
 | `GAMESAUCE_MAME_PLAY_MAX_YEAR` | MAME games newer than this get no browser Play button (default 1990; `9999` turns the cut-off off) |
 | `GAMESAUCE_COOKIE_SECURE=1` | Secure cookies (only with HTTPS) |
-| `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` behind a reverse proxy |
+| `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` / `X-Forwarded-Host` behind a reverse proxy |
+| `GAMESAUCE_ALLOWED_ORIGINS` | extra web addresses allowed to make changes (comma separated), e.g. `https://games.example.org`, if a proxy hides the real host |
+| `GAMESAUCE_RATE_LIMIT` | requests per minute per user (default 900; `0` turns rate limiting off). Heavier actions (metadata lookups, downloads, uploads, backup/restore) have tighter caps scaled from it; override with `GAMESAUCE_RATE_LIMIT_METADATA`, `_DOWNLOAD`, `_UPLOAD`, `_HEAVY` |
 | `GAMESAUCE_BACKUP_DIR` | default folder for server-side backups (default `data/backups`; can also be set in Settings → Backups) |
 | `GAMESAUCE_SESSION_HOURS` | lifetime of a "keep me signed in" session (default 336 = 14 days) |
 | `GAMESAUCE_SHORT_SESSION_HOURS` | lifetime of a browser-only session, when the box is unticked (default 12) |
@@ -563,6 +567,7 @@ sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI ru
 ## Notes and limits
 
 - Auth covers the API, but there is no TLS here: put it behind a reverse proxy for HTTPS.
+- Requests that change data are refused when they come from another website (CSRF check), and each user is rate limited (see the environment table).
 - No self-service signup, password-reset email or 2FA. An admin can set a new password for any user
   (**Settings → User accounts → Reset password**).
 - Members cannot download ROM files unless an admin allows it (`PUT /api/auth/policy`). Admins always can.
@@ -620,6 +625,7 @@ GET    /api/auth/users              admin
 POST   /api/auth/users              admin  { username, password, role }
 PATCH  /api/auth/users/:id          admin  { disabled?, role?, display_name? }
 POST   /api/auth/users/:id/password admin  { password }  (signs the user out everywhere, clears a lockout)
+GET    /api/admin/health            admin  (status, summary, shareable diagnostics text)
 GET    /api/auth/policy             any signed-in user
 PUT    /api/auth/policy             admin  { members_can_download: true|false }
 DELETE /api/auth/users/:id          admin
