@@ -309,10 +309,10 @@ What you need on the target machine, and nothing else:
 1. **Docker.** Windows/macOS: install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
    and start it. Linux: Docker Engine + the Compose plugin
    (`docker compose version` should print a version).
-   > Proxmox note: your error log shows `Linux 7.0.14-25-pve`, i.e. you're building
-   > **inside an LXC container or directly on the PVE host**. Docker needs cgroup
-   > support — an unprivileged LXC with nesting/keyctl off will fail in odd ways.
-   > Prefer a full VM for Docker, or enable nesting + keyctl for the container.
+   > Proxmox: run Docker inside a small Debian/Ubuntu **VM**, not on the PVE host itself.
+   > Inside an LXC container Docker also works, but only with *nesting* (and usually
+   > *keyctl*) enabled; an unprivileged LXC without them fails in odd ways.
+   > See [Deployment → Proxmox](docs/DEPLOYMENT.md#35a-running-on-proxmox).
 2. **This project folder** copied over (USB stick, network share, `git clone`, `scp -r`, …).
    It must contain: `Dockerfile`, `docker-compose.yml`, `env.example`, `package.json`,
    `package-lock.json`, `src/`, `public/`, `scripts/`. (`node_modules/`, `data/`, `storage/`,

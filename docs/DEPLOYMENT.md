@@ -116,6 +116,21 @@ Then `docker compose up -d` and in the UI: **Sources → Add folder → Browse**
 `/roms/...`. The `:ro` suffix means the container physically cannot modify your
 files even if asked to.
 
+### 3.5a Running on Proxmox
+
+- **Use a VM (simplest).** A small Debian or Ubuntu VM with Docker Engine behaves like any
+  Linux server, so every step above works unchanged. Avoid installing Docker on the Proxmox
+  host itself.
+- **LXC works with options.** In the container's *Options → Features*, enable **nesting**
+  (and **keyctl**). Without them Docker commonly fails with cgroup or permission errors.
+  Unprivileged LXCs are the most fragile; a privileged one is easier but less isolated.
+- **ROM folders.** The guest can only mount paths it can see. Share the ROM folder into the
+  VM or container (NFS/SMB mount, or a Proxmox bind mount for LXC), then map that path in the
+  `volumes:` block of `docker-compose.yml` as read-only (see 3.4).
+- **Persistence.** Keep the `gs-data` and `gs-storage` Docker volumes (or the folders you
+  bind-mount in their place) inside the guest's backed-up disk — they hold the database and
+  imported files.
+
 ### 3.5 Updating later
 
 ```bash
