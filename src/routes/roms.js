@@ -33,7 +33,7 @@ const ROM_COLUMNS = `
   r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
   r.release_year, r.developer, r.publisher, r.genre, r.players, r.rating,
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
-  r.meta_source, r.meta_synced_at, r.favorite, r.play_count, r.play_override,
+  r.meta_source, r.meta_synced_at, r.favorite, r.play_count, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
   r.dat_status, r.dat_title, r.hidden,
   r.created_at, r.updated_at,
@@ -150,10 +150,12 @@ function romById(id) {
  * the same columns in the same way.
  */
 export async function applyMetadataRecord(id, meta) {
-  const rom = db.prepare('SELECT sha1 FROM roms WHERE id = ?').get(id);
+  const rom = db.prepare('SELECT sha1, cover_path, cover_locked FROM roms WHERE id = ?').get(id);
   if (!rom) throw Object.assign(new Error('ROM not found'), { status: 404 });
 
-  const { coverPath, mediaJson } = await applyProviderMedia(meta, rom.sha1);
+  let { coverPath, mediaJson } = await applyProviderMedia(meta, rom.sha1);
+  // A cover the user uploaded themselves is never replaced by a provider's.
+  if (rom.cover_locked && rom.cover_path) coverPath = rom.cover_path;
   db.prepare(`
     UPDATE roms SET
       title = COALESCE(?, title),
@@ -964,7 +966,7 @@ router.post('/clear-covers', requireAdmin, (req, res) => {
   const slug = String(req.body?.platform || req.query.platform || '');
   const plat = db.prepare('SELECT id FROM platforms WHERE slug = ?').get(slug);
   if (!plat) return res.status(400).json({ error: 'Unknown platform' });
-  const rows = db.prepare("SELECT id, cover_path FROM roms WHERE platform_id = ? AND (cover_path IS NOT NULL OR cover_url IS NOT NULL OR provider_media IS NOT NULL)").all(plat.id);
+  const rows = db.prepare("SELECT id, cover_path FROM roms WHERE platform_id = ? AND cover_locked = 0 AND (cover_path IS NOT NULL OR cover_url IS NOT NULL OR provider_media IS NOT NULL)").all(plat.id);
   if (req.body?.dry_run !== false && req.query.dry_run !== '0') return res.json({ platform: slug, would_clear: rows.length });
   const upd = db.prepare("UPDATE roms SET cover_path = NULL, cover_url = NULL, provider_media = NULL, updated_at = datetime('now') WHERE id = ?");
   db.transaction(() => { for (const r of rows) upd.run(r.id); })();
@@ -1010,16 +1012,39 @@ router.delete('/', requireAdmin, (req, res) => {
 
 const coverUpload = multer({ limits: { fileSize: 8 * 1024 * 1024 } });
 
+/** Identify an image by its first bytes. The browser's claimed type and the file name
+ *  are not trusted: a renamed text/HTML/SVG file must never be stored as a cover. */
+export function sniffImage(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 12) return null;
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+  if (buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+  return null; // GIF and SVG are deliberately not accepted (SVG can carry scripts)
+}
+
 router.post('/:id/cover', coverUpload.single('cover'), (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+  const type = sniffImage(req.file.buffer);
+  if (!type) return res.status(400).json({ error: 'That file is not a JPEG, PNG or WebP image' });
 
   if (rom.cover_path) removeCoverFile(rom.cover_path);
-  const coverPath = saveCover(req.file.buffer, rom.sha1, req.file.mimetype);
-  db.prepare("UPDATE roms SET cover_path = ?, updated_at = datetime('now') WHERE id = ?")
+  // Own file name per ROM id (not the ROM's SHA1): provider covers are named by hash/URL,
+  // and a custom cover must never share a file with, or be deleted by, another game.
+  const coverPath = saveCover(req.file.buffer, `custom-${rom.id}-${Date.now()}`, type);
+  db.prepare("UPDATE roms SET cover_path = ?, cover_locked = 1, updated_at = datetime('now') WHERE id = ?")
     .run(coverPath, rom.id);
 
+  res.json(romById(rom.id));
+});
+
+// Go back to automatic covers: forget the custom image and unlock the cover.
+router.delete('/:id/cover', (req, res) => {
+  const rom = db.prepare('SELECT id, cover_path, cover_locked FROM roms WHERE id = ?').get(req.params.id);
+  if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  if (rom.cover_locked && rom.cover_path) removeCoverFile(rom.cover_path);
+  db.prepare("UPDATE roms SET cover_path = NULL, cover_url = NULL, cover_locked = 0, updated_at = datetime('now') WHERE id = ?").run(rom.id);
   res.json(romById(rom.id));
 });
 

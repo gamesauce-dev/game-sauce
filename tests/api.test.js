@@ -287,7 +287,7 @@ test('bulk delete removes several catalogue rows plus their tags, collections an
       body: JSON.stringify({ rom_ids: [a.id, b.id] })
     });
   });
-  const coverBlob = new Blob(['fakepng'], { type: 'image/png' });
+  const coverBlob = new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')], { type: 'image/png' });
   const coverFd = new FormData();
   coverFd.append('cover', coverBlob, 'cover.png');
   await fetch(`${base}/api/roms/${a.id}/cover`, { method: 'POST', headers: authHeaders(), body: coverFd });

@@ -260,3 +260,8 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '10') ON CON
 const romColsV11 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
 if (!romColsV11.has('play_override')) db.exec('ALTER TABLE roms ADD COLUMN play_override INTEGER');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '11') ON CONFLICT(key) DO UPDATE SET value = '11'").run();
+
+/* ── v12: cover_locked — set when a person uploads their own cover; provider refreshes keep it. */
+const romColsV12 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
+if (!romColsV12.has('cover_locked')) db.exec('ALTER TABLE roms ADD COLUMN cover_locked INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '12') ON CONFLICT(key) DO UPDATE SET value = '12'").run();

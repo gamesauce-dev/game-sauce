@@ -1040,6 +1040,9 @@ async function openDetail(id) {
       ${rom.play_capable ? `<button class="btn" data-act="playtoggle" title="Show or hide the Play in browser button for this game only${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}">${rom.playable ? '▶ Browser play: on' : '▷ Browser play: off'}${rom.play_override !== null && rom.play_override !== undefined ? ' •' : ''}</button>` : ''}
       <button class="btn" data-act="hide">${rom.hidden ? '◉ Unhide' : '◌ Hide'}</button>
       <button class="btn" data-act="refresh" title="Re-run metadata lookup">↻ Refresh metadata</button>
+      <button class="btn" data-act="cover-upload" title="Use your own image as this game's cover (JPEG, PNG or WebP, up to 8 MB)">🖼 ${rom.cover_locked ? 'Change cover' : 'Upload cover'}</button>
+      ${rom.cover_locked ? '<button class="btn" data-act="cover-reset" title="Remove your cover and go back to automatic covers">↺ Auto cover</button>' : ''}
+      <input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
       <button class="btn btn-danger btn-sm" data-act="delete">Delete</button>
     </div>
 
@@ -1147,6 +1150,33 @@ async function openDetail(id) {
     closeDrawer();
     await loadLibrary();
     loadPlatforms();
+  });
+
+  $('[data-act="cover-upload"]', drawer)?.addEventListener('click', () => $('#cover-file', drawer).click());
+  $('#cover-file', drawer)?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) return toast('That image is over 8 MB', true);
+    const fd = new FormData(); fd.append('cover', file);
+    try {
+      const res = await fetch(`/api/roms/${id}/cover`, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('gamesauce_token') || ''}` }, body: fd
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      toast('Cover updated');
+      await loadLibrary();
+      openDetail(id);
+    } catch (err) { toast(err.message, true); }
+  });
+  $('[data-act="cover-reset"]', drawer)?.addEventListener('click', async () => {
+    try {
+      await api(`/roms/${id}/cover`, { method: 'DELETE' });
+      toast('Back to automatic covers. Use Refresh metadata to fetch one.');
+      await loadLibrary();
+      openDetail(id);
+    } catch (err) { toast(err.message, true); }
   });
 
   $('[data-act="refresh"]', drawer).addEventListener('click', async (e) => {
