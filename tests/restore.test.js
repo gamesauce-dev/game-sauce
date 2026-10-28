@@ -206,3 +206,29 @@ test('end to end: restore through the API, restart the server, the old data is b
   assert.ok(fs.readdirSync(path.join(e2e, 'backups')).length >= 1, 'a safety backup was written to the backup folder');
   assert.ok(sql((d) => d.prepare('SELECT COUNT(*) n FROM sessions').get().n) <= 1, 'old sessions were not resurrected');
 });
+
+test('restore straight from a backup in the server folder (no download / upload)', async () => {
+  const saved = await jcall('/api/backup/run', { method: 'POST', body: {} });
+  assert.equal(saved.status, 201);
+  const name = saved.body.name;
+  addRom('Added After Server Backup', 'rs-srv'); // not in the backup
+
+  const r = await jcall('/api/backup/restore/inspect-server', { method: 'POST', body: { name } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.source_name, name);
+  assert.ok(r.body.counts.roms < r.body.current_counts.roms, 'counts come from the backup, not the live data');
+  assert.ok(r.body.token);
+
+  // Names are validated: nothing outside the backup folder can be staged.
+  for (const bad of ['../../etc/passwd', '..\\..\\x', 'precious.txt', '', 'game-sauce-backup-1.tar.gz']) {
+    const res = await jcall('/api/backup/restore/inspect-server', { method: 'POST', body: { name: bad } });
+    assert.ok([400, 404].includes(res.status), `refused: ${JSON.stringify(bad)} -> ${res.status}`);
+  }
+  // Admin only.
+  await jcall('/api/auth/users', { method: 'POST', body: { username: 'rsbob2', password: 'bob-password-12345', role: 'user' } });
+  const t2 = (await (await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'rsbob2', password: 'bob-password-12345' }) })).json()).token;
+  const forbidden = await fetch(`${base}/api/backup/restore/inspect-server`, { method: 'POST', headers: { Authorization: `Bearer ${t2}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+  assert.equal(forbidden.status, 403);
+
+  await jcall('/api/backup/restore/cancel', { method: 'POST', body: {} });
+});

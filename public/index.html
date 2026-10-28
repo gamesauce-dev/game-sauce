@@ -99,6 +99,13 @@
           <span class="search-ico">⌕</span>
           <input id="search" class="search" type="search" placeholder="Search titles, developers, genres…" autocomplete="off" />
         </div>
+        <div class="filter-toggles">
+          <button class="toggle-pill" data-toggle="favorite" title="Show favourites only">★ Favourites</button>
+          <button class="toggle-pill" data-toggle="hidden" title="Show hidden ROMs only">◌ Hidden</button>
+          <button class="toggle-pill" data-toggle="orphan" title="Show only ROMs with no valid source (leftovers)">⛁ Orphans</button>
+          <button class="toggle-pill" data-toggle="unmatched" title="Show only ROMs no provider has ever matched — the manual-identify worklist">○ Needs match</button>
+          <button class="toggle-pill" data-action="select" id="select-toggle" title="Select tiles to delete several at once">☐ Select</button>
+          </div>
         <div class="toolbar-right">
           <select id="sort" class="select" title="Sort">
             <option value="title">Title A–Z</option>
@@ -123,28 +130,23 @@
 
       <div id="lib-overview" class="overview hidden"></div>
 
-      <div id="lib-played-wrap" class="hidden">
-        <div class="recent-head">
-          <span class="section-label" style="margin:0">Continue playing</span>
-        </div>
+      <div class="strips">
+      <div id="lib-played-wrap" class="strip hidden" data-strip="played">
+        <button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row">
+          <span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span>
+        </button>
         <div id="played-row" class="recent-row"></div>
       </div>
 
-      <div id="lib-recent-wrap" class="hidden">
-        <div class="recent-head">
-          <span class="section-label" style="margin:0">Recently added</span>
-        </div>
+      <div id="lib-recent-wrap" class="strip hidden" data-strip="recent">
+        <button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row">
+          <span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span>
+        </button>
         <div id="recent-row" class="recent-row"></div>
+      </div>
       </div>
 
     <div class="filter-row">
-    <div class="filter-toggles">
-          <button class="toggle-pill" data-toggle="favorite" title="Show favourites only">★ Favourites</button>
-          <button class="toggle-pill" data-toggle="hidden" title="Show hidden ROMs only">◌ Hidden</button>
-          <button class="toggle-pill" data-toggle="orphan" title="Show only ROMs with no valid source (leftovers)">⛁ Orphans</button>
-          <button class="toggle-pill" data-toggle="unmatched" title="Show only ROMs no provider has ever matched — the manual-identify worklist">○ Needs match</button>
-          <button class="toggle-pill" data-action="select" id="select-toggle" title="Select tiles to delete several at once">☐ Select</button>
-        </div>
         <div class="bulk-bar hidden" id="bulk-bar">
           <span id="bulk-count">0 selected</span>
           <button class="btn btn-sm" id="bulk-selectall" title="Select every ROM matching the current filters, including ones not scrolled into view yet">Select all</button>
@@ -157,6 +159,7 @@
         <div class="count" id="result-count"></div>
       </div>
 
+      <div id="lib-heading" class="lib-heading hidden"></div>
       <div id="grid" class="grid"></div>
       <div id="empty" class="empty hidden">
         <div class="empty-ico">🕹</div>

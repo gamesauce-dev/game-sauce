@@ -55,9 +55,14 @@ delete-from-disk. Imported copies in `storage/roms` are removed together with th
   Collections, Sources, Add ROMs and Emulators, then every platform with a count, grouped by
   family. Click a platform to filter; it stays selected when you refresh the page.
 - **Home page rows:** **Continue playing** (games *you* played in the browser, newest first) and
-  **Recently added**. They appear when no filters are active.
+  **Recently added**. They appear when no filters are active, sit side by side on wide screens, and
+  are small so the main grid keeps its room. Click a row's heading (▾) to collapse it; the choice is
+  remembered in your browser.
 - **Search** matches title, developer, publisher and genre. The **★ Favourites**, **○ Hidden**,
-  **⛁ Orphans** and **○ Needs match** pills filter the grid. **☐ Select** turns on multi-select.
+  **⛁ Orphans**, **○ Needs match** and **☐ Select** pills sit on the same line as the search box and
+  filter the grid. **☐ Select** turns on multi-select.
+- **Choosing a platform** in the sidebar shows its full name as a heading above the tiles, with
+  **✕ All platforms** to go back.
 - **Selecting:** **Select all** selects every game matching the current filters (not only the tiles
   on screen). Then add them to a collection or delete them. Check the count before you delete.
 - **Tiles** show the cover (or initials), a platform badge and a ▶ button on playable games.
@@ -243,7 +248,8 @@ Only one tile's panel is open at a time.
 ![Backups](screenshots/backups.png)
 
 - **Download a backup now** gives you one `.tar.gz`. **Save one to the server folder now** writes
-  it to the server instead.
+  it to the server instead. Every backup kept on the server has **Download**, **Restore…** and
+  **Delete** buttons.
 - **Scheduled backups:** off, every 6 or 12 hours, daily or weekly. Choose how many to keep and the
   folder on the server. Point the folder at a network share or a second disk so a backup survives
   the machine itself.
@@ -255,8 +261,9 @@ Only one tile's panel is open at a time.
 
 **Restoring:**
 
-1. Choose the backup file and click **Check this backup**. The app unpacks it and shows what is
-   inside beside what is on the server now, plus any warnings. **Nothing changes yet.**
+1. Either click **Restore…** on a backup in the server list, or choose a backup file from your
+   computer and click **Check this backup**. The app unpacks it and shows what is inside beside what
+   is on the server now, plus any warnings. **Nothing changes yet.**
 2. Type `RESTORE` and confirm.
 3. A safety backup of the current data is saved first. The server then restarts and swaps the data
    in, and everyone signs in again.
@@ -296,7 +303,8 @@ Plug in or pair a gamepad and press any button. A legend appears at the bottom o
 | **LB / RB** | Previous / next game in the open panel; otherwise previous / next section |
 
 While a game is running in the player the controller belongs to the game and the interface ignores
-it. Moving the mouse or pressing a key hides the legend. The sign-in screen is not controller-driven.
+it, with one exception: **hold Select + Start for about a second** to close the game. A progress bar
+shows while you hold, and no other button is intercepted, so the game never loses a press. Moving the mouse or pressing a key hides the legend. The sign-in screen is not controller-driven.
 
 ---
 

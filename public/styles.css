@@ -941,3 +941,54 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
   border: 3px solid #22d3ee; box-shadow: 0 0 1.4286rem rgba(34, 211, 238, .6), inset 0 0 0.7143rem rgba(34, 211, 238, .25);
 }
 .card { position: relative; }
+
+/* Hold Select + Start to close a running game: shown over the player while the combo is held. */
+#gp-exit {
+  position: fixed; left: 50%; top: 1.4286rem; transform: translate(-50%, -160%); z-index: 500;
+  min-width: 18rem; padding: 0.7143rem 1.1429rem 0.9286rem; border-radius: 0.8571rem; text-align: center;
+  background: rgba(10, 8, 24, .95); border: 1px solid rgba(255, 61, 168, .7); color: #e2e8f0; font-size: 0.9286rem;
+  box-shadow: 0 0 1.4286rem rgba(255, 61, 168, .4); transition: transform .15s ease; pointer-events: none;
+}
+#gp-exit.on { transform: translate(-50%, 0); }
+#gp-exit b { color: #fff; }
+#gp-exit i { position: absolute; left: 0.8571rem; bottom: 0.5rem; height: 0.3571rem; border-radius: 999px; background: linear-gradient(90deg, #7c5cff, #ff3da8); max-width: calc(100% - 1.7143rem); }
+
+/* ───────── home-page rows: compact and collapsible, so the main grid keeps its room ───────── */
+.strip { margin: 0 0 0.5714rem; flex: 0 0 auto; }
+.strip-head {
+  display: flex; align-items: center; gap: 0.4286rem; background: none; border: 0; padding: 0.2143rem 0.2857rem;
+  margin: 0 0 0.2857rem -0.2857rem; cursor: pointer; color: var(--muted); border-radius: 0.4286rem;
+}
+.strip-head:hover { background: var(--panel); color: var(--text); }
+.strip-caret { display: inline-block; font-size: 0.9286rem; transition: transform .15s; width: 1rem; text-align: center; }
+.strip.collapsed .strip-caret { transform: rotate(-90deg); }
+.strip.collapsed .recent-row { display: none; }
+.strip .recent-row { grid-auto-columns: 5.4286rem; gap: 0.5714rem; padding-bottom: 0.2857rem; }
+.strip .recent-row .card { gap: 0.2857rem; }
+.strip .recent-row .card-title { font-size: 0.75rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.strip .recent-row .card-sub { display: none; }
+.strip .recent-row .card-badge { font-size: 0.5714rem; padding: 0.1071rem 0.2857rem; top: 0.3571rem; left: 0.3571rem; }
+.strip .recent-row .card-play, .strip .recent-row .card-fav, .strip .recent-row .card-hide { display: none; }
+.strip .recent-row .card-playbtn { width: 2.2857rem; height: 2.2857rem; font-size: 0.9286rem; }
+.strip .recent-row .badge-dat { display: none; }
+.strip .recent-row::-webkit-scrollbar { height: 0.4286rem; }
+.strip .recent-row::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 0.2143rem; }
+
+/* Side by side on wide windows (each takes half; a lone visible row takes the full width),
+   stacked on narrow ones. Halves the height the two rows cost the main grid. */
+.strips { flex: 0 0 auto; display: block; }
+@media (min-width: 1400px) {
+  .strips { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0 1.7143rem; }
+  .strips .strip { min-width: 0; }
+}
+
+/* ───────── search + filter pills on one line; platform heading above the tiles ───────── */
+.toolbar { flex-wrap: wrap; row-gap: 0.5714rem; }
+.toolbar .search-wrap { flex: 1 1 14rem; max-width: 26rem; min-width: 12rem; }
+.toolbar .filter-toggles { flex: 0 1 auto; flex-wrap: wrap; align-items: center; }
+.toolbar .toggle-pill { padding: 0.4286rem 0.8571rem; }
+.lib-heading { display: flex; align-items: center; gap: 0.7143rem; margin: 0 0 0.7143rem; flex: 0 0 auto; }
+.lib-heading .lib-dot { width: 0.7857rem; height: 0.7857rem; border-radius: 50%; flex: 0 0 auto; }
+.lib-heading h2 { margin: 0; font-size: 1.3571rem; font-weight: 700; letter-spacing: -.2px; }
+.lib-heading .lib-sub { color: var(--dim); font-size: 0.9286rem; }
+.lib-heading .lib-clear { margin-left: auto; }

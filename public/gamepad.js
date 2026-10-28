@@ -7,15 +7,20 @@
  *   Y                     jump to the search box
  *   LB / RB               previous / next game in the open game panel, otherwise previous / next section
  *
+ *   Select + Start (hold ~1 s)   while a game is running: close the player. Nothing else is
+ *                                intercepted then, so the game gets every other button.
+ *
  * It only listens while a controller is connected, ignores input while a game is running in
- * the player (the pad belongs to the game then), and pauses when the tab is hidden.
+ * the player (the pad belongs to the game then, apart from that one exit combo), and pauses
+ * when the tab is hidden.
  * Window-level, no dependencies. Move/activate logic is exposed as window.gamepadNav for tests.
  */
 (function () {
   'use strict';
   if (!navigator.getGamepads) return;
 
-  const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+  const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, SELECT: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+  const EXIT_HOLD = 1000;     // ms Select + Start must be held to close a running game
   const STICK = 0.6;          // dead-zone before the stick counts as a press
   const FIRST_REPEAT = 380;   // ms before a held direction starts repeating
   const REPEAT = 130;         // ms between repeats
@@ -27,6 +32,8 @@
   let heldSince = {}, lastRepeat = {};
   let lastAppFocus = null;
   let legend = null;
+  let exitHeldSince = 0;
+  let exitBar = null;
 
   const $ = (s, r = document) => r.querySelector(s);
   const hiddenAncestor = (el) => !!el.closest('.hidden, [hidden]');
@@ -177,6 +184,25 @@
     if (s && visible(s)) { s.focus(); s.select?.(); }
   }
 
+  /* ── leaving a running game ── */
+  function closeRunningGame() {
+    const btn = $('#player-close');
+    if (btn) btn.click();
+    // Back to the interface: put the focus on the game that was just played.
+    setTimeout(() => { const r = currentRoot(); if (r) ensureFocusIn(r); }, 400);
+  }
+  function showExitHint(fraction) {
+    if (!exitBar) {
+      exitBar = document.createElement('div');
+      exitBar.id = 'gp-exit';
+      exitBar.setAttribute('aria-hidden', 'true');
+      exitBar.innerHTML = '<span>Hold <b>Select + Start</b> to close the game</span><i></i>';
+      document.body.appendChild(exitBar);
+    }
+    exitBar.classList.toggle('on', fraction > 0);
+    exitBar.querySelector('i').style.width = Math.round(fraction * 100) + '%';
+  }
+
   /* ── input loop ── */
   function showLegend(on) {
     if (!legend) {
@@ -217,6 +243,19 @@
     const b = p.buttons || [];
     const down = (i) => !!(b[i] && (b[i].pressed || b[i].value > 0.5));
     const edge = (i) => down(i) && !prev.buttons[i];
+
+    // A game is running: the pad is the game's. The only thing we watch for is the exit combo.
+    const playerOpen = !!$('#player-scrim') && !$('#player-scrim').classList.contains('hidden');
+    if (playerOpen) {
+      if (down(BTN.SELECT) && down(BTN.START)) {
+        if (!exitHeldSince) exitHeldSince = now;
+        showExitHint(Math.min(1, (now - exitHeldSince) / EXIT_HOLD));
+        if (now - exitHeldSince >= EXIT_HOLD) { exitHeldSince = 0; showExitHint(0); closeRunningGame(); }
+      } else if (exitHeldSince) { exitHeldSince = 0; showExitHint(0); }
+      prev = { buttons: Array.from({ length: Math.max(b.length, 16) }, (_, i) => down(i)), dirs: dirsOf(p) };
+      return;
+    }
+    if (exitHeldSince) { exitHeldSince = 0; showExitHint(0); }
 
     let any = false;
     const d = dirsOf(p);

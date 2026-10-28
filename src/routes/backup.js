@@ -75,6 +75,17 @@ router.get('/restore/status', (req, res) => {
 });
 
 // Step 1: upload and CHECK a backup. Changes nothing; returns what is inside it.
+// Same check, for a backup already in the server's backup folder (no download/upload round trip).
+// The name is validated and resolved inside the backup folder only.
+router.post('/restore/inspect-server', async (req, res, next) => {
+  try {
+    const name = String(req.body?.name || '');
+    const file = backupPath(name);
+    if (!file) return res.status(404).json({ error: 'Backup not found in the server folder' });
+    res.json({ ...(await stageRestore(file)), source_name: name });
+  } catch (err) { next(err); }
+});
+
 router.post('/restore/inspect', restoreUpload.single('backup'), async (req, res, next) => {
   const file = req.file?.path;
   try {

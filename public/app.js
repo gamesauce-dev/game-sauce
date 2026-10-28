@@ -210,6 +210,8 @@ document.addEventListener('click', (e) => {
 
 async function loadPlatforms() {
   const [{ items }, stats] = await Promise.all([api('/platforms'), api('/stats')]);
+  window.__platformsCache = items; // names and colours for the heading above the tiles
+  renderLibHeading();
   const list = $('#platform-list');
   const total = stats.library.roms || 0;
 
@@ -290,9 +292,24 @@ async function loadPlatforms() {
 
 /* ─────────────────────────── library ─────────────────────────── */
 
+/** "Nintendo Entertainment System" heading above the tiles when one platform is selected. */
+function renderLibHeading() {
+  const box = $('#lib-heading');
+  if (!box) return;
+  if (state.platform === 'all' || state.orphan || state.unmatched) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const p = (window.__platformsCache || []).find((x) => x.slug === state.platform);
+  const name = p ? p.name : state.platform;
+  box.classList.remove('hidden');
+  box.innerHTML = `
+    <span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>
+    <h2>${esc(name)}</h2>
+    <button class="btn btn-sm btn-ghost lib-clear" id="lib-clear-platform" title="Show every platform again">✕ All platforms</button>`;
+  $('#lib-clear-platform').onclick = () => { state.platform = 'all'; loadPlatforms(); loadLibrary(); };
+}
+
 function activeFilterChips() {
+  renderLibHeading();
   const chips = [];
-  if (state.platform !== 'all') chips.push({ label: `Platform: ${state.platform}`, clear: () => { state.platform = 'all'; } });
   if (state.tag) chips.push({ label: `Tag: ${state.tag}`, clear: () => { state.tag = null; } });
   if (state.genre) chips.push({ label: `Genre: ${state.genre}`, clear: () => { state.genre = null; } });
   if (state.favorite) chips.push({ label: 'Favorites only', clear: () => { state.favorite = false; } });
@@ -551,6 +568,28 @@ async function renderOverview() {
   }
 }
 
+/* Collapsible home rows. The open/closed choice is remembered per browser. */
+const STRIP_KEY = 'gamesauce_strips';
+function stripState() { try { return JSON.parse(localStorage.getItem(STRIP_KEY) || '{}'); } catch { return {}; } }
+function applyStrips() {
+  const st = stripState();
+  $$('.strip').forEach((el) => {
+    const closed = st[el.dataset.strip] === 'closed';
+    el.classList.toggle('collapsed', closed);
+    $('[data-strip-toggle]', el)?.setAttribute('aria-expanded', closed ? 'false' : 'true');
+  });
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-strip-toggle]');
+  if (!b) return;
+  const st = stripState();
+  const key = b.dataset.stripToggle;
+  st[key] = st[key] === 'closed' ? 'open' : 'closed';
+  try { localStorage.setItem(STRIP_KEY, JSON.stringify(st)); } catch { /* private mode: still toggles for this page */ }
+  applyStrips();
+});
+applyStrips();
+
 /** "Continue playing": this user's recently played games, newest first. */
 async function renderPlayedRow() {
   const wrap = $('#lib-played-wrap');
@@ -709,7 +748,7 @@ async function openPlayer(rom) {
   const hint = $('#player-hint');
   if (hint) {
     hint.dataset.base ??= hint.innerHTML;
-    hint.innerHTML = (rom.platform === 'mame' ? '<b>Best effort:</b> browser MAME uses an old core, so some games may not start (a RetroArch menu appears instead) — use desktop MAME for those. ' : '') + hint.dataset.base;
+    hint.innerHTML = '<b>Controller:</b> hold <b>Select + Start</b> for a second to close the game. ' + (rom.platform === 'mame' ? '<b>Best effort:</b> browser MAME uses an old core, so some games may not start (a RetroArch menu appears instead) — use desktop MAME for those. ' : '') + hint.dataset.base;
   }
   const host = $('#player-game');
   host.innerHTML = '<div class="side-empty">Loading emulator…</div>';
@@ -2966,8 +3005,18 @@ async function loadBackups() {
       <span class="status"></span>
       <span class="name">${esc(b.name)} <span class="note">· ${fmtBytes(b.size)}</span></span>
       <a class="btn btn-sm" href="/api/backup/files/${encodeURIComponent(b.name)}" download>Download</a>
+      <button class="btn btn-sm" data-bk-restore="${esc(b.name)}" title="Check this backup and restore it">Restore…</button>
       <button class="btn btn-sm btn-danger" data-bk-del="${esc(b.name)}">Delete</button>
     </div>`).join('') : '<div class="side-empty">No backups in the server folder yet.</div>';
+  $$('[data-bk-restore]').forEach((b) => b.addEventListener('click', async () => {
+    b.disabled = true; const label = b.textContent; b.textContent = 'Checking…';
+    try {
+      const data = await api('/backup/restore/inspect-server', { method: 'POST', body: JSON.stringify({ name: b.dataset.bkRestore }) });
+      showRestoreReview(data);
+      $('#restore-result')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } catch (err) { toast(err.message, true); }
+    finally { b.disabled = false; b.textContent = label; }
+  }));
   $$('[data-bk-del]').forEach((b) => b.addEventListener('click', async () => {
     const ok = await confirmDialog({ title: 'Delete this backup?', body: b.dataset.bkDel, okLabel: 'Delete', danger: true });
     if (!ok) return;
@@ -3021,46 +3070,52 @@ $('#restore-inspect')?.addEventListener('click', async (e) => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'That file could not be read');
-    restoreStaged = data;
-    const c = data.counts, now = data.current_counts;
-    const row = (name, a, b) => `<tr><td>${name}</td><td><b>${a ?? '—'}</b></td><td style="color:var(--dim)">${b ?? '—'}</td></tr>`;
-    box.classList.remove('hidden');
-    box.innerHTML = `
-      <div style="font-weight:650;margin-bottom:6px">This backup is valid</div>
-      <div class="hint" style="margin:0 0 8px">Made ${esc(data.manifest.created_at ? new Date(data.manifest.created_at).toLocaleString() : 'at an unknown time')} · game-sauce ${esc(data.manifest.app_version || '?')}</div>
-      <table style="border-collapse:collapse;font-size:13px;margin-bottom:8px">
-        <tr style="color:var(--dim)"><td></td><td style="padding-right:24px">In the backup</td><td>On the server now</td></tr>
-        ${row('ROMs', c.roms, now.roms)}${row('Users', c.users, now.users)}${row('Collections', c.collections, now.collections)}${row('Saves', c.saves, now.saves)}
-      </table>
-      ${data.warnings.map((w) => `<p class="hint" style="color:var(--warn);margin:4px 0">⚠ ${esc(w)}</p>`).join('')}
-      ${data.restart_supported ? '' : '<p class="hint" style="color:var(--warn);margin:4px 0">⚠ This server cannot restart itself (it is not running under systemd or Docker). After you confirm, restart game-sauce yourself to finish the restore.</p>'}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
-        <input id="restore-confirm" class="select" placeholder="Type RESTORE to confirm" autocomplete="off" style="width:220px" />
-        <button class="btn btn-danger" id="restore-apply">Restore this backup</button>
-        <button class="btn btn-ghost" id="restore-cancel">Cancel</button>
-      </div>`;
-    $('#restore-cancel').onclick = async () => { try { await api('/backup/restore/cancel', { method: 'POST', body: '{}' }); } catch { /* none */ } restoreStaged = null; box.classList.add('hidden'); box.innerHTML = ''; };
-    $('#restore-apply').onclick = async () => {
-      if ($('#restore-confirm').value.trim() !== 'RESTORE') return toast('Type RESTORE (capitals) to confirm', true);
-      const ok = await confirmDialog({
-        title: 'Replace the current data with this backup?',
-        body: 'A safety backup of the current data is saved first, and the data being replaced is kept. The server will restart and everyone will need to sign in again.',
-        okLabel: 'Restore', danger: true
-      });
-      if (!ok) return;
-      try {
-        const r = await api('/backup/restore/apply', { method: 'POST', body: JSON.stringify({ token: restoreStaged.token, confirm: 'RESTORE' }) });
-        box.innerHTML = r.restarting
-          ? `<div style="font-weight:650">Restoring…</div><p class="hint">Safety backup saved as <code>${esc(r.safety_backup)}</code>. The server is restarting; this page will reload when it is back.</p>`
-          : `<div style="font-weight:650">Ready to finish</div><p class="hint">Safety backup saved as <code>${esc(r.safety_backup)}</code>. <strong>Restart game-sauce now</strong> (for example <code>systemctl restart game-sauce</code> or <code>docker compose restart</code>) to complete the restore.</p>`;
-        if (r.restarting) waitForServerThenReload();
-      } catch (err) { toast(err.message, true); }
-    };
+    showRestoreReview(data);
   } catch (err) {
     box.classList.add('hidden');
     toast(err.message, true);
   } finally { btn.disabled = false; btn.textContent = label; }
 });
+
+/** Shows what is inside a checked (staged) backup and the confirm-to-restore controls. */
+function showRestoreReview(data) {
+  const box = $('#restore-result');
+  restoreStaged = data;
+  const c = data.counts, now = data.current_counts;
+  const row = (name, a, b) => `<tr><td>${name}</td><td><b>${a ?? '—'}</b></td><td style="color:var(--dim)">${b ?? '—'}</td></tr>`;
+  box.classList.remove('hidden');
+  box.innerHTML = `
+    <div style="font-weight:650;margin-bottom:6px">This backup is valid${data.source_name ? ` <span class="note" style="font-weight:400">· ${esc(data.source_name)}</span>` : ''}</div>
+    <div class="hint" style="margin:0 0 8px">Made ${esc(data.manifest.created_at ? new Date(data.manifest.created_at).toLocaleString() : 'at an unknown time')} · game-sauce ${esc(data.manifest.app_version || '?')}</div>
+    <table style="border-collapse:collapse;font-size:13px;margin-bottom:8px">
+      <tr style="color:var(--dim)"><td></td><td style="padding-right:24px">In the backup</td><td>On the server now</td></tr>
+      ${row('ROMs', c.roms, now.roms)}${row('Users', c.users, now.users)}${row('Collections', c.collections, now.collections)}${row('Saves', c.saves, now.saves)}
+    </table>
+    ${data.warnings.map((w) => `<p class="hint" style="color:var(--warn);margin:4px 0">⚠ ${esc(w)}</p>`).join('')}
+    ${data.restart_supported ? '' : '<p class="hint" style="color:var(--warn);margin:4px 0">⚠ This server cannot restart itself (it is not running under systemd or Docker). After you confirm, restart game-sauce yourself to finish the restore.</p>'}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+      <input id="restore-confirm" class="select" placeholder="Type RESTORE to confirm" autocomplete="off" style="width:220px" />
+      <button class="btn btn-danger" id="restore-apply">Restore this backup</button>
+      <button class="btn btn-ghost" id="restore-cancel">Cancel</button>
+    </div>`;
+  $('#restore-cancel').onclick = async () => { try { await api('/backup/restore/cancel', { method: 'POST', body: '{}' }); } catch { /* none */ } restoreStaged = null; box.classList.add('hidden'); box.innerHTML = ''; };
+  $('#restore-apply').onclick = async () => {
+    if ($('#restore-confirm').value.trim() !== 'RESTORE') return toast('Type RESTORE (capitals) to confirm', true);
+    const ok = await confirmDialog({
+      title: 'Replace the current data with this backup?',
+      body: 'A safety backup of the current data is saved first, and the data being replaced is kept. The server will restart and everyone will need to sign in again.',
+      okLabel: 'Restore', danger: true
+    });
+    if (!ok) return;
+    try {
+      const r = await api('/backup/restore/apply', { method: 'POST', body: JSON.stringify({ token: restoreStaged.token, confirm: 'RESTORE' }) });
+      box.innerHTML = r.restarting
+        ? `<div style="font-weight:650">Restoring…</div><p class="hint">Safety backup saved as <code>${esc(r.safety_backup)}</code>. The server is restarting; this page will reload when it is back.</p>`
+        : `<div style="font-weight:650">Ready to finish</div><p class="hint">Safety backup saved as <code>${esc(r.safety_backup)}</code>. <strong>Restart game-sauce now</strong> (for example <code>systemctl restart game-sauce</code> or <code>docker compose restart</code>) to complete the restore.</p>`;
+      if (r.restarting) waitForServerThenReload();
+    } catch (err) { toast(err.message, true); }
+  };
+}
 
 // After a restore the server goes away briefly; poll health, then reload to the sign-in page.
 function waitForServerThenReload() {

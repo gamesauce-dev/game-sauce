@@ -247,7 +247,7 @@ or NSSM; Linux → a systemd unit; macOS → launchd.
 
 **In the app (Settings → Backups → Restore from a backup, admin only):**
 
-1. Upload the backup and click **Check this backup**. It is unpacked into a holding area and
+1. Click **Restore…** next to a backup in the server list, or upload a backup file and click **Check this backup**. It is unpacked into a holding area and
    verified (archive, manifest, database integrity, schema version, an admin account exists).
    You see what is inside next to what is on the server now. **Nothing changes yet.**
 2. Type `RESTORE` and confirm. A **safety backup** of the current data is saved to the backup
