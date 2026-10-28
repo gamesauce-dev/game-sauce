@@ -229,7 +229,7 @@ ${c_ok}✔ game-sauce is running${c_off}
 
   Container   pct enter $CTID
   Logs        pct exec $CTID -- journalctl -u game-sauce -f
-  Update      pct exec $CTID -- game-sauce-update
+  Update      pct exec $CTID -- /usr/local/bin/game-sauce-update
   Data        /var/lib/game-sauce  (database + imported files — back this up)
   ROMs        ${ROMS:+mounted read-only at /roms — add it as a Source in the UI}${ROMS:-not mounted. Add one with: pct set $CTID -mp0 /host/path,mp=/roms,ro=1  then  pct reboot $CTID}
 

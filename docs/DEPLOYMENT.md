@@ -157,7 +157,7 @@ path on the left must already exist inside that LXC/VM. Update with
   `bash -c "$(curl -fsSL https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/proxmox-lxc.sh)"`
   creates an unprivileged Debian 12 container, installs Node 22, generates an admin password
   and runs game-sauce as a systemd service. Options (CTID, RAM, DISK, STORAGE, BRIDGE, APP_PORT,
-  ROMS) are listed at the top of the script. Update later with `pct exec <id> -- game-sauce-update`.
+  ROMS) are listed at the top of the script. Update later with `pct exec <id> -- /usr/local/bin/game-sauce-update`.
 - **ROM folders.** The guest can only mount paths it can see. Share the ROM folder into the
   VM or container (NFS/SMB mount, or a Proxmox bind mount for LXC), then map that path in the
   `volumes:` block of `docker-compose.yml` as read-only (see 3.4).

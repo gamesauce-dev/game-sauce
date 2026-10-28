@@ -405,31 +405,43 @@ async function loadLibrary() {
   const token = (state.libToken = (state.libToken || 0) + 1);
   state.libObserver?.disconnect();
   state.libObserver = null;
+  state.libLoadMore = null;
   let loaded = data.items.length;
+  state.libTotal = data.total;
   if (loaded < data.total) {
     const sentinel = document.createElement('div');
     sentinel.style.cssText = 'grid-column:1/-1;height:1px';
     grid.appendChild(sentinel);
     let busy = false;
-    const obs = new IntersectionObserver(async (entries) => {
-      if (busy || !entries.some((e) => e.isIntersecting) || token !== state.libToken) return;
+    let obs = null;
+    // Also used by the detail drawer's "next" arrow when it runs off the end of the loaded tiles.
+    const loadMore = async () => {
+      if (busy || token !== state.libToken) return false;
       busy = true;
       try {
         params.set('offset', String(loaded));
         const more = await api(`/roms?${params}`);
-        if (token !== state.libToken) return; // a newer load replaced this grid
+        if (token !== state.libToken) return false; // a newer load replaced this grid
         const tmp = document.createElement('div');
         tmp.innerHTML = more.items.map(cardHtml).join('');
         bindCards(tmp);
         sentinel.before(...tmp.children);
         loaded += more.items.length;
         syncSelectUI();
-        if (!more.items.length || loaded >= more.total) { obs.disconnect(); sentinel.remove(); }
-      } catch (err) { toast(err.message, true); }
+        if (!more.items.length || loaded >= more.total) {
+          obs?.disconnect(); sentinel.remove();
+          if (state.libLoadMore === loadMore) state.libLoadMore = null;
+        }
+        return more.items.length > 0;
+      } catch (err) { toast(err.message, true); return false; }
       finally { busy = false; }
+    };
+    obs = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) loadMore();
     }, { rootMargin: '600px' });
     obs.observe(sentinel);
     state.libObserver = obs;
+    state.libLoadMore = loadMore;
   }
   try { await statsP; } catch { /* overview is decorative */ }
 
@@ -540,7 +552,11 @@ async function renderOverview() {
 /** Shared tile wiring for the main grid and the recent row. */
 function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(Number(card.dataset.rom)); }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      state.nav = { el: card.closest('#grid, #recent-row') || root };
+      openDetail(Number(card.dataset.rom));
+    }
   }));
 
   $$('.card', root).forEach((card) => card.addEventListener('click', (e) => {
@@ -576,12 +592,15 @@ function bindCards(root) {
     }
     const openBtn = e.target.closest('[data-open-rom]');
     if (openBtn) return; // handled by its own listener, don't double-open
+    // Prev/next walks the list this tile lives in (main grid or the recently-added row).
+    state.nav = { el: card.closest('#grid, #recent-row') || root };
     openDetail(id);
   }));
 
   // Most-downloaded overview tile carries its own id (it lives outside .card).
   $$('[data-open-rom]', root).forEach((btn) => btn.addEventListener('click', (e) => {
     e.stopPropagation();
+    state.nav = null;
     openDetail(Number(btn.dataset.openRom));
   }));
 }
@@ -891,12 +910,69 @@ async function toggleFavorite(id, el) {
 /* ─────────────────────────── detail ─────────────────────────── */
 
 function closeDrawer() {
+  state.detailToken = (state.detailToken || 0) + 1;
+  $('#drawer-nav')?.classList.add('hidden');
+  $$('.card.nav-current').forEach((c) => c.classList.remove('nav-current'));
   $('#drawer').classList.add('hidden');
   $('#scrim').classList.add('hidden');
   state.openRomId = null;
 }
 
+/* ── previous / next inside the detail drawer ──
+ * The list is whatever the game was opened from: the live tiles of the grid or recent row
+ * (state.nav.el, so pages added by scrolling count), or a fixed id list (a collection). */
+function navIds() {
+  const n = state.nav;
+  if (!n) return [];
+  if (n.ids) return n.ids;
+  return n.el ? [...n.el.querySelectorAll('.card[data-rom]')].map((c) => Number(c.dataset.rom)) : [];
+}
+function updateDrawerNav(id) {
+  const box = $('#drawer-nav');
+  if (!box) return;
+  const ids = navIds();
+  const i = ids.indexOf(id);
+  const canLoadMore = !!(state.nav?.el && state.nav.el.id === 'grid' && state.libLoadMore);
+  box.classList.toggle('hidden', i < 0 || ids.length < 2);
+  $('#drawer-prev').disabled = i <= 0;
+  $('#drawer-next').disabled = i < 0 || (i >= ids.length - 1 && !canLoadMore);
+  const total = state.nav?.el?.id === 'grid' ? (state.libTotal || ids.length) : ids.length;
+  $('#drawer-pos').textContent = i < 0 ? '' : `${i + 1} / ${total}`;
+  // Keep the matching tile in view behind the drawer, and mark it.
+  $$('.card.nav-current').forEach((c) => c.classList.remove('nav-current'));
+  const tile = state.nav?.el?.querySelector(`.card[data-rom="${id}"]`);
+  if (tile) { tile.classList.add('nav-current'); tile.scrollIntoView({ block: 'nearest' }); }
+}
+async function stepDetail(dir) {
+  const id = state.openRomId;
+  if (id == null) return;
+  let ids = navIds();
+  let i = ids.indexOf(id);
+  if (i < 0) return;
+  if (dir > 0 && i >= ids.length - 1 && state.libLoadMore && state.nav?.el?.id === 'grid') {
+    await state.libLoadMore(); // fetch the next page of tiles, then carry on
+    ids = navIds();
+    i = ids.indexOf(id);
+  }
+  const target = ids[i + dir];
+  if (target != null) openDetail(target);
+}
+$('#drawer-prev')?.addEventListener('click', () => stepDetail(-1));
+$('#drawer-next')?.addEventListener('click', () => stepDetail(1));
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if ($('#drawer')?.classList.contains('hidden') || state.openRomId == null) return;
+  if (!$('#player-scrim')?.classList.contains('hidden')) return; // game is running: keys belong to it
+  if ($('.modal-scrim:not(.hidden)')) return; // a dialog is open: leave the keys alone
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+  e.preventDefault();
+  stepDetail(e.key === 'ArrowRight' ? 1 : -1);
+});
+
 async function openDetail(id) {
+  const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
   state.openRomId = id;
   // Per-user prefs (default match provider). Cached after first fetch; failure is harmless.
   if (!state.prefs) { try { state.prefs = await api('/prefs'); } catch { state.prefs = {}; } }
@@ -905,13 +981,18 @@ async function openDetail(id) {
   drawer.classList.remove('hidden');
   $('#drawer-body').innerHTML = '<div class="skel" style="height:300px"></div>';
 
+  $('#drawer').scrollTop = 0;
+  updateDrawerNav(id);
+
   let rom;
   try {
     rom = await api(`/roms/${id}`);
   } catch (err) {
+    if (myOpen !== state.detailToken) return; // user already moved on
     toast(err.message, true);
     return closeDrawer();
   }
+  if (myOpen !== state.detailToken) return; // a newer game was opened while this one loaded
 
   const initials = rom.title.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const rows = [
@@ -2352,7 +2433,11 @@ async function openCollection(id) {
     </div>
   `;
 
-  $$('[data-rom-open]', drawer).forEach((b) => b.addEventListener('click', () => openDetail(Number(b.dataset.romOpen))));
+  $('#drawer-nav')?.classList.add('hidden');
+  $$('[data-rom-open]', drawer).forEach((b) => b.addEventListener('click', () => {
+    state.nav = { ids: c.items.map((r) => r.id) };
+    openDetail(Number(b.dataset.romOpen));
+  }));
   $$('[data-rom-remove]', drawer).forEach((b) => b.addEventListener('click', async () => {
     b.disabled = true;
     try {
