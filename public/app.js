@@ -24,6 +24,25 @@ const state = {
   browsePath: null
 };
 
+/* Remember where the user is (view, platform, search, filters, sort, density, settings tile)
+ * for this browser TAB, so a refresh puts them back instead of on the Library home.
+ * sessionStorage: survives reload, not a new tab/browser; cleared on sign-in and sign-out. */
+let activeSettingsModule = null; // which Settings tile is open (declared early: saveNav reads it)
+const NAV_KEY = 'gamesauce_nav';
+const NAV_FIELDS = ['platform', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
+  'missing', 'hidden', 'orphan', 'unmatched', 'datStatus'];
+function saveNav() {
+  try {
+    const snap = { view: state.view, settingsModule: activeSettingsModule };
+    for (const k of NAV_FIELDS) snap[k] = state[k];
+    sessionStorage.setItem(NAV_KEY, JSON.stringify(snap));
+  } catch { /* storage unavailable: refresh just starts at the Library */ }
+}
+function clearNav() { try { sessionStorage.removeItem(NAV_KEY); } catch { /* ignore */ } }
+function readNav() {
+  try { return JSON.parse(sessionStorage.getItem(NAV_KEY) || 'null'); } catch { return null; }
+}
+
 const fmtBytes = (n) => {
   if (!n) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -169,6 +188,7 @@ async function api(path, options = {}) {
 
 function setView(view) {
   state.view = view;
+  saveNav();
   $$('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
   $$('.view').forEach((v) => v.classList.add('hidden'));
   $(`#view-${view}`).classList.remove('hidden');
@@ -324,6 +344,7 @@ function cardHtml(rom) {
 }
 
 async function loadLibrary() {
+  saveNav();
   // Orphan-only and unmatched-only modes from the Database tools buttons take
   // over the grid without touching the user's filters — deliberate detours, so
   // normal browsing state is preserved underneath.
@@ -2652,7 +2673,7 @@ function showLogin(message = '') {
   setTimeout(() => $('#login-username')?.focus(), 30);
 }
 
-function showApp(user) {
+function showApp(user, { restore = false } = {}) {
   authState.user = user;
   $('#auth-screen').classList.add('hidden');
   $('#app').classList.remove('hidden');
@@ -2678,7 +2699,29 @@ function showApp(user) {
   // this you would land back on whatever view (e.g. Settings) was open before.
   try { closeDrawer(); } catch { /* drawer not open */ }
   closePlayer?.();
-  setView('library');
+  // Page refresh with a live session: put the user back where they were. A fresh sign-in
+  // (restore=false) always starts on the Library home.
+  const saved = restore ? readNav() : null;
+  if (saved && $(`#view-${saved.view}`)) {
+    for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
+    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings'].includes(saved.view)) saved.view = 'library';
+    if (state.sort) $('#sort').value = state.sort;
+    $('#search').value = state.q || '';
+    $$('#density button').forEach((x) => x.classList.toggle('is-active', x.dataset.density === state.density));
+    activeSettingsModule = saved.settingsModule || null;
+    // Members cannot open admin-only views; fall back to the Library.
+    const target = (saved.view === 'sources' && !isAdmin) ? 'library' : saved.view;
+    setView(target);
+  } else {
+    // Fresh start: forget filters from any earlier session in this tab.
+    clearNav();
+    Object.assign(state, { platform: 'all', q: '', sort: 'title', tag: null, genre: null, favorite: false,
+      source: null, sourceName: null, missing: false, hidden: false, orphan: false, unmatched: false, datStatus: null });
+    $('#search').value = '';
+    $('#sort').value = 'title';
+    activeSettingsModule = null;
+    setView('library');
+  }
   loadPlatforms();
 }
 
@@ -2703,6 +2746,7 @@ $('#login-form').addEventListener('submit', async (e) => {
     $('#login-password').value = '';
     try { localStorage.setItem('gamesauce_remember', $('#login-remember')?.checked === false ? '0' : '1'); } catch { /* private mode */ }
     if (data.token) sessionStorage.setItem('gamesauce_token', data.token);
+    clearNav();
     showApp(data.user);
   } catch (err) {
     const box = $('#login-error');
@@ -2724,6 +2768,7 @@ $('#logout').addEventListener('click', async () => {
   if (!ok) return;
   try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch { /* ignore */ }
   sessionStorage.removeItem('gamesauce_token');
+  clearNav();
   try { closeDrawer(); } catch { /* drawer not open */ }
   closePlayer?.();
   activeSettingsModule = null;
@@ -2749,7 +2794,6 @@ const SETTINGS_MODULES = [
   { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true }
 ];
 
-let activeSettingsModule = null;
 
 function renderSettingsTiles() {
   const wrap = $('#settings-tiles');
@@ -2771,6 +2815,7 @@ function showSettingsModule(id) {
   $$('#view-settings .panel').forEach((p) => p.classList.add('hidden'));
   $('#view-settings #settings-tiles').classList.remove('hidden');
   activeSettingsModule = id;
+  saveNav();
   const panel = $(`#mod-${id}`);
   if (!panel) return;
   panel.classList.remove('hidden');
@@ -3217,8 +3262,8 @@ $('#new-user-form').addEventListener('submit', async (e) => {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     const data = await res.json();
-    if (data.authenticated) showApp(data.user);
-    else showLogin();
+    if (data.authenticated) showApp(data.user, { restore: true });
+    else { clearNav(); showLogin(); }
   } catch {
     showLogin('Cannot reach the server.');
   }
