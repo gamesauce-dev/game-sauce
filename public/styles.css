@@ -1143,3 +1143,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .settings-anchor .tile { flex-direction: row; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; min-height: 0; }
 .settings-anchor .tile-ico { font-size: 1.2rem; line-height: 1; }
 .settings-anchor .tile-label { font-size: 0.9rem; }
+
+/* Family headers line up with the platforms below: chevron takes exactly the dot's width, so the names share one left edge. */
+.family-head .chev { width: 0.5714rem; flex: 0 0 0.5714rem; font-size: 0.65rem; text-align: center; }
+.family-head .plat-name { font-size: 0.9286rem; letter-spacing: .04em; }
