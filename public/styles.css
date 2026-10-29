@@ -1157,3 +1157,6 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .enrich-pill .ep-text { font-size: 0.85rem; color: var(--text); grid-column: 1 / -1; }
 .enrich-pill .ep-bar { height: 0.35rem; border-radius: 0.2rem; background: var(--line); overflow: hidden; }
 .enrich-pill .ep-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .4s; }
+
+/* The delete tile sits on the drawer's right edge: anchor its tip to the right so it is never clipped. */
+.detail-actions .ibtn-danger[data-tip]:hover::after, .detail-actions .ibtn-danger[data-tip]:focus-visible::after { left: auto; right: 0; transform: none; }
