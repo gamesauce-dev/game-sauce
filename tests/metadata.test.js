@@ -75,3 +75,13 @@ test('shared extensions are ambiguous, not guessed', () => {
   assert.deepEqual(candidatePlatforms('pkg').sort(), ['ps3', 'ps4', 'ps5']);
   assert.ok(candidatePlatforms('iso').length > 5);
 });
+
+test('disc and bracket tags are stripped before provider searches', async () => {
+  const { stripDiscTags } = await import('../src/lib/providers.js');
+  assert.equal(stripDiscTags('Alone in the Dark: The New Nightmare [Disc 1]'), 'Alone in the Dark: The New Nightmare');
+  assert.equal(stripDiscTags('Final Fantasy VII (Disc 2 of 3)'), 'Final Fantasy VII');
+  assert.equal(stripDiscTags('Metal Gear Solid - Disc 1'), 'Metal Gear Solid');
+  assert.equal(stripDiscTags('Resident Evil 2 [CD2] [!]'), 'Resident Evil 2');
+  assert.equal(stripDiscTags('Disc World'), 'Disc World', 'a title that merely contains the word survives');
+  assert.equal(stripDiscTags('Part Time Hero'), 'Part Time Hero');
+});

@@ -347,8 +347,17 @@ const screenscraper = {
 // query often misses while a stripped one hits. Each lookup tries them in
 // order and stops at the first hit — the cached key stays the *original*
 // query so a later manual search isn't polluted by a fallback.
+/** "Game [Disc 1]", "Game (Disc 2 of 3)", "Game - Disc 1", "Game [CD2]" -> "Game": which disc you hold is not part of the game's name. */
+export function stripDiscTags(title) {
+  return String(title || '')
+    .replace(/\s*[\[(]\s*(?:disc|disk|cd|dvd|side|tape|part)\s*[a-z0-9]+(?:\s*(?:of|\/)\s*\d+)?\s*[\])]/gi, ' ')
+    .replace(/\s*[-–,:]\s*(?:disc|disk|cd|side|tape)\s*[a-z0-9]+(?:\s*of\s*\d+)?\s*$/i, '')
+    .replace(/\s*\[[^\]]*\]\s*/g, ' ') // leftover [tags] ([!], [USA], [b1]...) are never part of a title
+    .replace(/\s+/g, ' ').trim();
+}
+
 function titleVariants(title) {
-  const base = String(title || '').trim();
+  const base = stripDiscTags(title) || String(title || '').trim();
   if (!base) return [];
   const out = [base];
   const push = (t) => {

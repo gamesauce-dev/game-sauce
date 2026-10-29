@@ -84,3 +84,16 @@ test('the job can be stopped and is admin-only', async () => {
   token = savedToken;
   assert.equal(anon.status, 401);
 });
+
+test('the job can be limited to one platform', async () => {
+  const bad = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'nope' } });
+  assert.equal(bad.status, 400);
+  const snes = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'snes' } });
+  assert.equal(snes.status, 202);
+  assert.equal(snes.body.platform, 'snes');
+  assert.equal(snes.body.total, 3);
+  for (let i = 0; i < 100; i++) { if (!(await call('/api/roms/bulk/enrich-job')).body.running) break; await new Promise((r) => setTimeout(r, 100)); }
+  const gba = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'gba' } });
+  assert.equal(gba.body.total, 0, 'no GBA games, so nothing to look up');
+  for (let i = 0; i < 100; i++) { if (!(await call('/api/roms/bulk/enrich-job')).body.running) break; await new Promise((r) => setTimeout(r, 100)); }
+});

@@ -2391,7 +2391,7 @@ function renderEnrichJob(j) {
       $('#enrich-stop', pill).addEventListener('click', stopEnrichJob);
     }
     const pct = j.total ? Math.min(100, Math.round((j.done / j.total) * 100)) : 0;
-    $('.ep-text', pill).textContent = `${j.stop ? 'Stopping… ' : j.onlyMissingCovers ? 'Fetching missing covers ' : 'Fetching metadata '}${j.done} / ${j.total} · ${j.updated} updated${j.failed ? ` · ${j.failed} failed` : ''}`;
+    $('.ep-text', pill).textContent = `${j.stop ? 'Stopping… ' : j.onlyMissingCovers ? 'Fetching missing covers ' : 'Fetching metadata '}${j.platform ? `(${String(j.platform).toUpperCase()}) ` : ''}${j.done} / ${j.total} · ${j.updated} updated${j.failed ? ` · ${j.failed} failed` : ''}`;
     $('.ep-bar i', pill).style.width = pct + '%';
     if (btn) btn.textContent = `✦ Fetching… ${j.done}/${j.total}`;
   } else {
@@ -2421,7 +2421,9 @@ async function stopEnrichJob() {
 }
 async function bulkEnrich({ onlyMissingCovers = false } = {}) {
   try {
-    const j = await api('/roms/bulk/enrich-job', { method: 'POST', body: JSON.stringify({ only_missing_covers: onlyMissingCovers }) });
+    // With a platform selected in the Library, only that platform's games are looked up.
+    const platform = state.view === 'library' && state.platform && state.platform !== 'all' ? state.platform : '';
+    const j = await api('/roms/bulk/enrich-job', { method: 'POST', body: JSON.stringify({ only_missing_covers: onlyMissingCovers, platform }) });
     enrichWasRunning = true;
     renderEnrichJob(j);
     startEnrichPolling();

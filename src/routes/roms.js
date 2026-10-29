@@ -77,7 +77,9 @@ function withTags(rows) {
       ...r,
       tags: byRom.get(r.id) || [],
       media,
-      cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : r.cover_url
+      // ?v= changes whenever the image file does, so a newly matched/uploaded cover shows at once
+      // instead of the browser's day-long cached copy of the old one.
+      cover_url: r.cover_path ? `/api/roms/${r.id}/cover?v=${encodeURIComponent(path.basename(r.cover_path))}` : r.cover_url
     };
   });
 }
@@ -883,7 +885,7 @@ router.post('/bulk/enrich', async (req, res, next) => {
 const CANDIDATES_SQL = `
   (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
      OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat')))`;
-const enrichJob = { running: false, stop: false, onlyMissingCovers: false, total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
+const enrichJob = { running: false, stop: false, onlyMissingCovers: false, platform: '', total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
 
 async function enrichOneRom(id, onlyMissingCovers) {
   const rom = db.prepare(`
@@ -914,8 +916,8 @@ async function runEnrichJob() {
   try {
     for (;;) {
       if (enrichJob.stop) break;
-      const ids = db.prepare(`SELECT id FROM roms WHERE id > ? AND ${CANDIDATES_SQL} AND (? = 0 OR cover_path IS NULL) ORDER BY id LIMIT 25`)
-        .all(cursor, enrichJob.onlyMissingCovers ? 1 : 0).map((r) => r.id);
+      const ids = db.prepare(`SELECT id FROM roms WHERE id > ? AND ${CANDIDATES_SQL} AND (? = 0 OR cover_path IS NULL) AND (? = '' OR platform_id = (SELECT id FROM platforms WHERE slug = ?)) ORDER BY id LIMIT 25`)
+        .all(cursor, enrichJob.onlyMissingCovers ? 1 : 0, enrichJob.platform, enrichJob.platform).map((r) => r.id);
       if (!ids.length) break;
       for (const id of ids) {
         if (enrichJob.stop) break;
@@ -938,8 +940,12 @@ async function runEnrichJob() {
 router.post('/bulk/enrich-job', requireAdmin, (req, res) => {
   if (enrichJob.running) return res.status(409).json({ error: 'A metadata run is already in progress', ...enrichJob });
   const onlyMissingCovers = req.body?.only_missing_covers === true;
-  const total = db.prepare(`SELECT COUNT(*) AS n FROM roms WHERE ${CANDIDATES_SQL} AND (? = 0 OR cover_path IS NULL)`).get(onlyMissingCovers ? 1 : 0).n;
-  Object.assign(enrichJob, { running: true, stop: false, onlyMissingCovers, total, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: new Date().toISOString(), finishedAt: null });
+  // Optional platform scope (the Library's selected platform): only that platform's games are looked up.
+  const platform = String(req.body?.platform || '').trim();
+  if (platform && platform !== 'all' && !db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Unknown platform' });
+  const scope = platform === 'all' ? '' : platform;
+  const total = db.prepare(`SELECT COUNT(*) AS n FROM roms WHERE ${CANDIDATES_SQL} AND (? = 0 OR cover_path IS NULL) AND (? = '' OR platform_id = (SELECT id FROM platforms WHERE slug = ?))`).get(onlyMissingCovers ? 1 : 0, scope, scope).n;
+  Object.assign(enrichJob, { running: true, stop: false, onlyMissingCovers, platform: scope, total, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: new Date().toISOString(), finishedAt: null });
   runEnrichJob();
   res.status(202).json({ ...enrichJob });
 });

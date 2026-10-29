@@ -50,6 +50,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **A newly picked cover shows straight away:** after choosing a match in *Identify this game*, the old cover could stay on screen (the browser kept its cached copy for a day). Cover links now change whenever the image does.
+- **Disc and bracket tags are left out of metadata searches:** `[Disc 1]`, `(Disc 2 of 3)`, `- Disc 1`, `[CD2]` and stray `[!]`-style tags are removed before a provider is asked, so every disc of a game finds the same entry.
+- **Fetch metadata with a platform selected only covers that platform** (the progress box names it). With no platform selected it runs over the whole library as before.
 - **Sources on your own platforms now scan into them:** a folder added to a platform you created used to be scanned into "Other" (so the platform stayed empty and missing from the sidebar), and files with a custom extension were skipped. Existing ROMs filed under Other can be re-filed, or remove the source with its ROMs and add it again.
 - **Add a folder no longer jumps** when you open the folder browser: the page keeps room for its scroll bar, and the Browse button keeps its label (it highlights while open and toggles the browser) instead of changing to "Hide browser".
 - **Custom platforms now work everywhere:** adding a source (or uploading / re-filing a ROM) with a platform you created yourself was refused with "Platform is required". The check only knew the built-in list; it now accepts any platform in the library.
