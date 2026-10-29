@@ -1147,3 +1147,13 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 /* Family headers line up with the platforms below: chevron takes exactly the dot's width, so the names share one left edge. */
 .family-head .chev { width: 0.5714rem; flex: 0 0 0.5714rem; font-size: 0.65rem; text-align: center; }
 .family-head .plat-name { font-size: 0.9286rem; letter-spacing: .04em; }
+
+/* Metadata run progress: floats bottom-right in every view. */
+.enrich-pill {
+  position: fixed; right: 1.2rem; bottom: 1.2rem; z-index: 90; display: grid; gap: 0.45rem; min-width: 18rem; max-width: 24rem;
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 0.8rem; padding: 0.7rem 0.9rem;
+  box-shadow: 0 0.5rem 1.6rem rgba(0, 0, 0, .55); grid-template-columns: 1fr auto; align-items: center;
+}
+.enrich-pill .ep-text { font-size: 0.85rem; color: var(--text); grid-column: 1 / -1; }
+.enrich-pill .ep-bar { height: 0.35rem; border-radius: 0.2rem; background: var(--line); overflow: hidden; }
+.enrich-pill .ep-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .4s; }

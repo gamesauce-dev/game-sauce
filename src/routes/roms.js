@@ -460,6 +460,9 @@ router.get('/recently-played', (req, res) => {
 
 /* ------------------------------------------------------------ detail */
 
+// Registered before '/:id' so it isn't swallowed by it (job itself is defined further down).
+router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJob }));
+
 router.get('/:id', (req, res) => {
   const rom = romById(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
@@ -873,6 +876,78 @@ router.post('/bulk/enrich', async (req, res, next) => {
   }
 });
 
+
+/* ---------------------------------------- bulk enrichment as a server job
+ * The browser used to drive the batches, so a page refresh stopped the run.
+ * The server now owns the loop; the UI only starts, stops and polls it. */
+const CANDIDATES_SQL = `
+  (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
+     OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat')))`;
+const enrichJob = { running: false, stop: false, onlyMissingCovers: false, total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
+
+async function enrichOneRom(id, onlyMissingCovers) {
+  const rom = db.prepare(`
+    SELECT r.*, p.slug AS platform_slug, p.name AS platform_name, p.screenscraper_id, p.tgdb_id, p.family
+    FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?
+  `).get(id);
+  if (!rom) return { kind: 'skipped' };
+  if (onlyMissingCovers && rom.cover_path) return { kind: 'skipped' };
+  const meta = await enrich({
+    filename: rom.filename,
+    titleTrusted: mameTitleTrusted(rom.platform_slug, rom.filename),
+    title: rom.title,
+    platform: { slug: rom.platform_slug, name: rom.platform_name, family: rom.family, screenscraper_id: rom.screenscraper_id, tgdb_id: rom.tgdb_id },
+    hashes: { crc32: rom.crc32, md5: rom.md5, sha1: rom.sha1 }
+  });
+  if (!meta) {
+    if (rom.meta_source === 'mame-list') db.prepare("UPDATE roms SET meta_synced_at = datetime('now') WHERE id = ?").run(id);
+    return { kind: 'skipped' };
+  }
+  if (meta.error) return { kind: 'failed', error: String(meta.error) };
+  if (mameTitleTrusted(rom.platform_slug, rom.filename)) meta.title = null;
+  await applyMetadataRecord(id, meta);
+  return { kind: 'updated' };
+}
+
+async function runEnrichJob() {
+  let cursor = 0;
+  try {
+    for (;;) {
+      if (enrichJob.stop) break;
+      const ids = db.prepare(`SELECT id FROM roms WHERE id > ? AND ${CANDIDATES_SQL} AND (? = 0 OR cover_path IS NULL) ORDER BY id LIMIT 25`)
+        .all(cursor, enrichJob.onlyMissingCovers ? 1 : 0).map((r) => r.id);
+      if (!ids.length) break;
+      for (const id of ids) {
+        if (enrichJob.stop) break;
+        cursor = id;
+        try {
+          const r = await enrichOneRom(id, enrichJob.onlyMissingCovers);
+          if (r.kind === 'updated') enrichJob.updated++;
+          else if (r.kind === 'failed') { enrichJob.failed++; enrichJob.lastError = r.error; }
+          else enrichJob.skipped++;
+        } catch (err) { enrichJob.failed++; enrichJob.lastError = err.message; }
+        enrichJob.done++;
+      }
+    }
+  } finally {
+    enrichJob.running = false;
+    enrichJob.finishedAt = new Date().toISOString();
+  }
+}
+
+router.post('/bulk/enrich-job', requireAdmin, (req, res) => {
+  if (enrichJob.running) return res.status(409).json({ error: 'A metadata run is already in progress', ...enrichJob });
+  const onlyMissingCovers = req.body?.only_missing_covers === true;
+  const total = db.prepare(`SELECT COUNT(*) AS n FROM roms WHERE ${CANDIDATES_SQL} AND (? = 0 OR cover_path IS NULL)`).get(onlyMissingCovers ? 1 : 0).n;
+  Object.assign(enrichJob, { running: true, stop: false, onlyMissingCovers, total, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: new Date().toISOString(), finishedAt: null });
+  runEnrichJob();
+  res.status(202).json({ ...enrichJob });
+});
+
+router.delete('/bulk/enrich-job', requireAdmin, (req, res) => {
+  if (enrichJob.running) enrichJob.stop = true;
+  res.json({ ...enrichJob });
+});
 
 /* ------------------------------------------------------------ upload */
 

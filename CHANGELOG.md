@@ -40,6 +40,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Fetch metadata keeps running when you refresh or close the page.** It is now a job on the server (Stop button included) instead of being driven by the browser. A progress box at the bottom right shows how far it has got, on every page, and reappears after a refresh. One run at a time; admin only.
+- **LIBRARY in the menu always shows the whole library:** clicking it clears any platform you had selected.
 - **Sidebar platform groups line up:** group headers (ARCADE, ATARI…) now start at the same left edge as the platforms under them, with the arrow sitting above the colour dots.
 - **Settings header stays put:** the title and the tile menu are pinned to the top while the open module scrolls underneath, so you can always jump to another section. The tiles are more compact to leave room.
 - **Sidebar menu redesigned:** UPPERCASE bold white labels, new drawn icons (library, collections, sources, add ROMs, emulators), an accent bar on the current page, and a smaller gap under the user box.

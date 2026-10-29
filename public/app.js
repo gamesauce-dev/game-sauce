@@ -253,7 +253,14 @@ function setView(view) {
 
 document.addEventListener('click', (e) => {
   const navBtn = e.target.closest('[data-view]');
-  if (navBtn) setView(navBtn.dataset.view);
+  if (navBtn) {
+    // The sidebar LIBRARY entry always means the whole library: drop any platform selection.
+    if (navBtn.classList.contains('nav-item') && navBtn.dataset.view === 'library' && state.platform !== 'all') {
+      state.platform = 'all';
+      loadPlatforms();
+    }
+    setView(navBtn.dataset.view);
+  }
 });
 
 /* ─────────────────────────── sidebar ─────────────────────────── */
@@ -2361,43 +2368,64 @@ async function loadSettingsOld() {
     : 'ScreenScraper is not configured yet — covers fall back to filename initials until credentials are set.';
 }
 
-// Runs batches of 25 back-to-back until the whole library has been tried (not just
-// the first 25 per click). Click the button again while it runs to stop.
-let bulkEnrichStop = false;
-let bulkEnrichRunning = false;
-async function bulkEnrich({ onlyMissingCovers = false } = {}) {
+// Metadata fetch runs as a SERVER job: it survives page refreshes and closing the tab.
+// The UI just starts/stops it and polls; a floating pill shows progress in every view.
+let enrichPollTimer = null;
+let enrichWasRunning = false;
+function renderEnrichJob(j) {
   const btn = $('#bulk-enrich');
-  if (bulkEnrichRunning) { bulkEnrichStop = true; btn.textContent = '✦ Stopping…'; return; }
-  bulkEnrichRunning = true; bulkEnrichStop = false;
-  const original = btn.textContent;
-  const tot = { updated: 0, skipped: 0, failed: 0 };
-  let cursor = 0, lastError = '', stopped = false;
-  try {
-    for (;;) {
-      btn.textContent = `✦ Fetching… ${tot.updated} updated (click to stop)`;
-      const r = await api('/roms/bulk/enrich', {
-        method: 'POST',
-        body: JSON.stringify({ limit: 25, only_missing_covers: onlyMissingCovers, after_id: cursor })
-      });
-      tot.updated += r.updated; tot.skipped += r.skipped; tot.failed += r.failed;
-      const err = (r.results || []).find((x) => x.status && !/^(updated|no match)/.test(x.status));
-      if (err) lastError = err.status;
-      cursor = r.next_after_id ?? cursor;
-      if (!r.more) break;
-      if (bulkEnrichStop) { stopped = true; break; }
+  let pill = $('#enrich-pill');
+  if (j?.running) {
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'enrich-pill';
+      pill.className = 'enrich-pill';
+      pill.innerHTML = '<div class="ep-text"></div><div class="ep-bar"><i></i></div><button class="btn btn-sm" id="enrich-stop">Stop</button>';
+      document.body.appendChild(pill);
+      $('#enrich-stop', pill).addEventListener('click', stopEnrichJob);
     }
-    toast(`${stopped ? 'Stopped: ' : 'Done: '}${tot.updated} updated, ${tot.skipped} no match/skipped, ${tot.failed} failed${lastError && tot.failed ? ` (e.g. ${lastError.slice(0, 80)})` : ''}`, !tot.updated && tot.failed > 0);
+    const pct = j.total ? Math.min(100, Math.round((j.done / j.total) * 100)) : 0;
+    $('.ep-text', pill).textContent = `${j.stop ? 'Stopping… ' : j.onlyMissingCovers ? 'Fetching missing covers ' : 'Fetching metadata '}${j.done} / ${j.total} · ${j.updated} updated${j.failed ? ` · ${j.failed} failed` : ''}`;
+    $('.ep-bar i', pill).style.width = pct + '%';
+    if (btn) btn.textContent = `✦ Fetching… ${j.done}/${j.total}`;
+  } else {
+    pill?.remove();
+    if (btn) btn.textContent = '✦ Fetch metadata';
+  }
+}
+async function pollEnrichJob() {
+  let j = null;
+  try { j = await api('/roms/bulk/enrich-job'); } catch { return; }
+  renderEnrichJob(j);
+  if (j.running) { enrichWasRunning = true; return; }
+  clearInterval(enrichPollTimer); enrichPollTimer = null;
+  if (enrichWasRunning) {
+    enrichWasRunning = false;
+    toast(`${j.stop ? 'Stopped: ' : 'Done: '}${j.updated} updated, ${j.skipped} no match/skipped, ${j.failed} failed${j.lastError && j.failed ? ` (e.g. ${String(j.lastError).slice(0, 80)})` : ''}`, !j.updated && j.failed > 0);
     await Promise.all([loadLibrary(), loadPlatforms()]);
+  }
+}
+function startEnrichPolling() {
+  if (enrichPollTimer) return;
+  enrichPollTimer = setInterval(pollEnrichJob, 1500);
+  pollEnrichJob();
+}
+async function stopEnrichJob() {
+  try { renderEnrichJob(await api('/roms/bulk/enrich-job', { method: 'DELETE' })); } catch (err) { toast(err.message, true); }
+}
+async function bulkEnrich({ onlyMissingCovers = false } = {}) {
+  try {
+    const j = await api('/roms/bulk/enrich-job', { method: 'POST', body: JSON.stringify({ only_missing_covers: onlyMissingCovers }) });
+    enrichWasRunning = true;
+    renderEnrichJob(j);
+    startEnrichPolling();
   } catch (err) {
-    toast(err.message, true);
-  } finally {
-    bulkEnrichRunning = false;
-    btn.disabled = false;
-    btn.textContent = original;
+    if (/already in progress/i.test(err.message)) { startEnrichPolling(); toast('A metadata run is already in progress'); }
+    else toast(err.message, true);
   }
 }
 
-$('#bulk-enrich').addEventListener('click', () => bulkEnrich());
+$('#bulk-enrich').addEventListener('click', () => { if (enrichPollTimer && $('#enrich-pill')) stopEnrichJob(); else bulkEnrich(); });
 $('#enrich-missing-covers').addEventListener('click', () => bulkEnrich({ onlyMissingCovers: true }));
 
 $('#check-ss-systems').addEventListener('click', async () => {
@@ -2950,6 +2978,7 @@ function showApp(user, { restore = false } = {}) {
   const isAdmin = user.role === 'admin';
   $$('[data-view="sources"]').forEach((b) => b.classList.toggle('hidden', !isAdmin));
   $('#bulk-enrich')?.classList.toggle('hidden', !isAdmin);
+  if (isAdmin) startEnrichPolling(); // picks up a metadata run that kept going across a refresh
   // Settings is for everyone (cog in the footer), but admin-only module pills
   // and tiles stay hidden for members; renderSettingsTiles filters by role.
   $$('#view-settings .admin-only').forEach((el) => el.classList.toggle('hidden', !isAdmin));
