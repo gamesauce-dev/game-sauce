@@ -1168,3 +1168,21 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .avatar-sm { width: 1.5rem; height: 1.5rem; flex-basis: 1.5rem; font-size: 0.7rem; display: inline-grid; vertical-align: middle; margin-right: 0.5rem; }
 .profile-row { display: flex; gap: 1.2rem; align-items: center; flex-wrap: wrap; }
 .user-line { display: flex; align-items: center; }
+
+/* Logo animation: the "-sauce" gradient flows, a bright band rolls across the whole name, and the logo glow breathes. */
+.brand-name { position: relative; display: inline-block; }
+.brand-name .saucy { background-size: 220% 100%; animation: brandFlow 6s linear infinite; }
+.brand-name::after {
+  content: attr(data-text); position: absolute; inset: 0; pointer-events: none; color: transparent;
+  background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, .95) 50%, transparent 62%) 140% 0 / 250% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; font: inherit; letter-spacing: inherit;
+  animation: brandShine 4.5s ease-in-out infinite;
+}
+.brand-logo { animation: logoGlow 3.6s ease-in-out infinite; }
+@keyframes brandFlow { to { background-position: -220% 0; } }
+@keyframes brandShine { 0%, 30% { background-position: 140% 0; } 80%, 100% { background-position: -40% 0; } }
+@keyframes logoGlow {
+  0%, 100% { filter: drop-shadow(0 0.2857rem 0.8571rem rgba(255, 61, 104, .35)); }
+  50% { filter: drop-shadow(0 0.2857rem 1.3rem rgba(255, 61, 104, .75)) drop-shadow(0 0 0.5rem rgba(124, 92, 255, .6)) brightness(1.08); }
+}
+@media (prefers-reduced-motion: reduce) { .brand-name .saucy, .brand-name::after, .brand-logo { animation: none; } .brand-name::after { display: none; } }
