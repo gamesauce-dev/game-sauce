@@ -40,6 +40,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Settings header stays put:** the title and the tile menu are pinned to the top while the open module scrolls underneath, so you can always jump to another section. The tiles are more compact to leave room.
 - **Sidebar menu redesigned:** UPPERCASE bold white labels, new drawn icons (library, collections, sources, add ROMs, emulators), an accent bar on the current page, and a smaller gap under the user box.
 - **Calmer Library home:** *Continue playing* and *Recently added* each sit in their own neon rounded box on a single line (no scroll bar), with a white divider before the main grid. Short windows start with the boxes collapsed.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).

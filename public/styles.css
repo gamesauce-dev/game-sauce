@@ -1131,3 +1131,15 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .nav-ico { width: 1.4rem; height: 1.4rem; display: inline-grid; place-items: center; opacity: 1; color: #b9a8ff; }
 .nav-item:hover .nav-ico { color: #fff; }
 .nav-item.is-active .nav-ico { color: var(--accent-2); }
+
+/* Settings: title + tile grid stay pinned while a module scrolls beneath. */
+.settings-anchor {
+  position: sticky; top: -1.4286rem; z-index: 5; background: var(--bg);
+  margin: -1.4286rem -0.5rem 0; padding: 1.4286rem 0.5rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+}
+.settings-anchor .toolbar { margin-bottom: 0.5rem; }
+.settings-anchor .tile-grid { margin-bottom: 0.7rem; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr)); }
+.settings-anchor .tile { flex-direction: row; align-items: center; gap: 0.6rem; padding: 0.55rem 0.8rem; min-height: 0; }
+.settings-anchor .tile-ico { font-size: 1.2rem; line-height: 1; }
+.settings-anchor .tile-label { font-size: 0.9rem; }
