@@ -471,6 +471,19 @@
         <p class="hint" id="restore-last" style="margin-top:10px"></p>
       </div>
 
+      <div class="panel hidden" id="mod-names">
+        <h3>Game names (CSV) <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Many romsets (FinalBurn Neo, MAME…) are named like <code>sf2ue.zip</code>, which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then <b>Fetch metadata</b> can find their covers. Preview shows what would change before anything is saved. Files are never touched.</p>
+        <div class="edit-form" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
+          <label class="field"><span>Platform</span><select id="names-platform" class="select"></select></label>
+          <label class="field"><span>CSV file</span><input type="file" id="names-file" accept=".csv,text/csv" /></label>
+          <label class="field"><span>File-name column</span><input id="names-rom-col" value="rom_name" /></label>
+          <label class="field"><span>Game-name column</span><input id="names-name-col" value="short_game_name" /></label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="names-preview">Preview</button><button class="btn btn-primary" id="names-apply" disabled>Apply names</button></div>
+        <p class="hint" id="names-result" style="margin-top:10px"></p>
+      </div>
+
       <div class="panel hidden" id="mod-dat">
         <h3>DAT files (offline verification) <span class="pill warn admin-only">admin</span></h3>
         <p class="hint" style="margin-top:0">

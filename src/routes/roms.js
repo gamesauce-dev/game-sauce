@@ -10,6 +10,7 @@ import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
 import { canDownload } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
+import { importNames } from '../lib/namecsv.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -461,6 +462,16 @@ router.get('/recently-played', (req, res) => {
 });
 
 /* ------------------------------------------------------------ detail */
+
+// Name list (CSV): rename ROMs on one platform from a file-name -> game-name table. Preview first, then apply.
+router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 * 1024 * 1024 } }).single('csv'), (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Choose a CSV file' });
+    const platform = String(req.body?.platform || '').trim();
+    if (!db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Pick a platform' });
+    res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, apply: req.body.apply === '1' }));
+  } catch (err) { next(err); }
+});
 
 // Registered before '/:id' so it isn't swallowed by it (job itself is defined further down).
 router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJob }));

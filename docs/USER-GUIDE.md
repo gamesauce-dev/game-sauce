@@ -231,7 +231,7 @@ download from the vault. game-sauce never bundles emulator binaries.
 
 ## 13. Settings
 
-Click **⚙** under the logo. Members see **Profile picture** (upload your own photo, shown next to your name), **Change password**, **Active sessions** and **Controller**. Admins also get:
+Click **⚙** under the logo. Members see **Profile picture** (upload your own photo, shown next to your name), **Change password**, **Active sessions** and **Controller**. Admins also get (among others) **Game names (CSV)**, which renames a platform's games from a file-name-to-game-name table before you fetch metadata:
 
 | Tile | What it does |
 |------|--------------|

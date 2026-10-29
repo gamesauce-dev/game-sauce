@@ -3130,6 +3130,7 @@ const SETTINGS_MODULES = [
   { id: 'coverage',  label: 'Coverage',        ico: '📊', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    ico: '📜', adminOnly: true },
+  { id: 'names',     label: 'Game names (CSV)', ico: '🏷', adminOnly: true },
   { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true },
   { id: 'backup',    label: 'Backups',         ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', ico: '🧬', adminOnly: true },
@@ -3312,6 +3313,28 @@ function waitForServerThenReload() {
   set();
 })();
 
+function initNamesPanel() {
+  const sel = $('#names-platform');
+  if (!sel.options.length) sel.innerHTML = (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
+  const out = $('#names-result'); const applyBtn = $('#names-apply');
+  const run = async (apply) => {
+    const f = $('#names-file').files?.[0];
+    if (!f) return toast('Choose a CSV file first', true);
+    const fd = new FormData();
+    fd.append('csv', f); fd.append('platform', sel.value); fd.append('rom_col', $('#names-rom-col').value); fd.append('name_col', $('#names-name-col').value);
+    if (apply) fd.append('apply', '1');
+    try {
+      const r = await api('/roms/bulk/import-names', { method: 'POST', body: fd });
+      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
+      applyBtn.disabled = apply || !r.matched;
+      if (apply) { toast(`Renamed ${r.matched} games`); loadLibrary(); }
+    } catch (err) { out.textContent = err.message; toast(err.message, true); }
+  };
+  $('#names-preview').onclick = () => run(false);
+  applyBtn.onclick = () => run(true);
+  $('#names-file').onchange = () => { applyBtn.disabled = true; out.textContent = ''; };
+}
+
 function showSettingsModule(id) {
   // Only one module at a time.
   $$('#view-settings .panel').forEach((p) => p.classList.add('hidden'));
@@ -3323,6 +3346,7 @@ function showSettingsModule(id) {
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
   if (id === 'profile') initProfilePanel();
+  if (id === 'names') initNamesPanel();
   if (id === 'health') loadHealth();
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
