@@ -1186,3 +1186,9 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
   50% { filter: drop-shadow(0 0.2857rem 1.3rem rgba(255, 61, 104, .75)) drop-shadow(0 0 0.5rem rgba(124, 92, 255, .6)) brightness(1.08); }
 }
 @media (prefers-reduced-motion: reduce) { .brand-name .saucy, .brand-name::after, .brand-logo { animation: none; } .brand-name::after { display: none; } }
+
+/* Platforms: the Add platform button stays visible just under the pinned Settings header. */
+.platform-add-bar {
+  position: sticky; top: var(--settings-anchor-h, 8rem); z-index: 4; display: flex; gap: 0.5rem;
+  margin: 0.6rem 0 0.9rem; padding: 0.5rem 0; background: var(--panel);
+}

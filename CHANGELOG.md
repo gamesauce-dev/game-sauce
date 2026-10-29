@@ -51,6 +51,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Settings → Platforms:** the **Add platform** button stays in view under the pinned header while you scroll the list.
 - **A newly picked cover shows straight away:** after choosing a match in *Identify this game*, the old cover could stay on screen (the browser kept its cached copy for a day). Cover links now change whenever the image does.
 - **Disc and bracket tags are left out of metadata searches:** `[Disc 1]`, `(Disc 2 of 3)`, `- Disc 1`, `[CD2]` and stray `[!]`-style tags are removed before a provider is asked, so every disc of a game finds the same entry.
 - **Fetch metadata with a platform selected only covers that platform** (the progress box names it). With no platform selected it runs over the whole library as before.

@@ -3299,6 +3299,19 @@ function waitForServerThenReload() {
   }, 1000);
 }
 
+// The pinned Settings header changes height as its tiles wrap; sticky bars inside a module
+// (e.g. Platforms → Add platform) sit just beneath it using this measured offset.
+(function trackSettingsAnchor() {
+  const anchor = document.querySelector('.settings-anchor');
+  if (!anchor || typeof ResizeObserver === 'undefined') return;
+  const set = () => {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 14;
+    document.documentElement.style.setProperty('--settings-anchor-h', `${Math.max(0, anchor.offsetHeight - rem * 1.4286)}px`);
+  };
+  new ResizeObserver(set).observe(anchor);
+  set();
+})();
+
 function showSettingsModule(id) {
   // Only one module at a time.
   $$('#view-settings .panel').forEach((p) => p.classList.add('hidden'));
