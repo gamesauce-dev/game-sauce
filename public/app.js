@@ -260,6 +260,12 @@ document.addEventListener('click', (e) => {
       loadPlatforms();
     }
     setView(navBtn.dataset.view);
+    // Clicking LIBRARY also goes back to the top of the grid (it scrolls itself, and so can the page around it).
+    if (navBtn.classList.contains('nav-item') && navBtn.dataset.view === 'library') {
+      const top = () => { const g = $('#grid'); if (g) g.scrollTop = 0; const v = $('#view-library'); if (v) v.scrollTop = 0; };
+      top();
+      setTimeout(top, 350); // again once the reload has re-rendered the tiles
+    }
   }
 });
 
