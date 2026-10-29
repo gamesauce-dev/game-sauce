@@ -59,6 +59,10 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'download_override')) {
   db.exec('ALTER TABLE users ADD COLUMN download_override INTEGER');
 }
+// Profile picture (small JPEG/PNG/WebP, stored in the database so backups carry it).
+for (const [col, ddl] of [['avatar', 'BLOB'], ['avatar_type', 'TEXT'], ['avatar_updated', 'INTEGER']]) {
+  if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE users ADD COLUMN ${col} ${ddl}`);
+}
 // Older databases: sessions without the flag were all persistent logins.
 if (!db.prepare('PRAGMA table_info(sessions)').all().some((c) => c.name === 'persistent')) {
   db.exec('ALTER TABLE sessions ADD COLUMN persistent INTEGER NOT NULL DEFAULT 1');
@@ -174,11 +178,11 @@ export function purgeExpiredSessions() {
 
 export function listUsers() {
   return db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override,
+    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated,
            (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > datetime('now')) AS active_sessions
     FROM users u ORDER BY u.username
-  `).all().map(({ download_override, ...u }) => ({
-    ...u, disabled: Boolean(u.disabled),
+  `).all().map(({ download_override, avatar_updated, ...u }) => ({
+    ...u, avatar_v: avatar_updated || null, disabled: Boolean(u.disabled),
     download: download_override === 1 ? 'allow' : download_override === 0 ? 'deny' : 'default'
   }));
 }

@@ -1160,3 +1160,11 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 
 /* The delete tile sits on the drawer's right edge: anchor its tip to the right so it is never clipped. */
 .detail-actions .ibtn-danger[data-tip]:hover::after, .detail-actions .ibtn-danger[data-tip]:focus-visible::after { left: auto; right: 0; transform: none; }
+
+/* Profile pictures */
+.avatar { background-size: cover; background-position: center; overflow: hidden; }
+.avatar.has-pic { color: transparent; font-size: 0; }
+.avatar-lg { width: 6rem; height: 6rem; flex-basis: 6rem; font-size: 2.4rem; }
+.avatar-sm { width: 1.5rem; height: 1.5rem; flex-basis: 1.5rem; font-size: 0.7rem; display: inline-grid; vertical-align: middle; margin-right: 0.5rem; }
+.profile-row { display: flex; gap: 1.2rem; align-items: center; flex-wrap: wrap; }
+.user-line { display: flex; align-items: center; }

@@ -231,7 +231,7 @@ download from the vault. game-sauce never bundles emulator binaries.
 
 ## 13. Settings
 
-Click **⚙** under the logo. Members see **Change password** and **Active sessions**. Admins also get:
+Click **⚙** under the logo. Members see **Profile picture** (upload your own photo, shown next to your name), **Change password**, **Active sessions** and **Controller**. Admins also get:
 
 | Tile | What it does |
 |------|--------------|

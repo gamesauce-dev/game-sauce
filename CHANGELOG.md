@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Profile pictures:** everyone can upload their own picture (Settings → Profile picture). It is cropped square and shrunk to 256 px in the browser, checked by content on the server (JPEG, PNG or WebP, max 1 MB; no SVG), shown next to your name in the menu and in the user list, and stored in the database so backups carry it. Only you can change yours; every signed-in person can see the household's pictures.
 - **Duplicate finder** (Settings → Duplicate finder, admin): groups the different versions of one game on a platform (USA, Europe, Japan, revisions; arcade clones are grouped under their parent using the MAME name list), suggests one copy to keep (DAT-verified first, a favourite is protected, then region and revision), and offers **Hide the others**. Reversible: nothing is deleted and no file is touched. Platform filter and paging included.
 - **Downloads per person:** each member can be set to Default, Always allowed or Never (Settings → User accounts). It beats the server-wide switch, takes effect immediately, and is audited. Admins can always download.
 - **Proxmox installer** now explains the Console tab's `login:` prompt (the container has no root password on purpose; use `pct enter <id>`).

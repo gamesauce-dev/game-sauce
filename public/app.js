@@ -2959,6 +2959,47 @@ function showLogin(message = '') {
   setTimeout(() => $('#login-username')?.focus(), 30);
 }
 
+/* ── Profile pictures ── */
+// Fills an .avatar element with the person's picture, or their initial when they have none.
+function paintAvatar(el, userId, label, v) {
+  if (!el) return;
+  el.textContent = String(label || '?').slice(0, 1);
+  el.style.backgroundImage = v ? `url(/api/auth/avatar/${userId}?v=${v})` : '';
+  el.classList.toggle('has-pic', !!v);
+}
+async function shrinkImage(file, size = 256) {
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(bmp.width, bmp.height);
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  c.getContext('2d').drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, size, size);
+  return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not read that image'))), 'image/jpeg', 0.9));
+}
+function initProfilePanel() {
+  const u = authState.user; if (!u) return;
+  const prev = $('#profile-preview');
+  paintAvatar(prev, u.id, u.display_name || u.username, u.avatar_v);
+  $('#profile-remove').disabled = !u.avatar_v;
+  $('#profile-upload').onclick = () => $('#profile-file').click();
+  $('#profile-file').onchange = async (e) => {
+    const file = e.target.files?.[0]; e.target.value = '';
+    if (!file) return;
+    try {
+      const blob = await shrinkImage(file);
+      const fd = new FormData(); fd.append('avatar', blob, 'avatar.jpg');
+      const data = await api('/auth/avatar', { method: 'POST', body: fd });
+      u.avatar_v = data.avatar_v; toast('Profile picture updated');
+      paintAvatar($('#user-avatar'), u.id, u.display_name || u.username, u.avatar_v); initProfilePanel();
+    } catch (err) { toast(err.message || 'Could not use that image', true); }
+  };
+  $('#profile-remove').onclick = async () => {
+    try {
+      await api('/auth/avatar', { method: 'DELETE' });
+      u.avatar_v = null; toast('Profile picture removed');
+      paintAvatar($('#user-avatar'), u.id, u.display_name || u.username, null); initProfilePanel();
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
 function showApp(user, { restore = false } = {}) {
   window.neonBg?.stop();
   authState.user = user;
@@ -2970,7 +3011,7 @@ function showApp(user, { restore = false } = {}) {
   const label = user.display_name || user.username;
   $('#user-name').textContent = label;
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : 'member';
-  $('#user-avatar').textContent = label.slice(0, 1);
+  paintAvatar($('#user-avatar'), user.id, label, user.avatar_v);
 
   // Settings/sources nav hidden for members (admin-only on server). The cog
   // in the footer opens Settings; admin-only modules inside stay hidden for
@@ -3071,6 +3112,7 @@ $('#settings-gear')?.addEventListener('click', () => setView('settings'));
 /* Role-dependent tile grid. Modules render in a fixed order; admins get the
    fully list. Clicking a tile reveals ONLY its module below. */
 const SETTINGS_MODULES = [
+  { id: 'profile', label: 'Profile picture', ico: '🖼', adminOnly: false },
   { id: 'password', label: 'Change password', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', ico: '💻', adminOnly: false },
   { id: 'controller', label: 'Controller', ico: '🎮', adminOnly: false },
@@ -3259,6 +3301,7 @@ function showSettingsModule(id) {
   if (!panel) return;
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
+  if (id === 'profile') initProfilePanel();
   if (id === 'health') loadHealth();
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
@@ -3451,7 +3494,7 @@ async function loadUsersForModule() {
   $('#user-list').innerHTML = users.map((u) => `
     <div class="user-list-row" data-user="${u.id}">
       <div class="grow">
-        <div>${esc(u.username)} ${u.role === 'admin' ? '<span class="pill accent">admin</span>' : ''} ${u.disabled ? '<span class="pill bad">disabled</span>' : ''}</div>
+        <div class="user-line"><span class="avatar avatar-sm${u.avatar_v ? ' has-pic' : ''}" style="${u.avatar_v ? `background-image:url(/api/auth/avatar/${u.id}?v=${u.avatar_v})` : ''}">${u.avatar_v ? '' : esc(u.username.slice(0, 1))}</span>${esc(u.username)} ${u.role === 'admin' ? '<span class="pill accent">admin</span>' : ''} ${u.disabled ? '<span class="pill bad">disabled</span>' : ''}</div>
         <div class="sub">${u.active_sessions} session(s) · last login ${u.last_login_at ? `${esc(u.last_login_at)} UTC` : 'never'}</div>
       </div>
       ${u.role === 'admin' ? '' : `<label class="dl-pick" title="Whether this person can download ROM files. 'Default' follows the switch above."><span>Downloads</span>

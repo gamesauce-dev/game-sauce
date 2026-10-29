@@ -239,6 +239,21 @@
       </div>
 
       <!-- Module targets (all hidden; the tile click reveals one). -->
+      <div class="panel hidden" id="mod-profile">
+        <h3>Profile picture</h3>
+        <div class="profile-row">
+          <div class="avatar avatar-lg" id="profile-preview">?</div>
+          <div>
+            <p class="hint" style="margin-top:0">Shown next to your name in the menu and on the user list. A square-ish JPEG, PNG or WebP works best; it is shrunk to 256 px before it is saved.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="profile-upload">Upload a picture</button>
+              <button class="btn" id="profile-remove">Remove</button>
+              <input type="file" id="profile-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="panel hidden" id="mod-password">
         <h3>Change password</h3>
         <form class="edit-form" id="password-form">

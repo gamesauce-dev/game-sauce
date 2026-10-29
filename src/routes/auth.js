@@ -6,6 +6,8 @@ import {
 import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload } from '../lib/policy.js';
 import db from '../db.js';
 import express from 'express';
+import multer from 'multer';
+import { sniffImage } from './roms.js';
 
 const router = express.Router();
 
@@ -84,12 +86,41 @@ router.get('/me', (req, res) => {
       username: req.user.username,
       display_name: req.user.display_name,
       role: req.user.role,
+      avatar_v: db.prepare('SELECT avatar_updated FROM users WHERE id = ?').get(req.user.id)?.avatar_updated || null,
       can_download: canDownload(req.user)
     }
   });
 });
 
 /** Server-wide switches. Anyone signed in can read them; only an admin can change them. */
+/* ───────────────────────── profile picture ───────────────────────── */
+const avatarUpload = multer({ limits: { fileSize: 1024 * 1024 } });
+
+// Any signed-in person can see the household's pictures; only you can change yours.
+router.get('/avatar/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT avatar, avatar_type FROM users WHERE id = ?').get(Number(req.params.id));
+  if (!row?.avatar) return res.status(404).end();
+  res.set({ 'Content-Type': row.avatar_type || 'image/jpeg', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, max-age=86400' });
+  res.send(row.avatar);
+});
+
+router.post('/avatar', requireAuth, (req, res, next) => {
+  avatarUpload.single('avatar')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That picture is over 1 MB' : err.message });
+    if (!req.file) return res.status(400).json({ error: 'No picture uploaded' });
+    const type = sniffImage(req.file.buffer);
+    if (!type) return res.status(400).json({ error: 'That file is not a JPEG, PNG or WebP image' });
+    const v = Date.now();
+    db.prepare('UPDATE users SET avatar = ?, avatar_type = ?, avatar_updated = ? WHERE id = ?').run(req.file.buffer, type, v, req.user.id);
+    res.json({ avatar_v: v });
+  });
+});
+
+router.delete('/avatar', requireAuth, (req, res) => {
+  db.prepare('UPDATE users SET avatar = NULL, avatar_type = NULL, avatar_updated = NULL WHERE id = ?').run(req.user.id);
+  res.json({ avatar_v: null });
+});
+
 router.get('/policy', requireAuth, (req, res) => {
   res.json({ members_can_download: membersCanDownload() });
 });
