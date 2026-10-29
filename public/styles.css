@@ -1187,7 +1187,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
   -webkit-background-clip: text; background-clip: text; font: inherit; letter-spacing: inherit;
   animation: brandShine 4.2s cubic-bezier(.45, 0, .55, 1) infinite;
 }
-.brand-logo { animation: logoGlow 3.2s ease-in-out infinite; }
+.brand-logo { animation: logoGlow 4.2s ease-in-out infinite; will-change: transform, filter; }
 @keyframes brandFlow { from { background-position: 0 0; } to { background-position: 200% 0; } }
 @keyframes brandPulse {
   0%, 100% { filter: saturate(1.3) drop-shadow(0 0 0.3rem rgba(255, 61, 140, .4)); }
@@ -1195,9 +1195,11 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 }
 /* 0% and 100% are both fully off-screen (left, then right); the band always finishes its trip. */
 @keyframes brandShine { 0%, 35% { background-position: 0% 0; } 85%, 100% { background-position: 100% 0; } }
+/* Gentle pulsation: every keyframe lists the SAME filter layers in the same order, so the browser
+   blends smoothly between them (a changing layer count is what made the glow flash on and off). */
 @keyframes logoGlow {
-  0%, 100% { filter: drop-shadow(0 0.2857rem 0.9rem rgba(255, 61, 104, .5)) saturate(1.1); }
-  50% { filter: drop-shadow(0 0.2857rem 1.5rem rgba(255, 61, 104, .95)) drop-shadow(0 0 0.7rem rgba(124, 92, 255, .85)) saturate(1.4) brightness(1.15); }
+  0%, 100% { transform: scale(1);     filter: drop-shadow(0 0.2857rem 0.9rem rgba(255, 61, 104, .35)) drop-shadow(0 0 0.5rem rgba(124, 92, 255, .15)) saturate(1.05) brightness(1); }
+  50%      { transform: scale(1.035); filter: drop-shadow(0 0.2857rem 1.3rem rgba(255, 61, 104, .7))  drop-shadow(0 0 0.8rem rgba(124, 92, 255, .5))  saturate(1.25) brightness(1.08); }
 }
 @media (prefers-reduced-motion: reduce) { .brand-name .saucy, .brand-name::after, .brand-logo { animation: none; } .brand-name::after { display: none; } }
 
