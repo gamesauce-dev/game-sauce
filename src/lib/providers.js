@@ -738,7 +738,9 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   const errors = [];
   let best = null;
 
-  for (const provider of PROVIDERS) {
+  // Arcade romsets: IGDB goes before TheGamesDB (whose monthly quota runs out on big sets).
+  const order = ARCADE_NAME_MATCH.has(platform.slug) ? [screenscraper, igdb, thegamesdb, steamgriddb] : PROVIDERS;
+  for (const provider of order) {
     if (!provider.enabled) continue;
     // steamgriddb is art-only: it never participates in metadata matching.
     if (provider.id === 'steamgriddb') continue;

@@ -45,6 +45,11 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   for (const r of roms) { const m = map.get(keyOf(r.filename)); if (m) hits.push({ id: r.id, filename: r.filename, from: r.title, ...m }); else unmatched++; }
 
   if (apply) {
+    // MAME: titles from your CSV count as trusted names, so title-based providers are allowed to search them.
+    if (platform === 'mame') {
+      const ins = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer) VALUES (?, ?, ?, ?) ON CONFLICT(name) DO NOTHING');
+      db.transaction(() => { for (const h of hits) ins.run(keyOf(h.filename), h.title, h.year, h.maker); })();
+    }
     const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
       developer = COALESCE(developer, ?), updated_at = datetime('now') WHERE id = ?`);
     db.transaction(() => { for (const h of hits) upd.run(h.title, sortTitle(h.title), h.year, h.maker, h.id); })();

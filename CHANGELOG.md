@@ -52,6 +52,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **MAME: Fetch metadata after a CSV names import now works, and tries IGDB first.** Names applied from the Game names (CSV) tool are now recorded as trusted MAME names (previously title-based providers skipped MAME games unless a `-listxml` list was imported). For arcade romsets the order is ScreenScraper, then IGDB, then TheGamesDB, so an exhausted TheGamesDB quota no longer holds the lookup up.
 - **Settings → Platforms:** the **Add platform** button stays in view under the pinned header while you scroll the list.
 - **A newly picked cover shows straight away:** after choosing a match in *Identify this game*, the old cover could stay on screen (the browser kept its cached copy for a day). Cover links now change whenever the image does.
 - **Disc and bracket tags are left out of metadata searches:** `[Disc 1]`, `(Disc 2 of 3)`, `- Disc 1`, `[CD2]` and stray `[!]`-style tags are removed before a provider is asked, so every disc of a game finds the same entry.
