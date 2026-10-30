@@ -1321,3 +1321,6 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 
 /* Duplicate finder: where each copy lives. */
 .dup-path { font-family: var(--mono, ui-monospace, monospace); font-size: 0.74rem; color: var(--dim); word-break: break-all; line-height: 1.35; margin: 0.15rem 0 0.2rem; }
+
+/* Tips on the duplicate finder's padlock wrap and stay on screen. */
+.dup-keepbtn[title] { position: absolute; }

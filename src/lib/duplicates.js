@@ -91,6 +91,10 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
   for (const [key, list] of groups) {
     if (list.length < 2) continue;
     const ranked = list.map((r) => ({ r, ...score(r) })).sort((a, b) => b.score - a.score || a.r.id - b.r.id);
+    // Display order is fixed (file name, then id) so locking or unlocking a copy never moves it under your pointer.
+    // The score above still decides which copy is suggested and kept.
+    const keepIndex = new Map(ranked.map((x, i) => [x.r.id, i]));
+    const display = [...ranked].sort((a, b) => String(a.r.filename).localeCompare(String(b.r.filename)) || a.r.id - b.r.id);
     const best = ranked[0];
     // Copies you pinned all stay; otherwise just the top-scored one. At least one copy is always kept.
     const pinned = ranked.some((x) => x.r.keep_override === 1);
@@ -103,7 +107,7 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
       platform: best.r.platform_name,
       platform_slug: best.r.platform_slug,
       platform_short: best.r.platform_short,
-      items: ranked.map((x, i) => ({
+      items: display.map((x) => ({ x, i: keepIndex.get(x.r.id) })).map(({ x, i }) => ({
         id: x.r.id, title: x.r.title, filename: x.r.filename, size_bytes: x.r.size_bytes,
         path: x.r.source_path || x.r.storage_path || null, source_name: x.r.source_name || null,
         region: x.r.region, revision: x.r.revision, year: x.r.release_year,

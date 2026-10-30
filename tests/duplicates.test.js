@@ -61,9 +61,9 @@ test('regional versions of one game are grouped, and the USA copy is suggested',
   assert.equal(r.extra, 2);
   const g = r.groups[0];
   assert.equal(g.items.length, 3);
-  assert.equal(g.items[0].id, us, 'USA first');
-  assert.equal(g.items[0].keep, true);
-  assert.match(g.items[0].why, /USA release/);
+  const kept = g.items.find((i) => i.keep);
+  assert.equal(kept.id, us, 'the USA copy is the one kept');
+  assert.match(kept.why, /USA release/);
   assert.deepEqual(g.items.filter((i) => i.keep).map((i) => i.id), [us], 'exactly one keeper');
   assert.ok(g.items.map((i) => i.id).includes(eu) && g.items.map((i) => i.id).includes(jp));
   assert.ok(!r.groups.some((x) => /Lonely/.test(x.title)), 'a single copy is not a duplicate');
@@ -89,14 +89,15 @@ test('a DAT-verified copy beats a bad dump, and a later revision beats an earlie
   const good = rom('genesis', 'Iron Tide (USA) (Rev A).md', { dat: 'verified', revision: 'A' });
   const r = (await call('/api/admin/duplicates?platform=genesis')).body;
   const g = r.groups.find((x) => /Iron Tide/.test(x.title));
-  assert.equal(g.items[0].id, good);
-  assert.match(g.items[0].why, /verified against a DAT/);
+  const kept1 = g.items.find((i) => i.keep);
+  assert.equal(kept1.id, good);
+  assert.match(kept1.why, /verified against a DAT/);
   assert.equal(g.items[1].id, bad);
 
   const a = rom('gba', 'Glitch Garden (USA) (Rev 1).gba', { revision: '1' });
   const b = rom('gba', 'Glitch Garden (USA) (Rev 2).gba', { revision: '2' });
   const r2 = (await call('/api/admin/duplicates?platform=gba')).body;
-  assert.equal(r2.groups[0].items[0].id, b, 'rev 2 is the keeper');
+  assert.equal(r2.groups[0].items.find((i) => i.keep).id, b, 'rev 2 is the keeper');
   assert.ok(a);
 });
 
@@ -105,8 +106,9 @@ test('a favourite is protected: it is the suggested keeper even if another has a
   db.prepare('INSERT OR IGNORE INTO favorites (user_id, rom_id) VALUES ((SELECT id FROM users WHERE username = \'dmember\'), ?)').run(fav); // any person's favourite protects the copy
   rom('n64', 'Banner of Dawn (USA).z64');
   const g = (await call('/api/admin/duplicates?platform=n64')).body.groups[0];
-  assert.equal(g.items[0].id, fav);
-  assert.match(g.items[0].why, /a favourite/);
+  const kept2 = g.items.find((i) => i.keep);
+  assert.equal(kept2.id, fav);
+  assert.match(kept2.why, /a favourite/);
 });
 
 test('arcade clones are grouped under their parent using the MAME name list', async () => {
@@ -290,4 +292,18 @@ test('the same arcade zip name on two different platforms is NOT a duplicate (FB
   db.prepare("INSERT OR IGNORE INTO mame_names (name, title, year, manufacturer, cloneof, isbios, isdevice) VALUES ('enduror2', 'Enduro Racer (clone)', 1986, 'Sega', 'enduror', 0, 0)").run();
   const g2 = (await call('/api/admin/duplicates?platform=mame&limit=200')).body.groups.find((g) => g.items.some((i) => i.id === b));
   assert.ok(g2 && g2.items.some((i) => i.id === c), 'a clone on the SAME platform still groups under its parent');
+});
+
+test('locking a copy never changes the order the copies are shown in', async () => {
+  const a = rom('gba', 'Order Check (USA).gba');
+  const b = rom('gba', 'Order Check (Japan).gba');
+  const find = async () => (await call('/api/admin/duplicates?platform=gba&limit=200')).body.groups.find((g) => /Order Check/.test(g.title));
+  const before = (await find()).items.map((i) => i.id);
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: before[1], value: 1 } }); // lock the one shown SECOND
+  const afterLock = await find();
+  assert.deepEqual(afterLock.items.map((i) => i.id), before, 'same order after locking the second copy');
+  assert.equal(afterLock.items.find((i) => i.keep).id, before[1], 'the locked (second) copy is the one kept');
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: before[1], value: null } });
+  assert.deepEqual((await find()).items.map((i) => i.id), before, 'and the same again after unlocking');
+  assert.ok(a && b);
 });
