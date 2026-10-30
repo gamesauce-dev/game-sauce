@@ -3507,7 +3507,7 @@ function renderDuplicates() {
   const size = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
   list.innerHTML = g.map((grp, gi) => `
     <div class="dup-group" data-gi="${gi}">
-      <div class="dup-head"><b>${esc(grp.title)}</b> <span class="pill">${esc(grp.platform_short || grp.platform)}</span>
+      <div class="dup-head"><b>${esc(grp.title)}</b> <span class="pill">${esc(grp.platform_short || grp.platform)}</span>${grp.size_mismatch ? ' <span class="pill warn" title="Same title but very different file sizes: these may be two different games that were given one title">⚠ sizes differ a lot: probably not duplicates</span>' : ''}
         <span class="grow"></span>
         <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one, from YOUR view only (others still see them)">Hide the others</button></div>
       <div class="dup-items">${grp.items.map((it) => `

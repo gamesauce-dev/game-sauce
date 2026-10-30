@@ -307,3 +307,33 @@ test('locking a copy never changes the order the copies are shown in', async () 
   assert.deepEqual((await find()).items.map((i) => i.id), before, 'and the same again after unlocking');
   assert.ok(a && b);
 });
+
+test('arcade zips with different parents are never grouped by a shared title (Darkstalkers vs Night Warriors on CPS2)', async () => {
+  // CPS2 is a platform people add themselves (as on a real server), so create it the same way.
+  db.prepare("INSERT OR IGNORE INTO platforms (slug, name, short_name, family, accent, extensions) VALUES ('cps2', 'Capcom CPS2', 'CPS2', 'Arcade', '#b71c1c', 'zip')").run();
+  const a = rom('cps2', 'dstlk.zip');
+  const b = rom('cps2', 'nwarr.zip');
+  const clone = rom('cps2', 'vampj.zip');
+  // both zips were wrongly given the same stored title by a metadata provider
+  db.prepare("UPDATE roms SET title = 'Night Warriors: Darkstalkers Revenge', sort_title = 'night warriors: darkstalkers revenge' WHERE id IN (?, ?)").run(a, b);
+  for (const [name, title, cloneof] of [['dstlk', 'Darkstalkers', null], ['nwarr', 'Night Warriors', null], ['vampj', 'Vampire (Japan)', 'dstlk']]) {
+    db.prepare('INSERT OR REPLACE INTO mame_names (name, title, year, manufacturer, cloneof, isbios, isdevice) VALUES (?, ?, 1994, ?, ?, 0, 0)').run(name, title, 'Capcom', cloneof);
+  }
+  const groups = (await call('/api/admin/duplicates?platform=cps2&limit=200')).body.groups;
+  assert.ok(!groups.some((g) => g.items.some((i) => i.id === a) && g.items.some((i) => i.id === b)), 'different parents stay apart');
+  const g = groups.find((x) => x.items.some((i) => i.id === clone));
+  assert.ok(g && g.items.some((i) => i.id === a), 'a real clone still groups under its parent');
+});
+
+test('same-title disc images with very different sizes are flagged as probably not duplicates', async () => {
+  const a = rom('ps2', 'Size Check (USA).chd');
+  const b = rom('ps2', 'Size Check (Europe).chd');
+  db.prepare('UPDATE roms SET size_bytes = ? WHERE id = ?').run(1400 * 1048576, a);
+  db.prepare('UPDATE roms SET size_bytes = ? WHERE id = ?').run(3500 * 1048576, b);
+  const g = (await call('/api/admin/duplicates?platform=ps2&limit=200')).body.groups.find((x) => /Size Check/.test(x.title));
+  assert.ok(g, 'still listed');
+  assert.equal(g.size_mismatch, true);
+  db.prepare('UPDATE roms SET size_bytes = ? WHERE id = ?').run(1450 * 1048576, b);
+  const g2 = (await call('/api/admin/duplicates?platform=ps2&limit=200')).body.groups.find((x) => /Size Check/.test(x.title));
+  assert.equal(g2.size_mismatch, false, 'similar sizes: no warning');
+});

@@ -7,7 +7,8 @@ import db from '../db.js';
 import { parseFilename, sortTitle } from './metadata.js';
 
 const REGION_RANK = ['USA', 'World', 'Europe', 'Australia', 'Canada', 'Japan'];
-const ARCADE = new Set(['arcade', 'mame', 'fba']);
+// Arcade romsets: the zip name IS the game, so two zips are the same game only if MAME's name list says one is a clone of the other.
+const ARCADE = new Set(['arcade', 'mame', 'fba', 'cps1', 'cps2', 'cps3', 'neogeo', 'naomi', 'atomiswave', 'coinop']);
 
 const stem = (filename) => path.basename(String(filename || '')).replace(/\.(zip|7z)$/i, '').toLowerCase();
 
@@ -79,7 +80,8 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
     if (ARCADE.has(r.platform_slug)) {
       const parent = arcadeParent(r, names);
       // The platform is part of the key: FinalBurn Neo's enduror.zip and MAME's enduror.zip are different romsets, not duplicates.
-      key = parent ? `a|${r.platform_id}|${parent}` : `t|${r.platform_id}|${sortTitle(r.title)}|${distinguishers(r.filename)}`;
+      // No clone information? Then never guess from the title: a zip with no parent stays on its own (its zip name is its identity).
+      key = parent ? `a|${r.platform_id}|${parent}` : `z|${r.platform_id}|${stem(r.filename)}`;
     } else {
       key = `t|${r.platform_id}|${r.sort_title || sortTitle(r.title)}|${distinguishers(r.filename)}`;
     }
@@ -100,9 +102,13 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
     const pinned = ranked.some((x) => x.r.keep_override === 1);
     // A tie: nothing in the score separates the top copies (and you haven't chosen). Say so instead of pretending.
     const tied = !pinned && ranked.length > 1 && ranked[0].score === ranked[1].score;
+    // Disc images: the same stored title but very different sizes usually means two different games that got one title.
+    const sizes = ranked.map((x) => Number(x.r.size_bytes) || 0).filter(Boolean);
+    const sizeMismatch = !ARCADE.has(best.r.platform_slug) && sizes.length > 1 && Math.max(...sizes) / Math.min(...sizes) >= 1.6 && Math.max(...sizes) > 50 * 1048576;
     dupes.push({
       key,
       tied,
+      size_mismatch: sizeMismatch,
       title: best.r.title,
       platform: best.r.platform_name,
       platform_slug: best.r.platform_slug,

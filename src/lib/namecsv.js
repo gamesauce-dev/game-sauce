@@ -31,7 +31,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   const head = rows[0].map((h) => h.trim().toLowerCase());
   const col = (n) => head.indexOf(String(n || '').trim().toLowerCase());
   const iRom = col(romCol), iName = col(nameCol), iYear = col(yearCol), iMaker = col(makerCol);
-  const iBios = col('is_bios'), iDev = col('is_device'), iArc = col('is_arcade');
+  const iBios = col('is_bios'), iDev = col('is_device'), iArc = col('is_arcade'), iClone = col('clone_of');
   const yes = (v) => /^(yes|y|true|1)$/i.test(String(v || '').trim());
   if (iRom < 0) throw Object.assign(new Error(`No "${romCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
   if (iName < 0) throw Object.assign(new Error(`No "${nameCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
@@ -39,7 +39,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   const map = new Map();
   for (const r of rows.slice(1)) {
     const k = keyOf(r[iRom]); const title = String(r[iName] || '').trim();
-    if (k && title && !map.has(k)) map.set(k, { title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
+    if (k && title && !map.has(k)) map.set(k, { title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
     // (e.g. the CPS3 sets share a BIOS but are playable). Otherwise BIOS/device, or is_arcade filled in as not-yes, means System.
     system: !(iArc >= 0 && yes(r[iArc])) && ((iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) || (iArc >= 0 && String(r[iArc] || '').trim() !== '')) });
   }
@@ -59,6 +59,11 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
     if (platform === 'mame') {
       const ins = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer) VALUES (?, ?, ?, ?) ON CONFLICT(name) DO NOTHING');
       db.transaction(() => { for (const h of hits) ins.run(keyOf(h.filename), h.title, h.year, h.maker); })();
+    }
+    // Clone information from the CSV (clone_of): lets the duplicate finder group clones under their parent on EVERY arcade platform.
+    {
+      const up = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer, cloneof) VALUES (?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET cloneof = excluded.cloneof WHERE mame_names.cloneof IS NULL AND excluded.cloneof IS NOT NULL');
+      db.transaction(() => { for (const h of hits) if (h.cloneof) up.run(keyOf(h.filename), h.title, h.year, h.maker, h.cloneof); })();
     }
     const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
       developer = COALESCE(developer, ?), updated_at = datetime('now') WHERE id = ?`);
