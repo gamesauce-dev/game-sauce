@@ -139,3 +139,16 @@ test('System flag: CSV marks BIOS/device/non-arcade, they leave the library and 
   const dl = await fetch(`${base}/api/roms/${ids[0]}/download`, { headers: { Authorization: `Bearer ${token}` } });
   assert.notEqual(dl.status, 404, 'System/hidden games can still be downloaded');
 });
+
+test('System flag: is_arcade = yes always wins over is_bios / is_device', async () => {
+  const csv = 'rom_name,short_game_name,is_bios,is_device,is_arcade\ncpsx.zip,Real Fighter,yes,,yes\ndevgame.zip,Device Game,,yes,yes\njustbios.zip,Plain BIOS,yes,,no\n';
+  const up = new FormData();
+  for (const n of ['cpsx.zip', 'devgame.zip', 'justbios.zip']) up.append('roms', new Blob([`w-${n}`]), n);
+  up.append('platform', 'n64'); up.append('enrich', 'false');
+  await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up });
+  const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'n64'); fd.append('flag_system', '1'); fd.append('apply', '1');
+  const r = await (await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd })).json();
+  assert.equal(r.flagged, 1, 'only the plain BIOS');
+  const lib = (await call('/api/roms?platform=n64&limit=50')).body.items.map((x) => x.title).sort();
+  assert.deepEqual(lib, ['Device Game', 'Real Fighter']);
+});
