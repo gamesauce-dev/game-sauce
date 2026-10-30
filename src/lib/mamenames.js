@@ -80,10 +80,12 @@ export async function importMameNames(filePath) {
  *  providers can be trusted. Based on the list itself (not meta_source), because
  *  a provider hit later rewrites meta_source. */
 export function mameTitleTrusted(platformSlug, filename) {
-  if (platformSlug !== 'mame') return false;
+  // Every arcade-romset platform: the zip name is looked up in the name list (MAME's list, or one loaded from a names CSV).
+  if (!ARCADE_ROMSET.has(platformSlug)) return false;
   const key = String(filename || '').replace(/\.(zip|7z)$/i, '').toLowerCase();
   return !!db.prepare('SELECT 1 FROM mame_names WHERE name = ?').get(key);
 }
+const ARCADE_ROMSET = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
 
 /** Title/year/developer from the list for MAME ROMs (all of them, or one id).
  *  Authoritative: a zip name IS the identifier, so this replaces filename-derived

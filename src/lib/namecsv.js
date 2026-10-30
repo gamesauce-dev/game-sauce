@@ -56,7 +56,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
     }
     // (Hiding is personal now; System entries are hidden for everyone by the System flag above.)
     // MAME: titles from your CSV count as trusted names, so title-based providers are allowed to search them.
-    if (platform === 'mame') {
+    if (['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop'].includes(platform)) {
       const ins = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer) VALUES (?, ?, ?, ?) ON CONFLICT(name) DO NOTHING');
       db.transaction(() => { for (const h of hits) ins.run(keyOf(h.filename), h.title, h.year, h.maker); })();
     }

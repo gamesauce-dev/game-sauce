@@ -159,3 +159,18 @@ test('System entries are hidden for everyone, admin-only to set, and a member ca
   const denied = await fetch(`${base}/api/roms/bulk/system`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` }, body: JSON.stringify({ ids: [sysId], system: false }) });
   assert.equal(denied.status, 403);
 });
+
+test('arcade-style platforms (Neo Geo, CPS...) are matched by name, with the right IGDB system and a trusted name list', async () => {
+  const providers = await import('../src/lib/providers.js');
+  const mn = await import('../src/lib/mamenames.js');
+  assert.ok(providers.ARCADE_NAME_MATCH.has('neogeo') && providers.ARCADE_NAME_MATCH.has('cps2') && providers.ARCADE_NAME_MATCH.has('fba'));
+  // a Neo Geo zip is only "trusted" once its name is on the list (a names CSV puts it there)
+  const csv = 'rom_name,short_game_name,clone_of\nmslug.zip,Metal Slug: Super Vehicle-001,\n';
+  const up = new FormData(); up.append('roms', new Blob(['neo-trust-test-' + Math.random()]), 'mslug.zip'); up.append('platform', 'neogeo'); up.append('enrich', 'false');
+  const made = await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up })).json();
+  assert.ok(made.created?.[0], JSON.stringify(made));
+  assert.equal(mn.mameTitleTrusted('neogeo', 'mslug.zip'), false, 'not trusted before the names are loaded');
+  const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'neogeo'); fd.append('apply', '1');
+  await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+  assert.equal(mn.mameTitleTrusted('neogeo', 'mslug.zip'), true, 'trusted once the CSV has named it');
+});

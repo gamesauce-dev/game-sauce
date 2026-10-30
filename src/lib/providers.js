@@ -578,7 +578,11 @@ const IGDB_PLATFORMS = {
   psp: 38, psvita: 39, xbox: 11, xbox360: 12, xboxone: 49,
   xboxseries: 169, genesis: 29, mastersystem: 64, gamegear: 67,
   saturn: 32, dreamcast: 23, atari2600: 59, lynx: 61, jaguar: 62,
-  turbografx16: 86, neogeo: 24, arcade: 52, mame: 52, dos: 13
+  turbografx16: 86, dos: 13,
+  // Arcade systems. (Neo Geo used to map to 24, which is Game Boy Advance: every Neo Geo lookup searched GBA games.)
+  // IGDB files Neo Geo games under Arcade (52), Neo Geo MVS (79) and Neo Geo AES (80) alike, so search all three.
+  arcade: '52', mame: '52', fba: '52', cps1: '52', cps2: '52', cps3: '52', naomi: '52', atomiswave: '52', coinop: '52',
+  neogeo: '52,79,80'
 };
 
 const igdb = {
@@ -732,7 +736,9 @@ export function providerStatus() {
 /** Romset platforms matched by zip filename (romnom). For these only
  *  ScreenScraper participates: TheGamesDB/IGDB/SteamGridDB search by TITLE, and a
  *  short name like "sf2" matches the wrong games (duplicate covers). */
-export const ARCADE_NAME_MATCH = new Set(['mame']);
+// Platforms where the file is a romset zip: a hit must really be that game (strict title match), IGDB is tried
+// before TheGamesDB, and a lookup only runs once the title is trusted (from a name list or a names CSV).
+export const ARCADE_NAME_MATCH = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
 
 export async function enrich({ title, platform, hashes, filename, titleTrusted = false }) {
   const errors = [];
