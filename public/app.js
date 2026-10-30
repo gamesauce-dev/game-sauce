@@ -3690,6 +3690,18 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('change', (e) => { if (e.target.id === 'dup-platform') loadDuplicates(true); });
 
+// Requests that took over a second, newest first, with how many others were running when they began: finds why it felt slow.
+async function renderSlowRequests() {
+  const box = $('#health-slow'); if (!box) return;
+  try {
+    const r = await api('/admin/slow-requests');
+    const sec = (ms) => (ms >= 10000 ? Math.round(ms / 1000) + ' s' : (ms / 1000).toFixed(1) + ' s');
+    box.innerHTML = `<h4 style="margin:1.2rem 0 0.4rem">Slow requests <span class="note">(over ${sec(r.threshold_ms)}, since the server last started)</span></h4>` + (r.entries.length
+      ? `<div class="slow-list">${r.entries.slice(0, 15).map((e) => `<div class="slow-row"><b>${sec(e.ms)}</b><span class="mono">${esc(e.method)} ${esc(e.path)}${e.query ? '?' + esc(e.query) : ''}</span><span class="note">${esc(new Date(e.at).toLocaleTimeString())}${e.user ? ' · ' + esc(e.user) : ''}${e.others_running ? ' · ' + e.others_running + ' other request' + (e.others_running === 1 ? '' : 's') + ' running' : ''}</span></div>`).join('')}</div>`
+      : '<div class="hint">None so far. If something feels slow, it will be listed here with what it was.</div>');
+  } catch { box.innerHTML = ''; }
+}
+
 let healthText = '';
 async function loadHealth() {
   const overall = $('#health-overall'), checks = $('#health-checks'), sum = $('#health-summary');
@@ -3715,6 +3727,7 @@ async function loadHealth() {
         <span class="health-ico">${icon[c.status]}</span>
         <div><b>${esc(c.label)}</b><div class="sub">${esc(c.detail)}</div></div>
       </div>`).join('');
+    renderSlowRequests();
   } catch (err) {
     overall.className = 'health-overall bad';
     overall.textContent = 'Could not run the health check: ' + err.message;

@@ -209,7 +209,13 @@ export function getAllScanProgress() {
   return [...PROGRESS.values()];
 }
 
-export async function scanSource(sourceId, { hash = true, enrich = null, onProgress = null } = {}) {
+import { clearDuplicateCache } from './duplicates.js';
+
+export async function scanSource(sourceId, opts = {}) {
+  try { return await scanSourceInner(sourceId, opts); } finally { clearDuplicateCache(); }
+}
+
+async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgress = null } = {}) {
   const source = db.prepare('SELECT * FROM sources WHERE id = ?').get(sourceId);
   if (!source) throw new Error('Source not found');
 

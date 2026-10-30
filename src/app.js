@@ -1,3 +1,5 @@
+import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
+import { clearDuplicateCache } from './lib/duplicates.js';
 import express from 'express';
 import db from './db.js';
 // Side-effect import: forward-compatible schema migrations (sources, source paths,
@@ -61,6 +63,13 @@ export function createApp() {
   const api = express.Router();
 
   // Cross-site request check, then per-user rate limits (see src/lib/guard.js).
+  api.use(slowLogMiddleware);
+  // The duplicate finder reuses its answer for 30 s. Any request that changes data (lock, hide, system, rename, delete,
+  // scan, upload, metadata...) throws that answer away when it finishes, so the finder never shows stale groups after a change.
+  api.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') res.once('finish', clearDuplicateCache);
+    next();
+  });
   api.use(originGuard({ trustProxy: process.env.GAMESAUCE_TRUST_PROXY === '1' }));
   api.use(rateLimit());
 
@@ -89,6 +98,9 @@ export function createApp() {
     db.prepare('UPDATE roms SET keep_override = ? WHERE id = ?').run(v, id);
     res.json({ id, value: v });
   });
+
+  // Requests that took over a second (what, how long, how many others were running): finds out WHY it felt slow.
+  api.get('/admin/slow-requests', requireAuth, requireAdmin, (req, res) => res.json(slowLog()));
 
   // Admin health report (read-only): see src/lib/health.js.
   api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {

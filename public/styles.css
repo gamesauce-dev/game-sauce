@@ -1373,3 +1373,9 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 /* A game that is both locked and DAT-verified: stack them instead of overlapping, in every mode. */
 .card-cover .card-lock ~ .badge-dat { bottom: 2.6rem; }
 .grid.selecting .card-cover .card-lock ~ .badge-dat { bottom: 4.7rem; }
+
+/* Health: slow-request list */
+.slow-list { display: grid; gap: 0.3rem; }
+.slow-row { display: grid; grid-template-columns: 4.5rem 1fr auto; gap: 0.7rem; align-items: baseline; padding: 0.4rem 0.7rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.5rem; font-size: 0.85rem; }
+.slow-row b { color: #fbbf24; }
+.slow-row .mono { font-family: var(--mono, ui-monospace, monospace); font-size: 0.8rem; word-break: break-all; }

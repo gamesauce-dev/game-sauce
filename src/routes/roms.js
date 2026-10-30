@@ -11,6 +11,7 @@ import { requireAdmin } from './auth.js';
 import { canDownload } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
+import { clearDuplicateCache } from '../lib/duplicates.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -992,6 +993,7 @@ async function enrichOneRom(id, onlyMissingCovers) {
 
 async function runEnrichJob() {
   let cursor = 0;
+  const tick = setInterval(clearDuplicateCache, 5000); // matches change titles while the job runs
   try {
     for (;;) {
       if (enrichJob.stop) break;
@@ -1011,6 +1013,8 @@ async function runEnrichJob() {
       }
     }
   } finally {
+    clearInterval(tick);
+    clearDuplicateCache();
     enrichJob.running = false;
     enrichJob.finishedAt = new Date().toISOString();
   }

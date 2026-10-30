@@ -12,6 +12,7 @@ process.env.GAMESAUCE_ADMIN_PASSWORD = 'd-admin-password-1';
 
 let server, base, db, adminTok, memberTok;
 const call = async (p, { token = adminTok, method = 'GET', body } = {}) => {
+  if (p.startsWith('/api/admin/duplicates') && method === 'GET' && !globalThis.__keepDupCache) (await import('../src/lib/duplicates.js')).clearDuplicateCache(); // tests insert rows directly, bypassing the request that would clear it
   const res = await fetch(base + p, { method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
   return { status: res.status, body: await res.json().catch(() => null) };
 };
@@ -336,4 +337,37 @@ test('same-title disc images with very different sizes are flagged as probably n
   db.prepare('UPDATE roms SET size_bytes = ? WHERE id = ?').run(1450 * 1048576, b);
   const g2 = (await call('/api/admin/duplicates?platform=ps2&limit=200')).body.groups.find((x) => /Size Check/.test(x.title));
   assert.equal(g2.size_mismatch, false, 'similar sizes: no warning');
+});
+
+test('the duplicate finder reuses a recent answer, and any change made through the app clears it', async () => {
+  const { clearDuplicateCache } = await import('../src/lib/duplicates.js');
+  const a = rom('gba', 'Cache Check (USA).gba');
+  const b = rom('gba', 'Cache Check (Japan).gba');
+  globalThis.__keepDupCache = true;
+  try {
+    clearDuplicateCache();
+    const first = (await call('/api/admin/duplicates?platform=gba&limit=200')).body;
+    assert.ok(first.groups.some((g) => /Cache Check/.test(g.title)));
+    // a row added behind the app's back is NOT seen while the answer is fresh...
+    rom('gba', 'Cache Other (USA).gba'); rom('gba', 'Cache Other (Japan).gba');
+    const again = (await call('/api/admin/duplicates?platform=gba&limit=200')).body;
+    assert.equal(again.total, first.total, 'recent answer reused');
+    // ...but a change made through the app (lock) is seen at once
+    await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: b, value: 1 } });
+    await new Promise((r) => setTimeout(r, 60)); // the clear runs when the response finishes
+    const after = (await call('/api/admin/duplicates?platform=gba&limit=200')).body;
+    assert.ok(after.total > first.total, 'the new pair appears after a change');
+    assert.equal(after.groups.find((g) => /Cache Check/.test(g.title)).items.find((i) => i.keep).id, b, 'and the lock shows');
+    await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: b, value: null } });
+    assert.ok(a);
+  } finally { globalThis.__keepDupCache = false; clearDuplicateCache(); }
+});
+
+test('slow requests are logged for admins: threshold, path, time, and how many others were running', async () => {
+  const log = (await call('/api/admin/slow-requests')).body;
+  assert.ok(Array.isArray(log.entries));
+  assert.ok(log.threshold_ms >= 100);
+  const anon = await fetch(base + '/api/admin/slow-requests');
+  assert.equal(anon.status, 401);
+  assert.equal((await call('/api/admin/slow-requests', { token: memberTok })).status, 403);
 });

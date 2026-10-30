@@ -59,7 +59,23 @@ export function score(r) {
   return { score: s, why };
 }
 
-export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = null } = {}) {
+// Recomputing groups means reading the whole library, so a recent answer is reused (a few seconds' staleness is harmless).
+// Anything that can change the groups (lock, hide, system, rename, delete, scan...) calls clearDuplicateCache().
+const CACHE_MS = 30_000;
+const cache = new Map();
+export function clearDuplicateCache() { cache.clear(); }
+
+export function findDuplicates(opts = {}) {
+  const { platform = null, limit = 50, offset = 0, uid = null } = opts;
+  const key = `${uid ?? ''}|${platform ?? ''}`;
+  const hit = cache.get(key);
+  let all;
+  if (hit && Date.now() - hit.at < CACHE_MS) all = hit.value;
+  else { all = computeDuplicates({ platform, uid }); cache.set(key, { at: Date.now(), value: all }); if (cache.size > 40) cache.delete(cache.keys().next().value); }
+  return { total: all.total, extra: all.extra, groups: all.groups.slice(offset, offset + limit) };
+}
+
+function computeDuplicates({ platform = null, uid = null } = {}) {
   const rows = db.prepare(`
     SELECT r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision, r.release_year,
            r.dat_status, r.source_path, r.storage_path, (SELECT name FROM sources WHERE id = r.source_id) AS source_name, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id) AS favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
@@ -129,5 +145,5 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
   dupes.sort((a, b) => (a.platform < b.platform ? -1 : a.platform > b.platform ? 1 : a.title.localeCompare(b.title)));
   const total = dupes.length;
   const extra = dupes.reduce((n, g) => n + g.items.length - 1, 0);
-  return { total, extra, groups: dupes.slice(offset, offset + limit) };
+  return { total, extra, groups: dupes };
 }
