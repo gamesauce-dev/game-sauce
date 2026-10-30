@@ -1350,3 +1350,6 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .subtile .tile-ico { font-size: 1rem; line-height: 1; }
 .subtile:hover { color: var(--text); border-color: var(--line-2); }
 .subtile.is-active { color: #fff; background: rgba(124, 92, 255, .22); border-color: var(--accent); }
+
+/* Anything in Settings that is scrolled to lands clear of the pinned header. */
+#view-settings .panel { scroll-margin-top: calc(var(--settings-anchor-h, 9rem) + 1rem); }

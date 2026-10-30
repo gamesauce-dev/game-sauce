@@ -1798,7 +1798,13 @@ function showAddSource(initialPath) {
   const input = $('#source-path');
   if (initialPath) input.value = initialPath;
   input.focus();
-  panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  // Bring the panel into view BELOW the pinned header (scrollIntoView alone slid its title underneath it).
+  const view = $('#view-settings'), anchor = $('.settings-anchor');
+  if (view && anchor) {
+    const gap = 12;
+    const top = panel.getBoundingClientRect().top - anchor.getBoundingClientRect().bottom - gap;
+    if (top < 0 || top > view.clientHeight * 0.5) view.scrollBy({ top, behavior: 'smooth' });
+  }
 }
 
 $('#add-source').addEventListener('click', () => showAddSource(''));
@@ -3301,7 +3307,7 @@ const SETTINGS_GROUPS = [
   { id: 'maint',    label: 'Maintenance',         ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
   { id: 'status',   label: 'Health & coverage',   ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
   { id: 'security', label: 'Security & activity', ico: '🛡', modules: ['sessions', 'audit'] },
-  { id: 'server',   label: 'Server setup',        ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
+  { id: 'server',   label: 'System setup',        ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
 ];
 const settingsLastInGroup = {};
 const settingsIsAdmin = () => authState.user?.role === 'admin';
@@ -3315,6 +3321,9 @@ function settingsVisibleGroups() { return SETTINGS_GROUPS.filter((g) => (!g.admi
 function renderSettingsTiles(activeId = activeSettingsModule) {
   const wrap = $('#settings-tiles'), sub = $('#settings-subtiles');
   if (!wrap) return;
+  // The tiles are rebuilt on every choice; remember which one had the focus (controller / keyboard) so it can be given back.
+  const ae = document.activeElement;
+  const refocus = ae && wrap.contains(ae) ? `[data-group="${ae.dataset.group}"]` : (ae && sub.contains(ae) ? `[data-mod="${ae.dataset.mod}"]` : null);
   const groups = settingsVisibleGroups();
   if (!groups.length) return;
   const cur = settingsGroupOf(activeId) || groups[0];
@@ -3333,6 +3342,11 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   sub.classList.toggle('hidden', mods.length < 2);
   sub.innerHTML = mods.map((m) => `<button class="subtile${m.id === activeId ? ' is-active' : ''}" data-mod="${m.id}"><span class="tile-ico">${m.ico}</span>${esc(m.label)}</button>`).join('');
   $$('[data-mod]', sub).forEach((t) => t.addEventListener('click', () => showSettingsModule(t.dataset.mod)));
+  if (refocus) {
+    // Choosing a group swaps the row beneath it: keep the focus on the group tile; choosing a tab keeps it on that tab.
+    const back = (refocus.startsWith('[data-group') ? $(refocus, wrap) : $(refocus, sub)) || $('.tile.is-active', wrap);
+    back?.focus({ preventScroll: true });
+  }
 }
 
 /* ── Backups module ── */
