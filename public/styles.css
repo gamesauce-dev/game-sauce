@@ -1364,3 +1364,12 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .bulk-bar { display: flex; flex-wrap: wrap; flex: 1 1 100%; border-radius: 0.8rem; padding: 0.45rem 0.7rem; gap: 0.45rem; }
 .bulk-bar .bulk-spacer { flex: 1 1 auto; min-width: 0.5rem; }
 #bulk-count { font-weight: 600; color: var(--text); padding-right: 0.3rem; }
+
+/* Select checkbox: bottom-left, so the platform badge (top-left) stays fully visible.
+   While selecting, the lock and DAT badges that normally sit there step up above it. */
+.card-select { top: auto; bottom: 0.5rem; left: 0.5rem; width: 1.7rem; height: 1.7rem; z-index: 4; }
+.grid.selecting .card-lock { bottom: 2.6rem; }
+.grid.selecting .badge-dat { bottom: 4.7rem; }
+/* A game that is both locked and DAT-verified: stack them instead of overlapping, in every mode. */
+.card-cover .card-lock ~ .badge-dat { bottom: 2.6rem; }
+.grid.selecting .card-cover .card-lock ~ .badge-dat { bottom: 4.7rem; }
