@@ -137,6 +137,7 @@ function romById(id) {
   `).get(id);
   const full = row ? withTags([row])[0] : null;
   if (full) {
+    full.favourite_of = db.prepare('SELECT u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id = ? ORDER BY u.username').all(full.id).map((x) => x.username);
     // Cheap playability flag for the detail drawer: BIOS-free core exists?
     const core = playableCore(full.platform, full.release_year, full.play_override);
     full.playable = core || null;
@@ -271,6 +272,11 @@ bulkRouter.post('/delete', (req, res) => {
   // Keep display labels for the audit line. A bulk of 500 titles would bloat
   // the row, so cap the stored sample — the summary counts the rest.
   const sample = [];
+  const favRows = db.prepare(`SELECT f.rom_id, u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id IN (${ids.map(() => '?').join(',') || 'NULL'})`).all(...ids);
+  if (favRows.length && !(req.body?.confirm_favorites === true || req.body?.confirm_favorites === '1')) {
+    const who = [...new Set(favRows.map((x) => x.username))];
+    return res.status(409).json({ error: `${new Set(favRows.map((x) => x.rom_id)).size} of these are favourites of ${who.join(', ')}.`, favourite_of: who, favourite_count: new Set(favRows.map((x) => x.rom_id)).size });
+  }
   let protectedCount = 0;
   for (const id of ids) {
     const rom = get.get(id);
@@ -1066,7 +1072,11 @@ router.delete('/:id', (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
 
-  if (rom.keep_override === 1) return res.status(409).json({ error: 'This copy is marked Keep (duplicate finder). Switch Keep off first if you want to delete it.' });
+  if (rom.keep_override === 1) return res.status(409).json({ error: 'This game is locked. Unlock it first if you want to delete it.', locked: true });
+  const favBy = db.prepare('SELECT u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id = ? ORDER BY u.username').all(rom.id).map((x) => x.username);
+  if (favBy.length && req.query.confirm_favorites !== '1') {
+    return res.status(409).json({ error: `This is a favourite of ${favBy.join(', ')}.`, favourite_of: favBy });
+  }
   const keepFile = req.query.keep_file === '1';
   const { fileDeleted } = deleteRomRow(rom, {
     deleteFile: !keepFile && (req.query.delete_file === '1' || !rom.in_place)

@@ -1247,3 +1247,45 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .ibtn.spin svg, .mi.spin svg { animation: ibspin .8s linear infinite; }
 .ibtn-more.is-on { color: var(--text); border-color: var(--accent); }
 .ibtn-more[aria-expanded="true"]::after { display: none; }
+
+/* Tile icons: favourite, hide and the lock badge, one size (2.1rem), always readable. */
+.card-fav, .card-hide {
+  width: 2.1rem; height: 2.1rem; padding: 0; background: rgba(8, 9, 14, .78); border: 1px solid rgba(255, 255, 255, .22);
+  color: #e5e7eb; box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, .55);
+}
+.card-fav svg, .card-hide svg { width: 1.15rem; height: 1.15rem; }
+.card-fav { right: 0.4286rem; }
+.card-hide { right: 2.9rem; color: #e5e7eb; }
+.card-fav.on { color: #f5c542; border-color: #f5c54299; }
+.card-fav:hover, .card-hide:hover { background: rgba(8, 9, 14, .95); border-color: #fff; color: #fff; }
+.card-fav.on:hover { color: #ffd964; }
+@media (hover: none) { .card-fav, .card-hide { opacity: 1; } } /* touch screens have no hover: always show them */
+.card-lock {
+  position: absolute; left: 0.5rem; bottom: 0.5rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center;
+  border-radius: 0.5rem; background: rgba(20, 83, 45, .92); border: 1px solid #4ade80; color: #4ade80; box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, .6);
+}
+.card-lock svg { width: 1.1rem; height: 1.1rem; }
+
+/* Locked game: delete looks disabled, with the reason in its tip. */
+.ibtn.is-locked { opacity: .45; cursor: not-allowed; }
+.ibtn.is-locked:hover { background: var(--panel); border-color: var(--line); color: #ff7a7a; }
+
+/* Duplicate finder: tie wording and legend. */
+.dup-tie { color: #fbbf24; font-size: 0.8571rem; margin-top: 0.2857rem; font-weight: 600; }
+.dup-legend { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0.4rem 0 0.8rem; }
+.dup-legend .lg { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 0.25rem; }
+.dup-legend .lg-sug { border: 2px solid #4ade80; }
+.dup-legend .lg-lock { background: #4ade80; }
+.dup-keepbtn svg { width: 1.1rem; height: 1.1rem; }
+
+/* Prev / count / next: directly under the cover art, exactly as wide as the art, buttons slightly smaller. */
+.detail-cover { margin: 1.1rem auto 3.6rem; }  /* room below the cover for the nav row */
+.drawer-nav {
+  position: absolute; top: calc(1.5714rem + 1.1rem + 11rem * 4 / 3 + 0.55rem); left: 50%; right: auto; transform: translateX(-50%);
+  width: min(100% - 3.1428rem, 11rem); display: grid; grid-template-columns: 1.9rem 1fr 1.9rem; gap: 0.3rem; align-items: center; z-index: 2;
+}
+.drawer-navbtn, .drawer-pos { height: 1.9rem; }
+.drawer-navbtn { width: 1.9rem; }
+.drawer-navbtn svg { width: 14px; height: 14px; }
+.drawer-pos { min-width: 0; padding: 0; font-size: 0.85rem; }
+.drawer-close { top: 1rem; }

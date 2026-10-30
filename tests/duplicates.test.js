@@ -222,7 +222,7 @@ test('a copy marked Keep cannot be deleted (single, bulk, orphan purge) until Ke
   await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: k, value: 1 } });
   const one = await call(`/api/roms/${k}`, { method: 'DELETE' });
   assert.equal(one.status, 409);
-  assert.match(one.body.error, /marked Keep/);
+  assert.match(one.body.error, /locked/);
   const bulk = await call('/api/roms/bulk/delete', { method: 'POST', body: { ids: [k] } });
   assert.equal(bulk.body.deleted, 0);
   assert.equal(bulk.body.protected, 1);
@@ -231,4 +231,35 @@ test('a copy marked Keep cannot be deleted (single, bulk, orphan purge) until Ke
   assert.ok(db.prepare('SELECT 1 FROM roms WHERE id = ?').get(k), 'still in the library after all three');
   await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: k, value: null } });
   assert.equal((await call(`/api/roms/${k}`, { method: 'DELETE' })).status, 200);
+});
+
+test('favourites: deleting a game someone favourited needs confirmation, and says who', async () => {
+  const f = rom('gba', 'Beloved Game (USA).gba');
+  const admin = db.prepare("SELECT id FROM users WHERE username = 'dadmin'").get().id;
+  db.prepare('INSERT OR IGNORE INTO favorites (user_id, rom_id) VALUES (?, ?)').run(admin, f);
+  const warn = await call(`/api/roms/${f}`, { method: 'DELETE' });
+  assert.equal(warn.status, 409);
+  assert.deepEqual(warn.body.favourite_of, ['dadmin']);
+  assert.match(warn.body.error, /favourite of dadmin/);
+  const bulk = await call('/api/roms/bulk/delete', { method: 'POST', body: { ids: [f] } });
+  assert.equal(bulk.status, 409);
+  assert.equal(bulk.body.favourite_count, 1);
+  assert.ok(db.prepare('SELECT 1 FROM roms WHERE id = ?').get(f), 'nothing deleted yet');
+  const ok = await call(`/api/roms/${f}?confirm_favorites=1`, { method: 'DELETE' });
+  assert.equal(ok.status, 200);
+});
+
+test('a tie says so; locking one copy ends the tie', async () => {
+  const a = rom('gba', 'Twin Game (USA).gba');
+  const b = rom('gba', 'Twin Game (USA) (2).gba');
+  const find = async () => (await call('/api/admin/duplicates?platform=gba')).body.groups.find((g) => /Twin/.test(g.title));
+  let g = await find();
+  if (g) { // same score, no lock: tie
+    assert.equal(g.tied, true);
+    assert.ok(g.items.every((i) => i.tie));
+    await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: a, value: 1 } });
+    g = await find();
+    assert.equal(g.tied, false);
+    assert.equal(g.items.filter((i) => i.keep).length, 1);
+  }
 });

@@ -411,8 +411,9 @@ function cardHtml(rom) {
         ${rom.playable && !rom.missing ? `<button type="button" class="card-playbtn" tabindex="-1" data-play="${rom.id}" title="Play in browser" aria-label="Play ${esc(rom.title)} in browser">▶</button>` : ''}
         ${rom.missing ? '<span class="card-missing">missing</span>' : ''}
         ${rom.dat_status && rom.dat_status !== 'not-in-dat' ? `<span class="badge-dat ${rom.dat_status === 'verified' ? '' : rom.dat_status}" title="DAT: ${rom.dat_status}">${rom.dat_status}</span>` : ''}
-        <span class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" title="Favourite">★</span>
-        <span class="card-hide" data-hide="${rom.id}" title="${rom.hidden ? 'Unhide' : 'Hide from library'}">${rom.hidden ? '◉' : '◌'}</span>
+        ${rom.keep_override === 1 ? `<span class="card-lock" title="Locked: protected from deletion" aria-label="Locked">${ICON.keepOn}</span>` : ''}
+        <button type="button" class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" tabindex="-1" title="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
+        <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : 'Hide from library'}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
         ${rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : ''}
       </div>
       <div class="card-title">${esc(rom.title)}</div>
@@ -986,8 +987,16 @@ async function bulkDeleteSelected() {
   });
   if (!ok) return;
   try {
-    const r = await api('/roms/bulk/delete', { method: 'POST', body: JSON.stringify({ ids }) });
-    toast(`Deleted ${r.deleted} ROM${r.deleted === 1 ? '' : 's'}${r.protected ? `. ${r.protected} marked Keep (duplicate finder) ${r.protected === 1 ? 'was' : 'were'} not deleted` : ''}`);
+    let r;
+    try { r = await api('/roms/bulk/delete', { method: 'POST', body: JSON.stringify({ ids }) }); }
+    catch (err) {
+      if (err.status === 409 && err.message.includes('favourites of')) {
+        const sure = await confirmDialog({ title: 'Some are favourites', body: `${err.message}\nDelete them anyway?`, okLabel: 'Delete anyway', danger: true });
+        if (!sure) return;
+        r = await api('/roms/bulk/delete', { method: 'POST', body: JSON.stringify({ ids, confirm_favorites: true }) });
+      } else throw err;
+    }
+    toast(`Deleted ${r.deleted} ROM${r.deleted === 1 ? '' : 's'}${r.protected ? `. ${r.protected} locked game${r.protected === 1 ? ' was' : 's were'} not deleted` : ''}`);
     state.selected.clear();
     setSelectMode(false);
     await Promise.all([loadLibrary(), loadPlatforms()]);
@@ -1063,6 +1072,8 @@ async function toggleFavorite(id, el) {
   try {
     const { favorite } = await api(`/roms/${id}/favorite`, { method: 'POST' });
     el.classList.toggle('on', Boolean(favorite));
+    el.innerHTML = favorite ? ICON.starFill : ICON.star;
+    el.title = favorite ? 'Remove from favourites' : 'Add to favourites';
     if (state.favorite) loadLibrary();
   } catch (err) {
     toast(err.message, true);
@@ -1149,8 +1160,8 @@ const ICON = {
   refresh: _ic('<path d="M20 11a8 8 0 0 0-14.3-4.5L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.5L20 15.5"/><path d="M20 20v-4.5h-4.5"/>'),
   image: _ic('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4.5 4"/>'),
   undo: _ic('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>'),
-  keep: _ic('<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8-7.5 9.5-4.3-1.5-7.5-4.9-7.5-9.5V6z"/>'),
-  keepOn: _ic('<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8-7.5 9.5-4.3-1.5-7.5-4.9-7.5-9.5V6z"/><path d="M8.8 12l2.3 2.3 4.2-4.6" stroke="#0b0c10"/>', true),
+  keep: _ic('<rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>'),
+  keepOn: _ic('<rect x="5" y="10.5" width="14" height="10" rx="2.2" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.4" fill="#0b0c10" stroke="none"/>'),
   more: _ic('<circle cx="5.5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor"/>'),
   trash: _ic('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>')
 };
@@ -1223,7 +1234,7 @@ async function openDetail(id) {
       <div class="more-wrap">
         <button class="ibtn ibtn-more" id="more-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions" data-tip="More actions">${ICON.more}</button>
         <div class="more-menu hidden" id="more-menu" role="menu">
-          ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Kept: switch off' : 'Keep this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
+          ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
           ${rom.play_capable ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b></span></button>
@@ -1233,7 +1244,7 @@ async function openDetail(id) {
         </div>
       </div>
       <input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
-      <button class="ibtn ibtn-danger" data-act="delete" data-tip="Delete from library" aria-label="Delete">${ICON.trash}</button>
+      <button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>
     </div>
 
     <div class="section-label">Identify this game</div>
@@ -1345,7 +1356,7 @@ async function openDetail(id) {
     try {
       const on = rom.keep_override !== 1;
       await api('/admin/duplicates/keep', { method: 'POST', body: JSON.stringify({ id, value: on ? 1 : null }) });
-      toast(on ? 'Marked Keep: protected from deletion' : 'Keep switched off');
+      toast(on ? 'Locked: protected from deletion' : 'Unlocked');
       openDetail(id);
     } catch (err) { toast(err.message, true); }
   });
@@ -1405,6 +1416,7 @@ async function openDetail(id) {
   });
 
   $('[data-act="delete"]', drawer).addEventListener('click', async () => {
+    if (rom.keep_override === 1) return toast('This game is locked. Unlock it first (⋯ More → Locked) if you want to delete it.', true);
     const ok = await confirmDialog({
       title: `Delete “${rom.title}”?`,
       body: rom.in_place
@@ -1415,7 +1427,15 @@ async function openDetail(id) {
     });
     if (!ok) return;
     try {
-      await api(`/roms/${id}`, { method: 'DELETE' });
+      try { await api(`/roms/${id}`, { method: 'DELETE' }); }
+      catch (err) {
+        // Someone has this as a favourite: tell the admin who, and let them go ahead on purpose.
+        if (err.status === 409 && err.message.includes('favourite of')) {
+          const sure = await confirmDialog({ title: 'Someone loves this game', body: `${err.message}\nDelete it anyway?`, okLabel: 'Delete anyway', danger: true });
+          if (!sure) return;
+          await api(`/roms/${id}?confirm_favorites=1`, { method: 'DELETE' });
+        } else throw err;
+      }
       closeDrawer();
       toast('ROM deleted');
       await loadLibrary();
@@ -3456,11 +3476,11 @@ function renderDuplicates() {
       <div class="dup-items">${grp.items.map((it) => `
         <div class="dup-item ${it.keep ? 'keep' : ''}" data-dup-open="${it.id}" title="Open this game">
           <div class="dup-cover">${it.cover_url ? `<img loading="lazy" src="${esc(it.cover_url)}" alt="" />` : ''}</div>
-          <button class="dup-keepbtn ${it.chosen === 'keep' ? 'on' : ''}" data-dup-keep="${it.id}" data-now="${it.chosen === 'keep' ? 1 : 0}" title="${it.chosen === 'keep' ? 'You chose to keep this copy (protected from deletion). Click to switch Keep off' : 'Click to keep this copy (overrides the suggestion and protects it from deletion)'}" aria-label="Keep this copy" aria-pressed="${it.chosen === 'keep'}">${it.chosen === 'keep' ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9z"/></svg>' : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9z"/></svg>'}</button>
+          <button class="dup-keepbtn ${it.chosen === 'keep' ? 'on' : ''}" data-dup-keep="${it.id}" data-now="${it.chosen === 'keep' ? 1 : 0}" title="${it.chosen === 'keep' ? 'Locked: you chose to keep this copy and it is protected from deletion. Click to unlock' : 'Lock this copy: keep it, override the suggestion and protect it from deletion'}" aria-label="Lock this copy" aria-pressed="${it.chosen === 'keep'}">${it.chosen === 'keep' ? ICON.keepOn : ICON.keep}</button>
           <div class="dup-meta">
             <div class="dup-file">${esc(it.filename)}</div>
             <div class="sub">${[it.region, it.revision ? 'rev ' + it.revision : '', it.year, size(it.size_bytes), it.dat_status && it.dat_status !== 'not-in-dat' ? 'DAT: ' + it.dat_status : ''].filter(Boolean).map(esc).join(' · ')}</div>
-            ${it.keep ? `<div class="dup-keep">✓ ${it.chosen === 'keep' ? 'Kept: you chose this copy' : 'Suggested to keep: ' + esc(it.why)}</div>` : (it.chosen === 'drop' ? '<div class="sub">Not kept (an older choice). Click the star to reset</div>' : '')}
+            ${it.tie ? `<div class="dup-tie">⚖ No clear winner: check both</div>` : it.keep ? `<div class="dup-keep">✓ ${it.chosen === 'keep' ? 'Locked: you chose this copy' : 'Suggested to keep: ' + esc(it.why)}</div>` : (it.chosen === 'drop' ? '<div class="sub">Not kept (an older choice). Click the padlock to reset</div>' : '')}
           </div>
         </div>`).join('')}</div>
     </div>`).join('');

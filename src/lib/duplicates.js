@@ -92,8 +92,11 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {})
     const best = ranked[0];
     // Copies you pinned all stay; otherwise just the top-scored one. At least one copy is always kept.
     const pinned = ranked.some((x) => x.r.keep_override === 1);
+    // A tie: nothing in the score separates the top copies (and you haven't chosen). Say so instead of pretending.
+    const tied = !pinned && ranked.length > 1 && ranked[0].score === ranked[1].score;
     dupes.push({
       key,
+      tied,
       title: best.r.title,
       platform: best.r.platform_name,
       platform_slug: best.r.platform_slug,
@@ -105,6 +108,7 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {})
         cover_url: x.r.cover_path ? `/api/roms/${x.r.id}/cover` : null,
         keep: pinned ? x.r.keep_override === 1 : i === 0,
         chosen: x.r.keep_override === 1 ? 'keep' : x.r.keep_override === 0 ? 'drop' : null,
+        tie: tied && x.score === ranked[0].score,
         why: (pinned ? x.r.keep_override === 1 : i === 0) ? (x.why.length ? x.why.join(', ') : 'the best match of the group') : null
       }))
     });
