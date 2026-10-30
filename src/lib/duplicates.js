@@ -61,7 +61,7 @@ export function score(r) {
 export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = null } = {}) {
   const rows = db.prepare(`
     SELECT r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision, r.release_year,
-           r.dat_status, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id) AS favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
+           r.dat_status, r.source_path, r.storage_path, (SELECT name FROM sources WHERE id = r.source_id) AS source_name, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id) AS favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
            p.id AS platform_id, p.slug AS platform_slug, p.name AS platform_name, p.short_name AS platform_short
     FROM roms r JOIN platforms p ON p.id = r.platform_id
     WHERE r.is_system = 0 AND r.missing = 0
@@ -104,6 +104,7 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
       platform_short: best.r.platform_short,
       items: ranked.map((x, i) => ({
         id: x.r.id, title: x.r.title, filename: x.r.filename, size_bytes: x.r.size_bytes,
+        path: x.r.source_path || x.r.storage_path || null, source_name: x.r.source_name || null,
         region: x.r.region, revision: x.r.revision, year: x.r.release_year,
         dat_status: x.r.dat_status, favorite: !!x.r.favorite,
         cover_url: x.r.cover_path ? `/api/roms/${x.r.id}/cover` : null,

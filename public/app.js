@@ -3516,6 +3516,7 @@ function renderDuplicates() {
           <button class="dup-keepbtn ${it.chosen === 'keep' ? 'on' : ''}" data-dup-keep="${it.id}" data-now="${it.chosen === 'keep' ? 1 : 0}" title="${it.chosen === 'keep' ? 'Locked: you chose to keep this copy and it is protected from deletion. Click to unlock' : 'Lock this copy: keep it, override the suggestion and protect it from deletion'}" aria-label="Lock this copy" aria-pressed="${it.chosen === 'keep'}">${it.chosen === 'keep' ? ICON.keepOn : ICON.keep}</button>
           <div class="dup-meta">
             <div class="dup-file">${esc(it.filename)}</div>
+            ${it.path ? `<div class="dup-path" title="${esc(it.path)}">${esc(it.source_name ? it.source_name + ' · ' : '')}${esc(it.path)}</div>` : ''}
             <div class="sub">${[it.region, it.revision ? 'rev ' + it.revision : '', it.year, size(it.size_bytes), it.dat_status && it.dat_status !== 'not-in-dat' ? 'DAT: ' + it.dat_status : ''].filter(Boolean).map(esc).join(' · ')}</div>
             ${it.tie ? `<div class="dup-tie">⚖ No clear winner: check both</div>` : it.keep ? `<div class="dup-keep">✓ ${it.chosen === 'keep' ? 'Locked: you chose this copy' : 'Suggested to keep: ' + esc(it.why)}</div>` : (it.chosen === 'drop' ? '<div class="sub">Not kept (an older choice). Click the padlock to reset</div>' : '')}
           </div>
