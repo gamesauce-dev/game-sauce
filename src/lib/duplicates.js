@@ -50,6 +50,8 @@ export function score(r) {
   if (reg !== -1) { s += (REGION_RANK.length - reg) * 20; if (reg === 0) why.push('USA release'); }
   const rev = revisionRank(r.revision);
   if (rev) { s += rev * 5; why.push(`revision ${r.revision}`); }
+  if (r.keep_override === 1) { s += 100000; why.push('you chose to keep this one'); }
+  else if (r.keep_override === 0) { s -= 100000; }
   if (r.favorite) { s += 150; why.push('a favourite'); }
   if (r.cover_path) s += 15;
   if (r.meta_source && !['none', 'filename', 'seed'].includes(r.meta_source)) s += 10;
@@ -59,7 +61,7 @@ export function score(r) {
 export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {}) {
   const rows = db.prepare(`
     SELECT r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision, r.release_year,
-           r.dat_status, r.favorite, r.cover_path, r.meta_source, r.source_id,
+           r.dat_status, r.favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
            p.id AS platform_id, p.slug AS platform_slug, p.name AS platform_name, p.short_name AS platform_short
     FROM roms r JOIN platforms p ON p.id = r.platform_id
     WHERE r.hidden = 0 AND r.missing = 0 ${platform ? 'AND p.slug = @platform' : ''}
@@ -88,6 +90,8 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {})
     if (list.length < 2) continue;
     const ranked = list.map((r) => ({ r, ...score(r) })).sort((a, b) => b.score - a.score || a.r.id - b.r.id);
     const best = ranked[0];
+    // Copies you pinned all stay; otherwise just the top-scored one. At least one copy is always kept.
+    const pinned = ranked.some((x) => x.r.keep_override === 1);
     dupes.push({
       key,
       title: best.r.title,
@@ -99,8 +103,9 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {})
         region: x.r.region, revision: x.r.revision, year: x.r.release_year,
         dat_status: x.r.dat_status, favorite: !!x.r.favorite,
         cover_url: x.r.cover_path ? `/api/roms/${x.r.id}/cover` : null,
-        keep: i === 0,
-        why: i === 0 ? (x.why.length ? x.why.join(', ') : 'the best match of the group') : null
+        keep: pinned ? x.r.keep_override === 1 : i === 0,
+        chosen: x.r.keep_override === 1 ? 'keep' : x.r.keep_override === 0 ? 'drop' : null,
+        why: (pinned ? x.r.keep_override === 1 : i === 0) ? (x.why.length ? x.why.join(', ') : 'the best match of the group') : null
       }))
     });
   }

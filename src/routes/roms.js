@@ -271,9 +271,12 @@ bulkRouter.post('/delete', (req, res) => {
   // Keep display labels for the audit line. A bulk of 500 titles would bloat
   // the row, so cap the stored sample — the summary counts the rest.
   const sample = [];
+  let protectedCount = 0;
   for (const id of ids) {
     const rom = get.get(id);
     if (!rom) continue;
+    // A copy you marked Keep in the duplicate finder is protected until you switch Keep off.
+    if (rom.keep_override === 1) { protectedCount++; continue; }
     // keep_file=1 wins over delete_file: when the caller wants catalogue-only
     // removal the file must never be touched.
     if (sample.length < 10) {
@@ -290,7 +293,7 @@ bulkRouter.post('/delete', (req, res) => {
   // row by now? No — it fires on finish, after this handler: stash the labels so
   // it picks them up instead of an empty detail.
   req.auditDetail = { ids: ids.slice(0, 50), titles: sample, count: deleted };
-  res.json({ deleted, files_deleted: filesDeleted });
+  res.json({ deleted, files_deleted: filesDeleted, protected: protectedCount });
 });
 
 router.use('/bulk', bulkRouter);
@@ -1063,6 +1066,7 @@ router.delete('/:id', (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
 
+  if (rom.keep_override === 1) return res.status(409).json({ error: 'This copy is marked Keep (duplicate finder). Switch Keep off first if you want to delete it.' });
   const keepFile = req.query.keep_file === '1';
   const { fileDeleted } = deleteRomRow(rom, {
     deleteFile: !keepFile && (req.query.delete_file === '1' || !rom.in_place)
@@ -1099,9 +1103,10 @@ router.post('/clear-covers', requireAdmin, (req, res) => {
 router.delete('/', requireAdmin, (req, res) => {
   const orphans = db.prepare(`
     SELECT * FROM roms
-    WHERE source_id IS NULL
-       OR source_id NOT IN (SELECT id FROM sources)
-  `).all();
+    WHERE (source_id IS NULL
+       OR source_id NOT IN (SELECT id FROM sources))
+      AND COALESCE(keep_override, -1) <> 1
+  `).all(); // copies marked Keep are never purged
 
   if (req.query.dry_run !== '0' && req.query.dry_run !== 'false') {
     return res.json({

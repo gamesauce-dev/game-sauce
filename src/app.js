@@ -81,6 +81,15 @@ export function createApp() {
     res.json(findDuplicates({ platform: req.query.platform ? String(req.query.platform) : null, limit, offset }));
   });
 
+  // Your say in the duplicate finder: 1 = keep this copy, 0 = do not keep it, null = automatic. Survives re-runs.
+  api.post('/admin/duplicates/keep', requireAuth, requireAdmin, (req, res) => {
+    const id = Number(req.body?.id);
+    const v = req.body?.value === 1 || req.body?.value === 0 ? req.body.value : null;
+    if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM roms WHERE id = ?').get(id)) return res.status(404).json({ error: 'Game not found' });
+    db.prepare('UPDATE roms SET keep_override = ? WHERE id = ?').run(v, id);
+    res.json({ id, value: v });
+  });
+
   // Admin health report (read-only): see src/lib/health.js.
   api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {
     const { collectHealth, collectSummary, diagnosticsText } = await import('./lib/health.js');

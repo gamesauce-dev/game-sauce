@@ -98,6 +98,8 @@ router.delete('/:id', (req, res) => {
   if (removeRoms) {
     // Only the catalogue entries go; the files on disk are never touched for an
     // in-place source. That is the whole point of scanning in place.
+    // Copies marked Keep in the duplicate finder survive: they stay as orphans instead of being removed.
+    db.prepare('UPDATE roms SET source_id = NULL WHERE source_id = ? AND keep_override = 1').run(src.id);
     db.prepare('DELETE FROM roms WHERE source_id = ?').run(src.id);
   } else {
     db.prepare('UPDATE roms SET source_id = NULL WHERE source_id = ?').run(src.id);

@@ -193,3 +193,42 @@ test('roman numerals count too, and a year or region tag does not', async () => 
   assert.equal(distinguishers('Super Street Fighter II Turbo (USA).sfc'), distinguishers('Super Street Fighter II Turbo (Europe).sfc'), 'the reported true duplicate still matches');
   assert.equal(distinguishers('Mixed Words (USA).sfc'), '', 'words like "mix" are not mistaken for numerals');
 });
+
+test('your keep choice overrides the automatic pick and survives a re-run', async () => {
+  const a = rom('gba', 'Pinned Game (USA).gba');
+  const b = rom('gba', 'Pinned Game (Japan).gba');
+  const find = async () => (await call('/api/admin/duplicates?platform=gba')).body.groups.find((g) => /Pinned/.test(g.title));
+  let g = await find();
+  assert.equal(g.items.find((i) => i.keep).id, a, 'automatic: USA wins');
+  assert.equal((await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: b, value: 1 } })).status, 200);
+  g = await find();
+  assert.equal(g.items.find((i) => i.keep).id, b, 'your pick wins');
+  assert.deepEqual(g.items.filter((i) => i.keep).map((i) => i.id), [b]);
+  assert.equal(g.items.find((i) => i.id === b).chosen, 'keep');
+  // pin both: both stay
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: a, value: 1 } });
+  g = await find();
+  assert.equal(g.items.filter((i) => i.keep).length, 2);
+  // back to automatic
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: a, value: null } });
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: b, value: null } });
+  g = await find();
+  assert.equal(g.items.find((i) => i.keep).id, a);
+  assert.equal((await call('/api/admin/duplicates/keep', { method: 'POST', token: memberTok, body: { id: a, value: 1 } })).status, 403);
+});
+
+test('a copy marked Keep cannot be deleted (single, bulk, orphan purge) until Keep is switched off', async () => {
+  const k = rom('gba', 'Protected Game (USA).gba');
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: k, value: 1 } });
+  const one = await call(`/api/roms/${k}`, { method: 'DELETE' });
+  assert.equal(one.status, 409);
+  assert.match(one.body.error, /marked Keep/);
+  const bulk = await call('/api/roms/bulk/delete', { method: 'POST', body: { ids: [k] } });
+  assert.equal(bulk.body.deleted, 0);
+  assert.equal(bulk.body.protected, 1);
+  const purge = await call('/api/roms?dry_run=0', { method: 'DELETE' });
+  assert.equal(purge.status, 200);
+  assert.ok(db.prepare('SELECT 1 FROM roms WHERE id = ?').get(k), 'still in the library after all three');
+  await call('/api/admin/duplicates/keep', { method: 'POST', body: { id: k, value: null } });
+  assert.equal((await call(`/api/roms/${k}`, { method: 'DELETE' })).status, 200);
+});

@@ -987,7 +987,7 @@ async function bulkDeleteSelected() {
   if (!ok) return;
   try {
     const r = await api('/roms/bulk/delete', { method: 'POST', body: JSON.stringify({ ids }) });
-    toast(`Deleted ${r.deleted} ROM${r.deleted === 1 ? '' : 's'}`);
+    toast(`Deleted ${r.deleted} ROM${r.deleted === 1 ? '' : 's'}${r.protected ? `. ${r.protected} marked Keep (duplicate finder) ${r.protected === 1 ? 'was' : 'were'} not deleted` : ''}`);
     state.selected.clear();
     setSelectMode(false);
     await Promise.all([loadLibrary(), loadPlatforms()]);
@@ -3427,10 +3427,11 @@ function renderDuplicates() {
       <div class="dup-items">${grp.items.map((it) => `
         <div class="dup-item ${it.keep ? 'keep' : ''}" data-dup-open="${it.id}" title="Open this game">
           <div class="dup-cover">${it.cover_url ? `<img loading="lazy" src="${esc(it.cover_url)}" alt="" />` : ''}</div>
+          <button class="dup-keepbtn ${it.keep ? 'on' : ''}" data-dup-keep="${it.id}" data-now="${it.keep ? 1 : 0}" title="${it.keep ? 'Keeping this copy. Click to stop keeping it' : 'Click to keep this copy'}" aria-label="Keep this copy" aria-pressed="${it.keep}">${it.keep ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9z"/></svg>' : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9z"/></svg>'}</button>
           <div class="dup-meta">
             <div class="dup-file">${esc(it.filename)}</div>
             <div class="sub">${[it.region, it.revision ? 'rev ' + it.revision : '', it.year, size(it.size_bytes), it.dat_status && it.dat_status !== 'not-in-dat' ? 'DAT: ' + it.dat_status : ''].filter(Boolean).map(esc).join(' · ')}</div>
-            ${it.keep ? `<div class="dup-keep">✓ Suggested to keep: ${esc(it.why)}</div>` : ''}
+            ${it.keep ? `<div class="dup-keep">✓ ${it.chosen === 'keep' ? 'Kept: you chose this copy' : 'Suggested to keep: ' + esc(it.why)}</div>` : (it.chosen === 'drop' ? '<div class="sub">Not kept: your choice</div>' : '')}
           </div>
         </div>`).join('')}</div>
     </div>`).join('');
@@ -3444,6 +3445,14 @@ async function hideDuplicateExtras(groups) {
   catch (err) { toast(err.message, true); }
 }
 document.addEventListener('click', (e) => {
+  const kb = e.target.closest('[data-dup-keep]');
+  if (kb) {
+    e.stopPropagation();
+    const want = kb.dataset.now === '1' ? 0 : 1;
+    api('/admin/duplicates/keep', { method: 'POST', body: JSON.stringify({ id: Number(kb.dataset.dupKeep), value: want }) })
+      .then(() => loadDuplicates(true)).catch((err) => toast(err.message, true));
+    return;
+  }
   const open = e.target.closest('[data-dup-open]');
   if (open) { state.nav = null; openDetail(Number(open.dataset.dupOpen)); return; }
   const one = e.target.closest('[data-dup-hide]');

@@ -265,3 +265,8 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '11') ON CON
 const romColsV12 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
 if (!romColsV12.has('cover_locked')) db.exec('ALTER TABLE roms ADD COLUMN cover_locked INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '12') ON CONFLICT(key) DO UPDATE SET value = '12'").run();
+
+/* ── v13: keep_override — a person's choice in the duplicate finder. NULL = automatic, 1 = keep this copy, 0 = do not keep. */
+const romColsV13 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
+if (!romColsV13.has('keep_override')) db.exec('ALTER TABLE roms ADD COLUMN keep_override INTEGER');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '13') ON CONFLICT(key) DO UPDATE SET value = '13'").run();
