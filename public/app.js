@@ -259,6 +259,7 @@ document.addEventListener('click', (e) => {
       state.platform = 'all';
       loadPlatforms();
     }
+    if (navBtn.classList.contains('nav-item') && navBtn.dataset.view === 'library') state.libKey = null; // always start from the top
     setView(navBtn.dataset.view);
     // Clicking LIBRARY also goes back to the top of the grid (it scrolls itself, and so can the page around it).
     if (navBtn.classList.contains('nav-item') && navBtn.dataset.view === 'library') {
@@ -465,6 +466,14 @@ async function loadLibrary() {
   state.libQuery = new URLSearchParams(params);
   state.libQuery.delete('limit'); state.libQuery.delete('offset');
 
+  // Same filters as the last render (hide, refresh, favourite…): keep the reader's place by reloading
+  // as many tiles as were showing and restoring the scroll position afterwards.
+  const libKey = state.libQuery.toString();
+  const keepPlace = grid.dataset.primed && state.libKey === libKey && (state.libLoadedCount?.() || 0) > 0;
+  const wantLoaded = keepPlace ? state.libLoadedCount() : 0;
+  if (keepPlace) params.set('limit', String(Math.min(500, Math.max(PAGE, wantLoaded))));
+  state.libKey = libKey;
+
   let data;
   try {
     data = await api(`/roms?${params}`);
@@ -474,6 +483,7 @@ async function loadLibrary() {
     return;
   }
 
+  const keepTop = keepPlace ? grid.scrollTop : 0;
   grid.dataset.primed = '1';
   grid.className = `grid ${state.density === 'compact' ? 'compact' : ''}${state.selectMode ? ' selecting' : ''}`;
   grid.innerHTML = data.items.map(cardHtml).join('');
@@ -490,6 +500,7 @@ async function loadLibrary() {
   state.libLoadMore = null;
   let loaded = data.items.length;
   state.libTotal = data.total;
+  state.libLoadedCount = () => loaded;
   if (loaded < data.total) {
     const sentinel = document.createElement('div');
     sentinel.style.cssText = 'grid-column:1/-1;height:1px';
@@ -524,6 +535,12 @@ async function loadLibrary() {
     obs.observe(sentinel);
     state.libObserver = obs;
     state.libLoadMore = loadMore;
+  }
+  // Past the server's 500-per-request cap: fetch the remaining pages so the old scroll position exists again.
+  if (keepPlace) {
+    while (state.libLoadMore && loaded < wantLoaded && token === state.libToken) { if (!(await state.libLoadMore())) break; }
+    grid.scrollTop = keepTop;
+    requestAnimationFrame(() => { grid.scrollTop = keepTop; });
   }
   try { await statsP; } catch { /* overview is decorative */ }
 
