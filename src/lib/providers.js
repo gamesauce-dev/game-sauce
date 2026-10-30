@@ -356,7 +356,7 @@ export function stripDiscTags(title) {
     .replace(/\s+/g, ' ').trim();
 }
 
-function titleVariants(title) {
+export function titleVariants(title) {
   const base = stripDiscTags(title) || String(title || '').trim();
   if (!base) return [];
   const out = [base];
@@ -382,6 +382,10 @@ function titleVariants(title) {
       const left = bare.split(sep)[0];
       if (left && left !== bare && left.length >= 3) push(left);
     }
+    // "Puzzle Bobble / Bust-A-Move": the part after a slash is the same game's other name (often the one a database uses).
+    for (const alt of bare.split(/\s+\/\s+/).slice(1)) {
+      if (alt && alt.length >= 3) push(alt);
+    }
     push(bare.replace(/&/g, 'and'));
     push(bare.replace(/['’`]/g, ''));
   }
@@ -402,12 +406,20 @@ function titleVariants(title) {
  *  (normalised: case, punctuation, "&"/"and"), and only if it has art — otherwise
  *  fall through to the next variant / provider. */
 const normTitle = (t) => String(t || '').toLowerCase().replace(/&/g, 'and').replace(/^the\s+/, '').replace(/[^a-z0-9]+/g, '');
-function pickArcadeHit(items, q) {
+// The same words in a different order ("2020 Super Baseball" / "Super Baseball 2020"): identical once the words are sorted.
+// Needs at least two words and some length, so a lone word never matches by accident.
+const wordKey = (t) => {
+  const words = String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/^the\s+/, '').split(/[^a-z0-9]+/).filter(Boolean);
+  return words.length >= 2 ? words.slice().sort().join(' ') : null;
+};
+export function pickArcadeHit(items, q) {
   const nq = normTitle(q);
   if (nq.length < 3) return null;
+  const wq = wordKey(q);
   const ok = (items || []).filter((i) => {
     const n = normTitle(i.title);
-    return n === nq || (nq.length >= 5 && (n.startsWith(nq) || nq.startsWith(n)) && n.length >= 5);
+    if (n === nq || (nq.length >= 5 && (n.startsWith(nq) || nq.startsWith(n)) && n.length >= 5)) return true;
+    return !!wq && wq.length >= 8 && wordKey(i.title) === wq;
   });
   return ok.find((i) => i.cover_url) || null;
 }
@@ -740,8 +752,12 @@ export function providerStatus() {
 // before TheGamesDB, and a lookup only runs once the title is trusted (from a name list or a names CSV).
 export const ARCADE_NAME_MATCH = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
 
+/** A provider that is simply out of allowance or unreachable right now (monthly limit, rate limit, timeout). */
+const isUnavailable = (msg) => /HTTP 429|HTTP 5\d\d|allowance|quota|rate limit|too many|timeout/i.test(String(msg || ''));
+
 export async function enrich({ title, platform, hashes, filename, titleTrusted = false }) {
   const errors = [];
+  let answered = false; // at least one provider answered cleanly (a hit OR a real "no such game")
   let best = null;
 
   // Arcade romsets: IGDB goes before TheGamesDB (whose monthly quota runs out on big sets).
@@ -756,7 +772,8 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
     // wrong match is cached under that SHA1 — key the lookup on the real title instead.
     const lookupHashes = ARCADE_NAME_MATCH.has(platform.slug) && provider.id !== 'screenscraper' ? null : hashes;
     const result = await provider.lookup({ title, platform, hashes: lookupHashes, filename });
-    if (result?.error) { errors.push(`${provider.id}: ${result.error}`); continue; }
+    if (result?.error) { errors.push({ provider: provider.id, message: result.error }); continue; }
+    answered = true;
     if (result) {
       if (!best) best = result;
       // A hit WITH a cover wins outright; a bare metadata hit is kept as a
@@ -778,7 +795,10 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   }
 
   if (best) return best;
-  return errors.length ? { error: errors.join('; ') } : null;
+  // One provider being out of allowance is not a failure of the lookup when another provider answered:
+  // "IGDB has no such game" must not be reported as "TheGamesDB is over quota".
+  const real = errors.filter((e) => !(answered && isUnavailable(e.message)));
+  return real.length ? { error: real.map((e) => `${e.provider}: ${e.message}`).join('; ') } : null;
 }
 
 export { screenscraper, thegamesdb, igdb, steamgriddb, PROVIDERS };

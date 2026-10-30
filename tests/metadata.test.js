@@ -85,3 +85,13 @@ test('disc and bracket tags are stripped before provider searches', async () => 
   assert.equal(stripDiscTags('Disc World'), 'Disc World', 'a title that merely contains the word survives');
   assert.equal(stripDiscTags('Part Time Hero'), 'Part Time Hero');
 });
+
+test('arcade matching accepts the same words in another order, and tries the alternative name after a slash', async () => {
+  const { pickArcadeHit, titleVariants } = await import('../src/lib/providers.js');
+  const T = (title) => ({ title, cover_url: 'x' });
+  assert.equal(pickArcadeHit([T('Super Baseball 2020'), T('ACA Neo Geo: 2020 Super Baseball')], '2020 Super Baseball')?.title, 'Super Baseball 2020', 'reordered words match');
+  assert.equal(pickArcadeHit([T('Super Puzzle Bobble'), T('Azumanga Daioh Puzzle Bobble')], 'Puzzle Bobble'), null, 'a longer different title is still rejected');
+  assert.equal(pickArcadeHit([T('Baseball Stars')], 'Stars Baseball Pro'), null, 'different words never match');
+  assert.ok(titleVariants('Puzzle Bobble / Bust-A-Move').includes('Bust-A-Move'), 'the name after the slash is tried too');
+  assert.ok(titleVariants('Puzzle Bobble 2 / Bust-A-Move Again').includes('Bust-A-Move Again'));
+});
