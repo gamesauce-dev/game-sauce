@@ -1218,3 +1218,8 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .dup-keepbtn:hover { color: #fff; border-color: #4ade80; }
 .dup-keepbtn.on { color: #4ade80; border-color: #4ade80; background: rgba(74, 222, 128, .12); }
 .dup-item .dup-meta { padding-right: 2.2rem; }
+
+/* Detail window: keep switch colour; tips wrap and, past the 4th button, anchor to their right edge so the drawer never clips them. */
+.ibtn.keepon { color: #4ade80; border-color: #4ade80; background: rgba(74, 222, 128, .12); }
+.detail-actions .ibtn[data-tip]:hover::after, .detail-actions .ibtn[data-tip]:focus-visible::after { white-space: normal; width: max-content; max-width: 14rem; text-align: left; }
+.detail-actions .ibtn:nth-child(n+5)[data-tip]:hover::after, .detail-actions .ibtn:nth-child(n+5)[data-tip]:focus-visible::after { left: auto; right: 0; transform: none; }

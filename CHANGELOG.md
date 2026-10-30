@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Keep button in the game detail window** (admin, a shield beside Collection): marks the game Keep, protecting it from every kind of deletion and preferring it in the duplicate finder, until you switch it off.
 - **Game names (CSV) can hide BIOS and device entries:** if the CSV has `is_bios` and/or `is_device` columns (`yes` marks a row), a tick box (on by default) hides those games when you apply the names. Preview shows how many there are. Hidden games are skipped by Fetch metadata, so BIOS and device files stop showing up as failed matches; they can be brought back from the Hidden filter.
 - **Keep switch in the Duplicate finder:** every copy has a star. Starring a copy makes it the one to keep and overrides the automatic suggestion (star several to keep several); the choice is saved and respected on every re-run, and **Hide the others** never hides a copy you starred. A starred copy is also **protected from deletion** (single delete, bulk delete, *Remove source + ROMs* and the orphan purge) until you switch the star off.
 - **Hide in Select mode:** with games selected (one, several, or *Select all*), a **Hide** button sits beside Collection and Delete, in the top bar and in the selection bar. Nothing is deleted. When you are looking at the *Hidden* filter it reads **Unhide** and brings the selection back.
@@ -55,6 +56,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Duplicate finder star can now be switched off on any copy**, including the suggested one: the star shows only your own choice (on = you pinned it, off = automatic), so clicking it toggles cleanly. The suggestion keeps its green outline.
+- **Hover tips in the game detail window no longer clip:** long tips (such as *Upload your own cover*) wrap and line up with the button's right edge.
 - **The Library keeps your place:** hiding a game, refreshing its metadata, favouriting it or changing it in the detail window no longer throws the grid back to the top. It reloads the tiles you had loaded and returns to the same scroll position. Changing a filter or pressing LIBRARY still starts from the top.
 - **MAME: Fetch metadata after a CSV names import now works, and tries IGDB first.** Names applied from the Game names (CSV) tool are now recorded as trusted MAME names (previously title-based providers skipped MAME games unless a `-listxml` list was imported). For arcade romsets the order is ScreenScraper, then IGDB, then TheGamesDB, so an exhausted TheGamesDB quota no longer holds the lookup up.
 - **Settings → Platforms:** the **Add platform** button stays in view under the pinned header while you scroll the list.

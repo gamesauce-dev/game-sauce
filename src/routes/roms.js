@@ -37,7 +37,7 @@ const ROM_COLUMNS = `
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
   r.meta_source, r.meta_synced_at, r.favorite, r.play_count, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
-  r.dat_status, r.dat_title, r.hidden,
+  r.dat_status, r.dat_title, r.hidden, r.keep_override,
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
   p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
