@@ -11,7 +11,9 @@ Express + SQLite on the server, a single static page on the client, no build ste
 
 ![The Library](docs/screenshots/library.png)
 
-**Guides:** [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+**New here? Want to try it on your own computer?** → [Quick start for a desktop](docs/QUICKSTART-DESKTOP.md): install Node.js, download the ZIP, run `./start.sh` (or double-click `start.bat` on Windows). No server, no Docker, no settings to edit.
+
+**Guides:** [Quick start (desktop)](docs/QUICKSTART-DESKTOP.md) · [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 ## What it does
 
@@ -354,6 +356,7 @@ The app is one Node process plus one SQLite file — no separate database, no bu
 |---------|-----|
 | **Proxmox VE** | [Option P: one-command LXC installer](#option-p--proxmox-lxc-one-command-no-docker) |
 | Any PC or server with Docker | [Option A: Docker](#option-a--docker-recommended-for-another-pcserver-works-on-windows--linux--macos) |
+| **Just trying it on your own computer** (no server) | [Quick start for a desktop](docs/QUICKSTART-DESKTOP.md): one command, `./start.sh` |
 | Just Node on Windows / Linux / macOS | [Option B: bare Node](#option-b--bare-node-windows-11-linux-macos) |
 
 ### Option P — Proxmox LXC (one command, no Docker)
