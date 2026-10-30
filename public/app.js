@@ -236,6 +236,19 @@ async function api(path, options = {}) {
 
 /* ─────────────────────────── navigation ─────────────────────────── */
 
+// Phone layout: the sidebar is a slide-in panel. Open with the menu button; closes on picking a page/platform, tapping outside, or Escape.
+function setSidebar(open) {
+  $('.sidebar')?.classList.toggle('open', open);
+  $('#side-scrim')?.classList.toggle('show', open);
+  $('#mobile-menu')?.setAttribute('aria-expanded', String(open));
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#mobile-menu')) { setSidebar(!$('.sidebar').classList.contains('open')); return; }
+  if (e.target.closest('#side-scrim')) { setSidebar(false); return; }
+  if ($('.sidebar')?.classList.contains('open') && e.target.closest('.sidebar .nav-item, .sidebar .plat-item[data-platform], .sidebar #settings-gear')) setSidebar(false);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('.sidebar')?.classList.contains('open')) setSidebar(false); });
+
 function setView(view) {
   state.view = view;
   saveNav();
