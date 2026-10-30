@@ -1,3 +1,5 @@
 # Shell scripts must keep Unix line endings or they fail on Linux/Proxmox.
 *.sh text eol=lf
 install/*.sh text eol=lf
+# Windows launcher: batch files need Windows line endings.
+*.bat text eol=crlf
