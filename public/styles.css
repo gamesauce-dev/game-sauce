@@ -1224,8 +1224,26 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .detail-actions .ibtn[data-tip]:hover::after, .detail-actions .ibtn[data-tip]:focus-visible::after { white-space: normal; width: max-content; max-width: 14rem; text-align: left; }
 .detail-actions .ibtn:nth-child(n+5)[data-tip]:hover::after, .detail-actions .ibtn:nth-child(n+5)[data-tip]:focus-visible::after { left: auto; right: 0; transform: none; }
 
-/* Detail window actions: always ONE row. Buttons shrink (down to 2rem) when there are many. */
-.detail-actions { flex-wrap: nowrap; gap: 0.4rem; }
-.detail-actions .ibtn { flex: 0 1 2.6rem; width: auto; min-width: 2rem; height: 2.6rem; }
-.detail-actions .ibtn svg { flex: 0 0 auto; }
-.detail-actions .ibtn-danger { margin-left: auto; flex-shrink: 0; width: 2.6rem; }
+/* Detail window actions: three main buttons, a labelled "More" menu, Delete set apart. Touch-sized (2.75rem). */
+.detail-actions { flex-wrap: nowrap; gap: 0.6rem; align-items: center; }
+.detail-actions .ibtn { flex: 0 0 2.75rem; width: 2.75rem; height: 2.75rem; }
+.detail-actions .ibtn-danger { margin-left: auto; }
+.more-wrap { position: relative; }
+.more-menu {
+  position: absolute; top: calc(100% + 0.5rem); left: 0; z-index: 30; width: 19rem; max-width: 80vw;
+  background: var(--panel-2, #1c1f2a); border: 1px solid var(--line-2); border-radius: 0.8rem; padding: 0.35rem;
+  box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, .6); display: grid; gap: 0.1rem;
+}
+.more-menu .mi {
+  display: flex; align-items: center; gap: 0.8rem; width: 100%; min-height: 2.75rem; padding: 0.45rem 0.7rem; text-align: left;
+  background: transparent; border: 0; border-radius: 0.55rem; color: var(--text); cursor: pointer;
+}
+.more-menu .mi svg { flex: 0 0 auto; color: var(--muted); }
+.more-menu .mi span { display: grid; gap: 0.1rem; }
+.more-menu .mi b { font-weight: 600; font-size: 0.92rem; }
+.more-menu .mi small { color: var(--dim); font-size: 0.78rem; line-height: 1.3; }
+.more-menu .mi:hover, .more-menu .mi:focus-visible { background: rgba(255, 255, 255, .07); outline: none; }
+.more-menu .mi.on svg { color: #4ade80; }
+.ibtn.spin svg, .mi.spin svg { animation: ibspin .8s linear infinite; }
+.ibtn-more.is-on { color: var(--text); border-color: var(--accent); }
+.ibtn-more[aria-expanded="true"]::after { display: none; }

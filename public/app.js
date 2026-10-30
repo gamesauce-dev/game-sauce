@@ -1151,6 +1151,7 @@ const ICON = {
   undo: _ic('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>'),
   keep: _ic('<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8-7.5 9.5-4.3-1.5-7.5-4.9-7.5-9.5V6z"/>'),
   keepOn: _ic('<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8-7.5 9.5-4.3-1.5-7.5-4.9-7.5-9.5V6z"/><path d="M8.8 12l2.3 2.3 4.2-4.6" stroke="#0b0c10"/>', true),
+  more: _ic('<circle cx="5.5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor"/>'),
   trash: _ic('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>')
 };
 
@@ -1219,13 +1220,18 @@ async function openDetail(id) {
       ${authState.user?.can_download === false ? '' : `<a class="ibtn ibtn-primary" href="/api/roms/${rom.id}/download" download data-tip="Download ROM" aria-label="Download ROM">${ICON.download}</a>`}
       ${rom.playable ? `<button class="ibtn ibtn-play" data-act="play" data-tip="Play in browser${rom.platform === 'mame' ? ' (best effort)' : ''}" aria-label="Play in browser">${ICON.play}</button>` : ''}
       <button class="ibtn${rom.favorite ? ' is-on fav' : ''}" data-act="favorite" data-tip="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
-      ${authState.user?.role === 'admin' ? `<button class="ibtn${rom.keep_override === 1 ? ' is-on keepon' : ''}" data-act="keep" data-tip="${rom.keep_override === 1 ? 'Kept: protected from deletion and preferred in the duplicate finder. Click to switch off' : 'Keep this game: protect it from deletion and prefer it in the duplicate finder'}" aria-label="Keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}</button>` : ''}
-      <button class="ibtn" data-act="addcoll" data-tip="Add to a collection" aria-label="Add to collection">${ICON.collection}</button>
-      ${rom.play_capable ? `<button class="ibtn${rom.playable ? ' is-on' : ''}" data-act="playtoggle" data-tip="Browser play: ${rom.playable ? 'on' : 'off'} for this game (click to switch)${rom.play_override !== null && rom.play_override !== undefined ? ' — overrides the default' : ''}" aria-label="Toggle browser play">${rom.playable ? ICON.gamepad : ICON.gamepadOff}</button>` : ''}
-      <button class="ibtn" data-act="hide" data-tip="${rom.hidden ? 'Unhide this game' : 'Hide this game'}" aria-label="Hide or unhide">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
-      <button class="ibtn" data-act="refresh" data-tip="Refresh metadata" aria-label="Refresh metadata">${ICON.refresh}</button>
-      <button class="ibtn" data-act="cover-upload" data-tip="${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'} (JPEG, PNG or WebP, up to 8 MB)" aria-label="Upload cover">${ICON.image}</button>
-      ${rom.cover_locked ? `<button class="ibtn" data-act="cover-reset" data-tip="Back to automatic cover" aria-label="Auto cover">${ICON.undo}</button>` : ''}
+      <div class="more-wrap">
+        <button class="ibtn ibtn-more" id="more-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions" data-tip="More actions">${ICON.more}</button>
+        <div class="more-menu hidden" id="more-menu" role="menu">
+          ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Kept: switch off' : 'Keep this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
+          <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
+          ${rom.play_capable ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
+          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b></span></button>
+          <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
+          <button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>
+          ${rom.cover_locked ? `<button class="mi" role="menuitem" data-act="cover-reset">${ICON.undo}<span><b>Back to automatic cover</b></span></button>` : ''}
+        </div>
+      </div>
       <input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
       <button class="ibtn ibtn-danger" data-act="delete" data-tip="Delete from library" aria-label="Delete">${ICON.trash}</button>
     </div>
@@ -1324,6 +1330,16 @@ async function openDetail(id) {
     await loadLibrary();
     openDetail(id);
   });
+
+  // "More" menu: open/close, close on outside click / Escape / choosing an item.
+  {
+    const mb = $('#more-btn', drawer), mm = $('#more-menu', drawer);
+    const setOpen = (on) => { mm.classList.toggle('hidden', !on); mb.setAttribute('aria-expanded', String(on)); mb.classList.toggle('is-on', on); };
+    mb.addEventListener('click', (e) => { e.stopPropagation(); setOpen(mm.classList.contains('hidden')); });
+    mm.addEventListener('click', (e) => { if (e.target.closest('.mi') && !e.target.closest('[data-act="refresh"]')) setOpen(false); });
+    drawer.addEventListener('click', (e) => { if (!e.target.closest('.more-wrap')) setOpen(false); });
+    drawer.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mm.classList.contains('hidden')) { e.stopPropagation(); setOpen(false); mb.focus(); } });
+  }
 
   $('[data-act="keep"]', drawer)?.addEventListener('click', async () => {
     try {
