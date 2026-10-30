@@ -1324,3 +1324,11 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 
 /* Tips on the duplicate finder's padlock wrap and stay on screen. */
 .dup-keepbtn[title] { position: absolute; }
+
+/* Genre pills above the title in the game detail: one label per genre, tap to see all games of that genre. */
+.genre-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin: 0 0 0.7rem; }
+.genre-pill {
+  font: inherit; font-size: 0.78rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+  padding: 0.28rem 0.7rem; border-radius: 999px; color: #d8ccff; background: rgba(124, 92, 255, .16); border: 1px solid rgba(124, 92, 255, .5);
+}
+.genre-pill:hover, .genre-pill:focus-visible { background: rgba(124, 92, 255, .32); border-color: #a58bff; color: #fff; outline: none; }

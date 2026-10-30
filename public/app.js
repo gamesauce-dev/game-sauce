@@ -1256,6 +1256,7 @@ async function openDetail(id) {
       ${rom.cover_url ? `<img src="${esc(rom.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
     </div>
 
+    ${genrePills(rom.genre)}
     <div class="detail-head">
       <div style="flex:1">
         <h2 class="detail-title">${esc(rom.title)}</h2>
@@ -3130,6 +3131,26 @@ function initProfilePanel() {
     } catch (err) { toast(err.message, true); }
   };
 }
+
+// One pill per genre. The stored field holds them as text ("Shooter, Racing, Arcade"); commas separate genres,
+// and a slash inside one name ("Hack and slash/Beat 'em up") is a single genre, so it is kept whole.
+function genreList(genre) {
+  return [...new Set(String(genre || '').split(',').map((g) => g.trim()).filter(Boolean))];
+}
+function genrePills(genre) {
+  const gs = genreList(genre);
+  if (!gs.length) return '';
+  return `<div class="genre-pills" aria-label="Genres">${gs.map((g) => `<button type="button" class="genre-pill" data-genre-pill="${esc(g)}" title="Show all ${esc(g)} games">${esc(g)}</button>`).join('')}</div>`;
+}
+document.addEventListener('click', (e) => {
+  const gp = e.target.closest('[data-genre-pill]');
+  if (!gp) return;
+  Object.assign(state, { genre: gp.dataset.genrePill, q: '', favorite: false, tag: null });
+  const s = $('#search'); if (s) s.value = '';
+  closeDrawer();
+  setView('library');
+  loadLibrary();
+});
 
 function showApp(user, { restore = false } = {}) {
   window.neonBg?.stop();

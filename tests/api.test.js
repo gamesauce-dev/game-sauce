@@ -600,3 +600,14 @@ test('unknown API route returns JSON 404', async () => {
   assert.equal(status, 404);
   assert.equal(body.error, 'Unknown API route');
 });
+
+test('the genre filter matches one genre inside a multi-genre field', async () => {
+  const mk = async (name, genre) => { const fd = new FormData(); fd.append('roms', new Blob([name + 'g-unique-genre-test-' + Math.random()]), name); fd.append('platform', 'nes'); fd.append('enrich', 'false'); const r = await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: authHeaders(), body: fd })).json(); if (!r.created?.[0]) throw new Error('upload failed: ' + JSON.stringify(r)); const id = r.created[0].id; await fetch(`${base}/api/roms/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ genre }) }); return id; };
+  const a = await mk('genre-a.nes', 'Puzzle, Arcade'); const b = await mk('genre-b.nes', 'Shooter, Puzzle'); const c = await mk('genre-c.nes', 'Puzzler'); const d = await mk('genre-d.nes', 'Shooter');
+  const ids = async (q) => (await (await fetch(`${base}/api/roms?genre=${encodeURIComponent(q)}&limit=100`, { headers: authHeaders() })).json()).items.map((r) => r.id);
+  const puzzle = await ids('Puzzle');
+  assert.ok(puzzle.includes(a) && puzzle.includes(b), 'finds Puzzle anywhere in the list');
+  assert.ok(!puzzle.includes(c), 'a longer word is not a match');
+  assert.ok(!puzzle.includes(d));
+  assert.deepEqual((await ids('Arcade')).filter((x) => [a, b, c, d].includes(x)), [a]);
+});

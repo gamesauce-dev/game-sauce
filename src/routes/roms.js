@@ -340,7 +340,8 @@ router.get('/', (req, res) => {
     params.q = String(q).trim();
   }
   if (platform && platform !== 'all') { where.push('p.slug = @platform'); params.platform = platform; }
-  if (genre) { where.push('r.genre = @genre'); params.genre = genre; }
+  // A game can carry several genres in one field ("Shooter, Arcade"): match one of them, not the whole text.
+  if (genre) { where.push("(',' || REPLACE(r.genre, ', ', ',') || ',') LIKE @genre"); params.genre = `%,${String(genre).replace(/[%_]/g, '').trim()},%`; }
   if (region) { where.push('r.region = @region'); params.region = region; }
   params.uid = req.user ? Number(req.user.id) : -1;
   if (favorite === '1' || favorite === 'true') where.push('EXISTS (SELECT 1 FROM favorites fv2 WHERE fv2.rom_id = r.id AND fv2.user_id = @uid)');
