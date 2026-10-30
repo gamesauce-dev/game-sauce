@@ -939,6 +939,11 @@ function syncSelectUI() {
   $('#bulk-bar')?.classList.toggle('hidden', !on);
   $('#bulk-delete-top')?.classList.toggle('hidden', !on || n === 0);
   $('#bulk-cancel-top')?.classList.toggle('hidden', !on);
+  $('#bulk-hide-top')?.classList.toggle('hidden', !on || n === 0);
+  $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
+  $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
+  const hideCount = $('#bulk-hide-top-count');
+  if (hideCount) hideCount.textContent = String(n);
   $('#bulk-addcoll-top')?.classList.toggle('hidden', !on || n === 0);
   $('#bulk-addcoll')?.classList.toggle('hidden', n === 0);
   $('#select-toggle')?.classList.toggle('is-active', on);
@@ -954,6 +959,20 @@ function syncSelectUI() {
     const box = card.querySelector('[data-select]');
     if (box) box.setAttribute('aria-checked', selected ? 'true' : 'false');
   });
+}
+
+// Hide (or, when looking at the Hidden filter, bring back) every selected game. Nothing is deleted.
+async function bulkHideSelected() {
+  const ids = [...state.selected];
+  if (!ids.length) return toast('Select some tiles first', true);
+  const unhide = !!state.hidden;
+  try {
+    await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: !unhide }) });
+    toast(unhide ? `${ids.length} game${ids.length === 1 ? '' : 's'} back in the library` : `Hid ${ids.length} game${ids.length === 1 ? '' : 's'}`);
+    state.selected.clear();
+    await Promise.all([loadLibrary(), loadPlatforms()]);
+    syncSelectUI();
+  } catch (err) { toast(err.message, true); }
 }
 
 async function bulkDeleteSelected() {
@@ -2961,6 +2980,8 @@ $('#bulk-selectall')?.addEventListener('click', async (e) => {
 
 $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); syncSelectUI(); });
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
+$('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
+$('#bulk-hide-top')?.addEventListener('click', bulkHideSelected);
 $('#bulk-delete-top')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
 $('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...state.selected]));
