@@ -954,28 +954,16 @@ function syncSelectUI() {
   const n = state.selected.size;
   const on = state.selectMode;
   $('#bulk-bar')?.classList.toggle('hidden', !on);
-  $('#bulk-delete-top')?.classList.toggle('hidden', !on || n === 0);
-  $('#bulk-cancel-top')?.classList.toggle('hidden', !on);
-  $('#bulk-hide-top')?.classList.toggle('hidden', !on || n === 0);
-  $('#bulk-system-top')?.classList.toggle('hidden', !on || n === 0 || authState.user?.role !== 'admin');
-  $('#bulk-clearmatch-top')?.classList.toggle('hidden', !on || n === 0 || authState.user?.role !== 'admin');
-  const cmCount = $('#bulk-clearmatch-top-count'); if (cmCount) cmCount.textContent = String(n);
+  // These two live in the selection bar (not the top row), so the Sort / Fetch / grid controls never move.
+  $('#bulk-system-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
+  $('#bulk-clearmatch-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
-  const sysCount = $('#bulk-system-top-count');
-  if (sysCount) sysCount.textContent = String(n);
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
   $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
-  const hideCount = $('#bulk-hide-top-count');
-  if (hideCount) hideCount.textContent = String(n);
-  $('#bulk-addcoll-top')?.classList.toggle('hidden', !on || n === 0);
   $('#bulk-addcoll')?.classList.toggle('hidden', n === 0);
   $('#select-toggle')?.classList.toggle('is-active', on);
   const count = $('#bulk-count');
   if (count) count.textContent = `${n} selected`;
-  const topCount = $('#bulk-delete-top-count');
-  if (topCount) topCount.textContent = String(n);
-  const addTopCount = $('#bulk-addcoll-top-count');
-  if (addTopCount) addTopCount.textContent = String(n);
   $$('#grid .card').forEach((card) => {
     const selected = state.selected.has(Number(card.dataset.rom));
     card.classList.toggle('selected', selected);
@@ -3127,7 +3115,6 @@ $$('#density button').forEach((b) => b.addEventListener('click', () => {
 
 $('#select-toggle')?.addEventListener('click', () => setSelectMode(!state.selectMode));
 $('#bulk-cancel')?.addEventListener('click', () => setSelectMode(false));
-$('#bulk-cancel-top')?.addEventListener('click', () => setSelectMode(false));
 // Select every ROM matching the current filters/search (not just loaded tiles):
 // pages through the same query 500 at a time, collecting ids.
 $('#bulk-selectall')?.addEventListener('click', async (e) => {
@@ -3161,12 +3148,9 @@ $('#bulk-selectall')?.addEventListener('click', async (e) => {
 $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); syncSelectUI(); });
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
-$('#bulk-hide-top')?.addEventListener('click', bulkHideSelected);
-$('#bulk-system-top')?.addEventListener('click', bulkSystemSelected);
-$('#bulk-clearmatch-top')?.addEventListener('click', () => clearMatchFor([...state.selected]));
-$('#bulk-delete-top')?.addEventListener('click', bulkDeleteSelected);
+$('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
+$('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
-$('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...state.selected]));
 
 /* ─────────────────────────── auth ─────────────────────────── */
 

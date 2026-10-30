@@ -106,6 +106,16 @@
           <span class="search-ico">⌕</span>
           <input id="search" class="search" type="search" placeholder="Search titles, developers, genres…" autocomplete="off" />
         </div>
+        <select id="sort" class="select sort-select" title="Sort">
+          <option value="title">Title A–Z</option>
+          <option value="-title">Title Z–A</option>
+          <option value="added">Recently added</option>
+          <option value="-added">Oldest added</option>
+          <option value="year">Year ↑</option>
+          <option value="-year">Year ↓</option>
+          <option value="rating">Rating ↓</option>
+          <option value="-size">Size ↓</option>
+        </select>
         <div class="filter-toggles">
           <button class="toggle-pill" data-toggle="favorite" title="Show favourites only">★ Favourites</button>
           <button class="toggle-pill" data-toggle="hidden" title="Games you have hidden from your own view (other people still see them)">◌ Hidden</button>
@@ -115,23 +125,7 @@
           <button class="toggle-pill" data-action="select" id="select-toggle" title="Select tiles to delete several at once">☐ Select</button>
           </div>
         <div class="toolbar-right">
-          <select id="sort" class="select" title="Sort">
-            <option value="title">Title A–Z</option>
-            <option value="-title">Title Z–A</option>
-            <option value="added">Recently added</option>
-            <option value="-added">Oldest added</option>
-            <option value="year">Year ↑</option>
-            <option value="-year">Year ↓</option>
-            <option value="rating">Rating ↓</option>
-            <option value="-size">Size ↓</option>
-          </select>
           <button class="btn btn-sm" id="bulk-enrich" title="Fetch metadata for ROMs that have none yet">✦ Fetch metadata</button>
-          <button class="btn btn-sm hidden" id="bulk-addcoll-top" title="Add the selected tiles to a collection">＋ Collection (<span id="bulk-addcoll-top-count">0</span>)</button>
-          <button class="btn btn-sm hidden" id="bulk-hide-top" title="Hide the selected games from YOUR view (other people still see them; nothing is deleted)">◌ <span class="bh-label">Hide</span> (<span id="bulk-hide-top-count">0</span>)</button>
-          <button class="btn btn-sm hidden" id="bulk-system-top" title="Move the selected games to System (or back to the library)">⚙ <span class="bs-label">Mark as System</span> (<span id="bulk-system-top-count">0</span>)</button>
-          <button class="btn btn-sm hidden" id="bulk-clearmatch-top" title="Remove the metadata match from the selected games (wrong cover, wrong details) so they can be matched again">⟲ Clear match (<span id="bulk-clearmatch-top-count">0</span>)</button>
-          <button class="btn btn-sm btn-danger hidden" id="bulk-delete-top" title="Delete the selected tiles">🗑 Delete (<span id="bulk-delete-top-count">0</span>)</button>
-          <button class="btn btn-sm btn-ghost hidden" id="bulk-cancel-top" title="Exit selection mode">✕ Cancel</button>
           <div class="segmented" id="density">
             <button data-density="comfortable" class="is-active" title="Comfortable grid">▦</button>
             <button data-density="compact" title="Dense grid">▤</button>
@@ -163,9 +157,12 @@
           <button class="btn btn-sm" id="bulk-selectall" title="Select every ROM matching the current filters, including ones not scrolled into view yet">Select all</button>
           <button class="btn btn-sm hidden" id="bulk-addcoll">＋ Add to collection</button>
           <button class="btn btn-sm hidden" id="bulk-hide-btn" title="Hide the selected games from YOUR view (other people still see them; nothing is deleted)">◌ <span class="bh-label">Hide</span> selected</button>
-          <button class="btn btn-sm btn-danger" id="bulk-delete-btn">Delete selected</button>
+          <button class="btn btn-sm hidden" id="bulk-system-btn" title="Move the selected games to System (or back to the library)">⚙ <span class="bs-label">Mark as System</span></button>
+          <button class="btn btn-sm hidden" id="bulk-clearmatch-btn" title="Remove the metadata match from the selected games (wrong cover, wrong details) so they can be matched again">⟲ Clear match</button>
           <button class="btn btn-sm btn-ghost" id="bulk-clear">Clear</button>
-          <button class="btn btn-sm btn-ghost" id="bulk-cancel">Done</button>
+          <span class="bulk-spacer"></span>
+          <button class="btn btn-sm btn-danger" id="bulk-delete-btn">🗑 Delete selected</button>
+          <button class="btn btn-sm" id="bulk-cancel" title="Leave selection mode">✕ Done</button>
         </div>
         <div id="active-filters" class="chips"></div>
         <div class="count" id="result-count"></div>

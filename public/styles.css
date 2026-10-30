@@ -1353,3 +1353,14 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 
 /* Anything in Settings that is scrolled to lands clear of the pinned header. */
 #view-settings .panel { scroll-margin-top: calc(var(--settings-anchor-h, 9rem) + 1rem); }
+
+/* Library toolbar: Sort sits right after the search box; the right side (Fetch metadata, grid size) never changes.
+   Selecting games changes nothing up here: every selection action lives in the bar underneath. */
+.toolbar .sort-select { flex: 0 0 auto; }
+
+/* The selection bar carries every action (the toolbar above never changes): a full-width bar that wraps tidily,
+   with Delete and Done pushed to the far right, away from the everyday actions. */
+.filter-row { flex-wrap: wrap; row-gap: 0.5rem; }
+.bulk-bar { display: flex; flex-wrap: wrap; flex: 1 1 100%; border-radius: 0.8rem; padding: 0.45rem 0.7rem; gap: 0.45rem; }
+.bulk-bar .bulk-spacer { flex: 1 1 auto; min-width: 0.5rem; }
+#bulk-count { font-weight: 600; color: var(--text); padding-right: 0.3rem; }
