@@ -109,6 +109,7 @@
         <div class="filter-toggles">
           <button class="toggle-pill" data-toggle="favorite" title="Show favourites only">★ Favourites</button>
           <button class="toggle-pill" data-toggle="hidden" title="Show hidden ROMs only">◌ Hidden</button>
+          <button class="toggle-pill" data-toggle="system" title="BIOS, device and computer entries: kept and downloadable, but out of the main library">⚙ System</button>
           <button class="toggle-pill" data-toggle="orphan" title="Show only ROMs with no valid source (leftovers)">⛁ Orphans</button>
           <button class="toggle-pill" data-toggle="unmatched" title="Show only ROMs no provider has ever matched — the manual-identify worklist">○ Needs match</button>
           <button class="toggle-pill" data-action="select" id="select-toggle" title="Select tiles to delete several at once">☐ Select</button>
@@ -127,6 +128,7 @@
           <button class="btn btn-sm" id="bulk-enrich" title="Fetch metadata for ROMs that have none yet">✦ Fetch metadata</button>
           <button class="btn btn-sm hidden" id="bulk-addcoll-top" title="Add the selected tiles to a collection">＋ Collection (<span id="bulk-addcoll-top-count">0</span>)</button>
           <button class="btn btn-sm hidden" id="bulk-hide-top" title="Hide the selected games from the library (nothing is deleted)">◌ <span class="bh-label">Hide</span> (<span id="bulk-hide-top-count">0</span>)</button>
+          <button class="btn btn-sm hidden" id="bulk-system-top" title="Move the selected games to System (or back to the library)">⚙ <span class="bs-label">Mark as System</span> (<span id="bulk-system-top-count">0</span>)</button>
           <button class="btn btn-sm btn-danger hidden" id="bulk-delete-top" title="Delete the selected tiles">🗑 Delete (<span id="bulk-delete-top-count">0</span>)</button>
           <button class="btn btn-sm btn-ghost hidden" id="bulk-cancel-top" title="Exit selection mode">✕ Cancel</button>
           <div class="segmented" id="density">
@@ -490,7 +492,8 @@
           <label class="field"><span>File-name column</span><input id="names-rom-col" value="rom_name" /></label>
           <label class="field"><span>Game-name column</span><input id="names-name-col" value="short_game_name" /></label>
         </div>
-        <label class="policy-row" style="margin-top:10px"><input type="checkbox" id="names-hide-system" checked /> <span>Hide BIOS and device entries (CSV columns <code>is_bios</code> / <code>is_device</code> = yes). They are not games and have no cover; hidden games are skipped by Fetch metadata and can be brought back from the Hidden filter.</span></label>
+        <label class="policy-row" style="margin-top:10px"><input type="checkbox" id="names-flag-system" checked /> <span><b>Mark BIOS, device and non-arcade entries as System</b> (CSV columns <code>is_bios</code>, <code>is_device</code> = yes, or <code>is_arcade</code> filled in and not yes). They are kept and downloadable, found under the <b>⚙ System</b> filter, and skipped by Fetch metadata and the main library.</span></label>
+        <label class="policy-row" style="margin-top:10px"><input type="checkbox" id="names-hide-system" /> <span>Hide BIOS and device entries (CSV columns <code>is_bios</code> / <code>is_device</code> = yes). They are not games and have no cover; hidden games are skipped by Fetch metadata and can be brought back from the Hidden filter.</span></label>
         <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="names-preview">Preview</button><button class="btn btn-primary" id="names-apply" disabled>Apply names</button></div>
         <p class="hint" id="names-result" style="margin-top:10px"></p>
       </div>

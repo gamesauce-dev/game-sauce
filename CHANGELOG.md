@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **System entries:** BIOS, device and computer/console entries can be marked **System**. They stay in game-sauce and stay downloadable, but leave the main Library and are skipped by Fetch metadata. A new **⚙ System** filter lists them, and there Select all, Hide, Unhide, Collection and **Back to library** all work. Admins can also mark any selection **Mark as System** in Select mode. The Game names (CSV) tool marks them from `is_bios`, `is_device`, and an `is_arcade` column (a filled value that is not *yes* means not arcade; for MAME, add `yes` when the machine's `<input>` has `coins`). The old *hide* option is still there as a second tick box.
 - **Favourites warning before deleting:** if anyone has the game as a favourite, deleting it (one game or a bulk delete) asks first and names who ("This is a favourite of anna, ben"), with *Delete anyway*.
 - **Duplicate finder: ties and legend.** When nothing separates the copies it says "No clear winner: check both" instead of suggesting one, and a one-line legend explains the green outline, the padlock and the tie mark.
 - **Library tiles:** the favourite and hide icons are the same, larger size (and always visible on touch screens), drawn clearly instead of text symbols.

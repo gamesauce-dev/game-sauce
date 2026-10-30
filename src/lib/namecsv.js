@@ -25,13 +25,13 @@ const keyOf = (name) => String(name || '').trim().replace(/\.(zip|7z|rar)$/i, ''
 /**
  * @param {{csvText:string, platform:string, romCol?:string, nameCol?:string, yearCol?:string, makerCol?:string, apply?:boolean}} o
  */
-export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 'short_game_name', yearCol = 'year', makerCol = 'manufacturer', hideSystem = false, apply = false }) {
+export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 'short_game_name', yearCol = 'year', makerCol = 'manufacturer', hideSystem = false, flagSystem = false, apply = false }) {
   const rows = parseCsv(csvText);
   if (rows.length < 2) throw Object.assign(new Error('The CSV has no data rows'), { status: 400 });
   const head = rows[0].map((h) => h.trim().toLowerCase());
   const col = (n) => head.indexOf(String(n || '').trim().toLowerCase());
   const iRom = col(romCol), iName = col(nameCol), iYear = col(yearCol), iMaker = col(makerCol);
-  const iBios = col('is_bios'), iDev = col('is_device');
+  const iBios = col('is_bios'), iDev = col('is_device'), iArc = col('is_arcade');
   const yes = (v) => /^(yes|y|true|1)$/i.test(String(v || '').trim());
   if (iRom < 0) throw Object.assign(new Error(`No "${romCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
   if (iName < 0) throw Object.assign(new Error(`No "${nameCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
@@ -39,7 +39,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   const map = new Map();
   for (const r of rows.slice(1)) {
     const k = keyOf(r[iRom]); const title = String(r[iName] || '').trim();
-    if (k && title && !map.has(k)) map.set(k, { title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, system: (iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) });
+    if (k && title && !map.has(k)) map.set(k, { title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, system: (iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) || (iArc >= 0 && String(r[iArc] || '').trim() !== '' && !yes(r[iArc])) });
   }
 
   const roms = db.prepare('SELECT r.id, r.filename, r.title FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE p.slug = ?').all(platform);
@@ -48,6 +48,10 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
 
   const systemHits = hits.filter((h) => h.system);
   if (apply) {
+    if (flagSystem && systemHits.length) {
+      const flag = db.prepare("UPDATE roms SET is_system = 1, updated_at = datetime('now') WHERE id = ? AND is_system = 0");
+      db.transaction(() => { for (const h of systemHits) flag.run(h.id); })();
+    }
     if (hideSystem && systemHits.length) {
       const hide = db.prepare("UPDATE roms SET hidden = 1, hidden_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND hidden = 0");
       db.transaction(() => { for (const h of systemHits) hide.run(h.id); })();
@@ -61,5 +65,5 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
       developer = COALESCE(developer, ?), updated_at = datetime('now') WHERE id = ?`);
     db.transaction(() => { for (const h of hits) upd.run(h.title, sortTitle(h.title), h.year, h.maker, h.id); })();
   }
-  return { applied: apply, system_files: systemHits.length, hid: apply && hideSystem ? systemHits.length : 0, has_system_columns: iBios >= 0 || iDev >= 0, csv_rows: rows.length - 1, roms_on_platform: roms.length, matched: hits.length, unmatched, sample: hits.slice(0, 8).map(({ filename, from, title }) => ({ filename, from, title })) };
+  return { applied: apply, system_files: systemHits.length, hid: apply && hideSystem ? systemHits.length : 0, flagged: apply && flagSystem ? systemHits.length : 0, has_system_columns: iBios >= 0 || iDev >= 0 || iArc >= 0, csv_rows: rows.length - 1, roms_on_platform: roms.length, matched: hits.length, unmatched, sample: hits.slice(0, 8).map(({ filename, from, title }) => ({ filename, from, title })) };
 }

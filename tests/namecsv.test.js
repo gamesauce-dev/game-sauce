@@ -111,3 +111,31 @@ test('CSV name import: is_bios / is_device entries can be hidden, and the job sk
   const job = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'gba' } });
   assert.equal(job.body.total, 1, 'hidden BIOS/device entries are not looked up');
 });
+
+test('System flag: CSV marks BIOS/device/non-arcade, they leave the library and the metadata job, and stay findable and reversible', async () => {
+  const csv = 'rom_name,short_game_name,is_bios,is_device,is_arcade\nbiosx.zip,Some BIOS,yes,,\ndevx.zip,A Device,,yes,\ncompx.zip,A Computer,,,no\narcx.zip,Arcade Game,,,yes\n';
+  const up = new FormData();
+  for (const n of ['biosx.zip', 'devx.zip', 'compx.zip', 'arcx.zip']) up.append('roms', new Blob([`s-${n}`]), n);
+  up.append('platform', 'nds'); up.append('enrich', 'false');
+  await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up });
+  const send = (apply) => { const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'nds'); fd.append('flag_system', '1'); if (apply) fd.append('apply', '1'); return fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd }).then((r) => r.json()); };
+  const prev = await send(false);
+  assert.equal(prev.system_files, 3, 'bios + device + the row whose is_arcade is filled in but not yes');
+  assert.equal((await call('/api/roms?platform=nds&limit=50')).body.total, 4, 'preview changes nothing');
+  const ap = await send(true);
+  assert.equal(ap.flagged, 3);
+  assert.deepEqual((await call('/api/roms?platform=nds&limit=50')).body.items.map((r) => r.title), ['Arcade Game']);
+  const sys = (await call('/api/roms?platform=nds&system=only&limit=50')).body;
+  assert.equal(sys.total, 3, 'the System filter finds them');
+  const job = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'nds' } });
+  assert.equal(job.body.total, 1, 'only the real game is looked up');
+  for (let i = 0; i < 100; i++) { if (!(await call('/api/roms/bulk/enrich-job')).body.running) break; await new Promise((r) => setTimeout(r, 100)); }
+  // reversible, and hide still works on top of it
+  const ids = sys.items.map((r) => r.id);
+  await call('/api/roms/bulk/hide', { method: 'POST', body: { ids, hidden: true } });
+  assert.equal((await call('/api/roms?platform=nds&system=only&limit=50')).body.total, 3, 'hidden System entries still show under System');
+  assert.equal((await call('/api/roms/bulk/system', { method: 'POST', body: { ids, system: false } })).status, 200);
+  assert.equal((await call('/api/roms?platform=nds&system=only&limit=50')).body.total, 0);
+  const dl = await fetch(`${base}/api/roms/${ids[0]}/download`, { headers: { Authorization: `Bearer ${token}` } });
+  assert.notEqual(dl.status, 404, 'System/hidden games can still be downloaded');
+});

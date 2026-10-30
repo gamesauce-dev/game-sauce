@@ -270,3 +270,8 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '12') ON CON
 const romColsV13 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
 if (!romColsV13.has('keep_override')) db.exec('ALTER TABLE roms ADD COLUMN keep_override INTEGER');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '13') ON CONFLICT(key) DO UPDATE SET value = '13'").run();
+
+/* ── v14: is_system — BIOS / device / non-arcade entries. Kept (and downloadable) but out of the main library and out of metadata lookups. */
+const romColsV14 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
+if (!romColsV14.has('is_system')) db.exec('ALTER TABLE roms ADD COLUMN is_system INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '14') ON CONFLICT(key) DO UPDATE SET value = '14'").run();

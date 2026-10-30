@@ -13,6 +13,7 @@ const state = {
   source: null,
   missing: false,
   hidden: false,
+  system: false,
   orphan: false,
   unmatched: false,
   datStatus: null,
@@ -394,6 +395,7 @@ function activeFilterChips() {
   if (state.missing) chips.push({ label: 'Missing files', clear: () => { state.missing = false; } });
   if (state.datStatus) chips.push({ label: `DAT: ${state.datStatus}`, clear: () => { state.datStatus = null; } });
   if (state.hidden) chips.push({ label: 'Hidden only', clear: () => { state.hidden = false; } });
+  if (state.system) chips.push({ label: 'System entries', clear: () => { state.system = false; } });
   if (state.unmatched) chips.push({ label: 'Needs match', clear: () => { state.unmatched = false; loadLibrary(); } });
   if (state.orphan) chips.push({ label: 'Orphaned (no source)', clear: () => { state.orphan = false; loadLibrary(); } });
 
@@ -455,7 +457,7 @@ async function loadLibrary() {
   // owns the full height.
   const isHome = !state.q && state.platform === 'all' && !state.tag && !state.genre &&
     !state.favorite && !state.source && !state.missing && !state.datStatus &&
-    !state.hidden && !orphanOnly && !unmatchedOnly;
+    !state.hidden && !state.system && !orphanOnly && !unmatchedOnly;
   $('#lib-overview')?.classList.toggle('hidden', !isHome);
   $('#lib-recent-wrap')?.classList.toggle('hidden', !isHome);
   if (!isHome) $('#lib-played-wrap')?.classList.add('hidden');
@@ -474,6 +476,7 @@ async function loadLibrary() {
   if (state.datStatus) params.set('dat_status', state.datStatus);
   if (unmatchedOnly) { params.set('unmatched', 'only'); params.set('hidden', 'all'); }
   else if (orphanOnly) { params.set('orphan', 'only'); params.set('hidden', 'all'); }
+  else if (state.system) params.set('system', 'only');
   else if (state.hidden) params.set('hidden', 'only');
 
   // Remember the active query (minus paging) so Select all can walk the whole result set.
@@ -954,6 +957,10 @@ function syncSelectUI() {
   $('#bulk-delete-top')?.classList.toggle('hidden', !on || n === 0);
   $('#bulk-cancel-top')?.classList.toggle('hidden', !on);
   $('#bulk-hide-top')?.classList.toggle('hidden', !on || n === 0);
+  $('#bulk-system-top')?.classList.toggle('hidden', !on || n === 0 || authState.user?.role !== 'admin');
+  $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
+  const sysCount = $('#bulk-system-top-count');
+  if (sysCount) sysCount.textContent = String(n);
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
   $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
   const hideCount = $('#bulk-hide-top-count');
@@ -973,6 +980,20 @@ function syncSelectUI() {
     const box = card.querySelector('[data-select]');
     if (box) box.setAttribute('aria-checked', selected ? 'true' : 'false');
   });
+}
+
+// Move the selected games to System (BIOS, devices, computers), or back to the library when viewing the System filter.
+async function bulkSystemSelected() {
+  const ids = [...state.selected];
+  if (!ids.length) return toast('Select some tiles first', true);
+  const back = !!state.system;
+  try {
+    await api('/roms/bulk/system', { method: 'POST', body: JSON.stringify({ ids, system: !back }) });
+    toast(back ? `${ids.length} game${ids.length === 1 ? '' : 's'} back in the library` : `${ids.length} game${ids.length === 1 ? '' : 's'} marked as System`);
+    state.selected.clear();
+    await Promise.all([loadLibrary(), loadPlatforms()]);
+    syncSelectUI();
+  } catch (err) { toast(err.message, true); }
 }
 
 // Hide (or, when looking at the Hidden filter, bring back) every selected game. Nothing is deleted.
@@ -1034,6 +1055,7 @@ function syncFilterToggles() {
     const key = btn.dataset.toggle;
     const on = key === 'favorite' ? state.favorite
       : key === 'hidden' ? state.hidden
+      : key === 'system' ? state.system
       : key === 'orphan' ? state.orphan
       : key === 'unmatched' ? state.unmatched : false;
     btn.classList.toggle('is-active', Boolean(on));
@@ -1069,7 +1091,8 @@ function syncUnmatchedToggle() {
 
 $$('[data-toggle]').forEach((btn) => btn.addEventListener('click', () => {
   if (btn.dataset.toggle === 'favorite') state.favorite = !state.favorite;
-  else if (btn.dataset.toggle === 'hidden') state.hidden = !state.hidden;
+  else if (btn.dataset.toggle === 'hidden') { state.hidden = !state.hidden; if (state.hidden) state.system = false; }
+  else if (btn.dataset.toggle === 'system') { state.system = !state.system; if (state.system) state.hidden = false; }
   else if (btn.dataset.toggle === 'orphan') state.orphan = !state.orphan;
   else if (btn.dataset.toggle === 'unmatched') state.unmatched = !state.unmatched;
   if (state.orphan || state.unmatched) state.hidden = false;
@@ -3043,6 +3066,7 @@ $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); sync
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
 $('#bulk-hide-top')?.addEventListener('click', bulkHideSelected);
+$('#bulk-system-top')?.addEventListener('click', bulkSystemSelected);
 $('#bulk-delete-top')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
 $('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...state.selected]));
@@ -3152,7 +3176,7 @@ function showApp(user, { restore = false } = {}) {
     // Fresh start: forget filters from any earlier session in this tab.
     clearNav();
     Object.assign(state, { platform: 'all', q: '', sort: 'title', tag: null, genre: null, favorite: false,
-      source: null, sourceName: null, missing: false, hidden: false, orphan: false, unmatched: false, datStatus: null });
+      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, unmatched: false, datStatus: null });
     $('#search').value = '';
     $('#sort').value = 'title';
     activeSettingsModule = null;
@@ -3423,9 +3447,10 @@ function initNamesPanel() {
     fd.append('csv', f); fd.append('platform', sel.value); fd.append('rom_col', $('#names-rom-col').value); fd.append('name_col', $('#names-name-col').value);
     if (apply) fd.append('apply', '1');
     if ($('#names-hide-system')?.checked) fd.append('hide_system', '1');
+    if ($('#names-flag-system')?.checked) fd.append('flag_system', '1');
     try {
       const r = await api('/roms/bulk/import-names', { method: 'POST', body: fd });
-      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS or device entries${r.applied && r.hid ? ' and were hidden' : $('#names-hide-system')?.checked ? ' and will be hidden' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
+      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS, device or non-arcade entries${r.applied && r.flagged ? ' and were marked as System' : $('#names-flag-system')?.checked ? ' and will be marked as System' : ''}${r.applied && r.hid ? ', and hidden' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
       applyBtn.disabled = apply || !r.matched;
       if (apply) { toast(`Renamed ${r.matched} games`); loadLibrary(); }
     } catch (err) { out.textContent = err.message; toast(err.message, true); }

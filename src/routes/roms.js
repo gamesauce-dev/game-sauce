@@ -37,7 +37,7 @@ const ROM_COLUMNS = `
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
   r.meta_source, r.meta_synced_at, r.favorite, r.play_count, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
-  r.dat_status, r.dat_title, r.hidden, r.keep_override,
+  r.dat_status, r.dat_title, r.hidden, r.keep_override, r.is_system,
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
   p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
@@ -255,6 +255,18 @@ bulkRouter.post('/hide', (req, res) => {
   res.json({ changed, hidden: Boolean(hidden) });
 });
 
+// Mark / unmark games as System entries (BIOS, devices, computers): kept and downloadable, but out of the main library.
+bulkRouter.post('/system', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
+  const v = req.body?.system === false ? 0 : 1;
+  const stmt = db.prepare("UPDATE roms SET is_system = ?, updated_at = datetime('now') WHERE id = ?");
+  let changed = 0;
+  db.transaction(() => { for (const id of ids) changed += stmt.run(v, id).changes; })();
+  req.auditDetail = { system: Boolean(v), count: ids.length };
+  res.json({ changed, system: Boolean(v) });
+});
+
 bulkRouter.post('/delete', (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
   if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
@@ -335,9 +347,15 @@ router.get('/', (req, res) => {
   if (req.query.dat_status) { where.push('r.dat_status = @dat_status'); params.dat_status = req.query.dat_status; }
   // Hidden ROMs are excluded by default so they disappear from every view that
   // does not ask for them; hidden=only is the filter that finds them again.
-  if (req.query.hidden === '1' || req.query.hidden === 'only') where.push('r.hidden = 1');
-  else if (req.query.hidden === 'all') { /* no clause */ }
-  else where.push('r.hidden = 0');
+  // System entries (BIOS, devices, computers) have their own filter: ?system=only shows just them (hidden ones too, so
+  // they can be selected, hidden or unhidden there); otherwise they stay out of the library.
+  if (req.query.system === 'only') where.push('r.is_system = 1');
+  else {
+    if (req.query.system !== 'all') where.push('r.is_system = 0');
+    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push('r.hidden = 1');
+    else if (req.query.hidden === 'all') { /* no clause */ }
+    else where.push('r.hidden = 0');
+  }
   if (req.query.missing === '1') where.push('r.missing = 1');
   if (req.query.missing === '0') where.push('r.missing = 0');
   // Unmatched: never enriched from any provider or DAT — filename/seed rows and
@@ -478,7 +496,7 @@ router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 
     if (!req.file) return res.status(400).json({ error: 'Choose a CSV file' });
     const platform = String(req.body?.platform || '').trim();
     if (!db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Pick a platform' });
-    res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, hideSystem: req.body.hide_system === '1', apply: req.body.apply === '1' }));
+    res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, hideSystem: req.body.hide_system === '1', flagSystem: req.body.flag_system === '1', apply: req.body.apply === '1' }));
   } catch (err) { next(err); }
 });
 
@@ -903,7 +921,7 @@ router.post('/bulk/enrich', async (req, res, next) => {
  * The browser used to drive the batches, so a page refresh stopped the run.
  * The server now owns the loop; the UI only starts, stops and polls it. */
 const CANDIDATES_SQL = `
-  (hidden = 0 AND (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
+  (hidden = 0 AND is_system = 0 AND (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
      OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat'))))`;
 const enrichJob = { running: false, stop: false, onlyMissingCovers: false, platform: '', total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
 
