@@ -279,3 +279,15 @@ test('favourites are per person: one user starring a game does not star it for a
   assert.equal((await asMember(`/api/roms/${g}/favorite`, { method: 'POST' })).body.favorite, 0, 'member un-stars only their own');
   assert.equal((await call(`/api/roms/${g}`)).body.favorite, 1, 'admin star untouched');
 });
+
+test('the same arcade zip name on two different platforms is NOT a duplicate (FBNeo vs MAME)', async () => {
+  const a = rom('fba', 'enduror.zip');
+  const b = rom('mame', 'enduror.zip');
+  db.prepare("INSERT OR IGNORE INTO mame_names (name, title, year, manufacturer, cloneof, isbios, isdevice) VALUES ('enduror', 'Enduro Racer', 1986, 'Sega', NULL, 0, 0)").run();
+  const all = (await call('/api/admin/duplicates?limit=200')).body.groups;
+  assert.ok(!all.some((g) => g.items.some((i) => i.id === a) && g.items.some((i) => i.id === b)), 'FBNeo and MAME copies are never grouped together');
+  const c = rom('mame', 'enduror2.zip');
+  db.prepare("INSERT OR IGNORE INTO mame_names (name, title, year, manufacturer, cloneof, isbios, isdevice) VALUES ('enduror2', 'Enduro Racer (clone)', 1986, 'Sega', 'enduror', 0, 0)").run();
+  const g2 = (await call('/api/admin/duplicates?platform=mame&limit=200')).body.groups.find((g) => g.items.some((i) => i.id === b));
+  assert.ok(g2 && g2.items.some((i) => i.id === c), 'a clone on the SAME platform still groups under its parent');
+});

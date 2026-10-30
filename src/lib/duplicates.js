@@ -78,7 +78,8 @@ export function findDuplicates({ platform = null, limit = 50, offset = 0, uid = 
     let key;
     if (ARCADE.has(r.platform_slug)) {
       const parent = arcadeParent(r, names);
-      key = parent ? `a|${parent}` : `t|${r.platform_id}|${sortTitle(r.title)}|${distinguishers(r.filename)}`;
+      // The platform is part of the key: FinalBurn Neo's enduror.zip and MAME's enduror.zip are different romsets, not duplicates.
+      key = parent ? `a|${r.platform_id}|${parent}` : `t|${r.platform_id}|${sortTitle(r.title)}|${distinguishers(r.filename)}`;
     } else {
       key = `t|${r.platform_id}|${r.sort_title || sortTitle(r.title)}|${distinguishers(r.filename)}`;
     }
