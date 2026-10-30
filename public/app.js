@@ -2419,7 +2419,7 @@ async function fillClearCoversPlatforms() {
   sel.dataset.filled = '1';
   sel.innerHTML = platformOptions({ selected: 'mame', excludeOther: false });
 }
-document.addEventListener('click', (e) => { if (e.target.closest('[data-mod="db"], #settings-tiles')) setTimeout(fillClearCoversPlatforms, 50); });
+document.addEventListener('click', (e) => { if (e.target.closest('[data-mod="db"], [data-group], #settings-tiles')) setTimeout(fillClearCoversPlatforms, 50); });
 $('#db-clear-covers-platform')?.addEventListener('focus', fillClearCoversPlatforms);
 
 $('#db-clear-covers')?.addEventListener('click', async () => {
@@ -3294,19 +3294,45 @@ const SETTINGS_MODULES = [
 ];
 
 
-function renderSettingsTiles() {
-  const wrap = $('#settings-tiles');
-  if (!wrap) return;
-  const isAdmin = authState.user?.role === 'admin';
-  wrap.innerHTML = SETTINGS_MODULES
-    .filter((m) => !m.adminOnly || isAdmin)
-    .map((m) => `
-      <button class="tile" data-mod="${m.id}" title="Open ${esc(m.label)}">
-        <span class="tile-ico">${m.ico}</span>
-        <span class="tile-label">${esc(m.label)}</span>
-      </button>`).join('');
+// Two levels: a few group tiles on top, and under the selected group the individual settings.
+const SETTINGS_GROUPS = [
+  { id: 'account',  label: 'My account',          ico: '👤', modules: ['profile', 'password', 'controller'] },
+  { id: 'tools',    label: 'Library tools',       ico: '🧰', modules: ['dat', 'names', 'duplicates'], adminOnly: true },
+  { id: 'maint',    label: 'Maintenance',         ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
+  { id: 'status',   label: 'Health & coverage',   ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
+  { id: 'security', label: 'Security & activity', ico: '🛡', modules: ['sessions', 'audit'] },
+  { id: 'server',   label: 'Server setup',        ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
+];
+const settingsLastInGroup = {};
+const settingsIsAdmin = () => authState.user?.role === 'admin';
+const settingsModuleOk = (m) => !m.adminOnly || settingsIsAdmin();
+function settingsGroupMods(g) {
+  return g.modules.map((id) => SETTINGS_MODULES.find((m) => m.id === id)).filter((m) => m && settingsModuleOk(m));
+}
+function settingsGroupOf(id) { return SETTINGS_GROUPS.find((g) => g.modules.includes(id)) || null; }
+function settingsVisibleGroups() { return SETTINGS_GROUPS.filter((g) => (!g.adminOnly || settingsIsAdmin()) && settingsGroupMods(g).length); }
 
-  $$('[data-mod]', wrap).forEach((t) => t.addEventListener('click', () => showSettingsModule(t.dataset.mod)));
+function renderSettingsTiles(activeId = activeSettingsModule) {
+  const wrap = $('#settings-tiles'), sub = $('#settings-subtiles');
+  if (!wrap) return;
+  const groups = settingsVisibleGroups();
+  if (!groups.length) return;
+  const cur = settingsGroupOf(activeId) || groups[0];
+  wrap.innerHTML = groups.map((g) => `
+      <button class="tile group${g.id === cur.id ? ' is-active' : ''}" data-group="${g.id}" title="${esc(settingsGroupMods(g).map((m) => m.label).join(', '))}">
+        <span class="tile-ico">${g.ico}</span>
+        <span class="tile-label">${esc(g.label)}</span>
+      </button>`).join('');
+  $$('[data-group]', wrap).forEach((t) => t.addEventListener('click', () => {
+    const g = SETTINGS_GROUPS.find((x) => x.id === t.dataset.group);
+    const mods = settingsGroupMods(g);
+    showSettingsModule(mods.find((m) => m.id === settingsLastInGroup[g.id])?.id || mods[0].id);
+  }));
+  // The second row: the settings inside the chosen group (a group with a single setting needs no second row).
+  const mods = settingsGroupMods(cur);
+  sub.classList.toggle('hidden', mods.length < 2);
+  sub.innerHTML = mods.map((m) => `<button class="subtile${m.id === activeId ? ' is-active' : ''}" data-mod="${m.id}"><span class="tile-ico">${m.ico}</span>${esc(m.label)}</button>`).join('');
+  $$('[data-mod]', sub).forEach((t) => t.addEventListener('click', () => showSettingsModule(t.dataset.mod)));
 }
 
 /* ── Backups module ── */
@@ -3493,10 +3519,15 @@ function initNamesPanel() {
 }
 
 function showSettingsModule(id) {
+  // A saved or stale module the person may not open (e.g. an admin one after signing in as a member) falls back to the first allowed one.
+  if (!SETTINGS_MODULES.some((m) => m.id === id && settingsModuleOk(m))) id = settingsGroupMods(settingsVisibleGroups()[0])[0].id;
   // Only one module at a time.
   $$('#view-settings .panel').forEach((p) => p.classList.add('hidden'));
   $('#view-settings #settings-tiles').classList.remove('hidden');
   activeSettingsModule = id;
+  const grp = settingsGroupOf(id);
+  if (grp) settingsLastInGroup[grp.id] = id;
+  renderSettingsTiles(id);
   saveNav();
   const panel = $(`#mod-${id}`);
   if (!panel) return;
@@ -3685,8 +3716,7 @@ async function loadSettings() {
 
   // Re-show whichever module was open (default: first avail tile) to avoid a
   // flash of nothing after refresh.
-  const firstTile = $('#view-settings .tile');
-  showSettingsModule(activeSettingsModule || firstTile?.dataset.mod || 'password');
+  showSettingsModule(activeSettingsModule || 'profile');
 }
 
 async function loadUsersForModule() {
