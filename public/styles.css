@@ -1314,3 +1314,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
   .toolbar { flex-wrap: wrap; }
   .meta-table { grid-template-columns: 5.5rem 1fr; }
 }
+
+/* In the Hidden view the "hidden" veil must not block the icons: they sit above it and the veil ignores the pointer. */
+.card-hidden-veil { pointer-events: none; }
+.card-fav, .card-hide, .card-lock { z-index: 3; }

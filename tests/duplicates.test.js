@@ -123,9 +123,10 @@ test('hidden and missing games are left out', async () => {
   const a = rom('ps1', 'Midnight Courier (USA).bin');
   const b = rom('ps1', 'Midnight Courier (Europe).bin');
   assert.equal((await call('/api/admin/duplicates?platform=ps1')).body.total, 1);
-  db.prepare('UPDATE roms SET hidden = 1 WHERE id = ?').run(b);
+  await call(`/api/roms/${b}/hide`, { method: 'POST', body: { hidden: true } }); // the admin hides it (personal)
   assert.equal((await call('/api/admin/duplicates?platform=ps1')).body.total, 0, 'once the extra is hidden the group is resolved');
-  db.prepare('UPDATE roms SET hidden = 0, missing = 1 WHERE id = ?').run(b);
+  await call(`/api/roms/${b}/hide`, { method: 'POST', body: { hidden: false } });
+  db.prepare('UPDATE roms SET missing = 1 WHERE id = ?').run(b);
   assert.equal((await call('/api/admin/duplicates?platform=ps1')).body.total, 0);
   assert.ok(a);
 });

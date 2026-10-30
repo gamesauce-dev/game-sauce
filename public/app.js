@@ -1042,7 +1042,7 @@ async function bulkDeleteSelected() {
 async function toggleHidden(id) {
   try {
     const { hidden } = await api(`/roms/${id}/hide`, { method: 'POST' });
-    toast(hidden ? 'Hidden from the library' : 'Back in the library');
+    toast(hidden ? 'Hidden from your view (others still see it)' : 'Back in your library');
     await loadLibrary();
     loadPlatforms();
   } catch (err) {
@@ -1273,7 +1273,7 @@ async function openDetail(id) {
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
           ${rom.play_capable ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
-          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b></span></button>
+          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b>${rom.hidden ? '' : '<small>Only from your view; others still see it</small>'}</span></button>
           <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
           <button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>
           ${rom.cover_locked ? `<button class="mi" role="menuitem" data-act="cover-reset">${ICON.undo}<span><b>Back to automatic cover</b></span></button>` : ''}
@@ -3446,11 +3446,10 @@ function initNamesPanel() {
     const fd = new FormData();
     fd.append('csv', f); fd.append('platform', sel.value); fd.append('rom_col', $('#names-rom-col').value); fd.append('name_col', $('#names-name-col').value);
     if (apply) fd.append('apply', '1');
-    if ($('#names-hide-system')?.checked) fd.append('hide_system', '1');
     if ($('#names-flag-system')?.checked) fd.append('flag_system', '1');
     try {
       const r = await api('/roms/bulk/import-names', { method: 'POST', body: fd });
-      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS, device or non-arcade entries${r.applied && r.flagged ? ' and were marked as System' : $('#names-flag-system')?.checked ? ' and will be marked as System' : ''}${r.applied && r.hid ? ', and hidden' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
+      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS, device or non-arcade entries${r.applied && r.flagged ? ' and were marked as System' : $('#names-flag-system')?.checked ? ' and will be marked as System' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
       applyBtn.disabled = apply || !r.matched;
       if (apply) { toast(`Renamed ${r.matched} games`); loadLibrary(); }
     } catch (err) { out.textContent = err.message; toast(err.message, true); }
@@ -3510,7 +3509,7 @@ function renderDuplicates() {
     <div class="dup-group" data-gi="${gi}">
       <div class="dup-head"><b>${esc(grp.title)}</b> <span class="pill">${esc(grp.platform_short || grp.platform)}</span>
         <span class="grow"></span>
-        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one">Hide the others</button></div>
+        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one, from YOUR view only (others still see them)">Hide the others</button></div>
       <div class="dup-items">${grp.items.map((it) => `
         <div class="dup-item ${it.keep ? 'keep' : ''}" data-dup-open="${it.id}" title="Open this game">
           <div class="dup-cover">${it.cover_url ? `<img loading="lazy" src="${esc(it.cover_url)}" alt="" />` : ''}</div>
@@ -3526,7 +3525,7 @@ function renderDuplicates() {
 async function hideDuplicateExtras(groups) {
   const ids = groups.flatMap((grp) => grp.items.filter((i) => !i.keep).map((i) => i.id));
   if (!ids.length) return;
-  const ok = await confirmDialog({ title: `Hide ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}?`, body: 'Only the suggested copy of each game stays visible. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
+  const ok = await confirmDialog({ title: `Hide ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}?`, body: 'Only the suggested copy of each game stays visible to you; other people still see all copies. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
   if (!ok) return;
   try { await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: true }) }); toast(`Hid ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}`); loadDuplicates(true); loadPlatforms(); }
   catch (err) { toast(err.message, true); }

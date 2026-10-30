@@ -90,28 +90,6 @@ test('CSV name import: bad column and non-admin are refused', async () => {
   assert.equal(anon.status, 401);
 });
 
-test('CSV name import: is_bios / is_device entries can be hidden, and the job skips hidden games', async () => {
-  const csv = 'rom_name,short_game_name,is_bios,is_device\nneogeo.zip,Neo Geo MVS BIOS,yes,\nzdev.zip,Some Device,,yes\nrealgame.zip,Real Game,,\n';
-  const up = new FormData();
-  for (const n of ['neogeo.zip', 'zdev.zip', 'realgame.zip']) up.append('roms', new Blob([`b-${n}`]), n);
-  up.append('platform', 'gba'); up.append('enrich', 'false');
-  await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up });
-  const send = (apply, hide) => { const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'gba'); if (apply) fd.append('apply', '1'); if (hide) fd.append('hide_system', '1'); return fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd }).then((r) => r.json()); };
-  const prev = await send(false, true);
-  assert.equal(prev.matched, 3);
-  assert.equal(prev.system_files, 2);
-  assert.equal(prev.has_system_columns, true);
-  assert.equal((await call('/api/roms?platform=gba&limit=50')).body.total, 3, 'preview hides nothing');
-  const ap = await send(true, true);
-  assert.equal(ap.hid, 2);
-  const visible = (await call('/api/roms?platform=gba&limit=50')).body.items.map((r) => r.title);
-  assert.deepEqual(visible, ['Real Game']);
-  const hidden = (await call('/api/roms?platform=gba&hidden=only&limit=50')).body.total;
-  assert.equal(hidden, 2);
-  const job = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'gba' } });
-  assert.equal(job.body.total, 1, 'hidden BIOS/device entries are not looked up');
-});
-
 test('System flag: CSV marks BIOS/device/non-arcade, they leave the library and the metadata job, and stay findable and reversible', async () => {
   const csv = 'rom_name,short_game_name,is_bios,is_device,is_arcade\nbiosx.zip,Some BIOS,yes,,\ndevx.zip,A Device,,yes,\ncompx.zip,A Computer,,,no\narcx.zip,Arcade Game,,,yes\n';
   const up = new FormData();
@@ -151,4 +129,33 @@ test('System flag: is_arcade = yes always wins over is_bios / is_device', async 
   assert.equal(r.flagged, 1, 'only the plain BIOS');
   const lib = (await call('/api/roms?platform=n64&limit=50')).body.items.map((x) => x.title).sort();
   assert.deepEqual(lib, ['Device Game', 'Real Fighter']);
+});
+
+test('hiding is personal: one person hiding a game does not hide it for anyone else', async () => {
+  const up = new FormData(); up.append('roms', new Blob(['personal-hide']), 'phide.zip'); up.append('platform', 'psp'); up.append('enrich', 'false');
+  const id = (await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up })).json()).created[0].id;
+  const mk = await call('/api/auth/users', { method: 'POST', body: { username: 'nmember', password: 'nm-member-pass-12', role: 'user' } });
+  const mt = (await (await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'nmember', password: 'nm-member-pass-12' }) })).json()).token;
+  const as = (p, o = {}) => fetch(base + p, { method: o.method || 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` }, body: o.body ? JSON.stringify(o.body) : undefined }).then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }));
+  assert.equal((await as(`/api/roms/${id}/hide`, { method: 'POST' })).body.hidden, 1);
+  assert.equal((await as('/api/roms?platform=psp&limit=50')).body.items.some((r) => r.id === id), false, 'hidden for the member');
+  assert.equal((await call('/api/roms?platform=psp&limit=50')).body.items.some((r) => r.id === id), true, 'still visible to the admin');
+  assert.equal((await as('/api/roms?hidden=only&limit=50')).body.items.some((r) => r.id === id), true, 'in the member Hidden filter');
+  assert.equal((await call('/api/roms?hidden=only&limit=50')).body.items.some((r) => r.id === id), false, 'not in the admin Hidden filter');
+  assert.equal((await as(`/api/roms/${id}/hide`, { method: 'POST' })).body.hidden, 0, 'toggles back');
+});
+
+test('System entries are hidden for everyone, admin-only to set, and a member cannot mark them', async () => {
+  const csv = 'rom_name,short_game_name,is_bios,is_device,is_arcade\nsysone.zip,System One,yes,,no\nreal.zip,Real Thing,,,yes\n';
+  const up = new FormData(); for (const n of ['sysone.zip', 'real.zip']) up.append('roms', new Blob([`sy-${n}`]), n); up.append('platform', 'ps2'); up.append('enrich', 'false');
+  await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up });
+  const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'ps2'); fd.append('flag_system', '1'); fd.append('apply', '1');
+  await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+  const mt = (await (await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'nmember', password: 'nm-member-pass-12' }) })).json()).token;
+  const list = async (t) => (await (await fetch(`${base}/api/roms?platform=ps2&limit=50`, { headers: { Authorization: `Bearer ${t}` } })).json()).items.map((r) => r.title);
+  assert.deepEqual(await list(token), ['Real Thing']);
+  assert.deepEqual(await list(mt), ['Real Thing'], 'hidden for the member too');
+  const sysId = (await call('/api/roms?platform=ps2&system=only&limit=50')).body.items[0].id;
+  const denied = await fetch(`${base}/api/roms/bulk/system`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` }, body: JSON.stringify({ ids: [sysId], system: false }) });
+  assert.equal(denied.status, 403);
 });

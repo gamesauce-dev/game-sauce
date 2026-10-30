@@ -54,10 +54,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
       const flag = db.prepare("UPDATE roms SET is_system = 1, updated_at = datetime('now') WHERE id = ? AND is_system = 0");
       db.transaction(() => { for (const h of systemHits) flag.run(h.id); })();
     }
-    if (hideSystem && systemHits.length) {
-      const hide = db.prepare("UPDATE roms SET hidden = 1, hidden_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND hidden = 0");
-      db.transaction(() => { for (const h of systemHits) hide.run(h.id); })();
-    }
+    // (Hiding is personal now; System entries are hidden for everyone by the System flag above.)
     // MAME: titles from your CSV count as trusted names, so title-based providers are allowed to search them.
     if (platform === 'mame') {
       const ins = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer) VALUES (?, ?, ?, ?) ON CONFLICT(name) DO NOTHING');

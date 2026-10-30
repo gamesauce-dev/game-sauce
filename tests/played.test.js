@@ -61,12 +61,13 @@ test('downloads are not plays, and hidden / missing / no-longer-playable games a
   assert.ok(!(await get('/api/roms/recently-played', bobTok)).body.items.some((x) => x.title === 'Three'), 'a download is not a play');
 
   play(ids.noplay, adminId());
-  db.prepare("UPDATE roms SET hidden = 1 WHERE id = ?").run(ids.two);
+  db.prepare("INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) VALUES ((SELECT id FROM users WHERE username = ?), ?)").run(process.env.GAMESAUCE_ADMIN_USER, ids.two);
   db.prepare("UPDATE roms SET missing = 1 WHERE id = ?").run(ids.three);
   let titles = (await get('/api/roms/recently-played', adminTok)).body.items.map((x) => x.title);
   assert.deepEqual(titles, ['One'], 'hidden, missing and core-less games are filtered out');
 
-  db.prepare("UPDATE roms SET hidden = 0, missing = 0 WHERE id IN (?, ?)").run(ids.two, ids.three);
+  db.prepare("DELETE FROM hidden_roms WHERE rom_id = ?").run(ids.two);
+  db.prepare("UPDATE roms SET missing = 0 WHERE id IN (?, ?)").run(ids.two, ids.three);
   db.prepare("UPDATE roms SET play_override = 0 WHERE id = ?").run(ids.one);
   titles = (await get('/api/roms/recently-played', adminTok)).body.items.map((x) => x.title);
   assert.ok(!titles.includes('One'), 'a game switched off for browser play drops out');

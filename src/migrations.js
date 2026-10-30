@@ -278,3 +278,24 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '14') ON CON
 
 /* ── v15: favourites are per person only. The old global roms.favorite flag is no longer read or written. */
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '15') ON CONFLICT(key) DO UPDATE SET value = '15'").run();
+
+/* ── v16: hiding is per person. A person's hidden games are theirs alone; System (admin) is the system-wide way to tuck games away.
+   Existing shared hides are handed to the oldest admin so nothing changes for them and nothing leaks to other people. */
+db.exec(`
+CREATE TABLE IF NOT EXISTS hidden_roms (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rom_id     INTEGER NOT NULL REFERENCES roms(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, rom_id)
+);
+CREATE INDEX IF NOT EXISTS idx_hidden_roms_user ON hidden_roms(user_id);
+`);
+if (!db.prepare("SELECT value FROM meta WHERE key = 'hide_migrated'").get()) {
+  // A brand-new database has no users table yet (it is created later); there is nothing to hand over then.
+  const haveUsers = !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'users'").get();
+  const admin = haveUsers ? db.prepare("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1").get() : null;
+  if (admin) db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) SELECT ?, id FROM roms WHERE hidden = 1').run(admin.id);
+  // Only mark done when there really was something to decide: with no admin yet, shared hides (if any) stay for the next start.
+  if (admin || !haveUsers) db.prepare("INSERT INTO meta (key, value) VALUES ('hide_migrated', '1') ON CONFLICT(key) DO NOTHING").run();
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '16') ON CONFLICT(key) DO UPDATE SET value = '16'").run();

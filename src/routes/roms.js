@@ -38,7 +38,7 @@ const ROM_COLUMNS = `
   r.meta_source, r.meta_synced_at, r.play_count,
   CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
-  r.dat_status, r.dat_title, r.hidden, r.keep_override, r.is_system,
+  r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system,
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
   p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
@@ -247,12 +247,12 @@ bulkRouter.post('/hide', (req, res) => {
   }
   req.auditDetail = { hidden: Boolean(hidden), titles, count: ids.length };
 
-  const stmt = db.prepare(`
-    UPDATE roms SET hidden = ?, hidden_at = CASE WHEN ? THEN datetime('now') ELSE NULL END,
-      updated_at = datetime('now') WHERE id = ?
-  `);
+  if (!req.user) return res.status(401).json({ error: 'Sign in required' });
+  // Personal: this only changes what YOU see.
+  const add = db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) SELECT ?, id FROM roms WHERE id = ?');
+  const del = db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?');
   let changed = 0;
-  db.transaction(() => { for (const id of ids) changed += stmt.run(hidden, hidden, id).changes; })();
+  db.transaction(() => { for (const id of ids) changed += (hidden ? add.run(req.user.id, id) : del.run(req.user.id, id)).changes; })();
   res.json({ changed, hidden: Boolean(hidden) });
 });
 
@@ -354,9 +354,11 @@ router.get('/', (req, res) => {
   if (req.query.system === 'only') where.push('r.is_system = 1');
   else {
     if (req.query.system !== 'all') where.push('r.is_system = 0');
-    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push('r.hidden = 1');
+    // Hiding is personal: only the signed-in person's own hidden games are left out (others still see them).
+    const mine = 'EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid)';
+    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(mine);
     else if (req.query.hidden === 'all') { /* no clause */ }
-    else where.push('r.hidden = 0');
+    else where.push('NOT ' + mine);
   }
   if (req.query.missing === '1') where.push('r.missing = 1');
   if (req.query.missing === '0') where.push('r.missing = 0');
@@ -453,7 +455,7 @@ router.get('/facets', (req, res) => {
            COUNT(DISTINCT platform_id) AS platforms,
            (SELECT COUNT(*) FROM favorites WHERE user_id = ${req.user ? Number(req.user.id) : -1}) AS favorites,
            SUM(missing) AS missing,
-           SUM(hidden) AS hidden,
+           (SELECT COUNT(*) FROM hidden_roms WHERE user_id = ${req.user ? Number(req.user.id) : -1}) AS hidden,
            SUM(CASE WHEN meta_source IN ('screenscraper','thegamesdb') THEN 1 ELSE 0 END) AS enriched,
            SUM(CASE WHEN source_id IS NULL THEN 1 ELSE 0 END) AS orphaned,
            SUM(CASE WHEN missing = 1 AND source_id IS NOT NULL THEN 1 ELSE 0 END) AS missing_sourced,
@@ -477,7 +479,7 @@ router.get('/recently-played', (req, res) => {
     JOIN roms r ON r.id = d.rom_id
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
-    WHERE d.kind = 'play' AND d.user_id = @uid AND r.hidden = 0 AND r.missing = 0
+    WHERE d.kind = 'play' AND d.user_id = @uid AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
     GROUP BY r.id
     ORDER BY last_play_id DESC
     LIMIT @lim
@@ -755,18 +757,19 @@ router.post('/:id/play-override', (req, res) => {
 });
 
 router.post('/:id/hide', (req, res) => {
-  const rom = db.prepare('SELECT hidden FROM roms WHERE id = ?').get(req.params.id);
+  const rom = db.prepare('SELECT id FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  if (!req.user) return res.status(401).json({ error: 'Sign in required' });
+  const wasHidden = !!db.prepare('SELECT 1 FROM hidden_roms WHERE user_id = ? AND rom_id = ?').get(req.user.id, rom.id);
 
   // The audit middleware already snapshotted { title, platform } before the
   // write; stash the *direction* (hide vs unhide) for the summary line. Reads
   // req.romSnapshot's sibling field so nothing about the write path changes.
-  const next = req.body?.hidden === undefined ? (rom.hidden ? 0 : 1) : (req.body.hidden ? 1 : 0);
+  const next = req.body?.hidden === undefined ? (wasHidden ? 0 : 1) : (req.body.hidden ? 1 : 0);
   if (req.romSnapshot) req.romSnapshot.hidden = Boolean(next);
-  db.prepare(`
-    UPDATE roms SET hidden = ?, hidden_at = CASE WHEN ? THEN datetime('now') ELSE NULL END,
-      updated_at = datetime('now') WHERE id = ?
-  `).run(next, next, req.params.id);
+  // Personal: only your own view changes.
+  if (next) db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) VALUES (?, ?)').run(req.user.id, rom.id);
+  else db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?').run(req.user.id, rom.id);
 
   res.json({ id: Number(req.params.id), hidden: next });
 });
@@ -921,7 +924,7 @@ router.post('/bulk/enrich', async (req, res, next) => {
  * The browser used to drive the batches, so a page refresh stopped the run.
  * The server now owns the loop; the UI only starts, stops and polls it. */
 const CANDIDATES_SQL = `
-  (hidden = 0 AND is_system = 0 AND (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
+  (is_system = 0 AND (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
      OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat'))))`;
 const enrichJob = { running: false, stop: false, onlyMissingCovers: false, platform: '', total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
 

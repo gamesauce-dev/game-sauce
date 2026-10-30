@@ -78,7 +78,7 @@ export function createApp() {
     const { findDuplicates } = await import('./lib/duplicates.js');
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
-    res.json(findDuplicates({ platform: req.query.platform ? String(req.query.platform) : null, limit, offset }));
+    res.json(findDuplicates({ platform: req.query.platform ? String(req.query.platform) : null, limit, offset, uid: req.user.id }));
   });
 
   // Your say in the duplicate finder: 1 = keep this copy, 0 = do not keep it, null = automatic. Survives re-runs.
