@@ -482,6 +482,7 @@
           <label class="field"><span>File-name column</span><input id="names-rom-col" value="rom_name" /></label>
           <label class="field"><span>Game-name column</span><input id="names-name-col" value="short_game_name" /></label>
         </div>
+        <label class="policy-row" style="margin-top:10px"><input type="checkbox" id="names-hide-system" checked /> <span>Hide BIOS and device entries (CSV columns <code>is_bios</code> / <code>is_device</code> = yes). They are not games and have no cover; hidden games are skipped by Fetch metadata and can be brought back from the Hidden filter.</span></label>
         <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="names-preview">Preview</button><button class="btn btn-primary" id="names-apply" disabled>Apply names</button></div>
         <p class="hint" id="names-result" style="margin-top:10px"></p>
       </div>

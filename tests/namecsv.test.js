@@ -89,3 +89,25 @@ test('CSV name import: bad column and non-admin are refused', async () => {
   const anon = await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', body: fd });
   assert.equal(anon.status, 401);
 });
+
+test('CSV name import: is_bios / is_device entries can be hidden, and the job skips hidden games', async () => {
+  const csv = 'rom_name,short_game_name,is_bios,is_device\nneogeo.zip,Neo Geo MVS BIOS,yes,\nzdev.zip,Some Device,,yes\nrealgame.zip,Real Game,,\n';
+  const up = new FormData();
+  for (const n of ['neogeo.zip', 'zdev.zip', 'realgame.zip']) up.append('roms', new Blob([`b-${n}`]), n);
+  up.append('platform', 'gba'); up.append('enrich', 'false');
+  await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up });
+  const send = (apply, hide) => { const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'gba'); if (apply) fd.append('apply', '1'); if (hide) fd.append('hide_system', '1'); return fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd }).then((r) => r.json()); };
+  const prev = await send(false, true);
+  assert.equal(prev.matched, 3);
+  assert.equal(prev.system_files, 2);
+  assert.equal(prev.has_system_columns, true);
+  assert.equal((await call('/api/roms?platform=gba&limit=50')).body.total, 3, 'preview hides nothing');
+  const ap = await send(true, true);
+  assert.equal(ap.hid, 2);
+  const visible = (await call('/api/roms?platform=gba&limit=50')).body.items.map((r) => r.title);
+  assert.deepEqual(visible, ['Real Game']);
+  const hidden = (await call('/api/roms?platform=gba&hidden=only&limit=50')).body.total;
+  assert.equal(hidden, 2);
+  const job = await call('/api/roms/bulk/enrich-job', { method: 'POST', body: { platform: 'gba' } });
+  assert.equal(job.body.total, 1, 'hidden BIOS/device entries are not looked up');
+});

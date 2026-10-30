@@ -3361,9 +3361,10 @@ function initNamesPanel() {
     const fd = new FormData();
     fd.append('csv', f); fd.append('platform', sel.value); fd.append('rom_col', $('#names-rom-col').value); fd.append('name_col', $('#names-name-col').value);
     if (apply) fd.append('apply', '1');
+    if ($('#names-hide-system')?.checked) fd.append('hide_system', '1');
     try {
       const r = await api('/roms/bulk/import-names', { method: 'POST', body: fd });
-      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
+      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS or device entries${r.applied && r.hid ? ' and were hidden' : $('#names-hide-system')?.checked ? ' and will be hidden' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
       applyBtn.disabled = apply || !r.matched;
       if (apply) { toast(`Renamed ${r.matched} games`); loadLibrary(); }
     } catch (err) { out.textContent = err.message; toast(err.message, true); }

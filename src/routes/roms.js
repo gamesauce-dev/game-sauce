@@ -472,7 +472,7 @@ router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 
     if (!req.file) return res.status(400).json({ error: 'Choose a CSV file' });
     const platform = String(req.body?.platform || '').trim();
     if (!db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Pick a platform' });
-    res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, apply: req.body.apply === '1' }));
+    res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, hideSystem: req.body.hide_system === '1', apply: req.body.apply === '1' }));
   } catch (err) { next(err); }
 });
 
@@ -897,8 +897,8 @@ router.post('/bulk/enrich', async (req, res, next) => {
  * The browser used to drive the batches, so a page refresh stopped the run.
  * The server now owns the loop; the UI only starts, stops and polls it. */
 const CANDIDATES_SQL = `
-  (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
-     OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat')))`;
+  (hidden = 0 AND (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
+     OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat'))))`;
 const enrichJob = { running: false, stop: false, onlyMissingCovers: false, platform: '', total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
 
 async function enrichOneRom(id, onlyMissingCovers) {
