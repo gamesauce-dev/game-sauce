@@ -1332,3 +1332,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
   padding: 0.28rem 0.7rem; border-radius: 999px; color: #d8ccff; background: rgba(124, 92, 255, .16); border: 1px solid rgba(124, 92, 255, .5);
 }
 .genre-pill:hover, .genre-pill:focus-visible { background: rgba(124, 92, 255, .32); border-color: #a58bff; color: #fff; outline: none; }
+
+/* Genre pills sit above the cover art; leave room for the close button and keep the cover close beneath them. */
+.drawer #drawer-body > .genre-pills { margin: 2.4rem 3rem 0.6rem; }
+.drawer #drawer-body > .genre-pills + .detail-cover { margin-top: 0.4rem; }

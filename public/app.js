@@ -1136,6 +1136,14 @@ function navIds() {
   if (n.ids) return n.ids;
   return n.el ? [...n.el.querySelectorAll('.card[data-rom]')].map((c) => Number(c.dataset.rom)) : [];
 }
+// The previous/next row sits just under the cover art; the cover moves when the genre pills above it wrap, so measure it.
+function placeDrawerNav() {
+  const nav = $('#drawer-nav'), cover = $('#drawer .detail-cover');
+  if (!nav || !cover) return;
+  nav.style.top = `${cover.offsetTop + cover.offsetHeight + 8}px`;
+}
+window.addEventListener('resize', placeDrawerNav);
+
 function updateDrawerNav(id) {
   const box = $('#drawer-nav');
   if (!box) return;
@@ -1251,12 +1259,12 @@ async function openDetail(id) {
   ];
 
   $('#drawer-body').innerHTML = `
+    ${genrePills(rom.genre)}
     <div class="detail-cover" style="background:linear-gradient(160deg,${rom.platform_accent}22,#12141a)">
       <div class="card-fallback">${esc(initials)}</div>
       ${rom.cover_url ? `<img src="${esc(rom.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
     </div>
 
-    ${genrePills(rom.genre)}
     <div class="detail-head">
       <div style="flex:1">
         <h2 class="detail-title">${esc(rom.title)}</h2>
@@ -1354,6 +1362,10 @@ async function openDetail(id) {
       </div>
     </form>
   `;
+  // Cover images and the pills' wrapping change heights after layout: place the nav now and again once images settle.
+  placeDrawerNav();
+  requestAnimationFrame(placeDrawerNav);
+  $('.detail-cover img', drawer)?.addEventListener('load', placeDrawerNav);
 
     const refresh = async () => { await loadLibrary(); await loadPlatforms(); openDetail(id); };
 
