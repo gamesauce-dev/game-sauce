@@ -447,6 +447,25 @@ export function pickArcadeHit(items, q, year = null) {
   return same[0].i;
 }
 
+/**
+ * Non-arcade platforms: providers rank "Destroy All Humans! 2" ahead of "Destroy All Humans!" when you
+ * search the first title, so taking the first hit gave the original the sequel's data. Prefer a hit whose
+ * title IS the title searched for (same words, or the same after roman numerals); a same-title hit with
+ * art beats one without. Only when nothing matches that closely do we fall back to the first hit.
+ */
+export function pickBestHit(items, q, year = null) {
+  const list = items || [];
+  if (!list.length) return null;
+  const nq = normTitle(q);
+  const nqNum = normTitle(romanToDigits(q));
+  const exact = list.filter((i) => { const n = normTitle(i.title); return n === nq || normTitle(romanToDigits(i.title)) === nqNum; });
+  if (!exact.length) return list[0];
+  const y = Number(year) || null;
+  return [...exact].sort((a, b) =>
+    (b.cover_url ? 1 : 0) - (a.cover_url ? 1 : 0)
+    || (y ? Math.abs((a.release_year || 9999) - y) - Math.abs((b.release_year || 9999) - y) : 0))[0];
+}
+
 const thegamesdb = {
   id: 'thegamesdb',
   label: 'TheGamesDB',
@@ -476,7 +495,7 @@ const thegamesdb = {
       if (hits.error) { lastError = hits.error; continue; }
       if (!hits.items?.length) continue;
       const strict = ARCADE_NAME_MATCH.has(platform.slug);
-      const pick = strict ? pickArcadeHit(hits.items, q, year) : hits.items[0];
+      const pick = strict ? pickArcadeHit(hits.items, q, year) : pickBestHit(hits.items, q, year);
       if (!pick) continue;
       const record = { ...pick, media: { box2d: pick.cover_url }, matched_query: q };
       cacheSet(key, 'thegamesdb', record);
@@ -639,7 +658,7 @@ const igdb = {
       if (hits.error) { lastError = hits.error; continue; }
       if (!hits.items?.length) continue;
       const strict = ARCADE_NAME_MATCH.has(platform.slug);
-      const pick = strict ? pickArcadeHit(hits.items, q, year) : hits.items[0];
+      const pick = strict ? pickArcadeHit(hits.items, q, year) : pickBestHit(hits.items, q, year);
       if (!pick) continue;
       const record = { ...pick, media: pick.media || { box2d: pick.cover_url }, matched_query: q };
       cacheSet(key, 'igdb', record);

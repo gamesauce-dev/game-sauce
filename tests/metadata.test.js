@@ -115,3 +115,14 @@ test('web-page codes are turned back into characters, and unknown ones are left 
   assert.equal(decodeEntities('R&D &madeup; thing'), 'R&D &madeup; thing', 'unknown codes stay');
   assert.equal(decodeEntities(null), null);
 });
+
+test('non-arcade: the searched title wins over a sequel the provider lists first', async () => {
+  const { pickBestHit } = await import('../src/lib/providers.js');
+  const T = (title, cover_url = 'x', release_year) => ({ title, cover_url, release_year });
+  const hits = [T('Destroy All Humans! 2', 'a', 2006), T('Destroy All Humans!', 'b', 2005)];
+  assert.equal(pickBestHit(hits, 'Destroy All Humans!').title, 'Destroy All Humans!');
+  assert.equal(pickBestHit(hits, 'Destroy All Humans! 2').title, 'Destroy All Humans! 2');
+  assert.equal(pickBestHit([T('Final Fantasy VII'), T('Final Fantasy')], 'Final Fantasy 7').title, 'Final Fantasy VII', 'roman numerals');
+  assert.equal(pickBestHit([T('Sonic the Hedgehog Spinball'), T('Something Else')], 'Sonic Spinball').title, 'Sonic the Hedgehog Spinball', 'no close match: falls back to the first hit');
+  assert.equal(pickBestHit([], 'x'), null);
+});
