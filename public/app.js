@@ -1792,11 +1792,59 @@ async function loadSources() {
   });
 }
 
+// Pre-select the platform whose name matches the folder's own name (".../roms/fbneo" -> FinalBurn Neo).
+// Exact matches only (after dropping punctuation and case): a folder called "games" or "misc" selects nothing,
+// and the person always sees the choice and can change it. Extra spellings people use for folders are listed here.
+const FOLDER_ALIASES = {
+  fba: ['fbneo', 'fba', 'finalburn', 'finalburnneo', 'finalburnalpha', 'fbalpha'],
+  mame: ['mame', 'mamearcade'], neogeo: ['neogeo', 'neogeoaes', 'neogeomvs', 'mvs', 'aes'],
+  cps1: ['cps1', 'cpsone', 'capcomcps1'], cps2: ['cps2', 'cpstwo', 'capcomcps2'], cps3: ['cps3', 'cpsthree', 'capcomcps3'],
+  ps1: ['psx', 'psone', 'ps1', 'playstation', 'playstation1'], ps2: ['ps2', 'playstation2'], ps3: ['ps3', 'playstation3'], psp: ['psp', 'playstationportable'],
+  snes: ['snes', 'sfc', 'supernintendo', 'supernes', 'superfamicom'], nes: ['nes', 'famicom', 'nintendo'], n64: ['n64', 'nintendo64'],
+  gb: ['gb', 'gameboy'], gbc: ['gbc', 'gameboycolor'], gba: ['gba', 'gameboyadvance'], nds: ['nds', 'nintendods'],
+  genesis: ['genesis', 'megadrive', 'md', 'segagenesis'], sega32x: ['32x', 'sega32x'], saturn: ['saturn', 'segasaturn'], dreamcast: ['dreamcast', 'dc'],
+  mastersystem: ['mastersystem', 'sms'], gamegear: ['gamegear', 'gg'], xbox: ['xbox', 'xboxoriginal', 'xboxclassic'], xbox360: ['xbox360', 'x360'],
+  wii: ['wii'], wiiu: ['wiiu'], gamecube: ['gamecube', 'gc', 'ngc', 'gcn'], '3do': ['3do'], atomiswave: ['atomiswave', 'aws'], naomi: ['naomi']
+};
+const folderKey = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+function platformForFolder(path) {
+  const parts = String(path || '').split(/[\\/]+/).filter(Boolean);
+  const name = folderKey(parts[parts.length - 1]);
+  if (!name) return null;
+  const list = window.__platformsCache || [];
+  // 1) a platform whose slug, short name or full name IS the folder name; 2) a known alias (only if that platform exists here)
+  const direct = list.filter((p) => [p.slug, p.short_name, p.name].map(folderKey).includes(name));
+  if (direct.length === 1) return direct[0].slug;
+  if (direct.length > 1) return null; // ambiguous: don't guess
+  for (const [slug, aliases] of Object.entries(FOLDER_ALIASES)) {
+    if (aliases.map(folderKey).includes(name) && list.some((p) => p.slug === slug)) return slug;
+  }
+  return null;
+}
+function suggestPlatformFromPath() {
+  const sel = $('#source-platform');
+  if (!sel) return;
+  if (sel.dataset.auto !== '1' && sel.dataset.touched === '1') return; // the person chose by hand: leave it alone
+  const slug = platformForFolder($('#source-path').value);
+  const note = $('#source-platform-note');
+  if (slug && [...sel.options].some((o) => o.value === slug)) {
+    sel.value = slug;
+    if (note) note.textContent = `Picked from the folder name (${sel.options[sel.selectedIndex].text}). Change it if that's wrong.`;
+    sel.dataset.auto = '1';
+  } else {
+    if (note) note.textContent = '';
+    // A suggestion made for an earlier folder must not linger: back to the first entry, as when the form opens.
+    if (sel.dataset.auto === '1' && sel.options.length) sel.selectedIndex = 0;
+    sel.dataset.auto = '';
+  }
+}
+
 function showAddSource(initialPath) {
   const panel = $('#add-source-panel');
   panel.classList.remove('hidden');
   const input = $('#source-path');
   if (initialPath) input.value = initialPath;
+  suggestPlatformFromPath();
   input.focus();
   // Bring the panel into view BELOW the pinned header (scrollIntoView alone slid its title underneath it).
   const view = $('#view-settings'), anchor = $('.settings-anchor');
@@ -1807,11 +1855,15 @@ function showAddSource(initialPath) {
   }
 }
 
+$('#source-platform')?.addEventListener('change', (e) => { if (e.isTrusted) { e.target.dataset.touched = '1'; e.target.dataset.auto = ''; $('#source-platform-note').textContent = ''; } });
 $('#add-source').addEventListener('click', () => showAddSource(''));
+// A path typed or pasted by hand also suggests its platform (on leaving the field, so half-typed names don't flicker).
+$('#source-path')?.addEventListener('change', suggestPlatformFromPath);
 $('#cancel-source').addEventListener('click', () => {
   $('#add-source-panel').classList.add('hidden');
   $('#browser').classList.add('hidden');
   $('#browse-source').classList.remove('is-on');
+  const ps = $('#source-platform'); if (ps) { ps.dataset.touched = ''; ps.dataset.auto = ''; }
 });
 
 $('#create-source').addEventListener('click', async () => {
@@ -1837,6 +1889,7 @@ $('#create-source').addEventListener('click', async () => {
     $('#source-path').value = '';
     $('#source-name').value = '';
     if ($('#source-platform').options.length) $('#source-platform').selectedIndex = 0;
+    $('#source-platform').dataset.touched = ''; $('#source-platform').dataset.auto = ''; $('#source-platform-note').textContent = '';
 
     startScanPolling();
     const r = await api(`/sources/${created.id}/scan`, {
@@ -1904,6 +1957,7 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
         $$('.browser-dir.is-current', $('#browser-dirs')).forEach((x) => x.classList.remove('is-current'));
         b.classList.add('is-current');
         $('#source-path').value = b.dataset.dir;
+        suggestPlatformFromPath();
       });
       // Chevron / double-click: drill in without changing the selection.
       const open = (e) => { e.stopPropagation(); browseTo(b.dataset.dir); };
@@ -1911,7 +1965,7 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
       b.addEventListener('dblclick', () => browseTo(b.dataset.dir));
     });
 
-    if (selectOnOpen) $('#source-path').value = data.path;
+    if (selectOnOpen) { $('#source-path').value = data.path; suggestPlatformFromPath(); }
 
     $('#browser-up').onclick = () => {
       if (data.parent) browseTo(data.parent);
@@ -1921,6 +1975,7 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
     $('#browser-use').onclick = () => {
       const chosen = $('#source-path').value.trim() || data.path;
       $('#source-path').value = chosen;
+      suggestPlatformFromPath();
       browser.classList.add('hidden');
       $('#browse-source').classList.remove('is-on');
       toast(`Path selected: ${chosen}`);
@@ -1934,6 +1989,7 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
     // Keep the legacy affordance too: clicking the current path selects it.
     $('#browser-path').onclick = () => {
       $('#source-path').value = data.path;
+      suggestPlatformFromPath();
       toast('Path selected');
     };
   } catch (err) {
