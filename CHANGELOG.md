@@ -57,7 +57,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 - **Duplicate finder star can now be switched off on any copy**, including the suggested one: the star shows only your own choice (on = you pinned it, off = automatic), so clicking it toggles cleanly. The suggestion keeps its green outline.
-- **Hover tips in the game detail window no longer clip:** long tips (such as *Upload your own cover*) wrap and line up with the button's right edge.
+- **Game detail window actions always stay on one line** (the buttons shrink a little when there are many), and hover tips no longer clip: long tips (such as *Upload your own cover*) wrap and line up with the button's right edge.
 - **The Library keeps your place:** hiding a game, refreshing its metadata, favouriting it or changing it in the detail window no longer throws the grid back to the top. It reloads the tiles you had loaded and returns to the same scroll position. Changing a filter or pressing LIBRARY still starts from the top.
 - **MAME: Fetch metadata after a CSV names import now works, and tries IGDB first.** Names applied from the Game names (CSV) tool are now recorded as trusted MAME names (previously title-based providers skipped MAME games unless a `-listxml` list was imported). For arcade romsets the order is ScreenScraper, then IGDB, then TheGamesDB, so an exhausted TheGamesDB quota no longer holds the lookup up.
 - **Settings → Platforms:** the **Add platform** button stays in view under the pinned header while you scroll the list.

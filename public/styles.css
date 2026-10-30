@@ -1223,3 +1223,9 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .ibtn.keepon { color: #4ade80; border-color: #4ade80; background: rgba(74, 222, 128, .12); }
 .detail-actions .ibtn[data-tip]:hover::after, .detail-actions .ibtn[data-tip]:focus-visible::after { white-space: normal; width: max-content; max-width: 14rem; text-align: left; }
 .detail-actions .ibtn:nth-child(n+5)[data-tip]:hover::after, .detail-actions .ibtn:nth-child(n+5)[data-tip]:focus-visible::after { left: auto; right: 0; transform: none; }
+
+/* Detail window actions: always ONE row. Buttons shrink (down to 2rem) when there are many. */
+.detail-actions { flex-wrap: nowrap; gap: 0.4rem; }
+.detail-actions .ibtn { flex: 0 1 2.6rem; width: auto; min-width: 2rem; height: 2.6rem; }
+.detail-actions .ibtn svg { flex: 0 0 auto; }
+.detail-actions .ibtn-danger { margin-left: auto; flex-shrink: 0; width: 2.6rem; }
