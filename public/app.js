@@ -958,6 +958,8 @@ function syncSelectUI() {
   $('#bulk-cancel-top')?.classList.toggle('hidden', !on);
   $('#bulk-hide-top')?.classList.toggle('hidden', !on || n === 0);
   $('#bulk-system-top')?.classList.toggle('hidden', !on || n === 0 || authState.user?.role !== 'admin');
+  $('#bulk-clearmatch-top')?.classList.toggle('hidden', !on || n === 0 || authState.user?.role !== 'admin');
+  const cmCount = $('#bulk-clearmatch-top-count'); if (cmCount) cmCount.textContent = String(n);
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
   const sysCount = $('#bulk-system-top-count');
   if (sysCount) sysCount.textContent = String(n);
@@ -980,6 +982,22 @@ function syncSelectUI() {
     const box = card.querySelector('[data-select]');
     if (box) box.setAttribute('aria-checked', selected ? 'true' : 'false');
   });
+}
+
+// Clear the metadata match (wrong cover / details) so a game starts fresh. Asks first; nothing on disk is touched.
+async function clearMatchFor(ids, { fromDetail = false } = {}) {
+  if (!ids.length) return toast('Select some tiles first', true);
+  const ok = await confirmDialog({ title: ids.length === 1 ? 'Clear this game\'s match?' : `Clear the match on ${ids.length} games?`,
+    body: 'Removes the cover and details a metadata provider gave them (including a wrong match) and goes back to the plain name. A cover you uploaded yourself is kept. Your files are not touched. You can then Fetch metadata or Identify again.', okLabel: 'Clear match' });
+  if (!ok) return;
+  try {
+    const r = await api('/roms/bulk/clear-match', { method: 'POST', body: JSON.stringify({ ids }) });
+    toast(`Cleared ${r.cleared} match${r.cleared === 1 ? '' : 'es'}`);
+    state.selected.clear();
+    await Promise.all([loadLibrary(), loadPlatforms()]);
+    syncSelectUI();
+    if (fromDetail) openDetail(ids[0]);
+  } catch (err) { toast(err.message, true); }
 }
 
 // Move the selected games to System (BIOS, devices, computers), or back to the library when viewing the System filter.
@@ -1284,6 +1302,7 @@ async function openDetail(id) {
           ${rom.play_capable ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b>${rom.hidden ? '' : '<small>Only from your view; others still see it</small>'}</span></button>
           <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
+          ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>
           ${rom.cover_locked ? `<button class="mi" role="menuitem" data-act="cover-reset">${ICON.undo}<span><b>Back to automatic cover</b></span></button>` : ''}
         </div>
@@ -1400,6 +1419,8 @@ async function openDetail(id) {
     drawer.addEventListener('click', (e) => { if (!e.target.closest('.more-wrap')) setOpen(false); });
     drawer.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mm.classList.contains('hidden')) { e.stopPropagation(); setOpen(false); mb.focus(); } });
   }
+
+  $('[data-act="clearmatch"]', drawer)?.addEventListener('click', () => clearMatchFor([id], { fromDetail: true }));
 
   $('[data-act="keep"]', drawer)?.addEventListener('click', async () => {
     try {
@@ -3142,6 +3163,7 @@ $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
 $('#bulk-hide-top')?.addEventListener('click', bulkHideSelected);
 $('#bulk-system-top')?.addEventListener('click', bulkSystemSelected);
+$('#bulk-clearmatch-top')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-delete-top')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
 $('#bulk-addcoll-top')?.addEventListener('click', () => openAddToCollection([...state.selected]));

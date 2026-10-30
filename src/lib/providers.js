@@ -412,16 +412,39 @@ const wordKey = (t) => {
   const words = String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/^the\s+/, '').split(/[^a-z0-9]+/).filter(Boolean);
   return words.length >= 2 ? words.slice().sort().join(' ') : null;
 };
-export function pickArcadeHit(items, q) {
+// Roman numerals count as digits ("Crossed Swords II" = "Crossed Swords 2"). X is left alone: "Mega Man X" is not "Mega Man 10".
+const ROMAN = { ii: 2, iii: 3, iv: 4, vi: 6, vii: 7, viii: 8, ix: 9, v: 5 };
+const romanToDigits = (t) => String(t || '').toLowerCase().replace(/\b(viii|vii|iii|ii|iv|vi|ix|v)\b/g, (m) => String(ROMAN[m]));
+/**
+ * Choose the provider's hit that really is this game. Best first: the exact title; the same title with roman numerals
+ * read as digits; the same words in another order; a longer/shorter title that starts the same way (a subtitle).
+ * An exact title always beats a looser one, and when several are equally good the one released in the year we
+ * already know (from the names CSV) wins. A hit must have cover art to be chosen.
+ */
+export function pickArcadeHit(items, q, year = null) {
   const nq = normTitle(q);
   if (nq.length < 3) return null;
-  const wq = wordKey(q);
-  const ok = (items || []).filter((i) => {
+  const nqNum = normTitle(romanToDigits(q));
+  const wq = wordKey(romanToDigits(q));
+  const tierOf = (i) => {
     const n = normTitle(i.title);
-    if (n === nq || (nq.length >= 5 && (n.startsWith(nq) || nq.startsWith(n)) && n.length >= 5)) return true;
-    return !!wq && wq.length >= 8 && wordKey(i.title) === wq;
-  });
-  return ok.find((i) => i.cover_url) || null;
+    if (n === nq) return 0;
+    if (normTitle(romanToDigits(i.title)) === nqNum) return 1;
+    if (wq && wq.length >= 8 && wordKey(romanToDigits(i.title)) === wq) return 2;
+    if (nq.length >= 5 && (n.startsWith(nq) || nq.startsWith(n)) && n.length >= 5) return 3;
+    return -1;
+  };
+  const scored = (items || []).map((i) => ({ i, tier: tierOf(i) })).filter((x) => x.tier >= 0);
+  if (!scored.length) return null;
+  const best = Math.min(...scored.map((x) => x.tier));
+  // Same title found but without art: say no match rather than settle for a looser title that has art.
+  const pool = scored.filter((x) => (best <= 2 ? x.tier <= 2 : true) && x.i.cover_url);
+  if (!pool.length) return null;
+  const top = Math.min(...pool.map((x) => x.tier));
+  const same = pool.filter((x) => x.tier === top);
+  const y = Number(year) || null;
+  if (y) same.sort((a, b) => Math.abs((a.i.release_year || 9999) - y) - Math.abs((b.i.release_year || 9999) - y));
+  return same[0].i;
 }
 
 const thegamesdb = {
@@ -431,7 +454,7 @@ const thegamesdb = {
   get enabled() {
     return Boolean(cred('TGDB_API_KEY'));
   },
-  async lookup({ title, platform, hashes }) {
+  async lookup({ title, platform, hashes, year }) {
     if (!this.enabled) return null;
 
     const key = cacheKey('thegamesdb', platform, hashes, title);
@@ -453,7 +476,7 @@ const thegamesdb = {
       if (hits.error) { lastError = hits.error; continue; }
       if (!hits.items?.length) continue;
       const strict = ARCADE_NAME_MATCH.has(platform.slug);
-      const pick = strict ? pickArcadeHit(hits.items, q) : hits.items[0];
+      const pick = strict ? pickArcadeHit(hits.items, q, year) : hits.items[0];
       if (!pick) continue;
       const record = { ...pick, media: { box2d: pick.cover_url }, matched_query: q };
       cacheSet(key, 'thegamesdb', record);
@@ -594,7 +617,7 @@ const IGDB_PLATFORMS = {
   // Arcade systems. (Neo Geo used to map to 24, which is Game Boy Advance: every Neo Geo lookup searched GBA games.)
   // IGDB files Neo Geo games under Arcade (52), Neo Geo MVS (79) and Neo Geo AES (80) alike, so search all three.
   arcade: '52', mame: '52', fba: '52', cps1: '52', cps2: '52', cps3: '52', naomi: '52', atomiswave: '52', coinop: '52',
-  neogeo: '52,79,80'
+  neogeo: '52,79,80,136' // + Neo Geo CD (some games, like Crossed Swords II, exist only there)
 };
 
 const igdb = {
@@ -604,7 +627,7 @@ const igdb = {
   get enabled() {
     return Boolean(cred('IGDB_CLIENT_ID') && cred('IGDB_CLIENT_SECRET'));
   },
-  async lookup({ title, platform, hashes }) {
+  async lookup({ title, platform, hashes, year }) {
     if (!this.enabled) return null;
     const key = cacheKey('igdb', platform, hashes, title);
     const cached = cacheGet(key);
@@ -616,7 +639,7 @@ const igdb = {
       if (hits.error) { lastError = hits.error; continue; }
       if (!hits.items?.length) continue;
       const strict = ARCADE_NAME_MATCH.has(platform.slug);
-      const pick = strict ? pickArcadeHit(hits.items, q) : hits.items[0];
+      const pick = strict ? pickArcadeHit(hits.items, q, year) : hits.items[0];
       if (!pick) continue;
       const record = { ...pick, media: pick.media || { box2d: pick.cover_url }, matched_query: q };
       cacheSet(key, 'igdb', record);
@@ -755,7 +778,7 @@ export const ARCADE_NAME_MATCH = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps
 /** A provider that is simply out of allowance or unreachable right now (monthly limit, rate limit, timeout). */
 const isUnavailable = (msg) => /HTTP 429|HTTP 5\d\d|allowance|quota|rate limit|too many|timeout/i.test(String(msg || ''));
 
-export async function enrich({ title, platform, hashes, filename, titleTrusted = false }) {
+export async function enrich({ title, platform, hashes, filename, titleTrusted = false, year = null }) {
   const errors = [];
   let answered = false; // at least one provider answered cleanly (a hit OR a real "no such game")
   let best = null;
@@ -771,7 +794,7 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
     // Romset zips: the zip's own hashes mean nothing to title providers, and an earlier
     // wrong match is cached under that SHA1 — key the lookup on the real title instead.
     const lookupHashes = ARCADE_NAME_MATCH.has(platform.slug) && provider.id !== 'screenscraper' ? null : hashes;
-    const result = await provider.lookup({ title, platform, hashes: lookupHashes, filename });
+    const result = await provider.lookup({ title, platform, hashes: lookupHashes, filename, year });
     if (result?.error) { errors.push({ provider: provider.id, message: result.error }); continue; }
     answered = true;
     if (result) {

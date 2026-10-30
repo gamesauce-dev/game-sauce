@@ -95,3 +95,13 @@ test('arcade matching accepts the same words in another order, and tries the alt
   assert.ok(titleVariants('Puzzle Bobble / Bust-A-Move').includes('Bust-A-Move'), 'the name after the slash is tried too');
   assert.ok(titleVariants('Puzzle Bobble 2 / Bust-A-Move Again').includes('Bust-A-Move Again'));
 });
+
+test('arcade matching: roman numerals, equal titles pick the matching year, exact titles beat loose ones', async () => {
+  const { pickArcadeHit } = await import('../src/lib/providers.js');
+  const T = (title, y, art = true) => ({ title, release_year: y, cover_url: art ? 'x' : null });
+  assert.equal(pickArcadeHit([T('Crossed Swords II', 1995)], 'Crossed Swords 2')?.title, 'Crossed Swords II', 'II = 2');
+  assert.equal(pickArcadeHit([T('Mega Man 10', 2010)], 'Mega Man X'), null, 'X is not 10');
+  assert.equal(pickArcadeHit([T('Bust-A-Move', 1996), T('Bust-A-Move', 1994), T('Bust-A-Move', 2006)], 'Bust-A-Move', 1994)?.release_year, 1994, 'the game released in the known year wins');
+  assert.equal(pickArcadeHit([T('Sengoku', 1991, false), T('Sengoku Ace', 1993)], 'Sengoku', 1991), null, 'the right title without art is "no match", not a different game');
+  assert.equal(pickArcadeHit([T('Sengoku', 1991), T('Sengoku Ace', 1993)], 'Sengoku', 1991)?.title, 'Sengoku', 'exact beats a longer title');
+});

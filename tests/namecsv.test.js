@@ -174,3 +174,31 @@ test('arcade-style platforms (Neo Geo, CPS...) are matched by name, with the rig
   await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
   assert.equal(mn.mameTitleTrusted('neogeo', 'mslug.zip'), true, 'trusted once the CSV has named it');
 });
+
+test('Clear match: a wrong match goes back to the CSV name, a self-uploaded cover is kept, members cannot', async () => {
+  const up = new FormData();
+  for (const n of ['wrongone.zip', 'mycover.zip']) up.append('roms', new Blob(['cm-' + n + Math.random()]), n);
+  up.append('platform', 'neogeo'); up.append('enrich', 'false');
+  const made = (await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up })).json()).created;
+  assert.equal(made.length, 2);
+  const [a, b] = made.map((r) => r.id);
+  const { default: db } = await import('../src/db.js');
+  // pretend a provider gave both a wrong match; the second also has a cover the person uploaded
+  db.prepare("UPDATE roms SET title='Double Dragon Advance', genre='Platform', description='wrong', developer='Other', release_year=2003, meta_source='igdb', cover_url='http://x/y.jpg' WHERE id IN (?, ?)").run(a, b);
+  db.prepare("UPDATE roms SET cover_locked = 1, cover_path = 'C:/keep-me.png' WHERE id = ?").run(b);
+  db.prepare("INSERT OR REPLACE INTO mame_names (name, title, year, manufacturer, cloneof, isbios, isdevice) VALUES ('wrongone', 'Real Name One', 1993, 'SNK', NULL, 0, 0)").run();
+  const r = await call('/api/roms/bulk/clear-match', { method: 'POST', body: { ids: [a, b] } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.cleared, 2);
+  const x = db.prepare('SELECT * FROM roms WHERE id = ?').get(a);
+  assert.equal(x.title, 'Real Name One', 'title comes from the name list');
+  assert.equal(x.release_year, 1993);
+  assert.equal(x.genre, null); assert.equal(x.description, null); assert.equal(x.developer, null); assert.equal(x.cover_url, null);
+  assert.equal(x.meta_source, 'mame-list', 'so Fetch metadata will look it up again');
+  const y = db.prepare('SELECT * FROM roms WHERE id = ?').get(b);
+  assert.equal(y.cover_path, 'C:/keep-me.png', 'a cover the person uploaded survives');
+  assert.equal(y.genre, null, 'but the provider details are gone');
+  const mt = (await (await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'nmember', password: 'nm-member-pass-12' }) })).json()).token;
+  const denied = await fetch(`${base}/api/roms/bulk/clear-match`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` }, body: JSON.stringify({ ids: [a] }) });
+  assert.equal(denied.status, 403);
+});

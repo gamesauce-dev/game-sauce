@@ -256,6 +256,40 @@ bulkRouter.post('/hide', (req, res) => {
   res.json({ changed, hidden: Boolean(hidden) });
 });
 
+// Clear the metadata match: a wrong match (the wrong game's cover and details) goes back to the plain name.
+// Title: the name from the loaded name list / names CSV when there is one, otherwise the name read from the file name.
+// Cover, description, genre, developer and other provider details are removed, so Fetch metadata (or Identify) can start fresh.
+// A cover you uploaded yourself is kept. Files on disk are never touched.
+const ARCADE_SLUGS = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
+function clearMatchFor(ids) {
+  const get = db.prepare('SELECT r.id, r.filename, r.cover_path, r.cover_locked, p.slug AS platform_slug FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?');
+  const listed = db.prepare('SELECT title, year FROM mame_names WHERE name = ?');
+  const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = ?, developer = NULL, publisher = NULL, genre = NULL,
+    players = NULL, rating = NULL, description = NULL, cover_url = NULL, provider_media = NULL, meta_source = ?, meta_synced_at = NULL,
+    cover_path = CASE WHEN cover_locked = 1 THEN cover_path ELSE NULL END, updated_at = datetime('now') WHERE id = ?`);
+  let cleared = 0;
+  db.transaction(() => {
+    for (const id of ids) {
+      const r = get.get(id);
+      if (!r) continue;
+      const key = String(r.filename).replace(/\.(zip|7z)$/i, '').toLowerCase();
+      const n = ARCADE_SLUGS.has(r.platform_slug) ? listed.get(key) : null;
+      const parsed = parseFilename(r.filename);
+      const title = n?.title || parsed.title;
+      upd.run(title, sortTitle(title), n?.year ?? parsed.year ?? null, n ? 'mame-list' : 'filename', id);
+      if (r.cover_path && !r.cover_locked) removeCoverFile(r.cover_path);
+      cleared++;
+    }
+  })();
+  return cleared;
+}
+bulkRouter.post('/clear-match', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
+  req.auditDetail = { count: ids.length };
+  res.json({ cleared: clearMatchFor(ids) });
+});
+
 // Mark / unmark games as System entries (BIOS, devices, computers): kept and downloadable, but out of the main library.
 bulkRouter.post('/system', requireAdmin, (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
@@ -940,6 +974,7 @@ async function enrichOneRom(id, onlyMissingCovers) {
     filename: rom.filename,
     titleTrusted: mameTitleTrusted(rom.platform_slug, rom.filename),
     title: rom.title,
+    year: rom.release_year,
     platform: { slug: rom.platform_slug, name: rom.platform_name, family: rom.family, screenscraper_id: rom.screenscraper_id, tgdb_id: rom.tgdb_id },
     hashes: { crc32: rom.crc32, md5: rom.md5, sha1: rom.sha1 }
   });

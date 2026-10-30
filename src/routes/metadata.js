@@ -164,6 +164,7 @@ router.post('/:id/refresh', async (req, res, next) => {
       filename: rom.filename,
       titleTrusted: mameTitleTrusted(rom.platform_slug, rom.filename),
       title: rom.title,
+      year: rom.release_year,
       platform: {
         slug: rom.platform_slug,
         name: rom.platform_name,
