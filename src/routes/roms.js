@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
 import { hashFile } from '../lib/hash.js';
-import { parseFilename, sortTitle } from '../lib/metadata.js';
+import { parseFilename, sortTitle, decodeEntities } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
@@ -159,6 +159,8 @@ export async function applyMetadataRecord(id, meta, uid = null) {
   const rom = db.prepare('SELECT sha1, cover_path, cover_locked FROM roms WHERE id = ?').get(id);
   if (!rom) throw Object.assign(new Error('ROM not found'), { status: 404 });
 
+  // Provider text sometimes arrives with web-page codes ("&amp;"): store plain characters.
+  for (const k of ['title', 'developer', 'publisher', 'genre', 'description']) if (typeof meta[k] === 'string') meta[k] = decodeEntities(meta[k]);
   let { coverPath, mediaJson } = await applyProviderMedia(meta, rom.sha1);
   // A cover the user uploaded themselves is never replaced by a provider's.
   if (rom.cover_locked && rom.cover_path) coverPath = rom.cover_path;

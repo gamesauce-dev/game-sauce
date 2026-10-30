@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import db from './db.js';
+import { decodeEntities } from './lib/metadata.js';
 
 // Bump when the schema changes in a way that needs an explicit migration step.
 const SCHEMA_VERSION = 7;
@@ -299,3 +300,15 @@ if (!db.prepare("SELECT value FROM meta WHERE key = 'hide_migrated'").get()) {
   if (admin || !haveUsers) db.prepare("INSERT INTO meta (key, value) VALUES ('hide_migrated', '1') ON CONFLICT(key) DO NOTHING").run();
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '16') ON CONFLICT(key) DO UPDATE SET value = '16'").run();
+
+/* ── v17: tidy web-page codes ("&amp;") that earlier provider matches and name lists left in titles and details. */
+if (!db.prepare("SELECT value FROM meta WHERE key = 'entities_cleaned'").get()) {
+  const rows = db.prepare("SELECT id, title, developer, publisher, genre, description FROM roms WHERE title LIKE '%&%;%' OR developer LIKE '%&%;%' OR publisher LIKE '%&%;%' OR genre LIKE '%&%;%' OR description LIKE '%&%;%'").all();
+  const upd = db.prepare('UPDATE roms SET title = ?, developer = ?, publisher = ?, genre = ?, description = ? WHERE id = ?');
+  db.transaction(() => { for (const r of rows) upd.run(decodeEntities(r.title), decodeEntities(r.developer), decodeEntities(r.publisher), decodeEntities(r.genre), decodeEntities(r.description), r.id); })();
+  for (const r of db.prepare("SELECT name, title, manufacturer FROM mame_names WHERE title LIKE '%&%;%' OR manufacturer LIKE '%&%;%'").all()) {
+    db.prepare('UPDATE mame_names SET title = ?, manufacturer = ? WHERE name = ?').run(decodeEntities(r.title), decodeEntities(r.manufacturer), r.name);
+  }
+  db.prepare("INSERT INTO meta (key, value) VALUES ('entities_cleaned', '1') ON CONFLICT(key) DO NOTHING").run();
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '17') ON CONFLICT(key) DO UPDATE SET value = '17'").run();

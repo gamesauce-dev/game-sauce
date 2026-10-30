@@ -105,3 +105,13 @@ test('arcade matching: roman numerals, equal titles pick the matching year, exac
   assert.equal(pickArcadeHit([T('Sengoku', 1991, false), T('Sengoku Ace', 1993)], 'Sengoku', 1991), null, 'the right title without art is "no match", not a different game');
   assert.equal(pickArcadeHit([T('Sengoku', 1991), T('Sengoku Ace', 1993)], 'Sengoku', 1991)?.title, 'Sengoku', 'exact beats a longer title');
 });
+
+test('web-page codes are turned back into characters, and unknown ones are left alone', async () => {
+  const { decodeEntities } = await import('../src/lib/metadata.js');
+  assert.equal(decodeEntities('Top Hunter - Roddy &amp; Cathy'), 'Top Hunter - Roddy & Cathy');
+  assert.equal(decodeEntities('Fire &amp;amp; Ice'), 'Fire & Ice', 'double-escaped too');
+  assert.equal(decodeEntities('It&#39;s &quot;Fun&quot;'), 'It\'s "Fun"');
+  assert.equal(decodeEntities('Plain Title: 2 & 3'), 'Plain Title: 2 & 3', 'a normal ampersand is untouched');
+  assert.equal(decodeEntities('R&D &madeup; thing'), 'R&D &madeup; thing', 'unknown codes stay');
+  assert.equal(decodeEntities(null), null);
+});

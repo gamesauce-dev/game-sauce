@@ -1,7 +1,7 @@
 // Name list import (CSV): maps a ROM file name to a proper game name, so title-based
 // metadata providers can find the game. Works for any platform (arcade romsets first).
 import db from '../db.js';
-import { sortTitle } from './metadata.js';
+import { sortTitle, decodeEntities } from './metadata.js';
 
 /** Minimal RFC-4180 CSV parser (quotes, doubled quotes, CRLF, BOM). */
 export function parseCsv(text) {
@@ -38,7 +38,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
 
   const map = new Map();
   for (const r of rows.slice(1)) {
-    const k = keyOf(r[iRom]); const title = String(r[iName] || '').trim();
+    const k = keyOf(r[iRom]); const title = decodeEntities(String(r[iName] || '')).trim();
     if (k && title && !map.has(k)) map.set(k, { title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
     // (e.g. the CPS3 sets share a BIOS but are playable). Otherwise BIOS/device, or is_arcade filled in as not-yes, means System.
     system: !(iArc >= 0 && yes(r[iArc])) && ((iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) || (iArc >= 0 && String(r[iArc] || '').trim() !== '')) });

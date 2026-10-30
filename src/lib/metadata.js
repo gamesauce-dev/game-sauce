@@ -167,6 +167,22 @@ export function parseFilename(filename) {
   };
 }
 
+/** Turn web-page codes back into characters ("Roddy &amp; Cathy" -> "Roddy & Cathy"). Some provider text and some name lists carry them.
+ *  Decodes up to twice, because a few sources escape twice ("&amp;amp;"). Unknown codes are left exactly as they are. */
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+export function decodeEntities(text) {
+  if (text == null) return text;
+  let s = String(text);
+  for (let i = 0; i < 2 && /&(?:#\d+|#x[0-9a-f]+|[a-z]+);/i.test(s); i++) {
+    s = s.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (m, dec, hex, name) => {
+      if (dec) return String.fromCodePoint(Number(dec));
+      if (hex) return String.fromCodePoint(parseInt(hex, 16));
+      return NAMED[name.toLowerCase()] ?? m;
+    });
+  }
+  return s;
+}
+
 export function sortTitle(title) {
   return title
     .toLowerCase()

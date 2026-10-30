@@ -202,3 +202,20 @@ test('Clear match: a wrong match goes back to the CSV name, a self-uploaded cove
   const denied = await fetch(`${base}/api/roms/bulk/clear-match`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mt}` }, body: JSON.stringify({ ids: [a] }) });
   assert.equal(denied.status, 403);
 });
+
+test('codes like &amp; are decoded when a CSV is imported and when a provider match is saved', async () => {
+  const csv = 'rom_name,short_game_name\nampgame.zip,Roddy &amp; Cathy\n';
+  const up = new FormData(); up.append('roms', new Blob(['amp-' + Math.random()]), 'ampgame.zip'); up.append('platform', 'neogeo'); up.append('enrich', 'false');
+  const made = (await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up })).json()).created[0];
+  const fd = new FormData(); fd.append('csv', new Blob([csv]), 'n.csv'); fd.append('platform', 'neogeo'); fd.append('apply', '1');
+  await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+  const r1 = await call(`/api/roms/${made.id}`);
+  assert.equal(r1.body.title, 'Roddy & Cathy', 'CSV names are decoded');
+  // a provider match with codes in its text is stored as plain characters
+  const ap = await call(`/api/metadata/${made.id}/apply`, { method: 'POST', body: { candidate: { title: 'Top Hunter - Roddy &amp; Cathy', publisher: 'A &amp; B', description: 'Roddy &amp; Cathy go on', source: 'igdb' } } });
+  assert.equal(ap.status, 200);
+  const r2 = await call(`/api/roms/${made.id}`);
+  assert.equal(r2.body.title, 'Top Hunter - Roddy & Cathy');
+  assert.equal(r2.body.publisher, 'A & B');
+  assert.equal(r2.body.description, 'Roddy & Cathy go on');
+});
