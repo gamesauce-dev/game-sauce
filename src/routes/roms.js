@@ -35,7 +35,8 @@ const ROM_COLUMNS = `
   r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
   r.release_year, r.developer, r.publisher, r.genre, r.players, r.rating,
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
-  r.meta_source, r.meta_synced_at, r.favorite, r.play_count, r.play_override, r.cover_locked,
+  r.meta_source, r.meta_synced_at, r.play_count,
+  CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
   r.dat_status, r.dat_title, r.hidden, r.keep_override, r.is_system,
   r.created_at, r.updated_at,
@@ -128,13 +129,13 @@ async function applyProviderMedia(meta, sha1) {
   return { coverPath, mediaJson: Object.keys(out).length ? JSON.stringify(out) : null };
 }
 
-function romById(id) {
+function romById(id, uid = null) {
   const row = db.prepare(`
     SELECT ${ROM_COLUMNS} FROM roms r
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
-    WHERE r.id = ?
-  `).get(id);
+    WHERE r.id = @rid
+  `).get({ rid: id, uid: uid ?? -1 });
   const full = row ? withTags([row])[0] : null;
   if (full) {
     full.favourite_of = db.prepare('SELECT u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id = ? ORDER BY u.username').all(full.id).map((x) => x.username);
@@ -154,7 +155,7 @@ function romById(id) {
  * auto-matcher and the manual "identify this game" flow, so both paths write
  * the same columns in the same way.
  */
-export async function applyMetadataRecord(id, meta) {
+export async function applyMetadataRecord(id, meta, uid = null) {
   const rom = db.prepare('SELECT sha1, cover_path, cover_locked FROM roms WHERE id = ?').get(id);
   if (!rom) throw Object.assign(new Error('ROM not found'), { status: 404 });
 
@@ -176,7 +177,7 @@ export async function applyMetadataRecord(id, meta) {
     meta.players, meta.rating, meta.description,
     meta.cover_url, coverPath, mediaJson, meta.source, id
   );
-  return romById(id);
+  return romById(id, uid);
 }
 
 /**
@@ -341,7 +342,8 @@ router.get('/', (req, res) => {
   if (platform && platform !== 'all') { where.push('p.slug = @platform'); params.platform = platform; }
   if (genre) { where.push('r.genre = @genre'); params.genre = genre; }
   if (region) { where.push('r.region = @region'); params.region = region; }
-  if (favorite === '1' || favorite === 'true') where.push('r.favorite = 1');
+  params.uid = req.user ? Number(req.user.id) : -1;
+  if (favorite === '1' || favorite === 'true') where.push('EXISTS (SELECT 1 FROM favorites fv2 WHERE fv2.rom_id = r.id AND fv2.user_id = @uid)');
   if (source) { where.push('r.source_id = @source'); params.source = Number(source); }
   if (family) { where.push('p.family = @family'); params.family = family; }
   if (req.query.dat_status) { where.push('r.dat_status = @dat_status'); params.dat_status = req.query.dat_status; }
@@ -449,7 +451,7 @@ router.get('/facets', (req, res) => {
   const stats = db.prepare(`
     SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
            COUNT(DISTINCT platform_id) AS platforms,
-           SUM(favorite) AS favorites,
+           (SELECT COUNT(*) FROM favorites WHERE user_id = ${req.user ? Number(req.user.id) : -1}) AS favorites,
            SUM(missing) AS missing,
            SUM(hidden) AS hidden,
            SUM(CASE WHEN meta_source IN ('screenscraper','thegamesdb') THEN 1 ELSE 0 END) AS enriched,
@@ -475,11 +477,11 @@ router.get('/recently-played', (req, res) => {
     JOIN roms r ON r.id = d.rom_id
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
-    WHERE d.kind = 'play' AND d.user_id = ? AND r.hidden = 0 AND r.missing = 0
+    WHERE d.kind = 'play' AND d.user_id = @uid AND r.hidden = 0 AND r.missing = 0
     GROUP BY r.id
     ORDER BY last_play_id DESC
-    LIMIT ?
-  `).all(req.user.id, lim * 3); // over-fetch: some may no longer be playable
+    LIMIT @lim
+  `).all({ uid: req.user.id, lim: lim * 3 }); // over-fetch: some may no longer be playable
   const items = withTags(rows)
     .map((r) => ({ ...r, playable: playableCore(r.platform, r.release_year, r.play_override) || null }))
     .filter((r) => r.playable)
@@ -504,7 +506,7 @@ router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 
 router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJob }));
 
 router.get('/:id', (req, res) => {
-  const rom = romById(req.params.id);
+  const rom = romById(req.params.id, req.user?.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
 
   const collections = db.prepare(`
@@ -770,17 +772,15 @@ router.post('/:id/hide', (req, res) => {
 });
 
 router.post('/:id/favorite', (req, res) => {
-  const rom = db.prepare('SELECT favorite FROM roms WHERE id = ?').get(req.params.id);
+  const rom = db.prepare('SELECT id FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
-  const next = req.body?.favorite === undefined ? (rom.favorite ? 0 : 1) : (req.body.favorite ? 1 : 0);
-  db.prepare("UPDATE roms SET favorite = ?, updated_at = datetime('now') WHERE id = ?").run(next, req.params.id);
-  // Per-user star mirrors the legacy global flag, so "★ mine" is per-person
-  // on a shared box while old clients reading roms.favorite keep working.
-  if (req.user) {
-    if (next) db.prepare('INSERT OR IGNORE INTO favorites (user_id, rom_id) VALUES (?, ?)').run(req.user.id, req.params.id);
-    else db.prepare('DELETE FROM favorites WHERE user_id = ? AND rom_id = ?').run(req.user.id, req.params.id);
-  }
-  res.json({ id: Number(req.params.id), favorite: next });
+  if (!req.user) return res.status(401).json({ error: 'Sign in required' });
+  // Favourites belong to the person who set them; nobody else's list changes.
+  const had = !!db.prepare('SELECT 1 FROM favorites WHERE user_id = ? AND rom_id = ?').get(req.user.id, rom.id);
+  const next = req.body?.favorite === undefined ? (had ? 0 : 1) : (req.body.favorite ? 1 : 0);
+  if (next) db.prepare('INSERT OR IGNORE INTO favorites (user_id, rom_id) VALUES (?, ?)').run(req.user.id, rom.id);
+  else db.prepare('DELETE FROM favorites WHERE user_id = ? AND rom_id = ?').run(req.user.id, rom.id);
+  res.json({ id: Number(rom.id), favorite: next });
 });
 
 /* -------------------------------------------------------------- edit */
@@ -821,7 +821,7 @@ router.patch('/:id', (req, res) => {
 
   if (req.body.tags !== undefined) setTags(Number(req.params.id), req.body.tags);
 
-  res.json(romById(req.params.id));
+  res.json(romById(req.params.id, req.user?.id));
 });
 
 /* -------------------------------------------------- bulk enrichment */
@@ -1074,7 +1074,7 @@ router.post('/upload', upload.array('roms', 50), async (req, res, next) => {
         }
       }
 
-      created.push(romById(romId));
+      created.push(romById(romId, req.user?.id));
     } catch (err) {
       try { fs.unlinkSync(file.path); } catch { /* already moved */ }
       errors.push({ filename: file.originalname, error: err.message });
@@ -1191,7 +1191,7 @@ router.post('/:id/cover', coverUpload.single('cover'), (req, res) => {
   db.prepare("UPDATE roms SET cover_path = ?, cover_locked = 1, updated_at = datetime('now') WHERE id = ?")
     .run(coverPath, rom.id);
 
-  res.json(romById(rom.id));
+  res.json(romById(rom.id, req.user?.id));
 });
 
 // Go back to automatic covers: forget the custom image and unlock the cover.
@@ -1200,7 +1200,7 @@ router.delete('/:id/cover', (req, res) => {
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (rom.cover_locked && rom.cover_path) removeCoverFile(rom.cover_path);
   db.prepare("UPDATE roms SET cover_path = NULL, cover_url = NULL, cover_locked = 0, updated_at = datetime('now') WHERE id = ?").run(rom.id);
-  res.json(romById(rom.id));
+  res.json(romById(rom.id, req.user?.id));
 });
 
 /* ------------------------------------------------------ bulk actions */

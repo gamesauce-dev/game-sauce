@@ -255,7 +255,8 @@ export function createApp() {
     res.json({
       library: db.prepare(`
         SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
-               COUNT(DISTINCT platform_id) AS platforms, SUM(favorite) AS favorites
+               COUNT(DISTINCT platform_id) AS platforms,
+               (SELECT COUNT(*) FROM favorites WHERE user_id = ${mine == null ? -1 : mine}) AS favorites
         FROM roms
       `).get(),
       mine: mine == null ? { favorites: 0, downloads: 0 } : {
@@ -263,7 +264,7 @@ export function createApp() {
         downloads: db.prepare("SELECT COUNT(*) AS n FROM downloads WHERE user_id = ? AND kind = 'download'").get(mine).n
       },
       recent: db.prepare(`
-        SELECT r.id, r.title, r.favorite, r.cover_path, r.created_at,
+        SELECT r.id, r.title, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = ${mine == null ? -1 : mine}) AS favorite, r.cover_path, r.created_at,
                p.short_name AS platform_short, p.accent AS platform_accent,
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id

@@ -61,7 +61,7 @@ export function score(r) {
 export function findDuplicates({ platform = null, limit = 50, offset = 0 } = {}) {
   const rows = db.prepare(`
     SELECT r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision, r.release_year,
-           r.dat_status, r.favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
+           r.dat_status, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id) AS favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
            p.id AS platform_id, p.slug AS platform_slug, p.name AS platform_name, p.short_name AS platform_short
     FROM roms r JOIN platforms p ON p.id = r.platform_id
     WHERE r.hidden = 0 AND r.missing = 0 ${platform ? 'AND p.slug = @platform' : ''}

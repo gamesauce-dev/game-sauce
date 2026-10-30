@@ -179,7 +179,7 @@ router.post('/:id/refresh', async (req, res, next) => {
 
     // A refresh must also replace a stale cover, so don't reuse the old one.
     if (result.cover_url) db.prepare('UPDATE roms SET cover_path = NULL WHERE id = ?').run(rom.id);
-    const updated = await applyMetadataRecord(rom.id, result);
+    const updated = await applyMetadataRecord(rom.id, result, req.user?.id);
 
     res.json({ updated: true, source: result.source, cached: Boolean(result.cached), rom: updated });
   } catch (err) { next(err); }
@@ -254,7 +254,7 @@ router.post('/:id/apply', async (req, res, next) => {
       has_cover: Boolean(cand.cover_url)
     };
 
-    const rom = await applyMetadataRecord(id, meta);
+    const rom = await applyMetadataRecord(id, meta, req.user?.id);
     res.json({ updated: true, source: meta.source, rom });
   } catch (err) { next(err); }
 });

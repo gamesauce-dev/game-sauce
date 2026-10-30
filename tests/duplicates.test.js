@@ -101,7 +101,8 @@ test('a DAT-verified copy beats a bad dump, and a later revision beats an earlie
 });
 
 test('a favourite is protected: it is the suggested keeper even if another has a nicer region', async () => {
-  const fav = rom('n64', 'Banner of Dawn (Europe).z64', { fav: true });
+  const fav = rom('n64', 'Banner of Dawn (Europe).z64');
+  db.prepare('INSERT OR IGNORE INTO favorites (user_id, rom_id) VALUES ((SELECT id FROM users WHERE username = \'dmember\'), ?)').run(fav); // any person's favourite protects the copy
   rom('n64', 'Banner of Dawn (USA).z64');
   const g = (await call('/api/admin/duplicates?platform=n64')).body.groups[0];
   assert.equal(g.items[0].id, fav);
@@ -262,4 +263,18 @@ test('a tie says so; locking one copy ends the tie', async () => {
     assert.equal(g.tied, false);
     assert.equal(g.items.filter((i) => i.keep).length, 1);
   }
+});
+
+test('favourites are per person: one user starring a game does not star it for anyone else', async () => {
+  const g = rom('gba', 'Per Person Game (USA).gba');
+  const asMember = (p, o = {}) => call(p, { token: memberTok, ...o });
+  assert.equal((await asMember(`/api/roms/${g}`)).body.favorite, 0);
+  assert.equal((await asMember(`/api/roms/${g}/favorite`, { method: 'POST' })).body.favorite, 1);
+  assert.equal((await asMember(`/api/roms/${g}`)).body.favorite, 1, 'the member sees their own star');
+  assert.equal((await call(`/api/roms/${g}`)).body.favorite, 0, 'the admin does NOT see the member\'s star');
+  assert.equal((await call('/api/roms?favorite=1&limit=100')).body.items.some((r) => r.id === g), false, 'not in the admin favourites list');
+  assert.equal((await asMember('/api/roms?favorite=1&limit=100')).body.items.some((r) => r.id === g), true, 'in the member favourites list');
+  assert.equal((await call(`/api/roms/${g}/favorite`, { method: 'POST' })).body.favorite, 1, 'admin can star it independently');
+  assert.equal((await asMember(`/api/roms/${g}/favorite`, { method: 'POST' })).body.favorite, 0, 'member un-stars only their own');
+  assert.equal((await call(`/api/roms/${g}`)).body.favorite, 1, 'admin star untouched');
 });

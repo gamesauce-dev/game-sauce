@@ -275,3 +275,6 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '13') ON CON
 const romColsV14 = new Set(db.prepare('PRAGMA table_info(roms)').all().map((c) => c.name));
 if (!romColsV14.has('is_system')) db.exec('ALTER TABLE roms ADD COLUMN is_system INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '14') ON CONFLICT(key) DO UPDATE SET value = '14'").run();
+
+/* ── v15: favourites are per person only. The old global roms.favorite flag is no longer read or written. */
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '15') ON CONFLICT(key) DO UPDATE SET value = '15'").run();
