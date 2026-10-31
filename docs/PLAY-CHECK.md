@@ -29,6 +29,7 @@ a quick health check. Useful options:
 | `--all` | every playable game: slow, about 12 seconds each, a couple at a time |
 | `--seconds 15` | how long each game runs before it is judged (default 12) |
 | `--concurrency 3` | games checked at once (default 2) |
+| `--only ghouls` | only games whose title contains that text: re-test one game |
 | `--resume` | carry on a stopped run, skipping games already done |
 | `--candidates` | also test games the app does not offer yet (MAME after the year cut-off, CPS3, Cave) |
 | `--cutoff` | find the year where games stop working: games tested oldest first, in steps of one or more years (years with few games are grouped so each step has enough), stops after two bad steps in a row. Failures only count after a stretch that mostly ran, because the very oldest games (Pong, Galaxy Game) fail anywhere |

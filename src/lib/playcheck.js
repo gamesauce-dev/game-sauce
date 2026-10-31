@@ -13,10 +13,17 @@ export function classifyFrame(stats) {
   if (!t) return 'blank';
   // RetroArch's menu: one flat mid-dark grey over most of the screen, and almost no other colours (white text, a few icons).
   if (isGrey(t) && lum(t) >= 28 && lum(t) <= 80 && t.share >= 0.55 && stats.colours <= 48) return 'retroarch-menu';
-  // Nothing drawn: black everywhere AND next to no other colours. Arcade games are mostly black on their own
-  // (Ms. Pac-Man's attract screen is 97% black with 6 colours), so the amount of black alone proves nothing.
-  if (lum(t) < 14 && t.share >= 0.97 && stats.colours <= 3) return 'blank';
+  // Nothing drawn: black and (all but) nothing else. Arcade games are mostly black on their own: Ms. Pac-Man's attract screen is
+  // 97% black, and Ghouls'n Ghosts' start-up self-test ("SCROLL 1 OK, WORK RAM OK") is 98.6% black with 2 colours. Text on black
+  // is a game running, so only a screen with less than half a percent of anything else counts as blank.
+  if (lum(t) < 14 && t.share >= 0.995) return 'blank';
   return 'runs';
+}
+
+/** A picture that is almost all black but has something drawn on it: worth waiting a little longer for the game to get going. */
+export function isSparse(stats) {
+  const t = stats?.top?.[0];
+  return Boolean(t) && lum(t) < 14 && t.share >= 0.95;
 }
 
 /**

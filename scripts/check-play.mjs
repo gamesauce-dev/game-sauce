@@ -26,6 +26,7 @@
 //   --sample N          check N random games per platform (default 20: a quick health check)
 //   --all               check EVERY playable game (slow: about 12 seconds each, a few at a time)
 //   --limit N           only the first N games per platform (alphabetical)
+//   --only TEXT         only games whose title contains TEXT (to re-test one game, e.g. --only "ghouls")
 //   --seconds N         how long to let each game run before judging it (default 12)
 //   --concurrency N     games checked at once (default 2)
 //   --recheck           also test games that are already switched ON. By default they are skipped: they passed before.
@@ -39,7 +40,7 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { verdict, planBuckets, judgeSteps } from '../src/lib/playcheck.js';
+import { verdict, planBuckets, judgeSteps, isSparse } from '../src/lib/playcheck.js';
 
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);
@@ -52,6 +53,7 @@ const user = opt('--user', 'admin');
 const platforms = (opt('--platform', '') || '').split(',').map((s) => s.trim()).filter(Boolean);
 const sample = flag('--all') ? 0 : Number(opt('--sample', 20));
 const limit = Number(opt('--limit', 0)) || 0;
+const only = (opt('--only', '') || '').toLowerCase();
 const seconds = Math.max(4, Number(opt('--seconds', 12)));
 const concurrency = Math.max(1, Math.min(6, Number(opt('--concurrency', 2))));
 const outDir = path.resolve(opt('--out', './play-check'));
@@ -87,6 +89,7 @@ for (const slug of wanted) {
     all = all.concat(page.items);
     if (all.length >= page.total || !page.items.length) break;
   }
+  if (only) all = all.filter((g) => String(g.title).toLowerCase().includes(only));
   if (cutoff) { /* chosen year by year below */ }
   else if (limit) all = all.slice(0, limit);
   else if (sample && all.length > sample) { for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; } all = all.slice(0, sample); }
@@ -154,6 +157,12 @@ async function checkOne(g) {
     await page.goto(`${server}/ejs-player.html?${params}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     for (const share of [0.5, 0.3, 0.2]) { // a picture at half, 80% and the end of the wait
       await page.waitForTimeout(seconds * 1000 * share);
+      const png = await page.locator('#game canvas').first().screenshot({ timeout: 4000 }).catch(() => null);
+      if (png) { pngs.push(png); frames.push(await measure(png)); }
+    }
+    // Still almost all black (a start-up self-test, a slow boot)? Give it more time, twice, before judging.
+    for (let extra = 0; extra < 2 && frames.length && isSparse(frames[frames.length - 1]); extra++) {
+      await page.waitForTimeout(7000);
       const png = await page.locator('#game canvas').first().screenshot({ timeout: 4000 }).catch(() => null);
       if (png) { pngs.push(png); frames.push(await measure(png)); }
     }

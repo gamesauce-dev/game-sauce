@@ -8,6 +8,8 @@ const RED_GAME = { colours: 2, top: [{ r: 216, g: 40, b: 0, share: 0.98 }, { r: 
 const BUSY_GAME = { colours: 3000, top: [{ r: 20, g: 20, b: 60, share: 0.2 }, { r: 200, g: 180, b: 40, share: 0.1 }, { r: 90, g: 90, b: 90, share: 0.08 }] };
 // Measured from a real screenshot of Ms. Pac-Man's attract screen: a running game that is 97% black.
 const MSPACMAN = { colours: 6, top: [{ r: 0, g: 0, b: 0, share: 0.9735 }, { r: 248, g: 0, b: 0, share: 0.0111 }, { r: 216, g: 216, b: 248, share: 0.0081 }] };
+// Measured from a real screenshot of Ghouls'n Ghosts (CPS1) on its start-up self-test: 98.6% black, grey text.
+const GHOULS_SELFTEST = { colours: 2, top: [{ r: 0, g: 0, b: 0, share: 0.9861 }, { r: 168, g: 168, b: 168, share: 0.0139 }] };
 const BLACK = { colours: 1, top: [{ r: 0, g: 0, b: 0, share: 1 }] };
 const GREY_SKY_GAME = { colours: 800, top: [{ r: 64, g: 64, b: 64, share: 0.6 }, { r: 200, g: 40, b: 40, share: 0.1 }] }; // grey, but many colours: a real game
 
@@ -18,7 +20,8 @@ test('the RetroArch menu is recognised, a running game is not mistaken for it', 
   assert.equal(classifyFrame(GREY_SKY_GAME), 'runs', 'a mostly grey game with plenty of colours is a game');
   assert.equal(classifyFrame(MSPACMAN), 'runs', 'a mostly black arcade screen is still a game');
   assert.equal(classifyFrame(BLACK), 'blank');
-  assert.equal(classifyFrame({ colours: 3, top: [{ r: 0, g: 0, b: 0, share: 0.99 }] }), 'blank', 'black with next to nothing else');
+  assert.equal(classifyFrame({ colours: 3, top: [{ r: 0, g: 0, b: 0, share: 0.999 }] }), 'blank', 'black with next to nothing else');
+  assert.equal(classifyFrame(GHOULS_SELFTEST), 'runs', "a game's own start-up test screen (grey text on black) is a game running");
   assert.equal(classifyFrame({ colours: 0, top: [] }), 'blank');
   assert.equal(classifyFrame(null), 'blank');
 });
