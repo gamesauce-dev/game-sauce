@@ -23,7 +23,8 @@
 //                       Galaxy Game) are not ordinary programs and fail anywhere. Prints a table, then the year to use.
 //   --per-year N        games tried per step with --cutoff (default 8; a step is a year, or several years added together until
 //                       they hold at least N games)
-//   --sample N          check N random games per platform (default 20: a quick health check)
+//   --sample N          check N random games per platform (default 20: a quick health check). With --resume the random
+//                       games come only from ones not tested yet, and a platform with few left is simply finished.
 //   --all               check EVERY playable game (slow: about 12 seconds each, a few at a time)
 //   --limit N           only the first N games per platform (alphabetical)
 //   --only TEXT         only games whose title contains TEXT (to re-test one game, e.g. --only "ghouls")
@@ -81,6 +82,11 @@ const get = async (p) => { const r = await fetch(server + p, { headers: H }); if
 const plats = (await get('/api/platforms')).items;
 const wanted = cutoff && !platforms.length ? ['mame'] : platforms.length ? platforms : plats.filter((p) => p.count > 0).map((p) => p.slug);
 for (const s of platforms) if (!plats.some((p) => p.slug === s)) { console.error(`No platform called "${s}". Slugs here: ${plats.map((p) => p.slug).join(', ')}`); process.exit(1); }
+fs.mkdirSync(path.join(outDir, 'shots'), { recursive: true });
+const jsonl = path.join(outDir, 'results.jsonl');
+const done = new Map();
+if (flag('--resume') && fs.existsSync(jsonl)) for (const l of fs.readFileSync(jsonl, 'utf8').split('\n').filter(Boolean)) { try { const r = JSON.parse(l); done.set(r.id, r); } catch { /* skip a torn line */ } }
+const sampled = {};
 const games = [];
 for (const slug of wanted) {
   let all = [];
@@ -92,7 +98,16 @@ for (const slug of wanted) {
   if (only) all = all.filter((g) => String(g.title).toLowerCase().includes(only));
   if (cutoff) { /* chosen year by year below */ }
   else if (limit) all = all.slice(0, limit);
+  else if (sample && flag('--resume')) {
+    // Carry on: draw only from games not tested yet, and when not many are left just do them all (so a platform finishes).
+    const fresh = all.filter((g) => !done.has(g.id));
+    const left = fresh.length;
+    if (left > sample * 2) { for (let i = fresh.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [fresh[i], fresh[j]] = [fresh[j], fresh[i]]; } all = fresh.slice(0, sample); }
+    else all = fresh;
+    if (left > all.length) sampled[slug] = left - all.length;
+  }
   else if (sample && all.length > sample) { for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; } all = all.slice(0, sample); }
+  if (!cutoff && !limit && sample && !flag('--resume') && all.length === sample) console.log(`${slug}: only a random ${sample} will be checked. Add --all to check every game.`);
   console.log(`${slug}: ${all.length} game${all.length === 1 ? '' : 's'} ${cutoff ? 'to pick from' : 'to check'}`);
   games.push(...all.map((g) => ({ ...g, slug })));
 }
@@ -102,12 +117,9 @@ if (!games.length) {
   process.exit(0);
 }
 
-fs.mkdirSync(path.join(outDir, 'shots'), { recursive: true });
-const jsonl = path.join(outDir, 'results.jsonl');
-const done = new Map();
-if (flag('--resume') && fs.existsSync(jsonl)) for (const l of fs.readFileSync(jsonl, 'utf8').split('\n').filter(Boolean)) { try { const r = JSON.parse(l); done.set(r.id, r); } catch { /* skip a torn line */ } }
-else fs.writeFileSync(jsonl, '');
 const todo = cutoff ? [] : games.filter((g) => !done.has(g.id));
+if (!(flag('--resume') && fs.existsSync(jsonl))) fs.writeFileSync(jsonl, ''); // a fresh run starts a fresh results file
+for (const [slug, n] of Object.entries(sampled)) console.log(`${slug}: ${n} more untested after this batch. Add --all to do every one of them in a single run.`);
 if (!cutoff) console.log(`\n${todo.length} to check${done.size ? ` (${done.size} already done)` : ''}; about ${Math.ceil(todo.length * (seconds + 4) / concurrency / 60)} minute(s) at ${concurrency} at a time.\n`);
 
 // ---- the browser
