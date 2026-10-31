@@ -1412,3 +1412,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .drawer-bar #drawer-close { position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); }
 .detail-cover { margin: 0.4rem auto 1.1429rem; }
 .drawer #drawer-body > .genre-pills { margin: 0.4rem 0 0.6rem; }
+
+/* Sources list: a small heading per platform family. */
+.source-family { margin: 1.1rem 0 0.4rem; font-size: 0.78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 650; }
+.source-family:first-child { margin-top: 0; }

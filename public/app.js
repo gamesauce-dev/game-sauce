@@ -292,6 +292,7 @@ document.addEventListener('click', (e) => {
 async function loadPlatforms() {
   const [{ items }, stats] = await Promise.all([api('/platforms'), api('/stats')]);
   window.__platformsCache = items; // names and colours for the heading above the tiles
+  refreshSourcePlatformPicker(items);
   renderLibHeading();
   const list = $('#platform-list');
   const total = stats.library.roms || 0;
@@ -1682,21 +1683,30 @@ function platformOptions({ selected = null, excludeOther = false, flatten = fals
     </optgroup>`).join('');
 }
 
+/** Rebuild the Sources platform picker when the platform list changed (a platform was added, renamed or removed),
+ *  keeping the choice the person already made. Cheap to call: it only touches the page when something differs. */
+function refreshSourcePlatformPicker(platforms) {
+  const sel = $('#source-platform');
+  if (!sel || !Array.isArray(platforms)) return;
+  const sig = platforms.map((p) => `${p.slug}|${p.name}|${p.family || ''}`).sort().join(';');
+  if (sel.dataset.sig === sig && sel.options.length > 1) return;
+  const keep = sel.value;
+  window.__platformsCache = platforms;
+  sel.innerHTML = platformOptions({ selected: keep });
+  sel.dataset.sig = sig;
+  if (keep && [...sel.options].some((o) => o.value === keep)) sel.value = keep;
+  else if (sel.options.length) sel.selectedIndex = 0;
+}
+
 async function loadSources() {
-  const [{ items }, roots] = await Promise.all([api('/sources'), api('/sources/roots')]);
+  const [{ items }, roots, plats] = await Promise.all([api('/sources'), api('/sources/roots'), api('/platforms')]);
   const wrap = $('#sources-list');
 
   // Populate the platform picker once, grouped by family — families and
   // platforms both A→Z, same as the sidebar and the Identify picker. The first
   // platform is pre-selected: platform is REQUIRED at creation (no auto), so
   // the form can never submit an unhinted source by accident.
-  const sel = $('#source-platform');
-  if (sel.options.length <= 1) {
-    const { items: platforms } = await api('/platforms');
-    window.__platformsCache = platforms;
-    sel.innerHTML = platformOptions();
-    if (sel.options.length) sel.selectedIndex = 0;
-  }
+  refreshSourcePlatformPicker(plats.items);
 
   if (!items.length) {
     wrap.innerHTML = `
@@ -1710,7 +1720,14 @@ async function loadSources() {
     return;
   }
 
-  wrap.innerHTML = items.map((s) => `
+  // Grouped by the platform family (A to Z), sources A to Z inside each family: the same order as the platform picker.
+  const famOf = (s) => (plats.items.find((p) => p.slug === s.platform_hint)?.family) || 'Others';
+  const byName = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
+  const ordered = [...items].sort((a, b) => byName(famOf(a), famOf(b)) || byName(a.name, b.name));
+  let lastFam = null;
+  const famHead = (s) => { const f = famOf(s); if (f === lastFam) return ''; lastFam = f; return `<h3 class="source-family">${esc(f)}</h3>`; };
+
+  wrap.innerHTML = ordered.map((s) => famHead(s) + `
     <div class="source-card ${s.enabled ? '' : 'is-off'} ${s.exists ? '' : 'is-gone'}" data-source="${s.id}">
       <div class="source-top">
         <span class="source-name">${esc(s.name)}</span>
