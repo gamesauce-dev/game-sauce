@@ -328,6 +328,38 @@ forwarding a port to the internet. It is not designed to be a public site.
 - [ ] Leave **Let members download ROM files** off unless you really want members to copy files
 - [ ] Forgotten password? Settings → User accounts → **Reset password** (the user is signed out everywhere)
 
+### 6.1 Reaching it from outside with Tailscale
+
+[Tailscale](https://tailscale.com/) is an easy VPN: your devices join one private network (a "tailnet"), and
+game-sauce stays closed to the internet.
+
+1. Install Tailscale on the machine that runs game-sauce (or on another always-on device on the same network,
+   see the note below) and on each phone or PC that needs access. Sign in with the same account.
+2. **Turn off key expiry for the server** (admin console, Machines, the server's menu, Disable key expiry).
+   Otherwise it drops off the tailnet every few months and nobody can reach it until someone signs in again.
+3. Open game-sauce at `http://<server's tailnet name or 100.x address>:8765`. The traffic is already encrypted by
+   Tailscale, so plain `http` is fine here and you do **not** need the cookie or proxy settings.
+4. **Do not use Tailscale Funnel** for game-sauce: Funnel puts a service on the public internet, which is what
+   this setup avoids.
+5. Family and friends: invite them to your tailnet, or share just the server with them (Machines, Share) so
+   they see nothing else of yours. Each person still needs their own game-sauce account.
+
+**Optional: a nice https address.** On the server run `tailscale serve --bg 8765`: it gives
+`https://<name>.<tailnet>.ts.net` and keeps it private to the tailnet. Because that is a proxy, also set
+`GAMESAUCE_TRUST_PROXY=1`, `GAMESAUCE_COOKIE_SECURE=1` and
+`GAMESAUCE_ALLOWED_ORIGINS=https://<name>.<tailnet>.ts.net` (see section 7), or changes will be refused with
+"Blocked: this request came from a different address".
+
+**Proxmox LXC.** A container has no network tunnel device by default, so Tailscale will not start inside it. Either
+give the container the device (on the Proxmox host add `lxc.cgroup2.devices.allow: c 10:200 rwm` and
+`lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file` to `/etc/pve/lxc/<id>.conf`, then restart it), or run
+Tailscale on another always-on device and advertise your home network from it.
+
+**NAS (UGREEN, Unraid, Synology).** Use the NAS's own Tailscale app or the official `tailscale/tailscale`
+container, then reach game-sauce by the NAS's tailnet address.
+
+*These steps follow Tailscale's own documentation; they have not been tested on every setup here.*
+
 ---
 
 ## 7. Configuration reference

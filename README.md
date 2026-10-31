@@ -663,6 +663,31 @@ Tailscale, rather than exposing it to the internet. Member accounts can browse a
 In-browser play loads [EmulatorJS](https://emulatorjs.org/) (GPLv3) from its CDN at runtime;
 it is not bundled with this project.
 
+## Credits and third-party services
+
+game-sauce stands on other people's work. None of it is bundled or redistributed here; each piece is
+fetched by your own server or browser, under its owner's terms, for your own use.
+
+- **[EmulatorJS](https://emulatorjs.org/)** (GPLv3) runs games in the browser. It is loaded from the
+  EmulatorJS CDN at runtime and is not part of this repository. It is a front end for
+  **[RetroArch](https://www.retroarch.com/)** and the **libretro cores**, each with its own licence
+  (some, such as Genesis Plus GX, restrict commercial use: another reason this is a personal, household
+  tool and not a public service).
+- **[LaunchBox Games Database](https://gamesdb.launchbox-app.com/)**: an admin downloads LaunchBox's
+  public `Metadata.zip` to their own server (Settings, System setup, Metadata providers) and covers are
+  fetched from LaunchBox's image server. Nothing from it is included in this repository. Use is subject
+  to LaunchBox's own terms; please keep it to personal use.
+- **[ScreenScraper](https://www.screenscraper.fr/)**, **[TheGamesDB](https://thegamesdb.net/)**,
+  **[IGDB](https://www.igdb.com/)** and **[SteamGridDB](https://www.steamgriddb.com/)** supply metadata and
+  artwork through their APIs, with the keys you bring and under their terms.
+- **[No-Intro](https://no-intro.org/)**, **[Redump](http://redump.org/)** and similar groups publish the
+  DAT files used to verify dumps; you supply those yourself.
+- Open-source libraries (Express, better-sqlite3, saxen, multer and others) are listed in
+  `package.json` under their own licences, mostly MIT.
+
+Game names, box art, logos and screenshots belong to their owners. The demo screenshots in this README use
+invented games with original artwork. game-sauce does not supply games, BIOS files or keys.
+
 ## License
 
 [MIT](LICENSE)
