@@ -54,13 +54,16 @@ const fmtBytes = (n) => {
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function toast(msg, bad = false) {
+/** { busy: true } keeps the message on screen with a spinner until the next toast() replaces it. */
+function toast(msg, bad = false, { busy = false } = {}) {
   const el = $('#toast');
-  el.textContent = msg;
+  el.textContent = '';
+  if (busy) { const sp = document.createElement('span'); sp.className = 'spin'; sp.setAttribute('aria-hidden', 'true'); el.append(sp); }
+  el.append(document.createTextNode(msg));
   el.classList.toggle('bad', bad);
   el.classList.add('show');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.remove('show'), 2600);
+  if (!busy) toast._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
 class ApiError extends Error {
@@ -1142,12 +1145,8 @@ function navIds() {
   if (n.ids) return n.ids;
   return n.el ? [...n.el.querySelectorAll('.card[data-rom]')].map((c) => Number(c.dataset.rom)) : [];
 }
-// The previous/next row sits just under the cover art; the cover moves when the genre pills above it wrap, so measure it.
-function placeDrawerNav() {
-  const nav = $('#drawer-nav'), cover = $('#drawer .detail-cover');
-  if (!nav || !cover) return;
-  nav.style.top = `${cover.offsetTop + cover.offsetHeight + 8}px`;
-}
+// The previous/next bar is pinned to the top of the window by CSS (sticky), so it no longer depends on the genre pills.
+function placeDrawerNav() { $('#drawer-nav')?.style.removeProperty('top'); }
 window.addEventListener('resize', placeDrawerNav);
 
 function updateDrawerNav(id) {
@@ -1883,6 +1882,7 @@ $('#create-source').addEventListener('click', async () => {
   try {
     // An active folder browser shows its chosen path in the Path field; when
     // the field was filled directly the browser starts hidden — both work.
+    toast('Adding folder…', false, { busy: true });
     const created = await api('/sources', {
       method: 'POST',
       body: JSON.stringify({
@@ -1892,7 +1892,7 @@ $('#create-source').addEventListener('click', async () => {
         recursive: $('#source-recursive').checked
       })
     });
-    toast(`Added ${created.name} — scanning…`);
+    toast(`Added ${created.name} — scanning…`, false, { busy: true });
     $('#add-source-panel').classList.add('hidden');
     $('#browser').classList.add('hidden');
     $('#source-path').value = '';
@@ -2025,14 +2025,20 @@ async function renderLaunchBox() {
     </div>
     <p class="provider-note">A free game database that lives on this server: no key, no limit, and lookups are instant. It matches by exact name, so it fills in games the other providers cannot find. It is tried after IGDB. Download it once (about 110 MB), then update it whenever you like.</p>
     ${s.available ? `<p class="hint">${esc(s.games.toLocaleString())} games indexed (${esc(s.covers.toLocaleString())} with covers) · ${esc(fmtBytes(s.bytes))} on disk · updated ${esc(when)}</p>` : ''}
-    ${running || s.job.state === 'error' || s.job.state === 'done' ? `
-      <div class="progress-item"><span>${esc(s.job.message || '')}</span>${running ? `<div class="bar"><i style="width:${Number(s.job.pct) || 0}%"></i></div>` : ''}</div>` : ''}
+    ${running ? `
+      <div class="lb-progress"><span class="spin" aria-hidden="true"></span><span class="lb-msg">${esc(s.job.message || 'Working…')}</span>
+        <div class="lb-bar"><i style="width:${Number(s.job.pct) || 0}%"></i></div><b>${Number(s.job.pct) || 0}%</b></div>`
+      : s.job.state === 'error' ? `<p class="provider-banner is-warn">${esc(s.job.message)}</p>`
+      : s.job.state === 'done' ? `<p class="provider-banner is-ok">${esc(s.job.message)}</p>` : ''}
     <div class="provider-actions">
       ${canEdit ? `<button class="btn btn-sm btn-primary" data-act="lb-update" ${running ? 'disabled' : ''}>${s.available ? 'Update database' : 'Download database'}</button>` : ''}
       <span class="provider-result"></span>
     </div>`;
-  $('[data-act="lb-update"]', box)?.addEventListener('click', async () => {
-    try { await api('/metadata/launchbox/update', { method: 'POST' }); } catch (err) { return toast(err.message, true); }
+  $('[data-act="lb-update"]', box)?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin" aria-hidden="true"></span>Starting…';
+    try { await api('/metadata/launchbox/update', { method: 'POST' }); } catch (err) { toast(err.message, true); }
     renderLaunchBox().catch(() => {});
   });
   clearTimeout(lbTimer);
