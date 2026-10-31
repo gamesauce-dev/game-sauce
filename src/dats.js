@@ -21,6 +21,7 @@ for (const [name, ddl] of [
 ]) {
   if (!romCols.has(name)) db.exec(`ALTER TABLE roms ADD COLUMN ${name} ${ddl}`);
 }
+db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
 
 /* ─────────────────────────── import ─────────────────────────── */
 

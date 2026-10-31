@@ -311,4 +311,12 @@ if (!db.prepare("SELECT value FROM meta WHERE key = 'entities_cleaned'").get()) 
   }
   db.prepare("INSERT INTO meta (key, value) VALUES ('entities_cleaned', '1') ON CONFLICT(key) DO NOTHING").run();
 }
-db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '17') ON CONFLICT(key) DO UPDATE SET value = '17'").run();
+// The DAT list counts, for every DAT file, the games that matched one of its entries. Without an index on the game's
+// dat_entry_id that count scanned the whole library for every entry (tens of seconds on a real collection, and the server
+// answers one request at a time, so everything else stalled behind it).
+// (The column itself is added by dats.js, which on a brand-new database loads after this file: an existing database gets
+// the index here, a new one gets it from dats.js right after the column is created.)
+if (db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'dat_entry_id')) {
+  db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '18') ON CONFLICT(key) DO UPDATE SET value = '18'").run();

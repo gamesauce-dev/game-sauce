@@ -76,3 +76,11 @@ test('signing in reports whether the tour was seen, so the app can show it strai
   const again = await call('/api/auth/login', { token: null, method: 'POST', body: { username: 'wlogin', password: 'w-login-pass-123' } });
   assert.equal(again.body.user.welcomed, true);
 });
+
+test('the DAT list is quick on a real-sized library (the game -> DAT entry link is indexed)', async () => {
+  const idx = db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'roms'").all().map((r) => r.name);
+  assert.ok(idx.includes('idx_roms_dat_entry'), 'roms.dat_entry_id needs an index or the DAT list scans every game for every entry');
+  const plan = db.prepare('EXPLAIN QUERY PLAN SELECT COUNT(*) FROM roms r WHERE r.dat_entry_id IN (SELECT id FROM dat_entries WHERE datfile_id = 1)').all().map((r) => r.detail).join(' | ');
+  assert.match(plan, /idx_roms_dat_entry/, 'the count uses the index: ' + plan);
+  assert.equal(Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get().value), 18);
+});

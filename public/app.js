@@ -1698,7 +1698,23 @@ function refreshSourcePlatformPicker(platforms) {
   else if (sel.options.length) sel.selectedIndex = 0;
 }
 
+/** Sources page: never leaves the list blank. If the server is busy or the connection drops, say so and offer a retry. */
 async function loadSources() {
+  const wrap = $('#sources-list');
+  if (!wrap) return;
+  if (!wrap.children.length) wrap.innerHTML = '<div class="side-empty"><span class="spin" aria-hidden="true"></span>Loading your folders…</div>';
+  try {
+    await loadSourcesNow();
+  } catch (err) {
+    if (err?.status === 401) return; // the sign-in card is already showing
+    wrap.innerHTML = `<div class="empty" style="padding:30px 0"><h2>Could not load your folders</h2>
+      <p>${esc(err?.message || 'The connection failed')}. The server may be busy with something else; give it a moment.</p>
+      <button class="btn btn-primary" id="sources-retry" type="button">Try again</button></div>`;
+    $('#sources-retry').onclick = () => loadSources();
+  }
+}
+
+async function loadSourcesNow() {
   const [{ items }, roots, plats] = await Promise.all([api('/sources'), api('/sources/roots'), api('/platforms')]);
   const wrap = $('#sources-list');
 
@@ -1953,8 +1969,7 @@ $('#scan-all').addEventListener('click', async (e) => {
 $('#browse-source').addEventListener('click', async () => {
   // Toggle; the button keeps its label so the Path row never changes width.
   const br = $('#browser');
-  if (!br.classList.contains('hidden')) { br.classList.add('hidden'); $('#browse-source').classList.remove('is-on'); return; }
-  br.classList.remove('hidden');
+  if (!br.classList.contains('hidden')) { state.browseSeq = (state.browseSeq || 0) + 1; br.classList.add('hidden'); $('#browse-source').classList.remove('is-on'); return; }
   $('#browse-source').classList.add('is-on');
   await browseTo($('#source-path').value.trim() || null);
 });
@@ -1962,11 +1977,20 @@ $('#browse-source').addEventListener('click', async () => {
 async function browseTo(path, { selectOnOpen = false } = {}) {
   const browser = $('#browser');
   browser.classList.remove('hidden');
+  // Say so while the server reads the folder (a busy NAS or network share can take a few seconds), and ignore an
+  // answer that arrives after a newer request or after the panel was closed.
+  const seq = state.browseSeq = (state.browseSeq || 0) + 1;
+  $('#browser-dirs').innerHTML = '<div class="side-empty"><span class="spin" aria-hidden="true"></span>Reading the folder…</div>';
+  $('#browser-up').disabled = true;
+  $('#browser-use').disabled = true;
   // The browser opens below the Add-folder form: bring it into view so the
   // folder list is never silently off-screen with no scrollbar in sight.
   requestAnimationFrame(() => browser.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
   try {
     const data = await api(`/sources/browse${path ? `?path=${encodeURIComponent(path)}` : ''}`);
+    if (seq !== state.browseSeq) return; // a newer click, or the panel was closed
+    $('#browser-use').disabled = false;
+    $('#browser-up').disabled = !data.parent;
     state.browsePath = data.path;
     $('#browser-path').textContent = data.path;
     // A folder row both navigates INTO it (double-click / chevron) and selects it
@@ -2019,7 +2043,12 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
       toast('Path selected');
     };
   } catch (err) {
-    toast(err.message, true);
+    if (seq !== state.browseSeq) return;
+    // Never leave an empty panel: say what went wrong and offer another try.
+    $('#browser-dirs').innerHTML = `<div class="side-empty">Could not read that folder (${esc(err.message)}). <button class="btn btn-sm" id="browser-retry" type="button">Try again</button></div>`;
+    $('#browser-retry').onclick = () => browseTo(path, { selectOnOpen });
+    $('#browser-up').disabled = !state.browsePath;
+    $('#browser-use').disabled = true;
   }
 }
 
