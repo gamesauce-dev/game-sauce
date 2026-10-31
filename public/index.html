@@ -352,6 +352,11 @@
           <span><b>Let members download ROM files</b>
             <small>The default for everyone who has no personal setting below. Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.</small></span>
         </label>
+        <label class="policy-row">
+          <input type="checkbox" id="policy-arcade-verified" />
+          <span><b>Arcade browser play: verified games only</b>
+            <small>Arcade games (MAME, FinalBurn Neo, Neo Geo, CPS, Cave) often fall into the RetroArch menu instead of starting. With this on, none is offered for browser play until it has been switched on for that game, which the play-check tool does for every game it saw running (<code>scripts/check-play.mjs --candidates --apply</code>). Off: the usual rules apply.</small></span>
+        </label>
         <div id="user-list" class="counts"></div>
         <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr auto;display:grid;gap:10px;align-items:end">
           <label class="field"><span>Username</span><input name="username" required /></label>

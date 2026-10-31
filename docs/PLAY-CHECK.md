@@ -30,8 +30,27 @@ a quick health check. Useful options:
 | `--seconds 15` | how long each game runs before it is judged (default 12) |
 | `--concurrency 3` | games checked at once (default 2) |
 | `--resume` | carry on a stopped run, skipping games already done |
-| `--apply` | switch browser play **off** for games that showed the RetroArch menu |
+| `--candidates` | also test games the app does not offer yet (MAME after the year cut-off, CPS3, Cave) |
+| `--cutoff` | find the year where games stop working: a few games per year, oldest first, stops after two bad years in a row |
+| `--per-year 8` | games tried per year with `--cutoff` |
+| `--apply` | switch browser play **off** for games that showed the RetroArch menu, and **on** (with `--candidates`) for games that ran |
 | `--out DIR` | where the results go (default `./play-check`) |
+
+## Building a list of verified arcade games
+
+Nothing about an arcade game says whether the browser core will run it, so the dependable way is to test them all and keep
+the ones that ran.
+
+1. Test everything, including games the app does not offer yet. Slow, so leave it running:
+   ```
+   node scripts/check-play.mjs --server http://YOUR-SERVER:8765 --user admin --platform mame,fba,neogeo,cps1,cps2,cps3,cave --candidates --all --apply
+   ```
+   Games that ran are switched **on**; games that showed the RetroArch menu are switched **off**.
+2. In **Settings, System setup, User accounts**, tick **Arcade browser play: verified games only**. From then on only the games
+   the tool saw running are offered.
+
+To find a sensible MAME year cut-off instead of testing every game, run `--platform mame --cutoff`. It stops once two years in a
+row mostly fail and tells you the year to set in `GAMESAUCE_MAME_PLAY_MAX_YEAR`.
 
 ## What you get
 

@@ -8,7 +8,7 @@ import { parseFilename, sortTitle, decodeEntities } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
-import { canDownload } from '../lib/policy.js';
+import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
 import { clearDuplicateCache } from '../lib/duplicates.js';
@@ -426,11 +426,18 @@ router.get('/', (req, res) => {
   }
   // playable=1: only games that can be played in the browser (the same rule as the Play button: a platform with a core,
   // MAME's year cut-off, and the admin's per-game on / off), and not missing. Done in the query so search and paging only see these.
-  if (req.query.playable === '1') {
+  // playable=candidates (admin only): every game on a platform that HAS a browser core, whether or not the app offers it today
+  // (MAME after the cut-off, CPS3, Cave...), so scripts/check-play.mjs can find out which ones really run. Games an admin forced
+  // OFF are left out unless include_off=1.
+  if (req.query.playable === 'candidates' && req.user?.role === 'admin') {
+    const cores = [...Object.keys(PLAYABLE_CORES), ...Object.keys(TESTABLE_CORES)].map((s) => `'${s}'`).join(',');
+    where.push(`r.missing = 0 AND r.is_system = 0 AND p.slug IN (${cores})${req.query.include_off === '1' ? '' : ' AND (r.play_override IS NULL OR r.play_override = 1)'}`);
+  } else if (req.query.playable === '1' || req.query.playable === 'candidates') {
     const cores = Object.keys(PLAYABLE_CORES).map((s) => `'${s}'`).join(',');
+    const allCores = [...Object.keys(PLAYABLE_CORES), ...Object.keys(TESTABLE_CORES)].map((s) => `'${s}'`).join(',');
     where.push(`r.missing = 0 AND r.is_system = 0 AND (
-      (r.play_override = 1 AND p.slug IN (${cores})) OR
-      (r.play_override IS NULL AND p.slug IN (${cores}) AND NOT (p.slug = 'mame' AND r.release_year > ${MAME_PLAY_MAX_YEAR}))
+      (r.play_override = 1 AND p.slug IN (${allCores})) OR
+      (r.play_override IS NULL AND p.slug IN (${cores}) AND NOT (p.slug = 'mame' AND r.release_year > ${MAME_PLAY_MAX_YEAR})${arcadeVerifiedOnly() ? ` AND p.slug NOT IN (${[...ARCADE_PLAY].map((s) => `'${s}'`).join(',')})` : ''})
     )`);
   }
   if (year_min) { where.push('r.release_year >= @year_min'); params.year_min = Number(year_min); }
@@ -466,7 +473,9 @@ router.get('/', (req, res) => {
   // platform? Guards the controller badge on covers + the detail Play button.
   const out = withTags(rows).map((r) => {
     const core = playableCore(r.platform, r.release_year, r.play_override);
-    return { ...r, playable: core || null, playable_core: core };
+    // The core a check run should load the game with, even when the app does not offer it yet (admin tool).
+    const extra = req.user?.role === 'admin' ? { candidate_core: playableCore(r.platform, null, 1) } : {};
+    return { ...r, playable: core || null, playable_core: core, ...extra };
   });
   res.json({ total, limit: lim, offset: off, items: out });
 });
@@ -692,7 +701,20 @@ const PLAYABLE_CORES = {
   arcade: 'arcade',
   neogeo: 'arcade',
   mame: 'mame',
-  fba: 'arcade'
+  fba: 'arcade',
+  // Capcom's CPS1 / CPS2 boards run on the same FinalBurn Neo core as 'arcade'.
+  cps1: 'arcade',
+  cps2: 'arcade'
+};
+
+// Arcade platforms: the ones where a core often cannot actually run a game (see policy.js: arcade_verified_only).
+const ARCADE_PLAY = new Set(['arcade', 'neogeo', 'mame', 'fba', 'cps1', 'cps2', 'cps3', 'cave']);
+
+// Platforms that HAVE a browser core but are not offered by default: a game on one of these only gets a Play button once
+// it has been switched on (by an admin, or by scripts/check-play.mjs --apply after it was seen to run).
+const TESTABLE_CORES = {
+  cps3: 'arcade',
+  cave: 'arcade'
 };
 
 /** Which platforms the in-browser player supports at all. */
@@ -706,7 +728,9 @@ export function playableCore(slug, year = null, override = null) {
   const s = String(slug || '').toLowerCase();
   // Per-game override wins: 0 = off, 1 = on (still needs a core for the platform).
   if (override === 0 || override === '0') return null;
-  if (override === 1 || override === '1') return PLAYABLE_CORES[s] || null;
+  if (override === 1 || override === '1') return PLAYABLE_CORES[s] || TESTABLE_CORES[s] || null;
+  // Verified-only mode: an arcade game is offered only once someone (or the check tool) switched it on.
+  if (ARCADE_PLAY.has(s) && arcadeVerifiedOnly()) return null;
   if (s === 'mame' && Number(year) > MAME_PLAY_MAX_YEAR) return null;
   return PLAYABLE_CORES[s] || null;
 }
@@ -739,7 +763,9 @@ function servePlay(req, res) {
   // BIOS-gated systems are excluded by design: the whole point of browser
   // play is "nothing to source but the ROM". Real emulators (vault/guide)
   // remain the path for PS1/PS2/Saturn/Dreamcast and friends.
-  const core = playableCore(rom.platform_slug, rom.release_year, rom.play_override);
+  // scripts/check-play.mjs (admin only, marked by a header) may load a game the app does not offer yet, to find out whether it runs.
+  const quiet = req.user?.role === 'admin' && req.headers['x-gamesauce-check'] === '1';
+  const core = quiet ? playableCore(rom.platform_slug, rom.release_year, 1) : playableCore(rom.platform_slug, rom.release_year, rom.play_override);
   if (!core) return res.status(400).json({ error: 'In-browser play is not available for this platform — use a vault emulator instead' });
 
   if (!fs.existsSync(rom.storage_path)) {
@@ -749,9 +775,7 @@ function servePlay(req, res) {
 
   // Play streams log too (so /play shows in stats), but the "most downloaded"
   // banner counts only kind='download' — manual downloads, not streams.
-  // scripts/check-play.mjs (an admin testing which games really start) sends this header so its test plays are not counted
-  // as real ones in "Continue playing" and the stats. Only an admin can use it.
-  const quiet = req.user?.role === 'admin' && req.headers['x-gamesauce-check'] === '1';
+  // A check run's test plays are not counted as real ones in "Continue playing" and the stats.
   if (!quiet) {
     db.prepare("INSERT INTO downloads (rom_id, bytes, user_id, kind) VALUES (?, ?, ?, 'play')")
       .run(rom.id, rom.size_bytes, req.user ? Number(req.user.id) : null);

@@ -3,7 +3,7 @@ import {
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
   audit, loginLockRemaining, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser
 } from '../auth.js';
-import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload } from '../lib/policy.js';
+import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload, arcadeVerifiedOnly, setArcadeVerifiedOnly } from '../lib/policy.js';
 import db from '../db.js';
 import express from 'express';
 import multer from 'multer';
@@ -132,15 +132,23 @@ router.delete('/avatar', requireAuth, (req, res) => {
 });
 
 router.get('/policy', requireAuth, (req, res) => {
-  res.json({ members_can_download: membersCanDownload() });
+  res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly() });
 });
 router.put('/policy', requireAdmin, (req, res) => {
-  if (typeof req.body?.members_can_download !== 'boolean') {
-    return res.status(400).json({ error: 'members_can_download must be true or false' });
+  const body = req.body || {};
+  const has = (k) => body[k] !== undefined;
+  if ((has('members_can_download') && typeof body.members_can_download !== 'boolean') || (has('arcade_verified_only') && typeof body.arcade_verified_only !== 'boolean') || (!has('members_can_download') && !has('arcade_verified_only'))) {
+    return res.status(400).json({ error: 'members_can_download / arcade_verified_only must be true or false' });
   }
-  const now = setMembersCanDownload(req.body.members_can_download, req.user.id);
-  audit(req.user, 'policy.changed', { detail: { members_can_download: now }, ip: clientIp(req) });
-  res.json({ members_can_download: now });
+  if (has('members_can_download')) {
+    const now = setMembersCanDownload(body.members_can_download, req.user.id);
+    audit(req.user, 'policy.changed', { detail: { members_can_download: now }, ip: clientIp(req) });
+  }
+  if (has('arcade_verified_only')) {
+    const now = setArcadeVerifiedOnly(body.arcade_verified_only, req.user.id);
+    audit(req.user, 'policy.changed', { detail: { arcade_verified_only: now }, ip: clientIp(req) });
+  }
+  res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly() });
 });
 
 router.post('/login', async (req, res) => {

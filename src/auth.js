@@ -320,6 +320,7 @@ export function describeAudit(entry) {
   if (a === 'sessions.revoked') return `${who} signed out ${detail?.all ? 'all devices' : 'other devices'}`;
   if (a === 'user.created') return `${who} created user ${t}${detail?.role ? ` (${detail.role})` : ''}`;
   if (a === 'user.deleted') return `${who} deleted user ${t || 'unknown'}`;
+  if (a === 'policy.changed' && detail?.arcade_verified_only !== undefined) return `${who} ${detail.arcade_verified_only ? 'switched arcade browser play to verified games only' : 'went back to the standard arcade browser-play rules'}`;
   if (a === 'policy.changed') return `${who} ${detail?.members_can_download ? 'allowed' : 'turned off'} ROM downloads for members`;
   if (a === 'user.password_reset') return `${who} reset a password for user ${t || 'unknown'}`;
   if (a === 'user.updated') {

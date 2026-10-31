@@ -3950,6 +3950,14 @@ async function loadUsersForModule() {
         catch (err) { box.checked = !box.checked; toast(err.message, true); }
       };
     }
+    const av = $('#policy-arcade-verified');
+    if (av) {
+      av.checked = !!pol.arcade_verified_only;
+      av.onchange = async () => {
+        try { const r = await api('/auth/policy', { method: 'PUT', body: JSON.stringify({ arcade_verified_only: av.checked }) }); av.checked = r.arcade_verified_only; toast(r.arcade_verified_only ? 'Arcade games are now offered for browser play only once verified' : 'Arcade browser play is back to the standard rules'); }
+        catch (err) { av.checked = !av.checked; toast(err.message, true); }
+      };
+    }
   } catch { /* the list below still works */ }
   const { items: users } = await api('/auth/users');
   $('#user-list').innerHTML = users.map((u) => `
