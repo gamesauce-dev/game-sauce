@@ -475,6 +475,7 @@ async function loadLibrary() {
   if (state.tag) params.set('tag', state.tag);
   if (state.genre) params.set('genre', state.genre);
   if (state.favorite) params.set('favorite', '1');
+  if (authState.user?.play_only) params.set('playable', '1'); // a play-only account only ever sees games it can play
   if (state.source && !orphanOnly && !unmatchedOnly) params.set('source', state.source);
   if (state.missing) params.set('missing', '1');
   if (state.datStatus) params.set('dat_status', state.datStatus);
@@ -3362,6 +3363,12 @@ function showApp(user, { restore = false } = {}) {
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : 'member';
   paintAvatar($('#user-avatar'), user.id, label, user.avatar_v);
 
+  // A play-only account gets the cut-down screen: just games you can play, search and favourites.
+  const playOnly = Boolean(user.play_only);
+  document.body.classList.toggle('play-only', playOnly);
+  if (playOnly) { state.favorite = false; state.hidden = false; state.system = false; state.platform = 'all'; }
+  $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
+
   // Settings/sources nav hidden for members (admin-only on server). The cog
   // in the footer opens Settings; admin-only modules inside stay hidden for
   // members and re-render per role in loadSettings().
@@ -3386,12 +3393,13 @@ function showApp(user, { restore = false } = {}) {
   if (saved && $(`#view-${saved.view}`)) {
     for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
     if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings'].includes(saved.view)) saved.view = 'library';
+    if (playOnly && saved.view !== 'settings') saved.view = 'library'; // a play-only account lives on the Play screen
     if (state.sort) $('#sort').value = state.sort;
     $('#search').value = state.q || '';
     $$('#density button').forEach((x) => x.classList.toggle('is-active', x.dataset.density === state.density));
     activeSettingsModule = saved.settingsModule || null;
     // Members cannot open admin-only views; fall back to the Library.
-    const target = (saved.view === 'sources' && !isAdmin) ? 'library' : saved.view;
+    const target = ((saved.view === 'sources' || saved.view === 'upload') && !isAdmin) ? 'library' : saved.view;
     setView(target);
   } else {
     // Fresh start: forget filters from any earlier session in this tab.
@@ -3945,11 +3953,13 @@ async function loadUsersForModule() {
   } catch { /* the list below still works */ }
   const { items: users } = await api('/auth/users');
   $('#user-list').innerHTML = users.map((u) => `
-    <div class="user-list-row" data-user="${u.id}">
+    <div class="user-list-row" data-user="${u.id}" data-name="${esc(u.username)}">
       <div class="grow">
         <div class="user-line"><span class="avatar avatar-sm${u.avatar_v ? ' has-pic' : ''}" style="${u.avatar_v ? `background-image:url(/api/auth/avatar/${u.id}?v=${u.avatar_v})` : ''}">${u.avatar_v ? '' : esc(u.username.slice(0, 1))}</span>${esc(u.username)} ${u.role === 'admin' ? '<span class="pill accent">admin</span>' : ''} ${u.disabled ? '<span class="pill bad">disabled</span>' : ''}</div>
         <div class="sub">${u.active_sessions} session(s) · last login ${u.last_login_at ? `${esc(u.last_login_at)} UTC` : 'never'}</div>
       </div>
+      ${u.role === 'admin' ? '' : `<label class="dl-pick" title="What this person sees. Full: the whole app. Play only: a simple screen of games that can be played in the browser, with search and favourites."><span>Screen</span>
+        <select class="select" data-act="mode-setting"><option value="full" ${u.mode === 'full' ? 'selected' : ''}>Full</option><option value="play" ${u.mode === 'play' ? 'selected' : ''}>Play only</option></select></label>`}
       ${u.role === 'admin' ? '' : `<label class="dl-pick" title="Whether this person can download ROM files. 'Default' follows the switch above."><span>Downloads</span>
         <select class="select" data-act="download-setting"><option value="default" ${u.download === 'default' ? 'selected' : ''}>Default</option><option value="allow" ${u.download === 'allow' ? 'selected' : ''}>Always allowed</option><option value="deny" ${u.download === 'deny' ? 'selected' : ''}>Never</option></select></label>`}
       <button class="btn btn-sm" data-act="reset-password" title="Set a new password for this user" ${u.id === (authState.user?.id) ? 'hidden' : ''}>Reset password</button>
@@ -3963,15 +3973,22 @@ async function loadUsersForModule() {
       try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ disabled: !disabled }) }); loadUsersForModule(); }
       catch (err) { toast(err.message, true); }
     });
+    $('[data-act="mode-setting"]', row)?.addEventListener('change', async (e) => {
+      const name = row.dataset.name;
+      try {
+        await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ mode: e.target.value }) });
+        toast(e.target.value === 'play' ? `${name} now sees the play-only screen (from their next page load)` : `${name} has the full screen`);
+      } catch (err) { toast(err.message, true); loadUsersForModule(); }
+    });
     $('[data-act="download-setting"]', row)?.addEventListener('change', async (e) => {
-      const name = $('.grow > div', row).firstChild.textContent.trim();
+      const name = row.dataset.name;
       try {
         await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ download: e.target.value }) });
         toast(e.target.value === 'allow' ? `${name} can always download` : e.target.value === 'deny' ? `${name} can never download` : `${name} follows the default`);
       } catch (err) { toast(err.message, true); loadUsersForModule(); }
     });
     $('[data-act="reset-password"]', row)?.addEventListener('click', async () => {
-      const name = $('.grow > div', row).firstChild.textContent.trim();
+      const name = row.dataset.name;
       const pw = await passwordDialog({ username: name });
       if (!pw) return;
       try { await api(`/auth/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(`Password reset for ${name}`); loadUsersForModule(); }

@@ -1444,3 +1444,39 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .wz-bpath { font-family: var(--mono, ui-monospace, monospace); font-size: 0.8rem; color: var(--muted); word-break: break-all; margin-bottom: 0.4rem; }
 .wz-bdirs { max-height: 11rem; overflow-y: auto; margin-bottom: 0.5rem; display: grid; gap: 0.2rem; }
 .modal.wz.is-busy .wz-nav .btn { opacity: .5; cursor: progress; }
+
+/* ───────── Play-only accounts: just games you can play, search and favourites ─────────
+   This only tidies the screen. What a play-only account may actually do is enforced by the server (lib/playonly.js). */
+body.play-only .nav-item[data-view="collections"],
+body.play-only .nav-item[data-view="sources"],
+body.play-only .nav-item[data-view="upload"],
+body.play-only .nav-item[data-view="emulators"],
+body.play-only #bulk-enrich,
+body.play-only #sort,
+body.play-only #density,
+body.play-only [data-toggle="hidden"],
+body.play-only [data-toggle="system"],
+body.play-only [data-toggle="orphan"],
+body.play-only [data-toggle="unmatched"],
+body.play-only [data-action="select"],
+body.play-only #bulk-bar,
+body.play-only #lib-overview,
+body.play-only #lib-recent-wrap,
+body.play-only .brand-sub,
+body.play-only .side-section,
+body.play-only #storage-usage,
+body.play-only .detail-actions > a.ibtn-primary,
+body.play-only .detail-actions > .more-wrap,
+body.play-only .detail-actions > [data-act="delete"],
+body.play-only #drawer-body .section-label ~ .panel,
+body.play-only #drawer-body #edit-form,
+body.play-only #drawer-body .section-label:not(.keep),
+body.play-only #drawer-body .meta-table,
+body.play-only .media-strip { display: none !important; }
+body.play-only .card-select, body.play-only .card-hide { display: none !important; }
+body.play-only .grid { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 1.2rem 1rem; }
+body.play-only .card-title { font-size: 0.95rem; }
+body.play-only .card-playbtn { opacity: 1; }
+@media (max-width: 720px) {
+  body.play-only .grid { grid-template-columns: repeat(auto-fill, minmax(7.6rem, 1fr)); gap: 0.9rem 0.7rem; }
+}

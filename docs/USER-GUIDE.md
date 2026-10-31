@@ -238,7 +238,7 @@ Click **⚙** under the logo. Members see **Profile picture** (upload your own p
 | Tile | What it does |
 |------|--------------|
 | Metadata providers | Credentials for ScreenScraper, TheGamesDB, IGDB, SteamGridDB |
-| User accounts | Create users, set roles, disable accounts, **reset a forgotten password**, the **Let members download ROM files** default, and a **Downloads** choice per person (Default / Always allowed / Never) |
+| User accounts | Create users, set roles, disable accounts, **reset a forgotten password**, the **Let members download ROM files** default, a **Downloads** choice per person (Default / Always allowed / Never), and a **Screen** choice per person: **Full**, or **Play only** (a simple grid of games that can be played in the browser, with search and favourites, and nothing else) |
 | Duplicate finder | Finds games you hold in several versions (regions, revisions; never different volumes, discs or numbered sequels), suggests which to keep, and hides the others |
 | Platforms | The platform catalogue; add your own |
 | Coverage | How much of the library has metadata and covers |

@@ -424,6 +424,15 @@ router.get('/', (req, res) => {
   if (req.query.orphan === '1' || req.query.orphan === 'only' || req.query.orphaned === '1') {
     where.push('(r.source_id IS NULL OR r.source_id NOT IN (SELECT id FROM sources))');
   }
+  // playable=1: only games that can be played in the browser (the same rule as the Play button: a platform with a core,
+  // MAME's year cut-off, and the admin's per-game on / off), and not missing. Done in the query so search and paging only see these.
+  if (req.query.playable === '1') {
+    const cores = Object.keys(PLAYABLE_CORES).map((s) => `'${s}'`).join(',');
+    where.push(`r.missing = 0 AND r.is_system = 0 AND (
+      (r.play_override = 1 AND p.slug IN (${cores})) OR
+      (r.play_override IS NULL AND p.slug IN (${cores}) AND NOT (p.slug = 'mame' AND r.release_year > ${MAME_PLAY_MAX_YEAR}))
+    )`);
+  }
   if (year_min) { where.push('r.release_year >= @year_min'); params.year_min = Number(year_min); }
   if (year_max) { where.push('r.release_year <= @year_max'); params.year_max = Number(year_max); }
   if (tag) {

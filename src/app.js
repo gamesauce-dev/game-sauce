@@ -1,4 +1,5 @@
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
+import { playOnlyGuard } from './lib/playonly.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
 import express from 'express';
 import db from './db.js';
@@ -111,6 +112,7 @@ export function createApp() {
   });
 
   api.use(requireAuth);
+  api.use(playOnlyGuard); // play-only accounts: an allow-list, see lib/playonly.js
 
   // Audited mutations: log every non-GET request with who did it.
   // For ROM-scoped routes, resolve the ROM's title + platform FIRST so the

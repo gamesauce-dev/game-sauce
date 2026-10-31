@@ -65,6 +65,10 @@ if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'welcom
   db.exec('ALTER TABLE users ADD COLUMN welcomed INTEGER NOT NULL DEFAULT 0');
   db.exec('UPDATE users SET welcomed = 1');
 }
+// Play-only accounts: 1 = a cut-down "play in browser" screen and nothing else. The admin sets it per person.
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'play_only')) {
+  db.exec('ALTER TABLE users ADD COLUMN play_only INTEGER NOT NULL DEFAULT 0');
+}
 // Profile picture (small JPEG/PNG/WebP, stored in the database so backups carry it).
 for (const [col, ddl] of [['avatar', 'BLOB'], ['avatar_type', 'TEXT'], ['avatar_updated', 'INTEGER']]) {
   if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE users ADD COLUMN ${col} ${ddl}`);
@@ -143,7 +147,7 @@ export function findSession(token) {
   if (!token) return null;
   const row = db.prepare(`
     SELECT s.id AS session_id, s.expires_at, s.last_seen_at, s.persistent,
-           u.id, u.username, u.display_name, u.role, u.disabled, u.download_override
+           u.id, u.username, u.display_name, u.role, u.disabled, u.download_override, u.play_only
     FROM sessions s JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ? AND s.expires_at > datetime('now')
   `).get(hashToken(token));
@@ -184,11 +188,11 @@ export function purgeExpiredSessions() {
 
 export function listUsers() {
   return db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated,
+    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated, u.play_only,
            (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > datetime('now')) AS active_sessions
     FROM users u ORDER BY u.username
-  `).all().map(({ download_override, avatar_updated, ...u }) => ({
-    ...u, avatar_v: avatar_updated || null, disabled: Boolean(u.disabled),
+  `).all().map(({ download_override, avatar_updated, play_only, ...u }) => ({
+    ...u, avatar_v: avatar_updated || null, disabled: Boolean(u.disabled), mode: u.role !== 'admin' && play_only ? 'play' : 'full',
     download: download_override === 1 ? 'allow' : download_override === 0 ? 'deny' : 'default'
   }));
 }

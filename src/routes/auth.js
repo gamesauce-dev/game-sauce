@@ -52,6 +52,7 @@ export function attachUser(req, res, next) {
         id: session.id, username: session.username,
         display_name: session.display_name, role: session.role,
         download_override: session.download_override,
+        play_only: session.role !== 'admin' && session.play_only === 1,
         session_id: session.session_id
       };
       req.sessionToken = token;
@@ -88,6 +89,7 @@ router.get('/me', (req, res) => {
       role: req.user.role,
       avatar_v: db.prepare('SELECT avatar_updated FROM users WHERE id = ?').get(req.user.id)?.avatar_updated || null,
       can_download: canDownload(req.user),
+      play_only: Boolean(req.user.play_only),
       welcomed: Boolean(db.prepare('SELECT welcomed FROM users WHERE id = ?').get(req.user.id)?.welcomed)
     }
   });
@@ -182,7 +184,7 @@ router.post('/login', async (req, res) => {
   res.json({
     token,
     expires_in,
-    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, can_download: canDownload(user), welcomed: Boolean(user.welcomed) }
+    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, can_download: canDownload(user), play_only: user.role !== 'admin' && user.play_only === 1, welcomed: Boolean(user.welcomed) }
   });
 });
 
@@ -258,6 +260,12 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
     const v = req.body.download;
     if (!['allow', 'deny', 'default'].includes(v)) return res.status(400).json({ error: "download must be 'allow', 'deny' or 'default'" });
     db.prepare('UPDATE users SET download_override = ? WHERE id = ?').run(v === 'allow' ? 1 : v === 'deny' ? 0 : null, id);
+  }
+
+  if (req.body?.mode !== undefined) {
+    if (!['full', 'play'].includes(req.body.mode)) return res.status(400).json({ error: "mode must be 'full' or 'play'" });
+    if (user.role === 'admin' && req.body.mode === 'play') return res.status(400).json({ error: 'An admin always has the full screen' });
+    db.prepare('UPDATE users SET play_only = ? WHERE id = ?').run(req.body.mode === 'play' ? 1 : 0, id);
   }
 
   if (req.body?.display_name !== undefined) {
