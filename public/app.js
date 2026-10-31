@@ -124,7 +124,7 @@ function passwordDialog({ username }) {
   $('#modal-body').textContent = `Set a new password for ${username}. They are signed out everywhere and any sign-in lockout is cleared. Tell them the new password; they can change it under Settings → Change password.`;
   $('#modal-check-wrap').classList.add('hidden');
   wrap.classList.remove('hidden');
-  input.value = ''; hint.textContent = 'At least 10 characters, with a letter and a number.';
+  input.value = ''; hint.textContent = 'At least 10 characters, with a letter and a number.'; hint.classList.add('pw-rule');
   okBtn.textContent = 'Set password'; okBtn.classList.add('btn-primary'); okBtn.classList.remove('btn-danger');
   const generate = () => {
     const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1731,6 +1731,51 @@ function refreshSourcePlatformPicker(platforms) {
   else if (sel.options.length) sel.selectedIndex = 0;
 }
 
+/** A small dialog to pick a folder on the server (the same listing the Add-a-folder panel uses). Resolves to the path, or null. */
+function pickFolderDialog({ title = 'Choose a folder', start = '' } = {}) {
+  return new Promise((resolve) => {
+    const el = document.createElement('div');
+    el.className = 'modal-scrim';
+    el.innerHTML = `<div class="modal pf" role="dialog" aria-modal="true">
+      <h3 class="modal-title">${esc(title)}</h3>
+      <div class="wz-bpath mono" id="pf-path"></div>
+      <div class="wz-bdirs" id="pf-dirs"><div class="side-empty"><span class="spin" aria-hidden="true"></span>Reading the folder…</div></div>
+      <div class="wz-row"><button class="btn btn-sm" type="button" id="pf-up" disabled>↑ Up</button><span class="wz-spacer"></span>
+        <button class="btn btn-ghost" type="button" id="pf-cancel">Cancel</button><button class="btn btn-primary" type="button" id="pf-use" disabled>Use this folder</button></div></div>`;
+    document.body.append(el);
+    let here = null, parent = null, seq = 0;
+    const done = (v) => { seq++; document.removeEventListener('keydown', onKey); el.remove(); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') done(null); };
+    document.addEventListener('keydown', onKey);
+    el.onclick = (e) => { if (e.target === el) done(null); };
+    const browse = async (p) => {
+      const mine = ++seq;
+      $('#pf-dirs', el).innerHTML = '<div class="side-empty"><span class="spin" aria-hidden="true"></span>Reading the folder…</div>';
+      $('#pf-use', el).disabled = true; $('#pf-up', el).disabled = true;
+      try {
+        const data = await api(`/sources/browse${p ? `?path=${encodeURIComponent(p)}` : ''}`);
+        if (mine !== seq) return;
+        here = data.path; parent = data.parent;
+        $('#pf-path', el).textContent = data.path;
+        $('#pf-dirs', el).innerHTML = data.dirs.length
+          ? data.dirs.map((d) => `<button type="button" class="browser-dir" data-dir="${esc(d.path)}"><span aria-hidden="true">🗀</span><span class="browser-dir-name">${esc(d.name)}</span><span class="browser-dir-go">›</span></button>`).join('')
+          : '<div class="side-empty">No subfolders here: use this folder as it is.</div>';
+        $$('#pf-dirs .browser-dir', el).forEach((b) => { b.onclick = () => browse(b.dataset.dir); });
+        $('#pf-up', el).disabled = !parent; $('#pf-use', el).disabled = false;
+      } catch (err) {
+        if (mine !== seq) return;
+        $('#pf-dirs', el).innerHTML = `<div class="side-empty">Could not read that folder (${esc(err.message)}). <button class="btn btn-sm" id="pf-retry" type="button">Try again</button></div>`;
+        $('#pf-retry', el).onclick = () => browse(p);
+        $('#pf-up', el).disabled = !here;
+      }
+    };
+    $('#pf-up', el).onclick = () => { if (parent) browse(parent); };
+    $('#pf-cancel', el).onclick = () => done(null);
+    $('#pf-use', el).onclick = () => done(here);
+    browse(start ? start.replace(/[\\/][^\\/]*$/, '') || start : null);
+  });
+}
+
 /** Sources page: never leaves the list blank. If the server is busy or the connection drops, say so and offer a retry. */
 async function loadSources() {
   const wrap = $('#sources-list');
@@ -1791,6 +1836,8 @@ async function loadSourcesNow() {
         </div>
       </div>
       <div class="source-path">${esc(s.path)}</div>
+      ${(s.extra_paths || []).map((x) => `<div class="source-path source-extra${x.exists ? '' : ' is-gone'}" data-extra="${x.id}"><span>${esc(x.path)}${x.exists ? '' : ' <em>(not reachable)</em>'}</span><button class="btn btn-sm btn-ghost" data-act="drop-folder" title="Stop scanning this folder (its games stay in the library)" aria-label="Remove this folder">✕</button></div>`).join('')}
+      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
       <div class="scan-progress hidden" data-progress="${s.id}"></div>
       <div class="source-stats">
         <span><b>${s.rom_count}</b> ROMs</span>
@@ -1826,6 +1873,28 @@ async function loadSourcesNow() {
         btn.textContent = '↻ Scan';
       }
     });
+
+    $('[data-act="add-folder"]', card).addEventListener('click', async () => {
+      const chosen = await pickFolderDialog({ title: `Add another folder to “${card.querySelector('.source-name').textContent}”`, start: card.querySelector('.source-path').textContent.trim() });
+      if (!chosen) return;
+      try {
+        const added = await api(`/sources/${id}/paths`, { method: 'POST', body: JSON.stringify({ path: chosen }) });
+        toast(`Folder added. Scanning ${added.name}…`, false, { busy: true });
+        await loadSources();
+        startScanPolling();
+        const r = await api(`/sources/${id}/scan`, { method: 'POST', body: JSON.stringify({ enrich: true }) });
+        toast(`${r.added} added, ${r.skipped} unchanged${r.enriched ? `, ${r.enriched} enriched` : ''}`);
+        await Promise.all([loadSources(), loadPlatforms()]);
+        loadLibrary();
+      } catch (err) { toast(err.message, true); loadSources(); }
+    });
+    $$('[data-act="drop-folder"]', card).forEach((b) => b.addEventListener('click', async () => {
+      const row = b.closest('[data-extra]');
+      const ok = await confirmDialog({ title: 'Stop scanning this folder?', body: 'Its games stay in the library and nothing on disk is touched. They show as missing after the next scan unless you add the folder back.', okLabel: 'Stop scanning it' });
+      if (!ok) return;
+      try { await api(`/sources/${id}/paths/${row.dataset.extra}`, { method: 'DELETE' }); toast('Folder removed from this source'); loadSources(); }
+      catch (err) { toast(err.message, true); }
+    }));
 
     $('[data-act="toggle"]', card).addEventListener('click', async () => {
       // `card` IS the .source-card, so look at its own class (searching inside it finds nothing).
@@ -4385,7 +4454,7 @@ function welcomeCards(isAdmin) {
         <form class="edit-form" id="wz-password" autocomplete="off">
           <label class="field"><span>Current password</span><input type="password" name="current_password" autocomplete="current-password" required /></label>
           <label class="field"><span>New password</span><input type="password" name="new_password" autocomplete="new-password" required /></label>
-          <p class="hint">At least 10 characters, with a letter and a number.</p>
+          <p class="hint pw-rule">At least 10 characters, with a letter and a number.</p>
           <div class="wz-row"><button class="btn btn-primary" type="submit">Change password</button><span class="hint" id="wz-password-msg"></span></div>
         </form>` },
     { id: 'picture', title: 'Add a picture', body: () => `

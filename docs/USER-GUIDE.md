@@ -91,6 +91,7 @@ Click any tile.
 - **‹ 3 / 24 ›** at the top steps to the previous or next game without closing the panel (the
   **←** and **→** keys do the same). It walks the list you opened the game from: the library grid,
   the Recently added or Continue playing row, or a collection.
+- **Collection split across drives?** On the Sources page, **＋ Add another folder** on a source adds a second (or third) folder to it: same name, same platform. If one drive is unplugged, its games stay put and the scan tells you which folder it could not read.
 - **Actions:** **Download** (hidden for members unless the admin allows it), **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
   **Hide**, **Refresh metadata**, **Upload cover**, **Delete**.
 - **Browser play: on/off** switches the Play button for this game only. A dot (•) means you have

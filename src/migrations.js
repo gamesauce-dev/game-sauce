@@ -322,3 +322,17 @@ if (db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'dat_entr
 /* ── v19: hidden_all — an admin can hide a game from EVERYONE (members cannot see or open it; the admin finds it under Hidden). Personal hiding (hidden_roms) is unchanged. */
 if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'hidden_all')) db.exec('ALTER TABLE roms ADD COLUMN hidden_all INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '19') ON CONFLICT(key) DO UPDATE SET value = '19'").run();
+
+/* ── v20: a source can have several folders. A collection is often split across drives; the source keeps its single name and
+   platform, its own folder stays in sources.path, and any further folders live here. */
+db.exec(`
+CREATE TABLE IF NOT EXISTS source_paths (
+  id         INTEGER PRIMARY KEY,
+  source_id  INTEGER NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+  path       TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (source_id, path)
+);
+CREATE INDEX IF NOT EXISTS idx_source_paths_source ON source_paths(source_id);
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '20') ON CONFLICT(key) DO UPDATE SET value = '20'").run();

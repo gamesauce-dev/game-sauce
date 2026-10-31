@@ -2,13 +2,15 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
-import { scanSource, scanAll, getScanProgress, getAllScanProgress } from '../lib/scanner.js';
+import { scanSource, scanAll, getScanProgress, getAllScanProgress, sourceRoots } from '../lib/scanner.js';
 import { PLATFORM_SLUGS, PLATFORMS } from '../lib/platforms.js';
 
 const router = express.Router();
 
+const isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } };
 const shape = (s) => ({
   ...s,
+  extra_paths: db.prepare('SELECT id, path FROM source_paths WHERE source_id = ? ORDER BY id').all(s.id).map((r) => ({ ...r, exists: isDir(r.path) })),
   enabled: Boolean(s.enabled),
   watch: Boolean(s.watch),
   recursive: Boolean(s.recursive),
@@ -59,6 +61,31 @@ router.post('/', (req, res) => {
     }
     throw err;
   }
+});
+
+/** Add another folder to a source (a collection split across drives). */
+router.post('/:id/paths', (req, res) => {
+  const src = db.prepare('SELECT * FROM sources WHERE id = ?').get(req.params.id);
+  if (!src) return res.status(404).json({ error: 'Source not found' });
+  const raw = String(req.body?.path || '').trim();
+  if (!raw) return res.status(400).json({ error: 'path is required' });
+  const resolved = path.resolve(raw);
+  if (!isDir(resolved)) return res.status(400).json({ error: `Folder does not exist or is not readable: ${resolved}` });
+  const same = (a, b) => path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase();
+  if (sourceRoots(src).some((p) => same(p, resolved))) return res.status(409).json({ error: 'That folder is already part of this source' });
+  const other = db.prepare('SELECT s.id, s.name FROM sources s WHERE s.id <> ? AND lower(s.path) = lower(?)').get(src.id, resolved)
+    || db.prepare('SELECT s.id, s.name FROM source_paths sp JOIN sources s ON s.id = sp.source_id WHERE sp.source_id <> ? AND lower(sp.path) = lower(?)').get(src.id, resolved);
+  if (other) return res.status(409).json({ error: `That folder already belongs to the source "${other.name}"` });
+  db.prepare('INSERT INTO source_paths (source_id, path) VALUES (?, ?)').run(src.id, resolved);
+  res.status(201).json(shape(db.prepare('SELECT * FROM sources WHERE id = ?').get(src.id)));
+});
+
+router.delete('/:id/paths/:pathId', (req, res) => {
+  const row = db.prepare('SELECT * FROM source_paths WHERE id = ? AND source_id = ?').get(req.params.pathId, req.params.id);
+  if (!row) return res.status(404).json({ error: 'Folder not found' });
+  // Its games stay in the library (flagged missing at the next scan); nothing on disk is touched.
+  db.prepare('DELETE FROM source_paths WHERE id = ?').run(row.id);
+  res.json({ removed: row.id, shape: shape(db.prepare('SELECT * FROM sources WHERE id = ?').get(req.params.id)) });
 });
 
 router.patch('/:id', (req, res) => {

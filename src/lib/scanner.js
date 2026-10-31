@@ -79,8 +79,31 @@ function matchIgnore(relPath, globs) {
  * Walk a source folder. Returns entries for ROM-ish files, skipping sidecars
  * whose disc image is present in the same directory.
  */
+/** Every folder a source covers: its own, then any extra ones added later. */
+export function sourceRoots(source) {
+  // A source that is not in the database (a bare { path } object) has no extra folders.
+  const extra = source.id == null ? [] : db.prepare('SELECT path FROM source_paths WHERE source_id = ? ORDER BY id').all(source.id).map((r) => r.path);
+  return [source.path, ...extra].filter(Boolean);
+}
+
 export function walkSource(source) {
-  const root = path.resolve(source.path);
+  const roots = sourceRoots(source).map((p) => path.resolve(p));
+  const found = [];
+  const seen = [];
+  const done = new Set();
+  for (const root of roots) {
+    if (done.has(root)) continue; // the same folder listed twice, or one folder inside another: walked once
+    done.add(root);
+    const part = walkOneRoot(source, root);
+    // A file reachable from two of the folders is one game.
+    const have = new Set(found.map((f) => f.path));
+    for (const f of part.found) if (!have.has(f.path)) found.push(f);
+    seen.push(...part.errors);
+  }
+  return { found, errors: seen };
+}
+
+function walkOneRoot(source, root) {
   const ignoreGlobs = source.ignore_globs ? String(source.ignore_globs).split(',') : [];
   const found = [];
   const seen = [];
@@ -267,6 +290,13 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
     rootExists = false;
   }
 
+  // Further folders: an unplugged one must not be mistaken for "its games were deleted". Games under a folder that cannot be
+  // read right now are left exactly as they were (neither added nor flagged missing), and the scan says which folder it was.
+  const extraDown = [];
+  for (const p of sourceRoots(source).slice(1)) {
+    try { if (!fs.statSync(p).isDirectory()) extraDown.push(p); } catch { extraDown.push(p); }
+  }
+
   if (!rootExists) {
     db.prepare("UPDATE scan_log SET finished_at = datetime('now'), error = ? WHERE id = ?")
       .run('Source folder is not reachable', logId);
@@ -276,6 +306,7 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
   }
 
   const { found, errors } = walkSource(source);
+  for (const d of extraDown) errors.push({ dir: d, error: 'folder not reachable' });
   prog.phase = 'importing'; prog.total = found.length;
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
@@ -409,9 +440,10 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
 
   // Anything we knew about in this source but did not see is now missing —
   // flagged, not deleted, because a drive being unplugged is not a delete.
-  const stale = db.prepare('SELECT id FROM roms WHERE source_id = ? AND missing = 0').all(sourceId)
-    .map((r) => r.id)
-    .filter((id) => !touched.has(id));
+  const underDown = (p) => extraDown.some((d) => { const rel = path.relative(path.resolve(d), path.resolve(p || '')); return rel && !rel.startsWith('..') && !path.isAbsolute(rel); });
+  const stale = db.prepare('SELECT id, source_path FROM roms WHERE source_id = ? AND missing = 0').all(sourceId)
+    .filter((r) => !touched.has(r.id) && !underDown(r.source_path))
+    .map((r) => r.id);
   const markMissing = db.prepare("UPDATE roms SET missing = 1, updated_at = datetime('now') WHERE id = ?");
   db.transaction(() => { for (const id of stale) markMissing.run(id); })();
 

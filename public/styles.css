@@ -1480,3 +1480,17 @@ body.play-only .card-playbtn { opacity: 1; }
 @media (max-width: 720px) {
   body.play-only .grid { grid-template-columns: repeat(auto-fill, minmax(7.6rem, 1fr)); gap: 0.9rem 0.7rem; }
 }
+
+/* The password rule is the one thing people need to read before they type: bold. */
+.pw-rule { font-weight: 700; color: var(--text); }
+
+/* A source with several folders */
+.source-extra { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.3rem; }
+.source-extra > span { flex: 1; min-width: 0; word-break: break-all; }
+.source-extra.is-gone > span { color: var(--warn); }
+.source-extra em { font-style: normal; font-size: 0.8em; }
+.source-addfolder { margin-top: 0.4rem; }
+.modal.pf { width: min(36rem, 94vw); }
+.modal.pf .wz-bdirs { max-height: 15rem; }
+/* (same rule, but strong enough to beat the hint styling inside the dialog's button row) */
+.modal-input-row .hint.pw-rule, .hint.pw-rule { font-weight: 700; color: var(--text); }

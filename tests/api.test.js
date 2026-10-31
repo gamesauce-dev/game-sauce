@@ -611,3 +611,23 @@ test('the genre filter matches one genre inside a multi-genre field', async () =
   assert.ok(!puzzle.includes(d));
   assert.deepEqual((await ids('Arcade')).filter((x) => [a, b, c, d].includes(x)), [a]);
 });
+
+test('the fast native CRC32 gives exactly the same answers as the JavaScript one', async () => {
+  const zlib = await import('node:zlib');
+  const { crc32, hashFile } = await import('../src/lib/hash.js');
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const buf = Buffer.from(Array.from({ length: 5000 }, (_, i) => (i * 31 + 7) & 255));
+  assert.equal(crc32(buf) >>> 0, zlib.crc32(buf) >>> 0);
+  assert.equal(crc32(Buffer.from('123456789')).toString(16), 'cbf43926', 'the standard CRC32 check value');
+  // across chunk boundaries (how a file is hashed)
+  const half = crc32(buf.subarray(0, 2500));
+  assert.equal(crc32(buf.subarray(2500), half) >>> 0, zlib.crc32(buf) >>> 0);
+  const f = path.join(os.tmpdir(), `crc-${process.pid}-${Date.now()}.bin`);
+  fs.writeFileSync(f, buf);
+  const h = await hashFile(f);
+  fs.unlinkSync(f);
+  assert.equal(h.crc32, (zlib.crc32(buf) >>> 0).toString(16).padStart(8, '0').toUpperCase());
+  assert.equal(h.size, 5000);
+});

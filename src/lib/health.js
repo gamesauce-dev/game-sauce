@@ -100,6 +100,7 @@ export function collectHealth() {
       const label = `Source: ${s.name}`;
       let reachable = true;
       try { fs.accessSync(s.path, fs.constants.R_OK); } catch { reachable = false; }
+      for (const x of db.prepare('SELECT path FROM source_paths WHERE source_id = ?').all(s.id)) { try { fs.accessSync(x.path, fs.constants.R_OK); } catch { reachable = false; } }
       const missing = db.prepare('SELECT COUNT(*) AS n FROM roms WHERE source_id = ? AND missing = 1').get(s.id).n;
       if (!s.enabled) { checks.push({ id: `source-${s.id}`, label, status: 'ok', detail: 'Disabled.' }); continue; }
       if (!reachable) {
