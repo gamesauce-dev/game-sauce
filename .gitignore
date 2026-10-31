@@ -28,3 +28,6 @@ demo-roms/
 Thumbs.db
 .vscode/
 .idea/
+
+# Play check results (scripts/check-play.mjs)
+play-check/

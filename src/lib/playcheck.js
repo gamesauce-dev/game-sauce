@@ -13,8 +13,9 @@ export function classifyFrame(stats) {
   if (!t) return 'blank';
   // RetroArch's menu: one flat mid-dark grey over most of the screen, and almost no other colours (white text, a few icons).
   if (isGrey(t) && lum(t) >= 28 && lum(t) <= 80 && t.share >= 0.55 && stats.colours <= 48) return 'retroarch-menu';
-  // Nothing drawn: a single black (or near black) colour everywhere.
-  if (lum(t) < 14 && t.share >= 0.97) return 'blank';
+  // Nothing drawn: black everywhere AND next to no other colours. Arcade games are mostly black on their own
+  // (Ms. Pac-Man's attract screen is 97% black with 6 colours), so the amount of black alone proves nothing.
+  if (lum(t) < 14 && t.share >= 0.97 && stats.colours <= 3) return 'blank';
   return 'runs';
 }
 
