@@ -104,6 +104,28 @@
     });
   }
 
+  // The 'latest' EmulatorJS front end reads a save state through a core function (EmulatorJSGetState) that the cores on the CDN
+  // do not have yet; they offer the older save_state_info instead, so every Save State ended in "FAILED TO SAVE STATE".
+  // Until the two match again, read the state the way the cores offer it. If a core does have the new function, it is used.
+  function bridgeGetState() {
+    const gm = window.EJS_emulator && window.EJS_emulator.gameManager;
+    if (!gm || gm.__gsBridged) return Boolean(gm);
+    gm.__gsBridged = true;
+    const original = gm.getState && gm.getState.bind(gm);
+    gm.getState = function () {
+      const M = gm.Module || {};
+      if (typeof M.EmulatorJSGetState === 'function' && original) return original();
+      if (typeof M.cwrap !== 'function') { if (original) return original(); throw new Error('This core cannot save states'); }
+      const info = M.cwrap('save_state_info', 'string', [])().split('|');
+      if (info[2] !== '1') throw new Error(info[0] || 'This game cannot save states');
+      const size = parseInt(info[0], 10), ptr = parseInt(info[1], 10);
+      return new Uint8Array(M.HEAPU8.subarray(ptr, ptr + size));
+    };
+    return true;
+  }
+  const bridgeTimer = setInterval(() => { if (bridgeGetState()) clearInterval(bridgeTimer); }, 400);
+  setTimeout(() => clearInterval(bridgeTimer), 120000);
+
   async function boot() {
     await Promise.race([versionReady, new Promise((r) => setTimeout(r, 2500))]);
     const all = romId ? await listSaves() : [];
@@ -121,6 +143,7 @@
     // (Chrome/Brave leaving slot 0 empty broke all pad input on stable).
     window.EJS_pathtodata = 'https://cdn.emulatorjs.org/latest/data/';
     window.EJS_startOnLoaded = true;
+    if (!window.EJS_onGameStart) window.EJS_onGameStart = () => { bridgeGetState(); };
     window.EJS_color = '#ff3d68';
     window.EJS_alignStartButton = 'center';
     // Never use the browser's own IndexedDB slots: saves live on the server, per user.
@@ -178,7 +201,7 @@
       }
       // Restore battery on boot (skipped if a full state is being loaded — it contains it).
       if (battery && !startState) {
-        window.EJS_onGameStart = () => { setTimeout(() => restoreBattery().catch(() => {}), 300); };
+        window.EJS_onGameStart = () => { bridgeGetState(); setTimeout(() => restoreBattery().catch(() => {}), 300); };
       }
     }
 

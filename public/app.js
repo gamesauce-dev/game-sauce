@@ -3593,6 +3593,18 @@ $('#logout').addEventListener('click', async () => {
 // Cog in the footer: the only path to Settings now (nav item removed).
 $('#settings-gear')?.addEventListener('click', () => setView('settings'));
 
+// Play-only screen: the logo is the way back to the whole library (the Library button is gone from the top bar), and the arrow
+// beside the count scrolls the games back to the top.
+$('#play-topbar')?.addEventListener('click', (e) => {
+  if (!e.target.closest('.brand')) return;
+  $('#nav .nav-item[data-view="library"]')?.click();
+});
+$('#play-topbar .brand')?.setAttribute('title', 'Back to the library');
+$('#to-top')?.addEventListener('click', () => {
+  const g = $('#grid'); if (g) g.scrollTo({ top: 0, behavior: 'smooth' });
+  const v = $('#view-library'); if (v) v.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 /* ─────────────────────────── settings hub ─────────────────────────── */
 
 /* Role-dependent tile grid. Modules render in a fixed order; admins get the

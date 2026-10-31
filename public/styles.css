@@ -1519,7 +1519,15 @@ body.play-only .play-topbar .brand-logo { width: 2.2rem; height: 2.2rem; flex-ba
 body.play-only .play-topbar .brand-name { font-size: 1.15rem; }
 body.play-only .play-topbar .nav { flex-direction: row; margin-left: 0.6rem; }
 body.play-only .play-topbar .nav-item { padding: 0.4rem 0.8rem; }
-body.play-only .play-topbar .nav-item[data-view="library"] { display: flex; }
+body.play-only .play-topbar .nav { display: none; }
+body.play-only .play-topbar .brand { cursor: pointer; border-radius: 0.6rem; }
+body.play-only .play-topbar .brand:hover .brand-name { color: #fff; }
+.totop { display: none; }
+body.play-only .totop {
+  display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: 0;
+  border-radius: 0.6rem; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 1.05rem; cursor: pointer;
+}
+body.play-only .totop:hover { background: var(--panel-2, #1d2030); border-color: var(--accent); }
 body.play-only .play-topbar .user-row { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; order: 3; }
 body.play-only .play-topbar .user-meta { display: flex; flex-direction: column; line-height: 1.15; }
 body.play-only .play-topbar .brand { order: 1; }

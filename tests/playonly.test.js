@@ -125,3 +125,18 @@ test('the top bar hands the logo, name row and menu back to the sidebar when a p
   assert.match(fn, /side\.prepend\(brand\)/);
   assert.match(fn, /footer\.prepend\(userRow\)/);
 });
+
+test('play-only: a back-to-top arrow replaces the Library button, and the logo goes back to the library', () => {
+  const root = (f) => fs.readFileSync(new URL('../public/' + f, import.meta.url), 'utf8');
+  assert.match(root('index.html'), /id="to-top"/);
+  assert.match(root('styles.css'), /body\.play-only \.play-topbar \.nav \{ display: none; \}/);
+  assert.match(root('app.js'), /\$\('#to-top'\)\?\.addEventListener/);
+  assert.match(root('app.js'), /closest\('\.brand'\)/);
+});
+
+test('the player reads a save state through the older core function when the new one is missing', () => {
+  const html = fs.readFileSync(new URL('../public/ejs-player.html', import.meta.url), 'utf8');
+  assert.match(html, /bridgeGetState/);
+  assert.match(html, /cwrap\('save_state_info'/);
+  assert.match(html, /EmulatorJSGetState/, 'a core that has the new function still uses it');
+});
