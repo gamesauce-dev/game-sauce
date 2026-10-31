@@ -749,8 +749,13 @@ function servePlay(req, res) {
 
   // Play streams log too (so /play shows in stats), but the "most downloaded"
   // banner counts only kind='download' — manual downloads, not streams.
-  db.prepare("INSERT INTO downloads (rom_id, bytes, user_id, kind) VALUES (?, ?, ?, 'play')")
-    .run(rom.id, rom.size_bytes, req.user ? Number(req.user.id) : null);
+  // scripts/check-play.mjs (an admin testing which games really start) sends this header so its test plays are not counted
+  // as real ones in "Continue playing" and the stats. Only an admin can use it.
+  const quiet = req.user?.role === 'admin' && req.headers['x-gamesauce-check'] === '1';
+  if (!quiet) {
+    db.prepare("INSERT INTO downloads (rom_id, bytes, user_id, kind) VALUES (?, ?, ?, 'play')")
+      .run(rom.id, rom.size_bytes, req.user ? Number(req.user.id) : null);
+  }
 
   res.setHeader('Accept-Ranges', 'bytes');
   res.setHeader('Cache-Control', 'private, max-age=3600');
