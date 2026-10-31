@@ -6,7 +6,7 @@ import db from './db.js';
 // Side-effect import: forward-compatible schema migrations (sources, source paths,
 // provider ids). Must run before anything queries the new columns.
 import './migrations.js';
-import { seedPlatforms } from './lib/platforms.js';
+import { seedPlatforms, ICON_TYPES } from './lib/platforms.js';
 import romsRouter from './routes/roms.js';
 import collectionsRouter from './routes/collections.js';
 import metadataRouter from './routes/metadata.js';
@@ -171,7 +171,7 @@ export function createApp() {
   // evolve: new rows, corrected provider ids, extra extensions. Admins can
   // manage them here without editing source; every change takes effect
   // immediately because lookups read the DB each time.
-  const PLATFORM_FIELDS = ['name', 'short_name', 'family', 'manufacturer', 'generation', 'accent', 'screenscraper_id', 'tgdb_id', 'extensions'];
+  const PLATFORM_FIELDS = ['name', 'short_name', 'family', 'manufacturer', 'generation', 'accent', 'screenscraper_id', 'tgdb_id', 'extensions', 'icon'];
 
   api.get('/platforms/all', requireAdmin, (req, res) => {
     res.json({
@@ -199,15 +199,16 @@ export function createApp() {
       accent: String(req.body?.accent || '#6b7280').trim(),
       screenscraper_id: req.body?.screenscraper_id === '' || req.body?.screenscraper_id == null ? null : Number(req.body.screenscraper_id),
       tgdb_id: req.body?.tgdb_id === '' || req.body?.tgdb_id == null ? null : Number(req.body.tgdb_id),
-      extensions: exts.join(',')
+      extensions: exts.join(','),
+      icon: ICON_TYPES.includes(String(req.body?.icon || '')) ? String(req.body.icon) : null
     };
     if (row.generation !== null && !Number.isFinite(row.generation)) return res.status(400).json({ error: 'generation must be a number' });
     if (row.screenscraper_id !== null && !Number.isFinite(row.screenscraper_id)) return res.status(400).json({ error: 'screenscraper_id must be a number' });
     if (row.tgdb_id !== null && !Number.isFinite(row.tgdb_id)) return res.status(400).json({ error: 'tgdb_id must be a number' });
     try {
       db.prepare(`
-        INSERT INTO platforms (slug, name, short_name, family, manufacturer, generation, accent, screenscraper_id, tgdb_id, extensions)
-        VALUES (@slug, @name, @short_name, @family, @manufacturer, @generation, @accent, @screenscraper_id, @tgdb_id, @extensions)
+        INSERT INTO platforms (slug, name, short_name, family, manufacturer, generation, accent, screenscraper_id, tgdb_id, extensions, icon)
+        VALUES (@slug, @name, @short_name, @family, @manufacturer, @generation, @accent, @screenscraper_id, @tgdb_id, @extensions, @icon)
       `).run(row);
     } catch (err) {
       return res.status(400).json({ error: err.message });
@@ -232,6 +233,7 @@ export function createApp() {
         if (!Number.isFinite(v)) return res.status(400).json({ error: `${f} must be a number or empty` });
       }
       if ((f === 'manufacturer') && v === '') v = null;
+      if (f === 'icon') { v = v === '' || v == null ? null : String(v); if (v !== null && !ICON_TYPES.includes(v)) return res.status(400).json({ error: `icon must be one of: ${ICON_TYPES.join(', ')}` }); }
       sets.push(`${f} = @${f}`);
       params[f] = v;
     }

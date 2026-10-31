@@ -1,3 +1,5 @@
+import { platformIconSvg, PLATFORM_ICON_TYPES, iconTypeFor } from './platform-icons.js';
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -333,7 +335,7 @@ async function loadPlatforms() {
       <div class="family-group ${collapsed ? 'collapsed' : ''}" data-family-group="${esc(family)}">
         ${plats.map((p) => `
           <button class="plat-item ${state.platform === p.slug ? 'is-active' : ''}" data-platform="${p.slug}" title="${esc(p.name)}">
-            <span class="plat-dot" style="background:${p.accent}"></span>
+            <span class="plat-ico-wrap">${platformIconSvg(p, 16)}</span>
             <span class="plat-name">${esc(String(p.short_name).toUpperCase())}</span>
             <span class="plat-count">${p.count}</span>
           </button>`).join('')}
@@ -1151,6 +1153,23 @@ async function toggleFavorite(id, el) {
 
 /* ─────────────────────────── detail ─────────────────────────── */
 
+/* Pinned details window: stays open beside the games, with no dark overlay, and clicking another game swaps what it shows.
+ * Remembered on this device. */
+const pinned = () => localStorage.getItem('gamesauce_pin_details') === '1';
+function syncPin() {
+  const on = pinned();
+  document.body.classList.toggle('details-pinned', on);
+  // The grid only makes room while a window is actually open.
+  document.body.classList.toggle('details-open', on && !$('#drawer')?.classList.contains('hidden'));
+  const b = $('#drawer-pin');
+  if (b) { b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', String(on)); b.title = on ? 'Unpin: the window closes when you click away' : 'Keep this window open beside the games'; }
+  // Pinned: no overlay at all, so the games behind stay clickable.
+  if (on) $('#scrim')?.classList.add('hidden');
+  else if (state.openRomId != null) $('#scrim')?.classList.remove('hidden');
+}
+$('#drawer-pin')?.addEventListener('click', () => { localStorage.setItem('gamesauce_pin_details', pinned() ? '0' : '1'); syncPin(); });
+syncPin();
+
 function closeDrawer() {
   state.detailToken = (state.detailToken || 0) + 1;
   $('#drawer-nav')?.classList.add('hidden');
@@ -1158,6 +1177,7 @@ function closeDrawer() {
   $('#drawer').classList.add('hidden');
   $('#scrim').classList.add('hidden');
   state.openRomId = null;
+  document.body.classList.remove('details-open');
 }
 
 /* ── previous / next inside the detail drawer ──
@@ -1244,9 +1264,10 @@ async function openDetail(id) {
   state.openRomId = id;
   // Per-user prefs (default match provider). Cached after first fetch; failure is harmless.
   if (!state.prefs) { try { state.prefs = await api('/prefs'); } catch { state.prefs = {}; } }
-  $('#scrim').classList.remove('hidden');
   const drawer = $('#drawer');
   drawer.classList.remove('hidden');
+  syncPin();
+  $('#scrim').classList.toggle('hidden', pinned());
   $('#drawer-body').innerHTML = '<div class="skel" style="height:300px"></div>';
 
   $('#drawer').scrollTop = 0;
@@ -1826,7 +1847,7 @@ async function loadSourcesNow() {
       <div class="source-top">
         <span class="source-name">${esc(s.name)}</span>
         ${s.exists ? '' : '<span class="pill bad">folder not reachable</span>'}
-        ${s.platform_hint ? `<span class="pill accent">${esc(s.platform_hint)}</span>` : ''}
+        ${s.platform_hint ? `<span class="pill accent plat-pill">${platformIconSvg((window.__platformsCache || []).find((x) => x.slug === s.platform_hint) || { slug: s.platform_hint }, 14)}${esc(s.platform_hint)}</span>` : ''}
         ${s.enabled ? '' : '<span class="pill">disabled</span>'}
         ${s.last_scan_error ? `<span class="pill warn">${esc(s.last_scan_error)}</span>` : ''}
         <div class="source-actions">
@@ -2908,10 +2929,18 @@ async function loadPlatformAdmin() {
       <label class="field"><span>ScreenScraper id</span><input data-pf="screenscraper_id" value="${p.screenscraper_id ?? ''}" /></label>
       <label class="field"><span>TheGamesDB id</span><input data-pf="tgdb_id" value="${p.tgdb_id ?? ''}" /></label>
       <label class="field"><span>Accent colour</span><input data-pf="accent" value="${esc(p.accent || '')}" /></label>
+      <div class="field" style="grid-column:1/-1"><span>Icon</span>
+        <div class="icon-pick" data-iconpick>${PLATFORM_ICON_TYPES.map((t) => `<button type="button" class="icon-opt${iconTypeFor(p) === t.id ? ' is-on' : ''}" data-icon="${t.id}" title="${esc(t.label)}" aria-label="${esc(t.label)}">${platformIconSvg({ ...p, icon: t.id }, 22)}<small>${esc(t.label)}</small></button>`).join('')}</div>
+        <input type="hidden" data-pf="icon" value="${esc(p.icon || '')}" />
+      </div>
       <div style="grid-column:1/-1;display:flex;gap:8px">
         <button class="btn btn-sm btn-primary" data-pact="save">Save</button>
         <button class="btn btn-sm btn-ghost" data-pact="cancel">Cancel</button>
       </div>`;
+    host.querySelectorAll('[data-icon]').forEach((b) => b.addEventListener('click', () => {
+      host.querySelectorAll('[data-icon]').forEach((x) => x.classList.toggle('is-on', x === b));
+      host.querySelector('[data-pf="icon"]').value = b.dataset.icon;
+    }));
     host.querySelector('[data-pact="save"]').onclick = async () => {
       const body = {};
       host.querySelectorAll('[data-pf]').forEach((inp) => { body[inp.dataset.pf] = inp.value.trim(); });
@@ -3419,6 +3448,26 @@ document.addEventListener('click', (e) => {
   loadLibrary();
 });
 
+/* Play-only accounts have no sidebar: a slim bar along the top carries the logo, the person and Library. The bar is the same markup
+ * as the sidebar's pieces, moved, so every button keeps working. */
+function syncTopbar() {
+  const on = document.body.classList.contains('play-only');
+  const bar = $('#play-topbar');
+  if (!bar) return;
+  const side = $('.sidebar');
+  const brand = $('.brand', side), footer = $('.side-footer', side), nav = $('#nav');
+  if (on && !bar.dataset.filled) {
+    bar.dataset.filled = '1';
+    bar.append(brand, footer.querySelector('.user-row'), nav);
+  } else if (!on && bar.dataset.filled) {
+    delete bar.dataset.filled;
+    side.prepend(brand);
+    footer.append(...bar.querySelectorAll('.user-row'));
+    side.insertBefore(nav, side.querySelector('.side-section'));
+  }
+  bar.classList.toggle('hidden', !on);
+}
+
 function showApp(user, { restore = false } = {}) {
   window.neonBg?.stop();
   authState.user = user;
@@ -3436,6 +3485,7 @@ function showApp(user, { restore = false } = {}) {
   const playOnly = Boolean(user.play_only);
   document.body.classList.toggle('play-only', playOnly);
   if (playOnly) { state.favorite = false; state.hidden = false; state.system = false; state.platform = 'all'; }
+  syncTopbar();
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog

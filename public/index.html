@@ -40,6 +40,8 @@
 </div>
 
 <div class="app hidden" id="app">
+  <!-- Play-only accounts: the sidebar is replaced by this slim bar (filled by the app). -->
+  <header class="play-topbar hidden" id="play-topbar"></header>
 
   <aside class="sidebar">
     <div class="brand">
@@ -104,7 +106,7 @@
       <header class="toolbar">
         <div class="search-wrap">
           <span class="search-ico">⌕</span>
-          <input id="search" class="search" type="search" placeholder="Search titles, developers, genres…" autocomplete="off" />
+          <input id="search" class="search" type="search" placeholder="Search titles, developers, genres, platforms…" autocomplete="off" />
         </div>
         <select id="sort" class="select sort-select" title="Sort">
           <option value="title">Title A–Z</option>
@@ -126,7 +128,7 @@
           </div>
         <div class="toolbar-right">
           <button class="btn btn-sm" id="bulk-enrich" title="Fetch metadata for ROMs that have none yet">✦ Fetch metadata</button>
-          <div class="segmented" id="density">
+          <div class="segmented" id="density" title="Grid size">
             <button data-density="comfortable" class="is-active" title="Comfortable grid">▦</button>
             <button data-density="compact" title="Dense grid">▤</button>
           </div>
@@ -701,6 +703,7 @@
       <span class="drawer-pos" id="drawer-pos"></span>
       <button class="drawer-navbtn" id="drawer-next" title="Next game (→)" aria-label="Next game"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
+    <button class="drawer-pin" id="drawer-pin" type="button" title="Keep this window open beside the games" aria-label="Pin the details window" aria-pressed="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/><path d="M12 14v7"/></svg></button>
     <button class="drawer-close" id="drawer-close">✕</button>
   </div>
   <div id="drawer-body"></div>

@@ -92,6 +92,7 @@ Click any tile.
   **←** and **→** keys do the same). It walks the list you opened the game from: the library grid,
   the Recently added or Continue playing row, or a collection.
 - **Collection split across drives?** On the Sources page, **＋ Add another folder** on a source adds a second (or third) folder to it: same name, same platform. If one drive is unplugged, its games stay put and the scan tells you which folder it could not read.
+- **Pin the details window.** The pin button beside the ✕ keeps a game's details open beside the grid; click another game and it switches. Unpin it to go back to the window that closes when you click away.
 - **Actions:** **Download** (hidden for members unless the admin allows it), **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
   **Hide**, **Refresh metadata**, **Upload cover**, **Delete**.
 - **Browser play: on/off** switches the Play button for this game only. A dot (•) means you have

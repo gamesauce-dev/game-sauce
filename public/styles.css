@@ -1494,3 +1494,63 @@ body.play-only .card-playbtn { opacity: 1; }
 .modal.pf .wz-bdirs { max-height: 15rem; }
 /* (same rule, but strong enough to beat the hint styling inside the dialog's button row) */
 .modal-input-row .hint.pw-rule, .hint.pw-rule { font-weight: 700; color: var(--text); }
+
+/* Platform pictograms */
+.plat-ico-wrap { display: inline-flex; width: 1.15rem; flex: 0 0 1.15rem; justify-content: center; }
+.plat-ico { display: block; }
+.plat-pill { display: inline-flex; align-items: center; gap: 0.3rem; }
+.icon-pick { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.3rem; }
+.icon-opt { display: grid; justify-items: center; gap: 0.2rem; width: 5rem; padding: 0.45rem 0.3rem; font: inherit; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 0.5rem; cursor: pointer; }
+.icon-opt small { font-size: 0.68rem; line-height: 1.1; text-align: center; }
+.icon-opt:hover { border-color: var(--line-2); color: var(--text); }
+.icon-opt.is-on { border-color: var(--accent); background: rgba(124, 92, 255, .16); color: #fff; }
+
+/* ───────── Play-only: a top bar instead of the sidebar ───────── */
+.play-topbar { display: none; }
+body.play-only .app { flex-direction: column; }
+body.play-only .sidebar { display: none; }
+body.play-only .mobile-bar, body.play-only .side-scrim { display: none !important; }
+body.play-only .play-topbar {
+  display: flex; align-items: center; gap: 0.9rem; flex: 0 0 auto; padding: 0.45rem 1.2rem;
+  background: var(--bg-2); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30;
+}
+body.play-only .play-topbar.hidden { display: none; }
+body.play-only .play-topbar .brand { padding: 0; gap: 0.6rem; flex: 0 0 auto; }
+body.play-only .play-topbar .brand-logo { width: 2.2rem; height: 2.2rem; flex-basis: 2.2rem; border-radius: 0.6rem; }
+body.play-only .play-topbar .brand-name { font-size: 1.15rem; }
+body.play-only .play-topbar .nav { flex-direction: row; margin-left: 0.6rem; }
+body.play-only .play-topbar .nav-item { padding: 0.4rem 0.8rem; }
+body.play-only .play-topbar .nav-item[data-view="library"] { display: flex; }
+body.play-only .play-topbar .user-row { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; order: 3; }
+body.play-only .play-topbar .user-meta { display: flex; flex-direction: column; line-height: 1.15; }
+body.play-only .play-topbar .brand { order: 1; }
+body.play-only .play-topbar .nav { order: 2; }
+body.play-only #density { display: inline-flex !important; }
+body.play-only .view { padding-top: 1rem; }
+@media (max-width: 720px) {
+  body.play-only .play-topbar { padding: 0.4rem 0.7rem; gap: 0.5rem; flex-wrap: wrap; }
+  body.play-only .play-topbar .brand-name { display: none; }
+  body.play-only .play-topbar .nav { margin-left: 0; }
+  body.play-only .play-topbar .user-meta { display: none; }
+}
+/* Comfortable / condensed for play-only too */
+body.play-only .grid.compact { grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr)); gap: 0.8rem 0.6rem; }
+body.play-only .grid.compact .card-title { font-size: 0.8rem; -webkit-line-clamp: 1; }
+
+/* ───────── Pinned details window ───────── */
+.drawer-pin {
+  position: absolute; top: 50%; right: 3.6rem; transform: translateY(-50%); z-index: 6;
+  width: 2.1429rem; height: 2.1429rem; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+  display: grid; place-items: center; cursor: pointer;
+}
+.drawer-pin:hover { color: var(--text); border-color: var(--accent); }
+.drawer-pin.is-on { color: #fff; background: var(--accent); border-color: var(--accent-2); }
+body.details-pinned .drawer { box-shadow: -0.6rem 0 1.6rem rgba(0, 0, 0, .35); }
+body.details-open .main { margin-right: min(32.8571rem, 92vw); }
+.main { transition: margin-right .18s ease; }
+@media (max-width: 720px) {
+  /* A phone has no room beside the games: pinning only keeps the window open on screen, over the games. */
+  body.details-open .main { margin-right: 0; }
+  .drawer-pin { display: none; }
+}
+body.details-pinned .drawer-scrim { display: none !important; }

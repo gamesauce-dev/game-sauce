@@ -336,3 +336,8 @@ CREATE TABLE IF NOT EXISTS source_paths (
 CREATE INDEX IF NOT EXISTS idx_source_paths_source ON source_paths(source_id);
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '20') ON CONFLICT(key) DO UPDATE SET value = '20'").run();
+
+/* ── v21: platforms.icon — which pictogram a platform shows (console, handheld, disc, arcade...). NULL = the built-in default for
+   that platform (see public/platform-icons.js). */
+if (!db.prepare('PRAGMA table_info(platforms)').all().some((c) => c.name === 'icon')) db.exec('ALTER TABLE platforms ADD COLUMN icon TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '21') ON CONFLICT(key) DO UPDATE SET value = '21'").run();

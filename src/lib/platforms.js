@@ -13,6 +13,9 @@
 // best-effort: `npm run check:platforms` verifies every one against the live API
 // and prints anything that does not resolve, so a stale id never fails silently.
 
+/** The pictograms a platform can show (drawn in public/platform-icons.js). Kept in step with it by a test. */
+export const ICON_TYPES = ['console', 'handheld', 'cartridge', 'disc', 'arcade', 'computer', 'pad', 'chip'];
+
 export const PLATFORMS = [
   /* ───────────────────────── Nintendo ───────────────────────── */
   { slug: 'nes', name: 'Nintendo Entertainment System', short_name: 'NES', family: 'Nintendo', manufacturer: 'Nintendo', generation: 3, accent: '#e60012', extensions: ['nes', 'unf', 'unif', 'fds'], screenscraper: 3, tgdb: 7 },

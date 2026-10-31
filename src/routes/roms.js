@@ -43,7 +43,7 @@ const ROM_COLUMNS = `
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
   p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
-  p.accent AS platform_accent, p.manufacturer AS platform_manufacturer
+  p.accent AS platform_accent, p.manufacturer AS platform_manufacturer, p.icon AS platform_icon
 `;
 
 const SORTS = {
@@ -383,7 +383,11 @@ router.get('/', (req, res) => {
       instr(lower(r.title), lower(@q)) > 0 OR
       instr(lower(COALESCE(r.developer,'')), lower(@q)) > 0 OR
       instr(lower(COALESCE(r.publisher,'')), lower(@q)) > 0 OR
-      instr(lower(COALESCE(r.genre,'')), lower(@q)) > 0
+      instr(lower(COALESCE(r.genre,'')), lower(@q)) > 0 OR
+      instr(lower(p.name), lower(@q)) > 0 OR
+      instr(lower(p.short_name), lower(@q)) > 0 OR
+      instr(lower(p.slug), lower(@q)) > 0 OR
+      instr(lower(COALESCE(p.family,'')), lower(@q)) > 0
     )`);
     params.q = String(q).trim();
   }
