@@ -1,7 +1,8 @@
 import express from 'express';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
-import { enrich, providerStatus, screenscraper, thegamesdb, igdb, steamgriddb } from '../lib/providers.js';
+import { enrich, providerStatus, screenscraper, thegamesdb, igdb, launchbox, steamgriddb } from '../lib/providers.js';
+import { launchboxStatus, startLaunchBoxUpdate } from '../lib/launchbox.js';
 import {
   describeProviderConfig, saveProviderConfig, clearProviderConfig, PROVIDER_FIELDS
 } from '../settings.js';
@@ -17,6 +18,16 @@ router.get('/', (req, res) => {
     FROM roms GROUP BY meta_source
   `).all();
   res.json({ providers: providerStatus(), counts, config: describeProviderConfig() });
+});
+
+/* ────────────────── LaunchBox local database ────────────────── */
+
+router.get('/launchbox', (req, res) => res.json(launchboxStatus()));
+
+/** Download and index the LaunchBox database in the background (admin). Poll GET /launchbox for progress. */
+router.post('/launchbox/update', requireAdmin, (req, res) => {
+  const r = startLaunchBoxUpdate();
+  res.status(r.started ? 202 : 409).json({ ...launchboxStatus(), ...(r.started ? {} : { error: 'An update is already running' }) });
 });
 
 /* ────────────────── provider credentials (UI) ────────────────── */
@@ -199,7 +210,7 @@ router.post('/search', async (req, res, next) => {
     if (!q) return res.status(400).json({ error: 'Search text is required' });
 
     const which = String(req.body?.provider || 'thegamesdb');
-    if (which !== 'thegamesdb' && which !== 'igdb') {
+    if (which !== 'thegamesdb' && which !== 'igdb' && which !== 'launchbox') {
       return res.status(400).json({ error: 'Unknown provider' });
     }
 
@@ -211,7 +222,7 @@ router.post('/search', async (req, res, next) => {
       tgdb_id = row.tgdb_id;
     }
 
-    const svc = which === 'igdb' ? igdb : thegamesdb;
+    const svc = which === 'igdb' ? igdb : which === 'launchbox' ? launchbox : thegamesdb;
     const hits = await svc.search(q, { slug, tgdb_id });
     if (hits.error && !hits.items?.length) {
       return res.status(502).json({ error: hits.error, items: [] });

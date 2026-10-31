@@ -1507,7 +1507,7 @@ async function openDetail(id) {
   const identifyQ = $('#identify-q', drawer);
   const identifyPlatform = $('#identify-platform', drawer);
   const identifyProvider = $('#identify-provider', drawer);
-  const IDENT_PROVIDERS = [['thegamesdb', 'TheGamesDB'], ['igdb', 'IGDB']];
+  const IDENT_PROVIDERS = [['thegamesdb', 'TheGamesDB'], ['igdb', 'IGDB'], ['launchbox', 'LaunchBox']];
   // Custom dropdown: a native <select> can't hold a clickable star per option.
   // ★ = your default provider (saved per user, pre-selected on every game).
   if (identifyProvider) {
@@ -1561,7 +1561,7 @@ async function openDetail(id) {
     const q = identifyQ.value.trim();
     if (!q) return toast('Type a title to search for', true);
     const provider = identifyProvider?.value || 'thegamesdb';
-    const label = provider === 'igdb' ? 'IGDB' : 'TheGamesDB';
+    const label = provider === 'igdb' ? 'IGDB' : provider === 'launchbox' ? 'LaunchBox' : 'TheGamesDB';
     identifyList.innerHTML = `<div class="side-empty">Searching ${label}…</div>`;
     try {
       const data = await api('/metadata/search', {
@@ -1576,7 +1576,7 @@ async function openDetail(id) {
         <button class="result-row ${c.has_cover ? 'ok' : 'skip'}" data-candidate="${i}">
           <span class="status"></span>
           ${c.cover_url ? `<img class="candidate-cover" loading="lazy" src="${esc(c.cover_url)}" alt="" onerror="this.remove()" />` : ''}
-          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${c.release_year})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : 'TGDB')}</span></span>
+          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${c.release_year})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : c.source === 'launchbox' ? 'LaunchBox' : 'TGDB')}</span></span>
           <span class="note">${c.has_cover ? 'art ✓' : 'no art'}</span>
         </button>`).join('');
       $$('[data-candidate]', identifyList).forEach((btn) => btn.addEventListener('click', async () => {
@@ -2008,6 +2008,37 @@ async function browseTo(path, { selectOnOpen = false } = {}) {
 
 /* ─────────────────────────── metadata settings ─────────────────────────── */
 
+/* LaunchBox: a free local database. No key: the admin downloads it once, the server indexes it, lookups are local. */
+let lbTimer = null;
+async function renderLaunchBox() {
+  const box = $('#launchbox-card');
+  if (!box) return;
+  const canEdit = authState.user?.role === 'admin';
+  const s = await api('/metadata/launchbox');
+  const running = s.job.state === 'downloading' || s.job.state === 'importing';
+  const when = s.imported_at ? new Date(s.imported_at).toLocaleString() : null;
+  box.innerHTML = `
+    <div class="provider-head">
+      <span class="pill ${s.available ? 'ok' : ''}">${s.available ? 'active' : 'not downloaded'}</span>
+      <span class="name">LaunchBox</span>
+      <a class="docs" href="https://gamesdb.launchbox-app.com/" target="_blank" rel="noreferrer">about ↗</a>
+    </div>
+    <p class="provider-note">A free game database that lives on this server: no key, no limit, and lookups are instant. It matches by exact name, so it fills in games the other providers cannot find. It is tried after IGDB. Download it once (about 110 MB), then update it whenever you like.</p>
+    ${s.available ? `<p class="hint">${esc(s.games.toLocaleString())} games indexed (${esc(s.covers.toLocaleString())} with covers) · ${esc(fmtBytes(s.bytes))} on disk · updated ${esc(when)}</p>` : ''}
+    ${running || s.job.state === 'error' || s.job.state === 'done' ? `
+      <div class="progress-item"><span>${esc(s.job.message || '')}</span>${running ? `<div class="bar"><i style="width:${Number(s.job.pct) || 0}%"></i></div>` : ''}</div>` : ''}
+    <div class="provider-actions">
+      ${canEdit ? `<button class="btn btn-sm btn-primary" data-act="lb-update" ${running ? 'disabled' : ''}>${s.available ? 'Update database' : 'Download database'}</button>` : ''}
+      <span class="provider-result"></span>
+    </div>`;
+  $('[data-act="lb-update"]', box)?.addEventListener('click', async () => {
+    try { await api('/metadata/launchbox/update', { method: 'POST' }); } catch (err) { return toast(err.message, true); }
+    renderLaunchBox().catch(() => {});
+  });
+  clearTimeout(lbTimer);
+  if (running) lbTimer = setTimeout(() => { if ($('#launchbox-card')) renderLaunchBox().catch(() => {}); }, 2000);
+}
+
 /**
  * Credential forms. Secrets are never echoed back — a field shows "set" or
  * "not set", and typing in it replaces the stored value.
@@ -2091,6 +2122,7 @@ function renderProviderForms(config, status = []) {
     </div>`;
   }).join('');
 
+  renderLaunchBox().catch(() => {});
   $('#encryption-note').innerHTML = config.encryption.key_source === 'env'
     ? 'Credentials are encrypted at rest (AES-256-GCM) with the key from <code>GAMESAUCE_SECRET_KEY</code>.'
     : `Credentials are encrypted at rest (AES-256-GCM). <strong>The key is currently kept in

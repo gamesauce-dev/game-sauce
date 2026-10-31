@@ -41,7 +41,7 @@ delete-from-disk. Imported copies in `storage/roms` are removed together with th
 2. **Sources → Add a folder.** Browse to your ROM folder, pick the **platform** it holds, and add it.
    The scan shows a live progress bar. New games are enriched with metadata as they arrive.
 3. Open the **Library**. Covers appear as metadata is fetched.
-4. **⚙ → Metadata providers:** add a TheGamesDB key and/or IGDB credentials for better matches
+4. **⚙ → System setup → Metadata providers:** press **Download database** on the **LaunchBox** card (free, no key, about 110 MB, a minute or two). It is the best first step: it matches by exact name and works offline afterwards. Then add a TheGamesDB key and/or IGDB credentials for better matches
    (ScreenScraper needs developer credentials you request on its forum).
 5. Press **Fetch metadata** in the Library and let it run; it works through everything in one go.
 6. Set up **backups** (⚙ → Backups) before you do much else. See [section 14](#14-backups-and-restore-admin).

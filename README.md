@@ -223,9 +223,12 @@ Two layers:
    regions, revisions, years, `[!]` noise tags, `(Japan, USA)` multi-region (USA wins),
    `Sonic.The.Hedgehog.2.USA` dot-separated dumps, `_` separators. Dots inside real titles
    (`Super Mario Bros. Wonder`, `Dr. Mario`) are left alone.
-2. **Providers** — ScreenScraper, TheGamesDB and IGDB, keyed by hash first (CRC32/MD5/SHA1)
+2. **Providers** — ScreenScraper, TheGamesDB, IGDB and LaunchBox, keyed by hash first (CRC32/MD5/SHA1)
    and by name only as a fallback. ScreenScraper lookups run only once all four credential fields are
    set; with a half-filled form it stays inert and the tiles keep their filename titles.
+   **LaunchBox** needs no key: an admin downloads its public database once (Settings → System setup →
+   Metadata providers, about 110 MB) and lookups are then local and instant. It matches by exact name only,
+   so on consoles it is asked first and never gives a sequel's data to the original game.
    SteamGridDB is art-only: it never supplies titles, it only fills in a missing cover after
    a metadata match.
 

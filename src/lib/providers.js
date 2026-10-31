@@ -23,6 +23,7 @@ const _envVal = (key) => {
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
 
 const TIMEOUT_MS = Number(process.env.META_TIMEOUT_MS || 15000);
 const CACHE_TTL_HOURS = Number(process.env.META_CACHE_TTL_HOURS || 168);
@@ -733,6 +734,39 @@ const igdb = {
   }
 };
 
+/* ─────────────────────── LaunchBox (local database) ─────────────────────── */
+
+/**
+ * Names to try against LaunchBox, in order. Unlike the web providers this lookup is EXACT, so a variant must be the
+ * same game: region tags, disc numbers, revisions and an "A / B" alternate name are fine; cutting a subtitle off
+ * ("Ratchet & Clank: Size Matters" -> "Ratchet & Clank") is not, because that is a different game.
+ */
+export function launchboxVariants(title) {
+  const base = stripDiscTags(title) || String(title || '').trim();
+  if (!base) return [];
+  const out = [];
+  const push = (t) => { const s = String(t || '').replace(/\s+/g, ' ').trim().replace(/[\s\-–—:;,.]+$/, '').trim(); if (s.length >= 2 && !out.includes(s)) out.push(s); };
+  push(base);
+  const bare = base.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  push(bare);
+  push(bare.replace(/\s*\b(USA|Europe|Japan|World|EUR|JPN|AUS|UK)\b\s*$/i, ''));
+  push(bare.replace(/\s*\b(rev\s*[a-z0-9]+|r\d+|v\d+(\.\d+)*)\s*$/i, ''));
+  for (const alt of bare.split(/\s+\/\s+/)) push(alt); // "Puzzle Bobble / Bust-A-Move": either name
+  return out;
+}
+
+const launchbox = {
+  id: 'launchbox',
+  label: 'LaunchBox',
+  docs: 'https://gamesdb.launchbox-app.com/',
+  get enabled() { return launchboxReady(); },
+  async lookup({ title, platform, year }) {
+    if (!this.enabled) return null;
+    return launchboxFind(launchboxVariants(title), platform.slug, year);
+  },
+  async search(query, platform = {}) { return launchboxSearch(query, platform.slug || null); }
+};
+
 /* ─────────────────────── SteamGridDB (art fallback) ─────────────────────── */
 
 // Art-only provider: no metadata, just images. Used ONLY as a cover fallback —
@@ -775,7 +809,7 @@ const steamgriddb = {
   }
 };
 
-const PROVIDERS = [screenscraper, thegamesdb, igdb, steamgriddb];
+const PROVIDERS = [screenscraper, thegamesdb, igdb, launchbox, steamgriddb];
 
 export function providerStatus() {
   return PROVIDERS.map((p) => ({
@@ -803,7 +837,9 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   let best = null;
 
   // Arcade romsets: IGDB goes before TheGamesDB (whose monthly quota runs out on big sets).
-  const order = ARCADE_NAME_MATCH.has(platform.slug) ? [screenscraper, igdb, thegamesdb, steamgriddb] : PROVIDERS;
+  // Consoles: the local LaunchBox database goes FIRST. It only answers when a name matches exactly, whereas the web
+  // providers hand back their best guess ("Micro Machines" -> "Micro Machines V4"), so a guess must never get in first.
+  const order = ARCADE_NAME_MATCH.has(platform.slug) ? [screenscraper, igdb, thegamesdb, launchbox, steamgriddb] : [launchbox, ...PROVIDERS.filter((p) => p !== launchbox)];
   for (const provider of order) {
     if (!provider.enabled) continue;
     // steamgriddb is art-only: it never participates in metadata matching.
@@ -843,4 +879,4 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   return real.length ? { error: real.map((e) => `${e.provider}: ${e.message}`).join('; ') } : null;
 }
 
-export { screenscraper, thegamesdb, igdb, steamgriddb, PROVIDERS };
+export { screenscraper, thegamesdb, igdb, launchbox, steamgriddb, PROVIDERS };
