@@ -30,3 +30,40 @@ export function verdict(frames) {
   if (kinds.length && kinds.every((k) => k === 'blank')) return 'blank';
   return kinds.length ? 'runs' : 'no-picture';
 }
+
+/* ───────────── finding the year where browser play stops working (check-play.mjs --cutoff) ───────────── */
+
+/**
+ * Group the years that have games into steps of at least `n` games, oldest first, so every step is judged on enough games.
+ * Early years often hold one or two games each; judging a year on one game proves nothing.
+ * years = [{ year, count }]  ->  [{ from, to, years: [year, ...], count }]
+ */
+export function planBuckets(years, n) {
+  const out = [];
+  let cur = null;
+  for (const { year, count } of [...years].sort((a, b) => a.year - b.year)) {
+    if (!cur) cur = { from: year, to: year, years: [], count: 0 };
+    cur.to = year; cur.years.push(year); cur.count += count;
+    if (cur.count >= n) { out.push(cur); cur = null; }
+  }
+  if (cur) out.push(cur); // the newest years may add up to fewer than n: they are still tried, but cannot decide anything alone
+  return out;
+}
+
+/**
+ * Where do games stop working? results = [{ from, to, tried, ran }] in year order. A step "mostly ran" at 50% or more.
+ *  - A step with fewer than `minEvidence` games tried is shown but never counts for or against.
+ *  - Failures only count AFTER a step that mostly ran. The very oldest games (Pong, Galaxy Game: discrete logic, no ordinary
+ *    program) fail on any core, which says nothing about the years after them.
+ *  - Two steps in a row that mostly fail end the search.
+ * Returns { stop, seenGood, lastGood (a year), firstBad (a year) }.
+ */
+export function judgeSteps(results, minEvidence = 5) {
+  let seenGood = false, lastGood = null, firstBad = null, badStreak = 0;
+  for (const r of results) {
+    if (!r.tried || r.tried < minEvidence) continue;
+    if (r.ran / r.tried >= 0.5) { seenGood = true; lastGood = r.to; firstBad = null; badStreak = 0; }
+    else if (seenGood) { firstBad ??= r.from; badStreak++; }
+  }
+  return { stop: badStreak >= 2, seenGood, lastGood, firstBad };
+}

@@ -17,9 +17,12 @@
 //   --platform a,b      platform slugs to check, e.g. mame,fba,neogeo,cps1,cps2,cps3,cave (default: every platform that can play)
 //   --candidates        also test games the app does NOT offer yet: MAME after the year cut-off, CPS3, Cave. The ones that run can
 //                       be switched ON with --apply, which is how the list of working games is built up.
-//   --cutoff            find the year where games stop working: tests a few games per year, oldest first, and stops once two
-//                       years in a row mostly fail. For one platform (default mame). Prints the year to use as the cut-off.
-//   --per-year N        games tried per year with --cutoff (default 8)
+//   --cutoff            find the year where games stop working: tests games oldest first, in steps of one or more years (years
+//                       with few games are grouped so every step is judged on enough games), and stops once two steps in a
+//                       row mostly fail. Failures only count after a stretch that mostly ran: the very oldest games (Pong,
+//                       Galaxy Game) are not ordinary programs and fail anywhere. Prints a table, then the year to use.
+//   --per-year N        games tried per step with --cutoff (default 8; a step is a year, or several years added together until
+//                       they hold at least N games)
 //   --sample N          check N random games per platform (default 20: a quick health check)
 //   --all               check EVERY playable game (slow: about 12 seconds each, a few at a time)
 //   --limit N           only the first N games per platform (alphabetical)
@@ -36,7 +39,7 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { verdict } from '../src/lib/playcheck.js';
+import { verdict, planBuckets, judgeSteps } from '../src/lib/playcheck.js';
 
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);
@@ -191,22 +194,26 @@ if (!cutoff) {
   // Oldest year first, a handful of games per year. Stop once two years in a row mostly fail: from there on it is not going to get better.
   for (const slug of wanted) {
     const mine = games.filter((g) => g.slug === slug);
-    const years = [...new Set(mine.map((g) => g.release_year).filter(Boolean))].sort((a, b) => a - b);
-    let badStreak = 0, lastGood = null, firstBad = null, stoppedAt = null;
-    console.log(`\n${slug}: trying up to ${perYear} games per year, oldest first, ${years.length} year(s) with games (${years[0]} to ${years[years.length - 1]}).\n`);
-    for (const y of years) {
-      const pool = mine.filter((g) => g.release_year === y).sort(() => Math.random() - 0.5).slice(0, perYear);
-      const before = finished;
+    const counts = new Map();
+    for (const g of mine) if (g.release_year) counts.set(g.release_year, (counts.get(g.release_year) || 0) + 1);
+    const steps = planBuckets([...counts].map(([year, count]) => ({ year, count })), perYear);
+    const minEvidence = Math.min(5, perYear);
+    const results = [];
+    const nogame = mine.filter((g) => !g.release_year).length;
+    console.log(`\n${slug}: ${steps.length} step(s) from ${steps[0]?.from} to ${steps[steps.length - 1]?.to}, up to ${perYear} games each, oldest first.${nogame ? ` (${nogame} games with no year are left out.)` : ''}\n`);
+    let verdictSoFar = { stop: false };
+    for (const st of steps) {
+      const pool = mine.filter((g) => g.release_year >= st.from && g.release_year <= st.to).sort(() => Math.random() - 0.5).slice(0, perYear);
       await runBatch(pool, null);
       const recs = pool.map((g) => done.get(g.id)).filter(Boolean);
-      const ok = recs.filter((r) => r.verdict === 'runs').length, rate = recs.length ? ok / recs.length : 0;
-      cutoffReport.push({ platform: slug, year: y, tried: recs.length, ran: ok });
-      console.log(`   ${y}: ${ok} of ${recs.length} run (${Math.round(rate * 100)}%)\n`);
-      if (rate >= 0.5) { lastGood = y; badStreak = 0; firstBad = null; }
-      else { firstBad ??= y; badStreak++; }
-      if (badStreak >= 2) { stoppedAt = y; break; }
+      const ran = recs.filter((r) => r.verdict === 'runs').length;
+      results.push({ from: st.from, to: st.to, tried: recs.length, ran });
+      const label = st.from === st.to ? `${st.from}` : `${st.from} to ${st.to}`;
+      console.log(`   ${label}: ${ran} of ${recs.length} run (${recs.length ? Math.round(ran / recs.length * 100) : 0}%)${recs.length < minEvidence ? '  [too few games to count]' : ''}\n`);
+      verdictSoFar = judgeSteps(results, minEvidence);
+      if (verdictSoFar.stop) break;
     }
-    cutoffReport.push({ platform: slug, summary: true, lastGood, firstBad, stoppedAt });
+    cutoffReport.push({ platform: slug, summary: true, results, ...verdictSoFar });
   }
 }
 await browser.close();
@@ -228,12 +235,14 @@ if (apply) for (const r of all) await applyOne(r); // anything that was not sent
 if (cutoff) {
   console.log('\n=== Where games stop working ===');
   for (const s of cutoffReport.filter((x) => x.summary)) {
-    console.log(s.stoppedAt
-      ? `${s.platform}: games up to ${s.lastGood ?? 'the earliest year'} mostly run; from ${s.firstBad} two years in a row mostly failed, so I stopped there. A cut-off year of ${s.lastGood ?? 'none'} fits.`
-      : `${s.platform}: no run of failing years was found: every year tried mostly ran.`);
+    console.log(`\n${s.platform}, by year (a step counts as running when half or more of its games ran):`);
+    for (const r of s.results) console.log(`   ${(r.from === r.to ? String(r.from) : `${r.from}-${r.to}`).padEnd(10)} ${String(r.ran).padStart(2)}/${String(r.tried).padEnd(2)} ${'#'.repeat(Math.round(r.tried ? r.ran / r.tried * 20 : 0)).padEnd(20, '.')} ${r.tried ? Math.round(r.ran / r.tried * 100) : 0}%`);
+    if (!s.seenGood) console.log(`\n${s.platform}: no stretch of years mostly ran, so there is no cut-off to suggest. (The very oldest games are not ordinary programs and fail on any core.)`);
+    else if (s.stop) console.log(`\n${s.platform}: games up to ${s.lastGood} mostly run. From ${s.firstBad} two steps in a row mostly failed, so I stopped there. Suggested cut-off year: ${s.lastGood}.`);
+    else console.log(`\n${s.platform}: every stretch after the first good one mostly ran, so there is no cut-off to suggest (last year tried: ${s.lastGood}).`);
   }
-  console.log('\nTo use it: set the environment variable GAMESAUCE_MAME_PLAY_MAX_YEAR to that year on the server (for MAME), then restart game-sauce.');
-  console.log('Games after the cut-off that ran can still be switched on one by one: run with --candidates --apply on that year range.');
+  console.log('\nTo use a year: set GAMESAUCE_MAME_PLAY_MAX_YEAR to it on the server (it only affects MAME), then restart game-sauce.');
+  console.log('A cut-off is a rough guide: failures are not neatly by year. The full run (--candidates --all --apply) is what settles each game.');
 }
 if (apply) {
   console.log(`\nBrowser play switched ON for ${switchedOn} game${switchedOn === 1 ? '' : 's'} that ran, and OFF for ${switchedOff} that showed the RetroArch menu. (Any can be changed back from the game's ⋯ menu.)`);

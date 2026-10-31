@@ -30,3 +30,43 @@ test('verdict over several pictures: any menu frame is a failure; black all the 
   assert.equal(verdict([BLACK, BLACK, BLACK]), 'blank');
   assert.equal(verdict([]), 'no-picture');
 });
+
+import { planBuckets, judgeSteps } from '../src/lib/playcheck.js';
+
+test('years with few games are grouped so each step is judged on enough games', () => {
+  const years = [{ year: 1971, count: 1 }, { year: 1972, count: 1 }, { year: 1973, count: 2 }, { year: 1974, count: 6 }, { year: 1975, count: 9 }, { year: 1976, count: 3 }];
+  const steps = planBuckets(years, 5);
+  assert.deepEqual(steps.map((s) => [s.from, s.to, s.count]), [[1971, 1974, 10], [1975, 1975, 9], [1976, 1976, 3]]);
+  assert.equal(planBuckets([], 5).length, 0);
+  assert.deepEqual(planBuckets([{ year: 1990, count: 50 }], 8).map((s) => [s.from, s.to]), [[1990, 1990]]);
+});
+
+test('Pong failing at the very start does not end the search (the case from a real run)', () => {
+  // 1971 and 1972 held one game each and both showed the menu; the old rule stopped there.
+  const early = [{ from: 1971, to: 1971, tried: 1, ran: 0 }, { from: 1972, to: 1972, tried: 1, ran: 0 }];
+  assert.equal(judgeSteps(early).stop, false);
+  const later = [...early, { from: 1973, to: 1976, tried: 8, ran: 0 }, { from: 1977, to: 1978, tried: 8, ran: 0 }];
+  assert.equal(judgeSteps(later).stop, false, 'still nothing has worked yet: failures before the first good stretch prove nothing');
+  assert.equal(judgeSteps(later).seenGood, false);
+});
+
+test('the cut-off is found: good stretch, then two bad steps in a row', () => {
+  const r = [
+    { from: 1971, to: 1972, tried: 2, ran: 0 },
+    { from: 1973, to: 1978, tried: 8, ran: 7 },
+    { from: 1979, to: 1982, tried: 8, ran: 8 },
+    { from: 1983, to: 1984, tried: 8, ran: 6 },
+    { from: 1985, to: 1986, tried: 8, ran: 2 },
+    { from: 1987, to: 1987, tried: 8, ran: 1 }
+  ];
+  const j = judgeSteps(r);
+  assert.deepEqual([j.stop, j.seenGood, j.lastGood, j.firstBad], [true, true, 1984, 1985]);
+});
+
+test('one bad step among good ones, and steps with too little evidence, do not end it', () => {
+  const dip = [{ from: 1980, to: 1981, tried: 8, ran: 7 }, { from: 1982, to: 1983, tried: 8, ran: 3 }, { from: 1984, to: 1985, tried: 8, ran: 6 }];
+  assert.equal(judgeSteps(dip).stop, false);
+  assert.equal(judgeSteps(dip).lastGood, 1985);
+  const thin = [{ from: 1980, to: 1981, tried: 8, ran: 7 }, { from: 1982, to: 1982, tried: 2, ran: 0 }, { from: 1983, to: 1983, tried: 1, ran: 0 }];
+  assert.equal(judgeSteps(thin).stop, false, 'two games failing is too little to decide anything');
+});

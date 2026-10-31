@@ -31,8 +31,8 @@ a quick health check. Useful options:
 | `--concurrency 3` | games checked at once (default 2) |
 | `--resume` | carry on a stopped run, skipping games already done |
 | `--candidates` | also test games the app does not offer yet (MAME after the year cut-off, CPS3, Cave) |
-| `--cutoff` | find the year where games stop working: a few games per year, oldest first, stops after two bad years in a row |
-| `--per-year 8` | games tried per year with `--cutoff` |
+| `--cutoff` | find the year where games stop working: games tested oldest first, in steps of one or more years (years with few games are grouped so each step has enough), stops after two bad steps in a row. Failures only count after a stretch that mostly ran, because the very oldest games (Pong, Galaxy Game) fail anywhere |
+| `--per-year 8` | games tried per step with `--cutoff` |
 | `--recheck` | also test games already switched on (they are skipped by default: they passed before) |
 | `--apply` | switch browser play **off** for games that showed the RetroArch menu, and **on** (with `--candidates`) for games that ran |
 | `--out DIR` | where the results go (default `./play-check`) |
@@ -50,8 +50,9 @@ the ones that ran.
 2. In **Settings, System setup, User accounts**, tick **Arcade browser play: verified games only**. From then on only the games
    the tool saw running are offered.
 
-To find a sensible MAME year cut-off instead of testing every game, run `--platform mame --cutoff`. It stops once two years in a
-row mostly fail and tells you the year to set in `GAMESAUCE_MAME_PLAY_MAX_YEAR`.
+To find a sensible MAME year cut-off instead of testing every game, run `--platform mame --cutoff`. It prints a table by year and
+suggests the year to set in `GAMESAUCE_MAME_PLAY_MAX_YEAR`. Treat it as a rough guide: a step that mixes years can put the answer
+one step early or late, and failures are not neatly by year.
 
 ## What you get
 
