@@ -4233,13 +4233,14 @@ $('#password-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
   try {
-    await api('/auth/password', {
+    const pw = await api('/auth/password', {
       method: 'POST',
       body: JSON.stringify({
         current_password: fd.get('current_password'),
         new_password: fd.get('new_password')
       })
     });
+    if (pw?.token) sessionStorage.setItem('gamesauce_token', pw.token); // the old sign-in was replaced
     e.target.reset();
     toast('Password updated — other devices signed out');
     loadSettings();
@@ -4326,12 +4327,18 @@ function welcomeCards(isAdmin) {
           <div class="wz-row"><button class="btn btn-primary" type="submit">Save</button><span class="hint" id="wz-prov-msg"></span></div>
         </form>` },
       { id: 'launchbox', title: 'Download the LaunchBox database', body: () => `
-        <p>A free game database that lives on this server. It needs no key, matches by exact name and is very quick. It is the best first step for finding your games, and it takes about a minute.</p>
+        <p>A free game database that lives on this server. It needs no key, matches by exact name and is very quick. It is the best first step for finding your games, and it takes about a minute. It carries on in the background if you move to the next step.</p>
         <div id="wz-lb"></div>` },
       { id: 'source', title: 'Add your first folder of games', body: () => `
         <p>Point game-sauce at a folder of games for <b>one</b> console. Your files stay exactly where they are.</p>
         <form class="edit-form" id="wz-source" autocomplete="off">
-          <label class="field"><span>Folder path on this server</span><input name="path" placeholder="/mnt/games/roms/ps2" required /></label>
+          <label class="field"><span>Folder path on this server</span>
+            <div class="wz-path"><input name="path" placeholder="/mnt/games/roms/ps2" required /><button class="btn" type="button" id="wz-browse">Browse…</button></div></label>
+          <div class="wz-browser hidden" id="wz-browser">
+            <div class="wz-bpath" id="wz-bpath"></div>
+            <div class="wz-bdirs" id="wz-bdirs"></div>
+            <div class="wz-row"><button class="btn btn-sm" type="button" id="wz-bup">↑ Up</button><button class="btn btn-sm btn-primary" type="button" id="wz-buse">Use this folder</button><button class="btn btn-sm btn-ghost" type="button" id="wz-bcancel">Cancel</button></div>
+          </div>
           <label class="field"><span>Platform</span><select name="platform" id="wz-platform"></select></label>
           <div class="wz-row"><button class="btn btn-primary" type="submit">Add and scan</button><span class="hint" id="wz-src-msg"></span></div>
         </form>` }
@@ -4396,18 +4403,28 @@ function paintWelcome() {
   if (wire) wire();
 }
 
+/** While a card is saving, the person cannot move on: Back / Next / Skip are locked and the message shows a spinner,
+ *  so a save is never left unconfirmed. Always call wzBusy(false) when done (use try / finally). */
+function wzBusy(on) {
+  for (const id of ['#wz-next', '#wz-back', '#wz-skip']) { const b = $(id); if (b) b.disabled = on; }
+  $('.modal.wz')?.classList.toggle('is-busy', on);
+}
+const wzSaying = (el, text) => { if (el) el.innerHTML = `<span class="spin" aria-hidden="true"></span>${esc(text)}`; };
+
 function wirePasswordCard() {
   const form = $('#wz-password'), msg = $('#wz-password-msg');
   form.onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(form);
-    msg.textContent = 'Saving…';
+    wzSaying(msg, 'Saving… this takes a few seconds');
+    wzBusy(true);
     try {
-      await api('/auth/password', { method: 'POST', body: JSON.stringify({ current_password: fd.get('current_password'), new_password: fd.get('new_password') }) });
+      const res = await api('/auth/password', { method: 'POST', body: JSON.stringify({ current_password: fd.get('current_password'), new_password: fd.get('new_password') }) });
+      if (res?.token) sessionStorage.setItem('gamesauce_token', res.token); // the old sign-in was replaced
       form.reset();
       msg.textContent = '✓ Password changed.';
-      $('#wz-next').focus();
     } catch (err) { msg.textContent = ''; toast(err.message, true); }
+    finally { wzBusy(false); }
   };
 }
 
@@ -4419,7 +4436,8 @@ function wirePictureCard() {
   file.onchange = async () => {
     const f = file.files[0];
     if (!f) return;
-    $('#wz-pic-msg').textContent = 'Uploading…';
+    wzSaying($('#wz-pic-msg'), 'Uploading…');
+    wzBusy(true);
     try {
       const fd = new FormData();
       fd.append('avatar', await shrinkImage(f), 'avatar.jpg');
@@ -4429,6 +4447,7 @@ function wirePictureCard() {
       paintAvatar($('#user-avatar'), u.id, u.display_name || u.username, data.avatar_v);
       $('#wz-pic-msg').textContent = '✓ Saved.';
     } catch (err) { $('#wz-pic-msg').textContent = ''; toast(err.message, true); }
+    finally { wzBusy(false); }
   };
 }
 
@@ -4439,12 +4458,14 @@ function wireProvidersCard() {
     const fields = {};
     for (const [k, v] of new FormData(form).entries()) if (String(v).trim()) fields[k] = String(v).trim();
     if (!Object.keys(fields).length) { msg.textContent = 'Nothing to save: fill in at least one, or press Next to skip.'; return; }
-    msg.textContent = 'Saving…';
+    wzSaying(msg, 'Saving…');
+    wzBusy(true);
     try {
       const res = await api('/metadata/providers', { method: 'PUT', body: JSON.stringify({ fields }) });
       form.reset();
       msg.textContent = res.rejected?.length ? `Saved; ${res.rejected.length} field(s) refused.` : '✓ Saved. You can test them later in Settings.';
     } catch (err) { msg.textContent = ''; toast(err.message, true); }
+    finally { wzBusy(false); }
   };
 }
 
@@ -4476,25 +4497,49 @@ async function wireSourceCard() {
     window.__platformsCache = items;
     sel.innerHTML = platformOptions();
   } catch { /* the list stays empty; the message below says so */ }
-  const form = $('#wz-source'), msg = $('#wz-src-msg');
+  const form = $('#wz-source'), msg = $('#wz-src-msg'), browser = $('#wz-browser');
   const guess = () => { const slug = platformForFolder(form.path.value); if (slug && [...sel.options].some((o) => o.value === slug)) sel.value = slug; };
   form.path.addEventListener('input', guess);
+
+  // Folder browser: the same server-side listing the Sources page uses, drawn inside the card.
+  let here = null, parent = null;
+  const browse = async (p) => {
+    try {
+      const data = await api(`/sources/browse${p ? `?path=${encodeURIComponent(p)}` : ''}`);
+      here = data.path; parent = data.parent;
+      $('#wz-bpath').textContent = data.path;
+      $('#wz-bdirs').innerHTML = data.dirs.length
+        ? data.dirs.map((d) => `<button type="button" class="browser-dir" data-dir="${esc(d.path)}"><span aria-hidden="true">🗀</span><span class="browser-dir-name">${esc(d.name)}</span><span class="browser-dir-go">›</span></button>`).join('')
+        : '<div class="side-empty">No subfolders here: use this folder as it is.</div>';
+      $$('#wz-bdirs .browser-dir').forEach((b) => { b.onclick = () => browse(b.dataset.dir); });
+      $('#wz-bup').disabled = !parent;
+      browser.classList.remove('hidden');
+    } catch (err) { toast(err.message, true); }
+  };
+  $('#wz-browse').onclick = () => browse(form.path.value.trim() || null);
+  $('#wz-bup').onclick = () => { if (parent) browse(parent); };
+  $('#wz-bcancel').onclick = () => browser.classList.add('hidden');
+  $('#wz-buse').onclick = () => { if (here) { form.path.value = here; guess(); } browser.classList.add('hidden'); };
+
   form.onsubmit = async (e) => {
     e.preventDefault();
     const path = form.path.value.trim();
     if (!path || !sel.value) return;
-    msg.innerHTML = '<span class="spin" aria-hidden="true"></span>Adding…';
+    wzSaying(msg, 'Adding…');
+    wzBusy(true);
+    let created;
     try {
-      const created = await api('/sources', { method: 'POST', body: JSON.stringify({ path, platform_hint: sel.value, recursive: true }) });
-      msg.innerHTML = `<span class="spin" aria-hidden="true"></span>Added ${esc(created.name)}. Scanning…`;
-      const r = await api(`/sources/${created.id}/scan`, { method: 'POST', body: JSON.stringify({ enrich: true }) });
-      msg.textContent = `✓ ${r.added} games found.`;
-      form.reset();
-      loadPlatforms(); loadLibrary();
-    } catch (err) { msg.textContent = ''; toast(err.message, true); }
+      created = await api('/sources', { method: 'POST', body: JSON.stringify({ path, platform_hint: sel.value, recursive: true }) });
+    } catch (err) { msg.textContent = ''; toast(err.message, true); wzBusy(false); return; }
+    // The folder is added; the scan can take minutes on a big collection, so it carries on in the background.
+    wzBusy(false);
+    msg.textContent = `✓ Added ${created.name}. Scanning in the background: you can carry on.`;
+    form.reset();
+    api(`/sources/${created.id}/scan`, { method: 'POST', body: JSON.stringify({ enrich: true }) })
+      .then((r) => { toast(`${r.added} games found in ${created.name}`); loadPlatforms(); loadLibrary(); })
+      .catch((err) => toast(err.message, true));
   };
 }
-
 
 (async function boot() {
   try {
