@@ -330,14 +330,14 @@ button.overview-card {
   width: 3.4286rem; height: 3.4286rem; border-radius: 50%; padding: 0 0 0 0.2143rem;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4286rem; line-height: 1; color: #fff;
-  background: rgba(124, 92, 255, .88); border: 1px solid rgba(255, 255, 255, .45);
-  box-shadow: 0 0 1.1429rem rgba(124, 92, 255, .6), 0 0.2857rem 0.8571rem rgba(0, 0, 0, .6);
+  background: rgba(38, 140, 82, .88); border: 1px solid rgba(255, 255, 255, .4);
+  box-shadow: 0 0 1.1429rem rgba(46, 160, 95, .45), 0 0.2857rem 0.8571rem rgba(0, 0, 0, .6);
   opacity: .0; transition: opacity .15s, transform .15s;
   cursor: pointer; z-index: 2;
 }
 .card:hover .card-playbtn, .card-playbtn:focus-visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 @media (hover: none) { .card-cover .card-playbtn { opacity: .85; } }
-.card-playbtn:hover { background: var(--accent); }
+.card-playbtn:hover { background: #2fa866; }
 .card-playbtn:hover, .card-playbtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 body:has(#bulk-bar:not(.hidden)) .card-playbtn { display: none; }
 .card-fav, .card-hide {
@@ -1476,7 +1476,6 @@ body.play-only .media-strip { display: none !important; }
 body.play-only .card-select, body.play-only .card-hide { display: none !important; }
 body.play-only .grid { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 1.2rem 1rem; }
 body.play-only .card-title { font-size: 0.95rem; }
-body.play-only .card-playbtn { opacity: 1; }
 @media (max-width: 720px) {
   body.play-only .grid { grid-template-columns: repeat(auto-fill, minmax(7.6rem, 1fr)); gap: 0.9rem 0.7rem; }
 }
