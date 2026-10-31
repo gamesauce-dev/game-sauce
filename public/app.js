@@ -432,8 +432,8 @@ function cardHtml(rom) {
         ${rom.dat_status && rom.dat_status !== 'not-in-dat' ? `<span class="badge-dat ${rom.dat_status === 'verified' ? '' : rom.dat_status}" title="DAT: ${rom.dat_status}">${rom.dat_status}</span>` : ''}
         ${rom.keep_override === 1 ? `<span class="card-lock" title="Locked: protected from deletion" aria-label="Locked">${ICON.keepOn}</span>` : ''}
         <button type="button" class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" tabindex="-1" title="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
-        <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : 'Hide from library'}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
-        ${rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : ''}
+        <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : 'Hide from your view'}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
+        ${rom.hidden_all ? '<span class="card-hidden-veil">hidden from everyone</span>' : (rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : '')}
       </div>
       <div class="card-title">${esc(rom.title)}</div>
       <div class="card-sub">
@@ -963,6 +963,8 @@ function syncSelectUI() {
   $('#bulk-clearmatch-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
+  $('#bulk-hideall-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
+  $$('.bha-label').forEach((l) => { l.textContent = state.hidden ? 'Show to everyone' : 'Hide from everyone'; });
   $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
   $('#bulk-addcoll')?.classList.toggle('hidden', n === 0);
   $('#select-toggle')?.classList.toggle('is-active', on);
@@ -1014,6 +1016,26 @@ async function bulkHideSelected() {
   try {
     await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: !unhide }) });
     toast(unhide ? `${ids.length} game${ids.length === 1 ? '' : 's'} back in the library` : `Hid ${ids.length} game${ids.length === 1 ? '' : 's'}`);
+    state.selected.clear();
+    await Promise.all([loadLibrary(), loadPlatforms()]);
+    syncSelectUI();
+  } catch (err) { toast(err.message, true); }
+}
+
+// Admin: hide every selected game from everyone (or, in the Hidden filter, show them to everyone again).
+async function bulkHideAllSelected() {
+  const ids = [...state.selected];
+  if (!ids.length) return toast('Select some tiles first', true);
+  const unhide = !!state.hidden;
+  const ok = await confirmDialog({
+    title: unhide ? `Show ${ids.length} game${ids.length === 1 ? '' : 's'} to everyone?` : `Hide ${ids.length} game${ids.length === 1 ? '' : 's'} from everyone?`,
+    body: unhide ? 'Members will be able to see them again.' : 'Members will no longer see or open them. Nothing is deleted, and you can show them again from the Hidden filter.',
+    okLabel: unhide ? 'Show to everyone' : 'Hide from everyone'
+  });
+  if (!ok) return;
+  try {
+    await api('/roms/bulk/hide-all', { method: 'POST', body: JSON.stringify({ ids, hidden: !unhide }) });
+    toast(unhide ? 'Shown to everyone again' : `Hid ${ids.length} game${ids.length === 1 ? '' : 's'} from everyone`);
     state.selected.clear();
     await Promise.all([loadLibrary(), loadPlatforms()]);
     syncSelectUI();
@@ -1288,7 +1310,8 @@ async function openDetail(id) {
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
           ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
-          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b>${rom.hidden ? '' : '<small>Only from your view; others still see it</small>'}</span></button>
+          ${authState.user?.role === 'admin' ? `<button class="mi${rom.hidden_all ? ' on' : ''}" role="menuitem" data-act="hideall">${rom.hidden_all ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden_all ? 'Show to everyone again' : 'Hide from everyone'}</b><small>${rom.hidden_all ? 'Hidden from every member now' : 'Members will not see or open it; you find it under Hidden'}</small></span></button>` : ''}
+          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide for me' : (authState.user?.role === 'admin' ? 'Hide from me only' : 'Hide this game')}</b>${rom.hidden ? '' : '<small>Only from your view; others still see it</small>'}</span></button>
           <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
           ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>
@@ -1423,6 +1446,15 @@ async function openDetail(id) {
     openAddToCollection([id], rom.title);
   });
 
+  $('[data-act="hideall"]', drawer)?.addEventListener('click', async () => {
+    try {
+      const to = !rom.hidden_all;
+      await api(`/roms/${id}/hide-all`, { method: 'POST', body: JSON.stringify({ hidden: to }) });
+      toast(to ? 'Hidden from everyone' : 'Shown to everyone again');
+      closeDrawer();
+      await Promise.all([loadLibrary(), loadPlatforms()]);
+    } catch (err) { toast(err.message, true); }
+  });
   $('[data-act="hide"]', drawer).addEventListener('click', async () => {
     await api(`/roms/${id}/hide`, { method: 'POST' });
     closeDrawer();
@@ -3233,6 +3265,7 @@ $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); sync
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
 $('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
+$('#bulk-hideall-btn')?.addEventListener('click', bulkHideAllSelected);
 $('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
 

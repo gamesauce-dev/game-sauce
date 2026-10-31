@@ -39,7 +39,7 @@ const ROM_COLUMNS = `
   r.meta_source, r.meta_synced_at, r.play_count,
   CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
-  r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system,
+  r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system, r.hidden_all,
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
   p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
@@ -305,6 +305,17 @@ bulkRouter.post('/system', requireAdmin, (req, res) => {
   res.json({ changed, system: Boolean(v) });
 });
 
+bulkRouter.post('/hide-all', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
+  const v = req.body?.hidden === false ? 0 : 1;
+  const stmt = db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?");
+  let changed = 0;
+  db.transaction(() => { for (const id of ids) changed += stmt.run(v, id).changes; })();
+  req.auditDetail = { hidden: Boolean(v), count: ids.length };
+  res.json({ changed, hidden_all: Boolean(v) });
+});
+
 bulkRouter.post('/delete', (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
   if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
@@ -389,14 +400,17 @@ router.get('/', (req, res) => {
   // does not ask for them; hidden=only is the filter that finds them again.
   // System entries (BIOS, devices, computers) have their own filter: ?system=only shows just them (hidden ones too, so
   // they can be selected, hidden or unhidden there); otherwise they stay out of the library.
+  // A game an admin hid from everyone is invisible to members, always. An admin finds those under Hidden.
+  const isAdminUser = req.user?.role === 'admin';
+  if (!isAdminUser) where.push('r.hidden_all = 0');
   if (req.query.system === 'only') where.push('r.is_system = 1');
   else {
     if (req.query.system !== 'all') where.push('r.is_system = 0');
     // Hiding is personal: only the signed-in person's own hidden games are left out (others still see them).
     const mine = 'EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid)';
-    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(mine);
+    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(isAdminUser ? `(${mine} OR r.hidden_all = 1)` : mine);
     else if (req.query.hidden === 'all') { /* no clause */ }
-    else where.push('NOT ' + mine);
+    else where.push('NOT ' + mine + (isAdminUser ? ' AND r.hidden_all = 0' : ''));
   }
   if (req.query.missing === '1') where.push('r.missing = 1');
   if (req.query.missing === '0') where.push('r.missing = 0');
@@ -451,17 +465,20 @@ router.get('/', (req, res) => {
 /* ------------------------------------------------------------ facets */
 
 router.get('/facets', (req, res) => {
+  // Members' counts leave out games an admin hid from everyone.
+  const vis = req.user?.role === 'admin' ? '' : ' AND r.hidden_all = 0';
+  const visOnly = req.user?.role === 'admin' ? '' : ' WHERE hidden_all = 0';
   const platforms = db.prepare(`
     SELECT p.slug, p.name, p.short_name, p.accent, p.family, p.manufacturer,
            p.generation, COUNT(r.id) AS count,
            COALESCE(SUM(r.size_bytes), 0) AS bytes
-    FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id
+    FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${vis}
     GROUP BY p.id HAVING count > 0 ORDER BY p.name
   `).all();
 
   const families = db.prepare(`
     SELECT COALESCE(p.family,'Other') AS name, COUNT(r.id) AS count
-    FROM platforms p JOIN roms r ON r.platform_id = p.id
+    FROM platforms p JOIN roms r ON r.platform_id = p.id${vis}
     GROUP BY p.family ORDER BY count DESC
   `).all();
 
@@ -493,13 +510,13 @@ router.get('/facets', (req, res) => {
            COUNT(DISTINCT platform_id) AS platforms,
            (SELECT COUNT(*) FROM favorites WHERE user_id = ${req.user ? Number(req.user.id) : -1}) AS favorites,
            SUM(missing) AS missing,
-           (SELECT COUNT(*) FROM hidden_roms WHERE user_id = ${req.user ? Number(req.user.id) : -1}) AS hidden,
+           (SELECT COUNT(*) FROM hidden_roms WHERE user_id = ${req.user ? Number(req.user.id) : -1}) + ${req.user?.role === 'admin' ? '(SELECT COUNT(*) FROM roms r2 WHERE r2.hidden_all = 1 AND NOT EXISTS (SELECT 1 FROM hidden_roms h2 WHERE h2.rom_id = r2.id AND h2.user_id = ' + Number(req.user.id) + '))' : '0'} AS hidden,
            SUM(CASE WHEN meta_source IN ('screenscraper','thegamesdb') THEN 1 ELSE 0 END) AS enriched,
            SUM(CASE WHEN source_id IS NULL THEN 1 ELSE 0 END) AS orphaned,
            SUM(CASE WHEN missing = 1 AND source_id IS NOT NULL THEN 1 ELSE 0 END) AS missing_sourced,
            SUM(CASE WHEN meta_source IN ('filename','seed','') OR meta_source IS NULL THEN 1 ELSE 0 END) AS never_enriched,
            SUM(CASE WHEN source_id IS NULL AND in_place = 0 THEN 1 ELSE 0 END) AS imported_or_seed
-    FROM roms
+    FROM roms${visOnly}
   `).get();
 
   res.json({ platforms, families, sources, genres, regions, tags, stats });
@@ -517,7 +534,7 @@ router.get('/recently-played', (req, res) => {
     JOIN roms r ON r.id = d.rom_id
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
-    WHERE d.kind = 'play' AND d.user_id = @uid AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
+    WHERE d.kind = 'play' AND d.user_id = @uid AND r.hidden_all = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
     GROUP BY r.id
     ORDER BY last_play_id DESC
     LIMIT @lim
@@ -544,6 +561,12 @@ router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 
 
 // Registered before '/:id' so it isn't swallowed by it (job itself is defined further down).
 router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJob }));
+
+// A game hidden from everyone does not exist for members: every route that names it answers 404 (admins pass).
+router.param('id', (req, res, next, id) => {
+  if (req.user?.role !== 'admin' && /^\d+$/.test(id) && db.prepare('SELECT 1 FROM roms WHERE id = ? AND hidden_all = 1').get(id)) return res.status(404).json({ error: 'ROM not found' });
+  next();
+});
 
 router.get('/:id', (req, res) => {
   const rom = romById(req.params.id, req.user?.id);
@@ -810,6 +833,16 @@ router.post('/:id/hide', (req, res) => {
   else db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?').run(req.user.id, rom.id);
 
   res.json({ id: Number(req.params.id), hidden: next });
+});
+
+/* Hide a game from EVERYONE (admin). hidden: true / false. Members lose sight of it at once; the admin finds it under Hidden. */
+router.post('/:id/hide-all', requireAdmin, (req, res) => {
+  const rom = db.prepare('SELECT id FROM roms WHERE id = ?').get(req.params.id);
+  if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  const next = req.body?.hidden === false ? 0 : 1;
+  if (req.romSnapshot) req.romSnapshot.hidden = Boolean(next);
+  db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
+  res.json({ id: rom.id, hidden_all: next });
 });
 
 router.post('/:id/favorite', (req, res) => {

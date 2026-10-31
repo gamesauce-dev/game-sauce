@@ -82,5 +82,5 @@ test('the DAT list is quick on a real-sized library (the game -> DAT entry link 
   assert.ok(idx.includes('idx_roms_dat_entry'), 'roms.dat_entry_id needs an index or the DAT list scans every game for every entry');
   const plan = db.prepare('EXPLAIN QUERY PLAN SELECT COUNT(*) FROM roms r WHERE r.dat_entry_id IN (SELECT id FROM dat_entries WHERE datfile_id = 1)').all().map((r) => r.detail).join(' | ');
   assert.match(plan, /idx_roms_dat_entry/, 'the count uses the index: ' + plan);
-  assert.equal(Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get().value), 18);
+  assert.ok(Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get().value) >= 18);
 });

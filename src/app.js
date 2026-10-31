@@ -149,7 +149,7 @@ export function createApp() {
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count
-        FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id
+        FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? '' : ' AND r.hidden_all = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
       `).all()
     });
@@ -269,7 +269,7 @@ export function createApp() {
         SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
                COUNT(DISTINCT platform_id) AS platforms,
                (SELECT COUNT(*) FROM favorites WHERE user_id = ${mine == null ? -1 : mine}) AS favorites
-        FROM roms
+        FROM roms${req.user?.role === 'admin' ? '' : ' WHERE hidden_all = 0'}
       `).get(),
       mine: mine == null ? { favorites: 0, downloads: 0 } : {
         favorites: db.prepare('SELECT COUNT(*) AS n FROM favorites WHERE user_id = ?').get(mine).n,
@@ -280,6 +280,7 @@ export function createApp() {
                p.short_name AS platform_short, p.accent AS platform_accent,
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id
+        WHERE r.hidden_all = 0
         ORDER BY r.created_at DESC LIMIT 16
       `).all().map((r) => ({ ...r, cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : null })),
       downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE kind = \'download\'').get().n,

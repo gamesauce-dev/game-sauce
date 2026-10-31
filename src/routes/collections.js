@@ -34,7 +34,7 @@ router.get('/:id', (req, res) => {
     FROM collection_roms cr
     JOIN roms r ON r.id = cr.rom_id
     JOIN platforms p ON p.id = r.platform_id
-    WHERE cr.collection_id = ?
+    WHERE cr.collection_id = ? ${req.user?.role === 'admin' ? '' : 'AND r.hidden_all = 0'}
     ORDER BY r.sort_title
   `).all(collection.id).map((r) => ({
     ...r,

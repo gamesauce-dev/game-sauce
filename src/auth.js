@@ -354,6 +354,11 @@ export function describeAudit(entry) {
       if (detail?.title) return `${who} deleted “${detail.title}” (${detail.platform || 'unknown platform'})`;
       return `${who} deleted ROM ${t || id}`;
     }
+    if (res === 'roms' && method === 'POST' && ((seg[1] === 'bulk' && seg[2] === 'hide-all') || seg[2] === 'hide-all')) {
+      const verb = detail?.hidden === false ? 'showed to everyone' : 'hid from everyone';
+      if (detail?.title) return `${who} ${verb} “${detail.title}” (${detail.platform || 'unknown platform'})`;
+      return `${who} ${verb} ${detail?.count ?? ''} ROM${detail?.count === 1 ? '' : 's'}`.replace('  ', ' ');
+    }
     if (res === 'roms' && method === 'POST' && seg[1] === 'bulk' && seg[2] === 'hide') {
       const named = Array.isArray(detail?.titles) && detail.titles.length
         ? detail.titles.slice(0, 3).map((x) => `“${x.title}” (${x.platform || 'unknown platform'})`).join(', ')

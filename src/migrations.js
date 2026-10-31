@@ -319,4 +319,6 @@ if (!db.prepare("SELECT value FROM meta WHERE key = 'entities_cleaned'").get()) 
 if (db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'dat_entry_id')) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
 }
-db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '18') ON CONFLICT(key) DO UPDATE SET value = '18'").run();
+/* ── v19: hidden_all — an admin can hide a game from EVERYONE (members cannot see or open it; the admin finds it under Hidden). Personal hiding (hidden_roms) is unchanged. */
+if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'hidden_all')) db.exec('ALTER TABLE roms ADD COLUMN hidden_all INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '19') ON CONFLICT(key) DO UPDATE SET value = '19'").run();
