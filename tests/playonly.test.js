@@ -114,3 +114,14 @@ test('the allow-list itself', async () => {
   assert.equal(playOnlyAllows('PATCH', '/auth/users/3'), false);
   assert.equal(playOnlyAllows('POST', '/auth/avatar'), true);
 });
+
+test('the top bar hands the logo, name row and menu back to the sidebar when a play-only user signs out and an admin signs in', () => {
+  const src = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('function syncTopbar()'), src.indexOf('function showApp('));
+  // the pieces are looked up once and remembered, not searched for inside the sidebar every time (they are not there while in the bar)
+  assert.match(fn, /syncTopbar\.parts/);
+  assert.equal(fn.split("$('.brand', side)").length - 1, 1, 'the logo is looked up in one place only');
+  assert.doesNotMatch(fn, /footer\.querySelector/, 'the name row is not searched for again on the way back');
+  assert.match(fn, /side\.prepend\(brand\)/);
+  assert.match(fn, /footer\.prepend\(userRow\)/);
+});

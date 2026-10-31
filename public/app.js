@@ -3455,14 +3455,21 @@ function syncTopbar() {
   const bar = $('#play-topbar');
   if (!bar) return;
   const side = $('.sidebar');
-  const brand = $('.brand', side), footer = $('.side-footer', side), nav = $('#nav');
+  // Look the pieces up wherever they are right now (the top bar OR the sidebar) and remember them the first time:
+  // once they have moved into the bar they are no longer inside the sidebar, and a failed lookup used to put the
+  // word "null" on the screen when the account changed from play-only back to the full screen without a refresh.
+  const parts = (syncTopbar.parts ||= {
+    brand: $('.brand', side), userRow: $('.side-footer .user-row', side), nav: $('#nav'), footer: $('.side-footer', side)
+  });
+  const { brand, userRow, nav, footer } = parts;
+  if (!side || !brand || !userRow || !nav || !footer) { bar.classList.toggle('hidden', !on); return; }
   if (on && !bar.dataset.filled) {
     bar.dataset.filled = '1';
-    bar.append(brand, footer.querySelector('.user-row'), nav);
+    bar.append(brand, userRow, nav);
   } else if (!on && bar.dataset.filled) {
     delete bar.dataset.filled;
     side.prepend(brand);
-    footer.append(...bar.querySelectorAll('.user-row'));
+    footer.prepend(userRow);
     side.insertBefore(nav, side.querySelector('.side-section'));
   }
   bar.classList.toggle('hidden', !on);
