@@ -195,15 +195,19 @@ export function detectPlatform(filename) {
 
 export const PLATFORM_SLUGS = new Set(PLATFORMS.map((p) => p.slug));
 
+/**
+ * Make sure every built-in platform exists. A platform that is ALREADY in the database is left exactly as it is: an admin can edit
+ * names, short names, families, colours, ids and extensions in Settings, and those edits must survive restarts and updates.
+ * (Until now every start overwrote them with the built-in values.) Only a platform that is missing is created, and an id that was
+ * never filled in (ScreenScraper / TheGamesDB) is filled from the built-in value, because a blank one only costs matching.
+ */
 export function seedPlatforms(db) {
   const stmt = db.prepare(`
     INSERT INTO platforms (slug, name, short_name, family, manufacturer, generation, accent, screenscraper_id, tgdb_id, extensions)
     VALUES (@slug, @name, @short_name, @family, @manufacturer, @generation, @accent, @screenscraper, @tgdb, @extensions)
     ON CONFLICT(slug) DO UPDATE SET
-      name = excluded.name, short_name = excluded.short_name, family = excluded.family,
-      manufacturer = excluded.manufacturer, generation = excluded.generation,
-      accent = excluded.accent, screenscraper_id = excluded.screenscraper_id,
-      tgdb_id = excluded.tgdb_id, extensions = excluded.extensions
+      screenscraper_id = COALESCE(platforms.screenscraper_id, excluded.screenscraper_id),
+      tgdb_id = COALESCE(platforms.tgdb_id, excluded.tgdb_id)
   `);
   const rows = PLATFORMS.map((p) => ({
     ...p,

@@ -72,3 +72,31 @@ test('games carry their platform icon, and search finds a game by its platform',
   assert.deepEqual(await t('nintendo'), ['Big Quest', 'Tiny Quest'], 'and its family');
   assert.equal((await call('/api/roms?q=tiny')).body.items[0].platform_icon, 'handheld');
 });
+
+test('edits to a built-in platform survive a restart or an update (the built-in list no longer overwrites them)', async () => {
+  const { seedPlatforms } = await import('../src/lib/platforms.js');
+  await call('/api/platforms/ps1', { method: 'PATCH', body: { short_name: 'PSX', accent: '#123456', name: 'PlayStation (mine)', family: 'Sony' } });
+  await call('/api/platforms/genesis', { method: 'PATCH', body: { short_name: 'GENESIS', icon: 'cartridge' } });
+  seedPlatforms(db); // what every start and every update runs
+  seedPlatforms(db);
+  const row = (slug) => db.prepare('SELECT * FROM platforms WHERE slug = ?').get(slug);
+  assert.equal(row('ps1').short_name, 'PSX');
+  assert.equal(row('ps1').accent, '#123456');
+  assert.equal(row('ps1').name, 'PlayStation (mine)');
+  assert.equal(row('genesis').short_name, 'GENESIS');
+  assert.equal(row('genesis').icon, 'cartridge', 'the icon choice is kept too');
+  assert.equal(row('snes').short_name, 'SNES', 'an untouched platform is, of course, still the built-in one');
+});
+
+test('a built-in platform that is missing is created again, and blank ids are filled from the built-in values', async () => {
+  const { seedPlatforms } = await import('../src/lib/platforms.js');
+  db.prepare("DELETE FROM platforms WHERE slug = 'virtualboy'").run();
+  db.prepare("UPDATE platforms SET screenscraper_id = NULL, tgdb_id = NULL WHERE slug = 'n64'").run();
+  seedPlatforms(db);
+  assert.ok(db.prepare("SELECT 1 FROM platforms WHERE slug = 'virtualboy'").get(), 'a missing built-in platform is created');
+  const n64 = db.prepare("SELECT screenscraper_id, tgdb_id FROM platforms WHERE slug = 'n64'").get();
+  assert.ok(n64.screenscraper_id && n64.tgdb_id, 'ids that were never set are filled in');
+  db.prepare("UPDATE platforms SET screenscraper_id = 9999 WHERE slug = 'n64'").run();
+  seedPlatforms(db);
+  assert.equal(db.prepare("SELECT screenscraper_id FROM platforms WHERE slug = 'n64'").get().screenscraper_id, 9999, 'an id the admin set is never replaced');
+});
