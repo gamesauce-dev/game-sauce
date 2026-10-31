@@ -87,9 +87,17 @@ router.get('/me', (req, res) => {
       display_name: req.user.display_name,
       role: req.user.role,
       avatar_v: db.prepare('SELECT avatar_updated FROM users WHERE id = ?').get(req.user.id)?.avatar_updated || null,
-      can_download: canDownload(req.user)
+      can_download: canDownload(req.user),
+      welcomed: Boolean(db.prepare('SELECT welcomed FROM users WHERE id = ?').get(req.user.id)?.welcomed)
     }
   });
+});
+
+/** The welcome tour: done = true marks it seen (finished or skipped); done = false lets the person run it again. */
+router.post('/welcomed', requireAuth, (req, res) => {
+  const done = req.body?.done !== false;
+  db.prepare('UPDATE users SET welcomed = ? WHERE id = ?').run(done ? 1 : 0, req.user.id);
+  res.json({ welcomed: done });
 });
 
 /** Server-wide switches. Anyone signed in can read them; only an admin can change them. */
@@ -174,7 +182,7 @@ router.post('/login', async (req, res) => {
   res.json({
     token,
     expires_in,
-    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, can_download: canDownload(user) }
+    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, can_download: canDownload(user), welcomed: Boolean(user.welcomed) }
   });
 });
 

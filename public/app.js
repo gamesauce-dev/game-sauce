@@ -1287,7 +1287,7 @@ async function openDetail(id) {
         <div class="more-menu hidden" id="more-menu" role="menu">
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
-          ${rom.play_capable ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
+          ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide this game' : 'Hide this game'}</b>${rom.hidden ? '' : '<small>Only from your view; others still see it</small>'}</span></button>
           <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
           ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
@@ -3311,6 +3311,9 @@ function showApp(user, { restore = false } = {}) {
   // and tiles stay hidden for members; renderSettingsTiles filters by role.
   $$('#view-settings .admin-only').forEach((el) => el.classList.toggle('hidden', !isAdmin));
 
+  // First sign-in of a new account: the welcome tour (once; "Run the welcome tour again" in My account brings it back).
+  if (user.welcomed === false && !restore) setTimeout(() => startWelcome(), 350);
+
   // Every sign-in starts on the Library home. Signing out only hides the app, so without
   // this you would land back on whatever view (e.g. Settings) was open before.
   try { closeDrawer(); } catch { /* drawer not open */ }
@@ -3400,6 +3403,7 @@ $('#settings-gear')?.addEventListener('click', () => setView('settings'));
    fully list. Clicking a tile reveals ONLY its module below. */
 const SETTINGS_MODULES = [
   { id: 'profile', label: 'Profile picture', ico: '🖼', adminOnly: false },
+  { id: 'welcome', label: 'Welcome tour', ico: '👋', adminOnly: false },
   { id: 'password', label: 'Change password', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', ico: '💻', adminOnly: false },
   { id: 'controller', label: 'Controller', ico: '🎮', adminOnly: false },
@@ -3419,7 +3423,7 @@ const SETTINGS_MODULES = [
 
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
-  { id: 'account',  label: 'My account',          ico: '👤', modules: ['profile', 'password', 'controller'] },
+  { id: 'account',  label: 'My account',          ico: '👤', modules: ['profile', 'welcome', 'password', 'controller'] },
   { id: 'tools',    label: 'Library tools',       ico: '🧰', modules: ['dat', 'names', 'duplicates'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
   { id: 'status',   label: 'Health & coverage',   ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
@@ -3665,6 +3669,7 @@ function showSettingsModule(id) {
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
   if (id === 'profile') initProfilePanel();
+  if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
   if (id === 'names') initNamesPanel();
   if (id === 'health') loadHealth();
   if (id === 'duplicates') loadDuplicates(true);
@@ -4273,6 +4278,223 @@ $('#new-user-form').addEventListener('submit', async (e) => {
 });
 
 /* ─────────────────────────── boot ─────────────────────────── */
+
+/* ─────────────────────────── welcome tour ─────────────────────────── */
+
+/* A short set of cards the first time someone signs in: members set a password and a picture; the admin also sets up
+ * providers, downloads the LaunchBox database and adds a first folder. Everything in it is also available in Settings,
+ * so any card can be skipped, and "Run the welcome tour again" in My account brings it back. */
+const WELCOME = { step: 0, cards: [], open: false };
+
+function welcomeCards(isAdmin) {
+  const cards = [
+    { id: 'hello', title: isAdmin ? 'Welcome to game-sauce' : 'Welcome', body: () => `
+        <p>${isAdmin
+          ? 'This quick tour gets your library ready: your password and picture, where game details come from, and your first folder of games.'
+          : 'This takes a minute: set your own password and, if you like, a picture. Then you are ready to browse.'}</p>
+        <p class="hint">You can skip any step and find everything later in Settings (the gear next to your name).</p>` },
+    { id: 'password', title: 'Choose your own password', body: () => `
+        <form class="edit-form" id="wz-password" autocomplete="off">
+          <label class="field"><span>Current password</span><input type="password" name="current_password" autocomplete="current-password" required /></label>
+          <label class="field"><span>New password</span><input type="password" name="new_password" autocomplete="new-password" required /></label>
+          <p class="hint">At least 10 characters, with a letter and a number.</p>
+          <div class="wz-row"><button class="btn btn-primary" type="submit">Change password</button><span class="hint" id="wz-password-msg"></span></div>
+        </form>` },
+    { id: 'picture', title: 'Add a picture', body: () => `
+        <div class="profile-row">
+          <div class="avatar avatar-lg" id="wz-avatar">?</div>
+          <div>
+            <p class="hint" style="margin-top:0">Shown next to your name. A JPEG, PNG or WebP up to 1 MB; it is shrunk before saving.</p>
+            <button class="btn btn-primary" id="wz-pic-btn" type="button">Choose a picture</button>
+            <input type="file" id="wz-pic-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+            <span class="hint" id="wz-pic-msg"></span>
+          </div>
+        </div>` }
+  ];
+  if (isAdmin) {
+    cards.push(
+      { id: 'providers', title: 'Where game details come from', body: () => `
+        <p>game-sauce looks games up in several places. <b>IGDB</b> is free and the best starting point; the others add coverage.</p>
+        <form class="edit-form" id="wz-providers" autocomplete="off">
+          <div class="wz-prov"><b>IGDB</b> <a href="https://api-docs.igdb.com/#getting-started" target="_blank" rel="noreferrer">get keys ↗</a>
+            <div class="wz-two"><input name="IGDB_CLIENT_ID" placeholder="Client ID" /><input name="IGDB_CLIENT_SECRET" type="password" placeholder="Client secret" /></div></div>
+          <div class="wz-prov"><b>TheGamesDB</b> <a href="https://thegamesdb.net/" target="_blank" rel="noreferrer">get a key ↗</a>
+            <div class="wz-two"><input name="TGDB_API_KEY" type="password" placeholder="API key" /></div></div>
+          <div class="wz-prov"><b>SteamGridDB</b> <span class="hint">(extra covers)</span> <a href="https://www.steamgriddb.com/profile/preferences/api" target="_blank" rel="noreferrer">get a key ↗</a>
+            <div class="wz-two"><input name="SGDB_API_KEY" type="password" placeholder="API key" /></div></div>
+          <p class="hint">Leave any you do not have blank. ScreenScraper needs a developer account and is set up later in Settings.</p>
+          <div class="wz-row"><button class="btn btn-primary" type="submit">Save</button><span class="hint" id="wz-prov-msg"></span></div>
+        </form>` },
+      { id: 'launchbox', title: 'Download the LaunchBox database', body: () => `
+        <p>A free game database that lives on this server. It needs no key, matches by exact name and is very quick. It is the best first step for finding your games, and it takes about a minute.</p>
+        <div id="wz-lb"></div>` },
+      { id: 'source', title: 'Add your first folder of games', body: () => `
+        <p>Point game-sauce at a folder of games for <b>one</b> console. Your files stay exactly where they are.</p>
+        <form class="edit-form" id="wz-source" autocomplete="off">
+          <label class="field"><span>Folder path on this server</span><input name="path" placeholder="/mnt/games/roms/ps2" required /></label>
+          <label class="field"><span>Platform</span><select name="platform" id="wz-platform"></select></label>
+          <div class="wz-row"><button class="btn btn-primary" type="submit">Add and scan</button><span class="hint" id="wz-src-msg"></span></div>
+        </form>` }
+    );
+  }
+  cards.push({ id: 'done', title: 'You are all set', body: () => `
+      <p>${isAdmin ? 'Your library will fill in as games are found.' : 'Have a look around.'} Settings (the gear next to your name) has everything this tour covered, and you can run the tour again from <b>My account</b>.</p>` });
+  return cards;
+}
+
+function closeWelcome() {
+  clearTimeout(WELCOME.lbTimer);
+  $('#welcome')?.remove();
+  WELCOME.open = false;
+}
+
+async function finishWelcome(done = true) {
+  closeWelcome();
+  try { await api('/auth/welcomed', { method: 'POST', body: JSON.stringify({ done }) }); if (authState.user) authState.user.welcomed = done; } catch { /* the tour just shows again next time */ }
+}
+
+function startWelcome() {
+  if (WELCOME.open || !authState.user) return;
+  const isAdmin = authState.user.role === 'admin';
+  WELCOME.cards = welcomeCards(isAdmin);
+  WELCOME.step = 0;
+  WELCOME.open = true;
+  const el = document.createElement('div');
+  el.id = 'welcome';
+  el.className = 'modal-scrim';
+  el.innerHTML = `<div class="modal wz" role="dialog" aria-modal="true" aria-labelledby="wz-title">
+    <div class="wz-dots" id="wz-dots"></div>
+    <h3 class="modal-title" id="wz-title"></h3>
+    <div id="wz-body"></div>
+    <div class="wz-nav">
+      <button class="btn btn-ghost" id="wz-skip" type="button">Skip tour</button>
+      <span class="wz-spacer"></span>
+      <button class="btn" id="wz-back" type="button">← Back</button>
+      <button class="btn btn-primary" id="wz-next" type="button">Next →</button>
+    </div></div>`;
+  document.body.append(el);
+  $('#wz-skip', el).onclick = () => finishWelcome(true);
+  $('#wz-back', el).onclick = () => { if (WELCOME.step > 0) { WELCOME.step--; paintWelcome(); } };
+  $('#wz-next', el).onclick = () => {
+    if (WELCOME.step >= WELCOME.cards.length - 1) return finishWelcome(true);
+    WELCOME.step++; paintWelcome();
+  };
+  paintWelcome();
+}
+
+function paintWelcome() {
+  const card = WELCOME.cards[WELCOME.step];
+  const last = WELCOME.step === WELCOME.cards.length - 1;
+  clearTimeout(WELCOME.lbTimer);
+  $('#wz-title').textContent = card.title;
+  $('#wz-body').innerHTML = card.body();
+  $('#wz-dots').innerHTML = WELCOME.cards.map((c, i) => `<i class="${i === WELCOME.step ? 'on' : i < WELCOME.step ? 'past' : ''}"></i>`).join('');
+  $('#wz-back').classList.toggle('hidden', WELCOME.step === 0);
+  $('#wz-skip').classList.toggle('hidden', last);
+  $('#wz-next').textContent = last ? 'Finish' : (WELCOME.step === 0 ? 'Start →' : 'Next →');
+  const wire = { password: wirePasswordCard, picture: wirePictureCard, providers: wireProvidersCard, launchbox: wireLaunchBoxCard, source: wireSourceCard }[card.id];
+  if (wire) wire();
+}
+
+function wirePasswordCard() {
+  const form = $('#wz-password'), msg = $('#wz-password-msg');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    msg.textContent = 'Saving…';
+    try {
+      await api('/auth/password', { method: 'POST', body: JSON.stringify({ current_password: fd.get('current_password'), new_password: fd.get('new_password') }) });
+      form.reset();
+      msg.textContent = '✓ Password changed.';
+      $('#wz-next').focus();
+    } catch (err) { msg.textContent = ''; toast(err.message, true); }
+  };
+}
+
+function wirePictureCard() {
+  const u = authState.user;
+  paintAvatar($('#wz-avatar'), u.id, u.display_name || u.username, u.avatar_v);
+  const file = $('#wz-pic-file');
+  $('#wz-pic-btn').onclick = () => file.click();
+  file.onchange = async () => {
+    const f = file.files[0];
+    if (!f) return;
+    $('#wz-pic-msg').textContent = 'Uploading…';
+    try {
+      const fd = new FormData();
+      fd.append('avatar', await shrinkImage(f), 'avatar.jpg');
+      const data = await api('/auth/avatar', { method: 'POST', body: fd });
+      u.avatar_v = data.avatar_v;
+      paintAvatar($('#wz-avatar'), u.id, u.display_name || u.username, data.avatar_v);
+      paintAvatar($('#user-avatar'), u.id, u.display_name || u.username, data.avatar_v);
+      $('#wz-pic-msg').textContent = '✓ Saved.';
+    } catch (err) { $('#wz-pic-msg').textContent = ''; toast(err.message, true); }
+  };
+}
+
+function wireProvidersCard() {
+  const form = $('#wz-providers'), msg = $('#wz-prov-msg');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const fields = {};
+    for (const [k, v] of new FormData(form).entries()) if (String(v).trim()) fields[k] = String(v).trim();
+    if (!Object.keys(fields).length) { msg.textContent = 'Nothing to save: fill in at least one, or press Next to skip.'; return; }
+    msg.textContent = 'Saving…';
+    try {
+      const res = await api('/metadata/providers', { method: 'PUT', body: JSON.stringify({ fields }) });
+      form.reset();
+      msg.textContent = res.rejected?.length ? `Saved; ${res.rejected.length} field(s) refused.` : '✓ Saved. You can test them later in Settings.';
+    } catch (err) { msg.textContent = ''; toast(err.message, true); }
+  };
+}
+
+async function wireLaunchBoxCard() {
+  const box = $('#wz-lb');
+  if (!box) return;
+  let s;
+  try { s = await api('/metadata/launchbox'); } catch (err) { box.innerHTML = `<p class="hint">${esc(err.message)}</p>`; return; }
+  if (!$('#wz-lb')) return;
+  const running = s.job.state === 'downloading' || s.job.state === 'importing';
+  box.innerHTML = running
+    ? `<div class="lb-progress"><span class="spin" aria-hidden="true"></span><span class="lb-msg">${esc(s.job.message || 'Working…')}</span><div class="lb-bar"><i style="width:${Number(s.job.pct) || 0}%"></i></div><b>${Number(s.job.pct) || 0}%</b></div>`
+    : s.available
+      ? `<p class="provider-banner is-ok">Ready: ${esc(s.games.toLocaleString())} games indexed. Nothing more to do here.</p>`
+      : `${s.job.state === 'error' ? `<p class="provider-banner is-warn">${esc(s.job.message)}</p>` : ''}<button class="btn btn-primary" id="wz-lb-go" type="button">Download database (about 110 MB)</button>`;
+  $('#wz-lb-go')?.addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
+    e.currentTarget.innerHTML = '<span class="spin" aria-hidden="true"></span>Starting…';
+    try { await api('/metadata/launchbox/update', { method: 'POST' }); } catch (err) { toast(err.message, true); }
+    wireLaunchBoxCard();
+  });
+  if (running) WELCOME.lbTimer = setTimeout(() => { if ($('#wz-lb')) wireLaunchBoxCard(); }, 2000);
+}
+
+async function wireSourceCard() {
+  const sel = $('#wz-platform');
+  try {
+    const { items } = await api('/platforms');
+    window.__platformsCache = items;
+    sel.innerHTML = platformOptions();
+  } catch { /* the list stays empty; the message below says so */ }
+  const form = $('#wz-source'), msg = $('#wz-src-msg');
+  const guess = () => { const slug = platformForFolder(form.path.value); if (slug && [...sel.options].some((o) => o.value === slug)) sel.value = slug; };
+  form.path.addEventListener('input', guess);
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const path = form.path.value.trim();
+    if (!path || !sel.value) return;
+    msg.innerHTML = '<span class="spin" aria-hidden="true"></span>Adding…';
+    try {
+      const created = await api('/sources', { method: 'POST', body: JSON.stringify({ path, platform_hint: sel.value, recursive: true }) });
+      msg.innerHTML = `<span class="spin" aria-hidden="true"></span>Added ${esc(created.name)}. Scanning…`;
+      const r = await api(`/sources/${created.id}/scan`, { method: 'POST', body: JSON.stringify({ enrich: true }) });
+      msg.textContent = `✓ ${r.added} games found.`;
+      form.reset();
+      loadPlatforms(); loadLibrary();
+    } catch (err) { msg.textContent = ''; toast(err.message, true); }
+  };
+}
+
 
 (async function boot() {
   try {

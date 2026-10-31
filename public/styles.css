@@ -1416,3 +1416,25 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 /* Sources list: a small heading per platform family. */
 .source-family { margin: 1.1rem 0 0.4rem; font-size: 0.78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 650; }
 .source-family:first-child { margin-top: 0; }
+
+/* Welcome tour */
+.modal.wz { width: min(36rem, 94vw); max-height: 90vh; overflow-y: auto; }
+.wz-dots { display: flex; gap: 0.4rem; justify-content: center; margin: 0 0 0.9rem; }
+.wz-dots i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--line-2); }
+.wz-dots i.past { background: var(--accent); opacity: .55; }
+.wz-dots i.on { background: var(--accent-2); box-shadow: 0 0 0 3px rgba(124, 92, 255, .25); }
+.modal.wz .modal-title { margin-bottom: 0.7rem; }
+#wz-body { min-height: 9rem; }
+#wz-body p { margin: 0 0 0.7rem; line-height: 1.5; }
+.wz-nav { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
+.wz-spacer { flex: 1; }
+.wz-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.wz-prov { margin: 0 0 0.7rem; }
+.wz-prov a { font-size: 0.82rem; margin-left: 0.4rem; color: var(--accent-2); }
+.wz-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.3rem; }
+.wz-two input:only-child { grid-column: 1 / -1; }
+.wz input:not([type=file]), .wz select {
+  width: 100%; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line-2);
+  border-radius: 0.5rem; padding: 0.55rem 0.7rem;
+}
+.wz input:focus, .wz select:focus { outline: none; border-color: var(--accent); }

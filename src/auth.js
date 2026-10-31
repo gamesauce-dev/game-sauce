@@ -59,6 +59,12 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'download_override')) {
   db.exec('ALTER TABLE users ADD COLUMN download_override INTEGER');
 }
+// First-run welcome tour: 0 = not seen yet. Accounts that already existed when this column was added are marked
+// as seen (they have been using the app); only accounts created afterwards get the tour.
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'welcomed')) {
+  db.exec('ALTER TABLE users ADD COLUMN welcomed INTEGER NOT NULL DEFAULT 0');
+  db.exec('UPDATE users SET welcomed = 1');
+}
 // Profile picture (small JPEG/PNG/WebP, stored in the database so backups carry it).
 for (const [col, ddl] of [['avatar', 'BLOB'], ['avatar_type', 'TEXT'], ['avatar_updated', 'INTEGER']]) {
   if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE users ADD COLUMN ${col} ${ddl}`);

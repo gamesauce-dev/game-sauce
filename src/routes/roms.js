@@ -782,7 +782,7 @@ router.get('/:id/play/:filename', servePlay);
 
 /* Per-game browser-play switch. value: true (force on) / false (force off) /
  * null (back to the platform default). Forcing on only works where a core exists. */
-router.post('/:id/play-override', (req, res) => {
+router.post('/:id/play-override', requireAdmin, (req, res) => {
   const rom = db.prepare('SELECT r.id, p.slug FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   const v = req.body?.value;
