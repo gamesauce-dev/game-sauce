@@ -94,3 +94,13 @@ test('policy input is validated', async () => {
   assert.equal((await call('/api/auth/policy', { method: 'PUT', body: {} })).status, 400);
   assert.equal((await call('/api/auth/policy', { method: 'PUT', body: { members_can_download: true } })).status, 200, 'the old switch still works alone');
 });
+
+test('skip_on leaves out games already switched on, so a check run only looks at the rest (admin only)', async () => {
+  await call(`/api/roms/${ids.fba}/play-override`, { method: 'POST', body: { value: true } });
+  const all = await titles('playable=candidates');
+  const skipped = await titles('playable=candidates&skip_on=1');
+  assert.ok(all.includes('Fba Game') && !skipped.includes('Fba Game'), 'already on: skipped');
+  assert.ok(skipped.includes('Cps1 Game'), 'not decided yet: still checked');
+  assert.deepEqual(await titles('playable=1&skip_on=1', memberTok), await titles('playable=1', memberTok), 'a member cannot use it');
+  await call(`/api/roms/${ids.fba}/play-override`, { method: 'POST', body: { value: null } });
+});

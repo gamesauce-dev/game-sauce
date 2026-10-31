@@ -33,6 +33,7 @@ a quick health check. Useful options:
 | `--candidates` | also test games the app does not offer yet (MAME after the year cut-off, CPS3, Cave) |
 | `--cutoff` | find the year where games stop working: a few games per year, oldest first, stops after two bad years in a row |
 | `--per-year 8` | games tried per year with `--cutoff` |
+| `--recheck` | also test games already switched on (they are skipped by default: they passed before) |
 | `--apply` | switch browser play **off** for games that showed the RetroArch menu, and **on** (with `--candidates`) for games that ran |
 | `--out DIR` | where the results go (default `./play-check`) |
 

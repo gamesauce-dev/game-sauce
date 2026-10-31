@@ -440,6 +440,8 @@ router.get('/', (req, res) => {
       (r.play_override IS NULL AND p.slug IN (${cores}) AND NOT (p.slug = 'mame' AND r.release_year > ${MAME_PLAY_MAX_YEAR})${arcadeVerifiedOnly() ? ` AND p.slug NOT IN (${[...ARCADE_PLAY].map((s) => `'${s}'`).join(',')})` : ''})
     )`);
   }
+  // skip_on=1 (admin only): leave out games already switched ON (verified earlier), so a check run only looks at the rest.
+  if (req.query.skip_on === '1' && req.user?.role === 'admin') where.push('(r.play_override IS NULL OR r.play_override <> 1)');
   if (year_min) { where.push('r.release_year >= @year_min'); params.year_min = Number(year_min); }
   if (year_max) { where.push('r.release_year <= @year_max'); params.year_max = Number(year_max); }
   if (tag) {

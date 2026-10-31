@@ -64,6 +64,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Play check: `--apply` works as it goes, and skips games already switched on.** Each game's flag is changed right after it is judged, so stopping a long run (or the PC sleeping) keeps its progress. Games already switched on are skipped on the next run (they passed before); `--recheck` tests them again. Together with `--resume`, a run that is stopped and started again simply carries on with what is left.
 - **Sources are grouped by platform family:** the list now has a small heading per family (Nintendo, Sega, Sony...) with the sources A to Z inside each, the same order as the platform picker, instead of one A to Z list that cut across families.
 - **Adding a folder shows progress that stays:** the message now carries a spinner and stays on screen from the moment you press the button until the scan finishes, instead of vanishing after a couple of seconds.
 - **Detail window: the previous / next bar is fixed in place.** It now sits in a pinned bar at the top of the window with the close button, in the same spot whether or not the game has genres, and it stays in view while you scroll the details.

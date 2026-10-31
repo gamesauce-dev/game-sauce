@@ -5,7 +5,7 @@
 //
 //   npm ci                                    (once, in the game-sauce folder: this installs the test browser tooling)
 //   npx playwright install chromium           (once: downloads the browser, about 150 MB)
-//   node scripts/check-play.mjs --server http://192.168.0.10:8765 --user admin --platform mame,fba
+//   node scripts/check-play.mjs --server http://YOUR-SERVER:8765 --user admin --platform mame,fba
 //
 // It READS only. It plays each game for a few seconds with saving switched off, and test plays are not counted in "Continue
 // playing" or the stats. Nothing is changed unless you add --apply (which switches off browser play for the games that
@@ -25,9 +25,11 @@
 //   --limit N           only the first N games per platform (alphabetical)
 //   --seconds N         how long to let each game run before judging it (default 12)
 //   --concurrency N     games checked at once (default 2)
+//   --recheck           also test games that are already switched ON. By default they are skipped: they passed before.
 //   --resume            carry on an earlier run (skips games already in the output folder)
-//   --apply             switch browser play OFF for games that show the RetroArch menu, and ON for games the app did not offer
-//                       that ran (only with --candidates). Games that already play by default are left as they are.
+//   --apply             change the flags AS IT GOES, so a stopped run keeps its progress: every game that runs is switched ON, and
+//                       a game that shows the RetroArch menu is switched OFF if it was on. Games already ON are skipped
+//                       (unless --recheck). Each flag can be changed back from the game's ⋯ menu.
 //   --out DIR           where to put the results (default ./play-check)
 //   --headed            show the browser while it runs
 import { chromium } from 'playwright';
@@ -51,6 +53,7 @@ const seconds = Math.max(4, Number(opt('--seconds', 12)));
 const concurrency = Math.max(1, Math.min(6, Number(opt('--concurrency', 2))));
 const outDir = path.resolve(opt('--out', './play-check'));
 const apply = flag('--apply');
+const recheck = flag('--recheck');
 const candidates = flag('--candidates') || flag('--cutoff');
 const cutoff = flag('--cutoff');
 const perYear = Math.max(3, Number(opt('--per-year', 8)));
@@ -77,7 +80,7 @@ const games = [];
 for (const slug of wanted) {
   let all = [];
   for (let off = 0; ; off += 500) {
-    const page = await get(`/api/roms?platform=${encodeURIComponent(slug)}&playable=${candidates ? 'candidates' : '1'}&sort=title&limit=500&offset=${off}`);
+    const page = await get(`/api/roms?platform=${encodeURIComponent(slug)}&playable=${candidates ? 'candidates' : '1'}${recheck ? '' : '&skip_on=1'}&sort=title&limit=500&offset=${off}`);
     all = all.concat(page.items);
     if (all.length >= page.total || !page.items.length) break;
   }
@@ -87,7 +90,11 @@ for (const slug of wanted) {
   console.log(`${slug}: ${all.length} game${all.length === 1 ? '' : 's'} ${cutoff ? 'to pick from' : 'to check'}`);
   games.push(...all.map((g) => ({ ...g, slug })));
 }
-if (!games.length) { console.log('Nothing to check: no games are flagged playable for those platforms.' + (candidates ? '' : ' (Add --candidates to test games the app does not offer yet.)')); process.exit(0); }
+if (!games.length) {
+  console.log('Nothing left to check. Every game on those platforms is already switched on (it passed earlier) or switched off (it failed), or none can play.');
+  console.log('Add --recheck to test the ones switched on again' + (candidates ? '.' : ', or --candidates to include games the app does not offer yet.'));
+  process.exit(0);
+}
 
 fs.mkdirSync(path.join(outDir, 'shots'), { recursive: true });
 const jsonl = path.join(outDir, 'results.jsonl');
@@ -116,6 +123,21 @@ async function measure(png) {
   }, png.toString('base64'));
 }
 
+// --apply works game by game, right after each one is judged, so stopping the run (or the PC going to sleep) loses nothing.
+const applied = new Set();
+let switchedOn = 0, switchedOff = 0;
+async function applyOne(rec) {
+  if (!apply || applied.has(rec.id)) return;
+  let value = null;
+  if (rec.verdict === 'runs' && !rec.was_on) value = true;
+  else if (rec.verdict === 'retroarch-menu' && (rec.offered || rec.was_on)) value = false;
+  if (value === null) { applied.add(rec.id); return; }
+  try {
+    const x = await fetch(`${server}/api/roms/${rec.id}/play-override`, { method: 'POST', headers: H, body: JSON.stringify({ value }) });
+    if (x.ok) { applied.add(rec.id); value ? switchedOn++ : switchedOff++; }
+  } catch { /* the end of the run tries again */ }
+}
+
 async function checkOne(g) {
   const page = await ctx.newPage();
   let romStatus = null;
@@ -136,10 +158,11 @@ async function checkOne(g) {
   await page.close().catch(() => {});
   let v = romStatus && romStatus >= 400 ? 'rom-unreachable' : verdict(frames);
   if (v === 'rom-unreachable' && romStatus === 400) v = 'not-playable-here';
-  const rec = { id: g.id, platform: g.slug, title: g.title, year: g.release_year || null, file: g.filename, offered: Boolean(g.playable), verdict: v, at: new Date().toISOString() };
+  const rec = { id: g.id, platform: g.slug, title: g.title, year: g.release_year || null, file: g.filename, offered: Boolean(g.playable), was_on: g.play_override === 1, verdict: v, at: new Date().toISOString() };
   if (v !== 'runs' && pngs.length) { rec.shot = `shots/${g.id}.png`; fs.writeFileSync(path.join(outDir, rec.shot), pngs[pngs.length - 1]); }
   fs.appendFileSync(jsonl, JSON.stringify(rec) + '\n');
   done.set(g.id, rec);
+  await applyOne(rec);
   return rec;
 }
 
@@ -199,8 +222,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 fs.writeFileSync(path.join(outDir, 'report.html'), `<!doctype html><meta charset="utf-8"><title>Play check</title><style>body{font:14px system-ui;background:#111;color:#eee;margin:20px}.g{display:inline-block;width:210px;margin:6px;vertical-align:top}.g img{width:210px;border:1px solid #444}.t{font-size:12px;margin-top:3px}.m{color:#ff8a8a}.b{color:#ffcf6e}</style><h1>Play check</h1><p>${all.length} games checked, ${bad.length} not running. Checked ${new Date().toLocaleString()} against ${esc(server)}.</p>${bad.map((r) => `<div class="g">${r.shot ? `<img src="${r.shot}">` : ''}<div class="t"><b>${esc(r.title)}</b><br>${esc(r.platform)}${r.year ? ' · ' + r.year : ''}<br><span class="${r.verdict === 'retroarch-menu' ? 'm' : 'b'}">${esc(r.verdict)}</span></div></div>`).join('')}`);
 console.log(`\nResults: ${outDir}${path.sep}results.jsonl   Pictures of the failures: ${outDir}${path.sep}report.html`);
 
-const toOff = all.filter((r) => r.verdict === 'retroarch-menu' && r.offered);
-const toOn = all.filter((r) => r.verdict === 'runs' && !r.offered);
+const toOff = all.filter((r) => r.verdict === 'retroarch-menu' && (r.offered || r.was_on));
+const toOn = all.filter((r) => r.verdict === 'runs' && !r.was_on);
+if (apply) for (const r of all) await applyOne(r); // anything that was not sent during the run (an earlier run without --apply, or a hiccup)
 if (cutoff) {
   console.log('\n=== Where games stop working ===');
   for (const s of cutoffReport.filter((x) => x.summary)) {
@@ -211,17 +235,9 @@ if (cutoff) {
   console.log('\nTo use it: set the environment variable GAMESAUCE_MAME_PLAY_MAX_YEAR to that year on the server (for MAME), then restart game-sauce.');
   console.log('Games after the cut-off that ran can still be switched on one by one: run with --candidates --apply on that year range.');
 }
-if (apply && toOn.length) {
-  let n = 0;
-  for (const r of toOn) { const x = await fetch(`${server}/api/roms/${r.id}/play-override`, { method: 'POST', headers: H, body: JSON.stringify({ value: true }) }); if (x.ok) n++; }
-  console.log(`\nSwitched browser play ON for ${n} game${n === 1 ? '' : 's'} that the app did not offer and that ran.`);
-} else if (toOn.length) {
-  console.log(`\n${toOn.length} game${toOn.length === 1 ? '' : 's'} that the app does not offer ran fine. Run again with --resume --apply to switch browser play ON for them.`);
-}
-if (apply && toOff.length) {
-  let n = 0;
-  for (const r of toOff) { const x = await fetch(`${server}/api/roms/${r.id}/play-override`, { method: 'POST', headers: H, body: JSON.stringify({ value: false }) }); if (x.ok) n++; }
-  console.log(`\nSwitched browser play OFF for ${n} game${n === 1 ? '' : 's'} that showed the RetroArch menu. (Any can be switched back on from the game's ⋯ menu.)`);
-} else if (toOff.length) {
-  console.log(`\n${toOff.length} game${toOff.length === 1 ? '' : 's'} showed the RetroArch menu. Look at report.html, then run again with --resume --apply to switch browser play off for them.`);
+if (apply) {
+  console.log(`\nBrowser play switched ON for ${switchedOn} game${switchedOn === 1 ? '' : 's'} that ran, and OFF for ${switchedOff} that showed the RetroArch menu. (Any can be changed back from the game's ⋯ menu.)`);
+} else {
+  if (toOn.length) console.log(`\n${toOn.length} game${toOn.length === 1 ? '' : 's'} ran fine. Run again with --resume --apply to switch browser play ON for them.`);
+  if (toOff.length) console.log(`${toOff.length} game${toOff.length === 1 ? '' : 's'} showed the RetroArch menu and ${toOff.length === 1 ? 'is' : 'are'} offered today. Look at report.html, then --resume --apply to switch ${toOff.length === 1 ? 'it' : 'them'} off.`);
 }
