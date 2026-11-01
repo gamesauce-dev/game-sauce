@@ -187,6 +187,8 @@ async function fillTicker(stats) {
   } catch { /* optional */ }
   const track = $('#mh-track'); if (!track) return;
   track.innerHTML = lines.map((l) => `<div class="mh-line">${l}</div>`).join('');
+  // The rolling position belongs to the OLD set of lines: start again from the first, or the box can sit past the end (blank).
+  track.style.transition = 'none'; track.style.transform = 'translateY(0)'; void track.offsetHeight; track.style.transition = '';
   clearInterval(tickerTimer);
   const rows = $$('.mh-line', track);
   if (rows.length > 1) {
@@ -446,6 +448,64 @@ function trackBarHeight() {
   new ResizeObserver(set).observe(bar); set();
 }
 
+
+/* ───────────── Icons instead of words (pages other than Library) ─────────────
+   Buttons that an icon can carry on its own are tagged data-mi="<icon>". CSS (modern.css + one generated rule per icon) hides the
+   words and draws the SVG in their place; the words stay as the hover text and the screen-reader label. Nothing is rewritten, so
+   Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
+const ICON_MAP = [
+  // Sources
+  ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
+  ['[data-act="add-folder"]', 'source-add'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
+  // Add ROMs / Emulators
+  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'scan-again'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
+  ['[data-save-release]', 'save-to-vault'], ['[data-vault-del]', 'delete'],
+  // Collections
+  ['#new-collection', 'collection-grid'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'],
+  // Library selection bar
+  ['#bulk-addcoll', 'collection'], ['#bulk-delete-btn', 'delete'],
+  // Settings: account
+  ['#profile-upload', 'image-upload'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
+  // Settings: health, tools, maintenance
+  ['#health-refresh, #dup-refresh', 'scan-again'], ['#enrich-missing-covers', 'fetch'], ['#check-ss-systems', 'recheck'],
+  ['#db-health-refresh', 'recheck'], ['#db-show-orphans', 'show-orphans'], ['#db-purge-orphans', 'delete'], ['#db-clear-covers', 'clear-covers'],
+  ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-server'], ['#backup-save', 'save-settings'], ['#restore-inspect', 'database-backup-check'],
+  ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview'],
+  ['#dat-upload', 'import-media'], ['#dat-rematch, #dat-rematch-force', 'rematch'], ['[data-act="delete-dat"]', 'delete'],
+  // Settings: setup
+  ['#platform-add-toggle', 'add-platform'], ['#new-user-form button[type="submit"]', 'add-user'], ['[data-act="test-provider"]', 'test-connection'],
+  ['[data-act="save-provider"]', 'save'], ['[data-act="reset-password"]', 'password-reset'], ['[data-act="delete-user"]', 'delete']
+];
+const miKnown = new Set();
+let miStyle = null;
+function miRule(name) {
+  if (miKnown.has(name)) return;
+  miKnown.add(name);
+  if (!miStyle) { miStyle = document.createElement('style'); miStyle.id = 'modern-icon-rules'; document.head.appendChild(miStyle); }
+  miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); }\n`));
+}
+const plainText = (el) => (el.getAttribute('data-mi-label') || el.textContent || '').replace(/^[^A-Za-z0-9]+/, '').replace(/…$/, '').trim();
+export function iconize(root = document) {
+  if (!isModern()) return;
+  for (const [sel, name] of ICON_MAP) {
+    for (const el of $$(sel, root)) {
+      if (el.dataset.mi === name) continue;
+      const label = el.getAttribute('title') || plainText(el);
+      el.dataset.mi = name;
+      if (!el.dataset.miLabel) el.dataset.miLabel = label;
+      if (!el.getAttribute('title')) el.setAttribute('title', label);
+      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', label);
+      miRule(name);
+    }
+  }
+  for (const el of $$('[data-mi]', root)) miRule(el.dataset.mi);   // icons named in templates (the Settings tiles)
+}
+let miTimer = null;
+function watchIcons() {
+  if (watchIcons.on) return; watchIcons.on = true;
+  new MutationObserver(() => { clearTimeout(miTimer); miTimer = setTimeout(() => iconize(), 120); }).observe(document.body, { childList: true, subtree: true });
+}
+
 /* ───────────── switching look ───────────── */
 export async function setUiMode(mode) {
   const next = mode === 'modern' ? 'modern' : 'classic';
@@ -461,6 +521,7 @@ export async function applyMode(mode, { fresh = false } = {}) {
   document.documentElement.dataset.theme = on ? theme() : 'dark';
   if (on) {
     await buildBar(); paintUser(); usePinIcon();
+    watchIcons(); iconize();
     paintToggles();
     go(fresh || current === 'library' && false ? 'home' : (ctx.state().view === 'library' ? (current === 'home' ? 'home' : 'library') : ctx.state().view));
   } else {

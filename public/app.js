@@ -3636,34 +3636,34 @@ $('#to-top')?.addEventListener('click', () => {
 /* Role-dependent tile grid. Modules render in a fixed order; admins get the
    fully list. Clicking a tile reveals ONLY its module below. */
 const SETTINGS_MODULES = [
-  { id: 'profile', label: 'Profile picture', ico: '🖼', adminOnly: false },
-  { id: 'welcome', label: 'Welcome tour', ico: '👋', adminOnly: false },
-  { id: 'password', label: 'Change password', ico: '🔑', adminOnly: false },
-  { id: 'sessions',  label: 'Active sessions', ico: '💻', adminOnly: false },
-  { id: 'controller', label: 'Controller', ico: '🎮', adminOnly: false },
-  { id: 'providers', label: 'Metadata providers', ico: '🔌', adminOnly: true },
-  { id: 'users',     label: 'User accounts',   ico: '👥', adminOnly: true },
-  { id: 'platforms', label: 'Platforms',       ico: '🕹', adminOnly: true },
-  { id: 'coverage',  label: 'Stats',           ico: '📊', adminOnly: true },
-  { id: 'covers',    label: 'Covers & platform ids', ico: '🖼', adminOnly: true },
-  { id: 'db',        label: 'Database maintenance', ico: '🗄️', adminOnly: true },
-  { id: 'audit',     label: 'Activity log',    ico: '📜', adminOnly: true },
-  { id: 'names',     label: 'Game names (CSV)', ico: '🏷', adminOnly: true },
-  { id: 'dat',       label: 'DAT files',       ico: '💾', adminOnly: true },
-  { id: 'backup',    label: 'Backups',         ico: '🛟', adminOnly: true },
-  { id: 'duplicates', label: 'Duplicate finder', ico: '🧬', adminOnly: true },
-  { id: 'health',    label: 'Health',          ico: '🩺', adminOnly: true }
+  { id: 'profile', label: 'Profile picture', mi: 'profile-pic', ico: '🖼', adminOnly: false },
+  { id: 'welcome', label: 'Welcome tour', mi: 'welcome-tour', ico: '👋', adminOnly: false },
+  { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
+  { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
+  { id: 'controller', label: 'Controller', mi: 'gamepad', ico: '🎮', adminOnly: false },
+  { id: 'providers', label: 'Metadata providers', mi: 'providers', ico: '🔌', adminOnly: true },
+  { id: 'users',     label: 'User accounts',   mi: 'users', ico: '👥', adminOnly: true },
+  { id: 'platforms', label: 'Platforms',       mi: 'platforms', ico: '🕹', adminOnly: true },
+  { id: 'coverage',  label: 'Stats',           mi: 'stats', ico: '📊', adminOnly: true },
+  { id: 'covers',    label: 'Covers & platform ids', mi: 'empty-covers', ico: '🖼', adminOnly: true },
+  { id: 'db',        label: 'Database maintenance', mi: 'database-maintenance', ico: '🗄️', adminOnly: true },
+  { id: 'audit',     label: 'Activity log',    mi: 'activity-log', ico: '📜', adminOnly: true },
+  { id: 'names',     label: 'Game names (CSV)', mi: 'game-csv', ico: '🏷', adminOnly: true },
+  { id: 'dat',       label: 'DAT files',       mi: 'DAT-files', ico: '💾', adminOnly: true },
+  { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
+  { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
+  { id: 'health',    label: 'Health',          mi: 'health', ico: '🩺', adminOnly: true }
 ];
 
 
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
-  { id: 'account',  label: 'My account',          ico: '👤', modules: ['profile', 'welcome', 'password', 'controller'] },
-  { id: 'tools',    label: 'Library tools',       ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers'], adminOnly: true },
-  { id: 'maint',    label: 'Maintenance',         ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
-  { id: 'status',   label: 'System health',       ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
-  { id: 'security', label: 'Security & activity', ico: '🛡', modules: ['sessions', 'audit'] },
-  { id: 'server',   label: 'System setup',        ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
+  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password', 'controller'] },
+  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers'], adminOnly: true },
+  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
+  { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
+  { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
+  { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
 ];
 const settingsLastInGroup = {};
 const settingsIsAdmin = () => authState.user?.role === 'admin';
@@ -3684,7 +3684,7 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   if (!groups.length) return;
   const cur = settingsGroupOf(activeId) || groups[0];
   wrap.innerHTML = groups.map((g) => `
-      <button class="tile group${g.id === cur.id ? ' is-active' : ''}" data-group="${g.id}" title="${esc(settingsGroupMods(g).map((m) => m.label).join(', '))}">
+      <button class="tile group${g.id === cur.id ? ' is-active' : ''}"${g.mi ? ` data-mi="${g.mi}"` : ''} data-group="${g.id}" aria-label="${esc(g.label)}" title="${esc(g.label)}: ${esc(settingsGroupMods(g).map((m) => m.label).join(', '))}">
         <span class="tile-ico">${g.ico}</span>
         <span class="tile-label">${esc(g.label)}</span>
       </button>`).join('');
@@ -3696,7 +3696,7 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   // The second row: the settings inside the chosen group (a group with a single setting needs no second row).
   const mods = settingsGroupMods(cur);
   sub.classList.toggle('hidden', mods.length < 2);
-  sub.innerHTML = mods.map((m) => `<button class="subtile${m.id === activeId ? ' is-active' : ''}" data-mod="${m.id}"><span class="tile-ico">${m.ico}</span>${esc(m.label)}</button>`).join('');
+  sub.innerHTML = mods.map((m) => `<button class="subtile${m.id === activeId ? ' is-active' : ''}"${m.mi ? ` data-mi="${m.mi}"` : ''} data-mod="${m.id}" title="${esc(m.label)}"><span class="tile-ico">${m.ico}</span>${esc(m.label)}</button>`).join('');
   $$('[data-mod]', sub).forEach((t) => t.addEventListener('click', () => showSettingsModule(t.dataset.mod)));
   if (refocus) {
     // Choosing a group swaps the row beneath it: keep the focus on the group tile; choosing a tab keeps it on that tab.

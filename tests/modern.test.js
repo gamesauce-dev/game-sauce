@@ -187,3 +187,24 @@ test('medium windows (snapped to half a screen): the library tools drop to their
   assert.match(m[1], /\.mb-slot \{ order: 6; flex: 1 1 100%; \}/, 'the tools / ticker take a full line of their own');
   assert.match(m[1], /\.mb-right \{ margin-left: auto; \}/, 'the switches stay at the right of the icon row');
 });
+
+test('stage 3: icons in place of words on the other pages, from your icon set, with the words kept as the tooltip', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css'), app = read('public/app.js');
+  const map = js.slice(js.indexOf('const ICON_MAP = ['), js.indexOf('const miKnown'));
+  const names = [...map.matchAll(/'([A-Za-z-]+)'\]/g)].map((x) => x[1]);
+  assert.ok(names.length >= 40, 'a good number of buttons are mapped');
+  for (const n of new Set(names)) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `mapped icon ${n}.svg exists`);
+  // the selectors it points at exist in the page or the app's templates
+  const html = read('public/index.html');
+  for (const id of ['scan-all', 'add-source', 'new-collection', 'enrich-missing-covers', 'backup-run', 'dat-upload', 'platform-add-toggle', 'health-refresh']) assert.ok(html.includes(`id="${id}"`), `#${id} is a real button`);
+  assert.match(js, /el\.setAttribute\('title', label\)/, 'the words stay as the hover text');
+  assert.match(js, /el\.setAttribute\('aria-label', label\)/, 'and as the screen-reader label');
+  assert.match(css, /body\.ui-modern \[data-mi\] \{ font-size: 0;/, 'the words are hidden only in Modern');
+  assert.match(css, /mask: center \/ contain no-repeat/, 'the icon takes the text colour (light and dark mode)');
+  // Settings: every group and setting names an icon, and every one exists
+  const used = [...app.matchAll(/mi: '([A-Za-z-]+)'/g)].map((x) => x[1]);
+  assert.ok(used.length >= 23, 'all Settings groups and settings carry an icon');
+  for (const n of new Set(used)) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `Settings icon ${n}.svg exists`);
+  assert.match(app, /aria-label="\$\{esc\(g\.label\)\}"/, 'icon-only group tiles still have a label for screen readers');
+  assert.doesNotMatch(read('public/styles.css'), /data-mi/, 'Classic is untouched');
+});
