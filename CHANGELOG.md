@@ -88,6 +88,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern: Retro font is now on by default** (turn it off from the avatar menu; remembered per device). People who already chose a font keep their choice.
+- **Modern Home: Continue playing and Recently added are stacked**, each the full width, instead of side by side (replaces the earlier side-by-side layout). Tiles still stretch to fill each row.
 - **Modern: no page titles.** The lit icon in the top bar already says which page you are on, so the big "Collections / Sources / Settings" headings are gone (Classic keeps them).
 - **Modern: the game details window shows every action in its icon row** (download, play, favourite, lock, add to collection, browser-play switch, hide, refresh, clear match, upload cover, back to automatic cover, delete) instead of hiding most behind More actions. The row wraps to a second line if there are more than fit. Words are the tooltips.
 - **Modern: collections show their games.** Each collection card has a strip of up to four covers (newest first), a game-count pill and "No games yet" when empty. The collections list API now returns a `covers` array.

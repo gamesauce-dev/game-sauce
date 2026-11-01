@@ -218,7 +218,7 @@ test('opening a family chip never shifts the other chips sideways (the arrow spa
 
 test('Home: two equal boxes side by side with the same tile size; a whole family lights only the family chip', () => {
   const css = read('public/modern.css'), js = read('public/modern.js'), app = read('src/app.js');
-  assert.match(css, /@media \(min-width: 760px\) \{ body\.ui-modern \.mh-strips \{ grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important; \} \}/, 'side by side from 760px up');
+  assert.doesNotMatch(css, /@media \(min-width: 760px\) \{ body\.ui-modern \.mh-strips/, 'the two boxes are stacked, not side by side');
   assert.match(css, /\.mh-strips \.strip \.recent-row \{ grid-template-columns: repeat\(auto-fill, minmax\(5\.6rem, 1fr\)\)/, 'tiles stretch to fill each box, by the same rule in both');
   assert.match(js, /recently-played\?limit=24/);
   assert.match(app, /ORDER BY r\.created_at DESC LIMIT 24/, 'enough recent tiles to fill a wide box');
@@ -288,7 +288,7 @@ test('Modern: no page titles, collection covers, and every details action sits i
 
 test('Modern: Retro font is a per-device switch that only swaps the font variable', () => {
   const css = read('public/modern.css'), js = read('public/modern.js');
-  assert.match(js, /id="mb-retro"/); assert.match(js, /gamesauce_retro/); assert.match(js, /export function applyRetro/);
+  assert.match(js, /id="mb-retro"/); assert.ok(js.includes("getItem('gamesauce_retro') !== '0'"), 'on by default'); assert.match(js, /export function applyRetro/);
   assert.match(css, /body\.ui-modern\.ui-retro \{ --font: ui-monospace/);
   assert.doesNotMatch(read('public/styles.css'), /ui-retro/, 'Classic is untouched');
 });

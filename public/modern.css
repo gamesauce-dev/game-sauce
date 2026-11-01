@@ -99,7 +99,7 @@ body.ui-modern .strip .recent-row .card { height: auto; align-self: start; }
    both boxes use the same rule, so the tiles come out the same size in both. */
 body.ui-modern .mh-strips .strip .recent-row { grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr)); column-gap: 0.7rem; }
 body.ui-modern .mh-strips { display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-items: stretch; }
-@media (min-width: 760px) { body.ui-modern .mh-strips { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; } }
+/* Stacked: Continue playing on top, Recently added under it, each the full width. */
 body.ui-modern .mh-strips .strip { margin: 0; }
 
 /* Medium windows (snapped to half a screen): the tools and the ticker drop onto their own line under the icons instead of

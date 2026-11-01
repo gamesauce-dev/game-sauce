@@ -38,7 +38,8 @@ export function applyTheme(mode) {
   paintToggles();
 }
 /* ───────────── retro monospace font (a per-device switch in the avatar menu) ───────────── */
-const retro = () => { try { return localStorage.getItem('gamesauce_retro') === '1'; } catch { return false; } };
+// On unless the person turned it off ('0'): the retro look is the default.
+const retro = () => { try { return localStorage.getItem('gamesauce_retro') !== '0'; } catch { return true; } };
 export function applyRetro(on) {
   document.body.classList.toggle('ui-retro', Boolean(on) && isModern());
   try { localStorage.setItem('gamesauce_retro', on ? '1' : '0'); } catch { /* private mode */ }
