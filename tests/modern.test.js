@@ -117,3 +117,17 @@ test('the logo is the vector file, sized to the icon row; the account is an avat
   assert.match(right, /id="mb-theme"[\s\S]*id="mb-gui"[\s\S]*id="mb-acct-btn"[\s\S]*My account[\s\S]*Sign out/, 'switches then avatar, in that order, on the right');
   assert.doesNotMatch(js.slice(0, js.indexOf('<div class="mb-right">')), /mb-signout/, 'sign-out is no longer at the left');
 });
+
+test('Library tools in the bar drive the Classic controls instead of duplicating them', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  // each tool button proxies a real Classic control, so filters and loading stay in one place
+  for (const sel of ['[data-toggle="favorite"]', '[data-toggle="hidden"]', '#select-toggle', '#bulk-enrich']) assert.ok(js.includes(sel), `${sel} is driven from the bar`);
+  assert.match(js, /id="tl-q"/);
+  assert.match(js, /dispatchEvent\(new Event\('input'/, 'typing in the bar fires the real search box');
+  assert.match(js, /sel\.dispatchEvent\(new Event\('change'/, 'sort fires the real sort control');
+  assert.match(js, /3-dot-spinner/, 'a metadata run shows the three-dot spinner');
+  assert.match(css, /#view-library > \.toolbar \{ display: none; \}/);
+  assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/);
+  // play-only accounts get the cut-down set: no sort, hidden, select, more
+  assert.match(js, /po \? '' :/);
+});

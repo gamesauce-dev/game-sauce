@@ -45,7 +45,7 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -69,6 +69,7 @@ async function doBuildBar() {
       </div>
     </div>`;
   built = true;
+  buildLibraryTools(ic);
   paintUser();
   refreshTicker(true);
   setInterval(() => { if (isModern()) refreshTicker(true); }, 60000);
@@ -89,11 +90,12 @@ function paintToggles() {
   const g = $('#mb-gui'); if (g) { g.classList.toggle('is-on', isModern()); g.setAttribute('aria-pressed', String(isModern())); g.title = isModern() ? 'Modern look (click for Classic)' : 'Classic look (click for Modern)'; }
 }
 
-function closeMenu() { $('#mb-menu')?.classList.add('hidden'); $('#mb-acct-btn')?.setAttribute('aria-expanded', 'false'); }
-document.addEventListener('click', (e) => { if (!e.target.closest('.mb-acct')) closeMenu(); });
+function closeMenu() { $('#mb-menu')?.classList.add('hidden'); $('#mb-acct-btn')?.setAttribute('aria-expanded', 'false'); closePop(); }
+document.addEventListener('click', (e) => { if (!e.target.closest('.mb-acct')) { $('#mb-menu')?.classList.add('hidden'); $('#mb-acct-btn')?.setAttribute('aria-expanded', 'false'); } if (!e.target.closest('.mb-pop, #tl-sort, #tl-more')) closePop(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 
 function onBarClick(e) {
+  if (toolClick(e)) return;
   if (e.target.closest('#mb-acct-btn')) { const m = $('#mb-menu'); const open = m.classList.toggle('hidden') === false; $('#mb-acct-btn').setAttribute('aria-expanded', String(open)); return; }
   if (e.target.closest('[data-acct="account"]')) { closeMenu(); go('settings'); setTimeout(() => ctx.openAccount?.(), 60); return; }
   // Only the bar's own buttons: <body> also carries data-mview (the current page), and closest() would find it for every click.
@@ -109,6 +111,8 @@ let current = 'home';
 export function go(view) {
   if (!isModern()) return;
   current = view;
+  closePop();
+  if (view === 'library') setTimeout(syncTools, 120);
   refreshTicker();
   document.body.dataset.mview = view;
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
@@ -186,6 +190,78 @@ async function fillTicker(stats) {
     let i = 0;
     tickerTimer = setInterval(() => { i = (i + 1) % rows.length; track.style.transform = `translateY(-${i * rows[0].offsetHeight}px)`; }, 3500);
   }
+}
+
+
+/* ───────────── Library tools in the bar ─────────────
+   The Classic toolbar (search, sort, filter pills, fetch metadata) stays where it is, hidden in Modern, and keeps all the logic.
+   These icon buttons drive it: they click the same buttons and set the same fields, so Classic and Modern cannot drift apart. */
+const q = (s) => document.querySelector(s);
+let pop = null;
+function closePop() { pop?.remove(); pop = null; }
+function openPop(anchor, html, onPick) {
+  closePop();
+  pop = document.createElement('div'); pop.className = 'mb-pop'; pop.setAttribute('role', 'menu'); pop.innerHTML = html;
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect();
+  pop.style.top = (r.bottom + 6) + 'px';
+  pop.style.left = Math.max(8, Math.min(innerWidth - pop.offsetWidth - 8, r.left)) + 'px';
+  pop.addEventListener('click', (e) => { const it = e.target.closest('[data-pick]'); if (it) { onPick(it.dataset.pick); closePop(); } });
+}
+const proxy = (sel) => { q(sel)?.click(); setTimeout(syncTools, 60); };
+
+function buildLibraryTools(ic) {
+  const host = $('#mb-library-tools'); if (!host) return;
+  const u = ctx.user(); const admin = u?.role === 'admin'; const po = Boolean(u?.play_only);
+  host.innerHTML = `
+    <label class="tl-search">${ic.search}<input id="tl-q" type="search" placeholder="Search" autocomplete="off" aria-label="Search the library" title="Search titles, developers, genres and platforms" /></label>
+    ${po ? '' : `<button class="mb-btn" id="tl-sort" title="Sort" aria-label="Sort" aria-haspopup="menu">${ic.sort}</button>`}
+    <button class="mb-btn" id="tl-fav" title="Favourites only" aria-label="Favourites only">${ic.favourite}</button>
+    ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
+    <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic.select}</button>`}
+    ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
+    ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
+  host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue });
+  document.body.classList.add('mb-tools');
+  $('#tl-q')?.addEventListener('input', (e) => { const s = q('#search'); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });
+  setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') syncTools(); }, 700);
+}
+
+/** Handle a click on one of the tool buttons. Returns true when it was one. */
+function toolClick(e) {
+  const b = e.target.closest('#tl-fav, #tl-hidden, #tl-select, #tl-fetch, #tl-sort, #tl-more');
+  if (!b) return false;
+  if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
+  else if (b.id === 'tl-hidden') proxy('[data-toggle="hidden"]');
+  else if (b.id === 'tl-select') proxy('#select-toggle');
+  else if (b.id === 'tl-fetch') proxy('#bulk-enrich');
+  else if (b.id === 'tl-sort') {
+    const sel = q('#sort'); if (!sel) return true;
+    openPop(b, [...sel.options].map((o) => `<button class="mb-menu-item${o.value === sel.value ? ' on' : ''}" role="menuitemradio" aria-checked="${o.value === sel.value}" data-pick="${o.value}"><span>${o.textContent}</span></button>`).join(''),
+      (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); });
+  } else if (b.id === 'tl-more') {
+    const ic = JSON.parse($('#mb-library-tools').dataset.icons || '{}');
+    const items = [['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'Orphans', ic.orphans, 'no source folder'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched']]
+      .filter(([k]) => { const t = q(`[data-toggle="${k}"]`); return t && !t.classList.contains('hidden'); });
+    if (!items.length) return true;
+    openPop(b, items.map(([k, label, svg, sub]) => `<button class="mb-menu-item${q(`[data-toggle="${k}"]`)?.classList.contains('is-active') ? ' on' : ''}" role="menuitemcheckbox" data-pick="${k}">${svg}<span>${label}<small>${sub}</small></span></button>`).join(''),
+      (k) => proxy(`[data-toggle="${k}"]`));
+  }
+  e.stopPropagation();
+  return true;
+}
+
+/** Make the icons reflect the real filters, and the fetch button show a spinner while a metadata run is going. */
+function syncTools() {
+  const on = (sel) => Boolean(q(sel)?.classList.contains('is-active'));
+  $('#tl-fav')?.classList.toggle('is-on', on('[data-toggle="favorite"]'));
+  $('#tl-hidden')?.classList.toggle('is-on', on('[data-toggle="hidden"]'));
+  $('#tl-select')?.classList.toggle('is-on', on('#select-toggle'));
+  const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'unmatched'].some((k) => on(`[data-toggle="${k}"]`)));
+  const sort = $('#tl-sort'); if (sort) { const s = q('#sort'); sort.classList.toggle('is-on', Boolean(s && s.value !== 'title')); sort.title = 'Sort: ' + (s?.selectedOptions?.[0]?.textContent || ''); }
+  const search = $('#tl-q'), real = q('#search'); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
+  const f = $('#tl-fetch');
+  if (f) { const txt = q('#bulk-enrich')?.textContent || ''; const busy = /Fetching/.test(txt); f.classList.toggle('is-busy', busy); f.classList.toggle('is-on', busy); f.title = busy ? txt.replace('✦', '').trim() + ' (click to stop)' : 'Fetch metadata'; }
 }
 
 /* ───────────── switching look ───────────── */
