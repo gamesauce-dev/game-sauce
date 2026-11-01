@@ -501,15 +501,15 @@ const ICON_MAP = [
   // Library selection bar
   ['#bulk-addcoll', 'collection-new'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-cancel', 'done'],
   // Settings: account
-  ['#profile-upload', 'image-upload'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
+  ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance
   ['#health-refresh, #dup-refresh', 'scan-again'], ['#enrich-missing-covers', 'fetch'], ['#check-ss-systems', 'recheck'],
-  ['#db-health-refresh', 'recheck'], ['#db-show-orphans', 'show-orphans'], ['#db-purge-orphans', 'delete'], ['#db-clear-covers', 'clear-covers'],
-  ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-server'], ['#backup-save', 'save-settings'], ['#restore-inspect', 'database-backup-check'],
+  ['#db-health-refresh', 'database-check'], ['#db-show-orphans', 'show-orphans'], ['#db-purge-orphans', 'delete'], ['#db-clear-covers', 'clear-covers'],
+  ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-save'], ['#backup-save', 'save-settings'], ['#restore-inspect', 'database-backup-check'],
   ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview'],
-  ['#dat-upload', 'import-media'], ['#dat-rematch, #dat-rematch-force', 'rematch'], ['[data-act="delete-dat"]', 'delete'],
+  ['#dat-upload', 'import-media'], ['#dat-rematch', 'rematch'], ['#dat-rematch-force', 'replace-text'], ['[data-act="delete-dat"]', 'delete'],
   // Settings: setup
-  ['#platform-add-toggle', 'add-platform'], ['#new-user-form button[type="submit"]', 'add-user'], ['[data-act="test-provider"]', 'test-connection'],
+  ['#platform-add-toggle', 'game-controller'], ['#new-user-form button[type="submit"]', 'add-user'], ['[data-act="test-provider"]', 'test-connection'],
   ['[data-act="save-provider"]', 'save'], ['[data-act="reset-password"]', 'password-reset'], ['[data-act="delete-user"]', 'delete']
 ];
 const miKnown = new Set();

@@ -202,7 +202,7 @@ test('stage 3: icons in place of words on the other pages, from your icon set, w
   assert.match(css, /body\.ui-modern \[data-mi\] \{ font-size: 0;/, 'the words are hidden only in Modern');
   assert.match(css, /mask: center \/ contain no-repeat/, 'the icon takes the text colour (light and dark mode)');
   // Settings: every group and setting names an icon, and every one exists
-  const used = [...app.matchAll(/mi: '([A-Za-z-]+)'/g)].map((x) => x[1]);
+  const used = [...app.matchAll(/mi: '([A-Za-z0-9-]+)'/g)].map((x) => x[1]);
   assert.ok(used.length >= 23, 'all Settings groups and settings carry an icon');
   for (const n of new Set(used)) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `Settings icon ${n}.svg exists`);
   assert.match(app, /aria-label="\$\{esc\(g\.label\)\}"/, 'icon-only group tiles still have a label for screen readers');
@@ -330,4 +330,11 @@ test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover
   assert.ok(js.includes("['label.btn:has(#cover-input)', 'upload-cover']"));
   assert.ok(js.includes("{ view: 'collections', icon: 'collection-new'"));
   assert.ok(js.includes("'[data-promo=\"addcoll\"]', 'collection-new'") || js.includes('data-promo="addcoll"]\', \'collection-new\''));
+});
+
+test('Settings icon swaps (upload-cover, replace-text, covers, database-check, providers-2, Library, game-controller, backup-save)', () => {
+  const js = read('public/modern.js'), app = read('public/app.js');
+  for (const s of ["['#profile-upload', 'upload-cover']", "['#dat-rematch-force', 'replace-text']", "['#db-health-refresh', 'database-check']", "['#platform-add-toggle', 'game-controller']", "['#backup-run', 'database-backup-save']"]) assert.ok(js.includes(s), s);
+  for (const s of ["mi: 'providers-2'", "mi: 'Library', ico: '🕹'", "mi: 'covers', ico: '🖼'"]) assert.ok(app.includes(s), s);
+  for (const n of ['covers', 'database-check', 'replace-text', 'providers-2', 'upload-cover', 'Library', 'game-controller', 'database-backup-save']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
 });
