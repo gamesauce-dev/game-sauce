@@ -58,7 +58,7 @@ async function doBuildBar() {
     </div>
     <div class="mb-right">
       <button class="mb-btn" id="mb-theme" title="" aria-label="Light or dark">${ic['dark-mode']}${ic['light-mode']}</button>
-      <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}<small>Modern</small></button>
+      <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}</button>
       <div class="mb-acct">
         <button class="mb-avatar-btn" id="mb-acct-btn" aria-haspopup="menu" aria-expanded="false" title="Account"><span class="mb-avatar" id="mb-avatar"></span></button>
         <div class="mb-menu hidden" id="mb-menu" role="menu">
