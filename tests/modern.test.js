@@ -338,3 +338,9 @@ test('Settings icon swaps (upload-cover, replace-text, covers, database-check, p
   for (const s of ["mi: 'providers-2'", "mi: 'Library', ico: '🕹'", "mi: 'covers', ico: '🖼'"]) assert.ok(app.includes(s), s);
   for (const n of ['covers', 'database-check', 'replace-text', 'providers-2', 'upload-cover', 'Library', 'game-controller', 'database-backup-save']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
 });
+
+test('Add ROMs: the dropzone stretches to the height of the Options panel', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /\.upload-layout \{ align-items: stretch; \}/);
+  assert.match(css, /\.upload-layout \.dropzone \{ display: flex; flex-direction: column;/);
+});

@@ -88,6 +88,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern Add ROMs:** the drop zone is exactly as tall as the Options panel beside it, with its words centred.
 - **Modern Settings icon swaps:** Upload a picture (My account) uses upload-cover; "Re-match and overwrite titles" (DAT files) uses replace-text; the Covers & platform ids sub-menu uses covers; Database maintenance's Re-check uses database-check; Backups' "save one to the server folder now" uses database-backup-save; Metadata providers uses providers(2); Platforms uses the library icon and its Add platform button uses game-controller.
 - **Modern details window and tiles:** Upload cover in the Edit area uses the upload-cover icon; add-to-collection on the icon row and the Collections page in the top bar use the collection icon; Clear match in More actions uses the clear-reset icon; the favourite button on game tiles uses your favourite icon (gold when lit).
 - **Modern: the selection bar is icons** (Select all uses your select icon, Add to collection your collection icon, Hide/Unhide your hidden/visible icons, Mark as System your system icon, Clear match your clear icon, Done your done icon), and the top Library menu's select button uses the same new select icon.

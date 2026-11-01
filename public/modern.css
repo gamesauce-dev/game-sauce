@@ -278,3 +278,7 @@ body.ui-modern .more-menu [data-act="clearmatch"]::before { content: ''; flex: 0
 body.ui-modern .card-fav > svg { display: none; }
 body.ui-modern .card-fav::before { content: ''; display: block; width: 1.3rem; height: 1.3rem; background: currentColor; -webkit-mask: url(/modern/icons/favourite.svg) center / contain no-repeat; mask: url(/modern/icons/favourite.svg) center / contain no-repeat; }
 body.ui-modern .card-fav.on { color: #f5c542; border-color: #f5c54299; }
+
+/* Add ROMs: the dropzone is exactly as tall as the Options panel beside it, with its words centred. */
+body.ui-modern .upload-layout { align-items: stretch; }
+body.ui-modern .upload-layout .dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; }
