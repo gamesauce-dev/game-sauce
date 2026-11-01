@@ -93,6 +93,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern Settings:** in DAT files the Import button sits on the same line as Choose file (the platform picker moves under it) and the two re-match icons share one line; the Choose file buttons in Game names (CSV), the Emulators vault and Backups restore look the same as the DAT one.
+- **Light mode text:** the yellow (admin badge, warnings, "sizes differ a lot…") and green (suggested copy, ok) text is a darker shade on white so it can be read; dark mode is unchanged.
+- **Sign-in screen:** the button is the app's purple again (not green), and the "Your session has ended — sign in again" line, which appeared after a delay on a screen that is already the sign-in screen, is gone.
 - **New accounts start in Modern** (they can switch to Classic from the ◐ / look button). Accounts that already exist keep whatever they had.
 - **Modern details window:** the games behind it dim gently (a light veil instead of a hard 55% black step), and choosing any page in the top bar releases it (unless it is pinned).
 - **Modern hover words use the app's own font** (so Retro applies to them too): each button's title is shown by one small bubble instead of the browser's tooltip, and Classic gets its normal tooltips back when you switch.

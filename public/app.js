@@ -236,7 +236,7 @@ async function api(path, options = {}) {
   // A dead session anywhere in the app drops straight back to the sign-in card
   // instead of leaving every panel showing a generic error.
   if (res.status === 401 && !path.startsWith('/auth/')) {
-    showLogin('Your session has ended — sign in again.');
+    showLogin();   // the sign-in card itself says it; no extra message
     throw new ApiError('Sign in required', 401);
   }
   if (!res.ok) throw new ApiError(data?.error || `Request failed (${res.status})`, res.status);

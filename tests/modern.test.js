@@ -418,3 +418,16 @@ test('Ticker has the game-sauce name line and an admin-only update line; one bar
   assert.match(css, /\[data-mi\]::before \{ content: ''; visibility: hidden;/, 'an icon is invisible until its picture has loaded');
   assert.match(js, /visibility: visible/); assert.match(js, /img\.onload = add/);
 });
+
+test('Settings file choosers share one style, DAT import sits on the chooser line, light-mode text is darker, sign-in has no green or session message', () => {
+  const html = read('public/index.html'), css = read('public/modern.css'), app = read('public/app.js'), cls = read('public/styles.css');
+  assert.match(html, /<div class="dat-row">\s*<input type="file" id="dat-file"[^>]*class="file-input" \/>\s*<button class="btn btn-primary" id="dat-upload">/, 'Import is on the same line as Choose file');
+  assert.match(html, /class="dat-rematch-row" style="display:flex;gap:8px;flex-wrap:nowrap/, 'the two re-match buttons stay on one line');
+  assert.match(html, /id="names-file" accept="\.csv,text\/csv" class="file-input"/);
+  assert.match(html, /name="file" required class="file-input"/, 'the Emulators vault chooser too');
+  assert.match(css, /body\.ui-modern \.file-input \{ display: block; width: 100%;/);
+  assert.match(css, /html\[data-theme="light"\] body\.ui-modern \{\s+--warn: #8a5a00; --good: #0f7a46;/);
+  assert.match(css, /html\[data-theme="light"\] body\.ui-modern \.pill\.warn \{ color: #7a4e00;/);
+  assert.doesNotMatch(app, /Your session has ended/, 'no message on a sign-in screen that is already showing');
+  assert.doesNotMatch(cls, /login-modern \.auth-form \.btn-primary \{ background: #1f9d63/, 'the sign-in button is not green');
+});

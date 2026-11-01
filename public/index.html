@@ -521,7 +521,7 @@
         <p class="hint" style="margin-top:0">Many romsets (FinalBurn Neo, MAME…) are named like <code>sf2ue.zip</code>, which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then <b>Fetch metadata</b> can find their covers. Preview shows what would change before anything is saved. Files are never touched.</p>
         <div class="edit-form" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
           <label class="field"><span>Platform</span><select id="names-platform" class="select"></select></label>
-          <label class="field"><span>CSV file</span><input type="file" id="names-file" accept=".csv,text/csv" /></label>
+          <label class="field"><span>CSV file</span><input type="file" id="names-file" accept=".csv,text/csv" class="file-input" /></label>
           <label class="field"><span>File-name column</span><input id="names-rom-col" value="rom_name" /></label>
           <label class="field"><span>Game-name column</span><input id="names-name-col" value="short_game_name" /></label>
         </div>
@@ -565,19 +565,19 @@
         <div class="dat-import" style="margin-top:14px">
           <label class="field">
             <span>Import a DAT</span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="dat-row">
               <input type="file" id="dat-file" accept=".dat,.xml" class="file-input" />
-              <select id="dat-platform" class="select" style="min-width:220px">
-                <option value="auto">Detect platform from the DAT name</option>
-              </select>
               <button class="btn btn-primary" id="dat-upload">Import</button>
             </div>
+            <select id="dat-platform" class="select" style="min-width:220px;margin-top:8px">
+              <option value="auto">Detect platform from the DAT name</option>
+            </select>
           </label>
           <p class="hint">The file is parsed as a stream and only the catalogue is kept — the DAT
             itself is not stored. Re-importing a newer version adds only the entries it is missing.</p>
         </div>
 
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <div class="dat-rematch-row" style="display:flex;gap:8px;flex-wrap:nowrap;margin-top:6px">
           <button class="btn" id="dat-rematch">Re-match library against DATs</button>
           <button class="btn" id="dat-rematch-force" title="Also replace titles you edited by hand">Re-match and overwrite titles</button>
         </div>
@@ -693,7 +693,7 @@
         </div>
         <div id="emu-vault" class="results"></div>
         <form id="emu-upload-form" class="edit-form admin-only" style="margin-top:12px;grid-template-columns:1fr 1fr 1fr;gap:10px;display:grid">
-          <label class="field"><span>Installer file *</span><input type="file" name="file" required /></label>
+          <label class="field"><span>Installer file *</span><input type="file" name="file" required class="file-input" /></label>
           <label class="field"><span>Display name</span><input name="name" placeholder="Dolphin for Windows" /></label>
           <label class="field"><span>Platform *</span><select name="platform_slug" id="emu-upload-platform" required><option value="">— pick one —</option></select></label>
           <label class="field"><span>Version</span><input name="version" placeholder="2506" /></label>

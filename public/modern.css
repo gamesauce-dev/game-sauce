@@ -328,3 +328,27 @@ body.ui-modern .play-topbar { display: none !important; }
 
 /* The game-sauce name in the ticker keeps its colour flow and shimmer, at ticker size. */
 body.ui-modern .mh-line .mh-brand { font-size: 1.05rem; font-weight: 700; letter-spacing: 0; }
+
+/* Settings: file choosers share one look (DAT files, Game names CSV, Emulators vault, Backups restore): a framed row with the Choose file button inside. */
+body.ui-modern .file-input { display: block; width: 100%; box-sizing: border-box; padding: 0.4rem 0.6rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 0.65rem; color: var(--muted); font-size: 0.89rem; }
+body.ui-modern .dat-row .file-input { flex: 1 1 auto; width: auto; }
+body.ui-modern .file-input::file-selector-button { background: var(--panel-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 0.5rem; padding: 0.35rem 0.7rem; margin-right: 0.6rem; cursor: pointer; font: inherit; }
+body.ui-modern .file-input::file-selector-button:hover { border-color: var(--accent); }
+body.ui-modern .dat-row .btn-primary[data-mi] { flex: 0 0 auto; }
+body.ui-modern .dat-rematch-row { flex-wrap: nowrap !important; }
+
+/* Light mode: yellow and green text need a darker shade to be readable on white; dark mode keeps its brighter ones. */
+html[data-theme="light"] body.ui-modern {
+  --warn: #8a5a00; --good: #0f7a46; --bad: #b42323;
+}
+html[data-theme="light"] body.ui-modern .pill.warn { color: #7a4e00; background: #fff4d6; border-color: #e0b24a; }
+html[data-theme="light"] body.ui-modern .pill.ok { color: #0b6a3b; background: #e2f6ea; border-color: #7fcca1; }
+html[data-theme="light"] body.ui-modern .pill.bad { color: #9b1c1c; background: #fde8e8; border-color: #e59a9a; }
+html[data-theme="light"] body.ui-modern .dup-tie, html[data-theme="light"] body.ui-modern .slow-row b, html[data-theme="light"] body.ui-modern .emu-bios,
+html[data-theme="light"] body.ui-modern .source-extra.is-gone > span { color: #8a5a00; }
+html[data-theme="light"] body.ui-modern .dup-keep, html[data-theme="light"] body.ui-modern .provider-actions .ok, html[data-theme="light"] body.ui-modern .dup-keepbtn.on { color: #0f7a46; }
+html[data-theme="light"] body.ui-modern .dup-keepbtn.on, html[data-theme="light"] body.ui-modern .ibtn.keepon { color: #0f7a46; border-color: #2f9e66; background: rgba(15, 122, 70, .1); }
+html[data-theme="light"] body.ui-modern .more-menu .mi.on { color: #0f7a46; }
+html[data-theme="light"] body.ui-modern .detail-actions .ibtn-play { color: #0f7a46; }
+html[data-theme="light"] body.ui-modern .health-row.warn .health-ico { background: #b8860b; }
+html[data-theme="light"] body.ui-modern .hint[style*="warn"] { color: #8a5a00 !important; }

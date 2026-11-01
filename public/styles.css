@@ -827,6 +827,8 @@ button.result-row:hover { border-color: var(--accent); }
 .coverage-legend span { display: inline-flex; align-items: center; gap: 0.3571rem; }
 .coverage-legend b { width: 0.5714rem; height: 0.5714rem; border-radius: 0.1429rem; display: inline-block; }
 .file-input { font-size: 0.8929rem; color: var(--muted); }
+.dat-row { display: flex; align-items: center; gap: 0.6rem; }
+.dat-row .file-input { flex: 1 1 auto; min-width: 0; }
 .file-input::file-selector-button {
   background: var(--panel-2); border: 1px solid var(--line-2); color: var(--text);
   border-radius: 0.5714rem; padding: 0.4286rem 0.7143rem; margin-right: 0.5714rem; cursor: pointer;
@@ -1589,6 +1591,4 @@ body.details-pinned .drawer-scrim { display: none !important; }
 
 /* The sign-in screen follows the look this browser last used. Modern: a quieter panel and the app's own accent. */
 body.login-modern .auth-card { background: var(--bg-2); border-color: var(--line-2); border-radius: 1rem; }
-body.login-modern .auth-form .btn-primary { background: #1f9d63; border-color: #1f9d63; }
-body.login-modern .auth-form .btn-primary:hover:not(:disabled) { background: #27b374; border-color: #27b374; }
 body.login-modern .auth-card .brand-name { letter-spacing: 0; }
