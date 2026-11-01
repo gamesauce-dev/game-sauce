@@ -154,3 +154,14 @@ test('A-Z jump, grid size and back to top sit above the grid and work from the l
   assert.match(js, /az-hit/, 'the first game under the letter is marked');
   assert.match(css, /^\.az-bar \{ display: none; \}/m, 'hidden everywhere but Modern Library');
 });
+
+test('the details window sits under the bar, uses the supplied pin icon, and the pin is lit or dim by state', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(js, /usePinIcon\(ic\.pin\)/);
+  assert.match(js, /restorePinIcon\(\)/, 'Classic gets its own pin icon back when Modern is turned off');
+  assert.match(js, /--mb-h/, 'the bar height is measured, so the window never covers the bar');
+  assert.match(css, /body\.ui-modern \.drawer \{ top: var\(--mb-h, 50px\)/);
+  assert.match(css, /body\.ui-modern \.drawer-pin\.is-on \{[^}]*box-shadow/, 'lit when pinned');
+  assert.match(css, /body\.ui-modern \.drawer-pin svg \{[^}]*rotate\(35deg\)/, 'tilted and dim when not pinned');
+  assert.match(css, /body\.ui-modern \.drawer-scrim \{ top: var\(--mb-h/, 'the dimming overlay also starts under the bar');
+});

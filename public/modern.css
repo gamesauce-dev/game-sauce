@@ -128,3 +128,14 @@ body.ui-modern .az-l.busy { animation: azpulse .7s infinite alternate; }
 body.ui-modern .az-right { display: flex; align-items: center; gap: 0.2rem; margin-left: auto; flex: 0 0 auto; }
 body.ui-modern .az-right .mb-btn { min-width: 2.2rem; height: 2.2rem; }
 body.ui-modern .card.az-hit .card-cover { outline: 2px solid var(--accent-2); outline-offset: 2px; box-shadow: 0 0 1.2rem color-mix(in srgb, var(--accent) 60%, transparent); }
+
+/* ── Details window under the bar; pin lit when on, dim when off ── */
+body.ui-modern .drawer { top: var(--mb-h, 50px); height: auto; padding-top: 1.1rem; }
+body.ui-modern .drawer-close { top: 0.7rem; }
+body.ui-modern .drawer-pin { color: var(--dim); background: var(--panel); }
+body.ui-modern .drawer-pin svg { width: 1.2rem; height: 1.2rem; transition: transform .15s; transform: rotate(35deg); }
+body.ui-modern .drawer-pin:hover { color: var(--text); }
+body.ui-modern .drawer-pin.is-on { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 18%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 60%, transparent); box-shadow: 0 0 0.7rem color-mix(in srgb, var(--accent) 40%, transparent); }
+body.ui-modern .drawer-pin.is-on svg { transform: rotate(0); }
+body.ui-modern .drawer-pin.is-on svg path { fill: currentColor; fill-opacity: .25; }
+body.ui-modern .drawer-scrim { top: var(--mb-h, 50px); }

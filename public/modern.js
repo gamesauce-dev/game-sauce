@@ -45,7 +45,7 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -71,6 +71,8 @@ async function doBuildBar() {
   built = true;
   buildLibraryTools(ic);
   buildAzBar(ic);
+  usePinIcon(ic.pin);
+  trackBarHeight();
   paintUser();
   refreshTicker(true);
   setInterval(() => { if (isModern()) refreshTicker(true); }, 60000);
@@ -406,6 +408,23 @@ function syncAz() {
   refreshLetters();
 }
 
+
+/* ───────────── Details window: under the bar, with your pin icon ───────────── */
+let classicPin = null;
+/** Swap the drawer's pin for the supplied icon while Modern is on (and put Classic's back when it is off). */
+function usePinIcon(svg) {
+  const b = $('#drawer-pin'); if (!b) return;
+  if (classicPin === null) classicPin = b.innerHTML;
+  if (svg) b.innerHTML = svg;
+}
+function restorePinIcon() { const b = $('#drawer-pin'); if (b && classicPin !== null) b.innerHTML = classicPin; }
+/** The window starts under the fixed bar, so the bar (and the library tools in it) stay reachable while a game is open. */
+function trackBarHeight() {
+  const bar = $('#modern-bar'); if (!bar || typeof ResizeObserver === 'undefined') return;
+  const set = () => document.documentElement.style.setProperty('--mb-h', bar.offsetHeight + 'px');
+  new ResizeObserver(set).observe(bar); set();
+}
+
 /* ───────────── switching look ───────────── */
 export async function setUiMode(mode) {
   const next = mode === 'modern' ? 'modern' : 'classic';
@@ -420,10 +439,11 @@ export async function applyMode(mode, { fresh = false } = {}) {
   document.body.classList.toggle('ui-modern', on);
   document.documentElement.dataset.theme = on ? theme() : 'dark';
   if (on) {
-    await buildBar(); paintUser();
+    await buildBar(); paintUser(); usePinIcon();
     paintToggles();
     go(fresh || current === 'library' && false ? 'home' : (ctx.state().view === 'library' ? (current === 'home' ? 'home' : 'library') : ctx.state().view));
   } else {
+    restorePinIcon();
     hideHome();
     delete document.body.dataset.mview;
     ctx.setView(ctx.state().view === 'home' ? 'library' : ctx.state().view);
