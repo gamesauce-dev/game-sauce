@@ -53,7 +53,7 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -169,6 +169,7 @@ function fillRow(sel, items, empty = '') {
 
 /** Fetch what the ticker says (cheap: it reuses /stats). It sits in the bar on every page except Library, where the library tools take its place. */
 let lastTicker = 0;
+const bytesText = (n) => { const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; n = Number(n) || 0; while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; } return `${n >= 100 || i === 0 ? Math.round(n) : n.toFixed(1)} ${u[i]}`; };
 async function refreshTicker(force = false) {
   if (!force && Date.now() - lastTicker < 20000) return;
   lastTicker = Date.now();
@@ -180,7 +181,13 @@ async function fillTicker(stats) {
   const lib = stats.library || {};
   const lines = [];
   const top = stats.topDownloaded;
-  lines.push(`<b>${Number(lib.roms || 0).toLocaleString()}</b> games across <b>${lib.platforms || 0}</b> platforms`);
+  const cache = window.__platformsCache || [];
+  const shown = cache.reduce((n, p) => n + pc(p), 0), all = cache.reduce((n, p) => n + (p.count || 0), 0);
+  if (cache.length && shown) {
+    lines.push(`<b>${shown.toLocaleString()}</b> games across <b>${cache.filter((p) => pc(p) > 0).length}</b> platforms`);
+    if (all > shown) lines.push(`<b>${(all - shown).toLocaleString()}</b> more are System entries or hidden`);
+  } else lines.push(`<b>${Number(lib.roms || 0).toLocaleString()}</b> games across <b>${lib.platforms || 0}</b> platforms`);
+  if (lib.bytes) lines.push(`<b>${bytesText(lib.bytes)}</b> of ROMs stored`);
   if (stats.mine) lines.push(`<b>${stats.mine.favorites || 0}</b> in your favourites`);
   if (top) lines.push(`Most downloaded: <b>${String(top.title || '').replace(/</g, '&lt;')}</b>`);
   try {
@@ -233,7 +240,7 @@ function buildLibraryTools(ic) {
     ${po ? '' : `<button class="mb-btn" id="tl-sort" title="Sort" aria-label="Sort" aria-haspopup="menu">${ic.sort}</button>`}
     <button class="mb-btn" id="tl-fav" title="Favourites only" aria-label="Favourites only">${ic.favourite}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
-    <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic.select}</button>`}
+    <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue });
@@ -288,13 +295,15 @@ let chipFamily = null;
 const chipSort = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
 const chosen = () => { const s = ctx.state(); return s.platform === 'all' ? [] : [s.platform, ...(s.extraPlatforms || [])]; };
 
-const allPlats = () => (window.__platformsCache || []).filter((p) => p.count > 0);
+// What the chips count is what the list shows: no System entries and nothing this person has hidden (the total above the grid then matches).
+const pc = (p) => (p.visible_count ?? p.count) || 0;
+const allPlats = () => (window.__platformsCache || []).filter((p) => pc(p) > 0);
 const familyOfSlug = (slug) => allPlats().find((p) => p.slug === slug)?.family || 'Others';
 const familySlugs = (f) => allPlats().filter((p) => (p.family || 'Others') === f).sort((a, b) => chipSort(a.name, b.name)).map((p) => p.slug);
 
 export function renderChips() {
   const host = $('#chip-rows'); if (!host) return;
-  const items = (window.__platformsCache || []).filter((p) => p.count > 0);
+  const items = (window.__platformsCache || []).filter((p) => pc(p) > 0);
   if (!items.length) { host.innerHTML = ''; return; }
   const fams = new Map();
   for (const p of items) { const f = p.family || 'Others'; if (!fams.has(f)) fams.set(f, []); fams.get(f).push(p); }
@@ -303,8 +312,8 @@ export function renderChips() {
   // A whole family selected = the family chip is lit and its platform chips are NOT (they light only when picked one by one).
   const wholeNow = chipFamily && familySlugs(chipFamily).length > 1 && familySlugs(chipFamily).every((s) => picked.has(s)) && picked.size === familySlugs(chipFamily).length;
   const famOf = (slug) => items.find((p) => p.slug === slug)?.family || 'Others';
-  const total = items.reduce((n, p) => n + p.count, 0);
-  const famCount = (f) => fams.get(f).reduce((n, p) => n + p.count, 0);
+  const total = items.reduce((n, p) => n + pc(p), 0);
+  const famCount = (f) => fams.get(f).reduce((n, p) => n + pc(p), 0);
   const litFam = (f) => [...picked].some((s) => famOf(s) === f);
   // 'whole' = every platform of that family is on, so the family chip is solid; 'part' = just some, so it is outlined
   const famState = (f) => { const sl = fams.get(f).map((p) => p.slug); const n = sl.filter((s) => picked.has(s)).length; return n === 0 ? '' : n === sl.length ? ' on whole' : ' on part'; };
@@ -315,7 +324,7 @@ export function renderChips() {
       <button class="chip${picked.size === 0 ? ' on' : ''}" data-chip-all title="All platforms">All <small>${total.toLocaleString()}</small></button>
       ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
     </div>
-    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}">${ctx.platformIconSvg(p, 16)}<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${p.count.toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}">${ctx.platformIconSvg(p, 16)}<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
 }
 
 async function chipChanged() {
@@ -480,7 +489,7 @@ const ICON_MAP = [
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
   ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse', 'tick'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
   ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
-  ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
+  ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
   ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
@@ -490,7 +499,7 @@ const ICON_MAP = [
   // Collections
   ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'],
   // Library selection bar
-  ['#bulk-addcoll', 'collection'], ['#bulk-delete-btn', 'delete'],
+  ['#bulk-addcoll', 'collection-new'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-cancel', 'done'],
   // Settings: account
   ['#profile-upload', 'image-upload'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance
@@ -542,6 +551,8 @@ export function iconize(root = document) {
       miRule(name);
     }
   }
+  const hb = $('#bulk-hide-btn');   // Hide shows the hidden icon; Unhide (when looking at hidden games) shows the visible one
+  if (hb) { const want = /unhide/i.test(hb.textContent) ? 'visible' : 'hidden'; if (hb.dataset.mi !== want) { if (!hb.dataset.miLabel) hb.dataset.miLabel = hb.getAttribute('title') || 'Hide selected'; hb.dataset.mi = want; if (!hb.getAttribute('aria-label')) hb.setAttribute('aria-label', hb.title || hb.dataset.miLabel); miRule(want); } }
   for (const el of $$('[data-mi]', root)) miRule(el.dataset.mi);   // icons named in templates (the Settings tiles)
 }
 let miTimer = null;

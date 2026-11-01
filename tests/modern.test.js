@@ -309,3 +309,14 @@ test('Details window: nav arrows, search/save icons, upload-cover icon, no dupli
   assert.match(css, /\.genre-pill \{ text-transform: none;/);
   assert.match(css, /#view-collections \.toolbar[^{]*\{ justify-content: flex-start; \}/);
 });
+
+test('Selection bar icons, platform chip counts match the list, storage in the ticker', () => {
+  const js = read('public/modern.js'), app = read('src/app.js');
+  for (const n of ['select-2', 'done', 'collection-new', 'system', 'clear-reset', 'hidden', 'visible']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  for (const s of ["['#bulk-selectall', 'select-2']", "['#bulk-system-btn', 'system']", "['#bulk-clearmatch-btn', 'clear-reset']", "['#bulk-cancel', 'done']", "['#bulk-addcoll', 'collection-new']"]) assert.ok(js.includes(s), s);
+  assert.ok(js.includes("ic['select-2']"), 'top library menu select icon');
+  assert.match(app, /AS visible_count/, 'the platforms API reports what the default list shows');
+  assert.match(js, /const pc = \(p\) => \(p\.visible_count \?\? p\.count\) \|\| 0;/);
+  assert.doesNotMatch(js.slice(js.indexOf('export function renderChips'), js.indexOf('async function chipChanged')), /\bp\.count\b/, 'chips never use the raw count');
+  assert.match(js, /of ROMs stored/);
+});

@@ -156,7 +156,8 @@ export function createApp() {
   api.get('/platforms', (req, res) => {
     res.json({
       items: db.prepare(`
-        SELECT p.*, COUNT(r.id) AS count
+        SELECT p.*, COUNT(r.id) AS count,
+               COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? '' : ' AND r.hidden_all = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
       `).all()
