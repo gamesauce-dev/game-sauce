@@ -89,14 +89,13 @@ test('the bar is built once (a second build would double every click)', () => {
   assert.match(js, /e\.currentTarget\.contains\(nav\)/, 'page buttons are matched inside the bar, not on <body data-mview>');
 });
 
-test('Modern Home reuses Classic\'s boxes, equal tile sizes and equal title heights; name and sign-out sit under the logo', () => {
+test('Modern Home reuses Classic\'s boxes, equal tile sizes and equal title heights', () => {
   const js = read('public/modern.js'), css = read('public/modern.css');
   assert.match(js, /class="strips mh-strips"/);
   assert.match(js, /data-strip="played"/);
   assert.match(js, /data-strip="recent"/);
   assert.match(css, /\.card-title \{ min-height: 2\.5em; \}/, 'every title is two lines tall, so covers never shrink');
   assert.match(css, /repeat\(auto-fill, 5\.6rem\)/, 'one tile size for both boxes');
-  assert.match(js, /<div class="mb-id">[\s\S]*mb-brand[\s\S]*mb-user/, 'user and sign-out are inside the same column as the logo');
   assert.match(read('public/app.js'), /applyStrips\(host, false\)|applyStrips\(b\.closest\('\.modern-home'\), false\)/, 'a short window does not collapse the Home boxes');
 });
 
@@ -106,4 +105,15 @@ test('the ticker lives in the top bar on every page, and Library will swap it fo
   assert.doesNotMatch(js.slice(js.indexOf('async function renderHome')), /id="mh-ticker"/, 'Home no longer carries its own ticker');
   assert.match(js, /refreshTicker\(\);/, 'it is refreshed on every page change');
   assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/, 'hidden in Library once the tools are in the bar');
+});
+
+test('the logo is the vector file, sized to the icon row; the account is an avatar menu on the right', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(js, /<img src="\/logo\.svg"/);
+  assert.match(css, /\.mb-brand img \{[^}]*width: 2\.5rem; height: 2\.5rem/);
+  assert.match(read('public/logo.svg'), /viewBox=/);
+  assert.doesNotMatch(read('public/logo.svg'), /<image|base64/, 'a true vector, no embedded bitmap');
+  const right = js.slice(js.indexOf('<div class="mb-right">'));
+  assert.match(right, /id="mb-theme"[\s\S]*id="mb-gui"[\s\S]*id="mb-acct-btn"[\s\S]*My account[\s\S]*Sign out/, 'switches then avatar, in that order, on the right');
+  assert.doesNotMatch(js.slice(0, js.indexOf('<div class="mb-right">')), /mb-signout/, 'sign-out is no longer at the left');
 });

@@ -45,16 +45,12 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
   bar.innerHTML = `
-    <div class="mb-id">
-      <a class="mb-brand" href="#" data-mview="home" title="Home"><img src="/logo.svg" alt="game-sauce" /><span class="mb-name">game<b>-sauce</b></span></a>
-      <div class="mb-user"><span class="mb-avatar" id="mb-avatar"></span><span class="mb-uname" id="mb-uname"></span>
-        <button class="mb-btn" id="mb-signout" title="Sign out" aria-label="Sign out">${ic['sign-out']}</button></div>
-    </div>
+    <a class="mb-brand" href="#" data-mview="home" title="game-sauce: Home" aria-label="game-sauce, Home"><img src="/logo.svg" alt="" width="40" height="40" /></a>
     <nav class="mb-nav" aria-label="Main">${items.map((n) => `<button class="mb-btn mb-navbtn" data-mview="${n.view}" title="${n.label}" aria-label="${n.label}">${ic[n.icon] || n.label}</button>`).join('')}</nav>
     <div class="mb-slot" id="mb-slot">
       <div class="mh-ticker" id="mh-ticker" aria-live="polite"><div class="mh-track" id="mh-track"></div></div>
@@ -63,6 +59,14 @@ async function doBuildBar() {
     <div class="mb-right">
       <button class="mb-btn" id="mb-theme" title="" aria-label="Light or dark">${ic['dark-mode']}${ic['light-mode']}</button>
       <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}<small>Modern</small></button>
+      <div class="mb-acct">
+        <button class="mb-avatar-btn" id="mb-acct-btn" aria-haspopup="menu" aria-expanded="false" title="Account"><span class="mb-avatar" id="mb-avatar"></span></button>
+        <div class="mb-menu hidden" id="mb-menu" role="menu">
+          <div class="mb-menu-head"><b id="mb-uname"></b><small id="mb-urole"></small></div>
+          <button class="mb-menu-item" role="menuitem" data-mview="settings" data-acct="account">${ic['my-account']}<span>My account</span></button>
+          <button class="mb-menu-item" role="menuitem" id="mb-signout">${ic['sign-out']}<span>Sign out</span></button>
+        </div>
+      </div>
     </div>`;
   built = true;
   paintUser();
@@ -76,6 +80,7 @@ function paintUser() {
   const u = ctx.user(); if (!u) return;
   const label = u.display_name || u.username;
   const name = $('#mb-uname'); if (name) name.textContent = label;
+  const role = $('#mb-urole'); if (role) role.textContent = u.role === 'admin' ? 'admin' : (u.play_only ? 'player' : 'member');
   const av = $('#mb-avatar'); if (av) { av.id = 'mb-avatar'; ctx.paintAvatar(av, u.id, label, u.avatar_v); }
 }
 
@@ -84,13 +89,19 @@ function paintToggles() {
   const g = $('#mb-gui'); if (g) { g.classList.toggle('is-on', isModern()); g.setAttribute('aria-pressed', String(isModern())); g.title = isModern() ? 'Modern look (click for Classic)' : 'Classic look (click for Modern)'; }
 }
 
+function closeMenu() { $('#mb-menu')?.classList.add('hidden'); $('#mb-acct-btn')?.setAttribute('aria-expanded', 'false'); }
+document.addEventListener('click', (e) => { if (!e.target.closest('.mb-acct')) closeMenu(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
 function onBarClick(e) {
+  if (e.target.closest('#mb-acct-btn')) { const m = $('#mb-menu'); const open = m.classList.toggle('hidden') === false; $('#mb-acct-btn').setAttribute('aria-expanded', String(open)); return; }
+  if (e.target.closest('[data-acct="account"]')) { closeMenu(); go('settings'); setTimeout(() => ctx.openAccount?.(), 60); return; }
   // Only the bar's own buttons: <body> also carries data-mview (the current page), and closest() would find it for every click.
   const nav = e.target.closest('[data-mview]');
   if (nav && e.currentTarget.contains(nav)) { e.preventDefault(); go(nav.dataset.mview); return; }
   if (e.target.closest('#mb-theme')) { applyTheme(theme() === 'light' ? 'dark' : 'light'); return; }
   if (e.target.closest('#mb-gui')) { setUiMode('classic'); return; }
-  if (e.target.closest('#mb-signout')) $('#logout')?.click();
+  if (e.target.closest('#mb-signout')) { closeMenu(); $('#logout')?.click(); }
 }
 
 /* ───────────── pages ───────────── */
