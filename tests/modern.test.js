@@ -232,3 +232,10 @@ test('"Add and scan" is your source-add-and-scan icon in Modern, with the words 
   assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-and-scan.svg', import.meta.url)));
   assert.match(read('public/modern/icons/source-add-and-scan.svg'), /currentColor/);
 });
+
+test('close, tick, copy, clear-reset and show-more icons are wired to their buttons', () => {
+  const js = read('public/modern.js');
+  for (const [id, n] of [['#health-copy', 'copy'], ['#bulk-clear', 'clear-reset-2'], ['#dup-more', 'show-more-down-arrow'], ['#browser-use', 'tick'], ['#cancel-source', 'close']]) {
+    assert.ok(js.includes(id) && fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `${id} -> ${n}`);
+  }
+});

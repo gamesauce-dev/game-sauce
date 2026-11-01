@@ -456,6 +456,10 @@ function trackBarHeight() {
    words and draws the SVG in their place; the words stay as the hover text and the screen-reader label. Nothing is rewritten, so
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
+  // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
+  ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
+  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse', 'tick'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
+  ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
   ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
