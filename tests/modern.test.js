@@ -178,3 +178,12 @@ test('chip row: a family selects the whole family (All goes off), a platform the
   assert.match(app, /wholeFam \? `\$\{fam\} \(all platforms\)`/, 'the heading names a whole family');
   assert.match(css, /\.chip\.on\.part \{[^}]*dashed/);
 });
+
+test('medium windows (snapped to half a screen): the library tools drop to their own line instead of overlapping the switches', () => {
+  const css = read('public/modern.css');
+  const m = css.match(/@media \(max-width: 1060px\) \{([\s\S]*?)\n\}/);
+  assert.ok(m, 'there is a rule for windows up to 1060px wide');
+  assert.match(m[1], /\.modern-bar \{ flex-wrap: wrap/);
+  assert.match(m[1], /\.mb-slot \{ order: 6; flex: 1 1 100%; \}/, 'the tools / ticker take a full line of their own');
+  assert.match(m[1], /\.mb-right \{ margin-left: auto; \}/, 'the switches stay at the right of the icon row');
+});

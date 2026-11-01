@@ -78,9 +78,19 @@ body.ui-modern .strip .recent-row .card { height: auto; align-self: start; }
 body.ui-modern .mh-strips .strip .recent-row { grid-template-columns: repeat(auto-fill, 5.6rem); justify-content: start; column-gap: 0.7rem; }
 body.ui-modern .mh-strips { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 0 0.9rem; align-items: start; }
 
+/* Medium windows (snapped to half a screen): the tools and the ticker drop onto their own line under the icons instead of
+   running into the switches on the right. */
+@media (max-width: 1060px) {
+  body.ui-modern .modern-bar { flex-wrap: wrap; row-gap: 0.4rem; }
+  body.ui-modern .mb-slot { order: 6; flex: 1 1 100%; }
+  body.ui-modern .mb-right { margin-left: auto; }
+  body.ui-modern .mh-ticker { margin: 0; max-width: none; flex: 1 1 100%; }
+  body.ui-modern .tl-search { max-width: none; }
+}
 @media (max-width: 720px) {
   body.ui-modern .modern-bar { flex-wrap: wrap; gap: 0.4rem; padding: 0.4rem 0.6rem; }
   body.ui-modern .mb-nav { order: 5; width: 100%; margin: 0; overflow-x: auto; }
+  body.ui-modern .mb-slot { order: 6; }
   body.ui-modern .mh-ticker { order: 6; width: 100%; max-width: none; margin: 0; flex-basis: 100%; }
   body.ui-modern .modern-home { padding: 0.8rem; }
 }
