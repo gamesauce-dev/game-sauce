@@ -20,10 +20,13 @@ body.ui-modern .mb-brand { display: flex; align-items: center; gap: 0.5rem; text
 body.ui-modern .mb-brand img { width: 2rem; height: 2rem; border-radius: 0.5rem; }
 body.ui-modern .mb-name { font-weight: 700; font-size: 1.05rem; letter-spacing: .01em; }
 body.ui-modern .mb-name b { color: #ff3d68; font-weight: 700; }
-body.ui-modern .mb-user { display: flex; align-items: center; gap: 0.5rem; padding-left: 0.4rem; border-left: 1px solid var(--line); }
-body.ui-modern .mb-avatar { width: 1.9rem; height: 1.9rem; border-radius: 50%; overflow: hidden; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; background: var(--accent); color: #fff; flex: 0 0 auto; }
+body.ui-modern .mb-id { display: flex; flex-direction: column; gap: 0.15rem; flex: 0 0 auto; }
+body.ui-modern .mb-user { display: flex; align-items: center; gap: 0.4rem; }
+body.ui-modern .mb-avatar { width: 1.5rem; height: 1.5rem; border-radius: 50%; overflow: hidden; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; background: var(--accent); color: #fff; flex: 0 0 auto; }
 body.ui-modern .mb-avatar img { width: 100%; height: 100%; object-fit: cover; }
-body.ui-modern .mb-uname { font-size: 0.85rem; color: var(--muted); max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.ui-modern .mb-id .mb-btn { min-width: 1.8rem; height: 1.8rem; padding: 0 0.3rem; }
+body.ui-modern .mb-id .mb-btn .mi { width: 1.1rem; height: 1.1rem; }
+body.ui-modern .mb-uname { font-size: 0.82rem; color: var(--muted); max-width: 7.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.ui-modern .mb-nav { display: flex; align-items: center; gap: 0.2rem; margin-left: 0.6rem; }
 body.ui-modern .mb-slot { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.5rem; }
 body.ui-modern .mb-right { display: flex; align-items: center; gap: 0.3rem; margin-left: auto; }
@@ -51,12 +54,14 @@ body.ui-modern .main { background: var(--bg); }
 .mh-track { display: flex; flex-direction: column; transition: transform .5s ease; }
 .mh-line { height: 2.6rem; flex: 0 0 2.6rem; display: flex; align-items: center; padding: 0 1rem; font-size: 0.95rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mh-line b { color: var(--text); margin: 0 0.25em; }
-.mh-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1.2rem; }
-.mh-panel { border: 1px solid var(--line); border-radius: 0.9rem; background: var(--panel); padding: 0.9rem 1rem 1rem; min-width: 0; }
-.mh-panel h2 { margin: 0 0 0.7rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); font-weight: 600; }
-.mh-row { display: grid; grid-auto-flow: column; grid-auto-columns: 8.2rem; gap: 0.8rem; overflow-x: auto; padding-bottom: 0.4rem; scroll-snap-type: x proximity; }
-.mh-row .card { scroll-snap-align: start; min-width: 0; }
-.mh-row .card-title { font-size: 0.8rem; }
+/* Continue playing and Recently added reuse Classic's own boxes (.strips / .strip / .recent-row): same borders, no scroll bar. */
+.mh-strips { margin: 0; }
+/* Every title takes exactly two lines, so a long title never makes its cover smaller than its neighbour's. */
+body.ui-modern .strip .recent-row .card-title { min-height: 2.5em; }
+body.ui-modern .strip .recent-row .card { height: auto; align-self: start; }
+/* Same tile size in both boxes (Classic stretches each box's tiles to its own width, so the two rows came out different sizes). */
+body.ui-modern .mh-strips .strip .recent-row { grid-template-columns: repeat(auto-fill, 5.6rem); justify-content: start; column-gap: 0.7rem; }
+body.ui-modern .mh-strips { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 0 0.9rem; align-items: start; }
 
 @media (max-width: 720px) {
   body.ui-modern .modern-bar { flex-wrap: wrap; gap: 0.4rem; padding: 0.4rem 0.6rem; }

@@ -676,16 +676,17 @@ async function renderOverview() {
 
 /* Collapsible home rows. The open/closed choice is remembered per browser. */
 const STRIP_KEY = 'gamesauce_strips';
-function stripState() {
+function stripState(shortWindowDefault = true) {
   let st = {};
   try { st = JSON.parse(localStorage.getItem(STRIP_KEY) || '{}'); } catch { /* ignore */ }
   // Until the user chooses, start collapsed on short windows so the main grid keeps its room.
-  if (window.innerHeight < 860) for (const k of ['played', 'recent']) if (!st[k]) st[k] = 'closed';
+  if (shortWindowDefault && window.innerHeight < 860) for (const k of ['played', 'recent']) if (!st[k]) st[k] = 'closed';
   return st;
 }
-function applyStrips() {
-  const st = stripState();
-  $$('.strip').forEach((el) => {
+// `scope` limits it to one container; on Modern Home there is no grid below to save room for, so a short window does not collapse them.
+function applyStrips(scope = document, shortWindowDefault = true) {
+  const st = stripState(shortWindowDefault);
+  $$('.strip', scope).forEach((el) => {
     const closed = st[el.dataset.strip] === 'closed';
     el.classList.toggle('collapsed', closed);
     $('[data-strip-toggle]', el)?.setAttribute('aria-expanded', closed ? 'false' : 'true');
@@ -694,11 +695,13 @@ function applyStrips() {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-strip-toggle]');
   if (!b) return;
-  const st = stripState();
+  const onModernHome = Boolean(b.closest('.modern-home'));
+  const st = stripState(!onModernHome);
   const key = b.dataset.stripToggle;
   st[key] = st[key] === 'closed' ? 'open' : 'closed';
   try { localStorage.setItem(STRIP_KEY, JSON.stringify(st)); } catch { /* private mode: still toggles for this page */ }
   applyStrips();
+  if (onModernHome) applyStrips(b.closest('.modern-home'), false);
 });
 applyStrips();
 
@@ -3496,7 +3499,7 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  modern.initModern({ api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
+  modern.initModern({ api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
   api('/prefs').then((p) => { state.prefs = p || {}; return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 

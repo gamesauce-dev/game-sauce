@@ -88,3 +88,14 @@ test('the bar is built once (a second build would double every click)', () => {
   assert.match(js, /building \|\| \(building = doBuildBar\(\)\)/);
   assert.match(js, /e\.currentTarget\.contains\(nav\)/, 'page buttons are matched inside the bar, not on <body data-mview>');
 });
+
+test('Modern Home reuses Classic\'s boxes, equal tile sizes and equal title heights; name and sign-out sit under the logo', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(js, /class="strips mh-strips"/);
+  assert.match(js, /data-strip="played"/);
+  assert.match(js, /data-strip="recent"/);
+  assert.match(css, /\.card-title \{ min-height: 2\.5em; \}/, 'every title is two lines tall, so covers never shrink');
+  assert.match(css, /repeat\(auto-fill, 5\.6rem\)/, 'one tile size for both boxes');
+  assert.match(js, /<div class="mb-id">[\s\S]*mb-brand[\s\S]*mb-user/, 'user and sign-out are inside the same column as the logo');
+  assert.match(read('public/app.js'), /applyStrips\(host, false\)|applyStrips\(b\.closest\('\.modern-home'\), false\)/, 'a short window does not collapse the Home boxes');
+});

@@ -50,9 +50,11 @@ async function doBuildBar() {
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
   bar.innerHTML = `
-    <a class="mb-brand" href="#" data-mview="home" title="Home"><img src="/logo.svg" alt="game-sauce" /><span class="mb-name">game<b>-sauce</b></span></a>
-    <div class="mb-user"><span class="mb-avatar" id="mb-avatar"></span><span class="mb-uname" id="mb-uname"></span>
-      <button class="mb-btn" id="mb-signout" title="Sign out" aria-label="Sign out">${ic['sign-out']}</button></div>
+    <div class="mb-id">
+      <a class="mb-brand" href="#" data-mview="home" title="Home"><img src="/logo.svg" alt="game-sauce" /><span class="mb-name">game<b>-sauce</b></span></a>
+      <div class="mb-user"><span class="mb-avatar" id="mb-avatar"></span><span class="mb-uname" id="mb-uname"></span>
+        <button class="mb-btn" id="mb-signout" title="Sign out" aria-label="Sign out">${ic['sign-out']}</button></div>
+    </div>
     <nav class="mb-nav" aria-label="Main">${items.map((n) => `<button class="mb-btn mb-navbtn" data-mview="${n.view}" title="${n.label}" aria-label="${n.label}">${ic[n.icon] || n.label}</button>`).join('')}</nav>
     <div class="mb-slot" id="mb-library-tools"></div>
     <div class="mb-right">
@@ -112,10 +114,11 @@ async function renderHome() {
   const host = $('#modern-home'); if (!host) return;
   host.innerHTML = `
     <div class="mh-ticker" id="mh-ticker" aria-live="polite"><div class="mh-track" id="mh-track"></div></div>
-    <div class="mh-rows">
-      <section class="mh-panel"><h2>Continue playing</h2><div class="mh-row" id="mh-played"><div class="side-empty">Nothing yet</div></div></section>
-      <section class="mh-panel"><h2>Recently added</h2><div class="mh-row" id="mh-recent"></div></section>
+    <div class="strips mh-strips">
+      <div class="strip" data-strip="played"><button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span></button><div class="recent-row" id="mh-played"></div></div>
+      <div class="strip" data-strip="recent"><button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span></button><div class="recent-row" id="mh-recent"></div></div>
     </div>`;
+  ctx.applyStrips?.(host, false);
   try {
     const [stats, played] = await Promise.all([api('/stats'), api('/roms/recently-played?limit=14').catch(() => ({ items: [] }))]);
     fillRow('#mh-recent', stats.recent || []);
@@ -126,9 +129,9 @@ async function renderHome() {
 
 function fillRow(sel, items, empty = '') {
   const el = $(sel); if (!el) return;
-  if (!items.length) { el.innerHTML = empty ? `<div class="side-empty">${empty}</div>` : ''; return; }
+  if (!items.length) { el.innerHTML = empty ? `<div class="side-empty" style="grid-column:1/-1">${empty}</div>` : ''; return; }
   // The same tiles as the library grid (cover, platform badge, play button), so they behave the same.
-  el.innerHTML = items.slice(0, 14).map(ctx.cardHtml).join('');
+  el.innerHTML = items.slice(0, 16).map(ctx.cardHtml).join('');
   ctx.bindCards(el);
 }
 
