@@ -1868,7 +1868,7 @@ async function loadSourcesNow() {
         ${s.last_scan_error ? `<span class="pill warn">${esc(s.last_scan_error)}</span>` : ''}
         <div class="source-actions">
           <button class="btn btn-sm" data-act="scan">↻ Scan</button>
-          <button class="btn btn-sm" data-act="toggle">${s.enabled ? 'Disable' : 'Enable'}</button>
+          <button class="btn btn-sm" data-act="toggle" data-enabled="${s.enabled ? 1 : 0}">${s.enabled ? 'Disable' : 'Enable'}</button>
           <button class="btn btn-sm btn-danger" data-act="remove">Remove</button>
         </div>
       </div>

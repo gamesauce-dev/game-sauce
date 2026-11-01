@@ -239,3 +239,9 @@ test('close, tick, copy, clear-reset and show-more icons are wired to their butt
     assert.ok(js.includes(id) && fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `${id} -> ${n}`);
   }
 });
+
+test('Sources: Disable uses the folder-disable icon; Enable stays text until an icon exists', () => {
+  assert.match(read('public/modern.js'), /\[data-act="toggle"\]\[data-enabled="1"\]', 'folder-disable'/);
+  assert.match(read('public/app.js'), /data-act="toggle" data-enabled=/);
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/folder-disable.svg', import.meta.url)));
+});
