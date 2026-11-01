@@ -431,3 +431,20 @@ test('Settings file choosers share one style, DAT import sits on the chooser lin
   assert.doesNotMatch(app, /Your session has ended/, 'no message on a sign-in screen that is already showing');
   assert.doesNotMatch(cls, /login-modern \.auth-form \.btn-primary \{ background: #1f9d63/, 'the sign-in button is not green');
 });
+
+test('an admin can change another person\'s role; the last admin and your own role are protected; the admin badge has room', async () => {
+  const r = (p, o) => call(p, o);
+  const created = await call('/api/auth/users', { method: 'POST', body: { username: 'mrole', password: 'm-role-pass-1234', role: 'user' } });
+  const rid = created.body.user?.id ?? created.body.id ?? db.prepare("SELECT id FROM users WHERE username = 'mrole'").get().id;
+  assert.equal((await r(`/api/auth/users/${rid}`, { method: 'PATCH', body: { role: 'admin' } })).body.role, 'admin', 'promoted');
+  const roleTok = await login('mrole', 'm-role-pass-1234');
+  assert.equal((await call('/api/auth/users', { token: roleTok })).status, 200, 'the new admin can use admin routes straight away');
+  assert.equal((await r(`/api/auth/users/${rid}`, { method: 'PATCH', body: { role: 'user' } })).body.role, 'user', 'demoted');
+  assert.equal((await call('/api/auth/users', { token: roleTok })).status, 403, 'and loses admin routes straight away');
+  assert.equal((await r(`/api/auth/users/${rid}`, { method: 'PATCH', body: { role: 'wizard' } })).status, 400);
+  const me = (await call('/api/auth/me')).body.user.id;
+  assert.equal((await r(`/api/auth/users/${me}`, { method: 'PATCH', body: { role: 'user' } })).status, 409, 'you cannot change your own role');
+  assert.equal((await call(`/api/auth/users/${rid}`, { token: memberTok, method: 'PATCH', body: { role: 'admin' } })).status, 403, 'a member cannot promote anyone');
+  const css = read('public/styles.css'), app = read('public/app.js');
+  assert.match(css, /\.user-line \.user-badge \{ margin-left: 0\.75rem; \}/); assert.match(app, /data-act="role-setting"/);
+});

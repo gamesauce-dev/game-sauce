@@ -4176,9 +4176,11 @@ async function loadUsersForModule() {
   $('#user-list').innerHTML = users.map((u) => `
     <div class="user-list-row" data-user="${u.id}" data-name="${esc(u.username)}">
       <div class="grow">
-        <div class="user-line"><span class="avatar avatar-sm${u.avatar_v ? ' has-pic' : ''}" style="${u.avatar_v ? `background-image:url(/api/auth/avatar/${u.id}?v=${u.avatar_v})` : ''}">${u.avatar_v ? '' : esc(u.username.slice(0, 1))}</span>${esc(u.username)} ${u.role === 'admin' ? '<span class="pill accent">admin</span>' : ''} ${u.disabled ? '<span class="pill bad">disabled</span>' : ''}</div>
+        <div class="user-line"><span class="avatar avatar-sm${u.avatar_v ? ' has-pic' : ''}" style="${u.avatar_v ? `background-image:url(/api/auth/avatar/${u.id}?v=${u.avatar_v})` : ''}">${u.avatar_v ? '' : esc(u.username.slice(0, 1))}</span><span class="user-name">${esc(u.username)}</span>${u.role === 'admin' ? '<span class="pill accent user-badge">admin</span>' : ''}${u.disabled ? '<span class="pill bad user-badge">disabled</span>' : ''}</div>
         <div class="sub">${u.active_sessions} session(s) · last login ${u.last_login_at ? `${esc(u.last_login_at)} UTC` : 'never'}</div>
       </div>
+      <label class="dl-pick" title="Admins manage the library, sources, providers and people. Members use the library. You cannot change your own role."><span>Role</span>
+        <select class="select" data-act="role-setting" ${u.id === (authState.user?.id) ? 'disabled' : ''}><option value="user" ${u.role !== 'admin' ? 'selected' : ''}>Member</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></label>
       ${u.role === 'admin' ? '' : `<label class="dl-pick" title="What this person sees. Full: the whole app. Play only: a simple screen of games that can be played in the browser, with search and favourites."><span>Screen</span>
         <select class="select" data-act="mode-setting"><option value="full" ${u.mode === 'full' ? 'selected' : ''}>Full</option><option value="play" ${u.mode === 'play' ? 'selected' : ''}>Play only</option></select></label>`}
       ${u.role === 'admin' ? '' : `<label class="dl-pick" title="Whether this person can download ROM files. 'Default' follows the switch above."><span>Downloads</span>
@@ -4193,6 +4195,14 @@ async function loadUsersForModule() {
       const disabled = row.textContent.includes('disabled');
       try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ disabled: !disabled }) }); loadUsersForModule(); }
       catch (err) { toast(err.message, true); }
+    });
+    $('[data-act="role-setting"]', row)?.addEventListener('change', async (e) => {
+      const name = row.dataset.name, role = e.target.value;
+      const ok = await confirmDialog({ title: role === 'admin' ? `Make ${name} an admin?` : `Make ${name} a member?`, body: role === 'admin' ? `${name} will be able to manage the library, sources, providers, backups and every other person. Only do this for someone you trust with the whole server.` : `${name} will lose access to Settings, Sources and the admin tools, and keep the normal library.`, okLabel: role === 'admin' ? 'Make admin' : 'Make member', danger: role !== 'admin' });
+      if (!ok) { loadUsersForModule(); return; }
+      try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ role }) }); toast(role === 'admin' ? `${name} is now an admin` : `${name} is now a member`); }
+      catch (err) { toast(err.message, true); }
+      loadUsersForModule();
     });
     $('[data-act="mode-setting"]', row)?.addEventListener('change', async (e) => {
       const name = row.dataset.name;

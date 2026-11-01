@@ -32,8 +32,14 @@
 //   --concurrency N     games checked at once (default 2)
 //   --recheck           also test games that are already switched ON. By default they are skipped: they passed before.
 //   --resume            carry on an earlier run (skips games already in the output folder)
+//   --off               do not test anything: switch browser play OFF for every game on the platforms you name with --platform (and,
+//                       with --only, whose title contains that text). It lists how many first and asks you to confirm (--yes skips
+//                       the question). Use it for a platform where the in-browser player cannot work at all, e.g.
+//                       --platform neogeo --off. Any game can be switched back on from its ⋯ menu.
+//   --yes               with --off: do not ask for confirmation
 //   --apply             change the flags AS IT GOES, so a stopped run keeps its progress: every game that runs is switched ON, and
-//                       a game that shows the RetroArch menu is switched OFF if it was on. Games already ON are skipped
+//                       a game that shows the RetroArch menu or the core's own error screen (FinalBurn Neo's "romset is missing
+//                       files") is switched OFF if it was on. Games already ON are skipped
 //                       (unless --recheck). Each flag can be changed back from the game's ⋯ menu.
 //   --out DIR           where to put the results (default ./play-check)
 //   --headed            show the browser while it runs
@@ -41,7 +47,7 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { verdict, planBuckets, judgeSteps, isSparse } from '../src/lib/playcheck.js';
+import { verdict, planBuckets, judgeSteps, isSparse, isFailure } from '../src/lib/playcheck.js';
 
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);
@@ -63,6 +69,7 @@ const recheck = flag('--recheck');
 const candidates = flag('--candidates') || flag('--cutoff');
 const cutoff = flag('--cutoff');
 const perYear = Math.max(3, Number(opt('--per-year', 8)));
+const turnOff = flag('--off');
 
 async function ask(question, hidden) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
@@ -82,6 +89,28 @@ const get = async (p) => { const r = await fetch(server + p, { headers: H }); if
 const plats = (await get('/api/platforms')).items;
 const wanted = cutoff && !platforms.length ? ['mame'] : platforms.length ? platforms : plats.filter((p) => p.count > 0).map((p) => p.slug);
 for (const s of platforms) if (!plats.some((p) => p.slug === s)) { console.error(`No platform called "${s}". Slugs here: ${plats.map((p) => p.slug).join(', ')}`); process.exit(1); }
+if (turnOff) {
+  if (!platforms.length) { console.error('--off needs --platform (for example --platform neogeo): it will not switch off browser play everywhere.'); process.exit(1); }
+  let todoOff = [];
+  for (const slug of platforms) {
+    for (let off = 0; ; off += 500) {
+      const page = await get(`/api/roms?platform=${encodeURIComponent(slug)}&playable=1&sort=title&limit=500&offset=${off}`);
+      todoOff = todoOff.concat(page.items.map((g) => ({ ...g, slug })));
+      if (todoOff.length >= page.total || !page.items.length) break;
+    }
+  }
+  if (only) todoOff = todoOff.filter((g) => String(g.title).toLowerCase().includes(only));
+  if (!todoOff.length) { console.log('No game on that platform is offered for browser play, so there is nothing to switch off.'); process.exit(0); }
+  console.log(`${todoOff.length} game${todoOff.length === 1 ? ' is' : 's are'} offered for browser play on ${platforms.join(', ')}${only ? ` matching "${only}"` : ''}.`);
+  if (!flag('--yes') && !/^y/i.test(await ask('Switch browser play OFF for all of them? (y/N) ', false))) { console.log('Nothing changed.'); process.exit(0); }
+  let n = 0, failed = 0;
+  for (const g of todoOff) {
+    try { const x = await fetch(`${server}/api/roms/${g.id}/play-override`, { method: 'POST', headers: H, body: JSON.stringify({ value: false }) }); x.ok ? n++ : failed++; } catch { failed++; }
+    if ((n + failed) % 50 === 0) console.log(`  ${n + failed}/${todoOff.length}`);
+  }
+  console.log(`Browser play switched OFF for ${n} game${n === 1 ? '' : 's'}${failed ? ` (${failed} could not be changed)` : ''}. Switch any back on from the game's ⋯ menu, or test them properly with --candidates --recheck --apply.`);
+  process.exit(failed ? 1 : 0);
+}
 fs.mkdirSync(path.join(outDir, 'shots'), { recursive: true });
 const jsonl = path.join(outDir, 'results.jsonl');
 const done = new Map();
@@ -148,7 +177,7 @@ async function applyOne(rec) {
   if (!apply || applied.has(rec.id)) return;
   let value = null;
   if (rec.verdict === 'runs' && !rec.was_on) value = true;
-  else if (rec.verdict === 'retroarch-menu' && (rec.offered || rec.was_on)) value = false;
+  else if (isFailure(rec.verdict) && (rec.offered || rec.was_on)) value = false;
   if (value === null) { applied.add(rec.id); return; }
   try {
     const x = await fetch(`${server}/api/roms/${rec.id}/play-override`, { method: 'POST', headers: H, body: JSON.stringify({ value }) });
@@ -193,7 +222,7 @@ async function checkOne(g) {
 let idx = 0, finished = 0;
 const tally = {};
 const show = (rec, of) => {
-  const mark = rec.verdict === 'runs' ? '  ok ' : rec.verdict === 'retroarch-menu' ? ' FAIL' : ' ??  ';
+  const mark = rec.verdict === 'runs' ? '  ok ' : isFailure(rec.verdict) ? ' FAIL' : ' ??  ';
   console.log(`[${finished}${of ? '/' + of : ''}] ${mark} ${rec.platform.padEnd(8)} ${String(rec.year || '----')}  ${rec.title}  ${rec.verdict === 'runs' ? '' : '(' + rec.verdict + ')'}`);
 };
 async function runBatch(list, of) {
@@ -250,7 +279,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 fs.writeFileSync(path.join(outDir, 'report.html'), `<!doctype html><meta charset="utf-8"><title>Play check</title><style>body{font:14px system-ui;background:#111;color:#eee;margin:20px}.g{display:inline-block;width:210px;margin:6px;vertical-align:top}.g img{width:210px;border:1px solid #444}.t{font-size:12px;margin-top:3px}.m{color:#ff8a8a}.b{color:#ffcf6e}</style><h1>Play check</h1><p>${all.length} games checked, ${bad.length} not running. Checked ${new Date().toLocaleString()} against ${esc(server)}.</p>${bad.map((r) => `<div class="g">${r.shot ? `<img src="${r.shot}">` : ''}<div class="t"><b>${esc(r.title)}</b><br>${esc(r.platform)}${r.year ? ' · ' + r.year : ''}<br><span class="${r.verdict === 'retroarch-menu' ? 'm' : 'b'}">${esc(r.verdict)}</span></div></div>`).join('')}`);
 console.log(`\nResults: ${outDir}${path.sep}results.jsonl   Pictures of the failures: ${outDir}${path.sep}report.html`);
 
-const toOff = all.filter((r) => r.verdict === 'retroarch-menu' && (r.offered || r.was_on));
+const toOff = all.filter((r) => isFailure(r.verdict) && (r.offered || r.was_on));
 const toOn = all.filter((r) => r.verdict === 'runs' && !r.was_on);
 if (apply) for (const r of all) await applyOne(r); // anything that was not sent during the run (an earlier run without --apply, or a hiccup)
 if (cutoff) {

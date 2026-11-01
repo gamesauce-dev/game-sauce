@@ -1170,7 +1170,9 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .avatar-lg { width: 6rem; height: 6rem; flex-basis: 6rem; font-size: 2.4rem; }
 .avatar-sm { width: 1.5rem; height: 1.5rem; flex-basis: 1.5rem; font-size: 0.7rem; display: inline-grid; vertical-align: middle; margin-right: 0.5rem; }
 .profile-row { display: flex; gap: 1.2rem; align-items: center; flex-wrap: wrap; }
-.user-line { display: flex; align-items: center; }
+.user-line { display: flex; align-items: center; gap: 0; }
+.user-line .user-badge { margin-left: 0.75rem; }
+.user-line .user-name { margin-right: 0; }
 
 /* Logo animation: "-sauce" colours flow in a seamless loop, a bright band rolls across the whole name
    (always travelling fully off both ends before the next pass), and the glows breathe. */

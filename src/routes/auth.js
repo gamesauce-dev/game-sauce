@@ -260,8 +260,17 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
   }
 
   if (req.body?.role !== undefined) {
-    const role = req.body.role === 'admin' ? 'admin' : 'user';
-    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
+    if (!['admin', 'user'].includes(req.body.role)) return res.status(400).json({ error: "role must be 'admin' or 'user'" });
+    const role = req.body.role;
+    if (role !== user.role) {
+      if (id === req.user.id) return res.status(409).json({ error: 'You cannot change your own role (ask another admin)' });
+      if (user.role === 'admin') {
+        const admins = db.prepare("SELECT COUNT(*) AS n FROM users WHERE role = 'admin' AND disabled = 0").get().n;
+        if (admins <= 1) return res.status(409).json({ error: 'There must always be at least one admin' });
+      }
+      // An admin always has the full screen, so the play-only flag means nothing for them; a demoted admin starts as a normal member.
+      db.prepare('UPDATE users SET role = ?, play_only = 0 WHERE id = ?').run(role, id);
+    }
   }
 
   if (req.body?.download !== undefined) {

@@ -108,3 +108,15 @@ one step early or late, and failures are not neatly by year.
 - It catches the RetroArch-menu failure. It cannot tell a game that runs but looks wrong from one that works, and a game waiting
   on a title screen counts as running.
 - It needs a computer that can run a browser. Run it on a PC, not on the server.
+
+## When the check says "runs" but the game does not
+
+Some cores draw their own error screen when a game's files are not right: FinalBurn Neo prints a light grey page with a blue title bar, "This game is known but one of your romsets is missing files for THIS VERSION of FBNeo". The core is running, so nothing reports a failure, and it is not black, so earlier versions of this tool counted it as playing. It is now recognised (`core-error`), counted as a failure like the RetroArch menu, and `--apply` switches those games off.
+
+If you already ran an older version over a platform, switch the wrong ones off in one go:
+
+```
+node scripts/check-play.mjs --server http://YOUR-SERVER:8765 --user admin --platform neogeo --off
+```
+
+`--off` does not test anything. It tells you how many games on that platform are offered for browser play, asks you to confirm (`--yes` skips the question) and switches browser play off for all of them. It needs `--platform`, so it can never switch off the whole library by accident. Any game can be switched back on from its ⋯ menu.

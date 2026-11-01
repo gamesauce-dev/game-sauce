@@ -12,6 +12,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Change a person's role.** Settings > User accounts has a Role box on each row (Member / Admin), with a confirmation. The server refuses to demote the last admin or to change your own role, and a demoted admin goes back to a normal member screen. The change applies to their next request.
+- **play-check `--off`:** `node scripts/check-play.mjs --platform neogeo --off` switches browser play off for every game on the named platform without testing (asks first; `--yes` skips the question; needs `--platform`).
 - **Update notice for game-sauce itself.** For admins, the Modern ticker adds a line "Update available: game-sauce X (you have Y)" when a newer release is published on GitHub (`GET /api/admin/update-check`, admin only). It asks GitHub at most once every six hours per server (the answer is cached, also across restarts, and shares the emulator lookups' back-off), sends nothing about your library, and can be switched off with `GAMESAUCE_UPDATE_CHECK=0`.
 - **The game-sauce name with its colour flow and shimmer is one of the Modern ticker's rolling lines.**
 - **Modern: "Deeper black" switch** in the avatar menu (dark mode only, per device): the background goes to true black and the panels follow.
@@ -155,6 +157,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **play-check passed games that were failing.** FinalBurn Neo's own error screen ("This game is known but one of your romsets is missing files for THIS VERSION of FBNeo": light grey, blue title bar) is not black, so it counted as running. It is now recognised as `core-error`, treated as a failure, and `--apply` switches those games off. A screen of nothing but white also counts as blank.
+- **Users list:** the admin badge sits too close to the name; it now has room, and the name and badge are separate pieces.
 - **Modern: black squares where Settings icons were being drawn** (on a first visit or hard refresh). An icon is now invisible until its picture has arrived, and every icon the page can use is fetched in the background as soon as Modern starts.
 - **Modern, admin's play-only preview showed two top bars** (Classic's play-only bar above Modern's). Modern now hides Classic's bar.
 - **Profile picture was missing after signing in** (it came back only after a page reload): the sign-in reply now carries the picture version, so it shows straight away.

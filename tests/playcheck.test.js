@@ -73,3 +73,27 @@ test('one bad step among good ones, and steps with too little evidence, do not e
   const thin = [{ from: 1980, to: 1981, tried: 8, ran: 7 }, { from: 1982, to: 1982, tried: 2, ran: 0 }, { from: 1983, to: 1983, tried: 1, ran: 0 }];
   assert.equal(judgeSteps(thin).stop, false, 'two games failing is too little to decide anything');
 });
+
+import { isCoreError, isFailure } from '../src/lib/playcheck.js';
+
+// Measured from the real screenshot the user sent: FinalBurn Neo's own error screen ("This game is known but one of your romsets is
+// missing files for THIS VERSION of FBNeo"), drawn by a running core: light grey, a blue title bar, dark text.
+const FBNEO_ERROR = { colours: 97, top: [{ r: 216, g: 216, b: 216, share: 0.889 }, { r: 0, g: 0, b: 248, share: 0.032 }, { r: 208, g: 208, b: 208, share: 0.005 }, { r: 168, g: 168, b: 168, share: 0.005 }] };
+const LIGHT_GAME = { colours: 1800, top: [{ r: 224, g: 224, b: 224, share: 0.5 }, { r: 40, g: 40, b: 200, share: 0.1 }] };     // a bright game with a blue sky: many colours
+const WHITE_TITLE = { colours: 12, top: [{ r: 240, g: 240, b: 240, share: 0.7 }, { r: 20, g: 20, b: 20, share: 0.2 }] };     // light screen, no blue bar
+
+test("a core's own error screen (FinalBurn Neo 'romset is missing files') is a failure, not a running game", () => {
+  assert.equal(classifyFrame(FBNEO_ERROR), 'core-error');
+  assert.equal(isCoreError(FBNEO_ERROR), true);
+  assert.equal(verdict([FBNEO_ERROR, FBNEO_ERROR, FBNEO_ERROR]), 'core-error');
+  assert.equal(verdict([BLACK, FBNEO_ERROR, BUSY_GAME]), 'core-error', 'any error frame is enough: it never goes away on its own');
+  assert.equal(isFailure('core-error'), true); assert.equal(isFailure('retroarch-menu'), true);
+  assert.equal(isFailure('runs'), false); assert.equal(isFailure('blank'), false, 'blank is only reported, never switched off on its own');
+});
+
+test('real games are not mistaken for the error screen', () => {
+  assert.equal(classifyFrame(LIGHT_GAME), 'runs', 'bright and blue, but thousands of colours');
+  assert.equal(classifyFrame(WHITE_TITLE), 'runs', 'a light screen with no blue title bar');
+  assert.equal(classifyFrame(RED_GAME), 'runs'); assert.equal(classifyFrame(MSPACMAN), 'runs'); assert.equal(classifyFrame(GHOULS_SELFTEST), 'runs');
+  assert.equal(classifyFrame({ colours: 1, top: [{ r: 248, g: 248, b: 248, share: 1 }] }), 'blank', 'a screen that is nothing but white is blank');
+});
