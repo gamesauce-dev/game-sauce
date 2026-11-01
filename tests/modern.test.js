@@ -376,3 +376,12 @@ test('Play-only accounts do not get the promoted management buttons on the detai
 test('Emulators: a rolling-build project is explained, not offered a pointless retry', () => {
   assert.match(read('public/app.js'), /This project publishes \$\{emuState\.why\[key\]/);
 });
+
+test('Admin-only play-only preview, avatar on sign-in, Settings sub-icons under their parent', () => {
+  const js = read('public/modern.js'), app = read('public/app.js'), au = read('src/routes/auth.js');
+  assert.match(au, /avatar_v: user\.avatar_updated \|\| null/, 'sign-in carries the picture version');
+  assert.match(app, /user\.role === 'admin' && sessionStorage\.getItem\('gamesauce_preview_play'\) === '1'/, 'only an admin can preview');
+  assert.match(js, /pv\.classList\.toggle\('hidden', u\.role !== 'admin'\)/, 'the menu item is for admins only');
+  assert.match(js, /function alignSubtiles/);
+  assert.match(js, /row\.style\.paddingLeft/);
+});

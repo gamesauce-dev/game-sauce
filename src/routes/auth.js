@@ -192,7 +192,7 @@ router.post('/login', async (req, res) => {
   res.json({
     token,
     expires_in,
-    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, can_download: canDownload(user), play_only: user.role !== 'admin' && user.play_only === 1, welcomed: Boolean(user.welcomed) }
+    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, avatar_v: user.avatar_updated || null, can_download: canDownload(user), play_only: user.role !== 'admin' && user.play_only === 1, welcomed: Boolean(user.welcomed) }
   });
 });
 

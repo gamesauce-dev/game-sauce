@@ -3499,6 +3499,9 @@ function syncTopbar() {
 
 function showApp(user, { restore = false } = {}) {
   window.neonBg?.stop();
+  // An admin can preview what a play-only person sees. It only changes this tab's screen (the server still treats them as the admin),
+  // and it ends when the tab is closed, so it can never lock anyone out.
+  try { if (user.role === 'admin' && sessionStorage.getItem('gamesauce_preview_play') === '1') user = { ...user, play_only: true, previewing: true }; } catch { /* private mode */ }
   authState.user = user;
   $('#auth-screen').classList.add('hidden');
   $('#app').classList.remove('hidden');

@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Admin-only "Preview play-only"** in the Modern avatar menu: shows an admin the screen a play-only person gets. Only that tab changes (the server still treats them as the admin) and it ends when the tab is closed, so nobody can lock themselves out. Members and play-only people never see the option.
 - **Modern: "Retro font" switch** in the avatar menu. Turns the whole Modern look into a monospace (typewriter-style) font; click it again to go back. Remembered per device, only changes the font, Classic is untouched.
 - **Modern: Sources "Disable" is your folder-disable icon.** "Enable" (shown for a disabled source) is your folder-enable icon.
 - **Modern Settings: the last text buttons are icons** (Update password, Apply names, Download backup / database, Edit, Delete, Disable / Enable user, Hide the others), found by opening every Settings tile and listing what still showed words.
@@ -88,6 +89,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern Settings:** the row of settings inside a group now starts directly under that group's icon.
 - **Modern Emulators:** a second save button (your arrow-up icon) sits beside Save to vault and does the same thing; the Download button next to the installer picker is your download icon.
 - **Modern Add ROMs:** the drop zone is exactly as tall as the Options panel beside it, with its words centred.
 - **Modern Settings icon swaps:** Upload a picture (My account) uses upload-cover; "Re-match and overwrite titles" (DAT files) uses replace-text; the Covers & platform ids sub-menu uses covers; Database maintenance's Re-check uses database-check; Backups' "save one to the server folder now" uses database-backup-save; Metadata providers uses providers(2); Platforms uses the library icon and its Add platform button uses game-controller.
@@ -142,6 +144,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Profile picture was missing after signing in** (it came back only after a page reload): the sign-in reply now carries the picture version, so it shows straight away.
 - **Emulators:** a project that only publishes nightly/rolling builds (Dolphin) now says so and points to its download page, instead of suggesting a retry that cannot help.
 - **Modern, play-only accounts:** the collection, hide and refresh buttons I moved onto the details icon row were showing for play-only people (the server would have refused them). They are hidden again, like More actions.
 - **Modern on a phone:** Emulator cards no longer run past the right edge (the text and the installer picker row wrap, the vault form is one column) and the details window's top bar fits the screen.

@@ -72,6 +72,7 @@ async function doBuildBar() {
         <div class="mb-menu hidden" id="mb-menu" role="menu">
           <div class="mb-menu-head"><b id="mb-uname"></b><small id="mb-urole"></small></div>
           <button class="mb-menu-item" role="menuitem" data-mview="settings" data-acct="account">${ic['my-account']}<span>My account</span></button>
+          <button class="mb-menu-item hidden" role="menuitemcheckbox" id="mb-preview" aria-checked="false" title="Admins only: see the screen a play-only person gets. Only this tab; it ends when the tab is closed."><span class="mb-retro-mark">▶</span><span id="mb-preview-label">Preview play-only</span></button>
           <button class="mb-menu-item" role="menuitemcheckbox" id="mb-retro" aria-checked="false" title="Use a monospace (typewriter-style) font everywhere in Modern"><span class="mb-retro-mark">Aa</span><span>Retro font</span></button>
           <button class="mb-menu-item" role="menuitem" id="mb-signout">${ic['sign-out']}<span>Sign out</span></button>
         </div>
@@ -95,6 +96,8 @@ function paintUser() {
   const name = $('#mb-uname'); if (name) name.textContent = label;
   const role = $('#mb-urole'); if (role) role.textContent = u.role === 'admin' ? 'admin' : (u.play_only ? 'player' : 'member');
   const av = $('#mb-avatar'); if (av) { av.id = 'mb-avatar'; ctx.paintAvatar(av, u.id, label, u.avatar_v); }
+  const pv = $('#mb-preview');   // admins only
+  if (pv) { pv.classList.toggle('hidden', u.role !== 'admin'); pv.classList.toggle('on', Boolean(u.previewing)); pv.setAttribute('aria-checked', String(Boolean(u.previewing))); const pl = $('#mb-preview-label'); if (pl) pl.textContent = u.previewing ? 'Previewing play-only: click to exit' : 'Preview play-only'; }
 }
 
 function paintToggles() {
@@ -110,6 +113,7 @@ function onBarClick(e) {
   if (toolClick(e)) return;
   if (e.target.closest('#mb-acct-btn')) { const m = $('#mb-menu'); const open = m.classList.toggle('hidden') === false; $('#mb-acct-btn').setAttribute('aria-expanded', String(open)); return; }
   if (e.target.closest('#mb-retro')) { applyRetro(!retro()); return; }
+  if (e.target.closest('#mb-preview')) { try { const on = sessionStorage.getItem('gamesauce_preview_play') === '1'; if (on) sessionStorage.removeItem('gamesauce_preview_play'); else sessionStorage.setItem('gamesauce_preview_play', '1'); } catch { /* private mode */ } location.reload(); return; }
   if (e.target.closest('[data-acct="account"]')) { closeMenu(); go('settings'); setTimeout(() => ctx.openAccount?.(), 60); return; }
   // Only the bar's own buttons: <body> also carries data-mview (the current page), and closest() would find it for every click.
   const nav = e.target.closest('[data-mview]');
@@ -534,8 +538,21 @@ function promoteDetailActions(root = document) {
     bar.insertBefore(b, more);
   }
 }
+/** Settings: the row of settings inside a group starts directly under that group's icon (kept inside the screen on narrow windows). */
+function alignSubtiles() {
+  const row = $('#settings-subtiles'), act = $('#settings-tiles .tile.is-active');
+  if (!row || !act || row.classList.contains('hidden') || !row.offsetWidth) return;
+  const kids = [...row.children]; if (!kids.length) return;
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+  const need = kids.reduce((n, k) => n + k.offsetWidth, 0) + gap * (kids.length - 1);
+  const want = act.getBoundingClientRect().left - row.getBoundingClientRect().left + (act.offsetWidth - kids[0].offsetWidth) / 2;
+  const left = Math.max(0, Math.min(want, row.clientWidth - need));
+  row.style.paddingLeft = `${Math.round(left)}px`;
+}
+window.addEventListener('resize', () => { if (isModern()) alignSubtiles(); });
 export function iconize(root = document) {
   if (!isModern()) return;
+  alignSubtiles();
   promoteDetailActions(root);
   for (const t of $$('.detail-actions [data-tip]', root)) { const tip = t.getAttribute('data-tip'); if (tip && t.title !== tip) t.title = tip; }
   for (const [sel, name] of ICON_MAP) {
