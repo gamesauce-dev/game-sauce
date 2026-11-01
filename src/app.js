@@ -291,7 +291,7 @@ export function createApp() {
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id
         WHERE r.hidden_all = 0
-        ORDER BY r.created_at DESC LIMIT 16
+        ORDER BY r.created_at DESC LIMIT 24
       `).all().map((r) => ({ ...r, cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : null })),
       downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE kind = \'download\'').get().n,
       // Most-downloaded counts ACTUAL manual downloads only (kind='download').

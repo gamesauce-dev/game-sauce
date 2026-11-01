@@ -215,3 +215,13 @@ test('opening a family chip never shifts the other chips sideways (the arrow spa
   assert.match(css, /\.chip\[data-chip-fam\]\.open::after \{ border-top-color: currentColor; \}/);
   assert.doesNotMatch(css, /\.chip\.open::after \{ content/, 'the old rule that only added the arrow to the open chip is gone');
 });
+
+test('Home: two equal boxes side by side with the same tile size; a whole family lights only the family chip', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js'), app = read('src/app.js');
+  assert.match(css, /@media \(min-width: 760px\) \{ body\.ui-modern \.mh-strips \{ grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important; \} \}/, 'side by side from 760px up');
+  assert.match(css, /\.mh-strips \.strip \.recent-row \{ grid-template-columns: repeat\(auto-fill, minmax\(5\.6rem, 1fr\)\)/, 'tiles stretch to fill each box, by the same rule in both');
+  assert.match(js, /recently-played\?limit=24/);
+  assert.match(app, /ORDER BY r\.created_at DESC LIMIT 24/, 'enough recent tiles to fill a wide box');
+  assert.match(js, /const wholeNow = /);
+  assert.match(js, /picked\.has\(p\.slug\) && !wholeNow \? ' on' : ''/, 'platform chips stay unlit while the whole family is selected');
+});

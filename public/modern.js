@@ -143,7 +143,7 @@ async function renderHome() {
     </div>`;
   ctx.applyStrips?.(host, false);
   try {
-    const [stats, played] = await Promise.all([api('/stats'), api('/roms/recently-played?limit=14').catch(() => ({ items: [] }))]);
+    const [stats, played] = await Promise.all([api('/stats'), api('/roms/recently-played?limit=24').catch(() => ({ items: [] }))]);
     fillRow('#mh-recent', stats.recent || []);
     fillRow('#mh-played', played.items || [], 'Nothing played yet');
   } catch { /* the home page degrades to empty rows */ }
@@ -153,7 +153,7 @@ function fillRow(sel, items, empty = '') {
   const el = $(sel); if (!el) return;
   if (!items.length) { el.innerHTML = empty ? `<div class="side-empty" style="grid-column:1/-1">${empty}</div>` : ''; return; }
   // The same tiles as the library grid (cover, platform badge, play button), so they behave the same.
-  el.innerHTML = items.slice(0, 16).map(ctx.cardHtml).join('');
+  el.innerHTML = items.slice(0, 24).map(ctx.cardHtml).join('');
   ctx.bindCards(el);
 }
 
@@ -290,6 +290,8 @@ export function renderChips() {
   for (const p of items) { const f = p.family || 'Others'; if (!fams.has(f)) fams.set(f, []); fams.get(f).push(p); }
   const order = [...fams.keys()].sort(chipSort);
   const picked = new Set(chosen());
+  // A whole family selected = the family chip is lit and its platform chips are NOT (they light only when picked one by one).
+  const wholeNow = chipFamily && familySlugs(chipFamily).length > 1 && familySlugs(chipFamily).every((s) => picked.has(s)) && picked.size === familySlugs(chipFamily).length;
   const famOf = (slug) => items.find((p) => p.slug === slug)?.family || 'Others';
   const total = items.reduce((n, p) => n + p.count, 0);
   const famCount = (f) => fams.get(f).reduce((n, p) => n + p.count, 0);
@@ -303,7 +305,7 @@ export function renderChips() {
       <button class="chip${picked.size === 0 ? ' on' : ''}" data-chip-all title="All platforms">All <small>${total.toLocaleString()}</small></button>
       ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
     </div>
-    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}">${ctx.platformIconSvg(p, 16)}<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${p.count.toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}">${ctx.platformIconSvg(p, 16)}<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${p.count.toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
 }
 
 async function chipChanged() {

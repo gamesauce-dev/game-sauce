@@ -75,8 +75,12 @@ body.ui-modern .mh-line b { color: var(--text); margin: 0 0.25em; }
 body.ui-modern .strip .recent-row .card-title { min-height: 2.5em; }
 body.ui-modern .strip .recent-row .card { height: auto; align-self: start; }
 /* Same tile size in both boxes (Classic stretches each box's tiles to its own width, so the two rows came out different sizes). */
-body.ui-modern .mh-strips .strip .recent-row { grid-template-columns: repeat(auto-fill, 5.6rem); justify-content: start; column-gap: 0.7rem; }
-body.ui-modern .mh-strips { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 0 0.9rem; align-items: start; }
+/* Two boxes of equal width side by side whenever there is room (stacked only on a narrow window). Tiles stretch to fill each box, and
+   both boxes use the same rule, so the tiles come out the same size in both. */
+body.ui-modern .mh-strips .strip .recent-row { grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr)); column-gap: 0.7rem; }
+body.ui-modern .mh-strips { display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-items: stretch; }
+@media (min-width: 760px) { body.ui-modern .mh-strips { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; } }
+body.ui-modern .mh-strips .strip { margin: 0; }
 
 /* Medium windows (snapped to half a screen): the tools and the ticker drop onto their own line under the icons instead of
    running into the switches on the right. */

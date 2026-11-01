@@ -83,6 +83,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern Home: Continue playing and Recently added sit side by side, equal width, with tiles to fill them.** From 760 px up the two boxes share the width equally (they stack only on a narrow window), tiles stretch to fill each box and are the same size in both, and up to 24 recent tiles are loaded so a wide box is full. Continue playing can only show games the person has actually played.
 - **Settings: "Health & coverage" is now "System health", with Health and Stats inside.** Health lays its checks out in columns, so there is much less scrolling.
 - **Settings: "Coverage" is now "Stats", with real totals.** Total games, platforms, sources, users, System items and favourites; how many games are matched by a provider or DAT (and by which), how many are named from the file only, with covers and without; orphans, missing files and hidden games; and plays in the browser, the most active user and the most played game.
 - **"Fetch missing covers" and "Verify platform ids" moved to Library tools** (a new "Covers & platform ids" page).
@@ -118,6 +119,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Modern chips: choosing a family lit every platform in it.** Picking a family now lights just that family chip (the platforms are shown unlit below it); platform chips light only when you pick them one by one.
 - **Modern chips: the row jumped sideways when a family was opened.** The little arrow that marks the open family was added only to that chip, which widened it and nudged everything after it. Every family chip now reserves the arrow's space, so opening one moves nothing.
 - **Modern ticker could show an empty box.** When its list of lines changed, the rolling position from the old list was kept and could sit past the end of the new, shorter one. It now starts again from the first line.
 - **Modern bar: icons overlapped in a half-width (snapped) window.** Below about 1,060 px the Library tools no longer squeeze in beside the page icons and the switches; they drop onto their own line under the icon row (and on a phone-sized window the rows stack). Checked at every width from 380 to 1,500 px: no two controls overlap and none runs off the edge.
