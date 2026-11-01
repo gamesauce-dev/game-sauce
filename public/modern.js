@@ -466,11 +466,10 @@ function trackBarHeight() {
    words and draws the SVG in their place; the words stay as the hover text and the screen-reader label. Nothing is rewritten, so
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
-  // Details window: the whole action row, nothing hidden behind More
+  // Details window: the row (the More menu keeps its words)
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],
-  ['.detail-actions [data-act="keep"]', 'lock'], ['.detail-actions [data-act="addcoll"]', 'collection'], ['.detail-actions [data-act="playtoggle"]', 'gamepad'],
-  ['.detail-actions [data-act="hide"]', 'hidden'], ['.detail-actions [data-act="refresh"]', 'fetch-metadata'], ['.detail-actions [data-act="clearmatch"]', 'clear-reset-2'],
-  ['.detail-actions [data-act="cover-upload"]', 'image-upload'], ['.detail-actions [data-act="cover-reset"]', 'restore'], ['.detail-actions [data-act="delete"]', 'delete'],
+  ['.detail-actions #more-btn', 'more-actions'], ['.detail-actions [data-act="delete"]', 'delete'],
+  ['.detail-actions [data-promo="addcoll"]', 'collection'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'fetch-metadata'],
   // Settings leftovers found by the 1 Nov audit
   ['#names-apply', 'tick'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"]', 'edit'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
@@ -512,8 +511,23 @@ function miRule(name) {
   miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); }\n`));
 }
 const plainText = (el) => (el.getAttribute('data-mi-label') || el.querySelector?.('b')?.textContent || el.getAttribute('data-tip') || el.getAttribute('aria-label') || el.textContent || '').replace(/^[^A-Za-z0-9]+/, '').replace(/…$/, '').trim();
+/** Details-window buttons: copy three of the More menu's actions onto the icon row. Each copy just clicks the original. */
+function promoteDetailActions(root = document) {
+  const row = root.querySelector?.('.detail-actions') || (root.matches?.('.detail-actions') ? root : null);
+  const bar = row || document.querySelector('.detail-actions'); if (!bar || bar.querySelector('[data-promo]')) return;
+  const more = bar.querySelector('.more-wrap'); if (!more) return;
+  for (const k of ['addcoll', 'hide', 'refresh']) {
+    const orig = bar.querySelector(`.more-menu [data-act="${k}"]`); if (!orig) continue;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'ibtn'; b.dataset.promo = k;
+    b.title = orig.querySelector('b')?.textContent || k; b.setAttribute('aria-label', b.title);
+    b.addEventListener('click', (e) => { e.stopPropagation(); orig.click(); });
+    bar.insertBefore(b, more);
+  }
+}
 export function iconize(root = document) {
   if (!isModern()) return;
+  promoteDetailActions(root);
+  for (const t of $$('.detail-actions [data-tip]', root)) { const tip = t.getAttribute('data-tip'); if (tip && t.title !== tip) t.title = tip; }
   for (const [sel, name] of ICON_MAP) {
     const hits = $$(sel, root);
     try { if (root.matches && root.matches(sel)) hits.push(root); } catch { /* not an element */ }

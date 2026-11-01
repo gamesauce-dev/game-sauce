@@ -210,20 +210,24 @@ body.ui-modern .chip[data-chip-fam].open::after { border-top-color: currentColor
 body.ui-modern .page-title { display: none; }
 body.ui-modern #view-collections .toolbar, body.ui-modern #view-sources .toolbar { justify-content: flex-end; }
 
-/* Details window: every action sits in the icon row (More actions is unfolded), wrapping onto a second row if needed. */
+/* Details window: the main actions are icons, with the three most useful extras (collection, hide, refresh) promoted onto the row.
+   More actions stays, with the rest. Words are the browser tooltip, like the top bar, not the old dark bubble. */
 body.ui-modern .detail-actions { flex-wrap: wrap; row-gap: 0.6rem; }
-body.ui-modern .detail-actions .more-wrap, body.ui-modern .detail-actions .more-menu, body.ui-modern .detail-actions .more-menu.hidden { display: contents !important; position: static; }
-body.ui-modern .detail-actions .ibtn-more { display: none; }
-body.ui-modern .detail-actions .more-menu .mi { flex: 0 0 2.75rem; width: 2.75rem; height: 2.75rem; min-height: 0; padding: 0; justify-content: center; gap: 0; border-radius: 0.8rem; background: var(--panel); border: 1px solid var(--line-2); color: var(--text); }
-body.ui-modern .detail-actions .more-menu .mi:hover { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); border-color: var(--accent); }
-body.ui-modern .detail-actions .more-menu .mi.on { color: #4ade80; border-color: color-mix(in srgb, #4ade80 55%, transparent); }
-body.ui-modern .detail-actions [data-mi] > svg, body.ui-modern .detail-actions [data-mi] > span, body.ui-modern .detail-actions [data-mi] > b, body.ui-modern .detail-actions [data-mi] small { display: none !important; }
-body.ui-modern .detail-actions .ibtn[data-mi]::before, body.ui-modern .detail-actions .mi[data-mi]::before { width: 1.4rem; height: 1.4rem; }
+body.ui-modern .ibtn[data-tip]:hover::after, body.ui-modern .ibtn[data-tip]:focus-visible::after { display: none; }
+body.ui-modern .detail-actions .ibtn[data-mi]::before { width: 1.4rem; height: 1.4rem; }
+body.ui-modern .detail-actions .ibtn[data-mi] > svg { display: none; }
 body.ui-modern .detail-actions .ibtn { color: var(--text); border-color: var(--line-2); }
+body.ui-modern .detail-actions .ibtn:hover { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); border-color: var(--accent); }
 body.ui-modern .detail-actions .ibtn-primary { color: #fff; border-color: var(--apply); background: var(--apply); }
+body.ui-modern .detail-actions .ibtn-primary:hover { background: var(--apply-2); border-color: var(--apply-2); }
 body.ui-modern .detail-actions .ibtn-play { color: #5fe3a1; }
 body.ui-modern .detail-actions .ibtn-danger { color: var(--cancel); }
 body.ui-modern .detail-actions .ibtn.fav.is-on { color: #f5c542; border-color: #f5c54299; }
+body.ui-modern .detail-actions .ibtn.is-on:not(.fav) { color: var(--accent-2); border-color: var(--accent); }
+body.ui-modern .more-menu { background: var(--panel); border-color: var(--line-2); box-shadow: var(--shadow, 0 0.6rem 1.8rem rgba(0, 0, 0, .6)); }
+body.ui-modern .more-menu .mi b { font-weight: 500; }
+body.ui-modern .more-menu .mi small { color: var(--muted); }
+body.ui-modern .more-menu .mi:hover, body.ui-modern .more-menu .mi:focus-visible { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
 /* Collections: wide cards with a strip of covers */
 body.ui-modern .collections { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1.1rem; }

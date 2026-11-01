@@ -277,13 +277,17 @@ test('Settings pills are equal icon-only circles and Settings text is brighter',
   assert.match(css, /body\.ui-modern #view-settings \{ --muted: #d6dce9;/);
 });
 
-test('Modern: no page titles, collection covers, and every details action sits in the icon row', () => {
+test('Modern: no page titles, collection covers; details row promotes three extras and keeps More actions', () => {
   const css = read('public/modern.css'), js = read('public/modern.js'), app = read('public/app.js'), api = read('src/routes/collections.js');
   assert.match(css, /body\.ui-modern \.page-title \{ display: none; \}/);
   assert.match(api, /c\.covers = pick\.all\(c\.id\)/, 'the API sends up to four covers per collection');
   assert.match(app, /collection-covers/);
-  assert.match(css, /\.detail-actions \.more-wrap, body\.ui-modern \.detail-actions \.more-menu[^{]*\{ display: contents !important;/, 'More actions is unfolded into the row');
-  for (const a of ['play', 'favorite', 'keep', 'addcoll', 'playtoggle', 'hide', 'refresh', 'clearmatch', 'cover-upload', 'cover-reset', 'delete']) assert.ok(js.includes(`.detail-actions [data-act="${a}"]`), a);
+  assert.match(js, /function promoteDetailActions/);
+  for (const k of ['addcoll', 'hide', 'refresh']) assert.ok(js.includes(`data-promo="${k}"`), k);
+  assert.ok(js.includes("'.detail-actions #more-btn', 'more-actions'"), 'More actions keeps its (icon) button');
+  assert.doesNotMatch(css, /\.more-menu[^{]*\{ display: contents/, 'the More menu is a real menu again');
+  assert.match(css, /\.ibtn\[data-tip\]:hover::after[^}]*display: none/, 'the old dark hover bubble is off in Modern');
+  assert.match(js, /t\.title = tip/, 'the words come from the browser tooltip, like the top bar');
 });
 
 test('Modern: Retro font is a per-device switch that only swaps the font variable', () => {
