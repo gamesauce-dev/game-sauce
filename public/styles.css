@@ -1584,3 +1584,5 @@ body.details-pinned .drawer-scrim { display: none !important; }
 #provider-forms .provider-field > span:first-child { grid-row: 1; grid-column: 1 / -1; font-size: 0.8571rem; color: var(--muted); }
 #provider-forms .provider-field > input { grid-row: 2; grid-column: 1; min-width: 0; }
 #provider-forms .provider-field > .state { grid-row: 2; grid-column: 2; font-size: 0.78rem; white-space: nowrap; }
+
+.emu-save-alt { display: none; }

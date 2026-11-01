@@ -88,6 +88,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern Emulators:** a second save button (your arrow-up icon) sits beside Save to vault and does the same thing; the Download button next to the installer picker is your download icon.
 - **Modern Add ROMs:** the drop zone is exactly as tall as the Options panel beside it, with its words centred.
 - **Modern Settings icon swaps:** Upload a picture (My account) uses upload-cover; "Re-match and overwrite titles" (DAT files) uses replace-text; the Covers & platform ids sub-menu uses covers; Database maintenance's Re-check uses database-check; Backups' "save one to the server folder now" uses database-backup-save; Metadata providers uses providers(2); Platforms uses the library icon and its Add platform button uses game-controller.
 - **Modern details window and tiles:** Upload cover in the Edit area uses the upload-cover icon; add-to-collection on the icon row and the Collections page in the top bar use the collection icon; Clear match in More actions uses the clear-reset icon; the favourite button on game tiles uses your favourite icon (gold when lit).
@@ -141,6 +142,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Emulators: the version picker and download buttons disappeared (Classic and Modern).** GitHub lets one server ask only 60 questions an hour; when that ran out the page showed nothing and, because the first answer was thrown away, kept showing nothing. Release answers are now kept for six hours (and across restarts), a refused or failed lookup keeps showing the last good answer with a note saying why, nothing more is sent to GitHub until the time it names, and "Check latest releases" really re-asks. When there is no answer at all the card now says the actual reason. You can raise the limit to 5,000 an hour by setting a `GITHUB_TOKEN` (any GitHub token, no permissions needed) in the server's environment.
 - **Modern: profile pictures now show in the top bar.** The picture was set but never sized to fit the avatar circle, so only the background colour showed.
 - **Modern: old word buttons flashed for a moment after clicking on a source.** The list is redrawn after each click and the icons were swapped in about a tenth of a second later. They are now swapped in the same instant as the redraw, before anything is painted.
 - **Modern chips: choosing a family lit every platform in it.** Picking a family now lights just that family chip (the platforms are shown unlit below it); platform chips light only when you pick them one by one.

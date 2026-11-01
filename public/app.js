@@ -4258,7 +4258,7 @@ for (const id of ['#audit-action']) {
 
 /* ─────────────────────────── emulators ─────────────────────────── */
 
-const emuState = { guide: [], vault: [], latest: {}, latestFetchStarted: false };
+const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false };
 
 async function loadEmulators() {
   const isAdmin = authState.user?.role === 'admin';
@@ -4352,10 +4352,11 @@ function renderEmuGuide() {
                    <select class="select" data-asset="${esc(key)}" title="Pick the installer for your OS">
                      ${latest.assets.map((a) => `<option value="${esc(a.url)}">${esc(a.name)} (${fmtBytes(a.size)})</option>`).join('')}
                    </select>
-                   ${authState.user?.role === 'admin' ? `<button class="btn btn-sm" data-save-release="${esc(key)}">Save to vault</button>` : ''}
+                   ${authState.user?.role === 'admin' ? `<button class="btn btn-sm" data-save-release="${esc(key)}">Save to vault</button><button class="btn btn-sm emu-save-alt" data-save-release="${esc(key)}" title="Save to vault">Save to vault</button>` : ''}
                  </span>` : `<span class="hint">${(e.github && !latest.assets?.length) ? 'Latest release has no downloadable assets — use the download page above.' : ''}</span>`}
                ${vaulted.length ? `<span class="pill ok">in vault: ${vaulted.map((v) => esc(v.version || v.filename)).join(', ')}</span>` : ''}`
-            : `<span class="hint">No GitHub release tracked — use the download page above (often nightly/rolling).</span>`}
+            : `<span class="hint">${esc(emuState.why[key] ? `Could not get the latest release: ${emuState.why[key]}. Press “Check latest releases” to try again, or use the download page above.` : 'No GitHub release tracked — use the download page above (often nightly/rolling).')}</span>`}
+        ${latest && emuState.why[key] ? `<span class="hint">(showing the last answer GitHub gave: ${esc(emuState.why[key])})</span>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -4389,7 +4390,7 @@ function renderEmuGuide() {
     opt.textContent = '↯ or download directly';
     sel.appendChild(opt);
     const btn = document.createElement('button');
-    btn.className = 'btn btn-sm';
+    btn.className = 'btn btn-sm emu-dl';
     btn.textContent = 'Download';
     btn.addEventListener('click', () => {
       if (sel.value === '__direct__') return toast('Pick an exact asset from the list first', true);
@@ -4445,7 +4446,7 @@ function renderEmuVault() {
   }));
 }
 
-async function fetchEmuLatest() {
+async function fetchEmuLatest({ force = false } = {}) {
   if (!emuState.guide.length) {
     const { items } = await api('/emulators/guide');
     emuState.guide = items || [];
@@ -4456,12 +4457,15 @@ async function fetchEmuLatest() {
     // Multi-system picks key off their explicit slug (retroarch), same as
     // renderEmuGuide — /latest resolves either through emulatorFor().
     const key = g.platforms[0] || g.slug;
-    if (!g.github || emuState.latest[key]) continue;
+    if (!g.github || (!force && emuState.latest[key])) continue;
     try {
-      const r = await api(`/emulators/latest/${encodeURIComponent(key)}`);
-      emuState.latest[key] = r.latest || null;
-    } catch {
-      emuState.latest[key] = null;
+      const r = await api(`/emulators/latest/${encodeURIComponent(key)}${force ? '?refresh=1' : ''}`);
+      // An empty answer never wipes a good one the page already holds: keep it and say why it could not be refreshed.
+      if (r.latest) { emuState.latest[key] = r.latest; emuState.why[key] = r.stale || ''; }
+      else { emuState.latest[key] = emuState.latest[key] || null; emuState.why[key] = r.reason || 'no answer from GitHub'; }
+    } catch (err) {
+      emuState.latest[key] = emuState.latest[key] || null;
+      emuState.why[key] = err.message || 'could not ask GitHub';
     }
     renderEmuGuide();
   }
@@ -4473,7 +4477,7 @@ $('#emu-refresh-latest')?.addEventListener('click', async (e) => {
   btn.disabled = true;
   btn.textContent = '↻ Checking…';
   try {
-    await fetchEmuLatest();
+    await fetchEmuLatest({ force: true });
     toast('Latest releases checked');
   } finally {
     btn.disabled = false;

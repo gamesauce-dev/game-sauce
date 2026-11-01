@@ -27,26 +27,56 @@ router.get('/guide/:platform', (req, res) => {
 /* ── GitHub latest-release check (live network call, short cache) ── */
 
 const releaseCache = new Map(); // repo -> { at, payload }
+const FRESH_MS = 6 * 60 * 60 * 1000;      // a release answer is good for six hours
+const MANUAL_MIN_MS = 10 * 60 * 1000;     // "Check latest releases" may re-ask once an answer is ten minutes old
+let limitedUntil = 0;                     // GitHub told us to stop until this time (ms)
+
+/* Answers survive a restart (a stored copy in metadata_cache) so a reboot does not spend the hourly budget again. */
+function storedRelease(repo) {
+  try {
+    const row = db.prepare("SELECT payload, strftime('%s', fetched_at) AS t FROM metadata_cache WHERE key = ?").get('ghrel:' + repo);
+    return row ? { at: Number(row.t) * 1000, payload: JSON.parse(row.payload) } : null;
+  } catch { return null; }
+}
+function keepRelease(repo, payload) {
+  releaseCache.set(repo, { at: Date.now(), payload });
+  try {
+    db.prepare("INSERT INTO metadata_cache (key, provider, payload, fetched_at) VALUES (?, 'github', ?, datetime('now')) ON CONFLICT(key) DO UPDATE SET payload = excluded.payload, fetched_at = excluded.fetched_at")
+      .run('ghrel:' + repo, JSON.stringify(payload));
+  } catch { /* the in-memory copy still works */ }
+}
+const clock = (ms) => new Date(ms).toTimeString().slice(0, 5);
 
 /**
  * Single source of truth for "what's the latest release of this repo".
- * ALWAYS returns the full payload including assets — the /updates endpoint
- * used to cache a tag-only shape, which then starved the Emulators view of
- * its asset dropdown (the "download option disappeared" regression). Both
- * callers go through here so the cache can never hold a partial payload.
- * Returns { payload } or { missing: reason } — never throws.
+ * ALWAYS returns the full payload including assets. Returns { payload, stale? } or { missing: reason } and never throws.
+ *
+ * GitHub allows an anonymous server only 60 requests an hour. So: good answers are kept six hours (and across restarts),
+ * a failed lookup falls back to the last good answer instead of showing nothing, and once GitHub says "slow down" (403/429)
+ * nothing more is sent until the time it names. An optional GITHUB_TOKEN raises the limit to 5,000 an hour.
+ * Pass { manual: true } for a person pressing the button: it accepts an answer older than ten minutes as out of date.
  */
-async function fetchLatestRelease(repo) {
-  const hit = releaseCache.get(repo);
-  if (hit && Date.now() - hit.at < 10 * 60 * 1000) return { payload: hit.payload, cached: true };
+export async function fetchLatestRelease(repo, { manual = false } = {}) {
+  const hit = releaseCache.get(repo) || storedRelease(repo);
+  if (hit && !releaseCache.has(repo)) releaseCache.set(repo, hit);
+  const age = hit ? Date.now() - hit.at : Infinity;
+  if (hit && age < (manual ? MANUAL_MIN_MS : FRESH_MS)) return { payload: hit.payload, cached: true };
+  const fallback = (why) => (hit ? { payload: hit.payload, cached: true, stale: why } : { missing: why });
+  if (Date.now() < limitedUntil) return fallback(`GitHub is limiting requests until about ${clock(limitedUntil)}`);
   try {
+    const token = String(process.env.GITHUB_TOKEN || process.env.GAMESAUCE_GITHUB_TOKEN || '').trim();
     const r = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
       signal: AbortSignal.timeout(15000),
-      headers: { 'User-Agent': 'game-sauce/0.2', Accept: 'application/vnd.github+json' }
+      headers: { 'User-Agent': 'game-sauce/0.2', Accept: 'application/vnd.github+json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
     });
     // 404 = repo publishes rolling/nightly tags with no "latest" release.
     if (r.status === 404) return { missing: 'no published latest release (nightly/rolling builds only)' };
-    if (!r.ok) return { missing: `GitHub answered ${r.status}` };
+    if (r.status === 403 || r.status === 429) {
+      const reset = Number(r.headers.get('x-ratelimit-reset')) * 1000, wait = Number(r.headers.get('retry-after')) * 1000;
+      limitedUntil = Math.max(Date.now() + 60 * 1000, Number.isFinite(reset) && reset > Date.now() ? reset : 0, Number.isFinite(wait) ? Date.now() + wait : 0);
+      return fallback(`GitHub is limiting requests until about ${clock(limitedUntil)}`);
+    }
+    if (!r.ok) return fallback(`GitHub answered ${r.status}`);
     const j = await r.json();
     const payload = {
       tag: j.tag_name,
@@ -57,21 +87,23 @@ async function fetchLatestRelease(repo) {
         name: a.name, size: a.size, downloads: a.download_count, url: a.browser_download_url
       }))
     };
-    releaseCache.set(repo, { at: Date.now(), payload });
+    keepRelease(repo, payload);
     return { payload };
   } catch (err) {
-    return { missing: `GitHub unreachable: ${err.message}` };
+    return fallback(`GitHub unreachable: ${err.message}`);
   }
 }
+/** For tests. */
+export function _resetReleaseCache() { releaseCache.clear(); limitedUntil = 0; }
 
 router.get('/latest/:platform', async (req, res) => {
   const entry = emulatorFor(req.params.platform);
   if (!entry) return res.status(404).json({ error: 'No recommendation for that platform yet' });
   if (!entry.github) return res.json({ entry, latest: null, reason: 'no GitHub repo tracked for this pick' });
 
-  const out = await fetchLatestRelease(entry.github);
+  const out = await fetchLatestRelease(entry.github, { manual: req.query.refresh === '1' });
   if (out.missing) return res.json({ entry, latest: null, reason: out.missing });
-  res.json({ entry, latest: out.payload, cached: Boolean(out.cached) });
+  res.json({ entry, latest: out.payload, cached: Boolean(out.cached), stale: out.stale || null });
 });
 
 /* ── vault: your own emulator installers (admin writes, anyone reads) ── */

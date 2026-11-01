@@ -344,3 +344,14 @@ test('Add ROMs: the dropzone stretches to the height of the Options panel', () =
   assert.match(css, /\.upload-layout \{ align-items: stretch; \}/);
   assert.match(css, /\.upload-layout \.dropzone \{ display: flex; flex-direction: column;/);
 });
+
+test('Emulators: second save button (arrow-up) does the same as Save to vault, Download is an icon, Classic keeps one button', () => {
+  const js = read('public/modern.js'), app = read('public/app.js'), cls = read('public/styles.css');
+  assert.ok(js.includes("['[data-save-release].emu-save-alt', 'arrow-up']"));
+  assert.ok(js.includes("['.emu-dl', 'download']"));
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/arrow-up.svg', import.meta.url)));
+  assert.match(app, /data-save-release="\$\{esc\(key\)\}" title="Save to vault"/, 'the second button carries the same data-save-release, so it runs the same code');
+  assert.match(cls, /\.emu-save-alt \{ display: none; \}/, 'Classic shows only the one button');
+  assert.match(app, /why\[key\]/, 'the page says why GitHub gave no answer');
+  assert.match(app, /An empty answer never wipes a good one/);
+});
