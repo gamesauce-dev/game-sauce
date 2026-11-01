@@ -299,3 +299,26 @@ body.ui-modern .emu-save-alt { display: inline-flex; }
 
 /* Play-only accounts: the buttons promoted onto the icon row (collection, hide, refresh) are management actions, so they stay hidden just like More actions. */
 body.ui-modern.play-only .detail-actions [data-promo] { display: none; }
+
+/* Details window open: the games behind it dim gently (not a hard black step) and the dim stops short of the top bar. */
+body.ui-modern .drawer-scrim { background: rgba(8, 9, 14, .32); backdrop-filter: none; }
+html[data-theme="light"] body.ui-modern .drawer-scrim { background: rgba(30, 38, 60, .16); }
+
+/* Hover words use the app's own font (Retro or normal): one small floating bubble, shown for any button that has a title.
+   (The browser's own tooltip cannot be given a font, so Modern moves each title into data-mtip and draws this instead.) */
+body.ui-modern #mb-tip {
+  position: fixed; z-index: 400; left: 0; top: 0; max-width: 16rem; padding: 0.32rem 0.65rem; border-radius: 0.5rem; pointer-events: none;
+  font: 500 0.8rem/1.3 var(--font); letter-spacing: 0; text-transform: none; text-align: center; white-space: normal;
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--line-2); box-shadow: var(--shadow, 0 0.4rem 1rem rgba(0, 0, 0, .5));
+  opacity: 0; transition: opacity .12s;
+}
+body.ui-modern #mb-tip.show { opacity: 1; }
+
+/* The favourite icon on tiles is gold (brighter when it is a favourite). */
+body.ui-modern .card-fav { color: #f5c542; border-color: #f5c54266; }
+body.ui-modern .card-fav:hover { color: #ffd966; border-color: #f5c542; }
+body.ui-modern .card-fav.on { color: #ffd23f; border-color: #f5c542; background: rgba(245, 197, 66, .18); }
+
+/* Deeper black: dark mode only. */
+html:not([data-theme="light"]) body.ui-modern.ui-deep { --bg: #000000; --bg-2: #05060a; --panel: #0b0c11; --panel-2: #12141b; --line: #1a1d26; --line-2: #262b38; }
+html:not([data-theme="light"]) body.ui-modern.ui-deep .modern-bar { background: rgba(2, 3, 6, .94); }

@@ -45,6 +45,13 @@ export function applyRetro(on) {
   try { localStorage.setItem('gamesauce_retro', on ? '1' : '0'); } catch { /* private mode */ }
   const b = $('#mb-retro'); if (b) { b.setAttribute('aria-checked', String(Boolean(on))); b.classList.toggle('on', Boolean(on)); }
 }
+/* ───────────── deeper black (a per-device switch in the avatar menu; dark mode only) ───────────── */
+const deep = () => { try { return localStorage.getItem('gamesauce_deep') === '1'; } catch { return false; } };
+export function applyDeep(on) {
+  document.body.classList.toggle('ui-deep', Boolean(on) && isModern());
+  try { localStorage.setItem('gamesauce_deep', on ? '1' : '0'); } catch { /* private mode */ }
+  const b = $('#mb-deep'); if (b) { b.setAttribute('aria-checked', String(Boolean(on))); b.classList.toggle('on', Boolean(on)); }
+}
 const theme = () => { try { return localStorage.getItem('gamesauce_theme') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } };
 
 /* ───────────── the bar ───────────── */
@@ -73,6 +80,7 @@ async function doBuildBar() {
           <div class="mb-menu-head"><b id="mb-uname"></b><small id="mb-urole"></small></div>
           <button class="mb-menu-item" role="menuitem" data-mview="settings" data-acct="account">${ic['my-account']}<span>My account</span></button>
           <button class="mb-menu-item hidden" role="menuitemcheckbox" id="mb-preview" aria-checked="false" title="Admins only: see the screen a play-only person gets. Only this tab; it ends when the tab is closed."><span class="mb-retro-mark">▶</span><span id="mb-preview-label">Preview play-only</span></button>
+          <button class="mb-menu-item" role="menuitemcheckbox" id="mb-deep" aria-checked="false" title="Make dark mode a deeper black (suits OLED screens). Has no effect in light mode."><span class="mb-retro-mark">●</span><span>Deeper black</span></button>
           <button class="mb-menu-item" role="menuitemcheckbox" id="mb-retro" aria-checked="false" title="Use a monospace (typewriter-style) font everywhere in Modern"><span class="mb-retro-mark">Aa</span><span>Retro font</span></button>
           <button class="mb-menu-item" role="menuitem" id="mb-signout">${ic['sign-out']}<span>Sign out</span></button>
         </div>
@@ -113,6 +121,7 @@ function onBarClick(e) {
   if (toolClick(e)) return;
   if (e.target.closest('#mb-acct-btn')) { const m = $('#mb-menu'); const open = m.classList.toggle('hidden') === false; $('#mb-acct-btn').setAttribute('aria-expanded', String(open)); return; }
   if (e.target.closest('#mb-retro')) { applyRetro(!retro()); return; }
+  if (e.target.closest('#mb-deep')) { applyDeep(!deep()); return; }
   if (e.target.closest('#mb-preview')) { try { const on = sessionStorage.getItem('gamesauce_preview_play') === '1'; if (on) sessionStorage.removeItem('gamesauce_preview_play'); else sessionStorage.setItem('gamesauce_preview_play', '1'); } catch { /* private mode */ } location.reload(); return; }
   if (e.target.closest('[data-acct="account"]')) { closeMenu(); go('settings'); setTimeout(() => ctx.openAccount?.(), 60); return; }
   // Only the bar's own buttons: <body> also carries data-mview (the current page), and closest() would find it for every click.
@@ -129,6 +138,8 @@ export function go(view) {
   if (!isModern()) return;
   current = view;
   closePop();
+  // Choosing a page releases the details window, unless it is pinned beside the games.
+  if (!document.body.classList.contains('details-pinned') && !$('#drawer')?.classList.contains('hidden')) ctx.closeDrawer?.();
   if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
   refreshTicker();
   document.body.dataset.mview = view;
@@ -572,6 +583,40 @@ export function iconize(root = document) {
   if (hb) { const want = /unhide/i.test(hb.textContent) ? 'visible' : 'hidden'; if (hb.dataset.mi !== want) { if (!hb.dataset.miLabel) hb.dataset.miLabel = hb.getAttribute('title') || 'Hide selected'; hb.dataset.mi = want; if (!hb.getAttribute('aria-label')) hb.setAttribute('aria-label', hb.title || hb.dataset.miLabel); miRule(want); } }
   for (const el of $$('[data-mi]', root)) miRule(el.dataset.mi);   // icons named in templates (the Settings tiles)
 }
+/* ───────────── hover words in the app's font ───────────── */
+function tipify(root = document) {
+  if (!isModern()) return;
+  const els = root.nodeType === 1 && root.hasAttribute?.('title') ? [root, ...$$('[title]', root)] : $$('[title]', root);
+  for (const el of els) {
+    if (el.closest?.('svg') || el.tagName === 'SVG' || el.tagName === 'IFRAME' || el.tagName === 'TITLE') continue;
+    const t = el.getAttribute('title'); if (!t) continue;
+    if (!el.hasAttribute('aria-label') && !(el.textContent || '').trim() && !el.querySelector?.('img[alt]:not([alt=""])')) el.setAttribute('aria-label', t);
+    el.dataset.mtip = t; el.removeAttribute('title');
+  }
+}
+/** Leaving Modern: put every title back, so Classic shows the browser's own tooltips as before. */
+function untipify() { for (const el of $$('[data-mtip]')) { el.setAttribute('title', el.dataset.mtip); delete el.dataset.mtip; } $('#mb-tip')?.classList.remove('show'); }
+let tipEl = null, tipTimer = null, tipFor = null;
+function tipHide() { clearTimeout(tipTimer); tipFor = null; tipEl?.classList.remove('show'); }
+function tipShow(el) {
+  if (!isModern() || !el?.isConnected) return;
+  if (!tipEl) { tipEl = document.createElement('div'); tipEl.id = 'mb-tip'; tipEl.setAttribute('role', 'tooltip'); document.body.appendChild(tipEl); }
+  tipEl.textContent = el.dataset.mtip || '';
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight, pad = 8;
+  let left = r.left + r.width / 2 - w / 2; left = Math.max(pad, Math.min(left, innerWidth - w - pad));
+  let top = r.bottom + 8; if (top + h > innerHeight - pad) top = Math.max(pad, r.top - h - 8);
+  tipEl.style.left = Math.round(left) + 'px'; tipEl.style.top = Math.round(top) + 'px';
+  tipEl.classList.add('show');
+}
+document.addEventListener('mouseover', (e) => {
+  if (!isModern()) return;
+  const el = e.target.closest?.('[data-mtip]'); if (el === tipFor) return;
+  tipHide(); if (!el) return;
+  tipFor = el; tipTimer = setTimeout(() => tipShow(el), 350);
+});
+document.addEventListener('focusin', (e) => { const el = e.target.closest?.('[data-mtip]'); if (el && isModern() && el.matches(':focus-visible')) { tipFor = el; tipShow(el); } });
+for (const ev of ['mousedown', 'focusout', 'scroll', 'keydown', 'touchstart']) document.addEventListener(ev, tipHide, true);
+
 let miTimer = null;
 function watchIcons() {
   if (watchIcons.on) return; watchIcons.on = true;
@@ -580,9 +625,12 @@ function watchIcons() {
   new MutationObserver((list) => {
     const roots = new Set();
     for (const r of list) for (const n of r.addedNodes) { const el = n.nodeType === 1 ? n : n.parentElement; if (el) roots.add(el); }
-    for (const n of roots) if (n.isConnected) iconize(n);
-    clearTimeout(miTimer); miTimer = setTimeout(() => iconize(), 250);   // safety net for anything missed
+    for (const n of roots) if (n.isConnected) { iconize(n); tipify(n); }
+    clearTimeout(miTimer); miTimer = setTimeout(() => { iconize(); tipify(); }, 250);   // safety net for anything missed
   }).observe(document.body, { childList: true, subtree: true });
+  // A title set later by the app (a toggle's state, a count) is moved into the bubble too.
+  new MutationObserver((list) => { for (const r of list) if (r.target.isConnected && r.target.hasAttribute('title')) tipify(r.target); })
+    .observe(document.body, { attributes: true, attributeFilter: ['title'], subtree: true });
 }
 
 /* ───────────── switching look ───────────── */
@@ -590,6 +638,7 @@ export async function setUiMode(mode) {
   const next = mode === 'modern' ? 'modern' : 'classic';
   try { await api('/prefs/ui_mode', { method: 'PUT', body: JSON.stringify({ value: next }) }); } catch { /* still switch for this session */ }
   ctx.setPref?.('ui_mode', next);
+  try { localStorage.setItem('gamesauce_last_look', next); } catch { /* private mode */ }
   await applyMode(next, { fresh: true });
 }
 
@@ -599,13 +648,15 @@ export async function applyMode(mode, { fresh = false } = {}) {
   document.body.classList.toggle('ui-modern', on);
   document.documentElement.dataset.theme = on ? theme() : 'dark';
   document.body.classList.toggle('ui-retro', on && retro());
+  document.body.classList.toggle('ui-deep', on && deep());
   if (on) {
     await buildBar(); paintUser(); usePinIcon();
-    applyRetro(retro());
-    watchIcons(); iconize();
+    applyRetro(retro()); applyDeep(deep());
+    watchIcons(); iconize(); tipify();
     paintToggles();
     go(fresh || current === 'library' && false ? 'home' : (ctx.state().view === 'library' ? (current === 'home' ? 'home' : 'library') : ctx.state().view));
   } else {
+    untipify();
     restorePinIcon();
     hideHome();
     delete document.body.dataset.mview;

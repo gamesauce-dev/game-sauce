@@ -385,3 +385,26 @@ test('Admin-only play-only preview, avatar on sign-in, Settings sub-icons under 
   assert.match(js, /function alignSubtiles/);
   assert.match(js, /row\.style\.paddingLeft/);
 });
+
+test('new accounts start in Modern; people who already exist are not changed', async () => {
+  assert.equal((await call('/api/prefs', { token: memberTok })).body.ui_mode, undefined, 'cleared earlier in this file, so it reads as Classic');
+  await call('/api/auth/users', { method: 'POST', body: { username: 'mfresh', password: 'm-fresh-pass-123', role: 'user' } });
+  const freshTok = await login('mfresh', 'm-fresh-pass-123');
+  assert.equal((await call('/api/prefs', { token: freshTok })).body.ui_mode, 'modern', 'a brand-new person starts in Modern');
+  assert.equal((await call('/api/prefs/ui_mode', { token: freshTok, method: 'PUT', body: { value: 'classic' } })).status, 200, 'and can switch to Classic');
+  assert.equal((await call('/api/prefs', { token: freshTok })).body.ui_mode, 'classic');
+});
+
+test('Details window dims gently, top-bar pages release it, tooltips use the app font, gold favourite, deeper black, sign-in follows the last look', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js'), app = read('public/app.js'), cls = read('public/styles.css');
+  assert.match(css, /body\.ui-modern \.drawer-scrim \{ background: rgba\(8, 9, 14, \.32\)/, 'a softer dim than the old 55%');
+  assert.match(js, /Choosing a page releases the details window, unless it is pinned/);
+  assert.match(js, /ctx\.closeDrawer\?\.\(\)/); assert.match(app, /modern\.initModern\(\{ closeDrawer,/);
+  assert.match(css, /#mb-tip \{[^}]*font: 500 0\.8rem\/1\.3 var\(--font\)/, 'the bubble uses the app font variable (so Retro applies)');
+  assert.match(js, /function tipify/); assert.match(js, /function untipify/, 'Classic gets its own tooltips back');
+  assert.match(css, /\.card-fav \{ color: #f5c542;/);
+  assert.match(css, /ui-deep \{ --bg: #000000;/); assert.match(js, /id="mb-deep"/); assert.match(js, /gamesauce_deep/);
+  assert.match(app, /function paintLoginLook/); assert.match(app, /gamesauce_last_look/);
+  assert.match(cls, /body\.login-modern \.auth-card/);
+  assert.match(js, /localStorage\.setItem\('gamesauce_last_look', next\)/, 'switching look updates what the sign-in screen will show');
+});

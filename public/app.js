@@ -3394,7 +3394,18 @@ $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...stat
 
 const authState = { user: null };
 
+// The sign-in screen follows the look this browser last used (Classic or Modern), so a returning person sees what they know.
+function paintLoginLook() {
+  try {
+    const m = localStorage.getItem('gamesauce_last_look') === 'classic' ? 'classic' : 'modern';
+    document.body.classList.toggle('login-modern', m === 'modern');
+    document.documentElement.dataset.theme = m === 'modern' && localStorage.getItem('gamesauce_theme') === 'light' ? 'light' : 'dark';
+  } catch { /* private mode */ }
+}
+paintLoginLook();
+
 function showLogin(message = '') {
+  paintLoginLook();
   // Remember the last choice of the "keep me signed in" box on this browser.
   try { const r = $('#login-remember'); if (r) r.checked = localStorage.getItem('gamesauce_remember') !== '0'; } catch { /* private mode */ }
   authState.user = null;
@@ -3520,8 +3531,8 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  modern.initModern({ api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
-  api('/prefs').then((p) => { state.prefs = p || {}; return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
+  modern.initModern({ closeDrawer, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
+  api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog

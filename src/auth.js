@@ -211,6 +211,8 @@ export async function createUser({ username, password, display_name = null, role
   }
   const info = db.prepare('INSERT INTO users (username, display_name, password_hash, role) VALUES (?, ?, ?, ?)')
     .run(name, display_name, await hashPassword(password), role === 'admin' ? 'admin' : 'user');
+  // New people start in the Modern look (they can switch to Classic any time). People who already exist are left as they are.
+  try { db.prepare("INSERT OR IGNORE INTO user_prefs (user_id, key, value) VALUES (?, 'ui_mode', 'modern')").run(Number(info.lastInsertRowid)); } catch { /* prefs table missing: they simply start in Classic */ }
   return { id: Number(info.lastInsertRowid), username: name, role };
 }
 

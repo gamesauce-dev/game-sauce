@@ -12,6 +12,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Modern: "Deeper black" switch** in the avatar menu (dark mode only, per device): the background goes to true black and the panels follow.
+- **Sign-in screen follows the last look used on this browser** (Classic or Modern, and light or dark), so a returning person sees what they know.
 - **Admin-only "Preview play-only"** in the Modern avatar menu: shows an admin the screen a play-only person gets. Only that tab changes (the server still treats them as the admin) and it ends when the tab is closed, so nobody can lock themselves out. Members and play-only people never see the option.
 - **Modern: "Retro font" switch** in the avatar menu. Turns the whole Modern look into a monospace (typewriter-style) font; click it again to go back. Remembered per device, only changes the font, Classic is untouched.
 - **Modern: Sources "Disable" is your folder-disable icon.** "Enable" (shown for a disabled source) is your folder-enable icon.
@@ -89,6 +91,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **New accounts start in Modern** (they can switch to Classic from the ◐ / look button). Accounts that already exist keep whatever they had.
+- **Modern details window:** the games behind it dim gently (a light veil instead of a hard 55% black step), and choosing any page in the top bar releases it (unless it is pinned).
+- **Modern hover words use the app's own font** (so Retro applies to them too): each button's title is shown by one small bubble instead of the browser's tooltip, and Classic gets its normal tooltips back when you switch.
+- **Modern: the favourite icon on game tiles is gold** (brighter when it is a favourite).
 - **Modern Settings:** the row of settings inside a group now starts directly under that group's icon.
 - **Modern Emulators:** a second save button (your arrow-up icon) sits beside Save to vault and does the same thing; the Download button next to the installer picker is your download icon.
 - **Modern Add ROMs:** the drop zone is exactly as tall as the Options panel beside it, with its words centred.

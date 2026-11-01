@@ -1586,3 +1586,9 @@ body.details-pinned .drawer-scrim { display: none !important; }
 #provider-forms .provider-field > .state { grid-row: 2; grid-column: 2; font-size: 0.78rem; white-space: nowrap; }
 
 .emu-save-alt { display: none; }
+
+/* The sign-in screen follows the look this browser last used. Modern: a quieter panel and the app's own accent. */
+body.login-modern .auth-card { background: var(--bg-2); border-color: var(--line-2); border-radius: 1rem; }
+body.login-modern .auth-form .btn-primary { background: #1f9d63; border-color: #1f9d63; }
+body.login-modern .auth-form .btn-primary:hover:not(:disabled) { background: #27b374; border-color: #27b374; }
+body.login-modern .auth-card .brand-name { letter-spacing: 0; }
