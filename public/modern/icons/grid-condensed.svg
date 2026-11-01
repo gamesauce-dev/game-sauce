@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<rect width="2.9" height="2.9" x="2.75" y="2.75" rx=".75" />
+		<rect width="2.9" height="2.9" x="7.95" y="2.75" rx=".75" />
+		<rect width="2.9" height="2.9" x="13.15" y="2.75" rx=".75" />
+		<rect width="2.9" height="2.9" x="18.35" y="2.75" rx=".75" />
+		<rect width="2.9" height="2.9" x="2.75" y="7.95" rx=".75" />
+		<rect width="2.9" height="2.9" x="7.95" y="7.95" rx=".75" />
+		<rect width="2.9" height="2.9" x="13.15" y="7.95" rx=".75" />
+		<rect width="2.9" height="2.9" x="18.35" y="7.95" rx=".75" />
+		<rect width="2.9" height="2.9" x="2.75" y="13.15" rx=".75" />
+		<rect width="2.9" height="2.9" x="7.95" y="13.15" rx=".75" />
+		<rect width="2.9" height="2.9" x="13.15" y="13.15" rx=".75" />
+		<rect width="2.9" height="2.9" x="18.35" y="13.15" rx=".75" />
+		<rect width="2.9" height="2.9" x="2.75" y="18.35" rx=".75" />
+		<rect width="2.9" height="2.9" x="7.95" y="18.35" rx=".75" />
+		<rect width="2.9" height="2.9" x="13.15" y="18.35" rx=".75" />
+		<rect width="2.9" height="2.9" x="18.35" y="18.35" rx=".75" />
+	</g>
+</svg>

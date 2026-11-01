@@ -220,6 +220,7 @@ re-runs matching after importing new DATs.
   collection to remove games from it (**✕ Remove**) or delete the collection. Games always stay in
   the library.
 - **★ Favourite** is per user.
+- **Modern look (preview).** Press ◐ beside the cog (bottom left) to try the Modern look: an icon bar along the top, a Home page with a ticker, Continue playing and Recently added, and a light / dark switch. The switch at the right of the bar takes you back to Classic. It is a personal choice, remembered for your account.
 - **Hide** removes a tile from the default view without deleting it; the **○ Hidden** pill shows them. When an **admin** hides a game, members cannot see or open it either: only admins see it again, under Hidden. A member's Hide only affects their own view.
 
 ---

@@ -17,7 +17,7 @@ const ALLOW = [
   ['GET', /^\/health$/],
   ['GET', /^\/platforms$/],
   ['GET', /^\/stats$/],
-  ['GET', /^\/prefs$/],
+  ['GET', /^\/prefs$/], ['PUT', /^\/prefs\/ui_mode$/],
   ['GET', /^\/roms\/?$/],
   ['GET', /^\/roms\/facets$/],
   ['GET', /^\/roms\/recently-played$/],

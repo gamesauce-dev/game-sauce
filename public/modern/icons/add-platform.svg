@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+	<mask id="SVGsZ1vtcCp" width="24" height="24" x="0" y="0" maskUnits="userSpaceOnUse">
+		<path fill="#fff" d="M0 0h24v24H0z" />
+		<circle cx="17.5" cy="17.5" r="6" />
+	</mask>
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<g mask="url(#SVGsZ1vtcCp)">
+			<path d="M6.75 18.35a4 4 0 0 1-.55-7.96A5.75 5.75 0 0 1 16.85 9a4.5 4.5 0 0 1-.6 9.35Z" />
+			<path d="M9.25 10A3.5 3.5 0 0 1 12 8.25" />
+		</g>
+		<path d="M17.5 14.75v5.5m-2.75-2.75h5.5" />
+	</g>
+</svg>

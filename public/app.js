@@ -3,6 +3,8 @@ import { platformIconSvg, PLATFORM_ICON_TYPES, iconTypeFor } from './platform-ic
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+import * as modern from './modern.js';
+
 const state = {
   view: 'library',
   platform: 'all',
@@ -3492,6 +3494,10 @@ function showApp(user, { restore = false } = {}) {
   document.body.classList.toggle('play-only', playOnly);
   if (playOnly) { state.favorite = false; state.hidden = false; state.system = false; state.platform = 'all'; }
   syncTopbar();
+  // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
+  state.prefs = state.prefs || {};
+  modern.initModern({ api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
+  api('/prefs').then((p) => { state.prefs = p || {}; return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog
@@ -3591,6 +3597,7 @@ $('#logout').addEventListener('click', async () => {
 
 // Cog in the footer: the only path to Settings now (nav item removed).
 $('#settings-gear')?.addEventListener('click', () => setView('settings'));
+$('#ui-modern-try')?.addEventListener('click', () => modern.setUiMode('modern'));
 
 // Play-only screen: the logo is the way back to the whole library (the Library button is gone from the top bar), and the arrow
 // beside the count scrolls the games back to the top.

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>game-sauce — ROM library</title>
 <link rel="stylesheet" href="/styles.css?v=9" />
+<link rel="stylesheet" href="/modern.css?v=1" />
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
 </head>
 <body>
@@ -42,6 +43,8 @@
 <div class="app hidden" id="app">
   <!-- Play-only accounts: the sidebar is replaced by this slim bar (filled by the app). -->
   <header class="play-topbar hidden" id="play-topbar"></header>
+  <!-- Modern look: icon top bar and Home page (see modern.js). Empty and hidden unless a person has chosen Modern. -->
+  <header class="modern-bar" id="modern-bar"></header>
 
   <aside class="sidebar">
     <div class="brand">
@@ -61,6 +64,7 @@
           <div class="user-role" id="user-role"></div>
         </div>
         <button class="btn btn-sm btn-ghost" id="settings-gear" title="Settings">⚙</button>
+        <button class="btn btn-sm btn-ghost" id="ui-modern-try" title="Try the Modern look (preview)">◐</button>
         <button class="btn btn-sm btn-ghost" id="logout" title="Sign out">⏻</button>
       </div>
     </div>
@@ -100,6 +104,9 @@
   <div class="side-scrim" id="side-scrim"></div>
 
   <main class="main">
+
+    <!-- Modern Home: ticker, Continue playing, Recently added -->
+    <section class="modern-home hidden" id="modern-home"></section>
 
     <!-- ───────────── library ───────────── -->
     <section class="view" id="view-library">
