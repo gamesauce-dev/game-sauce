@@ -256,3 +256,11 @@ test('Modern text has more contrast (brighter colours, medium weight) and icons 
   assert.match(js, /roots\.add\(el\)/, 'only the redrawn parts are re-checked, straight away');
   assert.match(js, /iconize\(n\)/);
 });
+
+test('Modern: apply buttons are green and cancel buttons are red, in both light and dark', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /--apply: #1f9d63;/); assert.match(css, /--cancel: #f06b6b;/);
+  assert.match(css, /data-theme="light"\] body\.ui-modern \{ --apply: #178a4c;/);
+  assert.match(css, /\.btn-primary, body\.ui-modern \.btn\[data-mi="tick"\] \{ background: var\(--apply\)/);
+  assert.match(css, /\.btn\[data-mi="close"\][^{]*\{ color: var\(--cancel\)/);
+});

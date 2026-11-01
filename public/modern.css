@@ -9,6 +9,18 @@ body.ui-modern .chip, body.ui-modern .card-title, body.ui-modern .mb-menu-item, 
 body.ui-modern label, body.ui-modern .field-label, body.ui-modern .pill, body.ui-modern .mh-line, body.ui-modern .tile-label { font-weight: 500; }
 body.ui-modern .hint, body.ui-modern .card-sub { color: var(--muted); }
 
+/* Apply = green, cancel = red, everywhere in Modern. */
+body.ui-modern { --apply: #1f9d63; --apply-2: #27b374; --cancel: #f06b6b; }
+html[data-theme="light"] body.ui-modern { --apply: #178a4c; --apply-2: #1d9e59; --cancel: #c93030; }
+body.ui-modern .btn-primary, body.ui-modern .btn[data-mi="tick"] { background: var(--apply); border-color: var(--apply); color: #fff; }
+body.ui-modern .btn-primary:hover:not(:disabled), body.ui-modern .btn[data-mi="tick"]:hover:not(:disabled) { background: var(--apply-2); border-color: var(--apply-2); }
+body.ui-modern .btn-primary:disabled { opacity: .45; }
+body.ui-modern .btn[data-mi="close"], body.ui-modern #platform-add-cancel, body.ui-modern #browser-cancel, body.ui-modern #cancel-source, body.ui-modern #collection-cancel,
+body.ui-modern #modal-cancel, body.ui-modern #pf-cancel, body.ui-modern #restore-cancel, body.ui-modern #wz-bcancel, body.ui-modern [data-pact="cancel"] { color: var(--cancel); border-color: color-mix(in srgb, var(--cancel) 45%, transparent); background: transparent; }
+body.ui-modern .btn[data-mi="close"]:hover, body.ui-modern #platform-add-cancel:hover, body.ui-modern #browser-cancel:hover, body.ui-modern #cancel-source:hover, body.ui-modern #collection-cancel:hover,
+body.ui-modern #modal-cancel:hover, body.ui-modern #pf-cancel:hover, body.ui-modern #restore-cancel:hover, body.ui-modern #wz-bcancel:hover, body.ui-modern [data-pact="cancel"]:hover { background: color-mix(in srgb, var(--cancel) 14%, transparent); }
+body.ui-modern .btn-danger { color: var(--cancel); border-color: color-mix(in srgb, var(--cancel) 45%, transparent); }
+
 /* light palette (Modern only; dark is the normal palette) */
 html[data-theme="light"] body.ui-modern {
   --bg: #f4f5f8; --bg-2: #ffffff; --panel: #ffffff; --panel-2: #eef0f5; --line: #dfe2ea; --line-2: #cfd3de;
@@ -171,7 +183,7 @@ body.ui-modern .btn[data-mi], body.ui-modern button.btn[data-mi] { display: inli
 body.ui-modern .btn-sm[data-mi] { min-width: 2.1rem; height: 2.1rem; padding: 0 0.45rem; }
 body.ui-modern .btn-sm[data-mi]::before { width: 1.1rem; height: 1.1rem; }
 body.ui-modern .btn-primary[data-mi]::before { background: #fff; }
-body.ui-modern .btn-danger[data-mi] { color: var(--bad); }
+body.ui-modern .btn-danger[data-mi] { color: var(--cancel); }
 /* Settings: group and setting tiles are icons; the open one keeps its name so you can see where you are */
 body.ui-modern .tile[data-mi], body.ui-modern .subtile[data-mi] { gap: 0.5rem; }
 body.ui-modern .tile[data-mi] .tile-ico, body.ui-modern .subtile[data-mi] .tile-ico { display: none; }

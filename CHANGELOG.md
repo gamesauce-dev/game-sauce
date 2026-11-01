@@ -86,6 +86,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern: apply buttons are green, cancel buttons are red** (both light and dark). Primary buttons and the tick icon are green; Cancel, the close icon and the Delete-style buttons are red outlines. Replaces the purple on buttons; purple stays for "selected" things such as lit chips and the pin.
 - **Modern: text stands out more.** Brighter text and a lighter muted grey in dark mode (darker in light mode), and a medium weight (not bold) on chips, titles, menus, buttons and labels. Classic is untouched.
 - **Modern Home: Continue playing and Recently added sit side by side, equal width, with tiles to fill them.** From 760 px up the two boxes share the width equally (they stack only on a narrow window), tiles stretch to fill each box and are the same size in both, and up to 24 recent tiles are loaded so a wide box is full. Continue playing can only show games the person has actually played.
 - **Settings: "Health & coverage" is now "System health", with Health and Stats inside.** Health lays its checks out in columns, so there is much less scrolling.
