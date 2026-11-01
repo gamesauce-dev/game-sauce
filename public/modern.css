@@ -296,3 +296,6 @@ body.ui-modern .emu-save-alt { display: inline-flex; }
   body.ui-modern #emu-upload-form .field-row, body.ui-modern #emu-upload-form { grid-template-columns: 1fr !important; }
   body.ui-modern #emu-upload-form .field { min-width: 0; }
 }
+
+/* Play-only accounts: the buttons promoted onto the icon row (collection, hide, refresh) are management actions, so they stay hidden just like More actions. */
+body.ui-modern.play-only .detail-actions [data-promo] { display: none; }

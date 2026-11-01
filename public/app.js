@@ -4355,7 +4355,7 @@ function renderEmuGuide() {
                    ${authState.user?.role === 'admin' ? `<button class="btn btn-sm" data-save-release="${esc(key)}">Save to vault</button><button class="btn btn-sm emu-save-alt" data-save-release="${esc(key)}" title="Save to vault">Save to vault</button>` : ''}
                  </span>` : `<span class="hint">${(e.github && !latest.assets?.length) ? 'Latest release has no downloadable assets — use the download page above.' : ''}</span>`}
                ${vaulted.length ? `<span class="pill ok">in vault: ${vaulted.map((v) => esc(v.version || v.filename)).join(', ')}</span>` : ''}`
-            : `<span class="hint">${esc(emuState.why[key] ? `Could not get the latest release: ${emuState.why[key]}. Press “Check latest releases” to try again, or use the download page above.` : 'No GitHub release tracked — use the download page above (often nightly/rolling).')}</span>`}
+            : `<span class="hint">${esc(emuState.why[key] ? (/nightly\/rolling/.test(emuState.why[key]) ? `This project publishes ${emuState.why[key].replace(/^no published latest release \(|\)$/g, '')}: use the download page above.` : `Could not get the latest release: ${emuState.why[key]}. Press “Check latest releases” to try again, or use the download page above.`) : 'No GitHub release tracked — use the download page above (often nightly/rolling).')}</span>`}
         ${latest && emuState.why[key] ? `<span class="hint">(showing the last answer GitHub gave: ${esc(emuState.why[key])})</span>` : ''}
       </div>
     </div>`;

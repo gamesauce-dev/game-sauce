@@ -368,3 +368,11 @@ test('Phone width: Emulator cards and the details bar are kept inside the screen
   assert.match(css, /@media \(max-width: 640px\) \{\s+body\.ui-modern \.emu-card/);
   assert.match(css, /body\.ui-modern \.drawer-bar \{ max-width: 100vw;/);
 });
+
+test('Play-only accounts do not get the promoted management buttons on the details row', () => {
+  assert.match(read('public/modern.css'), /body\.ui-modern\.play-only \.detail-actions \[data-promo\] \{ display: none; \}/);
+});
+
+test('Emulators: a rolling-build project is explained, not offered a pointless retry', () => {
+  assert.match(read('public/app.js'), /This project publishes \$\{emuState\.why\[key\]/);
+});
