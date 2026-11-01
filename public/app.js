@@ -387,8 +387,13 @@ function renderLibHeading() {
   if (!box) return;
   if (state.platform === 'all' || state.orphan || state.unmatched) { box.classList.add('hidden'); box.innerHTML = ''; return; }
   const p = (window.__platformsCache || []).find((x) => x.slug === state.platform);
-  const extra = (state.extraPlatforms || []).map((s) => (window.__platformsCache || []).find((x) => x.slug === s)?.name || s);
-  const name = [p ? p.name : state.platform, ...extra].join(' + ');
+  const cache = window.__platformsCache || [];
+  const picked = [state.platform, ...(state.extraPlatforms || [])];
+  const fam = cache.find((x) => x.slug === picked[0])?.family;
+  const famAll = fam ? cache.filter((x) => x.count > 0 && x.family === fam).map((x) => x.slug) : [];
+  const wholeFam = picked.length > 1 && famAll.length === picked.length && famAll.every((s) => picked.includes(s));
+  const names = picked.map((s) => cache.find((x) => x.slug === s)?.name || s);
+  const name = wholeFam ? `${fam} (all platforms)` : names.length > 3 ? `${names.length} platforms` : names.join(' + ');
   box.classList.remove('hidden');
   box.innerHTML = `
     <span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>

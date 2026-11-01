@@ -165,3 +165,16 @@ test('the details window sits under the bar, uses the supplied pin icon, and the
   assert.match(css, /body\.ui-modern \.drawer-pin svg \{[^}]*rotate\(35deg\)/, 'tilted and dim when not pinned');
   assert.match(css, /body\.ui-modern \.drawer-scrim \{ top: var\(--mb-h/, 'the dimming overlay also starts under the bar');
 });
+
+test('chip row: a family selects the whole family (All goes off), a platform then narrows, and a new list starts at the top', () => {
+  const js = read('public/modern.js'), app = read('public/app.js'), css = read('public/modern.css');
+  assert.match(js, /chipFamily = f; setPlatforms\(slugs\);/, 'clicking a family selects all of its platforms, so All is not left lit');
+  assert.match(js, /if \(wholeFamily\) setPlatforms\(\[slug\]\);/, 'with the whole family on, a platform click narrows to that one');
+  assert.match(js, /famState = /);
+  assert.match(js, /' on whole'/); assert.match(js, /' on part'/);
+  // the reported bug: the grid kept its old scroll position, past the end of a short list, so the tiles were "missing"
+  assert.match(js, /g\.scrollTop = 0;\s*\n\s*await ctx\.loadLibrary\(\);/, 'scroll resets before loading a different list');
+  assert.match(js, /requestAnimationFrame\(\(\) => \{ g\.scrollTop = 0; \}\)/, 'and again once the new tiles are drawn');
+  assert.match(app, /wholeFam \? `\$\{fam\} \(all platforms\)`/, 'the heading names a whole family');
+  assert.match(css, /\.chip\.on\.part \{[^}]*dashed/);
+});

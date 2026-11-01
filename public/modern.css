@@ -139,3 +139,6 @@ body.ui-modern .drawer-pin.is-on { color: var(--accent-2); background: color-mix
 body.ui-modern .drawer-pin.is-on svg { transform: rotate(0); }
 body.ui-modern .drawer-pin.is-on svg path { fill: currentColor; fill-opacity: .25; }
 body.ui-modern .drawer-scrim { top: var(--mb-h, 50px); }
+body.ui-modern .chip.open:not(.on) { color: var(--text); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+body.ui-modern .chip.open::after { content: ''; width: 0; height: 0; margin-left: 0.15rem; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; opacity: .7; }
+body.ui-modern .chip.on.part { background: transparent; border-style: dashed; }
