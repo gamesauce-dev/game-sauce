@@ -108,3 +108,18 @@ test('the library accepts several platforms at once (comma separated) and a sing
   assert.deepEqual(await t('platform=snes,,%20nes%20,'), ['Chip One', 'Chip Two'], 'stray commas and spaces are ignored');
   assert.deepEqual(await t('platform=nosuch,snes'), ['Chip One'], 'an unknown slug in the list matches nothing, it does not break the query');
 });
+
+test('letters=1 counts games per first letter under the same filters (the A-Z jump)', async () => {
+  rom('Zed Run (USA).sfc', 'snes'); rom('9 Lives (USA).sfc', 'snes'); rom('The Alpha (USA).sfc', 'snes'); rom('Alpha Two (USA).sfc', 'snes'); rom('Ünder (USA).nes', 'nes');
+  const get = async (q) => Object.fromEntries((await call(`/api/roms?letters=1&${q}`)).body.letters.map((x) => [x.letter, x.n]));
+  const snes = await get('platform=snes');
+  assert.equal(snes.Z, 1);
+  assert.equal(snes['#'], 1, 'digits and symbols are grouped together under #');
+  assert.equal(snes.A, 2, '"The Alpha" sorts under A, like the grid does');
+  assert.equal(snes.U, undefined, 'a filter narrows the letters: the NES game is not counted');
+  assert.equal((await get('platform=nes')).U, 1, 'accents are folded the same way the sort does');
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  const all = await get('');
+  assert.equal(sum(all), (await call('/api/roms?limit=1')).body.total, 'the counts add up to the list total');
+  assert.ok((await call('/api/roms?letters=1')).body.items === undefined, 'a letters request returns only the counts');
+});

@@ -45,7 +45,7 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -70,6 +70,7 @@ async function doBuildBar() {
     </div>`;
   built = true;
   buildLibraryTools(ic);
+  buildAzBar(ic);
   paintUser();
   refreshTicker(true);
   setInterval(() => { if (isModern()) refreshTicker(true); }, 60000);
@@ -112,7 +113,7 @@ export function go(view) {
   if (!isModern()) return;
   current = view;
   closePop();
-  if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); }
+  if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
   refreshTicker();
   document.body.dataset.mview = view;
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
@@ -224,7 +225,7 @@ function buildLibraryTools(ic) {
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue });
   document.body.classList.add('mb-tools');
   $('#tl-q')?.addEventListener('input', (e) => { const s = q('#search'); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });
-  setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') syncTools(); }, 700);
+  setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') { syncTools(); syncAz(); } }, 700);
 }
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
@@ -319,6 +320,91 @@ function chipClick(e) {
   return true;
 }
 document.addEventListener('click', (e) => { if (isModern() && e.target.closest('#chip-rows') && chipClick(e)) e.stopPropagation(); });
+
+
+/* ───────────── A-Z jump, grid size, back to top ─────────────
+   The grid pages in 200 at a time, so a letter is reached by loading pages until its first game exists, then scrolling to it.
+   Only offered while the list is sorted by title (either way); other sorts have no alphabet to jump along. */
+const LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+let azKey = null, azCounts = null, azBusy = false;
+
+function buildAzBar(ic) {
+  const bar = $('#az-bar'); if (!bar) return;
+  bar.innerHTML = `
+    <div class="az-letters" id="az-letters" role="toolbar" aria-label="Jump to a letter"></div>
+    <div class="az-right">
+      <button class="mb-btn" data-density="comfortable" title="Comfortable grid" aria-label="Comfortable grid">${ic.grid}</button>
+      <button class="mb-btn" data-density="compact" title="Condensed grid" aria-label="Condensed grid">${ic['grid-condensed']}</button>
+      <button class="mb-btn" id="az-top" title="Back to the top" aria-label="Back to the top">${ic['back-to-top']}</button>
+    </div>`;
+  bar.addEventListener('click', (e) => {
+    const d = e.target.closest('[data-density]');
+    if (d) { document.querySelector(`#density [data-density="${d.dataset.density}"]`)?.click(); setTimeout(syncAz, 60); return; }
+    if (e.target.closest('#az-top')) { const g = $('#grid'); g?.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    const l = e.target.closest('[data-letter]');
+    if (l && !l.disabled) jumpTo(l.dataset.letter);
+  });
+}
+
+const sortDir = () => { const s = ctx.state().sort; return s === 'title' ? 1 : s === '-title' ? -1 : 0; };
+
+async function refreshLetters() {
+  const s = ctx.state(), dir = sortDir();
+  const box = $('#az-letters'); if (!box) return;
+  box.classList.toggle('off', !dir);
+  if (!dir) { azKey = null; azCounts = null; box.innerHTML = ''; return; }
+  const key = (s.libKey || '') + '|' + dir;
+  if (key === azKey && azCounts) return;
+  azKey = key;
+  try {
+    const qs = new URLSearchParams(s.libQuery || ''); qs.set('letters', '1');
+    const r = await api('/roms?' + qs);
+    if (key !== azKey) return;   // the list changed while we were asking
+    azCounts = Object.fromEntries(r.letters.map((x) => [x.letter, x.n]));
+    paintLetters();
+  } catch { azCounts = null; }
+}
+
+function paintLetters() {
+  const box = $('#az-letters'); if (!box || !azCounts) return;
+  box.innerHTML = LETTERS.map((l) => `<button class="az-l" data-letter="${l}"${azCounts[l] ? '' : ' disabled'} title="${azCounts[l] ? l + ': ' + azCounts[l].toLocaleString() + ' games' : 'No games under ' + l}" aria-label="Jump to ${l}">${l}</button>`).join('');
+}
+
+/** Offset of the first game under a letter in the current order. */
+function offsetOf(letter) {
+  const order = sortDir() === 1 ? LETTERS : [...LETTERS].reverse();
+  let off = 0;
+  for (const l of order) { if (l === letter) return off; off += azCounts[l] || 0; }
+  return 0;
+}
+
+async function jumpTo(letter) {
+  if (azBusy || !azCounts) return;
+  azBusy = true;
+  const btn = document.querySelector(`[data-letter="${letter}"]`);
+  btn?.classList.add('busy');
+  try {
+    const s = ctx.state(), grid = $('#grid'), want = offsetOf(letter);
+    // load further pages until the target game is on the page
+    let guard = 0;
+    while ((s.libLoadedCount?.() || 0) <= want && s.libLoadMore && guard++ < 60) { if (!(await s.libLoadMore())) break; }
+    const card = [...grid.children].filter((c) => c.classList.contains('card'))[want];
+    if (card) {
+      grid.scrollTo({ top: Math.max(0, card.offsetTop - grid.offsetTop - 8), behavior: 'smooth' });
+      // A row holds several tiles, so the first game under the letter can sit mid-row: mark it so the eye finds it.
+      grid.querySelectorAll('.card.az-hit').forEach((x) => x.classList.remove('az-hit'));
+      card.classList.add('az-hit');
+      setTimeout(() => card.classList.remove('az-hit'), 2400);
+    }
+    document.querySelectorAll('.az-l.on').forEach((x) => x.classList.remove('on'));
+    btn?.classList.add('on');
+  } finally { btn?.classList.remove('busy'); azBusy = false; }
+}
+
+function syncAz() {
+  document.querySelectorAll('#az-bar [data-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.density === (ctx.state().density || 'comfortable')));
+  refreshLetters();
+}
 
 /* ───────────── switching look ───────────── */
 export async function setUiMode(mode) {

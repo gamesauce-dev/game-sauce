@@ -58,7 +58,7 @@ test('Modern is a separate layer: Classic files carry no Modern rules, and every
   assert.match(css, /body\.ui-modern/);
   // outside the light palette and the two "hidden unless modern" lines, no selector may apply without .ui-modern
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r) => r.split('{')[0].trim()).filter(Boolean);
-  const loose = rules.filter((sel) => !/ui-modern/.test(sel) && !/^\.(modern-bar|modern-home|chip-rows)/.test(sel) && !/^@media/.test(sel) && !/^\.m[bh]-/.test(sel));
+  const loose = rules.filter((sel) => !/ui-modern/.test(sel) && !/^\.(modern-bar|modern-home|chip-rows|az-bar)/.test(sel) && !/^@(media|keyframes)/.test(sel) && !/^(from|to|\d+%)$/.test(sel) && !/^\.m[bh]-/.test(sel));
   assert.deepEqual(loose, [], 'unscoped Modern selectors would leak into Classic');
   assert.doesNotMatch(read('public/styles.css'), /ui-modern/);
 });
@@ -142,4 +142,15 @@ test('the platform chip row: families, then the platforms of the opened family, 
   assert.match(app, /confirmChoice\(\{ title: 'Fetch metadata for which games\?'/, 'with several platforms picked, a metadata run asks its scope instead of guessing');
   assert.match(css, /body\.ui-modern\[data-mview="library"\] \.chip-rows \{ display: flex/);
   assert.match(css, /^\.chip-rows \{ display: none; \}/m, 'hidden everywhere else, so Classic never shows it');
+});
+
+test('A-Z jump, grid size and back to top sit above the grid and work from the list as sorted', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css'), html = read('public/index.html');
+  assert.match(html, /id="az-bar"/);
+  assert.match(js, /\['#', \.\.\.'ABCDEFGHIJKLMNOPQRSTUVWXYZ'\]/);
+  assert.match(js, /s === 'title' \? 1 : s === '-title' \? -1 : 0/, 'only offered while sorted by title, either way');
+  assert.match(js, /libLoadMore/, 'it loads further pages until the letter exists, then scrolls');
+  assert.match(js, /data-density="comfortable"[\s\S]*data-density="compact"[\s\S]*id="az-top"/);
+  assert.match(js, /az-hit/, 'the first game under the letter is marked');
+  assert.match(css, /^\.az-bar \{ display: none; \}/m, 'hidden everywhere but Modern Library');
 });

@@ -474,6 +474,16 @@ router.get('/', (req, res) => {
   const lim = Math.min(Number(limit) || 200, 500);
   const off = Math.max(Number(offset) || 0, 0);
 
+  // The A-Z jump: how many games start with each letter (digits and symbols together as '#') under the SAME filters. Titles sort
+  // by sort_title, so a letter's offset is simply the count of everything before it.
+  if (req.query.letters === '1') {
+    const letters = db.prepare(`
+      SELECT CASE WHEN substr(r.sort_title, 1, 1) BETWEEN 'a' AND 'z' THEN upper(substr(r.sort_title, 1, 1)) ELSE '#' END AS letter, COUNT(*) AS n
+      FROM roms r JOIN platforms p ON p.id = r.platform_id ${whereSql} GROUP BY letter
+    `).all(params);
+    return res.json({ letters });
+  }
+
   const total = db.prepare(`
     SELECT COUNT(*) AS n FROM roms r JOIN platforms p ON p.id = r.platform_id ${whereSql}
   `).get(params).n;
