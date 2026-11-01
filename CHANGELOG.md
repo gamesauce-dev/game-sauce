@@ -88,6 +88,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern details window and tiles:** Upload cover in the Edit area uses the upload-cover icon; add-to-collection on the icon row and the Collections page in the top bar use the collection icon; Clear match in More actions uses the clear-reset icon; the favourite button on game tiles uses your favourite icon (gold when lit).
 - **Modern: the selection bar is icons** (Select all uses your select icon, Add to collection your collection icon, Hide/Unhide your hidden/visible icons, Mark as System your system icon, Clear match your clear icon, Done your done icon), and the top Library menu's select button uses the same new select icon.
 - **Modern: platform chip counts now match the list.** The chips used to count every game including System entries and ones you had hidden, so "All" disagreed with the "ROMs" total above the grid. They now count exactly what the default list shows (the platforms API gained a `visible_count`; `count` is unchanged for Classic).
 - **Modern ticker:** a line for the storage the ROMs use, and the game count uses the same numbers as the chips, with a line saying how many more are System entries or hidden.
@@ -138,6 +139,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Modern: profile pictures now show in the top bar.** The picture was set but never sized to fit the avatar circle, so only the background colour showed.
 - **Modern: old word buttons flashed for a moment after clicking on a source.** The list is redrawn after each click and the icons were swapped in about a tenth of a second later. They are now swapped in the same instant as the redraw, before anything is painted.
 - **Modern chips: choosing a family lit every platform in it.** Picking a family now lights just that family chip (the platforms are shown unlit below it); platform chips light only when you pick them one by one.
 - **Modern chips: the row jumped sideways when a family was opened.** The little arrow that marks the open family was added only to that chip, which widened it and nudged everything after it. Every family chip now reserves the arrow's space, so opening one moves nothing.

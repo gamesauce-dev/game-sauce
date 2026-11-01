@@ -320,3 +320,14 @@ test('Selection bar icons, platform chip counts match the list, storage in the t
   assert.doesNotMatch(js.slice(js.indexOf('export function renderChips'), js.indexOf('async function chipChanged')), /\bp\.count\b/, 'chips never use the raw count');
   assert.match(js, /of ROMs stored/);
 });
+
+test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover in Edit, collection icon on the bar and row', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  assert.match(css, /\.mb-avatar \{ background-size: cover;/);
+  assert.match(css, /\.mb-avatar\.has-pic \{ color: transparent; font-size: 0; \}/);
+  assert.match(css, /\.card-fav::before[^}]*favourite\.svg/);
+  assert.match(css, /data-act="clearmatch"\]::before[^}]*clear-reset\.svg/);
+  assert.ok(js.includes("['label.btn:has(#cover-input)', 'upload-cover']"));
+  assert.ok(js.includes("{ view: 'collections', icon: 'collection-new'"));
+  assert.ok(js.includes("'[data-promo=\"addcoll\"]', 'collection-new'") || js.includes('data-promo="addcoll"]\', \'collection-new\''));
+});

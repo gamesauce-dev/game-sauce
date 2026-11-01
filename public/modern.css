@@ -265,3 +265,16 @@ body.ui-modern .more-menu [data-act="cover-upload"]::before { content: ''; flex:
 body.ui-modern .drawer #drawer-body > .genre-pills { margin: 1rem 0 0.8rem; justify-content: center; gap: 0.45rem; }
 body.ui-modern .genre-pill { text-transform: none; letter-spacing: 0; font-size: 0.82rem; font-weight: 500; height: 2rem; display: inline-flex; align-items: center; padding: 0 0.8rem; color: var(--text); background: var(--panel-2); border: 1px solid var(--line-2); max-width: 100%; white-space: normal; text-align: center; line-height: 1.15; }
 body.ui-modern .genre-pill:hover, body.ui-modern .genre-pill:focus-visible { background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); border-color: var(--accent); color: var(--text); }
+
+/* Profile picture in the top bar: the picture is set as a background, so it needs sizing and the initial hidden (Classic's .avatar rules do not reach this element). */
+body.ui-modern .mb-avatar { background-size: cover; background-position: center; background-repeat: no-repeat; }
+body.ui-modern .mb-avatar.has-pic { color: transparent; font-size: 0; }
+
+/* More actions: Clear match uses your clear-reset icon. */
+body.ui-modern .more-menu [data-act="clearmatch"] > svg { display: none; }
+body.ui-modern .more-menu [data-act="clearmatch"]::before { content: ''; flex: 0 0 auto; width: 1.3rem; height: 1.3rem; background: var(--muted); -webkit-mask: url(/modern/icons/clear-reset.svg) center / contain no-repeat; mask: url(/modern/icons/clear-reset.svg) center / contain no-repeat; }
+
+/* Game tiles: the favourite button uses your favourite icon (lit gold when it is a favourite). */
+body.ui-modern .card-fav > svg { display: none; }
+body.ui-modern .card-fav::before { content: ''; display: block; width: 1.3rem; height: 1.3rem; background: currentColor; -webkit-mask: url(/modern/icons/favourite.svg) center / contain no-repeat; mask: url(/modern/icons/favourite.svg) center / contain no-repeat; }
+body.ui-modern .card-fav.on { color: #f5c542; border-color: #f5c54299; }

@@ -17,7 +17,7 @@ export async function icon(name) {
 const NAV = [
   { view: 'home', icon: 'home', label: 'Home' },
   { view: 'library', icon: 'Library', label: 'Library' },
-  { view: 'collections', icon: 'collection', label: 'Collections' },
+  { view: 'collections', icon: 'collection-new', label: 'Collections' },
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
   { view: 'emulators', icon: 'emulators', label: 'Emulators' },
@@ -53,7 +53,7 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -478,8 +478,8 @@ const ICON_MAP = [
   // Details window: the row (the More menu keeps its words)
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],
   ['.detail-actions #more-btn', 'more-actions'], ['.detail-actions [data-act="delete"]', 'delete'],
-  ['.detail-actions [data-promo="addcoll"]', 'collection-grid'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'scan-again'],
-  ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
+  ['.detail-actions [data-promo="addcoll"]', 'collection-new'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'scan-again'],
+  ['label.btn:has(#cover-input)', 'upload-cover'], ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
   // Settings leftovers found by the 1 Nov audit
   ['#names-apply', 'tick'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"]', 'edit'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
