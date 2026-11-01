@@ -456,6 +456,11 @@ function trackBarHeight() {
    words and draws the SVG in their place; the words stay as the hover text and the screen-reader label. Nothing is rewritten, so
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
+  // Settings leftovers found by the 1 Nov audit
+  ['#names-apply', 'tick'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
+  ['[data-pact="edit"]', 'edit'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
+  ['[data-act="toggle-user"][data-disabled="0"]', 'user-disable'], ['[data-act="toggle-user"][data-disabled="1"]', 'user-enable'],
+  ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#dup-hide-all, [data-dup-hide]', 'hidden'],
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
   ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse', 'tick'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],

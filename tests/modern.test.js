@@ -264,3 +264,9 @@ test('Modern: apply buttons are green and cancel buttons are red, in both light 
   assert.match(css, /\.btn-primary, body\.ui-modern \.btn\[data-mi="tick"\] \{ background: var\(--apply\)/);
   assert.match(css, /\.btn\[data-mi="close"\][^{]*\{ color: var\(--cancel\)/);
 });
+
+test('Settings leftovers (user Disable/Enable, Edit, Delete, downloads, Update password) have icons', () => {
+  const js = read('public/modern.js'), app = read('public/app.js');
+  for (const s of ['#names-apply', '#backup-download', 'lb-update', 'data-pact="edit"', 'data-bk-del', 'user-disable', 'user-enable', '#dup-hide-all']) assert.ok(js.includes(s), s);
+  assert.match(app, /data-act="toggle-user" data-disabled=/);
+});
