@@ -285,3 +285,10 @@ test('Modern: no page titles, collection covers, and every details action sits i
   assert.match(css, /\.detail-actions \.more-wrap, body\.ui-modern \.detail-actions \.more-menu[^{]*\{ display: contents !important;/, 'More actions is unfolded into the row');
   for (const a of ['play', 'favorite', 'keep', 'addcoll', 'playtoggle', 'hide', 'refresh', 'clearmatch', 'cover-upload', 'cover-reset', 'delete']) assert.ok(js.includes(`.detail-actions [data-act="${a}"]`), a);
 });
+
+test('Modern: Retro font is a per-device switch that only swaps the font variable', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  assert.match(js, /id="mb-retro"/); assert.match(js, /gamesauce_retro/); assert.match(js, /export function applyRetro/);
+  assert.match(css, /body\.ui-modern\.ui-retro \{ --font: ui-monospace/);
+  assert.doesNotMatch(read('public/styles.css'), /ui-retro/, 'Classic is untouched');
+});

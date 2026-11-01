@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Modern: "Retro font" switch** in the avatar menu. Turns the whole Modern look into a monospace (typewriter-style) font; click it again to go back. Remembered per device, only changes the font, Classic is untouched.
 - **Modern: Sources "Disable" is your folder-disable icon.** "Enable" (shown for a disabled source) is your folder-enable icon.
 - **Modern Settings: the last text buttons are icons** (Update password, Apply names, Download backup / database, Edit, Delete, Disable / Enable user, Hide the others), found by opening every Settings tile and listing what still showed words.
 - **Modern: more icons from your set** (close, tick, copy, clear/reset, show-more arrow) now stand in for Cancel, Done, Use this folder, Copy report, Clear, Select all, Show more and Try again, with the words as tooltips.

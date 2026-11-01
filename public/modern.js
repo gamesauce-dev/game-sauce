@@ -37,6 +37,13 @@ export function applyTheme(mode) {
   try { localStorage.setItem('gamesauce_theme', m); } catch { /* private mode */ }
   paintToggles();
 }
+/* ───────────── retro monospace font (a per-device switch in the avatar menu) ───────────── */
+const retro = () => { try { return localStorage.getItem('gamesauce_retro') === '1'; } catch { return false; } };
+export function applyRetro(on) {
+  document.body.classList.toggle('ui-retro', Boolean(on) && isModern());
+  try { localStorage.setItem('gamesauce_retro', on ? '1' : '0'); } catch { /* private mode */ }
+  const b = $('#mb-retro'); if (b) { b.setAttribute('aria-checked', String(Boolean(on))); b.classList.toggle('on', Boolean(on)); }
+}
 const theme = () => { try { return localStorage.getItem('gamesauce_theme') === 'light' ? 'light' : 'dark'; } catch { return 'dark'; } };
 
 /* ───────────── the bar ───────────── */
@@ -64,6 +71,7 @@ async function doBuildBar() {
         <div class="mb-menu hidden" id="mb-menu" role="menu">
           <div class="mb-menu-head"><b id="mb-uname"></b><small id="mb-urole"></small></div>
           <button class="mb-menu-item" role="menuitem" data-mview="settings" data-acct="account">${ic['my-account']}<span>My account</span></button>
+          <button class="mb-menu-item" role="menuitemcheckbox" id="mb-retro" aria-checked="false" title="Use a monospace (typewriter-style) font everywhere in Modern"><span class="mb-retro-mark">Aa</span><span>Retro font</span></button>
           <button class="mb-menu-item" role="menuitem" id="mb-signout">${ic['sign-out']}<span>Sign out</span></button>
         </div>
       </div>
@@ -100,6 +108,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(
 function onBarClick(e) {
   if (toolClick(e)) return;
   if (e.target.closest('#mb-acct-btn')) { const m = $('#mb-menu'); const open = m.classList.toggle('hidden') === false; $('#mb-acct-btn').setAttribute('aria-expanded', String(open)); return; }
+  if (e.target.closest('#mb-retro')) { applyRetro(!retro()); return; }
   if (e.target.closest('[data-acct="account"]')) { closeMenu(); go('settings'); setTimeout(() => ctx.openAccount?.(), 60); return; }
   // Only the bar's own buttons: <body> also carries data-mview (the current page), and closest() would find it for every click.
   const nav = e.target.closest('[data-mview]');
@@ -545,8 +554,10 @@ export async function applyMode(mode, { fresh = false } = {}) {
   const on = mode === 'modern';
   document.body.classList.toggle('ui-modern', on);
   document.documentElement.dataset.theme = on ? theme() : 'dark';
+  document.body.classList.toggle('ui-retro', on && retro());
   if (on) {
     await buildBar(); paintUser(); usePinIcon();
+    applyRetro(retro());
     watchIcons(); iconize();
     paintToggles();
     go(fresh || current === 'library' && false ? 'home' : (ctx.state().view === 'library' ? (current === 'home' ? 'home' : 'library') : ctx.state().view));

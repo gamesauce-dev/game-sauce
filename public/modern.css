@@ -234,3 +234,11 @@ body.ui-modern .collection-covers img, body.ui-modern .collection-covers i { wid
 body.ui-modern .collection-name { font-size: 1.1rem; font-weight: 600; color: var(--text); }
 body.ui-modern .collection-desc { color: var(--muted); }
 body.ui-modern .collection-count { align-self: flex-start; margin-top: 0.2rem; padding: 0.2rem 0.65rem; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-2); font-weight: 500; }
+
+/* Retro font: one switch (avatar menu). It only replaces the font variable, so turning it off restores everything exactly. */
+body.ui-modern.ui-retro { --font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-family: var(--font); }
+body.ui-modern.ui-retro button, body.ui-modern.ui-retro input, body.ui-modern.ui-retro select, body.ui-modern.ui-retro textarea { font-family: var(--font); }
+body.ui-modern.ui-retro { letter-spacing: -0.01em; }
+body.ui-modern .mb-retro-mark { width: 1.2rem; text-align: center; font: 600 0.8rem ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+body.ui-modern #mb-retro.on .mb-retro-mark { color: var(--accent-2); }
+body.ui-modern #mb-retro.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }
