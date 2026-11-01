@@ -115,11 +115,17 @@ export async function cacheMedia(url, kind = 'box2d') {
   if (existing) return path.join(MEDIA_DIR, existing);
 
   try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(20000),
-      headers: { 'User-Agent': 'game-sauce/0.2' }
-    });
-    if (!res.ok) return null;
+    // A busy image server (rate limit, 5xx, a dropped connection) is retried a couple of times before giving up, so one bad
+    // moment during a big run does not leave a game matched but without its picture.
+    let res = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { 'User-Agent': 'game-sauce/0.2' } });
+        if (res.ok || (res.status !== 429 && res.status < 500)) break;
+      } catch { res = null; }
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+    }
+    if (!res || !res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     if (!buf.length || buf.length > MAX_MEDIA_BYTES) return null;
 

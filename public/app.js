@@ -899,6 +899,39 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('#player-scrim')?.classList.contains('hidden')) closePlayer();
 });
 
+/* Page Up / Page Down / Home / End. The page itself never scrolls here (the games grid and each view scroll inside it), and a browser
+   only sends those keys to a panel that has been clicked. So scroll the panel under the pointer, else the one you are looking at. */
+let lastPointer = { x: -1, y: -1 };
+document.addEventListener('pointermove', (e) => { lastPointer = { x: e.clientX, y: e.clientY }; }, { passive: true });
+function keyScroller() {
+  const canScroll = (el) => { const o = getComputedStyle(el).overflowY; return (o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight + 1; };
+  const up = (el) => { for (; el && el !== document.body; el = el.parentElement) if (canScroll(el)) return el; return null; };
+  const under = lastPointer.x >= 0 ? document.elementFromPoint(lastPointer.x, lastPointer.y) : null;
+  const hit = up(under);
+  if (hit) return hit;
+  if (!$('#drawer')?.classList.contains('hidden') && !document.body.classList.contains('details-pinned') ) return up($('#drawer-body')) || $('#drawer');
+  const view = $$('.view').find((v) => !v.classList.contains('hidden'));
+  if (!view) return null;
+  if (view.id === 'view-library') return canScroll($('#grid')) ? $('#grid') : (canScroll(view) ? view : null);
+  return up(view.firstElementChild) && canScroll(view) ? view : (canScroll(view) ? view : null);
+}
+document.addEventListener('keydown', (e) => {
+  if (!['PageDown', 'PageUp', 'Home', 'End'].includes(e.key)) return;
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+  if (!$('#player-scrim')?.classList.contains('hidden')) return; // a game is running: the keys belong to it
+  if ($('.modal-scrim:not(.hidden)')) return;
+  if (!$('#auth-screen')?.classList.contains('hidden')) return;
+  const el = keyScroller();
+  if (!el) return;
+  e.preventDefault();
+  const page = Math.max(80, el.clientHeight * 0.9);
+  if (e.key === 'Home') el.scrollTo({ top: 0, behavior: 'smooth' });
+  else if (e.key === 'End') el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  else el.scrollBy({ top: e.key === 'PageDown' ? page : -page, behavior: 'smooth' });
+});
+
 /* ─────────────────────────── scan progress bar ─────────────────────────── */
 
 let scanPollTimer = null;
@@ -2843,7 +2876,12 @@ async function loadPlatformAdmin() {
   form.classList.add('hidden');
   $('#platform-add-toggle')?.addEventListener('click', () => {
     form.classList.remove('hidden');
-    form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    // The Settings header is pinned to the top, so leave room for it or the form's first fields sit underneath it.
+    const pinned = document.querySelector('.settings-anchor');
+    const addBar = document.querySelector('.platform-add-bar'); // the sticky "Add platform" bar sits under the header too
+    form.style.scrollMarginTop = ((pinned ? pinned.offsetHeight : 0) + (addBar ? addBar.offsetHeight : 0) + 12) + 'px';
+    requestAnimationFrame(() => form.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    form.querySelector('input')?.focus({ preventScroll: true });
   });
   $('#platform-add-cancel')?.addEventListener('click', () => form.classList.add('hidden'));
 

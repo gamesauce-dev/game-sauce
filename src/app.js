@@ -310,7 +310,7 @@ export function createApp() {
   });
 
   // Per-user preferences (whitelisted keys only). Scoped to the signed-in user.
-  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb'] };
+  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'] };
   api.get('/prefs', (req, res) => {
     const out = {};
     for (const r of db.prepare('SELECT key, value FROM user_prefs WHERE user_id = ?').all(req.user.id)) out[r.key] = r.value;

@@ -1051,7 +1051,7 @@ router.post('/bulk/enrich', async (req, res, next) => {
  * The server now owns the loop; the UI only starts, stops and polls it. */
 const CANDIDATES_SQL = `
   (is_system = 0 AND (meta_source IS NULL OR meta_source IN ('filename','seed','mame-list')
-     OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat'))))`;
+     OR (cover_path IS NULL AND meta_source IN ('thegamesdb','igdb','screenscraper','dat','launchbox'))))`;
 const enrichJob = { running: false, stop: false, onlyMissingCovers: false, platform: '', total: 0, done: 0, updated: 0, skipped: 0, failed: 0, lastError: '', startedAt: null, finishedAt: null };
 
 async function enrichOneRom(id, onlyMissingCovers) {
