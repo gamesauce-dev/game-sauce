@@ -457,7 +457,7 @@ function trackBarHeight() {
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
   // Sources
-  ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
+  ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
   ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'scan-again'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],

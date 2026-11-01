@@ -95,7 +95,7 @@ test('Modern Home reuses Classic\'s boxes, equal tile sizes and equal title heig
   assert.match(js, /data-strip="played"/);
   assert.match(js, /data-strip="recent"/);
   assert.match(css, /\.card-title \{ min-height: 2\.5em; \}/, 'every title is two lines tall, so covers never shrink');
-  assert.match(css, /repeat\(auto-fill, 5\.6rem\)/, 'one tile size for both boxes');
+  assert.match(css, /repeat\(auto-fill, minmax\(5\.6rem, 1fr\)\)/, 'one tile size for both boxes');
   assert.match(read('public/app.js'), /applyStrips\(host, false\)|applyStrips\(b\.closest\('\.modern-home'\), false\)/, 'a short window does not collapse the Home boxes');
 });
 
@@ -224,4 +224,11 @@ test('Home: two equal boxes side by side with the same tile size; a whole family
   assert.match(app, /ORDER BY r\.created_at DESC LIMIT 24/, 'enough recent tiles to fill a wide box');
   assert.match(js, /const wholeNow = /);
   assert.match(js, /picked\.has\(p\.slug\) && !wholeNow \? ' on' : ''/, 'platform chips stay unlit while the whole family is selected');
+});
+
+test('"Add and scan" is your source-add-and-scan icon in Modern, with the words as its tooltip', () => {
+  const js = read('public/modern.js');
+  assert.match(js, /\['#create-source', 'source-add-and-scan'\]/);
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-and-scan.svg', import.meta.url)));
+  assert.match(read('public/modern/icons/source-add-and-scan.svg'), /currentColor/);
 });
