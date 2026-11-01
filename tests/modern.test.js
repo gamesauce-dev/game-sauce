@@ -247,3 +247,12 @@ test('Sources: Disable uses the folder-disable icon; Enable uses folder-enable',
   assert.match(read('public/app.js'), /data-act="toggle" data-enabled=/);
   assert.ok(fs.existsSync(new URL('../public/modern/icons/folder-disable.svg', import.meta.url)));
 });
+
+test('Modern text has more contrast (brighter colours, medium weight) and icons are applied before paint', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  assert.match(css, /body\.ui-modern \{ --text: #f6f7fb; --muted: #c0c7d6;/);
+  assert.match(css, /font-weight: 500;/);
+  assert.doesNotMatch(css, /font-weight: (600|700|bold)[^}]*\}\s*\/\* more contrast/i);
+  assert.match(js, /roots\.add\(el\)/, 'only the redrawn parts are re-checked, straight away');
+  assert.match(js, /iconize\(n\)/);
+});

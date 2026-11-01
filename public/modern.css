@@ -1,6 +1,14 @@
 /* "Modern" look. Everything here is scoped to body.ui-modern, so Classic is never touched. */
 .modern-bar, .modern-home { display: none; }
 
+/* More contrast for text (Modern only): brighter text and a lighter muted grey in dark, darker in light, and a medium weight (not bold)
+   on the small text that carries meaning. */
+body.ui-modern { --text: #f6f7fb; --muted: #c0c7d6; --dim: #939cb0; }
+html[data-theme="light"] body.ui-modern { --text: #0f1219; --muted: #3e4658; --dim: #6a7388; }
+body.ui-modern .chip, body.ui-modern .card-title, body.ui-modern .mb-menu-item, body.ui-modern .btn, body.ui-modern .strip-head,
+body.ui-modern label, body.ui-modern .field-label, body.ui-modern .pill, body.ui-modern .mh-line, body.ui-modern .tile-label { font-weight: 500; }
+body.ui-modern .hint, body.ui-modern .card-sub { color: var(--muted); }
+
 /* light palette (Modern only; dark is the normal palette) */
 html[data-theme="light"] body.ui-modern {
   --bg: #f4f5f8; --bg-2: #ffffff; --panel: #ffffff; --panel-2: #eef0f5; --line: #dfe2ea; --line-2: #cfd3de;

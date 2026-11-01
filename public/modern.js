@@ -495,7 +495,9 @@ const plainText = (el) => (el.getAttribute('data-mi-label') || el.textContent ||
 export function iconize(root = document) {
   if (!isModern()) return;
   for (const [sel, name] of ICON_MAP) {
-    for (const el of $$(sel, root)) {
+    const hits = $$(sel, root);
+    try { if (root.matches && root.matches(sel)) hits.push(root); } catch { /* not an element */ }
+    for (const el of hits) {
       if (el.dataset.mi === name) continue;
       const label = el.getAttribute('title') || plainText(el);
       el.dataset.mi = name;
@@ -510,7 +512,14 @@ export function iconize(root = document) {
 let miTimer = null;
 function watchIcons() {
   if (watchIcons.on) return; watchIcons.on = true;
-  new MutationObserver(() => { clearTimeout(miTimer); miTimer = setTimeout(() => iconize(), 120); }).observe(document.body, { childList: true, subtree: true });
+  // Runs in the same tick as the redraw (a microtask), before the browser paints, so the old word buttons are never seen.
+  // Only the parts that were just added are checked, so a big redraw stays cheap.
+  new MutationObserver((list) => {
+    const roots = new Set();
+    for (const r of list) for (const n of r.addedNodes) { const el = n.nodeType === 1 ? n : n.parentElement; if (el) roots.add(el); }
+    for (const n of roots) if (n.isConnected) iconize(n);
+    clearTimeout(miTimer); miTimer = setTimeout(() => iconize(), 250);   // safety net for anything missed
+  }).observe(document.body, { childList: true, subtree: true });
 }
 
 /* ───────────── switching look ───────────── */
