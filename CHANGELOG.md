@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Modern icons: more-actions and a three-dot spinner added** (100 icons now), ready for the Library and other pages.
 - **Modern top bar: less clutter.** The account avatar is now the same size as the icon buttons, and the GUI toggle no longer carries the word "Modern" (it is lit while Modern is on, with the name in its hover text).
 - **Modern top bar: bigger logo, account on the right.** The logo (the vector `logo.svg`) is larger, with a soft glow so it stands out on the dark and light bar; it still takes you Home. Your name and sign-out moved out of the left corner: a small avatar sits at the far right, and clicking it opens a menu with your name and role, My account, and Sign out (which still asks first). Escape or a click elsewhere closes it.
 - **Modern: the ticker moved into the top bar.** It now fills the free stretch of the bar on every page and keeps rolling (library facts, emulator updates, and for admins a running metadata job or a health warning), refreshed on each page change and every minute. When the Library tools join the bar they will take its place in Library.
