@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Slow requests show when they started and ended** (for example "14:02:11 → 14:02:19"), so a slow stretch can be lined up with what you were doing.
 - **Credits and third-party services** section in the README (EmulatorJS, RetroArch and the libretro cores, the LaunchBox Games Database, ScreenScraper, TheGamesDB, IGDB, SteamGridDB, the DAT groups), stating that none of it is bundled and each is used under its owner's terms.
 - **Deployment guide: reaching it with Tailscale** (section 6.1): turn off key expiry, no Funnel, plain http is fine on the tailnet, the optional `tailscale serve` https address with the proxy settings it needs, and how to give a Proxmox container the tunnel device.
 - **Platform icons.** Every platform now has a small pictogram, drawn in its own colour, in the sidebar and on the Sources list. They are original generic shapes (a home console, handheld, cartridge, disc, arcade cabinet, computer, controller or chip), not the console makers' logos. Each built-in platform has a sensible default, and an admin can pick another for any platform, or for one they add, under Settings, System setup, Platforms, Edit. (Database version 21.)
@@ -71,6 +72,11 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Settings: "Health & coverage" is now "System health", with Health and Stats inside.** Health lays its checks out in columns, so there is much less scrolling.
+- **Settings: "Coverage" is now "Stats", with real totals.** Total games, platforms, sources, users, System items and favourites; how many games are matched by a provider or DAT (and by which), how many are named from the file only, with covers and without; orphans, missing files and hidden games; and plays in the browser, the most active user and the most played game.
+- **"Fetch missing covers" and "Verify platform ids" moved to Library tools** (a new "Covers & platform ids" page).
+- **Settings: Metadata providers are laid out in two columns**, each provider in its own card.
+- **Duplicate finder legend** no longer talks about the padlock.
 - **Emulators: the vault is now above the suggested emulators.**
 - **An admin's Hide now hides the game from members too.** One Hide button, no separate "Hide from everyone": when an admin hides a game (tile eye, details menu, or the selection bar) members can no longer see or open it, and only admins see it again, under Hidden. A member's Hide still only changes their own view. Games an admin had already hidden for themselves become hidden from everyone on update (database version 22).
 - **Duplicate finder: Hide replaces the padlock.** Each copy now has a hide button (the eye) instead of a padlock, and the "Hide the others" buttons hide too (members will not see them either). Hidden copies stay hidden but are not deleted, and the list no longer offers games that are already hidden. The padlock in the finder is gone; a game can still be locked from its details (More menu) to protect it from deletion.
@@ -101,6 +107,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **"With provider metadata" always showed 0 for games matched by LaunchBox, IGDB or a DAT.** It only counted ScreenScraper and TheGamesDB. Stats now counts a game as matched when any provider or DAT matched it.
 - **Settings, Platforms: "Add platform" now brings the form into view.** After scrolling down the list, the form opened above the screen; it now scrolls to just under the pinned header and the Add platform bar, with the first field ready to type in.
 - **LaunchBox matched games but left them without a cover (seen on N64: 247 of 263).** The picture is downloaded separately after the match, and when the image server was busy or dropped the connection that single attempt was the only one, so the game stayed matched with no art; and "Fetch missing covers" then skipped it, because it only looked at games matched by the other providers. Pictures are now retried (up to three tries, with a short wait, for a busy server or a dropped connection), and "Fetch missing covers" also picks up LaunchBox-matched games that have no cover. After updating, press **Fetch missing covers** in the Library once.
 - **Starring LaunchBox as the default provider in a game's identify box showed an error.** The saved-preference list did not include LaunchBox. It does now (a test keeps the two lists in step).

@@ -1561,3 +1561,25 @@ body.details-open .main { margin-right: min(32.8571rem, 92vw); }
   .drawer-pin { display: none; }
 }
 body.details-pinned .drawer-scrim { display: none !important; }
+
+/* ── Settings: two-column layouts, so less scrolling ── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.9rem 1.4rem; }
+.stats-col h4 { margin: 0 0 0.45rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.stats-col > div { display: flex; justify-content: space-between; gap: 0.8rem; padding: 0.3rem 0; border-bottom: 1px solid var(--line); font-size: 0.9286rem; }
+.stats-col > div:last-child { border-bottom: 0; }
+.stats-col > div > span { color: var(--muted); }
+.stats-col b { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.stats-by { flex-direction: column; align-items: flex-start !important; }
+.stats-by b { font-weight: 500; font-size: 0.8571rem; text-align: left; color: var(--text); }
+#mod-health .health-checks { grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); }
+#mod-health .health-summary { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
+#mod-health .slow-list { grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr)); }
+.slow-row { grid-template-columns: 3.6rem minmax(0, 1fr); }
+.slow-row .note { grid-column: 2; }
+#provider-forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr)); gap: 0 1.6rem; align-items: start; }
+#provider-forms .provider-block, #mod-providers #launchbox-card.provider-block { border: 1px solid var(--line); border-radius: 0.7rem; padding: 0.9rem 1rem; margin-bottom: 0.9rem; background: var(--panel); }
+#provider-forms .provider-block:first-child { padding-top: 0.9rem; }
+#provider-forms .provider-field { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 0.25rem 0.6rem; }
+#provider-forms .provider-field > span:first-child { grid-row: 1; grid-column: 1 / -1; font-size: 0.8571rem; color: var(--muted); }
+#provider-forms .provider-field > input { grid-row: 2; grid-column: 1; min-width: 0; }
+#provider-forms .provider-field > .state { grid-row: 2; grid-column: 2; font-size: 0.78rem; white-space: nowrap; }

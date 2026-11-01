@@ -104,6 +104,12 @@ export function createApp() {
   api.get('/admin/slow-requests', requireAuth, requireAdmin, (req, res) => res.json(slowLog()));
 
   // Admin health report (read-only): see src/lib/health.js.
+  // Library figures for Settings > Stats (admin, read-only).
+  api.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
+    const { collectStats } = await import('./lib/stats.js');
+    res.json(collectStats());
+  });
+
   api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {
     const { collectHealth, collectSummary, diagnosticsText } = await import('./lib/health.js');
     const report = collectHealth();

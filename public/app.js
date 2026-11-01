@@ -2768,13 +2768,7 @@ async function loadSettingsOld() {
   const total = stats.roms || 0;
   const enriched = stats.enriched || 0;
 
-  $('#meta-counts').innerHTML = `
-    <div><span>Total ROMs</span><b>${total}</b></div>
-    <div><span>With provider metadata</span><b>${enriched}</b></div>
-    <div><span>Filename only</span><b>${(counts.get('filename') || 0) + (counts.get('seed') || 0)}</b></div>
-    <div><span>Never looked up</span><b>${counts.get('none') || 0}</b></div>
-    <div><span>Missing files</span><b>${stats.missing || 0}</b></div>
-  `;
+  loadStatsPanel().catch(() => {});
 
   loadDats().catch((err) => toast(err.message, true));
 
@@ -3623,7 +3617,8 @@ const SETTINGS_MODULES = [
   { id: 'providers', label: 'Metadata providers', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   ico: '👥', adminOnly: true },
   { id: 'platforms', label: 'Platforms',       ico: '🕹', adminOnly: true },
-  { id: 'coverage',  label: 'Coverage',        ico: '📊', adminOnly: true },
+  { id: 'coverage',  label: 'Stats',           ico: '📊', adminOnly: true },
+  { id: 'covers',    label: 'Covers & platform ids', ico: '🖼', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    ico: '📜', adminOnly: true },
   { id: 'names',     label: 'Game names (CSV)', ico: '🏷', adminOnly: true },
@@ -3637,9 +3632,9 @@ const SETTINGS_MODULES = [
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          ico: '👤', modules: ['profile', 'welcome', 'password', 'controller'] },
-  { id: 'tools',    label: 'Library tools',       ico: '🧰', modules: ['dat', 'names', 'duplicates'], adminOnly: true },
+  { id: 'tools',    label: 'Library tools',       ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
-  { id: 'status',   label: 'Health & coverage',   ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
+  { id: 'status',   label: 'System health',       ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
   { id: 'security', label: 'Security & activity', ico: '🛡', modules: ['sessions', 'audit'] },
   { id: 'server',   label: 'System setup',        ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
 ];
@@ -3974,10 +3969,43 @@ async function renderSlowRequests() {
   try {
     const r = await api('/admin/slow-requests');
     const sec = (ms) => (ms >= 10000 ? Math.round(ms / 1000) + ' s' : (ms / 1000).toFixed(1) + ' s');
+    const clock = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+    const day = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) || d.toDateString() === new Date().toDateString() ? '' : d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' '; };
     box.innerHTML = `<h4 style="margin:1.2rem 0 0.4rem">Slow requests <span class="note">(over ${sec(r.threshold_ms)}, since the server last started)</span></h4>` + (r.entries.length
-      ? `<div class="slow-list">${r.entries.slice(0, 15).map((e) => `<div class="slow-row"><b>${sec(e.ms)}</b><span class="mono">${esc(e.method)} ${esc(e.path)}${e.query ? '?' + esc(e.query) : ''}</span><span class="note">${esc(new Date(e.at).toLocaleTimeString())}${e.user ? ' · ' + esc(e.user) : ''}${e.others_running ? ' · ' + e.others_running + ' other request' + (e.others_running === 1 ? '' : 's') + ' running' : ''}</span></div>`).join('')}</div>`
+      ? `<div class="slow-list">${r.entries.slice(0, 15).map((e) => `<div class="slow-row"><b>${sec(e.ms)}</b><span class="mono">${esc(e.method)} ${esc(e.path)}${e.query ? '?' + esc(e.query) : ''}</span><span class="note">${esc(day(e.started_at || e.at))}${esc(clock(e.started_at || e.at))} → ${esc(clock(e.ended_at || e.at))}${e.user ? ' · ' + esc(e.user) : ''}${e.others_running ? ' · ' + e.others_running + ' other request' + (e.others_running === 1 ? '' : 's') + ' running' : ''}</span></div>`).join('')}</div>`
       : '<div class="hint">None so far. If something feels slow, it will be listed here with what it was.</div>');
   } catch { box.innerHTML = ''; }
+}
+
+/* Settings > Stats: counted straight from the database (see src/lib/stats.js). */
+async function loadStatsPanel() {
+  const box = $('#meta-counts'); if (!box) return;
+  const s = await api('/admin/stats');
+  const num = (v) => Number(v || 0).toLocaleString();
+  const src = (id) => (s.by_source.find((x) => x.source === id) || {}).count || 0;
+  const row = (k, v, note = '') => `<div><span>${esc(k)}${note ? ` <small class="note">${esc(note)}</small>` : ''}</span><b>${v}</b></div>`;
+  const who = s.most_active_user ? `${esc(s.most_active_user.name)} (${num(s.most_active_user.plays)} plays)` : 'no plays yet';
+  const game = s.most_played_game ? `${esc(s.most_played_game.title)} (${num(s.most_played_game.plays)})` : 'no plays yet';
+  const by = s.by_source.filter((x) => !['none', 'filename', 'seed'].includes(x.source)).map((x) => `${esc(x.source)} ${num(x.count)}`).join(' · ') || 'none yet';
+  box.innerHTML = `<div class="stats-grid">
+    <div class="stats-col">
+      <h4>Library</h4>
+      ${row('Total games', num(s.roms))}${row('Platforms', num(s.platforms))}${row('Sources', num(s.sources))}${row('Users', num(s.users))}${row('System items', num(s.system_items), 'BIOS, devices')}${row('Favourites', num(s.favourites))}
+    </div>
+    <div class="stats-col">
+      <h4>Metadata</h4>
+      ${row('Matched by a provider or DAT', num(s.with_metadata))}${row('Name from the file only', num(s.filename_only))}${row('With covers', num(s.with_covers))}${row('No cover', num(s.no_covers), 'excluding System')}
+      <div class="stats-by"><span>Matched by</span><b>${by}</b></div>
+    </div>
+    <div class="stats-col">
+      <h4>Housekeeping</h4>
+      ${row('Orphans', num(s.orphans), 'no source folder')}${row('Missing files', num(s.missing_files))}${row('Hidden', num(s.hidden), 'by anyone')}
+    </div>
+    <div class="stats-col">
+      <h4>Activity</h4>
+      ${row('Plays in the browser', num(s.plays))}${row('Most active user', who)}${row('Most played game', game)}
+    </div>
+  </div>`;
 }
 
 let healthText = '';
@@ -4061,12 +4089,7 @@ async function loadSettings() {
     const counts = new Map(meta.counts.map((c) => [c.source, c.count]));
     const total = facets.stats.roms || 0;
     const enriched = facets.stats.enriched || 0;
-    $('#meta-counts').innerHTML = `
-      <div><span>Total ROMs</span><b>${total}</b></div>
-      <div><span>With provider metadata</span><b>${enriched}</b></div>
-      <div><span>Filename only</span><b>${(counts.get('filename') || 0) + (counts.get('seed') || 0)}</b></div>
-      <div><span>Never looked up</span><b>${counts.get('none') || 0}</b></div>
-      <div><span>Missing files</span><b>${facets.stats.missing || 0}</b></div>`;
+    loadStatsPanel().catch(() => {});
     loadDats().catch((err) => toast(err.message, true));
     const ss = meta.providers.find((p) => p.id === 'screenscraper');
     $('#ss-quota').textContent = ss?.enabled

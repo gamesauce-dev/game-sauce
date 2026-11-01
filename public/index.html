@@ -318,7 +318,7 @@
       <div class="panel hidden" id="mod-duplicates">
         <h3>Duplicate finder <span class="pill warn admin-only">admin</span></h3>
         <p class="hint" style="margin-top:0">Games you hold in more than one version (a USA and a Europe copy, a revision, an arcade clone). One copy per group is suggested; <b>Hide the others</b> tucks the rest away. Nothing is deleted and no file on disk is touched, and hidden games can be brought back from the Hidden filter.</p>
-        <p class="hint dup-legend"><span class="lg lg-sug"></span> Green outline = suggested copy &nbsp;·&nbsp; <span class="lg lg-lock"></span> Padlock = your choice: locked, kept, protected from deletion &nbsp;·&nbsp; ⚖ = a tie, check both</p>
+        <p class="hint dup-legend"><span class="lg lg-sug"></span> Green outline = suggested copy &nbsp;·&nbsp; 👁 button = hide that copy (members will not see it either) &nbsp;·&nbsp; ⚖ = a tie, check both</p>
         <div class="dup-top">
           <select id="dup-platform" class="select" aria-label="Platform"><option value="">All platforms</option></select>
           <span id="dup-summary" class="hint" style="margin:0"></span>
@@ -403,8 +403,13 @@
       </div>
 
       <div class="panel hidden" id="mod-coverage">
-        <h3>Coverage <span class="pill warn admin-only">admin</span></h3>
+        <h3>Stats <span class="pill warn admin-only">admin</span></h3>
         <div id="meta-counts" class="counts"></div>
+      </div>
+
+      <div class="panel hidden" id="mod-covers">
+        <h3>Covers &amp; platform ids <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Fetch pictures for games that were matched but have none, and check that each platform's ScreenScraper and TheGamesDB numbers are right.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
           <button class="btn" id="enrich-missing-covers">Fetch missing covers</button>
           <button class="btn" id="check-ss-systems">Verify platform ids</button>

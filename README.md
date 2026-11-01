@@ -29,7 +29,7 @@ Express + SQLite on the server, a single static page on the client, no build ste
 - **Collections, favourites, hidden games, users and roles, an activity log.**
 - **Runs on PCs and ARM:** the Docker image is published for amd64 and arm64 (Raspberry Pi 4/5, ARM servers).
 - **Duplicate finder** (Settings → Duplicate finder): groups different versions of one game (USA / Europe / Japan, revisions, arcade clones), suggests the best copy to keep, and can hide the rest. Nothing is deleted.
-- **Health page** (Settings → Health): disk space, database, source reachability, last backup, providers, plus a copy-and-paste report with no secrets for bug reports.
+- **Health page** (Settings → System health): disk space, database, source reachability, last backup, providers, plus a copy-and-paste report with no secrets for bug reports.
 - **One-command Proxmox install:** a single line on the node creates a ready-to-use LXC (no Docker), or use the
   Docker image on any other machine. See [Deployment](#deployment).
 - **Backups and restore** built in: download them or schedule them to a folder, and restore from

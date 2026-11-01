@@ -172,7 +172,7 @@ Each card has **Save** and **Test connection**. Credentials are encrypted at res
 admin-only: members never see them.
 
 - **Fetch metadata** (Library toolbar, admin) walks the whole library 25 games at a time without
-  you clicking again. Click the button again to stop. **Fetch missing covers** (⚙ → Coverage) does
+  you clicking again. Click the button again to stop. **Fetch missing covers** (⚙ → Library tools → Covers & platform ids) does
   the same for games without art.
 - **Identify this game** in the detail panel fixes a wrong or missing match by hand.
 - **Clear covers** (⚙ → Database maintenance) removes cover art for one platform, for example after
@@ -243,7 +243,7 @@ Click **⚙** under the logo. Members see **Profile picture** (upload your own p
 | User accounts | Create users, set roles, disable accounts, **reset a forgotten password**, the **Let members download ROM files** default, a **Downloads** choice per person (Default / Always allowed / Never), and a **Screen** choice per person: **Full**, or **Play only** (a simple grid of games that can be played in the browser, with search and favourites, and nothing else) |
 | Duplicate finder | Finds games you hold in several versions (regions, revisions; never different volumes, discs or numbered sequels), suggests which to keep, and hides the others |
 | Platforms | The platform catalogue; add your own |
-| Coverage | How much of the library has metadata and covers |
+| Stats | Totals for the library: games, platforms, sources, how many are matched and have covers, orphans, hidden, and the most active user |
 | Database maintenance | Orphans, missing files, clear covers by platform |
 | Activity log | Who did what, with filters |
 | DAT files | Import DATs and MAME name lists; have/want reports |

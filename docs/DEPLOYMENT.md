@@ -324,7 +324,7 @@ forwarding a port to the internet. It is not designed to be a public site.
 - [ ] `data/` backups are private (they hold password/token hashes)
 - [ ] Non-admin users created per person (Settings → User accounts); never share the admin
 - [ ] Behind a reverse proxy: set `GAMESAUCE_TRUST_PROXY=1` (and `GAMESAUCE_ALLOWED_ORIGINS=https://your.address` if changes are refused with "Blocked: this request came from a different address")
-- [ ] Check **Settings → Health** after install and after changes: it flags a nearly full disk, an unplugged source folder, and missing or failed backups
+- [ ] Check **Settings → System health** after install and after changes: it flags a nearly full disk, an unplugged source folder, and missing or failed backups
 - [ ] Leave **Let members download ROM files** off unless you really want members to copy files
 - [ ] Forgotten password? Settings → User accounts → **Reset password** (the user is signed out everywhere)
 

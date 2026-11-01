@@ -12,10 +12,13 @@ export function slowLogMiddleware(req, res, next) {
   inFlight++;
   const onDone = () => {
     inFlight = Math.max(0, inFlight - 1);
-    const ms = Date.now() - start;
+    const ended = Date.now();
+    const ms = ended - start;
     if (ms >= SLOW_MS && req.originalUrl?.startsWith('/api')) {
       entries.unshift({
-        at: new Date().toISOString(),
+        at: new Date(ended).toISOString(),
+        started_at: new Date(start).toISOString(),
+        ended_at: new Date(ended).toISOString(),
         method: req.method,
         path: String(req.originalUrl).split('?')[0],
         query: String(req.originalUrl).includes('?') ? String(req.originalUrl).split('?')[1].slice(0, 120) : '',
