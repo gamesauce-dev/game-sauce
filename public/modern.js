@@ -456,6 +456,11 @@ function trackBarHeight() {
    words and draws the SVG in their place; the words stay as the hover text and the screen-reader label. Nothing is rewritten, so
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
+  // Details window: the whole action row, nothing hidden behind More
+  ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],
+  ['.detail-actions [data-act="keep"]', 'lock'], ['.detail-actions [data-act="addcoll"]', 'collection'], ['.detail-actions [data-act="playtoggle"]', 'gamepad'],
+  ['.detail-actions [data-act="hide"]', 'hidden'], ['.detail-actions [data-act="refresh"]', 'fetch-metadata'], ['.detail-actions [data-act="clearmatch"]', 'clear-reset-2'],
+  ['.detail-actions [data-act="cover-upload"]', 'image-upload'], ['.detail-actions [data-act="cover-reset"]', 'restore'], ['.detail-actions [data-act="delete"]', 'delete'],
   // Settings leftovers found by the 1 Nov audit
   ['#names-apply', 'tick'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"]', 'edit'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
@@ -496,7 +501,7 @@ function miRule(name) {
   if (!miStyle) { miStyle = document.createElement('style'); miStyle.id = 'modern-icon-rules'; document.head.appendChild(miStyle); }
   miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); }\n`));
 }
-const plainText = (el) => (el.getAttribute('data-mi-label') || el.textContent || '').replace(/^[^A-Za-z0-9]+/, '').replace(/…$/, '').trim();
+const plainText = (el) => (el.getAttribute('data-mi-label') || el.querySelector?.('b')?.textContent || el.getAttribute('data-tip') || el.getAttribute('aria-label') || el.textContent || '').replace(/^[^A-Za-z0-9]+/, '').replace(/…$/, '').trim();
 export function iconize(root = document) {
   if (!isModern()) return;
   for (const [sel, name] of ICON_MAP) {
@@ -507,7 +512,7 @@ export function iconize(root = document) {
       const label = el.getAttribute('title') || plainText(el);
       el.dataset.mi = name;
       if (!el.dataset.miLabel) el.dataset.miLabel = label;
-      if (!el.getAttribute('title')) el.setAttribute('title', label);
+      if (!el.getAttribute('title') && !el.getAttribute('data-tip')) el.setAttribute('title', label);
       if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', label);
       miRule(name);
     }

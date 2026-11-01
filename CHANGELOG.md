@@ -87,6 +87,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern: no page titles.** The lit icon in the top bar already says which page you are on, so the big "Collections / Sources / Settings" headings are gone (Classic keeps them).
+- **Modern: the game details window shows every action in its icon row** (download, play, favourite, lock, add to collection, browser-play switch, hide, refresh, clear match, upload cover, back to automatic cover, delete) instead of hiding most behind More actions. The row wraps to a second line if there are more than fit. Words are the tooltips.
+- **Modern: collections show their games.** Each collection card has a strip of up to four covers (newest first), a game-count pill and "No games yet" when empty. The collections list API now returns a `covers` array.
 - **Modern Settings: pills under the group icons are all the same icon-only circle** (the open one no longer carries its name beside the icon, which pushed it off centre; the panel heading names it), with clearer borders and a brighter icon. Hints, labels and body text in Settings use brighter greys in both modes.
 - **Modern: apply buttons are green, cancel buttons are red** (both light and dark). Primary buttons and the tick icon are green; Cancel, the close icon and the Delete-style buttons are red outlines. Replaces the purple on buttons; purple stays for "selected" things such as lit chips and the pin.
 - **Modern: text stands out more.** Brighter text and a lighter muted grey in dark mode (darker in light mode), and a medium weight (not bold) on chips, titles, menus, buttons and labels. Classic is untouched.

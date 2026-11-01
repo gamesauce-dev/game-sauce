@@ -9,6 +9,11 @@ router.get('/', (req, res) => {
     FROM collections c LEFT JOIN collection_roms cr ON cr.collection_id = c.id
     GROUP BY c.id ORDER BY c.name
   `).all();
+  // Up to four covers per collection, for the preview strip on its card.
+  const admin = req.user?.role === 'admin';
+  const pick = db.prepare(`SELECT r.id FROM collection_roms cr JOIN roms r ON r.id = cr.rom_id
+    WHERE cr.collection_id = ? AND r.cover_path IS NOT NULL ${admin ? '' : 'AND r.hidden_all = 0'} ORDER BY cr.rowid DESC LIMIT 4`);
+  for (const c of rows) c.covers = pick.all(c.id).map((x) => `/api/roms/${x.id}/cover`);
   res.json({ items: rows });
 });
 

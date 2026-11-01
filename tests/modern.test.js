@@ -276,3 +276,12 @@ test('Settings pills are equal icon-only circles and Settings text is brighter',
   assert.match(css, /\.subtile\[data-mi\], body\.ui-modern \.subtile\[data-mi\]\.is-active \{ width: 2\.4rem; height: 2\.4rem;/);
   assert.match(css, /body\.ui-modern #view-settings \{ --muted: #d6dce9;/);
 });
+
+test('Modern: no page titles, collection covers, and every details action sits in the icon row', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js'), app = read('public/app.js'), api = read('src/routes/collections.js');
+  assert.match(css, /body\.ui-modern \.page-title \{ display: none; \}/);
+  assert.match(api, /c\.covers = pick\.all\(c\.id\)/, 'the API sends up to four covers per collection');
+  assert.match(app, /collection-covers/);
+  assert.match(css, /\.detail-actions \.more-wrap, body\.ui-modern \.detail-actions \.more-menu[^{]*\{ display: contents !important;/, 'More actions is unfolded into the row');
+  for (const a of ['play', 'favorite', 'keep', 'addcoll', 'playtoggle', 'hide', 'refresh', 'clearmatch', 'cover-upload', 'cover-reset', 'delete']) assert.ok(js.includes(`.detail-actions [data-act="${a}"]`), a);
+});

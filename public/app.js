@@ -3044,9 +3044,10 @@ async function loadCollections() {
   const wrap = $('#collections');
   wrap.innerHTML = items.length ? items.map((c) => `
     <div class="collection-card" data-collection="${c.id}">
+      <div class="collection-covers">${[0, 1, 2, 3].map((i) => (c.covers || [])[i] ? `<img loading="lazy" src="${esc(c.covers[i])}" alt="" />` : '<i></i>').join('')}</div>
       <div class="collection-name">${esc(c.name)}</div>
       <div class="collection-desc">${esc(c.description || 'No description')}</div>
-      <div class="collection-count">${c.count} ${c.count === 1 ? 'game' : 'games'} →</div>
+      <div class="collection-count">${c.count ? `${c.count} ${c.count === 1 ? 'game' : 'games'} →` : 'No games yet →'}</div>
     </div>
   `).join('') : '<div class="empty"><h2>No collections yet</h2><p>Group ROMs into sets like “Co-op nights”.</p></div>';
 

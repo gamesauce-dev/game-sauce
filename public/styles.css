@@ -468,6 +468,7 @@ body:has(#bulk-bar:not(.hidden)) .card-playbtn { display: none; }
   transition: border-color .12s, transform .12s;
 }
 .collection-card:hover { border-color: var(--line-2); transform: translateY(-0.1429rem); }
+.collection-covers { display: none; }
 .collection-name { font-weight: 600; font-size: 1.0714rem; }
 .collection-desc { font-size: 0.8929rem; color: var(--dim); line-height: 1.45; }
 .collection-count { margin-top: auto; font-size: 0.8571rem; color: var(--accent-2); padding-top: 0.5714rem; }
