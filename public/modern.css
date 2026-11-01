@@ -50,10 +50,14 @@ body.ui-modern[data-mview="home"] #view-library { display: none !important; }
 body.ui-modern .modern-home { display: block; overflow-y: auto; flex: 1; padding: 1.2rem 1.6rem 2rem; }
 body.ui-modern .modern-home.hidden { display: none; }
 body.ui-modern .main { background: var(--bg); }
-.mh-ticker { height: 2.6rem; overflow: hidden; border: 1px solid var(--line); border-radius: 0.8rem; background: var(--panel); margin-bottom: 1.2rem; max-width: 46rem; }
+/* The ticker fills the free stretch of the top bar. In Library the library tools take its place (body.mb-tools is set once they are in the bar; until then the ticker stays). */
+body.ui-modern .mh-ticker { flex: 1 1 auto; min-width: 0; max-width: 40rem; height: 2.4rem; overflow: hidden; border: 1px solid var(--line); border-radius: 0.65rem; background: var(--panel); margin: 0 0.6rem; }
+body.ui-modern.mb-tools[data-mview="library"] .mh-ticker { display: none; }
+body.ui-modern .mb-library-tools { display: none; flex: 1 1 auto; min-width: 0; align-items: center; gap: 0.5rem; }
+body.ui-modern.mb-tools[data-mview="library"] .mb-library-tools { display: flex; }
 .mh-track { display: flex; flex-direction: column; transition: transform .5s ease; }
-.mh-line { height: 2.6rem; flex: 0 0 2.6rem; display: flex; align-items: center; padding: 0 1rem; font-size: 0.95rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mh-line b { color: var(--text); margin: 0 0.25em; }
+.mh-line { height: 2.4rem; flex: 0 0 2.4rem; display: flex; align-items: center; padding: 0 1rem; font-size: 0.95rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.ui-modern .mh-line b { color: var(--text); margin: 0 0.25em; }
 /* Continue playing and Recently added reuse Classic's own boxes (.strips / .strip / .recent-row): same borders, no scroll bar. */
 .mh-strips { margin: 0; }
 /* Every title takes exactly two lines, so a long title never makes its cover smaller than its neighbour's. */
@@ -67,5 +71,6 @@ body.ui-modern .mh-strips { display: grid !important; grid-template-columns: rep
   body.ui-modern .modern-bar { flex-wrap: wrap; gap: 0.4rem; padding: 0.4rem 0.6rem; }
   body.ui-modern .mb-name, body.ui-modern .mb-uname { display: none; }
   body.ui-modern .mb-nav { order: 5; width: 100%; margin: 0; overflow-x: auto; }
+  body.ui-modern .mh-ticker { order: 6; width: 100%; max-width: none; margin: 0; flex-basis: 100%; }
   body.ui-modern .modern-home { padding: 0.8rem; }
 }

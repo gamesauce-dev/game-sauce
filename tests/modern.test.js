@@ -99,3 +99,11 @@ test('Modern Home reuses Classic\'s boxes, equal tile sizes and equal title heig
   assert.match(js, /<div class="mb-id">[\s\S]*mb-brand[\s\S]*mb-user/, 'user and sign-out are inside the same column as the logo');
   assert.match(read('public/app.js'), /applyStrips\(host, false\)|applyStrips\(b\.closest\('\.modern-home'\), false\)/, 'a short window does not collapse the Home boxes');
 });
+
+test('the ticker lives in the top bar on every page, and Library will swap it for the library tools', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(js, /<div class="mb-slot" id="mb-slot">[\s\S]*id="mh-ticker"[\s\S]*id="mb-library-tools"/, 'one slot in the bar holds both');
+  assert.doesNotMatch(js.slice(js.indexOf('async function renderHome')), /id="mh-ticker"/, 'Home no longer carries its own ticker');
+  assert.match(js, /refreshTicker\(\);/, 'it is refreshed on every page change');
+  assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/, 'hidden in Library once the tools are in the bar');
+});

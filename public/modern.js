@@ -56,13 +56,18 @@ async function doBuildBar() {
         <button class="mb-btn" id="mb-signout" title="Sign out" aria-label="Sign out">${ic['sign-out']}</button></div>
     </div>
     <nav class="mb-nav" aria-label="Main">${items.map((n) => `<button class="mb-btn mb-navbtn" data-mview="${n.view}" title="${n.label}" aria-label="${n.label}">${ic[n.icon] || n.label}</button>`).join('')}</nav>
-    <div class="mb-slot" id="mb-library-tools"></div>
+    <div class="mb-slot" id="mb-slot">
+      <div class="mh-ticker" id="mh-ticker" aria-live="polite"><div class="mh-track" id="mh-track"></div></div>
+      <div class="mb-library-tools" id="mb-library-tools"></div>
+    </div>
     <div class="mb-right">
       <button class="mb-btn" id="mb-theme" title="" aria-label="Light or dark">${ic['dark-mode']}${ic['light-mode']}</button>
       <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}<small>Modern</small></button>
     </div>`;
   built = true;
   paintUser();
+  refreshTicker(true);
+  setInterval(() => { if (isModern()) refreshTicker(true); }, 60000);
   bar.addEventListener('click', onBarClick);
   paintToggles();
 }
@@ -93,6 +98,7 @@ let current = 'home';
 export function go(view) {
   if (!isModern()) return;
   current = view;
+  refreshTicker();
   document.body.dataset.mview = view;
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
   if (view === 'home') { showHome(); return; }
@@ -113,7 +119,6 @@ function hideHome() { $('#modern-home')?.classList.add('hidden'); }
 async function renderHome() {
   const host = $('#modern-home'); if (!host) return;
   host.innerHTML = `
-    <div class="mh-ticker" id="mh-ticker" aria-live="polite"><div class="mh-track" id="mh-track"></div></div>
     <div class="strips mh-strips">
       <div class="strip" data-strip="played"><button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span></button><div class="recent-row" id="mh-played"></div></div>
       <div class="strip" data-strip="recent"><button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span></button><div class="recent-row" id="mh-recent"></div></div>
@@ -123,7 +128,6 @@ async function renderHome() {
     const [stats, played] = await Promise.all([api('/stats'), api('/roms/recently-played?limit=14').catch(() => ({ items: [] }))]);
     fillRow('#mh-recent', stats.recent || []);
     fillRow('#mh-played', played.items || [], 'Nothing played yet');
-    await fillTicker(stats);
   } catch { /* the home page degrades to empty rows */ }
 }
 
@@ -133,6 +137,14 @@ function fillRow(sel, items, empty = '') {
   // The same tiles as the library grid (cover, platform badge, play button), so they behave the same.
   el.innerHTML = items.slice(0, 16).map(ctx.cardHtml).join('');
   ctx.bindCards(el);
+}
+
+/** Fetch what the ticker says (cheap: it reuses /stats). It sits in the bar on every page except Library, where the library tools take its place. */
+let lastTicker = 0;
+async function refreshTicker(force = false) {
+  if (!force && Date.now() - lastTicker < 20000) return;
+  lastTicker = Date.now();
+  try { await fillTicker(await api('/stats')); } catch { /* the bar just stays without a ticker */ }
 }
 
 /** The ticker: one line at a time, rolling upwards. Synopsis facts plus anything the system wants to say. */
