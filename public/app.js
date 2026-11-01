@@ -434,8 +434,8 @@ function cardHtml(rom) {
         ${rom.dat_status && rom.dat_status !== 'not-in-dat' ? `<span class="badge-dat ${rom.dat_status === 'verified' ? '' : rom.dat_status}" title="DAT: ${rom.dat_status}">${rom.dat_status}</span>` : ''}
         ${rom.keep_override === 1 ? `<span class="card-lock" title="Locked: protected from deletion" aria-label="Locked">${ICON.keepOn}</span>` : ''}
         <button type="button" class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" tabindex="-1" title="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
-        <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : 'Hide from your view'}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
-        ${rom.hidden_all ? '<span class="card-hidden-veil">hidden from everyone</span>' : (rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : '')}
+        <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : (authState.user?.role === 'admin' ? 'Hide (members will not see it either)' : 'Hide from your view')}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
+        ${rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : ''}
       </div>
       <div class="card-title">${esc(rom.title)}</div>
       <div class="card-sub">
@@ -966,8 +966,6 @@ function syncSelectUI() {
   $('#bulk-clearmatch-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
-  $('#bulk-hideall-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
-  $$('.bha-label').forEach((l) => { l.textContent = state.hidden ? 'Show to everyone' : 'Hide from everyone'; });
   $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
   $('#bulk-addcoll')?.classList.toggle('hidden', n === 0);
   $('#select-toggle')?.classList.toggle('is-active', on);
@@ -1025,26 +1023,6 @@ async function bulkHideSelected() {
   } catch (err) { toast(err.message, true); }
 }
 
-// Admin: hide every selected game from everyone (or, in the Hidden filter, show them to everyone again).
-async function bulkHideAllSelected() {
-  const ids = [...state.selected];
-  if (!ids.length) return toast('Select some tiles first', true);
-  const unhide = !!state.hidden;
-  const ok = await confirmDialog({
-    title: unhide ? `Show ${ids.length} game${ids.length === 1 ? '' : 's'} to everyone?` : `Hide ${ids.length} game${ids.length === 1 ? '' : 's'} from everyone?`,
-    body: unhide ? 'Members will be able to see them again.' : 'Members will no longer see or open them. Nothing is deleted, and you can show them again from the Hidden filter.',
-    okLabel: unhide ? 'Show to everyone' : 'Hide from everyone'
-  });
-  if (!ok) return;
-  try {
-    await api('/roms/bulk/hide-all', { method: 'POST', body: JSON.stringify({ ids, hidden: !unhide }) });
-    toast(unhide ? 'Shown to everyone again' : `Hid ${ids.length} game${ids.length === 1 ? '' : 's'} from everyone`);
-    state.selected.clear();
-    await Promise.all([loadLibrary(), loadPlatforms()]);
-    syncSelectUI();
-  } catch (err) { toast(err.message, true); }
-}
-
 async function bulkDeleteSelected() {
   const ids = [...state.selected];
   if (!ids.length) return toast('Select some tiles first', true);
@@ -1077,7 +1055,7 @@ async function bulkDeleteSelected() {
 async function toggleHidden(id) {
   try {
     const { hidden } = await api(`/roms/${id}/hide`, { method: 'POST' });
-    toast(hidden ? 'Hidden from your view (others still see it)' : 'Back in your library');
+    toast(hidden ? (authState.user?.role === 'admin' ? 'Hidden (members will not see it either)' : 'Hidden from your view (others still see it)') : 'Back in your library');
     await loadLibrary();
     loadPlatforms();
   } catch (err) {
@@ -1332,8 +1310,7 @@ async function openDetail(id) {
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
           ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
-          ${authState.user?.role === 'admin' ? `<button class="mi${rom.hidden_all ? ' on' : ''}" role="menuitem" data-act="hideall">${rom.hidden_all ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden_all ? 'Show to everyone again' : 'Hide from everyone'}</b><small>${rom.hidden_all ? 'Hidden from every member now' : 'Members will not see or open it; you find it under Hidden'}</small></span></button>` : ''}
-          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? 'Unhide for me' : (authState.user?.role === 'admin' ? 'Hide from me only' : 'Hide this game')}</b>${rom.hidden ? '' : '<small>Only from your view; others still see it</small>'}</span></button>
+          <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? 'Show this game again' : 'Unhide for me') : 'Hide this game'}</b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? '<small>Hidden from members too</small>' : '') : (authState.user?.role === 'admin' ? '<small>Members will not see it either; you find it under Hidden</small>' : '<small>Only from your view; others still see it</small>')}</span></button>
           <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
           ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>
@@ -1468,15 +1445,6 @@ async function openDetail(id) {
     openAddToCollection([id], rom.title);
   });
 
-  $('[data-act="hideall"]', drawer)?.addEventListener('click', async () => {
-    try {
-      const to = !rom.hidden_all;
-      await api(`/roms/${id}/hide-all`, { method: 'POST', body: JSON.stringify({ hidden: to }) });
-      toast(to ? 'Hidden from everyone' : 'Shown to everyone again');
-      closeDrawer();
-      await Promise.all([loadLibrary(), loadPlatforms()]);
-    } catch (err) { toast(err.message, true); }
-  });
   $('[data-act="hide"]', drawer).addEventListener('click', async () => {
     await api(`/roms/${id}/hide`, { method: 'POST' });
     closeDrawer();
@@ -3364,7 +3332,6 @@ $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); sync
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
 $('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
-$('#bulk-hideall-btn')?.addEventListener('click', bulkHideAllSelected);
 $('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
 
@@ -3887,9 +3854,13 @@ function showSettingsModule(id) {
 
 /* Duplicate finder: groups of different versions of one game, with a suggested keeper. */
 const dupState = { offset: 0, groups: [], total: 0, extra: 0, platformsLoaded: false };
-async function loadDuplicates(reset = true) {
+async function loadDuplicates(reset = true, keepPlace = false) {
   const list = $('#dup-list'), summary = $('#dup-summary');
-  if (reset) { dupState.offset = 0; dupState.groups = []; list.innerHTML = '<div class="side-empty">Looking…</div>'; summary.textContent = ''; }
+  // Refreshing after a click keeps the list and the scroll position: only a fresh look (platform change, Refresh) starts from the top.
+  const scroller = (() => { for (let el = list.parentElement; el; el = el.parentElement) { const o = getComputedStyle(el).overflowY; if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight) return el; } return document.scrollingElement; })();
+  const keepTop = keepPlace ? scroller.scrollTop : 0;
+  const keepCount = keepPlace ? Math.max(50, dupState.groups.length) : 50;
+  if (reset && !keepPlace) { dupState.offset = 0; dupState.groups = []; list.innerHTML = '<div class="side-empty">Looking…</div>'; summary.textContent = ''; }
   try {
     if (!dupState.platformsLoaded) {
       const plats = await api('/platforms');
@@ -3897,12 +3868,14 @@ async function loadDuplicates(reset = true) {
       (plats.items || plats).filter((p) => (p.count ?? 0) > 0).forEach((p) => sel.insertAdjacentHTML('beforeend', `<option value="${esc(p.slug)}">${esc(p.name)}</option>`));
       dupState.platformsLoaded = true;
     }
-    const q = new URLSearchParams({ limit: '50', offset: String(dupState.offset) });
+    if (keepPlace) dupState.offset = 0;
+    const q = new URLSearchParams({ limit: String(Math.min(keepCount, 200)), offset: String(dupState.offset) });
     if ($('#dup-platform').value) q.set('platform', $('#dup-platform').value);
     const r = await api('/admin/duplicates?' + q);
     dupState.total = r.total; dupState.extra = r.extra;
     dupState.groups = reset ? r.groups : dupState.groups.concat(r.groups);
     renderDuplicates();
+    if (keepPlace) { scroller.scrollTop = keepTop; requestAnimationFrame(() => { scroller.scrollTop = keepTop; }); }
   } catch (err) { list.innerHTML = `<div class="side-empty">${esc(err.message)}</div>`; }
 }
 function renderDuplicates() {
@@ -3917,11 +3890,11 @@ function renderDuplicates() {
     <div class="dup-group" data-gi="${gi}">
       <div class="dup-head"><b>${esc(grp.title)}</b> <span class="pill">${esc(grp.platform_short || grp.platform)}</span>${grp.size_mismatch ? ' <span class="pill warn" title="Same title but very different file sizes: these may be two different games that were given one title">⚠ sizes differ a lot: probably not duplicates</span>' : ''}
         <span class="grow"></span>
-        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one, from YOUR view only (others still see them)">Hide the others</button></div>
+        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one (members will not see them either)">Hide the others</button></div>
       <div class="dup-items">${grp.items.map((it) => `
         <div class="dup-item ${it.keep ? 'keep' : ''}" data-dup-open="${it.id}" title="Open this game">
           <div class="dup-cover">${it.cover_url ? `<img loading="lazy" src="${esc(it.cover_url)}" alt="" />` : ''}</div>
-          <button class="dup-keepbtn ${it.chosen === 'keep' ? 'on' : ''}" data-dup-keep="${it.id}" data-now="${it.chosen === 'keep' ? 1 : 0}" title="${it.chosen === 'keep' ? 'Locked and protected from deletion. Click to unlock' : 'Lock: keep this copy and protect it from deletion'}" aria-label="Lock this copy" aria-pressed="${it.chosen === 'keep'}">${it.chosen === 'keep' ? ICON.keepOn : ICON.keep}</button>
+          <button class="dup-keepbtn" data-dup-hide-one="${it.id}" title="Hide this copy (members will not see it either; you find it under Hidden in the Library)" aria-label="Hide this copy">${ICON.eyeOff}</button>
           <div class="dup-meta">
             <div class="dup-file">${esc(it.filename)}</div>
             ${it.path ? `<div class="dup-path" title="${esc(it.path)}">${esc(it.source_name ? it.source_name + ' · ' : '')}${esc(it.path)}</div>` : ''}
@@ -3934,18 +3907,17 @@ function renderDuplicates() {
 async function hideDuplicateExtras(groups) {
   const ids = groups.flatMap((grp) => grp.items.filter((i) => !i.keep).map((i) => i.id));
   if (!ids.length) return;
-  const ok = await confirmDialog({ title: `Hide ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}?`, body: 'Only the suggested copy of each game stays visible to you; other people still see all copies. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
+  const ok = await confirmDialog({ title: `Hide ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}?`, body: 'Only the suggested copy of each game stays visible; members will not see the others either. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
   if (!ok) return;
-  try { await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: true }) }); toast(`Hid ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}`); loadDuplicates(true); loadPlatforms(); }
+  try { await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: true }) }); toast(`Hid ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}`); loadDuplicates(true, true); loadPlatforms(); }
   catch (err) { toast(err.message, true); }
 }
 document.addEventListener('click', (e) => {
-  const kb = e.target.closest('[data-dup-keep]');
+  const kb = e.target.closest('[data-dup-hide-one]');
   if (kb) {
     e.stopPropagation();
-    const want = kb.dataset.now === '1' ? null : 1; // on -> off (back to automatic); off -> on
-    api('/admin/duplicates/keep', { method: 'POST', body: JSON.stringify({ id: Number(kb.dataset.dupKeep), value: want }) })
-      .then(() => loadDuplicates(true)).catch((err) => toast(err.message, true));
+    api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids: [Number(kb.dataset.dupHideOne)], hidden: true }) })
+      .then(() => { toast('Hidden'); loadDuplicates(true, true); loadPlatforms(); }).catch((err) => toast(err.message, true));
     return;
   }
   const open = e.target.closest('[data-dup-open]');

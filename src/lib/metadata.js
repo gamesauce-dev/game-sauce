@@ -95,7 +95,8 @@ export function parseFilename(filename) {
   for (let i = 0; i < 2; i++) {
     if (/\.(zip|7z|rar|gz)$/i.test(name)) name = name.replace(/\.(zip|7z|rar|gz)$/i, '');
   }
-  const base = name.replace(/\.[^.]+$/, '');
+  // Only a real extension (letters/digits, no spaces) comes off: in "Mega Games 6 Vol. 1 (Europe)" the ". 1 (Europe)" is part of the name.
+  const base = name.replace(/\.[A-Za-z0-9]{1,6}$/, '');
   const withoutNoise = base.replace(NOISE_WORDS, '');
 
   const groups = [...withoutNoise.matchAll(/[(\[]([^)\]]*)[)\]]/g)].map((m) => m[1]);

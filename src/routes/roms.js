@@ -39,7 +39,7 @@ const ROM_COLUMNS = `
   r.meta_source, r.meta_synced_at, r.play_count,
   CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
-  r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system, r.hidden_all,
+  r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 WHEN r.hidden_all = 1 THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system, r.hidden_all,
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
   p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
@@ -254,8 +254,16 @@ bulkRouter.post('/hide', (req, res) => {
   // Personal: this only changes what YOU see.
   const add = db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) SELECT ?, id FROM roms WHERE id = ?');
   const del = db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?');
+  // An admin's Hide also hides the game from members; only admins see it again (under Hidden).
+  const everyone = req.user.role === 'admin' ? db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ? AND hidden_all <> ?") : null;
   let changed = 0;
-  db.transaction(() => { for (const id of ids) changed += (hidden ? add.run(req.user.id, id) : del.run(req.user.id, id)).changes; })();
+  db.transaction(() => {
+    for (const id of ids) {
+      let c = (hidden ? add.run(req.user.id, id) : del.run(req.user.id, id)).changes;
+      if (everyone) c = Math.max(c, everyone.run(hidden, id, hidden).changes);
+      changed += c;
+    }
+  })();
   res.json({ changed, hidden: Boolean(hidden) });
 });
 
@@ -862,10 +870,11 @@ router.post('/:id/play-override', requireAdmin, (req, res) => {
 });
 
 router.post('/:id/hide', (req, res) => {
-  const rom = db.prepare('SELECT id FROM roms WHERE id = ?').get(req.params.id);
+  const rom = db.prepare('SELECT id, hidden_all FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!req.user) return res.status(401).json({ error: 'Sign in required' });
-  const wasHidden = !!db.prepare('SELECT 1 FROM hidden_roms WHERE user_id = ? AND rom_id = ?').get(req.user.id, rom.id);
+  const isAdmin = req.user.role === 'admin';
+  const wasHidden = !!db.prepare('SELECT 1 FROM hidden_roms WHERE user_id = ? AND rom_id = ?').get(req.user.id, rom.id) || (isAdmin && rom.hidden_all === 1);
 
   // The audit middleware already snapshotted { title, platform } before the
   // write; stash the *direction* (hide vs unhide) for the summary line. Reads
@@ -875,6 +884,8 @@ router.post('/:id/hide', (req, res) => {
   // Personal: only your own view changes.
   if (next) db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) VALUES (?, ?)').run(req.user.id, rom.id);
   else db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?').run(req.user.id, rom.id);
+  // An admin's Hide also hides the game from members (only admins see it, under Hidden).
+  if (isAdmin) db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
 
   res.json({ id: Number(req.params.id), hidden: next });
 });

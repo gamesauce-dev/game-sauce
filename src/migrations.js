@@ -341,3 +341,10 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '20') ON CON
    that platform (see public/platform-icons.js). */
 if (!db.prepare('PRAGMA table_info(platforms)').all().some((c) => c.name === 'icon')) db.exec('ALTER TABLE platforms ADD COLUMN icon TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '21') ON CONFLICT(key) DO UPDATE SET value = '21'").run();
+
+/* ── v22: an admin's Hide now hides the game from members too, so every game an admin had already hidden for themselves is
+   hidden from everyone (admins still see them under Hidden). */
+if (Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value || 0) < 22) try {
+  db.exec("UPDATE roms SET hidden_all = 1 WHERE hidden_all = 0 AND id IN (SELECT hr.rom_id FROM hidden_roms hr JOIN users u ON u.id = hr.user_id WHERE u.role = 'admin')");
+} catch { /* a brand-new database has no users yet: nothing to carry over */ }
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '22') ON CONFLICT(key) DO UPDATE SET value = '22'").run();
