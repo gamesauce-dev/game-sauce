@@ -88,6 +88,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Collections now belong to the person who made them (DB v23).** Each collection is seen, opened, changed and deleted only by its maker (admins included), and two people can each have a collection with the same name. Collections that already exist go to the oldest admin account; their games are kept. The game details window only lists your own collections.
+- **Modern details window:** previous / next use your arrow icons with a quieter position counter; Search and Save use your search and save icons; Upload cover uses your upload-cover icon; add-to-collection and refresh on the icon row get better icons; the three actions promoted to the row are no longer repeated in More actions; genre pills now match the platform chips (quiet, normal case, purple only on hover).
+- **Modern Collections:** the New collection button moved to the left and uses your collection icon.
 - **Modern: Retro font is now on by default** (turn it off from the avatar menu; remembered per device). People who already chose a font keep their choice.
 - **Modern Home: Continue playing and Recently added are stacked**, each the full width, instead of side by side (replaces the earlier side-by-side layout). Tiles still stretch to fill each row.
 - **Modern: no page titles.** The lit icon in the top bar already says which page you are on, so the big "Collections / Sources / Settings" headings are gone (Classic keeps them).

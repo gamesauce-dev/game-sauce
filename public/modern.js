@@ -469,7 +469,8 @@ const ICON_MAP = [
   // Details window: the row (the More menu keeps its words)
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],
   ['.detail-actions #more-btn', 'more-actions'], ['.detail-actions [data-act="delete"]', 'delete'],
-  ['.detail-actions [data-promo="addcoll"]', 'collection'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'fetch-metadata'],
+  ['.detail-actions [data-promo="addcoll"]', 'collection-grid'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'scan-again'],
+  ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
   // Settings leftovers found by the 1 Nov audit
   ['#names-apply', 'tick'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"]', 'edit'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
@@ -487,7 +488,7 @@ const ICON_MAP = [
   ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'scan-again'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
   ['[data-save-release]', 'save-to-vault'], ['[data-vault-del]', 'delete'],
   // Collections
-  ['#new-collection', 'collection-grid'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'],
+  ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'],
   // Library selection bar
   ['#bulk-addcoll', 'collection'], ['#bulk-delete-btn', 'delete'],
   // Settings: account

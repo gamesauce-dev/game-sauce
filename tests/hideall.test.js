@@ -69,8 +69,9 @@ test('counts for members leave it out; the admin\'s Hidden count includes it', a
 });
 
 test('collections and the recent row do not give it away', async () => {
-  const c = (await call('/api/collections', { method: 'POST', body: { name: 'Mixed' } })).body;
-  await call(`/api/collections/${c.id}/roms`, { method: 'POST', body: { rom_ids: [secretId, plainId] } });
+  // Collections are private to their maker, so the member builds their own and the admin-hidden game must still not show in it.
+  const c = (await call('/api/collections', { token: memberTok, method: 'POST', body: { name: 'Mixed' } })).body;
+  await call(`/api/collections/${c.id}/roms`, { token: memberTok, method: 'POST', body: { rom_ids: [secretId, plainId] } });
   const asMember = await call(`/api/collections/${c.id}`, { token: memberTok });
   assert.deepEqual((asMember.body.items || asMember.body.roms || []).map((i) => i.title), ['Plain Game']);
   assert.ok(!(await call('/api/stats', { token: memberTok })).body.recent.some((r) => r.title === 'Secret Game'));

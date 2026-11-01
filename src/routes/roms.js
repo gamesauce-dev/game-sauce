@@ -621,7 +621,7 @@ router.get('/:id', (req, res) => {
 
   const collections = db.prepare(`
     SELECT c.id, c.name FROM collections c
-    JOIN collection_roms cr ON cr.collection_id = c.id WHERE cr.rom_id = ?
+    JOIN collection_roms cr ON cr.collection_id = c.id WHERE cr.rom_id = ? AND c.user_id = ${req.user ? Number(req.user.id) : -1}
   `).all(rom.id);
 
   const siblings = db.prepare(`

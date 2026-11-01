@@ -3,12 +3,17 @@ import db from '../db.js';
 
 const router = express.Router();
 
+// A collection belongs to whoever made it, and only they see or change it (admins included).
+const mine = (req) => Number(req.user?.id ?? -1);
+const own = (req, id) => db.prepare('SELECT * FROM collections WHERE id = ? AND user_id = ?').get(id, mine(req));
+
 router.get('/', (req, res) => {
   const rows = db.prepare(`
     SELECT c.id, c.name, c.description, c.created_at, COUNT(cr.rom_id) AS count
     FROM collections c LEFT JOIN collection_roms cr ON cr.collection_id = c.id
+    WHERE c.user_id = ?
     GROUP BY c.id ORDER BY c.name
-  `).all();
+  `).all(mine(req));
   // Up to four covers per collection, for the preview strip on its card.
   const admin = req.user?.role === 'admin';
   const pick = db.prepare(`SELECT r.id FROM collection_roms cr JOIN roms r ON r.id = cr.rom_id
@@ -21,8 +26,8 @@ router.post('/', (req, res) => {
   const name = String(req.body?.name || '').trim();
   if (!name) return res.status(400).json({ error: 'name is required' });
   try {
-    const info = db.prepare('INSERT INTO collections (name, description) VALUES (?, ?)')
-      .run(name, req.body?.description || null);
+    const info = db.prepare('INSERT INTO collections (user_id, name, description) VALUES (?, ?, ?)')
+      .run(mine(req), name, req.body?.description || null);
     res.status(201).json(db.prepare('SELECT * FROM collections WHERE id = ?').get(info.lastInsertRowid));
   } catch {
     res.status(409).json({ error: 'A collection with that name already exists' });
@@ -30,7 +35,7 @@ router.post('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const collection = db.prepare('SELECT * FROM collections WHERE id = ?').get(req.params.id);
+  const collection = own(req, req.params.id);
   if (!collection) return res.status(404).json({ error: 'Collection not found' });
 
   const items = db.prepare(`
@@ -50,7 +55,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.patch('/:id', (req, res) => {
-  const existing = db.prepare('SELECT * FROM collections WHERE id = ?').get(req.params.id);
+  const existing = own(req, req.params.id);
   if (!existing) return res.status(404).json({ error: 'Collection not found' });
   db.prepare('UPDATE collections SET name = ?, description = ? WHERE id = ?')
     .run(req.body?.name ?? existing.name, req.body?.description ?? existing.description, existing.id);
@@ -58,13 +63,13 @@ router.patch('/:id', (req, res) => {
 });
 
 router.delete('/:id', (req, res) => {
-  const info = db.prepare('DELETE FROM collections WHERE id = ?').run(req.params.id);
+  const info = db.prepare('DELETE FROM collections WHERE id = ? AND user_id = ?').run(req.params.id, mine(req));
   if (!info.changes) return res.status(404).json({ error: 'Collection not found' });
   res.json({ deleted: Number(req.params.id) });
 });
 
 router.post('/:id/roms', (req, res) => {
-  const collection = db.prepare('SELECT id FROM collections WHERE id = ?').get(req.params.id);
+  const collection = own(req, req.params.id);
   if (!collection) return res.status(404).json({ error: 'Collection not found' });
 
   const ids = Array.isArray(req.body?.rom_ids) ? req.body.rom_ids.map(Number).filter(Boolean) : [];
@@ -79,6 +84,7 @@ router.post('/:id/roms', (req, res) => {
 });
 
 router.delete('/:id/roms/:romId', (req, res) => {
+  if (!own(req, req.params.id)) return res.status(404).json({ error: 'Collection not found' });
   const info = db.prepare('DELETE FROM collection_roms WHERE collection_id = ? AND rom_id = ?')
     .run(req.params.id, req.params.romId);
   res.json({ removed: info.changes });

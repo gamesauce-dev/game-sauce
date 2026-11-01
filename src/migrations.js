@@ -348,3 +348,33 @@ if (Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get
   db.exec("UPDATE roms SET hidden_all = 1 WHERE hidden_all = 0 AND id IN (SELECT hr.rom_id FROM hidden_roms hr JOIN users u ON u.id = hr.user_id WHERE u.role = 'admin')");
 } catch { /* a brand-new database has no users yet: nothing to carry over */ }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '22') ON CONFLICT(key) DO UPDATE SET value = '22'").run();
+
+/* ── v23: collections belong to the person who made them. Each one gets a user_id; the name is unique per person (two people can
+   both have "Favourites"). Collections that already exist go to the oldest admin. The table is rebuilt with foreign keys off, so
+   the game links (collection_roms) are not wiped by the drop. */
+if (Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value || 0) < 23
+    && !db.prepare('PRAGMA table_info(collections)').all().some((c) => c.name === 'user_id')) {
+  let owner = null;
+  try {   // a brand-new database has no users table yet: nothing to hand over, collections start empty
+    owner = db.prepare("SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1").get()?.id
+      ?? db.prepare('SELECT id FROM users ORDER BY id LIMIT 1').get()?.id ?? null;
+  } catch { /* no users yet */ }
+  db.pragma('foreign_keys = OFF');
+  try {
+    db.exec('BEGIN');
+    db.exec(`
+      CREATE TABLE collections_new (
+        id          INTEGER PRIMARY KEY,
+        user_id     INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        name        TEXT NOT NULL,
+        description TEXT,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE (user_id, name)
+      );`);
+    db.prepare('INSERT INTO collections_new (id, user_id, name, description, created_at) SELECT id, ?, name, description, created_at FROM collections').run(owner);
+    db.exec('DROP TABLE collections; ALTER TABLE collections_new RENAME TO collections; CREATE INDEX IF NOT EXISTS idx_collections_user ON collections(user_id);');
+    db.exec('COMMIT');
+  } catch (e) { try { db.exec('ROLLBACK'); } catch { /* nothing open */ } throw e; }
+  finally { db.pragma('foreign_keys = ON'); }
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '23') ON CONFLICT(key) DO UPDATE SET value = '23'").run();

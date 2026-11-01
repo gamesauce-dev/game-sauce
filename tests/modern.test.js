@@ -296,3 +296,16 @@ test('Modern: Retro font is a per-device switch that only swaps the font variabl
   assert.match(css, /body\.ui-modern\.ui-retro \{ --font: ui-monospace/);
   assert.doesNotMatch(read('public/styles.css'), /ui-retro/, 'Classic is untouched');
 });
+
+test('Details window: nav arrows, search/save icons, upload-cover icon, no duplicates in More actions, genre pills like chips', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  for (const [sel, n] of [['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'], ['[data-promo="addcoll"]', 'collection-grid'], ['[data-promo="refresh"]', 'scan-again'], ['#new-collection', 'collection-new']]) {
+    assert.ok(js.includes(`'${sel}'`) || js.includes(`${sel}"]', '${n}'`) || js.includes(sel), sel);
+    assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  }
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/upload-cover.svg', import.meta.url)));
+  assert.match(css, /\.more-menu \[data-act="addcoll"\], body\.ui-modern \.more-menu \[data-act="hide"\], body\.ui-modern \.more-menu \[data-act="refresh"\] \{ display: none; \}/);
+  assert.match(css, /upload-cover\.svg/);
+  assert.match(css, /\.genre-pill \{ text-transform: none;/);
+  assert.match(css, /#view-collections \.toolbar[^{]*\{ justify-content: flex-start; \}/);
+});
