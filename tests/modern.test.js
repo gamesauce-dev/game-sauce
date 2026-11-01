@@ -208,3 +208,10 @@ test('stage 3: icons in place of words on the other pages, from your icon set, w
   assert.match(app, /aria-label="\$\{esc\(g\.label\)\}"/, 'icon-only group tiles still have a label for screen readers');
   assert.doesNotMatch(read('public/styles.css'), /data-mi/, 'Classic is untouched');
 });
+
+test('opening a family chip never shifts the other chips sideways (the arrow space is always reserved)', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /\.chip\[data-chip-fam\]::after \{[^}]*border-top: 5px solid transparent/, 'the arrow slot exists on every family chip, transparent until open');
+  assert.match(css, /\.chip\[data-chip-fam\]\.open::after \{ border-top-color: currentColor; \}/);
+  assert.doesNotMatch(css, /\.chip\.open::after \{ content/, 'the old rule that only added the arrow to the open chip is gone');
+});

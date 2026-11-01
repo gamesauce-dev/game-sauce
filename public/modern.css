@@ -150,7 +150,6 @@ body.ui-modern .drawer-pin.is-on svg { transform: rotate(0); }
 body.ui-modern .drawer-pin.is-on svg path { fill: currentColor; fill-opacity: .25; }
 body.ui-modern .drawer-scrim { top: var(--mb-h, 50px); }
 body.ui-modern .chip.open:not(.on) { color: var(--text); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-body.ui-modern .chip.open::after { content: ''; width: 0; height: 0; margin-left: 0.15rem; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; opacity: .7; }
 body.ui-modern .chip.on.part { background: transparent; border-style: dashed; }
 
 /* ── Icons in place of words (the icon files are wired up by modern.js; the words stay as the tooltip) ── */
@@ -171,3 +170,6 @@ body.ui-modern .subtile[data-mi]::before { width: 1.2rem; height: 1.2rem; }
 body.ui-modern .subtile[data-mi].is-active { font-size: 0.85rem; line-height: 1.2; }
 body.ui-modern .settings-anchor .tile[data-mi] { min-width: 3.2rem; justify-content: center; padding: 0.55rem 0.8rem; }
 body.ui-modern .settings-anchor .tile-grid { grid-template-columns: repeat(auto-fill, minmax(3.4rem, max-content)); }
+/* The open-family arrow takes its space on every family chip, so opening one never pushes the others sideways. */
+body.ui-modern .chip[data-chip-fam]::after { content: ''; width: 0; height: 0; margin-left: 0.15rem; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid transparent; }
+body.ui-modern .chip[data-chip-fam].open::after { border-top-color: currentColor; }
