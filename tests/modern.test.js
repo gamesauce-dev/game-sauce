@@ -270,3 +270,9 @@ test('Settings leftovers (user Disable/Enable, Edit, Delete, downloads, Update p
   for (const s of ['#names-apply', '#backup-download', 'lb-update', 'data-pact="edit"', 'data-bk-del', 'user-disable', 'user-enable', '#dup-hide-all']) assert.ok(js.includes(s), s);
   assert.match(app, /data-act="toggle-user" data-disabled=/);
 });
+
+test('Settings pills are equal icon-only circles and Settings text is brighter', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /\.subtile\[data-mi\], body\.ui-modern \.subtile\[data-mi\]\.is-active \{ width: 2\.4rem; height: 2\.4rem;/);
+  assert.match(css, /body\.ui-modern #view-settings \{ --muted: #d6dce9;/);
+});

@@ -191,7 +191,15 @@ body.ui-modern .tile[data-mi] .tile-label { display: none; }   /* the open setti
 body.ui-modern .tile[data-mi]::before { width: 1.5rem; height: 1.5rem; flex: 0 0 auto; }
 body.ui-modern [data-mi]::before { flex: 0 0 auto; }
 body.ui-modern .subtile[data-mi]::before { width: 1.2rem; height: 1.2rem; }
-body.ui-modern .subtile[data-mi].is-active { font-size: 0.85rem; line-height: 1.2; }
+/* Settings pills: every pill is the same icon-only circle, so nothing sits off centre; the open setting is named by the panel heading below. */
+body.ui-modern .subtile[data-mi], body.ui-modern .subtile[data-mi].is-active { width: 2.4rem; height: 2.4rem; min-width: 2.4rem; padding: 0; gap: 0; justify-content: center; font-size: 0; line-height: 0; border-radius: 50%; color: var(--text); background: var(--panel-2); border: 1px solid var(--line-2); box-shadow: none; }
+body.ui-modern .subtile[data-mi]:hover { background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); border-color: var(--accent); color: var(--text); }
+body.ui-modern .subtile[data-mi].is-active { background: color-mix(in srgb, var(--accent) 30%, var(--panel-2)); border-color: var(--accent-2); color: var(--text); box-shadow: 0 0 0 1px var(--accent-2) inset; }
+body.ui-modern .subtile[data-mi]::before { width: 1.3rem; height: 1.3rem; }
+/* Settings text: brighter greys so hints and labels do not look washed out. */
+body.ui-modern #view-settings { --muted: #d6dce9; --dim: #b0b8cb; }
+html[data-theme="light"] body.ui-modern #view-settings { --muted: #2a3140; --dim: #475066; }
+body.ui-modern #view-settings .hint, body.ui-modern #view-settings p, body.ui-modern #view-settings label, body.ui-modern #view-settings .section-label { color: var(--muted); }
 body.ui-modern .settings-anchor .tile[data-mi] { min-width: 3.2rem; justify-content: center; padding: 0.55rem 0.8rem; }
 body.ui-modern .settings-anchor .tile-grid { grid-template-columns: repeat(auto-fill, minmax(3.4rem, max-content)); }
 /* The open-family arrow takes its space on every family chip, so opening one never pushes the others sideways. */
