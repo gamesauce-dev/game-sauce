@@ -194,7 +194,8 @@ async function refreshTicker(force = false) {
 /** The ticker: one line at a time, rolling upwards. Synopsis facts plus anything the system wants to say. */
 async function fillTicker(stats) {
   const lib = stats.library || {};
-  const lines = [];
+  // The game-sauce name with its shimmer, as one of the rolling lines.
+  const lines = ['<span class="brand-name mh-brand" data-text="game-sauce">game<span class="saucy">-sauce</span></span>'];
   const top = stats.topDownloaded;
   const cache = window.__platformsCache || [];
   const shown = cache.reduce((n, p) => n + pc(p), 0), all = cache.reduce((n, p) => n + (p.count || 0), 0);
@@ -213,6 +214,8 @@ async function fillTicker(stats) {
     if (ctx.user()?.role === 'admin') {
       const j = await api('/roms/bulk/enrich-job').catch(() => null);
       if (j?.running) lines.unshift(`Fetching metadata: <b>${j.done}</b> of <b>${j.total}</b>`);
+      const up = await api('/admin/update-check').catch(() => null);
+      if (up?.newer) lines.unshift(`Update available: game-sauce <b>${String(up.latest).replace(/^v/i, '').replace(/</g, '&lt;')}</b> (you have <b>${String(up.current).replace(/</g, '&lt;')}</b>)`);
       const h = await api('/admin/health').catch(() => null);
       if (h && h.status && h.status !== 'ok') lines.unshift(`System health: <b>${h.status === 'bad' ? 'needs attention' : 'has warnings'}</b>`);
     }
@@ -532,8 +535,13 @@ let miStyle = null;
 function miRule(name) {
   if (miKnown.has(name)) return;
   miKnown.add(name);
-  if (!miStyle) { miStyle = document.createElement('style'); miStyle.id = 'modern-icon-rules'; document.head.appendChild(miStyle); }
-  miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); }\n`));
+  // An icon stays invisible until its picture has arrived. Before that, the mask is missing and the icon would draw as a solid block
+  // (the black square on a first visit or a hard refresh). Space is kept, so nothing moves when it appears.
+  const add = () => {
+    if (!miStyle) { miStyle = document.createElement('style'); miStyle.id = 'modern-icon-rules'; document.head.appendChild(miStyle); }
+    miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); visibility: visible; }\n`));
+  };
+  const img = new Image(); img.onload = add; img.onerror = add; img.src = `${ICON_BASE}${name}.svg`;
 }
 const plainText = (el) => (el.getAttribute('data-mi-label') || el.querySelector?.('b')?.textContent || el.getAttribute('data-tip') || el.getAttribute('aria-label') || el.textContent || '').replace(/^[^A-Za-z0-9]+/, '').replace(/…$/, '').trim();
 /** Details-window buttons: copy three of the More menu's actions onto the icon row. Each copy just clicks the original. */
@@ -620,6 +628,9 @@ for (const ev of ['mousedown', 'focusout', 'scroll', 'keydown', 'touchstart']) d
 let miTimer = null;
 function watchIcons() {
   if (watchIcons.on) return; watchIcons.on = true;
+  // Fetch every icon the page can use now, in the background, so they are ready before they are needed.
+  for (const [, n] of ICON_MAP) miRule(n);
+  for (const n of ['favourite', 'upload-cover', 'clear-reset', 'arrow-up', 'folder-enable', 'folder-disable']) miRule(n);
   // Runs in the same tick as the redraw (a microtask), before the browser paints, so the old word buttons are never seen.
   // Only the parts that were just added are checked, so a big redraw stays cheap.
   new MutationObserver((list) => {

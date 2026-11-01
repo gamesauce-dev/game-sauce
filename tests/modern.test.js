@@ -408,3 +408,13 @@ test('Details window dims gently, top-bar pages release it, tooltips use the app
   assert.match(cls, /body\.login-modern \.auth-card/);
   assert.match(js, /localStorage\.setItem\('gamesauce_last_look', next\)/, 'switching look updates what the sign-in screen will show');
 });
+
+test('Ticker has the game-sauce name line and an admin-only update line; one bar in the play-only preview; icons never draw as a block', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css'), app = read('src/app.js');
+  assert.match(js, /mh-brand/); assert.match(js, /Update available: game-sauce/);
+  assert.match(js, /ctx\.user\(\)\?\.role === 'admin'[\s\S]*admin\/update-check/, 'the update line is only asked for by admins');
+  assert.match(app, /api\.get\('\/admin\/update-check', requireAuth, requireAdmin/);
+  assert.match(css, /body\.ui-modern \.play-topbar \{ display: none !important; \}/);
+  assert.match(css, /\[data-mi\]::before \{ content: ''; visibility: hidden;/, 'an icon is invisible until its picture has loaded');
+  assert.match(js, /visibility: visible/); assert.match(js, /img\.onload = add/);
+});

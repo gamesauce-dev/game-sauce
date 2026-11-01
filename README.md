@@ -544,6 +544,7 @@ Notes:
 | `IGDB_CLIENT_ID` / `IGDB_CLIENT_SECRET` | IGDB (Twitch app, minutes to create, no approval wait) |
 | `SGDB_API_KEY` | SteamGridDB art fallback key |
 | `GAMESAUCE_MAX_EMULATOR` | emulator vault file cap, bytes (default 1 GB) |
+| `GAMESAUCE_UPDATE_CHECK` | `0` turns off the admin's "update available" notice (it asks GitHub for the project's latest release at most once every six hours; nothing about your library is sent) |
 
 Env vars win over anything saved in the UI; a field pinned by env shows "set by environment"
 and cannot be edited from the page. The two `_SHARED` vars are the exception to the

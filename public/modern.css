@@ -178,7 +178,7 @@ body.ui-modern .chip.on.part { background: transparent; border-style: dashed; }
 
 /* ── Icons in place of words (the icon files are wired up by modern.js; the words stay as the tooltip) ── */
 body.ui-modern [data-mi] { font-size: 0; line-height: 0; letter-spacing: 0; }
-body.ui-modern [data-mi]::before { content: ''; display: inline-block; width: 1.25rem; height: 1.25rem; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+body.ui-modern [data-mi]::before { content: ''; visibility: hidden; display: inline-block; width: 1.25rem; height: 1.25rem; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
 body.ui-modern .btn[data-mi], body.ui-modern button.btn[data-mi] { display: inline-flex; align-items: center; justify-content: center; min-width: 2.4rem; height: 2.4rem; padding: 0 0.55rem; }
 body.ui-modern .btn-sm[data-mi] { min-width: 2.1rem; height: 2.1rem; padding: 0 0.45rem; }
 body.ui-modern .btn-sm[data-mi]::before { width: 1.1rem; height: 1.1rem; }
@@ -322,3 +322,9 @@ body.ui-modern .card-fav.on { color: #ffd23f; border-color: #f5c542; background:
 /* Deeper black: dark mode only. */
 html:not([data-theme="light"]) body.ui-modern.ui-deep { --bg: #000000; --bg-2: #05060a; --panel: #0b0c11; --panel-2: #12141b; --line: #1a1d26; --line-2: #262b38; }
 html:not([data-theme="light"]) body.ui-modern.ui-deep .modern-bar { background: rgba(2, 3, 6, .94); }
+
+/* Play-only top bar belongs to Classic: Modern has its own bar, so the two never stack (this showed up in the admin's play-only preview). */
+body.ui-modern .play-topbar { display: none !important; }
+
+/* The game-sauce name in the ticker keeps its colour flow and shimmer, at ticker size. */
+body.ui-modern .mh-line .mh-brand { font-size: 1.05rem; font-weight: 700; letter-spacing: 0; }

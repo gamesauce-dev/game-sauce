@@ -83,6 +83,13 @@ export function createApp() {
 
   api.use('/auth', authRouter);
 
+  // Is a newer game-sauce published? Admin only (it is the admin who updates the server). See src/lib/updatecheck.js.
+  api.get('/admin/update-check', requireAuth, requireAdmin, async (req, res) => {
+    const { checkForUpdate } = await import('./lib/updatecheck.js');
+    const { fetchLatestRelease } = await import('./routes/emulators.js');
+    res.json(await checkForUpdate(fetchLatestRelease));
+  });
+
   // Duplicate finder (read-only, admin): see src/lib/duplicates.js. Hiding the extras uses /roms/bulk/hide.
   api.get('/admin/duplicates', requireAuth, requireAdmin, async (req, res) => {
     const { findDuplicates } = await import('./lib/duplicates.js');
