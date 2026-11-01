@@ -487,7 +487,7 @@ const ICON_MAP = [
   ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#dup-hide-all, [data-dup-hide]', 'hidden'],
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
-  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse', 'tick'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
+  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
   ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources

@@ -285,3 +285,14 @@ body.ui-modern .upload-layout .dropzone { display: flex; flex-direction: column;
 
 /* Emulators: the second save button (arrow-up) exists only in Modern; Classic keeps its single text button. */
 body.ui-modern .emu-save-alt { display: inline-flex; }
+
+/* Phone width: nothing may run past the edge. Emulator cards wrap their text and their picker row; the details bar fits the screen; the vault form is one column. */
+@media (max-width: 640px) {
+  body.ui-modern .emu-card, body.ui-modern .emu-top, body.ui-modern .emu-note, body.ui-modern .emu-links, body.ui-modern .emu-latest { min-width: 0; max-width: 100%; }
+  body.ui-modern .emu-top, body.ui-modern .emu-links, body.ui-modern .emu-latest, body.ui-modern .emu-assets { flex-wrap: wrap; }
+  body.ui-modern .emu-assets { width: 100%; }
+  body.ui-modern .emu-assets .select { flex: 1 1 10rem; min-width: 0; max-width: 100%; }
+  body.ui-modern .drawer-bar { max-width: 100vw; box-sizing: border-box; padding-left: 0.5rem; padding-right: 0.5rem; }
+  body.ui-modern #emu-upload-form .field-row, body.ui-modern #emu-upload-form { grid-template-columns: 1fr !important; }
+  body.ui-modern #emu-upload-form .field { min-width: 0; }
+}

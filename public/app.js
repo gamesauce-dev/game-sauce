@@ -3143,10 +3143,10 @@ async function openAddToCollection(romIds, label) {
       member = new Set((d.collections || []).map((c) => c.id));
     }
     list.innerHTML = items.length ? items.map((c) => `
-      <button class="result-row ok" data-addcoll="${c.id}" data-in="${member.has(c.id) ? 1 : 0}">
+      <button class="result-row ok" data-addcoll="${c.id}" data-in="${member.has(c.id) ? 1 : 0}" title="${member.has(c.id) ? 'Already in this collection: click to remove it' : 'Add to this collection'}">
         <span class="status"></span>
-        <span class="name">${esc(c.name)} <span class="note">· ${c.count} games</span></span>
-        <span class="note">${member.has(c.id) ? '✓ in — click to remove' : 'add'}</span>
+        <span class="name">${esc(c.name)} <span class="note">· ${c.count} ${c.count === 1 ? 'game' : 'games'}</span></span>
+        <span class="note">${member.has(c.id) ? '✓ in · remove' : 'add'}</span>
       </button>`).join('')
       : '<div class="side-empty">No collections yet — create one with the button below.</div>';
     $$('[data-addcoll]', list).forEach((btn) => btn.addEventListener('click', async () => {

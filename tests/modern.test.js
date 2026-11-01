@@ -355,3 +355,16 @@ test('Emulators: second save button (arrow-up) does the same as Save to vault, D
   assert.match(app, /why\[key\]/, 'the page says why GitHub gave no answer');
   assert.match(app, /An empty answer never wipes a good one/);
 });
+
+test('Collection picker: New collection and Create are icons; counts read correctly and are not cut off', () => {
+  const js = read('public/modern.js'), app = read('public/app.js');
+  assert.ok(js.includes("['#addcoll-new', 'collection-new']")); assert.ok(js.includes('#collection-create'));
+  assert.match(app, /\$\{c\.count === 1 \? 'game' : 'games'\}/);
+  assert.match(app, /✓ in · remove/);
+});
+
+test('Phone width: Emulator cards and the details bar are kept inside the screen', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /@media \(max-width: 640px\) \{\s+body\.ui-modern \.emu-card/);
+  assert.match(css, /body\.ui-modern \.drawer-bar \{ max-width: 100vw;/);
+});
