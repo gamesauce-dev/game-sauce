@@ -399,7 +399,12 @@ router.get('/', (req, res) => {
     )`);
     params.q = String(q).trim();
   }
-  if (platform && platform !== 'all') { where.push('p.slug = @platform'); params.platform = platform; }
+  if (platform && platform !== 'all') {
+    // One slug, or several separated by commas (the Modern chip row can pick more than one platform).
+    const slugs = String(platform).split(',').map((s) => s.trim()).filter(Boolean).slice(0, 40);
+    if (slugs.length <= 1) { where.push('p.slug = @platform'); params.platform = slugs[0] || platform; }
+    else { where.push(`p.slug IN (${slugs.map((_, i) => '@plat' + i).join(',')})`); slugs.forEach((s, i) => { params['plat' + i] = s; }); }
+  }
   // A game can carry several genres in one field ("Shooter, Arcade"): match one of them, not the whole text.
   if (genre) { where.push("(',' || REPLACE(r.genre, ', ', ',') || ',') LIKE @genre"); params.genre = `%,${String(genre).replace(/[%_]/g, '').trim()},%`; }
   if (region) { where.push('r.region = @region'); params.region = region; }

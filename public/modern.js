@@ -112,7 +112,7 @@ export function go(view) {
   if (!isModern()) return;
   current = view;
   closePop();
-  if (view === 'library') setTimeout(syncTools, 120);
+  if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); }
   refreshTicker();
   document.body.dataset.mview = view;
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
@@ -263,6 +263,62 @@ function syncTools() {
   const f = $('#tl-fetch');
   if (f) { const txt = q('#bulk-enrich')?.textContent || ''; const busy = /Fetching/.test(txt); f.classList.toggle('is-busy', busy); f.classList.toggle('is-on', busy); f.title = busy ? txt.replace('✦', '').trim() + ' (click to stop)' : 'Fetch metadata'; }
 }
+
+
+/* ───────────── Platform chips ─────────────
+   Row 1: All, then a chip per family. Row 2 (only after a family is opened): that family's platforms as icon chips with counts.
+   Click a platform to pick it; click more to add them (several platforms at once); click a lit chip to drop it.
+   The state is the app's own (state.platform + state.extraPlatforms), so the sidebar, heading and fetch scope all agree. */
+let chipFamily = null;
+const chipSort = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
+const chosen = () => { const s = ctx.state(); return s.platform === 'all' ? [] : [s.platform, ...(s.extraPlatforms || [])]; };
+
+export function renderChips() {
+  const host = $('#chip-rows'); if (!host) return;
+  const items = (window.__platformsCache || []).filter((p) => p.count > 0);
+  if (!items.length) { host.innerHTML = ''; return; }
+  const fams = new Map();
+  for (const p of items) { const f = p.family || 'Others'; if (!fams.has(f)) fams.set(f, []); fams.get(f).push(p); }
+  const order = [...fams.keys()].sort(chipSort);
+  const picked = new Set(chosen());
+  const famOf = (slug) => items.find((p) => p.slug === slug)?.family || 'Others';
+  const total = items.reduce((n, p) => n + p.count, 0);
+  const famCount = (f) => fams.get(f).reduce((n, p) => n + p.count, 0);
+  const litFam = (f) => [...picked].some((s) => famOf(s) === f);
+  if (chipFamily && !fams.has(chipFamily)) chipFamily = null;
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  host.innerHTML = `
+    <div class="chip-row chip-fams" role="tablist">
+      <button class="chip${picked.size === 0 ? ' on' : ''}" data-chip-all title="All platforms">All <small>${total.toLocaleString()}</small></button>
+      ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${litFam(f) ? ' on' : ''}" data-chip-fam="${esc(f)}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
+    </div>
+    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}">${ctx.platformIconSvg(p, 16)}<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${p.count.toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+}
+
+async function chipChanged() {
+  renderChips();
+  await ctx.loadLibrary();
+  ctx.loadPlatforms();   // keeps the sidebar-side bookkeeping (counts, heading) in step
+}
+function setPlatforms(list) {
+  const s = ctx.state();
+  s.platform = list[0] || 'all';
+  s.extraPlatforms = list.slice(1);
+  s.libKey = null;
+}
+function chipClick(e) {
+  const all = e.target.closest('[data-chip-all]'), fam = e.target.closest('[data-chip-fam]'), pl = e.target.closest('[data-chip-plat]');
+  if (!all && !fam && !pl) return false;
+  if (all) { chipFamily = null; setPlatforms([]); chipChanged(); }
+  else if (fam) { const f = fam.dataset.chipFam; chipFamily = chipFamily === f ? null : f; renderChips(); }
+  else {
+    const slug = pl.dataset.chipPlat; const cur = chosen();
+    setPlatforms(cur.includes(slug) ? cur.filter((x) => x !== slug) : [...cur, slug]);
+    chipChanged();
+  }
+  return true;
+}
+document.addEventListener('click', (e) => { if (isModern() && e.target.closest('#chip-rows') && chipClick(e)) e.stopPropagation(); });
 
 /* ───────────── switching look ───────────── */
 export async function setUiMode(mode) {

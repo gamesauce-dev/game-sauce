@@ -97,3 +97,14 @@ test('database v22 carries games an admin hid earlier over to "hidden from every
   assert.equal(db.prepare('SELECT hidden_all FROM roms WHERE id = ?').get(z).hidden_all, 1);
   assert.ok(!titles(await call('/api/roms?limit=50', { token: memberTok })).includes('Zeta Game'));
 });
+
+test('the library accepts several platforms at once (comma separated) and a single slug still works', async () => {
+  rom('Chip One (USA).sfc', 'snes'); rom('Chip Two (USA).nes', 'nes'); rom('Chip Three (USA).md', 'genesis');
+  const t = (q) => call(`/api/roms?limit=100&${q}`).then((r) => r.body.items.map((i) => i.title).filter((x) => x.startsWith('Chip')).sort());
+  assert.deepEqual(await t('platform=snes'), ['Chip One'], 'one platform, as before');
+  assert.deepEqual(await t('platform=snes,nes'), ['Chip One', 'Chip Two'], 'two platforms');
+  assert.deepEqual(await t('platform=snes,nes,genesis'), ['Chip One', 'Chip Three', 'Chip Two']);
+  assert.deepEqual(await t('platform=all'), ['Chip One', 'Chip Three', 'Chip Two'], 'all still means everything');
+  assert.deepEqual(await t('platform=snes,,%20nes%20,'), ['Chip One', 'Chip Two'], 'stray commas and spaces are ignored');
+  assert.deepEqual(await t('platform=nosuch,snes'), ['Chip One'], 'an unknown slug in the list matches nothing, it does not break the query');
+});

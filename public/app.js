@@ -8,6 +8,7 @@ import * as modern from './modern.js';
 const state = {
   view: 'library',
   platform: 'all',
+  extraPlatforms: [],   // Modern chip row: more platforms picked alongside state.platform
   q: '',
   sort: 'title',
   density: 'comfortable',
@@ -296,6 +297,7 @@ document.addEventListener('click', (e) => {
 async function loadPlatforms() {
   const [{ items }, stats] = await Promise.all([api('/platforms'), api('/stats')]);
   window.__platformsCache = items; // names and colours for the heading above the tiles
+  try { modern.renderChips(); } catch { /* Modern chips are optional */ }
   refreshSourcePlatformPicker(items);
   renderLibHeading();
   const list = $('#platform-list');
@@ -355,6 +357,7 @@ async function loadPlatforms() {
       return;
     }
     state.platform = btn.dataset.platform;
+    state.extraPlatforms = [];   // the sidebar picks one platform; clear any chip-row extras
     loadPlatforms();
     if (state.view !== 'library') setView('library'); else loadLibrary();
   }));
@@ -384,13 +387,14 @@ function renderLibHeading() {
   if (!box) return;
   if (state.platform === 'all' || state.orphan || state.unmatched) { box.classList.add('hidden'); box.innerHTML = ''; return; }
   const p = (window.__platformsCache || []).find((x) => x.slug === state.platform);
-  const name = p ? p.name : state.platform;
+  const extra = (state.extraPlatforms || []).map((s) => (window.__platformsCache || []).find((x) => x.slug === s)?.name || s);
+  const name = [p ? p.name : state.platform, ...extra].join(' + ');
   box.classList.remove('hidden');
   box.innerHTML = `
     <span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>
     <h2>${esc(name)}</h2>
     <button class="btn btn-sm btn-ghost lib-clear" id="lib-clear-platform" title="Show every platform again">✕ All platforms</button>`;
-  $('#lib-clear-platform').onclick = () => { state.platform = 'all'; loadPlatforms(); loadLibrary(); };
+  $('#lib-clear-platform').onclick = () => { state.platform = 'all'; state.extraPlatforms = []; loadPlatforms(); loadLibrary(); };
 }
 
 function activeFilterChips() {
@@ -463,6 +467,7 @@ async function loadLibrary() {
   // The overview strip + recent row only make sense on the unfiltered library
   // home (no search, no filters). Any active filter hides them so the grid
   // owns the full height.
+  if (state.platform === 'all') state.extraPlatforms = [];
   const isHome = !state.q && state.platform === 'all' && !state.tag && !state.genre &&
     !state.favorite && !state.source && !state.missing && !state.datStatus &&
     !state.hidden && !state.system && !orphanOnly && !unmatchedOnly;
@@ -475,7 +480,7 @@ async function loadLibrary() {
   const PAGE = 200; // server caps at 500; further pages load on scroll (see below)
   const params = new URLSearchParams({ sort: state.sort, limit: String(PAGE) });
   if (state.q && !orphanOnly && !unmatchedOnly) params.set('q', state.q);
-  if (state.platform !== 'all' && !orphanOnly && !unmatchedOnly) params.set('platform', state.platform);
+  if (state.platform !== 'all' && !orphanOnly && !unmatchedOnly) params.set('platform', [state.platform, ...(state.extraPlatforms || [])].join(','));
   if (state.tag) params.set('tag', state.tag);
   if (state.genre) params.set('genre', state.genre);
   if (state.favorite) params.set('favorite', '1');
@@ -2833,7 +2838,14 @@ async function stopEnrichJob() {
 async function bulkEnrich({ onlyMissingCovers = false } = {}) {
   try {
     // With a platform selected in the Library, only that platform's games are looked up.
-    const platform = state.view === 'library' && state.platform && state.platform !== 'all' ? state.platform : '';
+    const picked = state.view === 'library' && state.platform && state.platform !== 'all' ? [state.platform, ...(state.extraPlatforms || [])] : [];
+    // The server looks up one platform per run. With several chips picked, ask which scope to use rather than quietly doing only the first.
+    let platform = picked[0] || '';
+    if (picked.length > 1) {
+      const choice = await confirmChoice({ title: 'Fetch metadata for which games?', body: `You have ${picked.length} platforms selected (${picked.map((s) => s.toUpperCase()).join(', ')}). A metadata run covers one platform or the whole library.`, choices: [{ id: 'first', label: `Just ${picked[0].toUpperCase()}` }, { id: 'all', label: 'The whole library' }] });
+      if (!choice) return;
+      platform = choice === 'all' ? '' : picked[0];
+    }
     const j = await api('/roms/bulk/enrich-job', { method: 'POST', body: JSON.stringify({ only_missing_covers: onlyMissingCovers, platform }) });
     enrichWasRunning = true;
     renderEnrichJob(j);
@@ -3499,7 +3511,7 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  modern.initModern({ api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
+  modern.initModern({ api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
   api('/prefs').then((p) => { state.prefs = p || {}; return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 

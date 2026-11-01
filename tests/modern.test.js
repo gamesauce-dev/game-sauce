@@ -58,7 +58,7 @@ test('Modern is a separate layer: Classic files carry no Modern rules, and every
   assert.match(css, /body\.ui-modern/);
   // outside the light palette and the two "hidden unless modern" lines, no selector may apply without .ui-modern
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r) => r.split('{')[0].trim()).filter(Boolean);
-  const loose = rules.filter((sel) => !/ui-modern/.test(sel) && !/^\.(modern-bar|modern-home)/.test(sel) && !/^@media/.test(sel) && !/^\.m[bh]-/.test(sel));
+  const loose = rules.filter((sel) => !/ui-modern/.test(sel) && !/^\.(modern-bar|modern-home|chip-rows)/.test(sel) && !/^@media/.test(sel) && !/^\.m[bh]-/.test(sel));
   assert.deepEqual(loose, [], 'unscoped Modern selectors would leak into Classic');
   assert.doesNotMatch(read('public/styles.css'), /ui-modern/);
 });
@@ -130,4 +130,16 @@ test('Library tools in the bar drive the Classic controls instead of duplicating
   assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/);
   // play-only accounts get the cut-down set: no sort, hidden, select, more
   assert.match(js, /po \? '' :/);
+});
+
+test('the platform chip row: families, then the platforms of the opened family, several at once', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css'), html = read('public/index.html'), app = read('public/app.js');
+  assert.match(html, /id="chip-rows"/);
+  assert.match(js, /data-chip-all/); assert.match(js, /data-chip-fam=/); assert.match(js, /data-chip-plat=/);
+  assert.match(js, /cur\.includes\(slug\) \? cur\.filter/, 'a lit chip is dropped again when clicked');
+  assert.match(app, /\[state\.platform, \.\.\.\(state\.extraPlatforms \|\| \[\]\)\]\.join\(','\)/, 'the picked platforms go to the server as one list');
+  assert.match(app, /state\.extraPlatforms = \[\];\s*\/\/ the sidebar picks one platform/, 'choosing from the Classic sidebar clears the extras');
+  assert.match(app, /confirmChoice\(\{ title: 'Fetch metadata for which games\?'/, 'with several platforms picked, a metadata run asks its scope instead of guessing');
+  assert.match(css, /body\.ui-modern\[data-mview="library"\] \.chip-rows \{ display: flex/);
+  assert.match(css, /^\.chip-rows \{ display: none; \}/m, 'hidden everywhere else, so Classic never shows it');
 });

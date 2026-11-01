@@ -99,3 +99,17 @@ body.ui-modern #tl-fetch.is-busy .tl-sp { display: inline-flex; }
 body.ui-modern .mb-pop { position: fixed; z-index: 70; min-width: 13rem; padding: 0.4rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 0.8rem; box-shadow: var(--shadow); }
 body.ui-modern .mb-pop .mb-menu-item small { display: block; color: var(--dim); font-size: 0.72rem; }
 body.ui-modern .mb-menu-item.on { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* ── Platform chips ── */
+.chip-rows { display: none; }
+body.ui-modern[data-mview="library"] .chip-rows { display: flex; flex-direction: column; gap: 0.45rem; margin: 0 0 0.7rem; }
+body.ui-modern .chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+body.ui-modern .chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2rem; padding: 0 0.75rem; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
+body.ui-modern .chip small { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
+body.ui-modern .chip:hover { color: var(--text); background: var(--panel-2); }
+body.ui-modern .chip.open { color: var(--text); border-color: var(--line-2); }
+body.ui-modern .chip.on { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+body.ui-modern .chip.plat { height: 2.1rem; border-radius: 0.65rem; padding: 0 0.7rem 0 0.55rem; }
+body.ui-modern .chip.plat .plat-ico { width: 1rem; height: 1rem; }
+body.ui-modern .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+body.ui-modern .chip-plats { padding: 0.45rem 0.5rem; background: color-mix(in srgb, var(--panel) 60%, transparent); border: 1px dashed var(--line); border-radius: 0.8rem; }
