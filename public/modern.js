@@ -526,7 +526,7 @@ const ICON_MAP = [
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
   ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
-  ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
+  ['[data-act="hidegames"][data-hidden="0"]', 'hidden'], ['[data-act="hidegames"][data-hidden="1"]', 'visible'], ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
   ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],

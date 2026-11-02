@@ -46,7 +46,7 @@ function query({ platform = '', includeHidden = false } = {}) {
   const where = [];
   const args = [];
   if (slugs.length) { where.push(`p.slug IN (${slugs.map(() => '?').join(',')})`); args.push(...slugs); }
-  if (!includeHidden) where.push('r.hidden_all = 0');
+  if (!includeHidden) where.push('r.hidden_all = 0 AND r.source_hidden = 0');
   return db.prepare(`
     SELECT r.id, r.title, r.filename, r.size_bytes, r.region, r.revision, r.release_year, r.developer, r.publisher, r.genre, r.players,
            r.rating, r.description, r.cover_path, r.meta_source, r.dat_status, r.crc32, r.md5, r.sha1, r.is_system, r.hidden_all,

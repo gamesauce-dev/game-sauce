@@ -1925,11 +1925,13 @@ async function loadSourcesNow() {
         <span class="source-name">${esc(s.name)}</span>
         ${s.exists ? '' : '<span class="pill bad">folder not reachable</span>'}
         ${s.platform_hint ? `<span class="pill accent plat-pill">${platformIconSvg((window.__platformsCache || []).find((x) => x.slug === s.platform_hint) || { slug: s.platform_hint }, 14)}${esc(s.platform_hint)}</span>` : ''}
-        ${s.enabled ? '' : '<span class="pill">disabled</span>'}
+        ${s.enabled ? '' : '<span class="pill" title="Scanning is paused for this source (its games are still in the library)">scanning paused</span>'}
+        ${s.hide_games ? '<span class="pill warn" title="Its games are left out of the library, search and counts until you show them again">games hidden</span>' : ''}
         ${s.last_scan_error ? `<span class="pill warn">${esc(s.last_scan_error)}</span>` : ''}
         <div class="source-actions">
           <button class="btn btn-sm" data-act="scan">↻ Scan</button>
-          <button class="btn btn-sm" data-act="toggle" data-enabled="${s.enabled ? 1 : 0}">${s.enabled ? 'Disable' : 'Enable'}</button>
+          <button class="btn btn-sm" data-act="toggle" data-enabled="${s.enabled ? 1 : 0}" title="${s.enabled ? 'Pause scanning this source (its games stay in the library)' : 'Resume scanning this source'}">${s.enabled ? 'Disable' : 'Enable'}</button>
+          <button class="btn btn-sm" data-act="hidegames" data-hidden="${s.hide_games ? 1 : 0}" title="${s.hide_games ? 'Show this source\'s games in the library again' : 'Hide this source\'s games from the library, search and counts (nothing is deleted; show them again any time)'}">${s.hide_games ? 'Show games' : 'Hide games'}</button>
           <button class="btn btn-sm btn-danger" data-act="remove">Remove</button>
         </div>
       </div>
@@ -2001,6 +2003,15 @@ async function loadSourcesNow() {
         await api(`/sources/${id}`, { method: 'PATCH', body: JSON.stringify({ enabled: isOff }) });
         toast(isOff ? 'Source enabled' : 'Source disabled');
         loadSources();
+      } catch (err) { toast(err.message, true); }
+    });
+
+    $('[data-act="hidegames"]', card).addEventListener('click', async (e) => {
+      const hiding = e.currentTarget.dataset.hidden !== '1';
+      try {
+        await api(`/sources/${id}`, { method: 'PATCH', body: JSON.stringify({ hide_games: hiding }) });
+        toast(hiding ? 'This source\'s games are hidden from the library' : 'This source\'s games are showing again');
+        loadSources(); loadPlatforms(); loadLibrary();
       } catch (err) { toast(err.message, true); }
     });
 

@@ -151,7 +151,7 @@ its CDN while you play; the ROM never leaves your server except to your own brow
    you refresh the page during a scan the bar comes back.
 
 Each source card shows its ROM count, size, missing count and last scan, with **↻ Scan**,
-**Disable/Enable** and **Remove** (keep the ROM rows, or remove them too). A scan never aborts
+**Disable/Enable** (pauses scanning only: the games stay in the library), **Hide games / Show games** (leaves the source's games out of the library, search and counts until you show them again; nothing is deleted) and **Remove** (keep the ROM rows, or remove them too). A scan never aborts
 because of one bad file: failures are counted and the first error is reported.
 
 Drives that vanish are flagged **missing**, not deleted. Reconnect and rescan; the flag clears.

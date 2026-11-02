@@ -435,15 +435,15 @@ router.get('/', (req, res) => {
   // they can be selected, hidden or unhidden there); otherwise they stay out of the library.
   // A game an admin hid from everyone is invisible to members, always. An admin finds those under Hidden.
   const isAdminUser = req.user?.role === 'admin';
-  if (!isAdminUser) where.push('r.hidden_all = 0');
+  if (!isAdminUser) where.push('r.hidden_all = 0 AND r.source_hidden = 0');
   if (req.query.system === 'only') where.push('r.is_system = 1');
   else {
     if (req.query.system !== 'all') where.push('r.is_system = 0');
     // Hiding is personal: only the signed-in person's own hidden games are left out (others still see them).
     const mine = 'EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid)';
-    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(isAdminUser ? `(${mine} OR r.hidden_all = 1)` : mine);
+    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(isAdminUser ? `(${mine} OR r.hidden_all = 1 OR r.source_hidden = 1)` : mine);
     else if (req.query.hidden === 'all') { /* no clause */ }
-    else where.push('NOT ' + mine + (isAdminUser ? ' AND r.hidden_all = 0' : ''));
+    else where.push('NOT ' + mine + (isAdminUser ? ' AND r.hidden_all = 0 AND r.source_hidden = 0' : ''));
   }
   // Cover and metadata filters (used by the clickable totals on Settings > Stats). 'matched' = a provider or a DAT matched it;
   // the rest are names taken from the file.
@@ -532,8 +532,8 @@ router.get('/', (req, res) => {
 
 router.get('/facets', (req, res) => {
   // Members' counts leave out games an admin hid from everyone.
-  const vis = req.user?.role === 'admin' ? '' : ' AND r.hidden_all = 0';
-  const visOnly = req.user?.role === 'admin' ? '' : ' WHERE hidden_all = 0';
+  const vis = req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0';
+  const visOnly = req.user?.role === 'admin' ? ' WHERE source_hidden = 0' : ' WHERE hidden_all = 0 AND source_hidden = 0';
   const platforms = db.prepare(`
     SELECT p.slug, p.name, p.short_name, p.accent, p.family, p.manufacturer,
            p.generation, COUNT(r.id) AS count,
@@ -600,7 +600,7 @@ router.get('/recently-played', (req, res) => {
     JOIN roms r ON r.id = d.rom_id
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
-    WHERE d.kind = 'play' AND d.user_id = @uid AND r.hidden_all = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
+    WHERE d.kind = 'play' AND d.user_id = @uid AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
     GROUP BY r.id
     ORDER BY last_play_id DESC
     LIMIT @lim
@@ -689,7 +689,7 @@ router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJ
 
 // A game hidden from everyone does not exist for members: every route that names it answers 404 (admins pass).
 router.param('id', (req, res, next, id) => {
-  if (req.user?.role !== 'admin' && /^\d+$/.test(id) && db.prepare('SELECT 1 FROM roms WHERE id = ? AND hidden_all = 1').get(id)) return res.status(404).json({ error: 'ROM not found' });
+  if (req.user?.role !== 'admin' && /^\d+$/.test(id) && db.prepare('SELECT 1 FROM roms WHERE id = ? AND (hidden_all = 1 OR source_hidden = 1)').get(id)) return res.status(404).json({ error: 'ROM not found' });
   next();
 });
 

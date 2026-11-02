@@ -164,9 +164,9 @@ export function createApp() {
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count,
-               COUNT(CASE WHEN ${playableSql()} AND r.hidden_all = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
-               COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
-        FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? '' : ' AND r.hidden_all = 0'}
+               COUNT(CASE WHEN ${playableSql()} AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
+               COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
+        FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
       `).all()
     });
@@ -288,7 +288,7 @@ export function createApp() {
         SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
                COUNT(DISTINCT platform_id) AS platforms,
                (SELECT COUNT(*) FROM favorites WHERE user_id = ${mine == null ? -1 : mine}) AS favorites
-        FROM roms${req.user?.role === 'admin' ? '' : ' WHERE hidden_all = 0'}
+        FROM roms${req.user?.role === 'admin' ? ' WHERE source_hidden = 0' : ' WHERE hidden_all = 0 AND source_hidden = 0'}
       `).get(),
       mine: mine == null ? { favorites: 0, downloads: 0 } : {
         favorites: db.prepare('SELECT COUNT(*) AS n FROM favorites WHERE user_id = ?').get(mine).n,
@@ -299,7 +299,7 @@ export function createApp() {
                p.short_name AS platform_short, p.accent AS platform_accent,
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id
-        WHERE r.hidden_all = 0
+        WHERE r.hidden_all = 0 AND r.source_hidden = 0
         ORDER BY r.created_at DESC LIMIT 24
       `).all().map((r) => ({ ...r, cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : null })),
       downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE kind = \'download\'').get().n,

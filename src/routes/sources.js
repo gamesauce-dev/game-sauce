@@ -1,4 +1,5 @@
 import express from 'express';
+import { clearDuplicateCache } from '../lib/duplicates.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
@@ -12,6 +13,7 @@ const shape = (s) => ({
   ...s,
   extra_paths: db.prepare('SELECT id, path FROM source_paths WHERE source_id = ? ORDER BY id').all(s.id).map((r) => ({ ...r, exists: isDir(r.path) })),
   enabled: Boolean(s.enabled),
+  hide_games: Boolean(s.hide_games),
   watch: Boolean(s.watch),
   recursive: Boolean(s.recursive),
   exists: (() => { try { return fs.statSync(s.path).isDirectory(); } catch { return false; } })(),
@@ -113,6 +115,12 @@ router.patch('/:id', (req, res) => {
       params[field] = req.body[field] ? 1 : 0;
     }
   }
+  if (req.body.hide_games !== undefined) {
+    const v = req.body.hide_games ? 1 : 0;
+    sets.push('hide_games = @hide_games'); params.hide_games = v;
+    db.prepare("UPDATE roms SET source_hidden = ? WHERE source_id = ?").run(v, src.id);
+    clearDuplicateCache();
+  }
   if (sets.length) db.prepare(`UPDATE sources SET ${sets.join(', ')} WHERE id = @id`).run(params);
   res.json(shape(db.prepare('SELECT * FROM sources WHERE id = ?').get(src.id)));
 });
@@ -122,6 +130,7 @@ router.delete('/:id', (req, res) => {
   if (!src) return res.status(404).json({ error: 'Source not found' });
 
   const removeRoms = req.query.remove_roms === '1';
+  db.prepare('UPDATE roms SET source_hidden = 0 WHERE source_id = ?').run(src.id);
   if (removeRoms) {
     // Only the catalogue entries go; the files on disk are never touched for an
     // in-place source. That is the whole point of scanning in place.

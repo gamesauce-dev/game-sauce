@@ -354,10 +354,10 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
     const lost = db.prepare('SELECT id FROM roms WHERE source_id IS NULL AND in_place = 1 AND source_path = ?').get(file.path);
     if (lost) {
       db.prepare(`
-        UPDATE roms SET source_id = ?, platform_id = ?, size_bytes = ?, scanned_size = ?, scanned_mtime = ?, missing = 0, last_seen_at = ?,
+        UPDATE roms SET source_id = ?, source_hidden = ?, platform_id = ?, size_bytes = ?, scanned_size = ?, scanned_mtime = ?, missing = 0, last_seen_at = ?,
           storage_path = ?, source_path = ?, updated_at = datetime('now')
         WHERE id = ?
-      `).run(sourceId, platformRow.id, file.size, file.size, file.mtimeMs, now, file.path, file.path, lost.id);
+      `).run(sourceId, source.hide_games ? 1 : 0, platformRow.id, file.size, file.size, file.mtimeMs, now, file.path, file.path, lost.id);
       touched.add(lost.id);
       updated++;
       continue;
@@ -411,12 +411,12 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
       INSERT INTO roms (
         platform_id, title, sort_title, filename, storage_path, source_path,
         source_id, in_place, size_bytes, scanned_size, scanned_mtime, last_seen_at,
-        region, revision, release_year, crc32, md5, sha1, meta_source
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'filename')
+        region, revision, release_year, crc32, md5, sha1, meta_source, source_hidden
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'filename', ?)
     `).run(
       platformRow.id, parsed.title, sortTitle(parsed.title), file.filename,
       file.path, file.path, sourceId, file.size, file.size, file.mtimeMs, now,
-      parsed.region, parsed.revision, parsed.year, hashes.crc32, hashes.md5, hashes.sha1
+      parsed.region, parsed.revision, parsed.year, hashes.crc32, hashes.md5, hashes.sha1, source.hide_games ? 1 : 0
     );
 
     const romId = Number(info.lastInsertRowid);

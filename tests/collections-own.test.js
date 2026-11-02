@@ -76,7 +76,7 @@ test('the v23 migration keeps every collection and its games, giving them to the
     INSERT INTO meta VALUES ('schema_version', '22');`);
   old.pragma('foreign_keys = ON');
   const src = fs.readFileSync(new URL('../src/migrations.js', import.meta.url), 'utf8');
-  const block = src.slice(src.indexOf('/* ── v23'));
+  const block = src.slice(src.indexOf('/* ── v23'), src.indexOf('/* ── v24'));   // only the v23 block
   const run = new Function('db', block.replace(/^\/\*[\s\S]*?\*\/\n/, '')); // the v23 block only
   run(old);
   assert.equal(old.prepare('SELECT COUNT(*) n FROM collection_roms').get().n, 3, 'no game link was lost');
