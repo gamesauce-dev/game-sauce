@@ -3903,8 +3903,37 @@ function initExportBox() {
   $('#export-covers').onclick = () => { location.href = '/api/roms/export/covers.zip?' + qs(); };
 }
 
+function initCoverImport() {
+  const zip = $('#covers-zip'), out = $('#covers-result'), applyBtn = $('#covers-apply');
+  if (!zip || zip.dataset.ready) return; zip.dataset.ready = '1';
+  const run = async (apply) => {
+    const f = zip.files?.[0];
+    if (!f) return toast('Choose a zip file first', true);
+    const fd = new FormData();
+    fd.append('zip', f); fd.append('platform', $('#names-platform')?.value || '');
+    if ($('#covers-replace').checked) fd.append('replace', '1');
+    if (apply) fd.append('apply', '1');
+    out.textContent = apply ? 'Saving the pictures…' : 'Reading the zip…';
+    applyBtn.disabled = true;
+    try {
+      const r = await api('/roms/bulk/import-covers', { method: 'POST', body: fd });
+      const n = (v) => Number(v || 0).toLocaleString();
+      out.innerHTML = apply
+        ? `<b>Applied.</b> ${n(r.set)} cover${r.set === 1 ? '' : 's'} saved${r.not_image ? `, ${n(r.not_image)} skipped (not a JPEG, PNG or WebP picture)` : ''}${r.unreadable ? `, ${n(r.unreadable)} could not be read` : ''}.`
+        : `${n(r.pictures)} picture${r.pictures === 1 ? '' : 's'} in the zip: ${n(r.matched)} match a game, ${n(r.will_set)} would be saved${r.already_have ? `, ${n(r.already_have)} games already have a cover (tick the box to replace them)` : ''}${r.not_image ? `, ${n(r.not_image)} cannot be used (only JPEG, PNG and WebP pictures are accepted: GIF and SVG are refused because they can carry scripts)` : ''}${r.unmatched ? `, ${n(r.unmatched)} match no game${r.unmatched_examples?.length ? ` (for example ${r.unmatched_examples.map(esc).join(', ')})` : ''}` : ''}.`;
+      applyBtn.disabled = apply || !r.will_set;
+      if (apply) { toast(`${r.set} cover${r.set === 1 ? '' : 's'} saved`); loadLibrary(); }
+    } catch (err) { out.textContent = err.message; toast(err.message, true); }
+  };
+  $('#covers-preview').onclick = () => run(false);
+  applyBtn.onclick = () => run(true);
+  zip.onchange = () => { applyBtn.disabled = true; out.textContent = ''; };
+  $('#covers-replace').onchange = () => { applyBtn.disabled = true; };
+}
+
 function initNamesPanel() {
   initExportBox();
+  initCoverImport();
   const sel = $('#names-platform');
   if (!sel.options.length) sel.innerHTML = (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
   const out = $('#names-result'); const applyBtn = $('#names-apply');

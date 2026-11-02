@@ -12,6 +12,8 @@ import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
 import { csvLines, coverEntries, zipChunks, exportCounts } from '../lib/export.js';
+import { listZip, planCovers, applyCovers } from '../lib/coverzip.js';
+import os from 'node:os';
 import { clearDuplicateCache } from '../lib/duplicates.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
@@ -622,6 +624,26 @@ router.get('/export/covers.zip', requireAdmin, (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="game-sauce-covers-${stamp}.zip"`);
   try { for (const chunk of zipChunks(entries)) res.write(chunk); } catch (err) { return res.destroy(err); }
   res.end();
+});
+
+// Import covers (admin): a zip of pictures named after games (the zip Export covers writes). Preview first, then apply.
+// The zip goes to a temp file on disk and is read one picture at a time, so a big zip never has to fit in memory.
+const coverZipUpload = multer({ dest: path.join(os.tmpdir(), 'gamesauce-coverzip'), limits: { fileSize: 4 * 1024 * 1024 * 1024 - 1 } });
+router.post('/bulk/import-covers', requireAdmin, coverZipUpload.single('zip'), (req, res, next) => {
+  const file = req.file?.path;
+  try {
+    if (!file) return res.status(400).json({ error: 'Choose a zip file' });
+    const platform = String(req.body?.platform || '').trim();
+    if (platform && !db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Unknown platform' });
+    const replace = req.body?.replace === '1';
+    let entries;
+    try { entries = listZip(file); } catch (e) { return res.status(400).json({ error: e.message }); }
+    const plan = planCovers(entries, { platform, replace });
+    const out = { applied: false, ...plan.counts, replace, unmatched_examples: plan.unmatchedNames };
+    if (req.body?.apply === '1') { const st = applyCovers(file, plan); Object.assign(out, { applied: true, set: st.set, unreadable: st.unreadable, not_image: out.not_image + st.not_image }); }
+    res.json(out);
+  } catch (err) { next(err); }
+  finally { if (file) fs.unlink(file, () => {}); }
 });
 
 // Name list (CSV): rename ROMs on one platform from a file-name -> game-name table. Preview first, then apply.

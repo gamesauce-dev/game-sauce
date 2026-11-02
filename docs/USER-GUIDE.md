@@ -347,3 +347,7 @@ shows while you hold, and no other button is intercepted, so the game never lose
 ## Exporting your game data
 
 Settings > Library tools > Game names (CSV) (admin) has an **Export your game data** box. Pick a platform (or all), then **Export games (CSV)** for one row per game with its file name, title, platform, where the file lives, the editable details and the checksums, or **Export covers (zip)** for the cover pictures, each named after its game's file so they pair up with the CSV rows. Nothing on the server is changed. The first two columns (`rom_name`, `short_game_name`) are what the import above reads, so you can fix names in a spreadsheet and import the file again.
+
+### Bringing an export back
+
+The CSV import reads every column the export writes, so you can edit titles, developers, genres, years, descriptions or tags in a spreadsheet and import the file again (a filled cell replaces what the game has; an empty cell leaves it alone). To bring covers back, use **Import cover pictures** in the same panel with the zip from **Export covers**: each picture goes to the game with the matching file name on the matching platform. Preview shows what would change, and games that already have a cover are skipped unless you tick the box. Only JPEG, PNG and WebP pictures are accepted.

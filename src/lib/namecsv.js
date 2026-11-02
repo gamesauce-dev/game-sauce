@@ -32,14 +32,29 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   const col = (n) => head.indexOf(String(n || '').trim().toLowerCase());
   const iRom = col(romCol), iName = col(nameCol), iYear = col(yearCol), iMaker = col(makerCol);
   const iBios = col('is_bios'), iDev = col('is_device'), iArc = col('is_arcade'), iClone = col('clone_of');
+  // The columns Settings > Game names > Export writes, so an exported file can be edited and imported again. Any of them may be missing.
+  const FIELD_COLS = { developer: col('developer'), publisher: col('publisher'), genre: col('genre'), region: col('region'), revision: col('revision'), players: col('players'), rating: col('rating'), description: col('description') };
+  const iTags = col('tags'), iSysItem = col('system_item');
+  const hasDetails = Object.values(FIELD_COLS).some((i) => i >= 0) || iTags >= 0;
   const yes = (v) => /^(yes|y|true|1)$/i.test(String(v || '').trim());
   if (iRom < 0) throw Object.assign(new Error(`No "${romCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
   if (iName < 0) throw Object.assign(new Error(`No "${nameCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
 
+  // What one row says about the game's details. An EMPTY cell never wipes a value the game already has: only filled cells count.
+  const text = (r, i) => (i >= 0 ? decodeEntities(String(r[i] ?? '')).trim() : '');
+  const detailsOf = (r) => {
+    const d = {};
+    for (const [f, i] of Object.entries(FIELD_COLS)) { const v = text(r, i); if (v !== '') d[f] = v; }
+    if (d.players !== undefined) { const p = Math.round(Number(d.players)); if (Number.isFinite(p) && p >= 1 && p <= 16) d.players = p; else delete d.players; }
+    if (d.rating !== undefined) { const x = Number(d.rating); if (Number.isFinite(x) && x >= 0 && x <= 5) d.rating = x; else delete d.rating; }
+    const tags = text(r, iTags); if (tags) d.tags = [...new Set(tags.split(/[;|]/).map((t) => t.trim()).filter(Boolean))].slice(0, 40);
+    return d;
+  };
+
   const map = new Map();
   for (const r of rows.slice(1)) {
     const k = keyOf(r[iRom]); const title = decodeEntities(String(r[iName] || '')).trim();
-    if (k && title && !map.has(k)) map.set(k, { title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
+    if (k && title && !map.has(k)) map.set(k, { details: detailsOf(r), title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
     // (e.g. the CPS3 sets share a BIOS but are playable). Otherwise BIOS/device, or is_arcade filled in as not-yes, means System.
     system: !(iArc >= 0 && yes(r[iArc])) && ((iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) || (iArc >= 0 && String(r[iArc] || '').trim() !== '')) });
   }
@@ -68,6 +83,20 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
     const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
       developer = COALESCE(developer, ?), updated_at = datetime('now') WHERE id = ?`);
     db.transaction(() => { for (const h of hits) upd.run(h.title, sortTitle(h.title), h.year, h.maker, h.id); })();
+    // The details window's fields, from the same rows. The CSV is the edited truth, so a filled cell replaces what the game has;
+    // an empty cell leaves it alone. Tags are replaced as a set only when the row has any.
+    if (hasDetails) {
+      const setF = (f) => db.prepare(`UPDATE roms SET ${f} = ?, updated_at = datetime('now') WHERE id = ?`);
+      const stmts = Object.fromEntries(Object.keys(FIELD_COLS).map((f) => [f, setF(f)]));
+      const delTags = db.prepare('DELETE FROM rom_tags WHERE rom_id = ?'), addTag = db.prepare('INSERT INTO tags (name) VALUES (?) ON CONFLICT(name) DO NOTHING');
+      const findTag = db.prepare('SELECT id FROM tags WHERE name = ?'), link = db.prepare('INSERT OR IGNORE INTO rom_tags (rom_id, tag_id) VALUES (?, ?)');
+      db.transaction(() => {
+        for (const h of hits) {
+          for (const [f, v] of Object.entries(h.details || {})) { if (f === 'tags') continue; stmts[f].run(v, h.id); }
+          if (h.details?.tags?.length) { delTags.run(h.id); for (const t of h.details.tags) { addTag.run(t); link.run(h.id, findTag.get(t).id); } }
+        }
+      })();
+    }
   }
-  return { applied: apply, system_files: systemHits.length, hid: apply && hideSystem ? systemHits.length : 0, flagged: apply && flagSystem ? systemHits.length : 0, has_system_columns: iBios >= 0 || iDev >= 0 || iArc >= 0, csv_rows: rows.length - 1, roms_on_platform: roms.length, matched: hits.length, unmatched, sample: hits.slice(0, 8).map(({ filename, from, title }) => ({ filename, from, title })) };
+  return { applied: apply, system_files: systemHits.length, hid: apply && hideSystem ? systemHits.length : 0, flagged: apply && flagSystem ? systemHits.length : 0, has_system_columns: iBios >= 0 || iDev >= 0 || iArc >= 0, csv_rows: rows.length - 1, roms_on_platform: roms.length, matched: hits.length, unmatched, detail_columns: Object.entries(FIELD_COLS).filter(([, i]) => i >= 0).map(([f]) => f).concat(iTags >= 0 ? ['tags'] : []), details_rows: hits.filter((h) => Object.keys(h.details || {}).length).length, sample: hits.slice(0, 8).map(({ filename, from, title }) => ({ filename, from, title })) };
 }

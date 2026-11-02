@@ -519,7 +519,7 @@
 
       <div class="panel hidden" id="mod-names">
         <h3>Game names (CSV) <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">Many romsets (FinalBurn Neo, MAME…) are named like <code>sf2ue.zip</code>, which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then <b>Fetch metadata</b> can find their covers. Preview shows what would change before anything is saved. Files are never touched.</p>
+        <p class="hint" style="margin-top:0">Many romsets (FinalBurn Neo, MAME…) are named like <code>sf2ue.zip</code>, which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then <b>Fetch metadata</b> can find their covers. If the file also has the columns Export writes (developer, publisher, genre, region, revision, year, players, rating, description, tags), those are imported too: a filled cell replaces what the game has, an empty cell leaves it alone. Preview shows what would change before anything is saved. Files are never touched.</p>
         <div class="edit-form" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
           <label class="field"><span>Platform</span><select id="names-platform" class="select"></select></label>
           <label class="field"><span>CSV file</span><input type="file" id="names-file" accept=".csv,text/csv" class="file-input" /></label>
@@ -529,6 +529,18 @@
         <label class="policy-row" style="margin-top:10px"><input type="checkbox" id="names-flag-system" checked /> <span><b>Mark BIOS, device and non-arcade entries as System</b> (CSV columns <code>is_bios</code>, <code>is_device</code> = yes, or <code>is_arcade</code> filled in and not yes). System entries are <b>hidden for everyone</b> in the main library (only an admin can mark or unmark them), kept and downloadable, found under the <b>⚙ System</b> filter, and skipped by Fetch metadata.</span></label>
         <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="names-preview">Preview</button><button class="btn btn-primary" id="names-apply" disabled>Apply names</button></div>
         <p class="hint" id="names-result" style="margin-top:10px"></p>
+
+        <div class="export-box">
+          <h4>Import cover pictures</h4>
+          <p class="hint" style="margin-top:0">Choose a zip of pictures named after your games, such as the one Export covers makes. A picture <code>snes/Super Mario World (USA).png</code> goes to the SNES game whose file is <code>Super Mario World (USA).sfc</code>; a picture with no folder uses the platform picked above. Only JPEG, PNG and WebP are accepted. Preview shows what would change before anything is saved. Pictures you bring in are kept as your own covers, so a later "Fetch metadata" will not replace them.</p>
+          <div class="export-row">
+            <label class="field"><span>Zip of covers</span><input type="file" id="covers-zip" accept=".zip,application/zip" class="file-input" /></label>
+            <label class="policy-row"><input type="checkbox" id="covers-replace" /> <span>Also replace covers games already have</span></label>
+            <button class="btn" id="covers-preview" title="Show what would change">Preview</button>
+            <button class="btn btn-primary" id="covers-apply" disabled title="Save the pictures">Apply covers</button>
+          </div>
+          <p class="hint" id="covers-result" style="margin-top:8px"></p>
+        </div>
 
         <div class="export-box">
           <h4>Export your game data</h4>
