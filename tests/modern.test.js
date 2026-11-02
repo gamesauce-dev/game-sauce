@@ -507,3 +507,11 @@ test('play-only: platform pills count only playable games; no Add ROMs offered; 
   assert.match(css, /\.export-row \.policy-row \{ margin: 0; align-items: center; min-height: 2\.4rem;/);
   assert.match(html, /id="covers-platform"/);
 });
+
+test('the CSV import takes an optional cover zip and shows a combined preview', () => {
+  const html = read('public/index.html'), app = read('public/app.js'), r = read('src/routes/roms.js');
+  assert.match(html, /id="names-covers-zip"/); assert.match(html, /id="names-covers-replace"/);
+  assert.match(app, /fd\.append\('zip', zf\)/); assert.match(app, /<b>Covers:<\/b>/);
+  assert.match(r, /\.fields\(\[\{ name: 'csv', maxCount: 1 \}, \{ name: 'zip', maxCount: 1 \}\]\)/);
+  assert.match(r, /planCoversForCsv\(entries, hits/);
+});

@@ -3955,19 +3955,26 @@ function initNamesPanel() {
     const f = $('#names-file').files?.[0];
     if (!f) return toast('Choose a CSV file first', true);
     const fd = new FormData();
-    fd.append('csv', f); fd.append('platform', sel.value); fd.append('rom_col', $('#names-rom-col').value); fd.append('name_col', $('#names-name-col').value);
+    fd.append('csv', f); fd.append('platform', sel.value);
+    const zf = $('#names-covers-zip')?.files?.[0]; if (zf) { fd.append('zip', zf); if ($('#names-covers-replace')?.checked) fd.append('replace_covers', '1'); } fd.append('rom_col', $('#names-rom-col').value); fd.append('name_col', $('#names-name-col').value);
     if (apply) fd.append('apply', '1');
     if ($('#names-flag-system')?.checked) fd.append('flag_system', '1');
     try {
       const r = await api('/roms/bulk/import-names', { method: 'POST', body: fd });
-      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games on this platform match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS, device or non-arcade entries${r.applied && r.flagged ? ' and were marked as System' : $('#names-flag-system')?.checked ? ' and will be marked as System' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
-      applyBtn.disabled = apply || !r.matched;
-      if (apply) { toast(`Renamed ${r.matched} games`); loadLibrary(); }
+      out.innerHTML = `${r.applied ? '<b>Applied.</b> ' : ''}${r.matched} of ${r.roms_on_platform} games ${r.platform_column || r.platforms > 1 ? `on ${r.platforms} platform${r.platforms === 1 ? '' : 's'}` : 'on this platform'} match the CSV (${r.unmatched} do not; the CSV has ${r.csv_rows} rows).${r.has_system_columns ? ` <b>${r.system_files}</b> of the matches are BIOS, device or non-arcade entries${r.applied && r.flagged ? ' and were marked as System' : $('#names-flag-system')?.checked ? ' and will be marked as System' : ''}.` : ''}${r.sample.length ? '<br>' + r.sample.map((s) => `<code>${esc(s.filename)}</code>: ${esc(s.from)} → <b>${esc(s.title)}</b>`).join('<br>') : ''}${r.applied && r.matched ? '<br>Next: go to the Library, select this platform and press <b>Fetch metadata</b>.' : ''}`;
+      if (r.covers) {
+        const c = r.covers, n = (v) => Number(v || 0).toLocaleString();
+        out.innerHTML += `<br>${r.applied ? '<b>Covers:</b> ' : '<b>Covers:</b> '}${r.applied ? `${n(c.set)} saved${c.not_image ? `, ${n(c.not_image)} skipped (not a JPEG, PNG or WebP picture)` : ''}${c.unreadable ? `, ${n(c.unreadable)} could not be read` : ''}.` : `${c.by_column ? `${n(c.cover_rows)} row${c.cover_rows === 1 ? '' : 's'} name a cover; ` : 'No cover_file column, so the zip\'s pictures were matched by file name; '}${n(c.found)} found in the zip, ${n(c.will_set)} would be saved${c.already_have ? `, ${n(c.already_have)} games already have one (tick the box to replace them)` : ''}${c.not_in_zip ? `, ${n(c.not_in_zip)} not in the zip${c.missing_examples?.length ? ` (for example ${c.missing_examples.map(esc).join(', ')})` : ''}` : ''}.`}`;
+      }
+      applyBtn.disabled = apply || !(r.matched || r.covers?.will_set);
+      if (apply) { toast(`Renamed ${r.matched} games${r.covers ? `, ${r.covers.set || 0} covers` : ''}`); loadLibrary(); }
     } catch (err) { out.textContent = err.message; toast(err.message, true); }
   };
   $('#names-preview').onclick = () => run(false);
   applyBtn.onclick = () => run(true);
   $('#names-file').onchange = () => { applyBtn.disabled = true; out.textContent = ''; };
+  $('#names-covers-zip').onchange = () => { applyBtn.disabled = true; };
+  $('#names-covers-replace').onchange = () => { applyBtn.disabled = true; };
 }
 
 function showSettingsModule(id) {

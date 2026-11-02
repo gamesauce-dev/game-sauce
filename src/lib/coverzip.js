@@ -97,6 +97,38 @@ export function planCovers(entries, { platform = '', replace = false } = {}) {
   return { matches, counts, unmatchedNames };
 }
 
+/**
+ * Covers named by a CSV: each matched game's `cover_file` is looked up in the zip (as "platform/name", then as a bare name, ignoring
+ * upper/lower case and the folder it sits in). The CSV says which picture belongs to which game, the zip only supplies the pictures.
+ * hits = [{ id, platform, coverFile }]. Returns the same { matches, counts } shape as planCovers.
+ */
+export function planCoversForCsv(entries, hits, { replace = false } = {}) {
+  const byFull = new Map(), byBase = new Map();
+  for (const ent of entries) {
+    if (ent.name.endsWith('/') || /(^|\/)(\.|__MACOSX)/.test(ent.name)) continue;
+    if (!/\.(jpe?g|png|webp)$/i.test(ent.name)) continue;
+    const low = ent.name.toLowerCase(); byFull.set(low, ent);
+    const base = low.split('/').pop(); (byBase.get(base) || byBase.set(base, []).get(base)).push(ent);
+  }
+  const roms = new Map(db.prepare(`SELECT id, cover_path FROM roms WHERE id IN (${hits.map(() => '?').join(',') || 'NULL'})`).all(...hits.map((h) => h.id)).map((r) => [r.id, r]));
+  const counts = { cover_rows: 0, found: 0, will_set: 0, already_have: 0, not_in_zip: 0 };
+  const matches = [], missing = [];
+  for (const h of hits) {
+    const want = String(h.coverFile || '').trim().replace(/\\/g, '/');
+    if (!want) continue;
+    counts.cover_rows++;
+    const low = want.toLowerCase();
+    let ent = byFull.get(low) || byFull.get(`${h.platform}/${low}`) || null;
+    if (!ent) { const list = byBase.get(low.split('/').pop()) || []; ent = list.find((e) => e.name.toLowerCase().split('/').slice(-2, -1)[0] === h.platform) || (list.length === 1 ? list[0] : null); }
+    if (!ent) { counts.not_in_zip++; if (missing.length < 6) missing.push(want); continue; }
+    counts.found++;
+    const rom = roms.get(h.id);
+    if (rom?.cover_path && !replace) { counts.already_have++; continue; }
+    matches.push({ entry: ent, rom: { id: h.id, cover_path: rom?.cover_path || null } }); counts.will_set++;
+  }
+  return { matches, counts, missing };
+}
+
 /** Save the planned pictures. A picture that is not a real JPEG/PNG/WebP is counted and skipped. Returns the final counts. */
 export function applyCovers(file, plan) {
   const stats = { set: 0, not_image: 0, unreadable: 0 };

@@ -12,7 +12,7 @@ import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
 import { csvLines, coverEntries, zipChunks, exportCounts } from '../lib/export.js';
-import { listZip, planCovers, applyCovers } from '../lib/coverzip.js';
+import { listZip, planCovers, planCoversForCsv, applyCovers } from '../lib/coverzip.js';
 import os from 'node:os';
 import { clearDuplicateCache } from '../lib/duplicates.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
@@ -642,13 +642,31 @@ router.post('/bulk/import-covers', requireAdmin, coverZipUpload.single('zip'), (
 });
 
 // Name list (CSV): rename ROMs on one platform from a file-name -> game-name table. Preview first, then apply.
-router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 * 1024 * 1024 } }).single('csv'), (req, res, next) => {
+// The CSV (and, optionally, a zip of the pictures its cover_file column names) both go to temp files and are read from there.
+const namesUpload = multer({ dest: path.join(os.tmpdir(), 'gamesauce-coverzip'), limits: { fileSize: 4 * 1024 * 1024 * 1024 - 1 } })
+  .fields([{ name: 'csv', maxCount: 1 }, { name: 'zip', maxCount: 1 }]);
+router.post('/bulk/import-names', requireAdmin, namesUpload, (req, res, next) => {
+  const csvFile = req.files?.csv?.[0], zipFile = req.files?.zip?.[0];
   try {
-    if (!req.file) return res.status(400).json({ error: 'Choose a CSV file' });
+    if (!csvFile) return res.status(400).json({ error: 'Choose a CSV file' });
+    if (csvFile.size > 20 * 1024 * 1024) return res.status(400).json({ error: 'That CSV is over 20 MB' });
     const platform = String(req.body?.platform || '').trim();
     if (platform && !db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Unknown platform' });
-    res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, hideSystem: req.body.hide_system === '1', flagSystem: req.body.flag_system === '1', apply: req.body.apply === '1' }));
+    let entries = null;
+    if (zipFile) { try { entries = listZip(zipFile.path); } catch (e) { return res.status(400).json({ error: e.message }); } }
+    const apply = req.body.apply === '1';
+    const out = importNames({ csvText: fs.readFileSync(csvFile.path, 'utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, hideSystem: req.body.hide_system === '1', flagSystem: req.body.flag_system === '1', apply });
+    const { hits } = out; delete out.hits;
+    if (entries) {
+      const replace = req.body.replace_covers === '1';
+      // With a cover_file column the CSV says which picture is whose; without one the zip's pictures are matched by file name.
+      const plan = out.has_cover_column ? planCoversForCsv(entries, hits, { replace }) : (() => { const p = planCovers(entries, { platform, replace }); return { ...p, counts: { cover_rows: 0, found: p.counts.matched, will_set: p.counts.will_set, already_have: p.counts.already_have, not_in_zip: p.counts.unmatched }, missing: p.unmatchedNames }; })();
+      out.covers = { ...plan.counts, by_column: out.has_cover_column, missing_examples: plan.missing || [] };
+      if (apply) { const st = applyCovers(zipFile.path, plan); out.covers.set = st.set; out.covers.not_image = st.not_image; out.covers.unreadable = st.unreadable; }
+    }
+    res.json(out);
   } catch (err) { next(err); }
+  finally { for (const f of [csvFile, zipFile]) if (f) fs.unlink(f.path, () => {}); }
 });
 
 // Registered before '/:id' so it isn't swallowed by it (job itself is defined further down).

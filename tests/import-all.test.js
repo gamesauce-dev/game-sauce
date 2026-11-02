@@ -159,3 +159,34 @@ test('cover import: a chosen platform limits it to that platform', async () => {
   const any = await call('/api/roms/bulk/import-covers', { method: 'POST', form: coverForm(zip) });
   assert.equal(any.body.matched, 2, 'with no platform chosen the folders say which platform each is for');
 });
+
+test('one CSV plus one zip: the cover_file column says which picture is each game\'s cover; one preview, one apply', async () => {
+  for (const id of [a, b, c]) { const r = row(id); if (r.cover_path) { try { fs.unlinkSync(r.cover_path); } catch {} } }
+  db.prepare('UPDATE roms SET cover_path = NULL, cover_locked = 0 WHERE id IN (?, ?, ?)').run(a, b, c);
+  // The pictures are named for the CSV, NOT for the games' file names: only the cover_file column links them.
+  const zip = makeZip([{ name: 'art/first.png', data: PNG }, { name: 'art/second.jpg', data: JPG }, { name: 'art/unused.png', data: PNG }]);
+  const csv = 'rom_name,short_game_name,platform,genre,cover_file\r\nAlpha (USA).sfc,Alpha One,snes,Puzzle,art/first.png\r\nBeta (USA).sfc,Beta One,snes,,SECOND.JPG\r\nAlpha (USA).nes,Gamma One,nes,,missing.png\r\n';
+  const form = (extra = {}) => { const f = csvForm(csv, { platform: '', ...extra }); f.append('zip', new Blob([zip]), 'c.zip'); return f; };
+  const prev = await call('/api/roms/bulk/import-names', { method: 'POST', form: form() });
+  assert.equal(prev.status, 200); assert.equal(prev.body.matched, 3);
+  assert.equal(prev.body.covers.by_column, true); assert.equal(prev.body.covers.cover_rows, 3);
+  assert.equal(prev.body.covers.found, 2, 'two of the three named pictures are in the zip (the name is matched ignoring upper/lower case)');
+  assert.equal(prev.body.covers.not_in_zip, 1); assert.deepEqual(prev.body.covers.missing_examples, ['missing.png']);
+  assert.equal(prev.body.covers.will_set, 2);
+  assert.equal(row(a).cover_path, null, 'a preview saves nothing'); assert.notEqual(row(a).title, 'Alpha One');
+  const ap = await call('/api/roms/bulk/import-names', { method: 'POST', form: form({ apply: '1' }) });
+  assert.equal(ap.body.applied, true); assert.equal(ap.body.covers.set, 2);
+  assert.equal(row(a).title, 'Alpha One'); assert.equal(row(a).genre, 'Puzzle', 'the metadata went in with the covers');
+  assert.deepEqual(fs.readFileSync(row(a).cover_path), PNG); assert.deepEqual(fs.readFileSync(row(b).cover_path), JPG);
+  assert.equal(row(c).cover_path, null, 'a game whose picture is not in the zip keeps what it had');
+  assert.equal(row(a).cover_locked, 1);
+  // a zip with no cover_file column in the CSV falls back to matching by file name, as the separate zip import does
+  const plain = 'rom_name,short_game_name,platform\r\nAlpha (USA).sfc,Alpha One,snes\r\n';
+  const z2 = makeZip([{ name: 'snes/Alpha (USA).png', data: PNG }]);
+  const f2 = csvForm(plain, { platform: '', replace_covers: '1' }); f2.append('zip', new Blob([z2]), 'c.zip');
+  const r2 = await call('/api/roms/bulk/import-names', { method: 'POST', form: f2 });
+  assert.equal(r2.body.covers.by_column, false); assert.equal(r2.body.covers.will_set, 1);
+  // no zip at all: nothing about covers in the answer, exactly as before
+  assert.equal((await call('/api/roms/bulk/import-names', { method: 'POST', form: csvForm(plain, { platform: '' }) })).body.covers, undefined);
+  assert.equal((await call('/api/roms/bulk/import-names', { token: memberTok, method: 'POST', form: form() })).status, 403);
+});
