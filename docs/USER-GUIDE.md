@@ -24,7 +24,8 @@ setup lives in [DEPLOYMENT.md](DEPLOYMENT.md).
 | **Add ROMs** | Imports a *copy* into game-sauce (`storage/roms/…`). Your original stays put. Best for one-off additions. |
 | **Platform** | Every source is tied to one platform (you pick it; there is no guessing). |
 | **Missing** | A file that could not be reached at the last scan (for example an unplugged drive). It is flagged, never deleted, and clears itself on the next scan that finds it. |
-| **Orphan** | A catalogue row whose source folder is gone (a source removed with "keep ROMs"). It can never be re-scanned, so purge it. |
+| **No source** (orphan) | A catalogue row that belongs to no source folder (a source was removed with "keep ROMs", or a game was locked when its source was removed). Add the folder as a source again and scan: the game is reconnected. Purge what is left. |
+| **Locked** | A game marked Keep (padlock). It cannot be deleted until you unlock it. Admins can lock and unlock in bulk. |
 | **Needs match** | A ROM no provider has ever matched: your manual-identify worklist. |
 | **DAT** | A No-Intro / Redump catalogue of known-good dumps, used to verify ROMs locally. |
 
@@ -68,8 +69,9 @@ Picking a platform shows its name above the tiles:
   box's heading (▾) to collapse it; the choice is remembered in your browser. On short windows (under
   about 860px high) they start collapsed so the grid keeps its room.
 - **Search** matches title, developer, publisher and genre. The **★ Favourites**, **○ Hidden**,
-  **⛁ Orphans**, **○ Needs match** and **☐ Select** pills sit on the same line as the search box and
-  filter the grid. **☐ Select** turns on multi-select.
+  **▢ No cover**, **⛁ No source**, **🔒 Locked** (admin), **○ Needs match** and **☐ Select** pills sit on the same line as the search box and
+  filter the grid. **☐ Select** turns on multi-select. **↺ Reset** (it appears while something is filtering) clears the
+  search, the platform choice and every filter in one press; sort order and tile size are kept.
 - **Choosing a platform** in the sidebar shows its full name as a heading above the tiles, with
   **✕ All platforms** to go back.
 - **Selecting:** **Select all** selects every game matching the current filters (not only the tiles
@@ -220,7 +222,13 @@ re-runs matching after importing new DATs.
   collection to remove games from it (**✕ Remove**) or delete the collection. Games always stay in
   the library.
 - **★ Favourite** is per user.
-- **Modern look (preview).** Press ◐ beside the cog (bottom left) to try the Modern look: an icon bar along the top, a Home page with a ticker, Continue playing and Recently added, and a light / dark switch. The switch at the right of the bar takes you back to Classic. It is a personal choice, remembered for your account.
+- **Modern look.** Press ◐ beside the cog (bottom left) to try it; new accounts start in it. It is a personal choice, remembered for your account, and the switch at the right of the bar takes you back to Classic.
+  - **Top bar:** page icons, a rolling ticker (the game-sauce name first, then library facts and, for an admin, notices such as an available update), and your avatar menu with the light / dark switch, the retro-font switch and a deeper-black switch.
+  - **Library tools** replace the sidebar's controls: search, **reset** (clears search, platform and filters), sort, favourites, hidden, no cover, select, fetch metadata (admin) and **⋯ More filters** (Locked, System items, No source, Needs a match).
+  - **Platform chips** along the top: a chip per family, then that family's platforms; click several to combine them. Counts are of what you can see. A play-only account sees only platforms with browser-playable games.
+  - **Details window:** icons for download, play, favourite, add to collection, hide and refresh, with more under ⋯. **Pin** it to keep it open beside the games.
+  - **Hover words** appear in the app's own font. A button that has no icon yet stays as words.
+- **Collections are private.** Each person sees only the collections they made (admins too). A collection card shows up to four covers and a count; **▶** plays a playable game straight from an open collection.
 - **Hide** removes a tile from the default view without deleting it; the **○ Hidden** pill shows them. When an **admin** hides a game, members cannot see or open it either: only admins see it again, under Hidden. A member's Hide only affects their own view.
 
 ---
@@ -335,6 +343,8 @@ shows while you hold, and no other button is intercepted, so the game never lose
 ---
 
 ## 17. Tips and limits
+
+- **Play-only accounts** (set per person under User accounts → Screen) see only games that can be played in the browser, with no downloads, Add ROMs or admin pages. An admin can preview this from the avatar menu (Preview play-only).
 
 - A short unique word finds a game faster than a full filename.
 - **Needs match** plus **Fetch metadata** is the loop: enrich everything, then hand-match the leftovers.

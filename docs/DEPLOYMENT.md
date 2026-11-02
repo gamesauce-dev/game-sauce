@@ -127,7 +127,7 @@ the source or a build step. Create a folder with just a `docker-compose.yml` and
 ```
 
 Then `docker compose pull && docker compose up -d`. To update later, run the same two
-commands. Pin a version instead of `latest` (for example `:v0.1.1`) if you want updates to
+commands. Pin a version instead of `latest` (for example `:v0.2.0`) if you want updates to
 be deliberate. The image is multi-architecture: `linux/amd64` (typical PCs, servers and Proxmox VMs) and
 `linux/arm64` (Raspberry Pi 4/5, Apple-silicon and other ARM servers); Docker picks the right one
 automatically. The ARM build is produced by CI but has had little testing on real ARM hardware, so

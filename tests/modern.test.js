@@ -534,3 +534,11 @@ test('Library reset: one button clears search, platforms and filters in both loo
   assert.match(html, /id="reset-filters"/); assert.match(app, /async function resetFilters\(\)/); assert.match(app, /function filtersActive\(\)/);
   assert.match(js, /id="tl-reset"/); assert.match(js, /ctx\.resetFilters/); assert.match(js, /'clear-reset-2'/);
 });
+
+test('release 0.2.0: version, changelog heading and docs agree', () => {
+  const pkg = JSON.parse(read('package.json')), cl = read('CHANGELOG.md');
+  assert.equal(pkg.version, '0.2.0');
+  assert.match(cl, /## \[Unreleased\]\s+## \[0\.2\.0\] - 2026-11-02/);
+  for (const f of ['README.md', 'docs/USER-GUIDE.md']) assert.doesNotMatch(read(f), /⛁ Orphans/, f + ' still says Orphans pill');
+  assert.match(read('README.md'), /GAMESAUCE_MAX_UPLOAD/); assert.match(read('README.md'), /bulk\/lock/);
+});

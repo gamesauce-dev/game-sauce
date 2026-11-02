@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-02 (the Modern look)
+
+Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned details window, light / dark, retro font), play-only accounts, private collections, export and import of game data and covers (one CSV plus one zip), locked games with bulk unlock, a Library reset button, an update notice, and many fixes. The database upgrades itself on start (schema v23). Details below.
+
 ### Security
 - **Upload library upgraded:** multer 1.x to 2.5 (the 1.x line has known vulnerabilities and is no longer patched). It handles ROM, cover, DAT and backup uploads; behaviour is unchanged and all tests pass. `npm audit` now reports no problems in the shipped dependencies.
 - **Cross-site request check:** requests that change data are refused when the browser says they came from another website or address (CSRF). Scripts and `curl` are unaffected. Behind a reverse proxy set `GAMESAUCE_TRUST_PROXY=1`, or list the address in `GAMESAUCE_ALLOWED_ORIGINS`.

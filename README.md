@@ -26,7 +26,16 @@ Express + SQLite on the server, a single static page on the client, no build ste
 - **MAME aware:** import a `-listxml` name list to turn `sf2.zip` into real titles; strict matching
   avoids wrong covers.
 - **Verifies dumps** against No-Intro / Redump DATs and shows have/want reports.
-- **Collections, favourites, hidden games, users and roles, an activity log.**
+- **Two looks, your choice.** **Classic** (sidebar) and **Modern**: an icon bar along the top with a rolling ticker, a
+  platform chip row, an A-Z bar, a details window you can pin beside the games, light and dark modes, and an optional
+  retro font. It is a personal setting; new accounts start in Modern. Both run on the same data.
+- **Collections, favourites, hidden games, users and roles, an activity log.** Collections are private to whoever
+  made them. **Play-only accounts** see just the games that can be played in the browser, with no downloads or admin.
+- **Export and import your game data:** a CSV of every game's details, a zip of the covers, and an import that
+  brings both back in one preview and one apply (the CSV's `cover_file` column names each picture).
+- **Locked games** (kept safe from deletion) can be found with a filter and unlocked in bulk; a **Reset** button
+  clears the search, platform choice and all filters at once.
+- **Tells the admin about updates:** a notice appears when a newer release is published (switch it off with `GAMESAUCE_UPDATE_CHECK=0`).
 - **Runs on PCs and ARM:** the Docker image is published for amd64 and arm64 (Raspberry Pi 4/5, ARM servers).
 - **Duplicate finder** (Settings → Duplicate finder): groups different versions of one game (USA / Europe / Japan, revisions, arcade clones), suggests the best copy to keep, and can hide the rest. Nothing is deleted.
 - **Health page** (Settings → System health): disk space, database, source reachability, last backup, providers, plus a copy-and-paste report with no secrets for bug reports.
@@ -87,9 +96,10 @@ Two modes, and the difference matters:
   scan only records path + size + date + hashes, then fetches metadata. Rescans hash only what
   changed; a file on an unplugged drive is flagged `missing`, never deleted. Best for a big
   multi-location collection you already organise yourself.
-- **Orphans**: deleting a source with "keep ROMs" leaves catalogue rows with no folder — they
-  still show in the library and platform list but can never be re-scanned. Find them with the
-  `⛁ Orphans` pill or Metadata → Database maintenance → Show orphans, and purge them there.
+- **No source** (formerly "Orphans"): deleting a source with "keep ROMs" leaves catalogue rows that belong to
+  no folder. Games you had locked (Keep) survive a source removal this way. Add the folder as a source again and
+  scan it: the games are reconnected, with their locks. Anything still left is found with the `⛁ No source` pill
+  (Modern: ⋯ More filters) or Settings → Database maintenance → Show orphans, and can be purged there.
 
 ## Sources (multiple folders)
 
@@ -339,6 +349,14 @@ PATCH  /api/roms/:id
 POST   /api/roms/:id/cover
 POST   /api/roms/upload            multipart, field name `roms`
 POST   /api/roms/bulk/delete       { ids: [...] } — rows + tags/collections/covers; imported files too, in-place never
+POST   /api/roms/bulk/lock         { ids: [...], locked: true|false }  admin — lock (Keep) or unlock games
+GET    /api/roms?locked=1          admin — only locked games
+GET    /api/roms/export/summary    admin — what an export would contain
+GET    /api/roms/export/games.csv  admin — one row per game (details, cover_file, checksums)
+GET    /api/roms/export/covers.zip admin — the covers, named <platform>/<file>.<ext>
+POST   /api/roms/bulk/import-names admin — CSV (+ optional covers zip), preview then apply
+POST   /api/roms/bulk/import-covers admin — a zip of pictures, preview then apply
+GET    /api/admin/update-check     admin — is a newer release published?
 DELETE /api/roms/:id[?delete_file=1]  single delete; in-place files survive unless delete_file=1
 GET    /api/collections
 POST   /api/collections
@@ -544,6 +562,14 @@ Notes:
 | `IGDB_CLIENT_ID` / `IGDB_CLIENT_SECRET` | IGDB (Twitch app, minutes to create, no approval wait) |
 | `SGDB_API_KEY` | SteamGridDB art fallback key |
 | `GAMESAUCE_MAX_EMULATOR` | emulator vault file cap, bytes (default 1 GB) |
+| `GAMESAUCE_MAX_UPLOAD` | largest single file Add ROMs accepts, bytes (default 8 GB) |
+| `GAMESAUCE_DB_FILE` | full path of the database file (default `<data dir>/gamesauce.db`) |
+| `GAMESAUCE_COOKIE_NAME` | name of the sign-in cookie (default `gamesauce_session`); change it only if two copies share one address |
+| `GAMESAUCE_SLOW_MS` | requests slower than this many milliseconds are logged under Settings → Health (default 1000) |
+| `META_TIMEOUT_MS` | how long a metadata provider may take to answer before it is skipped (default 15000) |
+| `GAMESAUCE_LAUNCHBOX_URL` | where the LaunchBox metadata file is downloaded from (default LaunchBox's own address) |
+| `GITHUB_TOKEN` / `GAMESAUCE_GITHUB_TOKEN` | optional GitHub token for the Emulators page's "latest release" lookups, if you hit GitHub's anonymous rate limit |
+| `GAMESAUCE_HOME` | desktop quick start only: where `start.sh` / `start.bat` keep data (default a `game-sauce-data` folder beside the app) |
 | `GAMESAUCE_UPDATE_CHECK` | `0` turns off the admin's "update available" notice (it asks GitHub for the project's latest release at most once every six hours; nothing about your library is sent) |
 
 Env vars win over anything saved in the UI; a field pinned by env shows "set by environment"
