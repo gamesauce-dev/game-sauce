@@ -293,7 +293,7 @@ function toolClick(e) {
       (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); });
   } else if (b.id === 'tl-more') {
     const ic = JSON.parse($('#mb-library-tools').dataset.icons || '{}');
-    const items = [['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'Orphans', ic.orphans, 'no source folder'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched']]
+    const items = [['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'No source', ic.orphans, 'a scan of their folder reconnects them'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched']]
       .filter(([k]) => { const t = q(`[data-toggle="${k}"]`); return t && !t.classList.contains('hidden'); });
     if (!items.length) return true;
     openPop(b, items.map(([k, label, svg, sub]) => `<button class="mb-menu-item${q(`[data-toggle="${k}"]`)?.classList.contains('is-active') ? ' on' : ''}" role="menuitemcheckbox" data-pick="${k}">${svg}<span>${label}<small>${sub}</small></span></button>`).join(''),

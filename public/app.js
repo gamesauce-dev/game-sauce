@@ -425,7 +425,7 @@ function activeFilterChips() {
   if (state.hidden) chips.push({ label: 'Hidden only', clear: () => { state.hidden = false; } });
   if (state.system) chips.push({ label: 'System entries', clear: () => { state.system = false; } });
   if (state.unmatched) chips.push({ label: 'Needs match', clear: () => { state.unmatched = false; loadLibrary(); } });
-  if (state.orphan) chips.push({ label: 'Orphaned (no source)', clear: () => { state.orphan = false; loadLibrary(); } });
+  if (state.orphan) chips.push({ label: 'Not in any source', clear: () => { state.orphan = false; loadLibrary(); } });
 
   const wrap = $('#active-filters');
   wrap.innerHTML = chips.map((c, i) => `<span class="chip">${esc(c.label)}<button data-chip="${i}">✕</button></span>`).join('');

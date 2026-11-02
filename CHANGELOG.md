@@ -104,6 +104,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **"Orphans" is now "No source"** (the filter, its chip, and Modern's menu), with a tooltip saying what it means: games no longer attached to a source folder, and that scanning a source that covers their folder reconnects them. Settings > Stats still counts them under "Orphans (no source folder)".
 - **"Game names (CSV)" is now "CSV tools"** (Settings > Library tools).
 - **Play-only people see only the platforms that have games they can play.** The platform pills, families and counts (Classic sidebar and Modern chip row) count only games playable in the browser, so a platform with none disappears and "All" matches the list. The platform list gained a `playable_count`, worked out by the same rule as the Play button.
 - **Modern: the No cover filter uses your no-covers icon.**
@@ -170,6 +171,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Locked games showed as "Orphaned" even though their file was exactly where a source looks.** When a source was removed, any game locked with Keep survived with its source link cleared. Adding the folder again and scanning found the same file but skipped it as a duplicate of the surviving entry, so it never reconnected and stayed "orphaned" for good. A scan now takes such a game back: same entry, same id, same lock, attached to the source again, no duplicate. (The 49 Genesis games on the live server are this case: a scan of the Genesis source reconnects them.) A game whose file is not under any scanned folder is left alone.
 - **A play-only person was offered "Add ROMs"** in the empty "No ROMs match" screen (seen when a platform has nothing playable). It is hidden for them.
 - **CSV tools:** the tick boxes beside the Export and Import buttons were not on the same line as the buttons; they are now.
 - **A play-only person could get the previous person's full Modern bar** (Sources, Emulators, Settings and the admin tools). The Modern bar was built once per page load and kept, so signing out and signing in as someone else on the same page left the first person's bar on screen. It is now rebuilt for whoever signs in (and for a changed role or screen), its click handlers are attached once, and the page timers start once. (The server was always right: the play-only person could not actually use any admin route.)

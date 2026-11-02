@@ -348,6 +348,21 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
     const platformRow = db.prepare('SELECT * FROM platforms WHERE slug = ?').get(platform.slug)
       || db.prepare("SELECT * FROM platforms WHERE slug = 'other'").get();
 
+    // A game that lost its source (the source was removed while the game was locked with Keep) is still in the library with no source.
+    // When a source covers its folder again and finds the very same file, it is taken back (not skipped as a "duplicate" of itself):
+    // same entry, same id, same locks, now belonging to this source again.
+    const lost = db.prepare('SELECT id FROM roms WHERE source_id IS NULL AND in_place = 1 AND source_path = ?').get(file.path);
+    if (lost) {
+      db.prepare(`
+        UPDATE roms SET source_id = ?, platform_id = ?, size_bytes = ?, scanned_size = ?, scanned_mtime = ?, missing = 0, last_seen_at = ?,
+          storage_path = ?, source_path = ?, updated_at = datetime('now')
+        WHERE id = ?
+      `).run(sourceId, platformRow.id, file.size, file.size, file.mtimeMs, now, file.path, file.path, lost.id);
+      touched.add(lost.id);
+      updated++;
+      continue;
+    }
+
     const parsed = parseFilename(file.filename);
 
     let hashes = { crc32: null, md5: null, sha1: null };
