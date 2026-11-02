@@ -541,7 +541,7 @@ const ICON_MAP = [
   // Settings: account
   ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance
-  ['#health-refresh, #dup-refresh', 'scan-again'], ['#enrich-missing-covers', 'fetch'], ['#check-ss-systems', 'recheck'],
+  ['#health-refresh, #dup-refresh', 'scan-again'], ['#enrich-missing-covers', 'fetch'], ['#check-ss-systems', 'recheck'], ['[data-pid-use], #pid-apply-all', 'tick'],
   ['#db-health-refresh', 'database-check'], ['#db-show-orphans', 'show-orphans'], ['#db-purge-orphans', 'delete'], ['#db-clear-covers', 'clear-covers'],
   ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-save'], ['#backup-save', 'save-settings'], ['#restore-inspect', 'database-backup-check'],
   ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview'],

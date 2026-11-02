@@ -403,7 +403,7 @@
         </div>
         <form id="platform-add-form" class="edit-form hidden" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
           <label class="field"><span>Name *</span><input name="name" required placeholder="Sega Model 2" /></label>
-          <label class="field"><span>Slug * <span class="note">(letters/digits, used in URLs)</span></span><input name="slug" required placeholder="segamodel2" /></label>
+          <label class="field"><span>Slug * <span class="note">(the platform's short internal name: lowercase letters and digits, e.g. segacd. It cannot be changed later)</span></span><input name="slug" required placeholder="segamodel2" autocomplete="off" /></label>
           <label class="field"><span>Short name</span><input name="short_name" placeholder="M2" /></label>
           <label class="field"><span>Family</span><input name="family" placeholder="Sega" /></label>
           <label class="field"><span>Extensions (comma separated)</span><input name="extensions" placeholder="zip, 7z, chd" /></label>
@@ -426,11 +426,12 @@
 
       <div class="panel hidden" id="mod-covers">
         <h3>Covers &amp; platform ids <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">Fetch pictures for games that were matched but have none, and check that each platform's ScreenScraper and TheGamesDB numbers are right.</p>
+        <p class="hint" style="margin-top:0">Fetch pictures for games that were matched but have none, and check each platform's ScreenScraper and TheGamesDB numbers against the providers' own lists. Verify also finds platforms with no number and suggests the likely one by name; nothing changes until you accept it.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
           <button class="btn" id="enrich-missing-covers">Fetch missing covers</button>
           <button class="btn" id="check-ss-systems">Verify platform ids</button>
         </div>
+        <div id="pid-report" class="pid-report hidden"></div>
         <p class="hint" id="ss-quota"></p>
       </div>
 

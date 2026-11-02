@@ -1614,3 +1614,9 @@ body.login-modern .auth-card .brand-name { letter-spacing: 0; }
 
 body.play-only #empty [data-view="upload"] { display: none; }
 body.play-only #empty .empty-add-text { display: none; }
+
+/* Platform id check */
+.pid-list { display: grid; gap: 6px; margin-top: 6px; }
+.pid-row { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 8px; }
+.pid-row.pid-done { opacity: .5; }
+.pid-fix { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

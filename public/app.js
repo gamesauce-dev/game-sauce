@@ -2925,19 +2925,37 @@ async function bulkEnrich({ onlyMissingCovers = false } = {}) {
 $('#bulk-enrich').addEventListener('click', () => { if (enrichPollTimer && $('#enrich-pill')) stopEnrichJob(); else bulkEnrich(); });
 $('#enrich-missing-covers').addEventListener('click', () => bulkEnrich({ onlyMissingCovers: true }));
 
-$('#check-ss-systems').addEventListener('click', async () => {
-  try {
-    const r = await api('/metadata/screenscraper/systems');
-    if (r.missing?.length) {
-      toast(`${r.missing.length} of ${r.checked} platform ids do not resolve`, true);
-      console.table(r.missing);
-    } else {
-      toast(`All ${r.checked} platform ids resolve on ScreenScraper`);
-    }
-  } catch (err) {
-    toast(err.message, true);
-  }
-});
+/** Platform ids: check ours against each provider's list, show what is missing or wrong, and let the admin accept the suggested number. */
+async function verifyPlatformIds() {
+  const box = $('#pid-report'); if (!box) return;
+  const PROV = { screenscraper: 'ScreenScraper', thegamesdb: 'TheGamesDB' };
+  box.classList.remove('hidden'); box.innerHTML = '<p class="hint">Checking against the providers…</p>';
+  let r;
+  try { r = await api('/metadata/platform-ids'); } catch (err) { box.innerHTML = `<p class="hint">${esc(err.message)}</p>`; return; }
+  const sum = Object.entries(r.counts).map(([k, c]) => `<b>${PROV[k] || k}</b>: ${c.ok} of ${c.checked} fine${c.missing ? `, ${c.missing} with no number` : ''}${c.unresolved ? `, ${c.unresolved} not on its list` : ''}${c.suspicious ? `, ${c.suspicious} that look like the wrong console` : ''}`).join('<br>');
+  const label = { missing: 'no number', unresolved: 'number not on the provider\'s list', suspicious: 'number is a different console' };
+  const rows = r.rows.map((x, i) => {
+    const sug = x.suggestion;
+    return `<div class="pid-row" data-i="${i}">
+      <div class="pid-what"><b>${esc(x.name)}</b> <span class="note">(${esc(x.slug)}) · ${esc(PROV[x.provider] || x.provider)} · ${label[x.status]}${x.current ? `: ${x.current.id}${x.current.name ? ` = ${esc(x.current.name)}` : ''}` : ''}</span></div>
+      <div class="pid-fix">${sug ? `<span class="note">Likely: <b>${sug.id}</b> ${esc(sug.name)} (${sug.score}% alike)</span> <button class="btn btn-sm${x.confident ? ' btn-primary' : ''}" data-pid-use="${i}" title="Save ${sug.id} as this platform's ${esc(PROV[x.provider] || x.provider)} number">Use ${sug.id}</button>${x.candidates.length > 1 ? `<span class="note"> Others: ${x.candidates.slice(1).map((c) => `${c.id} ${esc(c.name)}`).join(' · ')}</span>` : ''}` : '<span class="note">No close match by name: look it up on the provider\'s site and type it into the platform\'s edit form.</span>'}</div>
+    </div>`;
+  }).join('');
+  const sure = r.rows.filter((x) => x.confident && x.suggestion);
+  box.innerHTML = `<p class="hint" style="margin-top:10px">${sum}${r.notes?.length ? `<br><span class="note">${r.notes.map(esc).join(' ')}</span>` : ''}</p>
+    ${rows ? `${sure.length ? `<div style="margin:6px 0"><button class="btn btn-sm btn-primary" id="pid-apply-all" title="Save every suggestion that is a close name match">Use the ${sure.length} close match${sure.length === 1 ? '' : 'es'}</button></div>` : ''}<div class="pid-list">${rows}</div>` : '<p class="hint"><b>Everything checks out.</b></p>'}`;
+  const save = async (x) => api(`/platforms/${encodeURIComponent(x.slug)}`, { method: 'PATCH', body: JSON.stringify({ [x.field]: x.suggestion.id }) });
+  $$('[data-pid-use]', box).forEach((b) => b.addEventListener('click', async () => {
+    const x = r.rows[Number(b.dataset.pidUse)];
+    try { await save(x); toast(`${x.name}: ${PROV[x.provider]} number set to ${x.suggestion.id}`); b.closest('.pid-row').classList.add('pid-done'); b.disabled = true; loadPlatformAdmin?.(); loadPlatforms?.(); } catch (err) { toast(err.message, true); }
+  }));
+  $('#pid-apply-all', box)?.addEventListener('click', async () => {
+    let n = 0;
+    for (const x of sure) { try { await save(x); n++; } catch { /* the rest still go */ } }
+    toast(`Saved ${n} platform number${n === 1 ? '' : 's'}`); loadPlatformAdmin?.(); loadPlatforms?.(); verifyPlatformIds();
+  });
+}
+$('#check-ss-systems').addEventListener('click', verifyPlatformIds);
 
 /* ─────────────────────────── platforms (admin) ─────────────────────────── */
 
@@ -2961,6 +2979,15 @@ async function loadPlatformAdmin() {
     form.querySelector('input')?.focus({ preventScroll: true });
   });
   $('#platform-add-cancel')?.addEventListener('click', () => form.classList.add('hidden'));
+  // Slug: suggested from the name (lowercase letters and digits) until the person types their own.
+  {
+    const nameIn = form.querySelector('[name="name"]'), slugIn = form.querySelector('[name="slug"]');
+    if (nameIn && slugIn && !nameIn.dataset.slugWired) {
+      nameIn.dataset.slugWired = '1';
+      slugIn.addEventListener('input', () => { slugIn.dataset.own = slugIn.value ? '1' : ''; });
+      nameIn.addEventListener('input', () => { if (!slugIn.dataset.own) slugIn.value = nameIn.value.toLowerCase().replace(/[^a-z0-9]+/g, ''); });
+    }
+  }
 
   let items = [];
   try {

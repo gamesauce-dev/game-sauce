@@ -2,6 +2,7 @@ import express from 'express';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
 import { enrich, providerStatus, screenscraper, thegamesdb, igdb, launchbox, steamgriddb } from '../lib/providers.js';
+import { buildReport } from '../lib/platformids.js';
 import { launchboxStatus, startLaunchBoxUpdate } from '../lib/launchbox.js';
 import {
   describeProviderConfig, saveProviderConfig, clearProviderConfig, PROVIDER_FIELDS
@@ -123,6 +124,30 @@ router.get('/screenscraper/account', async (req, res, next) => {
     }
     const info = await screenscraper.accountInfo();
     res.json(info || { error: 'no response' });
+  } catch (err) { next(err); }
+});
+
+/**
+ * Platform ids, checked against each provider's own list (admin, read-only). Returns, per platform and provider, whether our stored
+ * number is right (ok), missing, not on the provider's list (unresolved) or names a different console (suspicious), with the best
+ * match by name as a suggestion. Nothing is changed here: accepting a suggestion is a normal platform edit.
+ */
+router.get('/platform-ids', requireAdmin, async (req, res, next) => {
+  try {
+    const providers = {}, notes = [];
+    if (screenscraper.enabled) {
+      const systems = await screenscraper.systemList();
+      if (systems) providers.screenscraper = { list: systems.map((s) => ({ id: s.id, name: s.name, short: s.short })), field: 'screenscraper_id' };
+      else notes.push('ScreenScraper did not answer, so its numbers were not checked.');
+    } else notes.push('ScreenScraper is not set up (Settings > Metadata providers), so its numbers were not checked.');
+    if (thegamesdb.enabled) {
+      const t = await thegamesdb.platformList();
+      if (t?.list) providers.thegamesdb = { list: t.list, field: 'tgdb_id' };
+      else notes.push(`TheGamesDB did not answer (${t?.error || 'no reason given'}), so its numbers were not checked.`);
+    } else notes.push('TheGamesDB is not set up (Settings > Metadata providers), so its numbers were not checked.');
+    if (!Object.keys(providers).length) return res.status(400).json({ error: 'Connect ScreenScraper or TheGamesDB first (Settings > Metadata providers): the check compares against their own lists.', notes });
+    const platforms = db.prepare('SELECT slug, name, short_name, screenscraper_id, tgdb_id FROM platforms ORDER BY family, name').all();
+    res.json({ ...buildReport(platforms, providers), notes, providers: Object.keys(providers) });
   } catch (err) { next(err); }
 });
 

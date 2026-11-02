@@ -349,6 +349,15 @@ const screenscraper = {
 
 /* ─────────────────────── TheGamesDB ─────────────────────── */
 
+/** TheGamesDB's own list of consoles: [{ id, name, alias }]. Used to check and fill in our platform ids. */
+async function tgdbPlatformList() {
+  const result = await fetchJson(`https://api.thegamesdb.net/v1/Platforms?apikey=${encodeURIComponent(cred('TGDB_API_KEY'))}`);
+  if (result.error) return { error: result.error };
+  const raw = result.data?.data?.platforms;
+  if (!raw || typeof raw !== 'object') return { error: 'TheGamesDB sent no platform list' };
+  return { list: Object.values(raw).map((x) => ({ id: Number(x.id), name: String(x.name || ''), alias: x.alias || null })).filter((x) => Number.isFinite(x.id) && x.name) };
+}
+
 // Query variants for name search, most specific first. Filenames carry region
 // tags, revisions and disc numbers that providers don't index, so the first
 // query often misses while a stripped one hits. Each lookup tries them in
@@ -480,6 +489,7 @@ const thegamesdb = {
   get enabled() {
     return Boolean(cred('TGDB_API_KEY'));
   },
+  async platformList() { return this.enabled ? tgdbPlatformList() : null; },
   async lookup({ title, platform, hashes, year }) {
     if (!this.enabled) return null;
 
