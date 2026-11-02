@@ -502,7 +502,7 @@ const ICON_MAP = [
   ['.detail-actions [data-promo="addcoll"]', 'collection-new'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'scan-again'],
   ['label.btn:has(#cover-input)', 'upload-cover'], ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
   // Settings leftovers found by the 1 Nov audit
-  ['#names-apply', 'tick'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
+  ['#names-apply', 'tick'], ['#export-csv', 'game-csv'], ['#export-covers', 'covers'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"]', 'edit'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
   ['[data-act="toggle-user"][data-disabled="0"]', 'user-disable'], ['[data-act="toggle-user"][data-disabled="1"]', 'user-enable'],
   ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#dup-hide-all, [data-dup-hide]', 'hidden'],

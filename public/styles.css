@@ -1602,3 +1602,10 @@ body.login-modern .auth-card .brand-name { letter-spacing: 0; }
 .stats-col a.stat-link b { color: var(--accent-2); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
 .stats-col a.stat-link:hover, .stats-col a.stat-link:focus-visible { background: rgba(124, 92, 255, .12); outline: none; }
 .stats-col a.stat-link:hover b { text-decoration-color: currentColor; }
+
+/* Game names panel: the export box */
+.export-box { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.export-box h4 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.export-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.7rem 1rem; margin-top: 0.9rem; }
+.export-row .field { min-width: 13rem; }
+.export-row .policy-row { margin: 0 0 0.35rem; }

@@ -11,6 +11,7 @@ import { requireAdmin } from './auth.js';
 import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
+import { csvLines, coverEntries, zipChunks, exportCounts } from '../lib/export.js';
 import { clearDuplicateCache } from '../lib/duplicates.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
@@ -601,6 +602,27 @@ router.get('/recently-played', (req, res) => {
 });
 
 /* ------------------------------------------------------------ detail */
+
+// Export (admin, read-only): the library's game data as a CSV, and the cover pictures as a zip named after each game's file.
+// ?platform=a,b limits it (blank = every platform); ?hidden=1 includes games hidden from everyone.
+const exportOpts = (q) => ({ platform: String(q.platform || ''), includeHidden: q.hidden === '1' });
+router.get('/export/summary', requireAdmin, (req, res) => res.json(exportCounts(exportOpts(req.query))));
+router.get('/export/games.csv', requireAdmin, (req, res) => {
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="game-sauce-games-${stamp}.csv"`);
+  for (const line of csvLines(exportOpts(req.query))) res.write(line);
+  res.end();
+});
+router.get('/export/covers.zip', requireAdmin, (req, res) => {
+  const entries = coverEntries(exportOpts(req.query));
+  if (!entries.length) return res.status(404).json({ error: 'No covers to export for that choice' });
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="game-sauce-covers-${stamp}.zip"`);
+  try { for (const chunk of zipChunks(entries)) res.write(chunk); } catch (err) { return res.destroy(err); }
+  res.end();
+});
 
 // Name list (CSV): rename ROMs on one platform from a file-name -> game-name table. Preview first, then apply.
 router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 * 1024 * 1024 } }).single('csv'), (req, res, next) => {

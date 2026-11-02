@@ -529,6 +529,18 @@
         <label class="policy-row" style="margin-top:10px"><input type="checkbox" id="names-flag-system" checked /> <span><b>Mark BIOS, device and non-arcade entries as System</b> (CSV columns <code>is_bios</code>, <code>is_device</code> = yes, or <code>is_arcade</code> filled in and not yes). System entries are <b>hidden for everyone</b> in the main library (only an admin can mark or unmark them), kept and downloadable, found under the <b>⚙ System</b> filter, and skipped by Fetch metadata.</span></label>
         <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="names-preview">Preview</button><button class="btn btn-primary" id="names-apply" disabled>Apply names</button></div>
         <p class="hint" id="names-result" style="margin-top:10px"></p>
+
+        <div class="export-box">
+          <h4>Export your game data</h4>
+          <p class="hint" style="margin-top:0">Downloads a CSV with one row per game: file name, title, platform, where the file lives (a source folder or the vault), size, developer, publisher, genre, region, revision, year, players, rating, description, tags, the cover's file name, where the details came from, and the checksums. The first two columns match the import above, so you can edit the file and bring it back. The covers come as a zip, each picture named after its game's file. Hidden-from-everyone games are left out unless you tick the box.</p>
+          <div class="export-row">
+            <label class="field"><span>Platform</span><select id="export-platform" class="select"><option value="">All platforms</option></select></label>
+            <label class="policy-row"><input type="checkbox" id="export-hidden" /> <span>Include games hidden from everyone</span></label>
+            <button class="btn" id="export-csv" title="Download the game data as a CSV">Export games (CSV)</button>
+            <button class="btn" id="export-covers" title="Download the cover pictures as a zip">Export covers (zip)</button>
+          </div>
+          <p class="hint" id="export-summary" style="margin-top:8px"></p>
+        </div>
       </div>
 
       <div class="panel hidden" id="mod-dat">

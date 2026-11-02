@@ -343,3 +343,7 @@ shows while you hold, and no other button is intercepted, so the game never lose
 - Covers are cached in `storage/media`; deleting a game deletes its cached art.
 - The DAT import limit is 512 MB (`GAMESAUCE_MAX_DAT`); a MAME list of about 400 MB fits.
 - The animated sign-in background switches itself off if your system asks for reduced motion.
+
+## Exporting your game data
+
+Settings > Library tools > Game names (CSV) (admin) has an **Export your game data** box. Pick a platform (or all), then **Export games (CSV)** for one row per game with its file name, title, platform, where the file lives, the editable details and the checksums, or **Export covers (zip)** for the cover pictures, each named after its game's file so they pair up with the CSV rows. Nothing on the server is changed. The first two columns (`rom_name`, `short_game_name`) are what the import above reads, so you can fix names in a spreadsheet and import the file again.

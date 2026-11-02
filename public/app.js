@@ -3891,7 +3891,20 @@ function waitForServerThenReload() {
   set();
 })();
 
+function initExportBox() {
+  const sel = $('#export-platform'), hid = $('#export-hidden'), sum = $('#export-summary');
+  if (!sel || sel.dataset.ready) return; sel.dataset.ready = '1';
+  sel.innerHTML = '<option value="">All platforms</option>' + (window.__platformsCache || []).filter((p) => p.count).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)} (${p.count})</option>`).join('');
+  const qs = () => new URLSearchParams({ ...(sel.value ? { platform: sel.value } : {}), ...(hid.checked ? { hidden: '1' } : {}) }).toString();
+  const refresh = async () => { try { const c = await api('/roms/export/summary?' + qs()); sum.textContent = `${c.games.toLocaleString()} game${c.games === 1 ? '' : 's'}, ${c.covers.toLocaleString()} with a cover.`; } catch { sum.textContent = ''; } };
+  sel.onchange = refresh; hid.onchange = refresh; refresh();
+  // A plain download link: the browser's own downloader handles a big file, and the sign-in cookie goes with it.
+  $('#export-csv').onclick = () => { location.href = '/api/roms/export/games.csv?' + qs(); };
+  $('#export-covers').onclick = () => { location.href = '/api/roms/export/covers.zip?' + qs(); };
+}
+
 function initNamesPanel() {
+  initExportBox();
   const sel = $('#names-platform');
   if (!sel.options.length) sel.innerHTML = (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
   const out = $('#names-result'); const applyBtn = $('#names-apply');
