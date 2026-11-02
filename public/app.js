@@ -20,6 +20,7 @@ const state = {
   hidden: false,
   system: false,
   orphan: false,
+  locked: false,   // admin: only games locked with Keep
   unmatched: false,
   datStatus: null,
   cover: null,     // 'with' | 'none': from the Stats totals
@@ -39,7 +40,7 @@ const state = {
 let activeSettingsModule = null; // which Settings tile is open (declared early: saveNav reads it)
 const NAV_KEY = 'gamesauce_nav';
 const NAV_FIELDS = ['platform', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
-  'missing', 'hidden', 'orphan', 'unmatched', 'datStatus', 'cover', 'matched', 'incl'];
+  'missing', 'hidden', 'orphan', 'locked', 'unmatched', 'datStatus', 'cover', 'matched', 'incl'];
 function saveNav() {
   try {
     const snap = { view: state.view, settingsModule: activeSettingsModule };
@@ -385,6 +386,7 @@ async function loadPlatforms() {
   }
   syncOrphanToggle();
   syncUnmatchedToggle();
+  document.querySelector('[data-toggle="locked"]')?.classList.toggle('hidden', authState.user?.role !== 'admin');
 }
 
 /* ─────────────────────────── library ─────────────────────────── */
@@ -425,6 +427,7 @@ function activeFilterChips() {
   if (state.hidden) chips.push({ label: 'Hidden only', clear: () => { state.hidden = false; } });
   if (state.system) chips.push({ label: 'System entries', clear: () => { state.system = false; } });
   if (state.unmatched) chips.push({ label: 'Needs match', clear: () => { state.unmatched = false; loadLibrary(); } });
+  if (state.locked) chips.push({ label: 'Locked games', clear: () => { state.locked = false; loadLibrary(); } });
   if (state.orphan) chips.push({ label: 'Not in any source', clear: () => { state.orphan = false; loadLibrary(); } });
 
   const wrap = $('#active-filters');
@@ -474,6 +477,7 @@ async function loadLibrary() {
   // over the grid without touching the user's filters — deliberate detours, so
   // normal browsing state is preserved underneath.
   const orphanOnly = state.orphan === true;
+  const lockedOnly = state.locked === true && authState.user?.role === 'admin';
   const unmatchedOnly = state.unmatched === true;
   const grid = $('#grid');
   if (!grid.dataset.primed) {
@@ -486,7 +490,7 @@ async function loadLibrary() {
   if (state.platform === 'all') state.extraPlatforms = [];
   const isHome = !state.q && state.platform === 'all' && !state.tag && !state.genre &&
     !state.favorite && !state.source && !state.missing && !state.datStatus && !state.cover && !state.matched && !state.incl &&
-    !state.hidden && !state.system && !orphanOnly && !unmatchedOnly;
+    !state.hidden && !state.system && !orphanOnly && !unmatchedOnly && !lockedOnly;
   $('#lib-overview')?.classList.toggle('hidden', !isHome);
   $('#lib-recent-wrap')?.classList.toggle('hidden', !isHome);
   if (!isHome) $('#lib-played-wrap')?.classList.add('hidden');
@@ -509,6 +513,7 @@ async function loadLibrary() {
   if (state.matched) params.set('matched', state.matched === 'yes' ? '1' : '0');
   if (unmatchedOnly) { params.set('unmatched', 'only'); params.set('hidden', 'all'); }
   else if (orphanOnly) { params.set('orphan', 'only'); params.set('hidden', 'all'); }
+  else if (lockedOnly) { params.set('locked', '1'); params.set('hidden', 'all'); params.set('system', 'all'); }
   else if (state.system) params.set('system', 'only');
   else if (state.hidden) params.set('hidden', 'only');
 
@@ -594,7 +599,9 @@ async function loadLibrary() {
   }
   try { await statsP; } catch { /* overview is decorative */ }
 
-  $('#result-count').textContent = state.orphan
+  $('#result-count').textContent = lockedOnly
+    ? `${data.total} locked game${data.total === 1 ? '' : 's'}${state.q ? ` matching “${state.q}”` : ''}`
+    : state.orphan
     ? `${data.total} orphaned ROM${data.total === 1 ? '' : 's'} (no valid source)`
     : state.unmatched
       ? `${data.total} unmatched ROM${data.total === 1 ? '' : 's'} (no provider hit yet)`
@@ -1026,6 +1033,8 @@ function syncSelectUI() {
   // These two live in the selection bar (not the top row), so the Sort / Fetch / grid controls never move.
   $('#bulk-system-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $('#bulk-clearmatch-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
+  $('#bulk-lock-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
+  $$('.bl-label').forEach((l) => { l.textContent = state.locked ? 'Unlock' : 'Lock'; });
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
   $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
@@ -1085,6 +1094,19 @@ async function bulkHideSelected() {
   } catch (err) { toast(err.message, true); }
 }
 
+async function bulkLockSelected() {
+  const ids = [...state.selected];
+  if (!ids.length) return toast('Select some tiles first', true);
+  const unlock = !!state.locked;
+  try {
+    const r = await api('/roms/bulk/lock', { method: 'POST', body: JSON.stringify({ ids, locked: !unlock }) });
+    toast(unlock ? `Unlocked ${r.changed} game${r.changed === 1 ? '' : 's'}: they can be deleted now` : `Locked ${r.changed} game${r.changed === 1 ? '' : 's'}: protected from deletion`);
+    state.selected.clear();
+    await Promise.all([loadLibrary(), loadPlatforms()]);
+    syncSelectUI();
+  } catch (err) { toast(err.message, true); }
+}
+
 async function bulkDeleteSelected() {
   const ids = [...state.selected];
   if (!ids.length) return toast('Select some tiles first', true);
@@ -1133,6 +1155,7 @@ function syncFilterToggles() {
       : key === 'system' ? state.system
       : key === 'nocover' ? state.cover === 'none'
       : key === 'orphan' ? state.orphan
+      : key === 'locked' ? state.locked
       : key === 'unmatched' ? state.unmatched : false;
     btn.classList.toggle('is-active', Boolean(on));
   });
@@ -1171,8 +1194,11 @@ $$('[data-toggle]').forEach((btn) => btn.addEventListener('click', () => {
   else if (btn.dataset.toggle === 'system') { state.system = !state.system; if (state.system) state.hidden = false; }
   else if (btn.dataset.toggle === 'nocover') state.cover = state.cover === 'none' ? null : 'none';
   else if (btn.dataset.toggle === 'orphan') state.orphan = !state.orphan;
+  else if (btn.dataset.toggle === 'locked') state.locked = !state.locked;
   else if (btn.dataset.toggle === 'unmatched') state.unmatched = !state.unmatched;
-  if (state.orphan || state.unmatched) state.hidden = false;
+  if (state.orphan || state.unmatched || state.locked) state.hidden = false;
+  if (state.locked && btn.dataset.toggle === 'locked') { state.orphan = false; state.unmatched = false; state.system = false; }
+  else if (state.locked && (btn.dataset.toggle === 'orphan' || btn.dataset.toggle === 'unmatched' || btn.dataset.toggle === 'system')) state.locked = false;
   if (state.orphan && state.unmatched) {
     // One troubleshooting lens at a time — the newer click wins.
     if (btn.dataset.toggle === 'orphan') state.unmatched = false;
@@ -3408,6 +3434,7 @@ $('#bulk-selectall')?.addEventListener('click', async (e) => {
 $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); syncSelectUI(); });
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
+$('#bulk-lock-btn')?.addEventListener('click', bulkLockSelected);
 $('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
 $('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
@@ -3593,7 +3620,7 @@ function showApp(user, { restore = false } = {}) {
     // Fresh start: forget filters from any earlier session in this tab.
     clearNav();
     Object.assign(state, { platform: 'all', q: '', sort: 'title', tag: null, genre: null, favorite: false,
-      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
     $('#search').value = '';
     $('#sort').value = 'title';
     activeSettingsModule = null;
@@ -4132,7 +4159,7 @@ async function loadStatsPanel() {
 function openLibraryFor(kind) {
   closeDrawer();
   Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
   const sb = $('#search'); if (sb) sb.value = '';
   // The Stats page counts every game, so the lists these links open include hidden games (and System ones where the total does).
   if (kind === 'all' || kind === 'matched' || kind === 'unmatched-name' || kind === 'cover' || kind === 'missing') state.incl = 'all';

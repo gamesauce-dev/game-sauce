@@ -327,6 +327,19 @@ bulkRouter.post('/hide-all', requireAdmin, (req, res) => {
   res.json({ changed, hidden_all: Boolean(v) });
 });
 
+// Lock (Keep) or unlock several games at once. A locked game is protected from deletion; unlocking puts it back to automatic.
+bulkRouter.post('/lock', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
+  const lock = req.body?.locked !== false;
+  const upd = db.prepare("UPDATE roms SET keep_override = ?, updated_at = datetime('now') WHERE id = ? AND COALESCE(keep_override, -1) <> ?");
+  let changed = 0;
+  db.transaction(() => { for (const id of ids) changed += upd.run(lock ? 1 : null, id, lock ? 1 : -1).changes; })();
+  req.auditDetail = { locked: lock, count: ids.length, changed };
+  clearDuplicateCache();
+  res.json({ changed, locked: lock });
+});
+
 bulkRouter.post('/delete', (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
   if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
@@ -445,6 +458,8 @@ router.get('/', (req, res) => {
   if (req.query.unmatched === '1' || req.query.unmatched === 'only') {
     where.push(`(r.meta_source IS NULL OR r.meta_source IN ('filename','seed',''))`);
   }
+  // Locked (admin only): games marked Keep, which cannot be deleted until they are unlocked. Shows hidden and System ones too.
+  if ((req.query.locked === '1' || req.query.locked === 'only') && req.user?.role === 'admin') where.push('r.keep_override = 1');
   // Orphans: ROMs whose source row is gone (or was never set). These can never
   // be re-scanned — this is the "platforms with no source" the sidebar shows.
   if (req.query.orphan === '1' || req.query.orphan === 'only' || req.query.orphaned === '1') {

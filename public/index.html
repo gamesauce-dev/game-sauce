@@ -130,6 +130,7 @@
           <button class="toggle-pill" data-toggle="hidden" title="Games you have hidden from your own view (other people still see them)">◌ Hidden</button>
           <button class="toggle-pill" data-toggle="nocover" title="Show only games that have no cover picture yet">▢ No cover</button>
           <button class="toggle-pill" data-toggle="system" title="BIOS, device and computer entries: kept and downloadable, but out of the main library">⚙ System</button>
+          <button class="toggle-pill hidden" data-toggle="locked" title="Games you have locked (Keep): protected from deletion. Select them and unlock to be able to delete them.">🔒 Locked</button>
           <button class="toggle-pill" data-toggle="orphan" title="Games that are no longer attached to any source folder (for example a locked game whose source was removed). Scanning a source that covers their folder reconnects them.">⛁ No source</button>
           <button class="toggle-pill" data-toggle="unmatched" title="Show only ROMs no provider has ever matched — the manual-identify worklist">○ Needs match</button>
           <button class="toggle-pill" data-action="select" id="select-toggle" title="Select tiles to delete several at once">☐ Select</button>
@@ -171,6 +172,7 @@
           <button class="btn btn-sm hidden" id="bulk-addcoll">＋ Add to collection</button>
           <button class="btn btn-sm hidden" id="bulk-hide-btn" title="Hide the selected games (for an admin: members will not see them either; nothing is deleted)">◌ <span class="bh-label">Hide</span> selected</button>
           <button class="btn btn-sm hidden" id="bulk-system-btn" title="Move the selected games to System (or back to the library)">⚙ <span class="bs-label">Mark as System</span></button>
+          <button class="btn btn-sm hidden" id="bulk-lock-btn" title="Lock the selected games so they cannot be deleted (or unlock them when you are looking at Locked)">🔒 <span class="bl-label">Lock</span> selected</button>
           <button class="btn btn-sm hidden" id="bulk-clearmatch-btn" title="Remove the metadata match from the selected games (wrong cover, wrong details) so they can be matched again">⟲ Clear match</button>
           <button class="btn btn-sm btn-ghost" id="bulk-clear">Clear</button>
           <span class="bulk-spacer"></span>

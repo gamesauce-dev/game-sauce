@@ -70,7 +70,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -272,7 +272,7 @@ function buildLibraryTools(ic) {
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
-  host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue });
+  host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue, lock: ic.lock });
   document.body.classList.add('mb-tools');
   $('#tl-q')?.addEventListener('input', (e) => { const s = q('#search'); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });
   if (!buildLibraryTools.timer) buildLibraryTools.timer = setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') { syncTools(); syncAz(); } }, 700);
@@ -293,7 +293,7 @@ function toolClick(e) {
       (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); });
   } else if (b.id === 'tl-more') {
     const ic = JSON.parse($('#mb-library-tools').dataset.icons || '{}');
-    const items = [['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'No source', ic.orphans, 'a scan of their folder reconnects them'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched']]
+    const items = [['locked', 'Locked games', ic.lock, 'protected from deletion; unlock to delete'], ['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'No source', ic.orphans, 'a scan of their folder reconnects them'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched']]
       .filter(([k]) => { const t = q(`[data-toggle="${k}"]`); return t && !t.classList.contains('hidden'); });
     if (!items.length) return true;
     openPop(b, items.map(([k, label, svg, sub]) => `<button class="mb-menu-item${q(`[data-toggle="${k}"]`)?.classList.contains('is-active') ? ' on' : ''}" role="menuitemcheckbox" data-pick="${k}">${svg}<span>${label}<small>${sub}</small></span></button>`).join(''),
@@ -310,7 +310,7 @@ function syncTools() {
   $('#tl-hidden')?.classList.toggle('is-on', on('[data-toggle="hidden"]'));
   $('#tl-nocover')?.classList.toggle('is-on', on('[data-toggle="nocover"]'));
   $('#tl-select')?.classList.toggle('is-on', on('#select-toggle'));
-  const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'unmatched'].some((k) => on(`[data-toggle="${k}"]`)));
+  const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'locked', 'unmatched'].some((k) => on(`[data-toggle="${k}"]`)));
   const sort = $('#tl-sort'); if (sort) { const s = q('#sort'); sort.classList.toggle('is-on', Boolean(s && s.value !== 'title')); sort.title = 'Sort: ' + (s?.selectedOptions?.[0]?.textContent || ''); }
   const search = $('#tl-q'), real = q('#search'); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
   const f = $('#tl-fetch');
@@ -532,7 +532,7 @@ const ICON_MAP = [
   // Collections
   ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
   // Library selection bar
-  ['#bulk-addcoll', 'collection-new'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-cancel', 'done'],
+  ['#bulk-addcoll', 'collection-new'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-lock-btn', 'lock'], ['#bulk-cancel', 'done'],
   // Settings: account
   ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance
