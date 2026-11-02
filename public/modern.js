@@ -285,7 +285,7 @@ function buildLibraryTools(ic) {
 function toolClick(e) {
   const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
   if (!b) return false;
-  if (b.id === 'tl-reset') { ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
+  if (b.id === 'tl-reset') { chipFamily = null; ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
   else if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
   else if (b.id === 'tl-hidden') proxy('[data-toggle="hidden"]');
   else if (b.id === 'tl-nocover') proxy('[data-toggle="nocover"]');

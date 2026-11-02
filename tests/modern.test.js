@@ -542,3 +542,7 @@ test('release 0.2.0: version, changelog heading and docs agree', () => {
   for (const f of ['README.md', 'docs/USER-GUIDE.md']) assert.doesNotMatch(read(f), /⛁ Orphans/, f + ' still says Orphans pill');
   assert.match(read('README.md'), /GAMESAUCE_MAX_UPLOAD/); assert.match(read('README.md'), /bulk\/lock/);
 });
+
+test('Reset also closes the open platform family row', () => {
+  assert.match(read('public/modern.js'), /b\.id === 'tl-reset'\) \{ chipFamily = null;/);
+});

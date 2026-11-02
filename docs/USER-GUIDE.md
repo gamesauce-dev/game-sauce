@@ -53,11 +53,21 @@ delete-from-disk. Imported copies in `storage/roms` are removed together with th
 
 ## 3. Library
 
+The Library in the Modern look (Classic has the same features with a sidebar):
+
 ![The Library](screenshots/library.png)
 
-Picking a platform shows its name above the tiles:
+The Home page, with the ticker, Continue playing and Recently added:
+
+![Home](screenshots/home.png)
+
+Pick a family, then one or more platforms; the heading names them:
 
 ![One platform selected](screenshots/platform.png)
+
+Admins can find locked games, select them all and unlock them in one go:
+
+![Locked games](screenshots/locked.png)
 
 - **Sidebar:** your name, settings (⚙) and sign out (⏻) sit under the logo. Below are Library,
   Collections, Sources, Add ROMs and Emulators, then every platform with a count, grouped by
@@ -88,7 +98,7 @@ Picking a platform shows its name above the tiles:
 
 Click any tile.
 
-![Game details](screenshots/detail.png)
+![Game details, pinned beside the games](screenshots/detail.png)
 
 - **‹ 3 / 24 ›** at the top steps to the previous or next game without closing the panel (the
   **←** and **→** keys do the same). It walks the list you opened the game from: the library grid,
@@ -361,6 +371,8 @@ Settings > Library tools > CSV tools (admin) has an **Export your game data** bo
 ### Bringing an export back
 
 The CSV import reads every column the export writes, so you can edit titles, developers, genres, years, descriptions or tags in a spreadsheet and import the file again (a filled cell replaces what the game has; an empty cell leaves it alone). To bring covers back, use **Import cover pictures** in the same panel with the zip from **Export covers**: each picture goes to the game with the matching file name on the matching platform. Preview shows what would change, and games that already have a cover are skipped unless you tick the box. Only JPEG, PNG and WebP pictures are accepted.
+
+![CSV tools](screenshots/csv-tools.png)
 
 To bring in details and covers in one go, choose the CSV and add the zip from **Export covers** in the **Cover pictures (zip)** box of the same import. The CSV's `cover_file` column names the picture for each game, so the pictures do not have to be named after the games' files. One Preview shows both parts, and one Apply saves them.
 

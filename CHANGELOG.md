@@ -110,6 +110,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Documentation screenshots** retaken in the Modern look from the invented-games demo (Home, Library, light mode, platforms, details window, Locked, Collections, CSV tools, Health, Emulators). Backups, Sources, Gamepad and Sign-in keep their Classic pictures.
 - **Modern ticker:** the game-sauce name is now always the first line, on launch and when you go back to Home (it was pushed down by notices such as System health or an update). Notices still follow straight after it. The health notice is calmer: "System health: a few notes to read" (or "needs a look" when something is actually wrong). The selection bar's lock button hover now reads "Lock / Unlock the selected games".
 - **"Orphans" is now "No source"** (the filter, its chip, and Modern's menu), with a tooltip saying what it means: games no longer attached to a source folder, and that scanning a source that covers their folder reconnects them. Settings > Stats still counts them under "Orphans (no source folder)".
 - **"Game names (CSV)" is now "CSV tools"** (Settings > Library tools).
@@ -178,6 +179,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Modern: Reset now also closes the open platform family row** (the platforms under Nintendo, say) instead of leaving it showing with All selected.
 - **Modern: the Emulators page started lower than Sources, Add ROMs and the rest.** Its "Check latest releases" button had a row of its own above the content. On wide screens the button now sits in the top-right corner, so the page starts at the same height as the others (measured: 84 px on all three). On a narrow screen it keeps its row.
 - **Locked games showed as "Orphaned" even though their file was exactly where a source looks.** When a source was removed, any game locked with Keep survived with its source link cleared. Adding the folder again and scanning found the same file but skipped it as a duplicate of the surviving entry, so it never reconnected and stayed "orphaned" for good. A scan now takes such a game back: same entry, same id, same lock, attached to the source again, no duplicate. (The 49 Genesis games on the live server are this case: a scan of the Genesis source reconnects them.) A game whose file is not under any scanned folder is left alone.
 - **A play-only person was offered "Add ROMs"** in the empty "No ROMs match" screen (seen when a platform has nothing playable). It is hidden for them.

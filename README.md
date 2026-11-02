@@ -9,7 +9,7 @@ library, enrich it with metadata and artwork, play many older games in the brows
 ROMs back out. Built for a household: you run it, and you give accounts to the people you trust.
 Express + SQLite on the server, a single static page on the client, no build step.
 
-![The Library](docs/screenshots/library.png)
+![The Library (Modern look)](docs/screenshots/library.png)
 
 **New here? Want to try it on your own computer?** → [Quick start for a desktop](docs/QUICKSTART-DESKTOP.md): install Node.js, download the ZIP, run `./start.sh` (or double-click `start.bat` on Windows). No server, no Docker, no settings to edit.
 
@@ -52,12 +52,21 @@ Express + SQLite on the server, a single static page on the client, no build ste
 <details>
 <summary>More screenshots</summary>
 
+**Modern look**
+
 | | |
 |---|---|
-| ![One platform](docs/screenshots/platform.png) | ![Game details](docs/screenshots/detail.png) |
+| ![Home](docs/screenshots/home.png) | ![One platform, details window pinned](docs/screenshots/detail.png) |
+| ![Locked games, select all, unlock](docs/screenshots/locked.png) | ![Collections](docs/screenshots/collections.png) |
+| ![CSV tools: one CSV plus one zip](docs/screenshots/csv-tools.png) | ![Health](docs/screenshots/health.png) |
+| ![Emulator guide](docs/screenshots/emulators.png) | ![Light mode](docs/screenshots/library-light.png) |
+
+**Classic look**
+
+| | |
+|---|---|
 | ![Backups and restore](docs/screenshots/backups.png) | ![Gamepad navigation](docs/screenshots/gamepad.png) |
-| ![Sources](docs/screenshots/sources.png) | ![Settings](docs/screenshots/settings.png) |
-| ![Emulator guide](docs/screenshots/emulators.png) | |
+| ![Sources](docs/screenshots/sources.png) | |
 
 ![Sign-in screen](docs/screenshots/login.png)
 
