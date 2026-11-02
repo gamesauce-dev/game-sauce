@@ -774,7 +774,7 @@ function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
+      state.navSnap = null; state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
       openDetail(Number(card.dataset.rom));
     }
   }));
@@ -813,14 +813,14 @@ function bindCards(root) {
     const openBtn = e.target.closest('[data-open-rom]');
     if (openBtn) return; // handled by its own listener, don't double-open
     // Prev/next walks the list this tile lives in (main grid or the recently-added row).
-    state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
+    state.navSnap = null; state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
     openDetail(id);
   }));
 
   // Most-downloaded overview tile carries its own id (it lives outside .card).
   $$('[data-open-rom]', root).forEach((btn) => btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    state.nav = null;
+    state.navSnap = null; state.nav = null;
     openDetail(Number(btn.dataset.openRom));
   }));
 }
@@ -1283,8 +1283,12 @@ window.addEventListener('resize', placeDrawerNav);
 function updateDrawerNav(id) {
   const box = $('#drawer-nav');
   if (!box) return;
-  const ids = navIds();
-  const i = ids.indexOf(id);
+  let ids = navIds();
+  let i = ids.indexOf(id);
+  // The list can change under an open game: a match gives it a cover, so it leaves "No cover"; hiding it removes it from the
+  // library; unfavouriting leaves Favourites. Keep the list it was opened from, so the previous / next row stays and still works.
+  if (i >= 0) state.navSnap = ids.slice();
+  else if (state.navSnap && state.navSnap.includes(id)) { state.nav = { ids: state.navSnap }; ids = state.navSnap; i = ids.indexOf(id); }
   const canLoadMore = !!(state.nav?.el && state.nav.el.id === 'grid' && state.libLoadMore);
   box.classList.toggle('hidden', i < 0 || ids.length < 2);
   $('#drawer-prev').disabled = i <= 0;
@@ -3183,7 +3187,7 @@ async function openCollection(id) {
 
   $('#drawer-nav')?.classList.add('hidden');
   $$('[data-rom-open]', drawer).forEach((b) => b.addEventListener('click', () => {
-    state.nav = { ids: c.items.map((r) => r.id) };
+    state.navSnap = null; state.nav = { ids: c.items.map((r) => r.id) };
     openDetail(Number(b.dataset.romOpen));
   }));
   // Play straight from the collection. Fullscreen must be asked for inside this click, so the player opens first (as on a tile).
@@ -4155,7 +4159,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   const open = e.target.closest('[data-dup-open]');
-  if (open) { state.nav = null; openDetail(Number(open.dataset.dupOpen)); return; }
+  if (open) { state.navSnap = null; state.nav = null; openDetail(Number(open.dataset.dupOpen)); return; }
   const one = e.target.closest('[data-dup-hide]');
   if (one) { e.stopPropagation(); hideDuplicateExtras([dupState.groups[Number(one.dataset.dupHide)]]); return; }
   if (e.target.closest('#dup-hide-all')) hideDuplicateExtras(dupState.groups);

@@ -550,3 +550,10 @@ test('Reset also closes the open platform family row', () => {
 test('Reset is live while a family row of platform pills is open, even with no platform picked', () => {
   assert.match(read('public/modern.js'), /ctx\.filtersActive\?\.\(\) \|\| chipFamily/);
 });
+
+test('details window keeps its previous / next row when the opened game leaves the list (e.g. matched while filtered to No cover)', () => {
+  const app = read('public/app.js');
+  assert.match(app, /if \(i >= 0\) state\.navSnap = ids\.slice\(\);/);
+  assert.match(app, /state\.nav = \{ ids: state\.navSnap \}/);
+  assert.ok((app.match(/state\.navSnap = null;/g) || []).length >= 5, 'every fresh open resets the snapshot');
+});
