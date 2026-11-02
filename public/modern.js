@@ -309,7 +309,7 @@ function toolClick(e) {
 
 /** Make the icons reflect the real filters, and the fetch button show a spinner while a metadata run is going. */
 function syncTools() {
-  { const r = $('#tl-reset'); if (r) { const act = Boolean(ctx.filtersActive?.()); r.classList.toggle('is-dim', !act); r.disabled = !act; } }
+  { const r = $('#tl-reset'); if (r) { const act = Boolean(ctx.filtersActive?.() || chipFamily); /* an open family row (the platform pills) counts too, even with nothing picked in it */ r.classList.toggle('is-dim', !act); r.disabled = !act; } }
   const on = (sel) => Boolean(q(sel)?.classList.contains('is-active'));
   $('#tl-fav')?.classList.toggle('is-on', on('[data-toggle="favorite"]'));
   $('#tl-hidden')?.classList.toggle('is-on', on('[data-toggle="hidden"]'));

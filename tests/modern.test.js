@@ -546,3 +546,7 @@ test('release 0.2.0: version, changelog heading and docs agree', () => {
 test('Reset also closes the open platform family row', () => {
   assert.match(read('public/modern.js'), /b\.id === 'tl-reset'\) \{ chipFamily = null;/);
 });
+
+test('Reset is live while a family row of platform pills is open, even with no platform picked', () => {
+  assert.match(read('public/modern.js'), /ctx\.filtersActive\?\.\(\) \|\| chipFamily/);
+});
