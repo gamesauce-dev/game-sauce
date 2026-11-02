@@ -83,9 +83,10 @@ test('every shipped icon is a plain SVG that takes the text colour', () => {
   }
 });
 
-test('the bar is built once (a second build would double every click)', () => {
+test('the bar is built once per person (a second build for the same person would double every click)', () => {
   const js = read('public/modern.js');
-  assert.match(js, /building \|\| \(building = doBuildBar\(\)\)/);
+  assert.match(js, /if \(building && builtFor === key\) return building;/, 'the same person reuses the bar that is already built');
+  assert.match(js, /return \(building = doBuildBar\(\)\);/);
   assert.match(js, /e\.currentTarget\.contains\(nav\)/, 'page buttons are matched inside the bar, not on <body data-mview>');
 });
 
@@ -467,4 +468,31 @@ test('Stats totals are links that open the Library with the same filter, so the 
   for (const k of ['all', 'system', 'matched', 'unmatched-name', 'cover', 'nocover', 'orphan', 'missing', 'hidden']) assert.ok(app.includes(`'${k}'`), k);
   assert.match(app, /state\.incl = 'all'/, 'hidden and System games are included where the Stats total counts them');
   assert.match(api, /req\.query\.cover === '0'/); assert.match(api, /req\.query\.matched === '1'/);
+});
+
+test('the No cover tool uses the no-covers icon', () => {
+  const js = read('public/modern.js');
+  assert.match(js, /\$\{ic\['no-covers'\]\}<\/button>/); assert.ok(js.includes("'no-covers', 'fetch-metadata'"));
+  assert.doesNotMatch(js, /ic\['empty-covers'\]/);
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/no-covers.svg', import.meta.url)));
+});
+
+test('the Modern bar is rebuilt for whoever signs in, so a play-only person never gets the last person\'s admin bar', () => {
+  const js = read('public/modern.js');
+  assert.match(js, /const whoKey = \(\) =>/); assert.match(js, /builtFor === key/, 'the bar remembers who it was built for');
+  assert.match(js, /bar\.dataset\.wired/, 'its click handler is attached once, however often it is rebuilt');
+  assert.match(js, /buildLibraryTools\.timer/, 'and the Library tools timer is started once');
+});
+
+test('collections say which games can be played, and offer Play on them', async () => {
+  const mk = await call('/api/collections', { method: 'POST', body: { name: 'Playable test' } });
+  const snes = db.prepare("SELECT id FROM roms WHERE platform_id = (SELECT id FROM platforms WHERE slug = 'snes') LIMIT 1").get();
+  const ps1 = db.prepare("SELECT id FROM roms WHERE platform_id = (SELECT id FROM platforms WHERE slug = 'ps1') LIMIT 1").get();
+  const ids = [snes?.id, ps1?.id].filter(Boolean);
+  if (ids.length < 2) return;   // the seeded test library has no such games: nothing to compare
+  await call(`/api/collections/${mk.body.id}/roms`, { method: 'POST', body: { rom_ids: ids } });
+  const d = (await call(`/api/collections/${mk.body.id}`)).body;
+  assert.equal(d.items.find((r) => r.id === snes.id).playable, true, 'a SNES game has a browser core');
+  assert.equal(d.items.find((r) => r.id === ps1.id).playable, false, 'a PS1 game needs a BIOS: no Play button');
+  assert.match(read('public/app.js'), /data-rom-play=/); assert.match(read('public/app.js'), /\.then\(openPlayer\)/);
 });

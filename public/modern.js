@@ -57,10 +57,20 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 /* ───────────── the bar ───────────── */
 // Built once. Two callers can ask at nearly the same moment (sign-in and the look switch), and a second build would attach a
 // second click handler, so every button would run twice and undo itself.
-function buildBar() { return building || (building = doBuildBar()); }
+let builtFor = null;   // 'id:role:playonly' the bar on screen was built for
+const whoKey = () => { const u = ctx?.user?.(); return u ? `${u.id}:${u.role}:${u.play_only ? 1 : 0}` : ''; };
+function buildBar() {
+  const key = whoKey();
+  if (building && builtFor === key) return building;
+  // A different person (or the same person with a changed role or screen): build their bar from scratch, and forget the last one's state.
+  builtFor = key;
+  document.body.classList.remove('mb-tools');
+  for (const id of ['mb-menu']) $('#' + id)?.classList.add('hidden');
+  return (building = doBuildBar());
+}
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'empty-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -93,8 +103,8 @@ async function doBuildBar() {
   trackBarHeight();
   paintUser();
   refreshTicker(true);
-  setInterval(() => { if (isModern()) refreshTicker(true); }, 60000);
-  bar.addEventListener('click', onBarClick);
+  if (!buildBar.timer) buildBar.timer = setInterval(() => { if (isModern()) refreshTicker(true); }, 60000);
+  if (!bar.dataset.wired) { bar.dataset.wired = '1'; bar.addEventListener('click', onBarClick); }   // once: the bar is rebuilt for each person, the listener must not stack
   paintToggles();
 }
 
@@ -258,14 +268,14 @@ function buildLibraryTools(ic) {
     ${po ? '' : `<button class="mb-btn" id="tl-sort" title="Sort" aria-label="Sort" aria-haspopup="menu">${ic.sort}</button>`}
     <button class="mb-btn" id="tl-fav" title="Favourites only" aria-label="Favourites only">${ic.favourite}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
-    <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['empty-covers']}</button>
+    <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['no-covers']}</button>
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue });
   document.body.classList.add('mb-tools');
   $('#tl-q')?.addEventListener('input', (e) => { const s = q('#search'); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });
-  setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') { syncTools(); syncAz(); } }, 700);
+  if (!buildLibraryTools.timer) buildLibraryTools.timer = setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') { syncTools(); syncAz(); } }, 700);
 }
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
@@ -404,6 +414,8 @@ function buildAzBar(ic) {
       <button class="mb-btn" data-density="compact" title="Condensed grid" aria-label="Condensed grid">${ic['grid-condensed']}</button>
       <button class="mb-btn" id="az-top" title="Back to the top" aria-label="Back to the top">${ic['back-to-top']}</button>
     </div>`;
+  if (bar.dataset.wired) return;   // the markup above is rebuilt each time; the click handler is attached only once
+  bar.dataset.wired = '1';
   bar.addEventListener('click', (e) => {
     const d = e.target.closest('[data-density]');
     if (d) { document.querySelector(`#density [data-density="${d.dataset.density}"]`)?.click(); setTimeout(syncAz, 60); return; }
@@ -518,7 +530,7 @@ const ICON_MAP = [
   ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'scan-again'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
   ['[data-save-release]:not(.emu-save-alt)', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-save-release].emu-save-alt', 'arrow-up'], ['[data-vault-del]', 'delete'],
   // Collections
-  ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'],
+  ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
   // Library selection bar
   ['#bulk-addcoll', 'collection-new'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-cancel', 'done'],
   // Settings: account

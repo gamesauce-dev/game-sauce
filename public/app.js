@@ -3075,7 +3075,7 @@ async function openCollection(id) {
   $('#drawer-body').innerHTML = `
     <h2 class="detail-title">${esc(c.name)}</h2>
     <p class="detail-desc">${esc(c.description || '')}</p>
-    <div class="section-label">${c.items.length} games</div>
+    <div class="section-label">${c.items.length} ${c.items.length === 1 ? 'game' : 'games'}</div>
     <div class="results">
       ${c.items.map((r) => `
         <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:4px">
@@ -3084,6 +3084,7 @@ async function openCollection(id) {
             <span class="name">${esc(r.title)}</span>
             <span class="note">${esc(r.platform_short)}${r.release_year ? ` · ${r.release_year}` : ''}</span>
           </button>
+          ${r.playable ? `<button class="btn btn-sm btn-play" data-rom-play="${r.id}" title="Play ${esc(r.title)} in the browser" aria-label="Play ${esc(r.title)} in the browser">▶ Play</button>` : ''}
           <button class="btn btn-sm" data-rom-remove="${r.id}" title="Remove from this collection (game stays in library)">✕ Remove</button>
         </div>`).join('') || '<div class="side-empty">Empty collection</div>'}
     </div>
@@ -3096,6 +3097,11 @@ async function openCollection(id) {
   $$('[data-rom-open]', drawer).forEach((b) => b.addEventListener('click', () => {
     state.nav = { ids: c.items.map((r) => r.id) };
     openDetail(Number(b.dataset.romOpen));
+  }));
+  // Play straight from the collection. Fullscreen must be asked for inside this click, so the player opens first (as on a tile).
+  $$('[data-rom-play]', drawer).forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    api(`/roms/${b.dataset.romPlay}`).then(openPlayer).catch((err) => toast(err.message, true));
   }));
   $$('[data-rom-remove]', drawer).forEach((b) => b.addEventListener('click', async () => {
     b.disabled = true;

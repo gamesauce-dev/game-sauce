@@ -352,3 +352,7 @@ html[data-theme="light"] body.ui-modern .more-menu .mi.on { color: #0f7a46; }
 html[data-theme="light"] body.ui-modern .detail-actions .ibtn-play { color: #0f7a46; }
 html[data-theme="light"] body.ui-modern .health-row.warn .health-ico { background: #b8860b; }
 html[data-theme="light"] body.ui-modern .hint[style*="warn"] { color: #8a5a00 !important; }
+
+/* Collections: the play button on a game in the list is green like the tile's, icon only. */
+body.ui-modern .btn-play[data-rom-play] { color: #5fe3a1; border-color: color-mix(in srgb, #5fe3a1 45%, transparent); }
+html[data-theme="light"] body.ui-modern .btn-play[data-rom-play] { color: #0f7a46; border-color: #2f9e66; }

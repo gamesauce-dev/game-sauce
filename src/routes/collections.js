@@ -1,5 +1,6 @@
 import express from 'express';
 import db from '../db.js';
+import { playableCore } from './roms.js';
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.get('/:id', (req, res) => {
   if (!collection) return res.status(404).json({ error: 'Collection not found' });
 
   const items = db.prepare(`
-    SELECT r.id, r.title, r.sort_title, r.release_year, r.region, r.cover_path,
+    SELECT r.id, r.title, r.sort_title, r.release_year, r.region, r.cover_path, r.play_override, r.missing,
            p.slug AS platform, p.short_name AS platform_short, p.accent AS platform_accent
     FROM collection_roms cr
     JOIN roms r ON r.id = cr.rom_id
@@ -49,7 +50,7 @@ router.get('/:id', (req, res) => {
   `).all(collection.id).map((r) => ({
     ...r,
     cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : r.cover_url
-  }));
+  })).map(({ play_override, missing, ...r }) => ({ ...r, playable: !missing && playableCore(r.platform, r.release_year, play_override) ? true : false }));
 
   res.json({ ...collection, items });
 });
