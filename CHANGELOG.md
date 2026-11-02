@@ -12,6 +12,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **A "No cover" filter for everyone.** Classic has a ▢ No cover pill beside the other filters; Modern has an icon button (your empty-covers icon) in the Library tools. It lists the games that have no cover picture yet. Not shown to play-only accounts (they get search and favourites only).
+- **Stats totals are links.** On Settings > Stats the main totals (Total games, System items, Matched / Name from the file only, With covers / No cover, Orphans, Missing files, Hidden) open the Library showing exactly those games, and the number above the list matches the number you clicked. The Library list also gained `cover=0|1` and `matched=0|1` filters.
 - **Change a person's role.** Settings > User accounts has a Role box on each row (Member / Admin), with a confirmation. The server refuses to demote the last admin or to change your own role, and a demoted admin goes back to a normal member screen. The change applies to their next request.
 - **play-check `--off`:** `node scripts/check-play.mjs --platform neogeo --off` switches browser play off for every game on the named platform without testing (asks first; `--yes` skips the question; needs `--platform`).
 - **Update notice for game-sauce itself.** For admins, the Modern ticker adds a line "Update available: game-sauce X (you have Y)" when a newer release is published on GitHub (`GET /api/admin/update-check`, admin only). It asks GitHub at most once every six hours per server (the answer is cached, also across restarts, and shares the emulator lookups' back-off), sends nothing about your library, and can be switched off with `GAMESAUCE_UPDATE_CHECK=0`.
@@ -95,6 +97,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern DAT files:** the Choose file box is shorter, and Import and the two re-match icons sit beside it on the same line.
 - **Modern Settings:** in DAT files the Import button sits on the same line as Choose file (the platform picker moves under it) and the two re-match icons share one line; the Choose file buttons in Game names (CSV), the Emulators vault and Backups restore look the same as the DAT one.
 - **Light mode text:** the yellow (admin badge, warnings, "sizes differ a lot…") and green (suggested copy, ok) text is a darker shade on white so it can be read; dark mode is unchanged.
 - **Sign-in screen:** the button is the app's purple again (not green), and the "Your session has ended — sign in again" line, which appeared after a delay on a screen that is already the sign-in screen, is gone.

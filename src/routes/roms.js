@@ -429,6 +429,12 @@ router.get('/', (req, res) => {
     else if (req.query.hidden === 'all') { /* no clause */ }
     else where.push('NOT ' + mine + (isAdminUser ? ' AND r.hidden_all = 0' : ''));
   }
+  // Cover and metadata filters (used by the clickable totals on Settings > Stats). 'matched' = a provider or a DAT matched it;
+  // the rest are names taken from the file.
+  if (req.query.cover === '0') where.push('r.cover_path IS NULL');
+  if (req.query.cover === '1') where.push('r.cover_path IS NOT NULL');
+  if (req.query.matched === '1') where.push("(r.meta_source IS NOT NULL AND r.meta_source NOT IN ('', 'none', 'filename', 'seed'))");
+  if (req.query.matched === '0') where.push("(r.meta_source IS NULL OR r.meta_source IN ('', 'none', 'filename', 'seed'))");
   if (req.query.missing === '1') where.push('r.missing = 1');
   if (req.query.missing === '0') where.push('r.missing = 0');
   // Unmatched: never enriched from any provider or DAT — filename/seed rows and

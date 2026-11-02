@@ -22,6 +22,9 @@ const state = {
   orphan: false,
   unmatched: false,
   datStatus: null,
+  cover: null,     // 'with' | 'none': from the Stats totals
+  matched: null,   // 'yes' | 'no': from the Stats totals
+  incl: null,      // 'all' (hidden and System games too) | 'hidden' (hidden games too): the Stats page counts them, so its links must
   selectMode: false,
   selected: new Set(),
   collections: [],
@@ -36,7 +39,7 @@ const state = {
 let activeSettingsModule = null; // which Settings tile is open (declared early: saveNav reads it)
 const NAV_KEY = 'gamesauce_nav';
 const NAV_FIELDS = ['platform', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
-  'missing', 'hidden', 'orphan', 'unmatched', 'datStatus'];
+  'missing', 'hidden', 'orphan', 'unmatched', 'datStatus', 'cover', 'matched', 'incl'];
 function saveNav() {
   try {
     const snap = { view: state.view, settingsModule: activeSettingsModule };
@@ -411,6 +414,9 @@ function activeFilterChips() {
   if (state.source) chips.push({ label: `Source: ${state.sourceName || state.source}`, clear: () => { state.source = null; state.sourceName = null; } });
   if (state.missing) chips.push({ label: 'Missing files', clear: () => { state.missing = false; } });
   if (state.datStatus) chips.push({ label: `DAT: ${state.datStatus}`, clear: () => { state.datStatus = null; } });
+  if (state.incl) chips.push({ label: state.incl === 'all' ? 'Including hidden and System games' : 'Including hidden games', clear: () => { state.incl = null; } });
+  if (state.cover) chips.push({ label: state.cover === 'none' ? 'No cover' : 'With a cover', clear: () => { state.cover = null; } });
+  if (state.matched) chips.push({ label: state.matched === 'yes' ? 'Matched by a provider or DAT' : 'Name from the file only', clear: () => { state.matched = null; } });
   if (state.hidden) chips.push({ label: 'Hidden only', clear: () => { state.hidden = false; } });
   if (state.system) chips.push({ label: 'System entries', clear: () => { state.system = false; } });
   if (state.unmatched) chips.push({ label: 'Needs match', clear: () => { state.unmatched = false; loadLibrary(); } });
@@ -474,7 +480,7 @@ async function loadLibrary() {
   // owns the full height.
   if (state.platform === 'all') state.extraPlatforms = [];
   const isHome = !state.q && state.platform === 'all' && !state.tag && !state.genre &&
-    !state.favorite && !state.source && !state.missing && !state.datStatus &&
+    !state.favorite && !state.source && !state.missing && !state.datStatus && !state.cover && !state.matched && !state.incl &&
     !state.hidden && !state.system && !orphanOnly && !unmatchedOnly;
   $('#lib-overview')?.classList.toggle('hidden', !isHome);
   $('#lib-recent-wrap')?.classList.toggle('hidden', !isHome);
@@ -493,6 +499,9 @@ async function loadLibrary() {
   if (state.source && !orphanOnly && !unmatchedOnly) params.set('source', state.source);
   if (state.missing) params.set('missing', '1');
   if (state.datStatus) params.set('dat_status', state.datStatus);
+  if (state.incl && !orphanOnly && !unmatchedOnly && !state.system && !state.hidden) { params.set('hidden', 'all'); if (state.incl === 'all') params.set('system', 'all'); }
+  if (state.cover) params.set('cover', state.cover === 'none' ? '0' : '1');
+  if (state.matched) params.set('matched', state.matched === 'yes' ? '1' : '0');
   if (unmatchedOnly) { params.set('unmatched', 'only'); params.set('hidden', 'all'); }
   else if (orphanOnly) { params.set('orphan', 'only'); params.set('hidden', 'all'); }
   else if (state.system) params.set('system', 'only');
@@ -1117,6 +1126,7 @@ function syncFilterToggles() {
     const on = key === 'favorite' ? state.favorite
       : key === 'hidden' ? state.hidden
       : key === 'system' ? state.system
+      : key === 'nocover' ? state.cover === 'none'
       : key === 'orphan' ? state.orphan
       : key === 'unmatched' ? state.unmatched : false;
     btn.classList.toggle('is-active', Boolean(on));
@@ -1154,6 +1164,7 @@ $$('[data-toggle]').forEach((btn) => btn.addEventListener('click', () => {
   if (btn.dataset.toggle === 'favorite') state.favorite = !state.favorite;
   else if (btn.dataset.toggle === 'hidden') { state.hidden = !state.hidden; if (state.hidden) state.system = false; }
   else if (btn.dataset.toggle === 'system') { state.system = !state.system; if (state.system) state.hidden = false; }
+  else if (btn.dataset.toggle === 'nocover') state.cover = state.cover === 'none' ? null : 'none';
   else if (btn.dataset.toggle === 'orphan') state.orphan = !state.orphan;
   else if (btn.dataset.toggle === 'unmatched') state.unmatched = !state.unmatched;
   if (state.orphan || state.unmatched) state.hidden = false;
@@ -3571,7 +3582,7 @@ function showApp(user, { restore = false } = {}) {
     // Fresh start: forget filters from any earlier session in this tab.
     clearNav();
     Object.assign(state, { platform: 'all', q: '', sort: 'title', tag: null, genre: null, favorite: false,
-      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, unmatched: false, datStatus: null });
+      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
     $('#search').value = '';
     $('#sort').value = 'title';
     activeSettingsModule = null;
@@ -4025,29 +4036,55 @@ async function loadStatsPanel() {
   const s = await api('/admin/stats');
   const num = (v) => Number(v || 0).toLocaleString();
   const src = (id) => (s.by_source.find((x) => x.source === id) || {}).count || 0;
-  const row = (k, v, note = '') => `<div><span>${esc(k)}${note ? ` <small class="note">${esc(note)}</small>` : ''}</span><b>${v}</b></div>`;
+  // A total that can be opened as a search is a link: it opens the Library with exactly that filter (the number matches the list).
+  const row = (k, v, note = '', go = '') => go
+    ? `<a class="stat-link" href="#" data-stat-go="${go}" title="Show these games in the Library"><span>${esc(k)}${note ? ` <small class="note">${esc(note)}</small>` : ''}</span><b>${v}</b></a>`
+    : `<div><span>${esc(k)}${note ? ` <small class="note">${esc(note)}</small>` : ''}</span><b>${v}</b></div>`;
   const who = s.most_active_user ? `${esc(s.most_active_user.name)} (${num(s.most_active_user.plays)} plays)` : 'no plays yet';
   const game = s.most_played_game ? `${esc(s.most_played_game.title)} (${num(s.most_played_game.plays)})` : 'no plays yet';
   const by = s.by_source.filter((x) => !['none', 'filename', 'seed'].includes(x.source)).map((x) => `${esc(x.source)} ${num(x.count)}`).join(' · ') || 'none yet';
   box.innerHTML = `<div class="stats-grid">
     <div class="stats-col">
       <h4>Library</h4>
-      ${row('Total games', num(s.roms))}${row('Platforms', num(s.platforms))}${row('Sources', num(s.sources))}${row('Users', num(s.users))}${row('System items', num(s.system_items), 'BIOS, devices')}${row('Favourites', num(s.favourites))}
+      ${row('Total games', num(s.roms), '', 'all')}${row('Platforms', num(s.platforms))}${row('Sources', num(s.sources))}${row('Users', num(s.users))}${row('System items', num(s.system_items), 'BIOS, devices', 'system')}${row('Favourites', num(s.favourites))}
     </div>
     <div class="stats-col">
       <h4>Metadata</h4>
-      ${row('Matched by a provider or DAT', num(s.with_metadata))}${row('Name from the file only', num(s.filename_only))}${row('With covers', num(s.with_covers))}${row('No cover', num(s.no_covers), 'excluding System')}
+      ${row('Matched by a provider or DAT', num(s.with_metadata), '', 'matched')}${row('Name from the file only', num(s.filename_only), '', 'unmatched-name')}${row('With covers', num(s.with_covers), '', 'cover')}${row('No cover', num(s.no_covers), 'excluding System', 'nocover')}
       <div class="stats-by"><span>Matched by</span><b>${by}</b></div>
     </div>
     <div class="stats-col">
       <h4>Housekeeping</h4>
-      ${row('Orphans', num(s.orphans), 'no source folder')}${row('Missing files', num(s.missing_files))}${row('Hidden', num(s.hidden), 'by anyone')}
+      ${row('Orphans', num(s.orphans), 'no source folder', 'orphan')}${row('Missing files', num(s.missing_files), '', 'missing')}${row('Hidden', num(s.hidden), 'by anyone', 'hidden')}
     </div>
     <div class="stats-col">
       <h4>Activity</h4>
       ${row('Plays in the browser', num(s.plays))}${row('Most active user', who)}${row('Most played game', game)}
     </div>
   </div>`;
+  $$('[data-stat-go]', box).forEach((el) => el.addEventListener('click', (e) => { e.preventDefault(); openLibraryFor(el.dataset.statGo); }));
+}
+
+/** Open the Library showing exactly the games behind a total on the Stats page. */
+function openLibraryFor(kind) {
+  closeDrawer();
+  Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
+    missing: false, hidden: false, system: false, orphan: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+  const sb = $('#search'); if (sb) sb.value = '';
+  // The Stats page counts every game, so the lists these links open include hidden games (and System ones where the total does).
+  if (kind === 'all' || kind === 'matched' || kind === 'unmatched-name' || kind === 'cover' || kind === 'missing') state.incl = 'all';
+  else if (kind === 'nocover') state.incl = 'hidden';
+  if (kind === 'system') state.system = true;
+  else if (kind === 'hidden') state.hidden = true;
+  else if (kind === 'orphan') state.orphan = true;
+  else if (kind === 'missing') state.missing = true;
+  else if (kind === 'matched') state.matched = 'yes';
+  else if (kind === 'unmatched-name') state.matched = 'no';
+  else if (kind === 'cover') state.cover = 'with';
+  else if (kind === 'nocover') state.cover = 'none';
+  state.libKey = null;
+  setView('library');
+  loadLibrary();
 }
 
 let healthText = '';

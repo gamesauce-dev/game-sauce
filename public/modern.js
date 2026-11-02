@@ -60,7 +60,7 @@ const theme = () => { try { return localStorage.getItem('gamesauce_theme') === '
 function buildBar() { return building || (building = doBuildBar()); }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'empty-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -258,6 +258,7 @@ function buildLibraryTools(ic) {
     ${po ? '' : `<button class="mb-btn" id="tl-sort" title="Sort" aria-label="Sort" aria-haspopup="menu">${ic.sort}</button>`}
     <button class="mb-btn" id="tl-fav" title="Favourites only" aria-label="Favourites only">${ic.favourite}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
+    <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['empty-covers']}</button>
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
@@ -269,10 +270,11 @@ function buildLibraryTools(ic) {
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
 function toolClick(e) {
-  const b = e.target.closest('#tl-fav, #tl-hidden, #tl-select, #tl-fetch, #tl-sort, #tl-more');
+  const b = e.target.closest('#tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
   if (!b) return false;
   if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
   else if (b.id === 'tl-hidden') proxy('[data-toggle="hidden"]');
+  else if (b.id === 'tl-nocover') proxy('[data-toggle="nocover"]');
   else if (b.id === 'tl-select') proxy('#select-toggle');
   else if (b.id === 'tl-fetch') proxy('#bulk-enrich');
   else if (b.id === 'tl-sort') {
@@ -296,6 +298,7 @@ function syncTools() {
   const on = (sel) => Boolean(q(sel)?.classList.contains('is-active'));
   $('#tl-fav')?.classList.toggle('is-on', on('[data-toggle="favorite"]'));
   $('#tl-hidden')?.classList.toggle('is-on', on('[data-toggle="hidden"]'));
+  $('#tl-nocover')?.classList.toggle('is-on', on('[data-toggle="nocover"]'));
   $('#tl-select')?.classList.toggle('is-on', on('#select-toggle'));
   const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'unmatched'].some((k) => on(`[data-toggle="${k}"]`)));
   const sort = $('#tl-sort'); if (sort) { const s = q('#sort'); sort.classList.toggle('is-on', Boolean(s && s.value !== 'title')); sort.title = 'Sort: ' + (s?.selectedOptions?.[0]?.textContent || ''); }

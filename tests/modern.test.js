@@ -422,7 +422,7 @@ test('Ticker has the game-sauce name line and an admin-only update line; one bar
 test('Settings file choosers share one style, DAT import sits on the chooser line, light-mode text is darker, sign-in has no green or session message', () => {
   const html = read('public/index.html'), css = read('public/modern.css'), app = read('public/app.js'), cls = read('public/styles.css');
   assert.match(html, /<div class="dat-row">\s*<input type="file" id="dat-file"[^>]*class="file-input" \/>\s*<button class="btn btn-primary" id="dat-upload">/, 'Import is on the same line as Choose file');
-  assert.match(html, /class="dat-rematch-row" style="display:flex;gap:8px;flex-wrap:nowrap/, 'the two re-match buttons stay on one line');
+  assert.match(html, /id="dat-upload">Import<\/button>\s*<button class="btn" id="dat-rematch">[\s\S]*?id="dat-rematch-force"/, 'Import and the two re-match buttons sit together on the chooser line');
   assert.match(html, /id="names-file" accept="\.csv,text\/csv" class="file-input"/);
   assert.match(html, /name="file" required class="file-input"/, 'the Emulators vault chooser too');
   assert.match(css, /body\.ui-modern \.file-input \{ display: block; width: 100%;/);
@@ -447,4 +447,24 @@ test('an admin can change another person\'s role; the last admin and your own ro
   assert.equal((await call(`/api/auth/users/${rid}`, { token: memberTok, method: 'PATCH', body: { role: 'admin' } })).status, 403, 'a member cannot promote anyone');
   const css = read('public/styles.css'), app = read('public/app.js');
   assert.match(css, /\.user-line \.user-badge \{ margin-left: 0\.75rem; \}/); assert.match(app, /data-act="role-setting"/);
+});
+
+test('a No cover filter for everyone: server filter, Classic pill, Modern tool button', async () => {
+  const none = await call('/api/roms?cover=0&limit=5', { token: memberTok });
+  assert.equal(none.status, 200);
+  assert.ok(none.body.items.every((r) => !r.cover_url), 'every game it returns has no cover');
+  const withCover = await call('/api/roms?cover=1&limit=5', { token: memberTok });
+  assert.ok(withCover.body.items.every((r) => r.cover_url), 'and cover=1 returns only games with one');
+  const html = read('public/index.html'), app = read('public/app.js'), js = read('public/modern.js');
+  assert.match(html, /data-toggle="nocover"/); assert.match(app, /state\.cover = state\.cover === 'none' \? null : 'none'/);
+  assert.match(js, /id="tl-nocover"/); assert.match(js, /proxy\('\[data-toggle="nocover"\]'\)/);
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/empty-covers.svg', import.meta.url)));
+});
+
+test('Stats totals are links that open the Library with the same filter, so the number matches', () => {
+  const app = read('public/app.js'), api = read('src/routes/roms.js');
+  assert.match(app, /data-stat-go=/); assert.match(app, /function openLibraryFor/);
+  for (const k of ['all', 'system', 'matched', 'unmatched-name', 'cover', 'nocover', 'orphan', 'missing', 'hidden']) assert.ok(app.includes(`'${k}'`), k);
+  assert.match(app, /state\.incl = 'all'/, 'hidden and System games are included where the Stats total counts them');
+  assert.match(api, /req\.query\.cover === '0'/); assert.match(api, /req\.query\.matched === '1'/);
 });

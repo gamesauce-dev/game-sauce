@@ -128,6 +128,7 @@
         <div class="filter-toggles">
           <button class="toggle-pill" data-toggle="favorite" title="Show favourites only">★ Favourites</button>
           <button class="toggle-pill" data-toggle="hidden" title="Games you have hidden from your own view (other people still see them)">◌ Hidden</button>
+          <button class="toggle-pill" data-toggle="nocover" title="Show only games that have no cover picture yet">▢ No cover</button>
           <button class="toggle-pill" data-toggle="system" title="BIOS, device and computer entries: kept and downloadable, but out of the main library">⚙ System</button>
           <button class="toggle-pill" data-toggle="orphan" title="Show only ROMs with no valid source (leftovers)">⛁ Orphans</button>
           <button class="toggle-pill" data-toggle="unmatched" title="Show only ROMs no provider has ever matched — the manual-identify worklist">○ Needs match</button>
@@ -568,6 +569,8 @@
             <div class="dat-row">
               <input type="file" id="dat-file" accept=".dat,.xml" class="file-input" />
               <button class="btn btn-primary" id="dat-upload">Import</button>
+              <button class="btn" id="dat-rematch">Re-match library against DATs</button>
+              <button class="btn" id="dat-rematch-force" title="Also replace titles you edited by hand">Re-match and overwrite titles</button>
             </div>
             <select id="dat-platform" class="select" style="min-width:220px;margin-top:8px">
               <option value="auto">Detect platform from the DAT name</option>
@@ -577,10 +580,6 @@
             itself is not stored. Re-importing a newer version adds only the entries it is missing.</p>
         </div>
 
-        <div class="dat-rematch-row" style="display:flex;gap:8px;flex-wrap:nowrap;margin-top:6px">
-          <button class="btn" id="dat-rematch">Re-match library against DATs</button>
-          <button class="btn" id="dat-rematch-force" title="Also replace titles you edited by hand">Re-match and overwrite titles</button>
-        </div>
       </div>
     </section>
 
