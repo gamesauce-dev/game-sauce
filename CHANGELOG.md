@@ -182,6 +182,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **A collection tile's game count now matches its list.** The tile counted every game in the collection, including ones hidden because their source is hidden (or hidden from everyone, for a member), while the open collection correctly left them out. The count now follows the same rule as the list and returns when the games are shown again.
 - **Modern: Reset did nothing while a family's platform pills were showing but none was picked** (for instance after picking a platform and then clicking it off). It looked dim and inert even though the row of pills was still open. An open family row now counts as something to reset, so the button is live and closes it.
 - **Modern: Reset now also closes the open platform family row** (the platforms under Nintendo, say) instead of leaving it showing with All selected.
 - **Modern: the Emulators page started lower than Sources, Add ROMs and the rest.** Its "Check latest releases" button had a row of its own above the content. On wide screens the button now sits in the top-right corner, so the page starts at the same height as the others (measured: 84 px on all three). On a narrow screen it keeps its row.

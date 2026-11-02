@@ -9,14 +9,18 @@ const mine = (req) => Number(req.user?.id ?? -1);
 const own = (req, id) => db.prepare('SELECT * FROM collections WHERE id = ? AND user_id = ?').get(id, mine(req));
 
 router.get('/', (req, res) => {
+  const admin = req.user?.role === 'admin';
+  // The count is of the games the person can see in that collection: the same rule as opening it (games hidden from everyone, or
+  // belonging to a source whose games are hidden, are not counted), so the tile's number matches the list.
   const rows = db.prepare(`
-    SELECT c.id, c.name, c.description, c.created_at, COUNT(cr.rom_id) AS count
-    FROM collections c LEFT JOIN collection_roms cr ON cr.collection_id = c.id
+    SELECT c.id, c.name, c.description, c.created_at, COUNT(r.id) AS count
+    FROM collections c
+    LEFT JOIN collection_roms cr ON cr.collection_id = c.id
+    LEFT JOIN roms r ON r.id = cr.rom_id ${admin ? 'AND r.source_hidden = 0' : 'AND r.hidden_all = 0 AND r.source_hidden = 0'}
     WHERE c.user_id = ?
     GROUP BY c.id ORDER BY c.name
   `).all(mine(req));
   // Up to four covers per collection, for the preview strip on its card.
-  const admin = req.user?.role === 'admin';
   const pick = db.prepare(`SELECT r.id FROM collection_roms cr JOIN roms r ON r.id = cr.rom_id
     WHERE cr.collection_id = ? AND r.cover_path IS NOT NULL ${admin ? 'AND r.source_hidden = 0' : 'AND r.hidden_all = 0 AND r.source_hidden = 0'} ORDER BY cr.rowid DESC LIMIT 4`);
   for (const c of rows) c.covers = pick.all(c.id).map((x) => `/api/roms/${x.id}/cover`);

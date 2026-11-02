@@ -88,3 +88,23 @@ test('the Sources page has the Hide games switch and the pills say what they mea
   assert.match(app, /data-act="hidegames"/); assert.match(app, /scanning paused/); assert.match(app, /games hidden/); assert.match(app, /hide_games: hiding/);
   assert.match(js, /data-act="hidegames"\]\[data-hidden="0"\]', 'hidden'/); assert.match(js, /data-act="hidegames"\]\[data-hidden="1"\]', 'visible'/);
 });
+
+test('a collection tile counts only the games you can see in it, so its number matches the open list', async () => {
+  // fresh source so earlier tests do not matter
+  const d = path.join(TMP, 'cc'); fs.mkdirSync(d);
+  fs.writeFileSync(path.join(d, 'Coll One (USA).md'), 'c1-bytes-'.repeat(8)); fs.writeFileSync(path.join(d, 'Coll Two (USA).md'), 'c2-bytes-'.repeat(8));
+  const s = (await call('/api/sources', { method: 'POST', body: { name: 'cc', path: d, platform_hint: 'genesis' } })).body.id;
+  await call(`/api/sources/${s}/scan`, { method: 'POST', body: {} });
+  const ids = db.prepare("SELECT id FROM roms WHERE source_id = ?").all(s).map((r) => r.id);
+  const col = (await call('/api/collections', { method: 'POST', body: { name: 'Mixed' } })).body.id;
+  const other = db.prepare("SELECT id FROM roms WHERE source_id <> ? LIMIT 1").get(s)?.id;
+  await call(`/api/collections/${col}/roms`, { method: 'POST', body: { rom_ids: [...ids, ...(other ? [other] : [])] } });
+  const tile = async (t) => (await call('/api/collections', { token: t })).body.items.find((c) => c.id === col)?.count;
+  const total = ids.length + (other ? 1 : 0);
+  assert.equal(await tile(tok), total);
+  await call(`/api/sources/${s}`, { method: 'PATCH', body: { hide_games: true } });
+  assert.equal(await tile(tok), total - ids.length, 'hiding the source takes its games off the tile count');
+  assert.equal((await call(`/api/collections/${col}`)).body.items.length, total - ids.length, 'and the tile matches the open list');
+  await call(`/api/sources/${s}`, { method: 'PATCH', body: { hide_games: false } });
+  assert.equal(await tile(tok), total, 'showing them again restores the count');
+});
