@@ -515,3 +515,9 @@ test('the CSV import takes an optional cover zip and shows a combined preview', 
   assert.match(r, /\.fields\(\[\{ name: 'csv', maxCount: 1 \}, \{ name: 'zip', maxCount: 1 \}\]\)/);
   assert.match(r, /planCoversForCsv\(entries, hits/);
 });
+
+test('Emulators starts at the same height as the other pages: its toolbar button sits in the corner on wide screens', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /@media \(min-width: 1101px\)\s*\{\s*body\.ui-modern #view-emulators > \.toolbar \{[^}]*height: 0/);
+  assert.match(css, /body\.ui-modern #view-emulators > \.toolbar \.toolbar-right \{ position: absolute; right: 0; top: 0; \}/);
+});

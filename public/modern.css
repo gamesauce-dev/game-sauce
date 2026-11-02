@@ -359,3 +359,9 @@ html[data-theme="light"] body.ui-modern .btn-play[data-rom-play] { color: #0f7a4
 
 /* CSV tools: icon buttons in the Export / Import rows are as tall as the framed tick boxes beside them, so everything sits on one line. */
 body.ui-modern .export-row .btn[data-mi] { height: 2.4rem; }
+
+/* Emulators: the "Check latest releases" button sits in the top-right corner instead of a row of its own, so the page starts at the same height as Sources and Add ROMs. On a narrow screen it keeps its row (it would sit on the text). */
+@media (min-width: 1101px) {
+  body.ui-modern #view-emulators > .toolbar { height: 0; min-height: 0; margin: 0 0 14px; padding: 0; overflow: visible; position: relative; z-index: 3; }
+  body.ui-modern #view-emulators > .toolbar .toolbar-right { position: absolute; right: 0; top: 0; }
+}
