@@ -412,8 +412,27 @@ function renderLibHeading() {
   $('#lib-clear-platform').onclick = () => { state.platform = 'all'; state.extraPlatforms = []; loadPlatforms(); loadLibrary(); };
 }
 
+/** Is anything narrowing the Library right now (a search, a platform, a filter)? Sort and density are looks, not filters. */
+function filtersActive() {
+  return Boolean(state.q || state.platform !== 'all' || (state.extraPlatforms || []).length || state.tag || state.genre || state.favorite
+    || state.source || state.missing || state.hidden || state.system || state.orphan || state.locked || state.unmatched
+    || state.datStatus || state.cover || state.matched || state.incl);
+}
+/** Back to the whole library: search cleared, every platform and filter off. Sort and tile size stay as the person set them. */
+async function resetFilters() {
+  Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null, libKey: null });
+  const sb = $('#search'); if (sb) sb.value = '';
+  const tq = $('#tl-q'); if (tq) tq.value = '';
+  const g = $('#grid'); if (g) g.scrollTop = 0;
+  await Promise.all([loadLibrary(), loadPlatforms()]);
+  window.dispatchEvent(new Event('gs:filters'));
+}
+
 function activeFilterChips() {
   renderLibHeading();
+  document.querySelector('#reset-filters')?.classList.toggle('hidden', !filtersActive());
+  setTimeout(() => window.dispatchEvent(new Event('gs:filters')), 0);
   const chips = [];
   if (state.tag) chips.push({ label: `Tag: ${state.tag}`, clear: () => { state.tag = null; } });
   if (state.genre) chips.push({ label: `Genre: ${state.genre}`, clear: () => { state.genre = null; } });
@@ -3434,6 +3453,7 @@ $('#bulk-selectall')?.addEventListener('click', async (e) => {
 $('#bulk-clear')?.addEventListener('click', () => { state.selected.clear(); syncSelectUI(); });
 $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
+$('#reset-filters')?.addEventListener('click', resetFilters);
 $('#bulk-lock-btn')?.addEventListener('click', bulkLockSelected);
 $('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
 $('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
@@ -3580,7 +3600,7 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  modern.initModern({ closeDrawer, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; } });
+  modern.initModern({ closeDrawer, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
   api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 

@@ -528,3 +528,9 @@ test('ticker: the game-sauce name is always the first line; health wording is ca
   assert.doesNotMatch(js, /has warnings/); assert.match(js, /a few notes to read/);
   assert.match(read('public/index.html'), /title="Lock \/ Unlock the selected games/);
 });
+
+test('Library reset: one button clears search, platforms and filters in both looks', () => {
+  const app = read('public/app.js'), js = read('public/modern.js'), html = read('public/index.html');
+  assert.match(html, /id="reset-filters"/); assert.match(app, /async function resetFilters\(\)/); assert.match(app, /function filtersActive\(\)/);
+  assert.match(js, /id="tl-reset"/); assert.match(js, /ctx\.resetFilters/); assert.match(js, /'clear-reset-2'/);
+});

@@ -28,7 +28,7 @@ let api = null, ctx = null, built = false, building = null, tickerTimer = null;
 export const isModern = () => document.body.classList.contains('ui-modern');
 
 /** Called once by app.js with the few things Modern needs from it (the API helper and navigation). */
-export function initModern(c) { ctx = c; api = c.api; }
+export function initModern(c) { ctx = c; api = c.api; window.addEventListener('gs:filters', () => { if (isModern()) { syncTools(); renderChips(); } }); }
 
 /* ───────────── light / dark ───────────── */
 export function applyTheme(mode) {
@@ -70,7 +70,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -267,6 +267,7 @@ function buildLibraryTools(ic) {
   const u = ctx.user(); const admin = u?.role === 'admin'; const po = Boolean(u?.play_only);
   host.innerHTML = `
     <label class="tl-search">${ic.search}<input id="tl-q" type="search" placeholder="Search" autocomplete="off" aria-label="Search the library" title="Search titles, developers, genres and platforms" /></label>
+    <button class="mb-btn" id="tl-reset" title="Reset: clear the search, platforms and filters" aria-label="Reset search and filters">${ic['clear-reset-2']}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-sort" title="Sort" aria-label="Sort" aria-haspopup="menu">${ic.sort}</button>`}
     <button class="mb-btn" id="tl-fav" title="Favourites only" aria-label="Favourites only">${ic.favourite}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
@@ -282,9 +283,10 @@ function buildLibraryTools(ic) {
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
 function toolClick(e) {
-  const b = e.target.closest('#tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
+  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
   if (!b) return false;
-  if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
+  if (b.id === 'tl-reset') { ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
+  else if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
   else if (b.id === 'tl-hidden') proxy('[data-toggle="hidden"]');
   else if (b.id === 'tl-nocover') proxy('[data-toggle="nocover"]');
   else if (b.id === 'tl-select') proxy('#select-toggle');
@@ -307,6 +309,7 @@ function toolClick(e) {
 
 /** Make the icons reflect the real filters, and the fetch button show a spinner while a metadata run is going. */
 function syncTools() {
+  { const r = $('#tl-reset'); if (r) { const act = Boolean(ctx.filtersActive?.()); r.classList.toggle('is-dim', !act); r.disabled = !act; } }
   const on = (sel) => Boolean(q(sel)?.classList.contains('is-active'));
   $('#tl-fav')?.classList.toggle('is-on', on('[data-toggle="favorite"]'));
   $('#tl-hidden')?.classList.toggle('is-on', on('[data-toggle="hidden"]'));
