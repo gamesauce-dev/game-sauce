@@ -151,7 +151,7 @@ export function go(view) {
   // Choosing a page releases the details window, unless it is pinned beside the games.
   if (!document.body.classList.contains('details-pinned') && !$('#drawer')?.classList.contains('hidden')) ctx.closeDrawer?.();
   if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
-  refreshTicker();
+  refreshTicker(view === 'library');   // home: rebuild so the ticker starts again from the name
   document.body.dataset.mview = view;
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
   if (view === 'home') { showHome(); return; }
@@ -205,7 +205,8 @@ async function refreshTicker(force = false) {
 async function fillTicker(stats) {
   const lib = stats.library || {};
   // The game-sauce name with its shimmer, as one of the rolling lines.
-  const lines = ['<span class="brand-name mh-brand" data-text="game-sauce">game<span class="saucy">-sauce</span></span>'];
+  const brand = '<span class="brand-name mh-brand" data-text="game-sauce">game<span class="saucy">-sauce</span></span>';
+  const lines = [];   // the name always goes first, whatever else is added in front of the facts below
   const top = stats.topDownloaded;
   const cache = window.__platformsCache || [];
   const shown = cache.reduce((n, p) => n + pc(p), 0), all = cache.reduce((n, p) => n + (p.count || 0), 0);
@@ -227,9 +228,10 @@ async function fillTicker(stats) {
       const up = await api('/admin/update-check').catch(() => null);
       if (up?.newer) lines.unshift(`Update available: game-sauce <b>${String(up.latest).replace(/^v/i, '').replace(/</g, '&lt;')}</b> (you have <b>${String(up.current).replace(/</g, '&lt;')}</b>)`);
       const h = await api('/admin/health').catch(() => null);
-      if (h && h.status && h.status !== 'ok') lines.unshift(`System health: <b>${h.status === 'bad' ? 'needs attention' : 'has warnings'}</b>`);
+      if (h && h.status && h.status !== 'ok') lines.unshift(`System health: <b>${h.status === 'bad' ? 'needs a look' : 'a few notes to read'}</b>`);
     }
   } catch { /* optional */ }
+  lines.unshift(brand);
   const track = $('#mh-track'); if (!track) return;
   track.innerHTML = lines.map((l) => `<div class="mh-line">${l}</div>`).join('');
   // The rolling position belongs to the OLD set of lines: start again from the first, or the box can sit past the end (blank).

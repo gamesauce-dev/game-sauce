@@ -104,7 +104,7 @@ test('the ticker lives in the top bar on every page, and Library will swap it fo
   const js = read('public/modern.js'), css = read('public/modern.css');
   assert.match(js, /<div class="mb-slot" id="mb-slot">[\s\S]*id="mh-ticker"[\s\S]*id="mb-library-tools"/, 'one slot in the bar holds both');
   assert.doesNotMatch(js.slice(js.indexOf('async function renderHome')), /id="mh-ticker"/, 'Home no longer carries its own ticker');
-  assert.match(js, /refreshTicker\(\);/, 'it is refreshed on every page change');
+  assert.match(js, /refreshTicker\(view === 'library'\);/, 'it is refreshed on every page change');
   assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/, 'hidden in Library once the tools are in the bar');
 });
 
@@ -520,4 +520,11 @@ test('Emulators starts at the same height as the other pages: its toolbar button
   const css = read('public/modern.css');
   assert.match(css, /@media \(min-width: 1101px\)\s*\{\s*body\.ui-modern #view-emulators > \.toolbar \{[^}]*height: 0/);
   assert.match(css, /body\.ui-modern #view-emulators > \.toolbar \.toolbar-right \{ position: absolute; right: 0; top: 0; \}/);
+});
+
+test('ticker: the game-sauce name is always the first line; health wording is calm; Lock hover says Lock / Unlock', () => {
+  const js = read('public/modern.js');
+  assert.match(js, /lines\.unshift\(brand\);\s*\n\s*const track/);
+  assert.doesNotMatch(js, /has warnings/); assert.match(js, /a few notes to read/);
+  assert.match(read('public/index.html'), /title="Lock \/ Unlock the selected games/);
 });

@@ -105,6 +105,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern ticker:** the game-sauce name is now always the first line, on launch and when you go back to Home (it was pushed down by notices such as System health or an update). Notices still follow straight after it. The health notice is calmer: "System health: a few notes to read" (or "needs a look" when something is actually wrong). The selection bar's lock button hover now reads "Lock / Unlock the selected games".
 - **"Orphans" is now "No source"** (the filter, its chip, and Modern's menu), with a tooltip saying what it means: games no longer attached to a source folder, and that scanning a source that covers their folder reconnects them. Settings > Stats still counts them under "Orphans (no source folder)".
 - **"Game names (CSV)" is now "CSV tools"** (Settings > Library tools).
 - **Play-only people see only the platforms that have games they can play.** The platform pills, families and counts (Classic sidebar and Modern chip row) count only games playable in the browser, so a platform with none disappears and "All" matches the list. The platform list gained a `playable_count`, worked out by the same rule as the Play button.
