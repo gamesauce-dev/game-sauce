@@ -298,13 +298,18 @@ document.addEventListener('click', (e) => {
 /* ─────────────────────────── sidebar ─────────────────────────── */
 
 async function loadPlatforms() {
-  const [{ items }, stats] = await Promise.all([api('/platforms'), api('/stats')]);
+  const [{ items: all }, stats] = await Promise.all([api('/platforms'), api('/stats')]);
+  // A play-only person only ever sees games that can be played in the browser, so the platform list (families and pills) shows only
+  // platforms that have some, with counts of just those. Everyone else sees every platform, as before.
+  const items = authState.user?.play_only
+    ? all.map((p) => ({ ...p, count: p.playable_count || 0, visible_count: p.playable_count || 0 }))
+    : all;
   window.__platformsCache = items; // names and colours for the heading above the tiles
   try { modern.renderChips(); } catch { /* Modern chips are optional */ }
   refreshSourcePlatformPicker(items);
   renderLibHeading();
   const list = $('#platform-list');
-  const total = stats.library.roms || 0;
+  const total = authState.user?.play_only ? items.reduce((n, p) => n + (p.count || 0), 0) : (stats.library.roms || 0);
 
   // Group the platforms that actually have ROMs under their family, so a
   // 50-platform catalogue stays readable instead of one long flat list.
@@ -3680,7 +3685,7 @@ const SETTINGS_MODULES = [
   { id: 'covers',    label: 'Covers & platform ids', mi: 'covers', ico: '🖼', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', mi: 'database-maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    mi: 'activity-log', ico: '📜', adminOnly: true },
-  { id: 'names',     label: 'Game names (CSV)', mi: 'game-csv', ico: '🏷', adminOnly: true },
+  { id: 'names',     label: 'CSV tools', mi: 'game-csv', ico: '🏷', adminOnly: true },
   { id: 'dat',       label: 'DAT files',       mi: 'DAT-files', ico: '💾', adminOnly: true },
   { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
@@ -3912,11 +3917,14 @@ function initExportBox() {
 function initCoverImport() {
   const zip = $('#covers-zip'), out = $('#covers-result'), applyBtn = $('#covers-apply');
   if (!zip || zip.dataset.ready) return; zip.dataset.ready = '1';
+  const cp = $('#covers-platform');
+  if (cp.options.length <= 1) cp.innerHTML += (window.__platformsCache || []).filter((p) => p.count).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)} (${p.count})</option>`).join('');
+  cp.onchange = () => { applyBtn.disabled = true; };
   const run = async (apply) => {
     const f = zip.files?.[0];
     if (!f) return toast('Choose a zip file first', true);
     const fd = new FormData();
-    fd.append('zip', f); fd.append('platform', $('#names-platform')?.value || '');
+    fd.append('zip', f); fd.append('platform', $('#covers-platform')?.value || '');
     if ($('#covers-replace').checked) fd.append('replace', '1');
     if (apply) fd.append('apply', '1');
     out.textContent = apply ? 'Saving the pictures…' : 'Reading the zip…';
@@ -3926,7 +3934,7 @@ function initCoverImport() {
       const n = (v) => Number(v || 0).toLocaleString();
       out.innerHTML = apply
         ? `<b>Applied.</b> ${n(r.set)} cover${r.set === 1 ? '' : 's'} saved${r.not_image ? `, ${n(r.not_image)} skipped (not a JPEG, PNG or WebP picture)` : ''}${r.unreadable ? `, ${n(r.unreadable)} could not be read` : ''}.`
-        : `${n(r.pictures)} picture${r.pictures === 1 ? '' : 's'} in the zip: ${n(r.matched)} match a game, ${n(r.will_set)} would be saved${r.already_have ? `, ${n(r.already_have)} games already have a cover (tick the box to replace them)` : ''}${r.not_image ? `, ${n(r.not_image)} cannot be used (only JPEG, PNG and WebP pictures are accepted: GIF and SVG are refused because they can carry scripts)` : ''}${r.unmatched ? `, ${n(r.unmatched)} match no game${r.unmatched_examples?.length ? ` (for example ${r.unmatched_examples.map(esc).join(', ')})` : ''}` : ''}.`;
+        : `${n(r.pictures)} picture${r.pictures === 1 ? '' : 's'} in the zip: ${n(r.matched)} match a game, ${n(r.will_set)} would be saved${r.already_have ? `, ${n(r.already_have)} games already have a cover (tick the box to replace them)` : ''}${r.not_image ? `, ${n(r.not_image)} cannot be used (only JPEG, PNG and WebP pictures are accepted: GIF and SVG are refused because they can carry scripts)` : ''}${r.other_platform ? `, ${n(r.other_platform)} left out (another platform's picture)` : ''}${r.unmatched ? `, ${n(r.unmatched)} match no game${r.unmatched_examples?.length ? ` (for example ${r.unmatched_examples.map(esc).join(', ')})` : ''}` : ''}.`;
       applyBtn.disabled = apply || !r.will_set;
       if (apply) { toast(`${r.set} cover${r.set === 1 ? '' : 's'} saved`); loadLibrary(); }
     } catch (err) { out.textContent = err.message; toast(err.message, true); }
@@ -3941,7 +3949,7 @@ function initNamesPanel() {
   initExportBox();
   initCoverImport();
   const sel = $('#names-platform');
-  if (!sel.options.length) sel.innerHTML = (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
+  if (!sel.options.length) sel.innerHTML = '<option value="">From the CSV\'s platform column</option>' + (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
   const out = $('#names-result'); const applyBtn = $('#names-apply');
   const run = async (apply) => {
     const f = $('#names-file').files?.[0];

@@ -459,12 +459,7 @@ router.get('/', (req, res) => {
     const cores = [...Object.keys(PLAYABLE_CORES), ...Object.keys(TESTABLE_CORES)].map((s) => `'${s}'`).join(',');
     where.push(`r.missing = 0 AND r.is_system = 0 AND p.slug IN (${cores})${req.query.include_off === '1' ? '' : ' AND (r.play_override IS NULL OR r.play_override = 1)'}`);
   } else if (req.query.playable === '1' || req.query.playable === 'candidates') {
-    const cores = Object.keys(PLAYABLE_CORES).map((s) => `'${s}'`).join(',');
-    const allCores = [...Object.keys(PLAYABLE_CORES), ...Object.keys(TESTABLE_CORES)].map((s) => `'${s}'`).join(',');
-    where.push(`r.missing = 0 AND r.is_system = 0 AND (
-      (r.play_override = 1 AND p.slug IN (${allCores})) OR
-      (r.play_override IS NULL AND p.slug IN (${cores}) AND NOT (p.slug = 'mame' AND r.release_year > ${MAME_PLAY_MAX_YEAR})${arcadeVerifiedOnly() ? ` AND p.slug NOT IN (${[...ARCADE_PLAY].map((s) => `'${s}'`).join(',')})` : ''})
-    )`);
+    where.push(playableSql());
   }
   // skip_on=1 (admin only): leave out games already switched ON (verified earlier), so a check run only looks at the rest.
   if (req.query.skip_on === '1' && req.user?.role === 'admin') where.push('(r.play_override IS NULL OR r.play_override <> 1)');
@@ -651,7 +646,7 @@ router.post('/bulk/import-names', requireAdmin, multer({ limits: { fileSize: 20 
   try {
     if (!req.file) return res.status(400).json({ error: 'Choose a CSV file' });
     const platform = String(req.body?.platform || '').trim();
-    if (!db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Pick a platform' });
+    if (platform && !db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(platform)) return res.status(400).json({ error: 'Unknown platform' });
     res.json(importNames({ csvText: req.file.buffer.toString('utf8'), platform, romCol: req.body.rom_col || undefined, nameCol: req.body.name_col || undefined, hideSystem: req.body.hide_system === '1', flagSystem: req.body.flag_system === '1', apply: req.body.apply === '1' }));
   } catch (err) { next(err); }
 });
@@ -802,6 +797,16 @@ const TESTABLE_CORES = {
  * this year get no Play button. Unknown year = allowed (best effort). Override with
  * GAMESAUCE_MAME_PLAY_MAX_YEAR (set 9999 to disable the cutoff). */
 export const MAME_PLAY_MAX_YEAR = Number(process.env.GAMESAUCE_MAME_PLAY_MAX_YEAR) || 1990;
+
+/** SQL for "this game can be played in the browser" (the same rule as the Play button, written for a query over roms r + platforms p). */
+export function playableSql() {
+  const cores = Object.keys(PLAYABLE_CORES).map((s) => `'${s}'`).join(',');
+  const allCores = [...Object.keys(PLAYABLE_CORES), ...Object.keys(TESTABLE_CORES)].map((s) => `'${s}'`).join(',');
+  return `r.missing = 0 AND r.is_system = 0 AND (
+      (r.play_override = 1 AND p.slug IN (${allCores})) OR
+      (r.play_override IS NULL AND p.slug IN (${cores}) AND NOT (p.slug = 'mame' AND r.release_year > ${MAME_PLAY_MAX_YEAR})${arcadeVerifiedOnly() ? ` AND p.slug NOT IN (${[...ARCADE_PLAY].map((s) => `'${s}'`).join(',')})` : ''})
+    )`;
+}
 
 export function playableCore(slug, year = null, override = null) {
   const s = String(slug || '').toLowerCase();

@@ -67,20 +67,24 @@ const baseKey = (name) => String(name || '').replace(/\.[A-Za-z0-9]{1,6}$/, '').
 
 /**
  * Match the zip's pictures to games. Returns { matches: [{ entry, rom }], counts }.
- * options: { platform } is used for pictures with no folder; replace = also replace covers games already have.
+ * options: { platform }: with one chosen, ONLY that platform's pictures are used (a picture in another platform's folder is skipped, a picture
+ * with no folder is taken to be for it). With none chosen, the folder name in the zip says which platform each picture is for.
+ * replace = also replace covers games already have.
  */
 export function planCovers(entries, { platform = '', replace = false } = {}) {
   const roms = db.prepare('SELECT r.id, r.filename, r.cover_path, r.cover_locked, p.slug FROM roms r JOIN platforms p ON p.id = r.platform_id').all();
   const byKey = new Map();
   for (const r of roms) { const k = `${r.slug}/${baseKey(r.filename)}`; (byKey.get(k) || byKey.set(k, []).get(k)).push(r); }
-  const counts = { pictures: 0, matched: 0, will_set: 0, already_have: 0, unmatched: 0, not_image: 0, skipped: 0 };
+  const counts = { pictures: 0, matched: 0, will_set: 0, already_have: 0, unmatched: 0, not_image: 0, skipped: 0, other_platform: 0 };
   const matches = [], unmatchedNames = [];
   for (const ent of entries) {
     if (ent.name.endsWith('/') || /(^|\/)(\.|__MACOSX)/.test(ent.name)) continue;
     if (/\.(gif|svg)$/i.test(ent.name)) { counts.pictures++; counts.not_image++; continue; }   // never accepted (an SVG can carry scripts): said so in the preview
     if (!/\.(jpe?g|png|webp)$/i.test(ent.name)) { counts.skipped++; continue; }
     counts.pictures++;
-    const parts = ent.name.split('/'); const file = parts.pop(); const folder = (parts.pop() || platform || '').toLowerCase();
+    const parts = ent.name.split('/'); const file = parts.pop(); const own = (parts.pop() || '').toLowerCase();
+    const folder = own || String(platform || '').toLowerCase();
+    if (platform && own && own !== String(platform).toLowerCase()) { counts.other_platform++; continue; }   // a different platform's picture
     const hit = byKey.get(`${folder}/${baseKey(file)}`);
     if (!hit) { counts.unmatched++; if (unmatchedNames.length < 6) unmatchedNames.push(ent.name); continue; }
     counts.matched++;

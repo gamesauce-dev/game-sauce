@@ -1607,5 +1607,10 @@ body.login-modern .auth-card .brand-name { letter-spacing: 0; }
 .export-box { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .export-box h4 { margin: 0 0 0.4rem; font-size: 0.95rem; }
 .export-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.7rem 1rem; margin-top: 0.9rem; }
-.export-row .field { min-width: 13rem; }
-.export-row .policy-row { margin: 0 0 0.35rem; }
+.export-row .field { min-width: 13rem; margin: 0; }
+.export-row .policy-row { margin: 0; align-items: center; min-height: 2.4rem; box-sizing: border-box; padding-top: 0; padding-bottom: 0; }
+.export-row .policy-row input { margin-top: 0; }
+.export-row .btn { align-self: flex-end; }
+
+body.play-only #empty [data-view="upload"] { display: none; }
+body.play-only #empty .empty-add-text { display: none; }

@@ -496,3 +496,14 @@ test('collections say which games can be played, and offer Play on them', async 
   assert.equal(d.items.find((r) => r.id === ps1.id).playable, false, 'a PS1 game needs a BIOS: no Play button');
   assert.match(read('public/app.js'), /data-rom-play=/); assert.match(read('public/app.js'), /\.then\(openPlayer\)/);
 });
+
+test('play-only: platform pills count only playable games; no Add ROMs offered; CSV tools rename; checkbox rows aligned', async () => {
+  const app = read('public/app.js'), css = read('public/styles.css'), html = read('public/index.html'), srv = read('src/app.js'), roms = read('src/routes/roms.js');
+  assert.match(srv, /AS playable_count/, 'the platform list reports how many games can be played in the browser');
+  assert.match(roms, /export function playableSql\(\)/); assert.match(roms, /where\.push\(playableSql\(\)\)/, 'the list filter and the counts share one rule');
+  assert.match(app, /authState\.user\?\.play_only\s*\? all\.map\(\(p\) => \(\{ \.\.\.p, count: p\.playable_count/, 'a play-only person sees playable counts, so empty platforms and families drop out');
+  assert.match(css, /body\.play-only #empty \[data-view="upload"\] \{ display: none; \}/);
+  assert.match(html, /<h3>CSV tools </); assert.match(app, /label: 'CSV tools'/); assert.doesNotMatch(html + app, /Game names \(CSV\)/);
+  assert.match(css, /\.export-row \.policy-row \{ margin: 0; align-items: center; min-height: 2\.4rem;/);
+  assert.match(html, /id="covers-platform"/);
+});

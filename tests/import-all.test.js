@@ -35,7 +35,7 @@ function makeZip(entries) {
   return Buffer.concat([...parts, cd, end]);
 }
 const coverForm = (zip, extra = {}) => { const f = new FormData(); f.append('zip', new Blob([zip]), 'covers.zip'); for (const [k, v] of Object.entries(extra)) f.append(k, v); return f; };
-const csvForm = (text, extra = {}) => { const f = new FormData(); f.append('csv', new Blob([text]), 'g.csv'); f.append('platform', 'snes'); for (const [k, v] of Object.entries(extra)) f.append(k, v); return f; };
+const csvForm = (text, extra = {}) => { const f = new FormData(); f.append('csv', new Blob([text]), 'g.csv'); const x = { platform: 'snes', ...extra }; for (const [k, v] of Object.entries(x)) f.append(k, v); return f; };
 const row = (id) => db.prepare('SELECT * FROM roms WHERE id = ?').get(id);
 let a, b, c;
 
@@ -138,4 +138,24 @@ test('round trip: what Export covers writes, Import covers reads back', async ()
   assert.equal(prev.body.will_set, 2, 'both pictures from the export find their games');
   const ap = await call('/api/roms/bulk/import-covers', { method: 'POST', form: coverForm(z.body, { apply: '1' }) });
   assert.equal(ap.body.set, 2); assert.ok(fs.existsSync(row(a).cover_path));
+});
+
+test('the CSV import uses each row\'s platform column, so an export of several platforms imports in one go', async () => {
+  db.prepare('UPDATE roms SET title = ? WHERE id IN (?, ?)').run('before', a, c);
+  const csv = 'rom_name,short_game_name,platform\r\nAlpha (USA).sfc,Alpha SNES,snes\r\nAlpha (USA).nes,Alpha NES,nes\r\n';
+  const r = await call('/api/roms/bulk/import-names', { method: 'POST', form: csvForm(csv, { platform: '', apply: '1' }) });
+  assert.equal(r.status, 200); assert.equal(r.body.matched, 2); assert.equal(r.body.platforms, 2); assert.equal(r.body.platform_column, true);
+  assert.equal(row(a).title, 'Alpha SNES'); assert.equal(row(c).title, 'Alpha NES', 'the same file name on two platforms goes to the right game each');
+  // a name-only CSV with no platform picked is refused with a plain message
+  const bad = await call('/api/roms/bulk/import-names', { method: 'POST', form: csvForm('rom_name,short_game_name\r\nx,y\r\n', { platform: '' }) });
+  assert.equal(bad.status, 400); assert.match(bad.body.error, /Pick a platform/);
+});
+
+test('cover import: a chosen platform limits it to that platform', async () => {
+  const zip = makeZip([{ name: 'snes/Alpha (USA).png', data: PNG }, { name: 'nes/Alpha (USA).png', data: PNG }]);
+  db.prepare('UPDATE roms SET cover_path = NULL, cover_locked = 0 WHERE id IN (?, ?)').run(a, c);
+  const only = await call('/api/roms/bulk/import-covers', { method: 'POST', form: coverForm(zip, { platform: 'nes' }) });
+  assert.equal(only.body.matched, 1, 'only the NES picture is used'); assert.equal(only.body.other_platform, 1, 'and the SNES one is reported as left out');
+  const any = await call('/api/roms/bulk/import-covers', { method: 'POST', form: coverForm(zip) });
+  assert.equal(any.body.matched, 2, 'with no platform chosen the folders say which platform each is for');
 });

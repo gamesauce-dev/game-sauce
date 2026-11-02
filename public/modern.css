@@ -356,3 +356,6 @@ html[data-theme="light"] body.ui-modern .hint[style*="warn"] { color: #8a5a00 !i
 /* Collections: the play button on a game in the list is green like the tile's, icon only. */
 body.ui-modern .btn-play[data-rom-play] { color: #5fe3a1; border-color: color-mix(in srgb, #5fe3a1 45%, transparent); }
 html[data-theme="light"] body.ui-modern .btn-play[data-rom-play] { color: #0f7a46; border-color: #2f9e66; }
+
+/* CSV tools: icon buttons in the Export / Import rows are as tall as the framed tick boxes beside them, so everything sits on one line. */
+body.ui-modern .export-row .btn[data-mi] { height: 2.4rem; }
