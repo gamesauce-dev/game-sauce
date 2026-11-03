@@ -85,5 +85,9 @@ test('a platform keeps its logo when edited, and the logo goes when the platform
 test('page: a fixed-size logo box in the Library heading, and a logo chooser in the platform editor', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
   assert.match(app, /class=\"lib-logo\"/); assert.match(app, /data-logo-file/); assert.match(app, /\/logo\`, \{ method: 'POST', body: fd \}/);
-  assert.match(css, /\.lib-logo \{[^}]*width: 5\.5rem; height: 2\.2rem;/); assert.match(css, /\.lib-logo img \{[^}]*object-fit: contain/);
+  assert.match(css, /\.lib-logo \{[^}]*width: 5\.5rem; height: 2\.2rem;/); assert.match(css, /\.lib-logo img \{[^}]*width: 100%; height: 100%; object-fit: contain/);
+});
+
+test('family chips are in capitals', () => {
+  assert.match(fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), /\.chip\[data-chip-fam\] \{ text-transform: uppercase;/);
 });

@@ -116,6 +116,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Platform logos now fill their box**: a small logo is scaled up and a large one down, always keeping its proportions (before, a small picture stayed tiny). **Family chips in the Library are in capitals.**
 - **Modern: Fetch metadata uses the `fetch-metadata(3)` icon.**
 - **Modern Library: the filtered total sits beside the platform name above the grid** ("All platforms  124 ROMs"), and the gaps between the platform chips, the selection controls and the grid are tighter. The "add another folder" icon on each source uses the new `source-add(2)` icon.
 - **Modern: larger A-Z jump letters, a larger "add another folder" icon on each source, and the Emulators refresh button on the left and bigger.**

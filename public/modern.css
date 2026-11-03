@@ -401,3 +401,7 @@ body.ui-modern .chip.plat .plat-ico { display: none; }
 body.ui-modern .lib-heading .lib-logo { width: 5.5rem; height: 2.2rem; }
 body.ui-modern .lib-logo { background: transparent; }
 body.ui-modern .logo-edit .lib-logo { border: 1px dashed var(--line-2); border-radius: 0.5rem; padding: 0.2rem; }
+
+/* Family names in capitals (the family chips); the platform chips already show the short name in capitals. */
+body.ui-modern .chip[data-chip-fam] { text-transform: uppercase; letter-spacing: .06em; font-size: 0.78rem; }
+body.ui-modern .chip[data-chip-fam] small { letter-spacing: 0; }
