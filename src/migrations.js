@@ -413,3 +413,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS family_logos (
   updated INTEGER NOT NULL
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '27') ON CONFLICT(key) DO UPDATE SET value = '27'").run();
+
+/* ── v28: "light backing in dark mode" per logo. A logo drawn in black (many official ones) vanishes on the dark theme; with this set, the
+   Library shows it on a light plate when the theme is dark. Off by default; one flag per platform logo and per family logo. */
+for (const t of ['platform_logos', 'family_logos']) {
+  if (!db.prepare(`PRAGMA table_info(${t})`).all().some((c) => c.name === 'plate')) db.exec(`ALTER TABLE ${t} ADD COLUMN plate INTEGER NOT NULL DEFAULT 0`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '28') ON CONFLICT(key) DO UPDATE SET value = '28'").run();

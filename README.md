@@ -372,6 +372,7 @@ GET    /api/platforms/families/logo?family=  a family's logo; POST (multipart `l
 GET    /api/platforms/:slug/logo   a platform's logo picture (signed in)
 POST   /api/platforms/:slug/logo   admin — upload a logo (multipart field `logo`; JPEG, PNG, WebP or plain SVG, up to 512 KB)
 DELETE /api/platforms/:slug/logo   admin — remove it
+PUT    /api/platforms/:slug/logo/plate  and  /api/platforms/families/logo/plate   admin — set the "light backing in dark mode" flag of a logo
 PUT    /api/platforms/families/colour  admin — set or reset a family's chip colour (refused if unreadable on dark or light)
 DELETE /api/roms/:id[?delete_file=1]  single delete; in-place files survive unless delete_file=1
 GET    /api/collections

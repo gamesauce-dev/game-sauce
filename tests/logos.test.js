@@ -117,3 +117,40 @@ test('page: the heading shows the family logo for several platforms of one famil
   assert.match(app, /const sameFam = picked\.length > 1/); assert.match(app, /logoOf \|\| famLogo \|\|/); assert.match(app, /data-famlogo-file/);
   assert.match(css, /\.drawer-bar \{ height: 4\.2rem; padding-top: 0\.8rem;/); assert.match(css, /#drawer-pin, body\.ui-modern \.drawer-bar #drawer-close \{ top: calc\(50% \+ 0\.4rem\); \}/);
 });
+
+test('light backing flag: off by default, set per platform logo and per family logo, listed with the platforms, survives a new upload', async () => {
+  const put = (p, body, token) => call(p, { method: 'PUT', body, token });
+  assert.equal((await put('/api/platforms/gb/logo/plate', { plate: true })).status, 404, 'no logo yet, nothing to back');
+  await post('/api/platforms/gb/logo', PNG);
+  assert.equal((await call('/api/platforms')).body.items.find((p) => p.slug === 'gb').logo_plate, 0, 'off by default');
+  assert.equal((await put('/api/platforms/gb/logo/plate', { plate: true }, memberTok)).status, 403);
+  assert.equal((await put('/api/platforms/gb/logo/plate', { plate: true })).status, 200);
+  assert.equal((await call('/api/platforms', { token: memberTok })).body.items.find((p) => p.slug === 'gb').logo_plate, 1);
+  await post('/api/platforms/gb/logo', PNG);   // replace the picture: the tick stays
+  assert.equal((await call('/api/platforms')).body.items.find((p) => p.slug === 'gb').logo_plate, 1, 'a new picture keeps the tick');
+  assert.equal((await put('/api/platforms/gb/logo/plate', { plate: false })).status, 200);
+  assert.equal((await call('/api/platforms')).body.items.find((p) => p.slug === 'gb').logo_plate, 0);
+  const fpost = async (family) => { const f = new FormData(); f.append('family', family); f.append('logo', new Blob([PNG], { type: 'image/png' }), 'f.png'); return (await fetch(base + '/api/platforms/families/logo', { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: f })).status; };
+  assert.equal((await put('/api/platforms/families/logo/plate', { family: 'Atari', plate: true })).status, 404);
+  assert.equal(await fpost('Atari'), 200);
+  assert.equal((await put('/api/platforms/families/logo/plate', { family: 'Atari', plate: true })).status, 200);
+  assert.equal((await call('/api/platforms')).body.items.find((p) => p.family === 'Atari').family_logo_plate, 1);
+  await call('/api/platforms/families/rename', { method: 'POST', body: { from: 'Atari', to: 'Atari machines' } });
+  assert.equal((await call('/api/platforms')).body.items.find((p) => p.family === 'Atari machines').family_logo_plate, 1, 'a rename carries the tick');
+  assert.equal((await put('/api/platforms/families/logo/plate', { family: 'Atari machines', plate: false }, memberTok)).status, 403);
+});
+
+test('page: the plate class is applied from the flag, and each logo editor has the tick', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8');
+  assert.match(app, /p\.logo_plate \? ' on-plate' : ''/); assert.match(app, /famRow\.family_logo_plate \? ' on-plate' : ''/);
+  assert.match(app, /data-logo-plate/); assert.match(app, /data-famlogo-plate/); assert.match(app, /Light backing in dark mode/);
+  assert.match(css, /html:not\(\[data-theme="light"\]\) body\.ui-modern \.lib-logo\.on-plate \{ background: rgba\(255,255,255,\.94\)/);
+});
+
+test('the light-backing tick is compact, not a framed card', () => {
+  assert.match(fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), /\.logo-edit \.policy-row, body\.ui-modern \.fam-plate \{ display: inline-flex;[^}]*white-space: nowrap;/);
+});
+
+test('the light-backing checkbox keeps its natural size (a general input rule must not stretch it)', () => {
+  assert.match(fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), /\.fam-plate input \{ margin: 0; flex: 0 0 auto; width: 1rem; height: 1rem; padding: 0; \}/);
+});

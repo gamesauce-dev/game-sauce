@@ -549,3 +549,12 @@ body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"]) { backg
 body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"]):hover:not(:disabled) { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
 body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"]):disabled { opacity: .45; }
 body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"])::before { background: currentColor; }
+
+/* Light backing for logos drawn in black: only in dark mode, only for logos the admin ticked. A plain light tile behind the picture. */
+html:not([data-theme="light"]) body.ui-modern .lib-logo.on-plate { background: rgba(255,255,255,.94); border-radius: 0.55rem; padding: 0.22rem 0.5rem; box-sizing: border-box; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+
+/* The "Light backing" tick beside a logo: a small inline tick and one line of text, not the framed card the settings switches use. */
+body.ui-modern .logo-edit .policy-row, body.ui-modern .fam-plate { display: inline-flex; align-items: center; gap: 0.45rem; width: auto; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; white-space: nowrap; font-size: 0.82rem; font-weight: 500; }
+body.ui-modern .logo-edit .policy-row[hidden], body.ui-modern .fam-plate[hidden] { display: none; }
+body.ui-modern .logo-edit .policy-row input, body.ui-modern .fam-plate input { margin: 0; flex: 0 0 auto; width: 1rem; height: 1rem; padding: 0; }
+body.ui-modern .logo-edit .policy-row span { display: inline; }

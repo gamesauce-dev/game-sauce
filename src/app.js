@@ -165,22 +165,24 @@ export function createApp() {
 
   // The colour of a family: the one chosen in Settings, else the built-in default for that family, else grey.
   const familyLogoMap = () => Object.fromEntries(db.prepare('SELECT family, updated FROM family_logos').all().map((r) => [r.family, r.updated]));
+  const familyPlateMap = () => Object.fromEntries(db.prepare('SELECT family, plate FROM family_logos').all().map((r) => [r.family, r.plate]));
   const familyColourMap = () => {
     const m = { ...FAMILY_DEFAULTS };
     for (const r of db.prepare('SELECT family, colour FROM family_colours').all()) m[r.family] = r.colour;
     return m;
   };
   api.get('/platforms', (req, res) => {
-    const fc = familyColourMap(), fl = familyLogoMap();
+    const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap();
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count,
                COUNT(CASE WHEN ${playableSql()} AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
                COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
         , (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v
+        , COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
-      `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null }))
+      `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
     });
   });
 
@@ -232,9 +234,9 @@ export function createApp() {
   });
 
   api.get('/platforms/all', requireAdmin, (req, res) => {
-    const fc = familyColourMap(), fl = familyLogoMap();
+    const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap();
     res.json({
-      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null })),
+      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v, COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 })),
       defaults: FAMILY_DEFAULTS
     });
   });
@@ -262,6 +264,15 @@ export function createApp() {
       res.json({ family, logo_v: v, type: kind.type });
     });
   });
+  api.put('/platforms/families/logo/plate', requireAdmin, (req, res) => {
+    const family = String(req.body?.family || '');
+    const row = db.prepare('SELECT 1 FROM family_logos WHERE family = ?').get(family);
+    if (!row) return res.status(404).json({ error: 'That family has no logo yet' });
+    const plate = req.body?.plate ? 1 : 0;
+    db.prepare('UPDATE family_logos SET plate = ? WHERE family = ?').run(plate, family);
+    req.auditDetail = { family, plate: Boolean(plate) };
+    res.json({ family, plate });
+  });
   api.delete('/platforms/families/logo', requireAdmin, (req, res) => {
     const family = String(req.query.family || '');
     db.prepare('DELETE FROM family_logos WHERE family = ?').run(family);
@@ -287,6 +298,14 @@ export function createApp() {
       req.auditDetail = { platform: slug, type: kind.type, bytes: req.file.buffer.length };
       res.json({ slug, logo_v: v, type: kind.type });
     });
+  });
+  api.put('/platforms/:slug/logo/plate', requireAdmin, (req, res) => {
+    const slug = String(req.params.slug || '').toLowerCase();
+    if (!db.prepare('SELECT 1 FROM platform_logos WHERE slug = ?').get(slug)) return res.status(404).json({ error: 'That platform has no logo yet' });
+    const plate = req.body?.plate ? 1 : 0;
+    db.prepare('UPDATE platform_logos SET plate = ? WHERE slug = ?').run(plate, slug);
+    req.auditDetail = { platform: slug, plate: Boolean(plate) };
+    res.json({ slug, plate });
   });
   api.delete('/platforms/:slug/logo', requireAdmin, (req, res) => {
     const slug = String(req.params.slug || '').toLowerCase();
