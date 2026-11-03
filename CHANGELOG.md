@@ -184,6 +184,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Health: the Copy report button did nothing on a server reached by plain `http://`** (browsers only allow the clipboard on HTTPS or localhost, and its fallback message pointed at text that was never shown). It now tries the clipboard, then the older copy command, and if the browser refuses both it shows the report selected in a box to copy with Ctrl+C.
 - **Modern: refreshing the page in Library took you back to Home.** It now remembers which of the two you were on and stays there. A fresh sign-in or switching look still starts at Home.
 - **Modern: light mode's play window has a calmer close button** (transparent with an outline, not a bright white block that could burn into an OLED screen).
 - **Details window: the previous / next row vanished after matching a game from a filtered list** (for example No cover: the match gives the game a cover, so it leaves the list and the window lost its place). The window now remembers the list it was opened from, so the row stays and keeps working after a match, and likewise after hiding a game or un-favouriting it while looking at Favourites.

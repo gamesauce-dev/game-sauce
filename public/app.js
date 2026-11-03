@@ -4274,8 +4274,24 @@ document.addEventListener('click', async (e) => {
   if (e.target.closest('#health-refresh')) loadHealth();
   if (e.target.closest('#health-copy')) {
     if (!healthText) return;
-    try { await navigator.clipboard.writeText(healthText); toast('Health report copied'); }
-    catch { toast('Could not copy automatically; select the text and copy it', true); }
+    // navigator.clipboard only exists on HTTPS or localhost; a server reached by plain http:// on a LAN address has no such thing.
+    // So: try it, then the older copy command, and if the browser refuses both, show the report in a box to select and copy.
+    let ok = false;
+    try { if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(healthText); ok = true; } } catch { /* fall through */ }
+    if (!ok) {
+      const ta = document.createElement('textarea');
+      ta.value = healthText; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+    }
+    if (ok) toast('Health report copied');
+    else {
+      let box = $('#health-report-box');
+      if (!box) { box = document.createElement('textarea'); box.id = 'health-report-box'; box.className = 'search'; box.readOnly = true; box.rows = 12; box.style.cssText = 'width:100%;margin-top:10px;font-family:monospace;'; $('#health-copy').closest('.panel, section, div')?.appendChild(box); }
+      box.value = healthText; box.focus(); box.select();
+      toast('Your browser would not copy automatically: the report is selected below, press Ctrl+C', true);
+    }
   }
 });
 

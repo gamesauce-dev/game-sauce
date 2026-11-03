@@ -569,3 +569,8 @@ test('Modern remembers Library vs Home across a refresh; refresh button left and
   assert.match(css, /\.source-addfolder \.btn\[data-mi\]::before \{ width: 1\.7rem/);
   assert.match(css, /data-theme="light"\] body\.ui-modern #player-close \{ background: transparent/);
 });
+
+test('Health: Copy report works without HTTPS (older copy command, then a select-and-copy box)', () => {
+  const app = read('public/app.js');
+  assert.match(app, /navigator\.clipboard\?\.writeText/); assert.match(app, /document\.execCommand\('copy'\)/); assert.match(app, /id = 'health-report-box'/);
+});
