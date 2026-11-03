@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
+import { sniffProviderImage } from './coverzip.js';
 
 const TIMEOUT_MS = Number(process.env.META_TIMEOUT_MS || 15000);
 const CACHE_TTL_HOURS = Number(process.env.META_CACHE_TTL_HOURS || 168);
@@ -112,27 +113,35 @@ export async function cacheMedia(url, kind = 'box2d') {
 
   const hash = crypto.createHash('sha1').update(url).digest('hex');
   const existing = fs.readdirSync(MEDIA_DIR).find((f) => f.startsWith(`${kind}-${hash}.`));
-  if (existing) return path.join(MEDIA_DIR, existing);
+  if (existing) {
+    // Trust a cached file only if it really has content; an empty leftover (a failed write) is downloaded again.
+    try { if (fs.statSync(path.join(MEDIA_DIR, existing)).size > 0) return path.join(MEDIA_DIR, existing); } catch { /* download again */ }
+  }
 
   try {
     // A busy image server (rate limit, 5xx, a dropped connection) is retried a couple of times before giving up, so one bad
     // moment during a big run does not leave a game matched but without its picture.
-    let res = null;
+    // The bytes are checked as well: an error page sent with a success code, or a cut-off download, is not a picture. It is retried
+    // like a busy server and never saved, so a game is not left pointing at something that cannot be shown.
+    let buf = null, type = null;
     for (let attempt = 0; attempt < 3; attempt++) {
+      let res = null;
       try {
         res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { 'User-Agent': 'game-sauce/0.2' } });
-        if (res.ok || (res.status !== 429 && res.status < 500)) break;
+        if (res.ok) {
+          const got = Buffer.from(await res.arrayBuffer());
+          if (got.length && got.length <= MAX_MEDIA_BYTES && (type = sniffProviderImage(got))) { buf = got; break; }
+        } else if (res.status !== 429 && res.status < 500) break;
       } catch { res = null; }
       if (attempt < 2) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
     }
-    if (!res || !res.ok) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (!buf.length || buf.length > MAX_MEDIA_BYTES) return null;
+    if (!buf) return null;
 
-    const ct = res.headers.get('content-type') || '';
-    const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : ct.includes('gif') ? 'gif' : 'jpg';
+    const ext = type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : type === 'image/gif' ? 'gif' : 'jpg';
     const dest = path.join(MEDIA_DIR, `${kind}-${hash}.${ext}`);
     fs.writeFileSync(dest, buf);
+    // Read it back: the file must be on disk at the size that arrived, or it is removed and counts as a failed download.
+    if (!fs.existsSync(dest) || fs.statSync(dest).size !== buf.length) { try { fs.unlinkSync(dest); } catch { /* gone already */ } return null; }
     return dest;
   } catch {
     return null;

@@ -4358,6 +4358,7 @@ async function loadHealth() {
       <div class="health-row ${c.status}">
         <span class="health-ico">${icon[c.status]}</span>
         <div><b>${esc(c.label)}</b><div class="sub">${esc(c.detail)}</div></div>
+        ${c.fixable === 'covers' ? '<button class="btn btn-sm" id="health-repair-covers" title="Repair: mark the games whose cover picture is missing as having no cover">Repair</button>' : ''}
       </div>`).join('');
     renderSlowRequests();
   } catch (err) {
@@ -4367,6 +4368,10 @@ async function loadHealth() {
 }
 document.addEventListener('click', async (e) => {
   if (e.target.closest('#health-refresh')) loadHealth();
+  if (e.target.closest('#health-repair-covers')) {
+    try { const j = await api('/roms/bulk/repair-covers', { method: 'POST' }); toast(`${j.forgotten} game${j.forgotten === 1 ? '' : 's'} marked as having no cover. Run Fetch missing covers to download them again.`); loadHealth(); }
+    catch (err) { toast(err.message, true); }
+  }
   if (e.target.closest('#health-copy')) {
     if (!healthText) return;
     // navigator.clipboard only exists on HTTPS or localhost; a server reached by plain http:// on a LAN address has no such thing.

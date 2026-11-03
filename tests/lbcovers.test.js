@@ -13,7 +13,7 @@ process.env.GAMESAUCE_ADMIN_PASSWORD = 'c-admin-password-1';
 
 let img, imgPort, hits = 0, failFirst = 2, db, mod;
 before(async () => {
-  img = http.createServer((q, r) => { hits++; if (hits <= failFirst) { r.statusCode = 503; return r.end('busy'); } r.setHeader('Content-Type', 'image/png'); r.end(Buffer.from('89504e470d0a1a0a', 'hex')); });
+  img = http.createServer((q, r) => { hits++; if (hits <= failFirst) { r.statusCode = 503; return r.end('busy'); } r.setHeader('Content-Type', 'image/png'); r.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')); });
   await new Promise((r) => img.listen(0, '127.0.0.1', r));
   imgPort = img.address().port;
   mod = await import('../src/lib/providers.js');

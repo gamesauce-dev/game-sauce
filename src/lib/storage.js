@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { sniffProviderImage } from './coverzip.js';
 
 // Resolved per call, not at import time, so tests and deployments can point the
 // storage root anywhere by setting the environment before use.
@@ -67,8 +68,12 @@ export async function downloadCover(url, sha1) {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > 8 * 1024 * 1024) return null;
-    return saveCover(buf, sha1, res.headers.get('content-type') || 'image/jpeg');
+    if (!buf.length || buf.length > 8 * 1024 * 1024) return null;
+    const type = sniffProviderImage(buf);
+    if (!type) return null; // not a picture (an error page, a cut-off download)
+    const dest = saveCover(buf, sha1, type);
+    if (!fs.existsSync(dest) || fs.statSync(dest).size !== buf.length) { try { fs.unlinkSync(dest); } catch { /* gone */ } return null; }
+    return dest;
   } catch {
     return null;
   }

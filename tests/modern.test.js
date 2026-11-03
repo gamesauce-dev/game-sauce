@@ -667,3 +667,7 @@ test('Modern: every chip is a rounded square, selected chips glow, platform Save
   assert.match(css, /body\.ui-modern \.chip\.on \{ box-shadow: 0 0 0 1px color-mix/);
   assert.ok(js.includes("'save-platform'")); assert.ok(fs.existsSync(new URL('../public/modern/icons/save-platform.svg', import.meta.url)));
 });
+
+test('Modern: the health Repair button for missing covers has an icon', () => {
+  assert.ok(fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8').includes("['#health-repair-covers', 'recheck']"));
+});

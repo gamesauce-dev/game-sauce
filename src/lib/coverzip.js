@@ -21,6 +21,14 @@ export function sniffImage(buf) {
   return null;
 }
 
+/** Like sniffImage, but also accepts GIF: for pictures a provider sends (never for uploads, which keep the narrower list). */
+export function sniffProviderImage(buf) {
+  const t = sniffImage(buf);
+  if (t) return t;
+  if (Buffer.isBuffer(buf) && buf.length >= 12 && /^GIF8[79]a/.test(buf.toString('ascii', 0, 6))) return 'image/gif';
+  return null;
+}
+
 /** The entries of a zip: [{ name, method, csize, size, off }]. Throws a plain-language error for anything it cannot read. */
 export function listZip(file) {
   const fd = fs.openSync(file, 'r');

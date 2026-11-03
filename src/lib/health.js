@@ -91,6 +91,21 @@ export function collectHealth() {
   checks.push(diskCheck('disk-data', 'Disk space: data folder', dataDir()));
   checks.push(diskCheck('disk-storage', 'Disk space: storage folder', rootDir()));
 
+  // Cover pictures: every cover recorded in the database should still be a file on disk.
+  try {
+    const rows = db.prepare('SELECT cover_path FROM roms WHERE cover_path IS NOT NULL').all();
+    let dead = 0;
+    for (const x of rows) if (!fs.existsSync(x.cover_path)) dead++;
+    checks.push({
+      id: 'covers', label: 'Cover pictures', status: dead ? 'warn' : 'ok', fixable: dead > 0 ? 'covers' : undefined,
+      detail: dead
+        ? `${dead.toLocaleString()} game${dead === 1 ? ' has' : 's have'} a cover recorded but the picture file is missing, so the tile shows empty. Repair marks them as having no cover; Fetch missing covers then downloads them again.`
+        : `All ${rows.length.toLocaleString()} recorded covers are on disk.`
+    });
+  } catch (err) {
+    checks.push({ id: 'covers', label: 'Cover pictures', status: 'warn', detail: `Could not be checked: ${err.message}` });
+  }
+
   // ROM sources: reachable? last scan?
   const sources = db.prepare('SELECT id, name, path, enabled, last_scan_at, last_scan_found, last_scan_added, last_scan_error FROM sources ORDER BY name').all();
   if (!sources.length) {

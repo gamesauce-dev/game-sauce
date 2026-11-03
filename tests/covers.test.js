@@ -120,3 +120,38 @@ test('a cover whose picture file is gone counts as "no cover" (filter, repair ro
   const mt = await (async () => { await j('/api/auth/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'cvm', password: 'cv-member-pass-12', role: 'user' }) }); return (await (await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'cvm', password: 'cv-member-pass-12' }) })).json()).token; })();
   assert.equal((await fetch(base + '/api/roms/bulk/repair-covers', { method: 'POST', headers: { Authorization: 'Bearer ' + mt } })).status, 403);
 });
+
+test('arrival check: a "cover" that is not a picture is never saved; a real one is; health reports and repairs missing files', async () => {
+  const { cacheMedia } = await import('../src/lib/providers.js');
+  const http = await import('node:http');
+  const html = Buffer.from('<html><body>Sorry, rate limited</body></html>');
+  const srv = http.createServer((req, res) => {
+    if (req.url.startsWith('/page')) { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); res.end(html); }   // success code, but a web page
+    else if (req.url.startsWith('/empty')) { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); res.end(); }
+    else if (req.url.startsWith('/real')) { res.writeHead(200, { 'Content-Type': 'application/octet-stream' }); res.end(PNG); } // a real picture, wrong label: the bytes decide
+    else if (req.url.startsWith('/gif')) { res.writeHead(200, { 'Content-Type': 'image/gif' }); res.end(Buffer.concat([Buffer.from('GIF89a'), Buffer.alloc(20, 1)])); }
+    else { res.writeHead(404); res.end(); }
+  });
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const u = (p) => `http://127.0.0.1:${srv.address().port}${p}`;
+  try {
+    assert.equal(await cacheMedia(u('/page'), 'box2d'), null, 'a web page sent as an image is refused');
+    assert.equal(await cacheMedia(u('/empty'), 'box2d'), null, 'an empty body is refused');
+    const ok = await cacheMedia(u('/real'), 'box2d');
+    assert.ok(ok && fs.existsSync(ok) && ok.endsWith('.png'), 'a real PNG is saved with the right extension');
+    assert.equal(fs.statSync(ok).size, PNG.length);
+    const gif = await cacheMedia(u('/gif'), 'box2d');
+    assert.ok(gif && gif.endsWith('.gif'));
+    // a zero-byte leftover in the cache is downloaded again, not trusted
+    fs.writeFileSync(ok, '');
+    const again = await cacheMedia(u('/real'), 'box2d');
+    assert.equal(fs.statSync(again).size, PNG.length, 'an empty cached file is replaced');
+  } finally { srv.close(); }
+  // health: a recorded cover with no file is a warning with a repair; after repair it is fine
+  const f = path.join(TMP, 'dead.jpg'); db.prepare('UPDATE roms SET cover_path = ? WHERE id = ?').run(f, a);
+  let h = (await j('/api/admin/health')).body.checks.find((c) => c.id === 'covers');
+  assert.equal(h.status, 'warn'); assert.equal(h.fixable, 'covers'); assert.match(h.detail, /missing/);
+  await j('/api/roms/bulk/repair-covers', { method: 'POST' });
+  h = (await j('/api/admin/health')).body.checks.find((c) => c.id === 'covers');
+  assert.equal(h.status, 'ok');
+});
