@@ -21,6 +21,16 @@ import {
   removeRomFile, removeCoverFile, saveCover
 } from '../lib/storage.js';
 
+/* Provider covers are cached by the picture's address, so two games with the same cover share ONE file. Deleting the file because one
+ * game lost its cover would blank the others, leaving them with a cover recorded and no picture. So a cover file is only removed when
+ * no other game still uses it. Call this AFTER the game's own record has been changed or deleted (or pass its id to leave it out). */
+export function dropCoverFile(coverPath, exceptId = null) {
+  if (!coverPath) return;
+  const used = db.prepare('SELECT 1 FROM roms WHERE (? IS NULL OR id <> ?) AND (cover_path = ? OR provider_media LIKE ?) LIMIT 1')
+    .get(exceptId, exceptId, coverPath, '%' + String(coverPath).replace(/[\\%_]/g, (c) => '\\' + c) + '%');
+  if (!used) removeCoverFile(coverPath);
+}
+
 const router = express.Router();
 
 const upload = multer({
@@ -221,7 +231,7 @@ function deleteRomRow(rom, { deleteFile = false } = {}) {
     } catch { fileDeleted = false; }
   }
   if (rom.cover_path) {
-    try { removeCoverFile(rom.cover_path); } catch { /* best effort */ }
+    try { dropCoverFile(rom.cover_path, rom.id); } catch { /* best effort */ }
   }
   return { fileDeleted };
 }
@@ -291,7 +301,7 @@ function clearMatchFor(ids) {
       const parsed = parseFilename(r.filename);
       const title = n?.title || parsed.title;
       upd.run(title, sortTitle(title), n?.year ?? parsed.year ?? null, n ? 'mame-list' : 'filename', id);
-      if (r.cover_path && !r.cover_locked) removeCoverFile(r.cover_path);
+      if (r.cover_path && !r.cover_locked) dropCoverFile(r.cover_path, id);
       cleared++;
     }
   })();
@@ -1390,7 +1400,7 @@ router.post('/clear-covers', requireAdmin, (req, res) => {
   if (req.body?.dry_run !== false && req.query.dry_run !== '0') return res.json({ platform: slug, would_clear: rows.length });
   const upd = db.prepare("UPDATE roms SET cover_path = NULL, cover_url = NULL, provider_media = NULL, updated_at = datetime('now') WHERE id = ?");
   db.transaction(() => { for (const r of rows) upd.run(r.id); })();
-  for (const r of rows) { try { removeCoverFile(r.cover_path); } catch { /* best effort */ } }
+  for (const r of rows) { try { dropCoverFile(r.cover_path); } catch { /* best effort */ } }
   res.json({ platform: slug, cleared: rows.length });
 });
 
@@ -1450,7 +1460,7 @@ router.post('/:id/cover', coverUpload.single('cover'), (req, res) => {
   const type = sniffImage(req.file.buffer);
   if (!type) return res.status(400).json({ error: 'That file is not a JPEG, PNG or WebP image' });
 
-  if (rom.cover_path) removeCoverFile(rom.cover_path);
+  if (rom.cover_path) dropCoverFile(rom.cover_path, rom.id);
   // Own file name per ROM id (not the ROM's SHA1): provider covers are named by hash/URL,
   // and a custom cover must never share a file with, or be deleted by, another game.
   const coverPath = saveCover(req.file.buffer, `custom-${rom.id}-${Date.now()}`, type);
@@ -1464,7 +1474,7 @@ router.post('/:id/cover', coverUpload.single('cover'), (req, res) => {
 router.delete('/:id/cover', (req, res) => {
   const rom = db.prepare('SELECT id, cover_path, cover_locked FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
-  if (rom.cover_locked && rom.cover_path) removeCoverFile(rom.cover_path);
+  if (rom.cover_locked && rom.cover_path) dropCoverFile(rom.cover_path, rom.id);
   db.prepare("UPDATE roms SET cover_path = NULL, cover_url = NULL, cover_locked = 0, updated_at = datetime('now') WHERE id = ?").run(rom.id);
   res.json(romById(rom.id, req.user?.id));
 });

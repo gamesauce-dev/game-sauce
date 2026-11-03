@@ -155,3 +155,15 @@ test('arrival check: a "cover" that is not a picture is never saved; a real one 
   h = (await j('/api/admin/health')).body.checks.find((c) => c.id === 'covers');
   assert.equal(h.status, 'ok');
 });
+
+test('a cover file shared by two games is not deleted when one of them loses its cover', async () => {
+  const f = path.join(TMP, 'shared.jpg'); fs.writeFileSync(f, JPG);
+  db.prepare('UPDATE roms SET cover_path = ?, cover_locked = 0 WHERE id IN (?, ?)').run(f, a, b);
+  // game A gets its own custom picture: its old (shared) file must stay, because B still shows it
+  assert.equal((await send(a, PNG)).status, 200);
+  assert.ok(fs.existsSync(f), 'B still needs the shared picture');
+  assert.equal(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(b).cover_path, f);
+  // once B is the last user, replacing its cover does remove the old file
+  assert.equal((await send(b, PNG)).status, 200);
+  assert.equal(fs.existsSync(f), false, 'nobody uses it any more');
+});
