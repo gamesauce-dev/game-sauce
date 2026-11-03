@@ -368,6 +368,7 @@ POST   /api/roms/bulk/import-covers admin — a zip of pictures, preview then ap
 GET    /api/admin/update-check     admin — is a newer release published?
 GET    /api/metadata/platform-ids  admin — check platform ids against ScreenScraper / TheGamesDB, with suggestions (read-only)
 POST   /api/platforms/families/rename  admin — rename a platform family for all its platforms (or merge into another)
+GET    /api/platforms/families/logo?family=  a family's logo; POST (multipart `logo` + `family`) and DELETE are admin only
 GET    /api/platforms/:slug/logo   a platform's logo picture (signed in)
 POST   /api/platforms/:slug/logo   admin — upload a logo (multipart field `logo`; JPEG, PNG, WebP or plain SVG, up to 512 KB)
 DELETE /api/platforms/:slug/logo   admin — remove it

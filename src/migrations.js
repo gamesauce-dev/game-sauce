@@ -403,3 +403,13 @@ db.exec(`CREATE TABLE IF NOT EXISTS platform_logos (
   updated INTEGER NOT NULL
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '26') ON CONFLICT(key) DO UPDATE SET value = '26'").run();
+
+/* ── v27: a logo per platform FAMILY (shown in the Library when several platforms of one family are picked; a family such as Arcade can
+   carry a generic logo). Same rules as platform logos; keyed by the family name. */
+db.exec(`CREATE TABLE IF NOT EXISTS family_logos (
+  family  TEXT PRIMARY KEY,
+  data    BLOB NOT NULL,
+  type    TEXT NOT NULL,
+  updated INTEGER NOT NULL
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '27') ON CONFLICT(key) DO UPDATE SET value = '27'").run();

@@ -164,13 +164,14 @@ export function createApp() {
   });
 
   // The colour of a family: the one chosen in Settings, else the built-in default for that family, else grey.
+  const familyLogoMap = () => Object.fromEntries(db.prepare('SELECT family, updated FROM family_logos').all().map((r) => [r.family, r.updated]));
   const familyColourMap = () => {
     const m = { ...FAMILY_DEFAULTS };
     for (const r of db.prepare('SELECT family, colour FROM family_colours').all()) m[r.family] = r.colour;
     return m;
   };
   api.get('/platforms', (req, res) => {
-    const fc = familyColourMap();
+    const fc = familyColourMap(), fl = familyLogoMap();
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count,
@@ -179,7 +180,7 @@ export function createApp() {
         , (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
-      `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' }))
+      `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null }))
     });
   });
 
@@ -219,6 +220,8 @@ export function createApp() {
     const merged = to !== from && db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(to) ? true : false;
     const changed = to === from ? 0 : db.prepare('UPDATE platforms SET family = ? WHERE family = ?').run(to, from).changes;
     if (to !== from) {
+      if (merged) db.prepare('DELETE FROM family_logos WHERE family = ?').run(from);
+      else db.prepare('UPDATE family_logos SET family = ? WHERE family = ?').run(to, from);
       const mine = db.prepare('SELECT colour FROM family_colours WHERE family = ?').get(from);
       db.prepare('DELETE FROM family_colours WHERE family = ?').run(from);
       if (mine && !merged) db.prepare('INSERT OR REPLACE INTO family_colours (family, colour) VALUES (?, ?)').run(to, mine.colour);
@@ -229,15 +232,42 @@ export function createApp() {
   });
 
   api.get('/platforms/all', requireAdmin, (req, res) => {
-    const fc = familyColourMap();
+    const fc = familyColourMap(), fl = familyLogoMap();
     res.json({
-      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' })),
+      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null })),
       defaults: FAMILY_DEFAULTS
     });
   });
 
   // ── Platform logos (admin uploads; anyone signed in can see them) ──
   const logoUpload = multer({ limits: { fileSize: MAX_LOGO_BYTES } });
+  // Family logos. The family name goes in the query (names such as "NEC / SNK" contain a slash). Registered first so "families" is never read as a slug.
+  api.get('/platforms/families/logo', requireAuth, (req, res) => {
+    const row = db.prepare('SELECT data, type FROM family_logos WHERE family = ?').get(String(req.query.family || ''));
+    if (!row) return res.status(404).end();
+    res.set(LOGO_HEADERS(row.type)).send(row.data);
+  });
+  api.post('/platforms/families/logo', requireAdmin, (req, res) => {
+    logoUpload.single('logo')(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That logo is over 512 KB' : err.message });
+      const family = String(req.body?.family || '').trim();
+      if (!family || !db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(family)) return res.status(404).json({ error: 'No such family' });
+      if (!req.file) return res.status(400).json({ error: 'Choose a picture first' });
+      const kind = sniffLogo(req.file.buffer);
+      if (!kind) return res.status(400).json({ error: 'That file is not a JPEG, PNG, WebP or SVG picture' });
+      if (kind.error) return res.status(400).json({ error: kind.error });
+      const v = Date.now();
+      db.prepare('INSERT INTO family_logos (family, data, type, updated) VALUES (?, ?, ?, ?) ON CONFLICT(family) DO UPDATE SET data = excluded.data, type = excluded.type, updated = excluded.updated').run(family, req.file.buffer, kind.type, v);
+      req.auditDetail = { family, type: kind.type, bytes: req.file.buffer.length };
+      res.json({ family, logo_v: v, type: kind.type });
+    });
+  });
+  api.delete('/platforms/families/logo', requireAdmin, (req, res) => {
+    const family = String(req.query.family || '');
+    db.prepare('DELETE FROM family_logos WHERE family = ?').run(family);
+    req.auditDetail = { family, removed: true };
+    res.json({ family, logo_v: null });
+  });
   api.get('/platforms/:slug/logo', requireAuth, (req, res) => {
     const row = db.prepare('SELECT data, type FROM platform_logos WHERE slug = ?').get(String(req.params.slug || '').toLowerCase());
     if (!row) return res.status(404).end();

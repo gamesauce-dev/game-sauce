@@ -409,13 +409,18 @@ function renderLibHeading() {
   // One platform picked and it has a logo: show it in a fixed-size box, so the heading never changes height or width with the picture.
   const logoOf = picked.length === 1 && p?.logo_v ? `<span class="lib-logo"><img src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="" onerror="this.remove()" /></span>` : '';
   const fam = cache.find((x) => x.slug === picked[0])?.family;
+  const sameFam = picked.length > 1 && picked.every((s) => cache.find((x) => x.slug === s)?.family === fam);
+  const famRow = cache.find((x) => x.slug === picked[0]);
+  const famLogo = sameFam && famRow?.family_logo_v ? `<span class="lib-logo"><img src="/api/platforms/families/logo?family=${encodeURIComponent(fam)}&v=${famRow.family_logo_v}" alt="" onerror="this.remove()" /></span>` : '';
+  // Several platforms: the family's logo if the picks are all one family and it has one; otherwise a dot in the family's colour (not the first platform's).
+  const dotColour = picked.length > 1 && sameFam ? (famRow?.family_colour || 'var(--accent)') : (p?.accent || 'var(--accent)');
   const famAll = fam ? cache.filter((x) => x.count > 0 && x.family === fam).map((x) => x.slug) : [];
   const wholeFam = picked.length > 1 && famAll.length === picked.length && famAll.every((s) => picked.includes(s));
   const names = picked.map((s) => cache.find((x) => x.slug === s)?.name || s);
   const name = wholeFam ? `${fam} (all platforms)` : names.length > 3 ? `${names.length} platforms` : names.join(' + ');
   box.classList.remove('hidden');
   box.innerHTML = `
-    ${logoOf || `<span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>`}
+    ${logoOf || famLogo || `<span class="lib-dot" style="background:${esc(dotColour)}"></span>`}
     <h2>${esc(name)}</h2>
     <span class="lib-total">${esc(total)}</span>
     <button class="btn btn-sm btn-ghost lib-clear" id="lib-clear-platform" title="Show every platform again">✕ All platforms</button>`;
@@ -3035,7 +3040,7 @@ async function loadPlatformAdmin() {
   }
 
   list.innerHTML = [...byFamily.entries()].map(([fam, plats]) => `
-    <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <input type="color" class="fam-colour" data-fam-colour="${esc(fam)}" value="${esc(/^#[0-9a-f]{6}$/i.test(plats[0]?.family_colour || '') ? plats[0].family_colour : '#6b7280')}" title="The colour of the ${esc(fam)} chip (the platform chips keep their own colours)" aria-label="Colour of the ${esc(fam)} family" /> <button class="btn btn-sm btn-ghost" data-fam-colour-reset="${esc(fam)}" title="Back to the default colour for this family">Reset colour</button> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
+    <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <input type="color" class="fam-colour" data-fam-colour="${esc(fam)}" value="${esc(/^#[0-9a-f]{6}$/i.test(plats[0]?.family_colour || '') ? plats[0].family_colour : '#6b7280')}" title="The colour of the ${esc(fam)} chip (the platform chips keep their own colours)" aria-label="Colour of the ${esc(fam)} family" /> <button class="btn btn-sm btn-ghost" data-fam-colour-reset="${esc(fam)}" title="Back to the default colour for this family">Reset colour</button> <span class="lib-logo fam-logo-box" data-famlogo-box="${esc(fam)}">${plats[0]?.family_logo_v ? `<img src="/api/platforms/families/logo?family=${encodeURIComponent(fam)}&v=${plats[0].family_logo_v}" alt="" />` : ''}</span> <label class="btn btn-sm btn-ghost" data-famlogo-pick="${esc(fam)}" title="A logo for the ${esc(fam)} family, shown in the Library when several of its platforms are picked (optional; the system supplies none)">Logo<input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,.svg" hidden data-famlogo-file="${esc(fam)}" /></label> <button class="btn btn-sm btn-ghost" data-famlogo-remove="${esc(fam)}" ${plats[0]?.family_logo_v ? '' : 'hidden'} title="Remove the family logo">Remove logo</button> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
     ${plats.map((p) => `
       <div class="result-row ok" data-platform="${esc(p.slug)}" style="align-items:flex-start">
         <span class="status"></span>
@@ -3059,6 +3064,19 @@ async function loadPlatformAdmin() {
   }));
   $$('[data-fam-colour-reset]', list).forEach((b) => b.addEventListener('click', async () => {
     try { await api('/platforms/families/colour', { method: 'PUT', body: JSON.stringify({ family: b.dataset.famColourReset, colour: '' }) }); toast('Back to the default colour'); loadPlatformAdmin(); loadPlatforms(); }
+    catch (err) { toast(err.message, true); }
+  }));
+
+  // Family logo: uploads at once; the server's reason is shown if it is refused.
+  $$('[data-famlogo-file]', list).forEach((inp) => inp.addEventListener('change', async () => {
+    const f = inp.files?.[0]; if (!f) return;
+    const fd = new FormData(); fd.append('logo', f); fd.append('family', inp.dataset.famlogoFile);
+    try { await api('/platforms/families/logo', { method: 'POST', body: fd }); toast('Family logo saved'); loadPlatformAdmin(); loadPlatforms(); }
+    catch (err) { toast(err.message, true); }
+    inp.value = '';
+  }));
+  $$('[data-famlogo-remove]', list).forEach((b) => b.addEventListener('click', async () => {
+    try { await api(`/platforms/families/logo?family=${encodeURIComponent(b.dataset.famlogoRemove)}`, { method: 'DELETE' }); toast('Family logo removed'); loadPlatformAdmin(); loadPlatforms(); }
     catch (err) { toast(err.message, true); }
   }));
 

@@ -405,3 +405,11 @@ body.ui-modern .logo-edit .lib-logo { border: 1px dashed var(--line-2); border-r
 /* Family names in capitals (the family chips); the platform chips already show the short name in capitals. */
 body.ui-modern .chip[data-chip-fam] { text-transform: uppercase; letter-spacing: .06em; font-size: 0.78rem; }
 body.ui-modern .chip[data-chip-fam] small { letter-spacing: 0; }
+
+/* Platform family logo box in Settings: small, and empty (no frame) when the family has none. */
+body.ui-modern .fam-logo-box { width: 3.6rem; height: 1.6rem; }
+body.ui-modern .fam-logo-box:empty { display: none; }
+/* Details window: the strip holding the pin, previous / next and close is taller, with its controls centred in the lower part, so they clear the top bar.
+   (They all live in that one sticky strip, so they stay level with each other.) */
+body.ui-modern .drawer-bar { height: 4.2rem; padding-top: 0.8rem; box-sizing: border-box; }
+body.ui-modern .drawer-bar #drawer-pin, body.ui-modern .drawer-bar #drawer-close { top: calc(50% + 0.4rem); }

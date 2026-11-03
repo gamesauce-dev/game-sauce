@@ -91,3 +91,29 @@ test('page: a fixed-size logo box in the Library heading, and a logo chooser in 
 test('family chips are in capitals', () => {
   assert.match(fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), /\.chip\[data-chip-fam\] \{ text-transform: uppercase;/);
 });
+
+test('family logos: upload, show, replace, remove; admin only; a name with a slash works; rename carries it; listed with the platforms', async () => {
+  const fpost = async (p, buf, family, token) => { const f = new FormData(); f.append('family', family); f.append('logo', new Blob([buf], { type: 'image/png' }), 'f.png'); const res = await fetch(base + p, { method: 'POST', headers: { Authorization: 'Bearer ' + (token || tok) }, body: f }); return { status: res.status, body: await res.json().catch(() => null) }; };
+  assert.equal((await fpost('/api/platforms/families/logo', PNG, 'Arcade', memberTok)).status, 403);
+  assert.equal((await fpost('/api/platforms/families/logo', PNG, 'No such family')).status, 404);
+  assert.equal((await fpost('/api/platforms/families/logo', Buffer.from('not a picture, only words in here'), 'Arcade')).status, 400);
+  const ok = await fpost('/api/platforms/families/logo', PNG, 'NEC / SNK');
+  assert.equal(ok.status, 200);
+  const got = await call('/api/platforms/families/logo?family=' + encodeURIComponent('NEC / SNK'), { token: memberTok });
+  assert.equal(got.status, 200); assert.equal(got.res.headers.get('content-type'), 'image/png');
+  assert.equal((await call('/api/platforms', { token: memberTok })).body.items.find((p) => p.family === 'NEC / SNK').family_logo_v, ok.body.logo_v);
+  assert.equal((await call('/api/platforms')).body.items.find((p) => p.family === 'Sega').family_logo_v ?? null, null);
+  await call('/api/platforms/families/rename', { method: 'POST', body: { from: 'NEC / SNK', to: 'NEC and SNK' } });
+  assert.equal((await call('/api/platforms/families/logo?family=' + encodeURIComponent('NEC and SNK'))).status, 200, 'the logo went with the family');
+  assert.equal((await call('/api/platforms/families/logo?family=' + encodeURIComponent('NEC / SNK'))).status, 404);
+  assert.equal((await call('/api/platforms/families/logo?family=' + encodeURIComponent('NEC and SNK'), { method: 'DELETE', token: memberTok })).status, 403);
+  assert.equal((await call('/api/platforms/families/logo?family=' + encodeURIComponent('NEC and SNK'), { method: 'DELETE' })).status, 200);
+  assert.equal((await call('/api/platforms/families/logo?family=' + encodeURIComponent('NEC and SNK'))).status, 404);
+  assert.equal((await call('/api/platforms/snes/logo')).status, 404, 'the family route did not shadow the platform route');
+});
+
+test('page: the heading shows the family logo for several platforms of one family, and the drawer controls sit lower', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8');
+  assert.match(app, /const sameFam = picked\.length > 1/); assert.match(app, /logoOf \|\| famLogo \|\|/); assert.match(app, /data-famlogo-file/);
+  assert.match(css, /\.drawer-bar \{ height: 4\.2rem; padding-top: 0\.8rem;/); assert.match(css, /#drawer-pin, body\.ui-modern \.drawer-bar #drawer-close \{ top: calc\(50% \+ 0\.4rem\); \}/);
+});
