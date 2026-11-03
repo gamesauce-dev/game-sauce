@@ -3033,7 +3033,7 @@ async function loadPlatformAdmin() {
   }
 
   list.innerHTML = [...byFamily.entries()].map(([fam, plats]) => `
-    <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
+    <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <input type="color" class="fam-colour" data-fam-colour="${esc(fam)}" value="${esc(/^#[0-9a-f]{6}$/i.test(plats[0]?.family_colour || '') ? plats[0].family_colour : '#6b7280')}" title="The colour of the ${esc(fam)} chip (the platform chips keep their own colours)" aria-label="Colour of the ${esc(fam)} family" /> <button class="btn btn-sm btn-ghost" data-fam-colour-reset="${esc(fam)}" title="Back to the default colour for this family">Reset colour</button> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
     ${plats.map((p) => `
       <div class="result-row ok" data-platform="${esc(p.slug)}" style="align-items:flex-start">
         <span class="status"></span>
@@ -3049,6 +3049,16 @@ async function loadPlatformAdmin() {
 
   // Existing families, offered as suggestions in the Add and Edit forms (typing a new name still works).
   { const dl = $('#family-list'); if (dl) dl.innerHTML = [...byFamily.keys()].map((f) => `<option value="${esc(f)}"></option>`).join(''); }
+
+  // Family colour: pick one and it saves when the picker closes; a colour that could not be seen on both themes is refused with the reason.
+  $$('[data-fam-colour]', list).forEach((inp) => inp.addEventListener('change', async () => {
+    try { await api('/platforms/families/colour', { method: 'PUT', body: JSON.stringify({ family: inp.dataset.famColour, colour: inp.value }) }); toast(`${inp.dataset.famColour} colour saved`); loadPlatforms(); }
+    catch (err) { toast(err.message, true); loadPlatformAdmin(); }
+  }));
+  $$('[data-fam-colour-reset]', list).forEach((b) => b.addEventListener('click', async () => {
+    try { await api('/platforms/families/colour', { method: 'PUT', body: JSON.stringify({ family: b.dataset.famColourReset, colour: '' }) }); toast('Back to the default colour'); loadPlatformAdmin(); loadPlatforms(); }
+    catch (err) { toast(err.message, true); }
+  }));
 
   // Rename a whole family: the heading turns into a box. Enter saves, Escape cancels.
   $$('[data-fam-rename]', list).forEach((btn) => btn.addEventListener('click', () => {

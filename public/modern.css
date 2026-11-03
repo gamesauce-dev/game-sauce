@@ -386,3 +386,13 @@ body.ui-modern .lib-heading { margin: 0 0 0.5rem; gap: 0.7rem; }
 body.ui-modern[data-mview="library"] .chip-rows { margin: 0 0 0.35rem; }
 body.ui-modern .filter-row { min-height: 0; margin-bottom: 0.3rem; }
 body.ui-modern[data-mview="library"] .az-bar { margin: 0 0 0.35rem; padding-bottom: 0.35rem; }
+
+/* Platform and family chips take their colour as a tint: a coloured left edge and a soft wash behind the normal text, so every colour
+   stays readable. Picked chips are stronger and bold. No icon in the chips: the colour does that job. */
+body.ui-modern .chip[style*="--chip-c"] { font-weight: 700; border-left: 5px solid var(--chip-c); background: color-mix(in srgb, var(--chip-c) 16%, var(--panel)); border-color: color-mix(in srgb, var(--chip-c) 50%, transparent); border-left-color: var(--chip-c); color: var(--text); }
+body.ui-modern .chip[style*="--chip-c"]:hover { background: color-mix(in srgb, var(--chip-c) 26%, var(--panel)); color: var(--text); }
+body.ui-modern .chip[style*="--chip-c"].on, body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 40%, var(--panel)); border-color: var(--chip-c); border-left-color: var(--chip-c); color: var(--text); }
+body.ui-modern .chip[style*="--chip-c"] small { color: var(--text); opacity: .72; font-weight: 600; }
+html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"] { background: color-mix(in srgb, var(--chip-c) 12%, #ffffff); }
+html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"].on, html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 28%, #ffffff); }
+body.ui-modern .chip.plat .plat-ico { display: none; }

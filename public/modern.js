@@ -354,6 +354,7 @@ export function renderChips() {
   const famOf = (slug) => items.find((p) => p.slug === slug)?.family || 'Others';
   const total = items.reduce((n, p) => n + pc(p), 0);
   const famCount = (f) => fams.get(f).reduce((n, p) => n + pc(p), 0);
+  const famColour = (f) => { const c = fams.get(f)?.[0]?.family_colour; return /^#[0-9a-f]{6}$/i.test(c || '') ? c : '#6b7280'; };
   const litFam = (f) => [...picked].some((s) => famOf(s) === f);
   // 'whole' = every platform of that family is on, so the family chip is solid; 'part' = just some, so it is outlined
   const famState = (f) => { const sl = fams.get(f).map((p) => p.slug); const n = sl.filter((s) => picked.has(s)).length; return n === 0 ? '' : n === sl.length ? ' on whole' : ' on part'; };
@@ -362,9 +363,9 @@ export function renderChips() {
   host.innerHTML = `
     <div class="chip-row chip-fams" role="tablist">
       <button class="chip${picked.size === 0 ? ' on' : ''}" data-chip-all title="All platforms">All <small>${total.toLocaleString()}</small></button>
-      ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
+      ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" style="--chip-c:${esc(famColour(f))}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
     </div>
-    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}">${ctx.platformIconSvg(p, 16)}<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" style="--chip-c:${esc(/^#[0-9a-f]{6}$/i.test(p.accent || '') ? p.accent : (p.family_colour || '#6b7280'))}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}"><span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
 }
 
 async function chipChanged() {
@@ -524,7 +525,7 @@ const ICON_MAP = [
   ['label.btn:has(#cover-input)', 'upload-cover'], ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
   // Settings leftovers found by the 1 Nov audit
   ['#names-apply', 'tick'], ['#export-csv', 'game-csv'], ['#covers-preview', 'preview'], ['#covers-apply', 'tick'], ['#export-covers', 'covers'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
-  ['[data-pact="edit"], [data-fam-rename]', 'edit'], ['[data-fam-save]', 'tick'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
+  ['[data-pact="edit"], [data-fam-rename]', 'edit'], ['[data-fam-save]', 'tick'], ['[data-fam-colour-reset]', 'clear-reset'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
   ['[data-act="toggle-user"][data-disabled="0"]', 'user-disable'], ['[data-act="toggle-user"][data-disabled="1"]', 'user-enable'],
   ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#dup-hide-all, [data-dup-hide]', 'hidden'],
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)

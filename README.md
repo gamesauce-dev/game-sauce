@@ -367,6 +367,8 @@ POST   /api/roms/bulk/import-names admin — CSV (+ optional covers zip), previe
 POST   /api/roms/bulk/import-covers admin — a zip of pictures, preview then apply
 GET    /api/admin/update-check     admin — is a newer release published?
 GET    /api/metadata/platform-ids  admin — check platform ids against ScreenScraper / TheGamesDB, with suggestions (read-only)
+POST   /api/platforms/families/rename  admin — rename a platform family for all its platforms (or merge into another)
+PUT    /api/platforms/families/colour  admin — set or reset a family's chip colour (refused if unreadable on dark or light)
 DELETE /api/roms/:id[?delete_file=1]  single delete; in-place files survive unless delete_file=1
 GET    /api/collections
 POST   /api/collections

@@ -63,3 +63,45 @@ test('the page offers existing families as suggestions and a Rename on each fami
   assert.match(html, /<datalist id="family-list">/); assert.match(html, /name="family"[^>]*list="family-list"/);
   assert.match(app, /data-fam-rename/); assert.match(app, /\/platforms\/families\/rename/); assert.match(app, /data-pf="family"[^>]*list="family-list"/);
 });
+
+import { usable, FAMILY_DEFAULTS, contrast } from '../src/lib/colours.js';
+test('colour guardrails: unreadable colours are refused, every built-in default is accepted, text colour is never the chip colour', () => {
+  assert.equal(usable('#000000').ok, false, 'black vanishes on the dark theme');
+  assert.equal(usable('#0a0a0a').ok, false);
+  assert.equal(usable('#ffffff').ok, false, 'white vanishes on the light theme');
+  assert.equal(usable('#fdfdfd').ok, false);
+  assert.equal(usable('red').ok, false); assert.equal(usable('#12345').ok, false); assert.equal(usable('').ok, false);
+  assert.equal(usable('#E60012').ok, true); assert.equal(usable('#E60012').colour, '#e60012', 'stored in lower case');
+  for (const [f, c] of Object.entries(FAMILY_DEFAULTS)) assert.equal(usable(c).ok, true, `default for ${f} must pass its own guardrail`);
+  assert.ok(contrast('#ffffff', '#000000') > 20);
+});
+
+test('family colour: set, refused when unreadable, reset to the default, listed with the platforms; members cannot; rename keeps it', async () => {
+  assert.equal((await call('/api/platforms/families/colour', { method: 'PUT', token: memberTok, body: { family: 'Sega', colour: '#112233' } })).status, 403);
+  const list = async () => (await call('/api/platforms')).body.items;
+  const sega0 = (await list()).find((p) => p.family === 'Sega').family_colour;
+  assert.equal(sega0, FAMILY_DEFAULTS.Sega, 'a built-in family has a sensible default straight away');
+  const ok = await call('/api/platforms/families/colour', { method: 'PUT', body: { family: 'Sega', colour: '#33AA55' } });
+  assert.equal(ok.status, 200); assert.equal(ok.body.colour, '#33aa55');
+  assert.equal((await list()).find((p) => p.family === 'Sega').family_colour, '#33aa55');
+  const bad = await call('/api/platforms/families/colour', { method: 'PUT', body: { family: 'Sega', colour: '#000000' } });
+  assert.equal(bad.status, 400); assert.match(bad.body.error, /too dark/);
+  assert.equal((await list()).find((p) => p.family === 'Sega').family_colour, '#33aa55', 'a refused colour changes nothing');
+  assert.equal((await call('/api/platforms/families/colour', { method: 'PUT', body: { family: 'Nope', colour: '#33aa55' } })).status, 404);
+  // renaming keeps the colour with the family
+  await call('/api/platforms/families/rename', { method: 'POST', body: { from: 'Sega', to: 'Sega consoles' } });
+  assert.equal((await list()).find((p) => p.family === 'Sega consoles').family_colour, '#33aa55');
+  // reset goes back to the built-in default for that name, or grey for a custom family
+  const r = await call('/api/platforms/families/colour', { method: 'PUT', body: { family: 'Sega consoles', colour: '' } });
+  assert.equal(r.body.reset, true); assert.equal((await list()).find((p) => p.family === 'Sega consoles').family_colour, '#6b7280');
+  await call('/api/platforms/families/rename', { method: 'POST', body: { from: 'Sega consoles', to: 'Sega' } });
+  assert.equal((await list()).find((p) => p.family === 'Sega').family_colour, FAMILY_DEFAULTS.Sega);
+});
+
+test('Modern chips: tint, no icon, bold; family colour picker in Settings', () => {
+  const css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8'), app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(css, /\.chip\[style\*="--chip-c"\] \{ font-weight: 700; border-left: 5px solid var\(--chip-c\)/);
+  assert.match(css, /\.chip\.plat \.plat-ico \{ display: none; \}/);
+  assert.match(js, /data-chip-plat="\$\{esc\(p\.slug\)\}" style="--chip-c:/); assert.ok(!/class="chip plat[^`]*\$\{ctx\.platformIconSvg/.test(js), 'the chip no longer draws the platform icon');
+  assert.match(app, /data-fam-colour=/); assert.match(app, /\/platforms\/families\/colour/);
+});

@@ -1,6 +1,7 @@
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
+import { usable, FAMILY_DEFAULTS } from './lib/colours.js';
 import express from 'express';
 import db from './db.js';
 // Side-effect import: forward-compatible schema migrations (sources, source paths,
@@ -160,7 +161,14 @@ export function createApp() {
     next();
   });
 
+  // The colour of a family: the one chosen in Settings, else the built-in default for that family, else grey.
+  const familyColourMap = () => {
+    const m = { ...FAMILY_DEFAULTS };
+    for (const r of db.prepare('SELECT family, colour FROM family_colours').all()) m[r.family] = r.colour;
+    return m;
+  };
   api.get('/platforms', (req, res) => {
+    const fc = familyColourMap();
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count,
@@ -168,7 +176,7 @@ export function createApp() {
                COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
-      `).all()
+      `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' }))
     });
   });
 
@@ -207,14 +215,39 @@ export function createApp() {
     if (!exists) return res.status(404).json({ error: 'No such family' });
     const merged = to !== from && db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(to) ? true : false;
     const changed = to === from ? 0 : db.prepare('UPDATE platforms SET family = ? WHERE family = ?').run(to, from).changes;
+    if (to !== from) {
+      const mine = db.prepare('SELECT colour FROM family_colours WHERE family = ?').get(from);
+      db.prepare('DELETE FROM family_colours WHERE family = ?').run(from);
+      if (mine && !merged) db.prepare('INSERT OR REPLACE INTO family_colours (family, colour) VALUES (?, ?)').run(to, mine.colour);
+      else if (!mine && !merged && FAMILY_DEFAULTS[from]) db.prepare('INSERT OR IGNORE INTO family_colours (family, colour) VALUES (?, ?)').run(to, FAMILY_DEFAULTS[from]);
+    }
     req.auditDetail = { from, to, platforms: changed, merged };
     res.json({ from, to, changed, merged });
   });
 
   api.get('/platforms/all', requireAdmin, (req, res) => {
+    const fc = familyColourMap();
     res.json({
-      items: db.prepare('SELECT * FROM platforms ORDER BY family COLLATE NOCASE, name COLLATE NOCASE').all().map(shapePlatform)
+      items: db.prepare('SELECT * FROM platforms ORDER BY family COLLATE NOCASE, name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' })),
+      defaults: FAMILY_DEFAULTS
     });
+  });
+
+  // Set (or, with an empty colour, reset) a family's colour. Refused when it could not be seen on both themes.
+  api.put('/platforms/families/colour', requireAdmin, (req, res) => {
+    const family = String(req.body?.family || '').trim();
+    if (!family || !db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(family)) return res.status(404).json({ error: 'No such family' });
+    const raw = String(req.body?.colour || '').trim();
+    if (!raw) {
+      db.prepare('DELETE FROM family_colours WHERE family = ?').run(family);
+      req.auditDetail = { family, reset: true };
+      return res.json({ family, colour: FAMILY_DEFAULTS[family] || '#6b7280', reset: true });
+    }
+    const u = usable(raw);
+    if (!u.ok) return res.status(400).json({ error: u.reason });
+    db.prepare('INSERT INTO family_colours (family, colour) VALUES (?, ?) ON CONFLICT(family) DO UPDATE SET colour = excluded.colour').run(family, u.colour);
+    req.auditDetail = { family, colour: u.colour };
+    res.json({ family, colour: u.colour });
   });
 
   api.post('/platforms', requireAdmin, (req, res) => {

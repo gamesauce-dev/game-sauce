@@ -385,3 +385,11 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '23') ON CON
 if (!db.prepare('PRAGMA table_info(sources)').all().some((c) => c.name === 'hide_games')) db.exec('ALTER TABLE sources ADD COLUMN hide_games INTEGER NOT NULL DEFAULT 0');
 if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'source_hidden')) db.exec('ALTER TABLE roms ADD COLUMN source_hidden INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '24') ON CONFLICT(key) DO UPDATE SET value = '24'").run();
+
+/* ── v25: a colour per platform family, used for the family chips (and as the fallback for a platform that has no colour of its own).
+   A family is only a label (platforms.family), so its colour lives in its own small table keyed by the family name. */
+db.exec(`CREATE TABLE IF NOT EXISTS family_colours (
+  family TEXT PRIMARY KEY,
+  colour TEXT NOT NULL
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '25') ON CONFLICT(key) DO UPDATE SET value = '25'").run();

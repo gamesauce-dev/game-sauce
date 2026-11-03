@@ -1622,3 +1622,6 @@ body.play-only #empty .empty-add-text { display: none; }
 .pid-fix { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 .emu-refresh-bar { max-width: 980px; margin: 0 0 12px; display: flex; justify-content: flex-start; }
+
+.fam-colour { width: 2rem; height: 1.6rem; padding: 0; border: 1px solid var(--line, rgba(255,255,255,.2)); border-radius: 6px; background: transparent; cursor: pointer; vertical-align: middle; }
+.fam-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
