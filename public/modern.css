@@ -424,24 +424,23 @@ body.ui-modern .drawer:has(.detail-hero) .drawer-bar { background: transparent; 
 body.ui-modern .drawer:has(.detail-hero) .drawer-bar.is-scrolled { background: color-mix(in srgb, var(--bg-2) 88%, transparent); backdrop-filter: blur(10px); }
 /* glass controls: the top strip, the genre pills and the action icons share one look */
 body.ui-modern .drawer:has(.detail-hero) .drawer-navbtn, body.ui-modern .drawer:has(.detail-hero) .drawer-pos, body.ui-modern .drawer:has(.detail-hero) .drawer-pin, body.ui-modern .drawer:has(.detail-hero) .drawer-close,
-body.ui-modern .detail-hero .genre-pill, body.ui-modern .detail-hero > .detail-actions .ibtn:not(.ibtn-primary) {
+body.ui-modern .detail-hero .genre-pill, body.ui-modern .detail-hero > .detail-actions .ibtn {
   background: rgba(12,14,20,.42); border: 1px solid rgba(255,255,255,.24); color: #fff; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: none;
 }
 body.ui-modern .drawer:has(.detail-hero) .drawer-navbtn:hover:not(:disabled), body.ui-modern .drawer:has(.detail-hero) .drawer-pin:hover, body.ui-modern .drawer:has(.detail-hero) .drawer-close:hover,
-body.ui-modern .detail-hero .genre-pill:hover, body.ui-modern .detail-hero > .detail-actions .ibtn:not(.ibtn-primary):hover { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.5); color: #fff; }
+body.ui-modern .detail-hero .genre-pill:hover, body.ui-modern .detail-hero > .detail-actions .ibtn:hover { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.5); color: #fff; }
 body.ui-modern .drawer:has(.detail-hero) .drawer-pin.is-on { background: color-mix(in srgb, var(--accent) 45%, rgba(12,14,20,.42)); border-color: color-mix(in srgb, var(--accent) 80%, white); color: #fff; }
 body.ui-modern .detail-hero > .genre-pills { position: absolute; top: calc(var(--bar-h) + 1.4rem); left: 1rem; right: 1rem; margin: 0; justify-content: center; z-index: 1; }
 body.ui-modern .detail-hero > .detail-cover { margin: 2.1rem auto 0; width: min(62%, 12.5rem); box-shadow: 0 0.8rem 2rem rgba(0,0,0,.55); border-color: rgba(255,255,255,.2); }
 body.ui-modern .detail-hero > .detail-actions { margin: 0.3rem 0 0; padding: 0; width: 100%; box-sizing: border-box; justify-content: center; background: none; border: 0; backdrop-filter: none; border-radius: 0; }
 body.ui-modern .detail-hero > .detail-actions .ibtn-danger { margin-left: 0; }
 body.ui-modern .detail-hero > .detail-actions .ibtn-danger { color: #ff9a9a; }
-body.ui-modern .detail-hero > .detail-actions .ibtn-primary { box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
 html[data-theme="light"] body.ui-modern .hero-back { filter: blur(26px) saturate(1.2) brightness(.95); }
 html[data-theme="light"] body.ui-modern .hero-fade { background: linear-gradient(to bottom, rgba(255,255,255,.1) 0%, rgba(255,255,255,0) 35%, color-mix(in srgb, var(--bg-2) 96%, transparent) 100%); }
 html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-navbtn, html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-pos, html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-pin, html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-close,
-html[data-theme="light"] body.ui-modern .detail-hero .genre-pill, html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn:not(.ibtn-primary) { background: rgba(255,255,255,.55); border-color: rgba(0,0,0,.18); color: #0f1219; }
+html[data-theme="light"] body.ui-modern .detail-hero .genre-pill, html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn { background: rgba(255,255,255,.55); border-color: rgba(0,0,0,.18); color: #0f1219; }
 html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-navbtn:hover:not(:disabled), html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-pin:hover, html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-close:hover,
-html[data-theme="light"] body.ui-modern .detail-hero .genre-pill:hover, html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn:not(.ibtn-primary):hover { background: rgba(255,255,255,.85); border-color: rgba(0,0,0,.35); color: #0f1219; }
+html[data-theme="light"] body.ui-modern .detail-hero .genre-pill:hover, html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn:hover { background: rgba(255,255,255,.85); border-color: rgba(0,0,0,.35); color: #0f1219; }
 html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn-danger { color: #b3261e; }
 @media (max-width: 720px) { body.ui-modern .detail-hero { margin: calc(-1.1rem - var(--bar-h)) -1.1rem 1rem; } body.ui-modern .detail-hero > .genre-pills { top: calc(var(--bar-h) + 0.8rem); } }
 

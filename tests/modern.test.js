@@ -615,3 +615,8 @@ test('details header uses the stored screenshot as the backdrop when there is on
 test('a refresh keeps every picked platform, not just the first (so a whole family stays selected)', () => {
   assert.match(read('public/app.js'), /const NAV_FIELDS = \['platform', 'extraPlatforms', 'q',/);
 });
+
+test('the download button in the details header is glass like the rest, not green', () => {
+  const css = read('public/modern.css');
+  assert.doesNotMatch(css, /\.ibtn:not\(\.ibtn-primary\)/); assert.doesNotMatch(css, /detail-hero > \.detail-actions \.ibtn-primary/);
+});
