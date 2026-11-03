@@ -582,6 +582,30 @@ function promoteDetailActions(root = document) {
     bar.insertBefore(b, more);
   }
 }
+/**
+ * Details window header ("hero"): the cover sits in front of a blurred, enlarged copy of itself, with the genre pills at the top and the
+ * action icons along the bottom, instead of a small cover floating in an empty wide panel. Modern only; built from the elements Classic
+ * already renders (nothing is duplicated, so the buttons keep their handlers). A game with no cover gets a backdrop in its platform colour.
+ */
+function buildDetailHero(root = document) {
+  const body = document.querySelector('#drawer-body'); if (!body || body.querySelector('.detail-hero')) return;
+  const cover = body.querySelector(':scope > .detail-cover'), actions = body.querySelector(':scope > .detail-actions');
+  if (!cover || !actions) return;                               // a collection or another view uses the same window: leave it alone
+  const pills = body.querySelector(':scope > .genre-pills');
+  const img = cover.querySelector('img');
+  const src = img?.getAttribute('src') || '';
+  const accent = (/#[0-9a-f]{6}/i.exec(cover.getAttribute('style') || '') || [])[0] || '#6b7280';
+  const hero = document.createElement('div'); hero.className = 'detail-hero';
+  const back = document.createElement('div'); back.className = 'hero-back';
+  if (src) back.style.backgroundImage = `url("${src.replace(/"/g, '%22')}")`; else back.style.background = `linear-gradient(160deg, ${accent}66, #12141a)`;
+  const fade = document.createElement('div'); fade.className = 'hero-fade';
+  body.insertBefore(hero, body.firstChild);
+  hero.append(back, fade);
+  if (pills) hero.append(pills);
+  hero.append(cover, actions);
+  // if the cover fails to load, fall back to the colour backdrop so the header is never a black hole
+  img?.addEventListener('error', () => { back.style.backgroundImage = ''; back.style.background = `linear-gradient(160deg, ${accent}66, #12141a)`; });
+}
 /** Settings: the row of settings inside a group starts directly under that group's icon (kept inside the screen on narrow windows). */
 function alignSubtiles() {
   const row = $('#settings-subtiles'), act = $('#settings-tiles .tile.is-active');
@@ -598,6 +622,7 @@ export function iconize(root = document) {
   if (!isModern()) return;
   alignSubtiles();
   promoteDetailActions(root);
+  buildDetailHero(root);
   for (const t of $$('.detail-actions [data-tip]', root)) { const tip = t.getAttribute('data-tip'); if (tip && t.title !== tip) t.title = tip; }
   for (const [sel, name] of ICON_MAP) {
     const hits = $$(sel, root);

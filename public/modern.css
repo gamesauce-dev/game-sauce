@@ -413,3 +413,19 @@ body.ui-modern .fam-logo-box:empty { display: none; }
    (They all live in that one sticky strip, so they stay level with each other.) */
 body.ui-modern .drawer-bar { height: 4.2rem; padding-top: 0.8rem; box-sizing: border-box; }
 body.ui-modern .drawer-bar #drawer-pin, body.ui-modern .drawer-bar #drawer-close { top: calc(50% + 0.4rem); }
+
+/* ── Details window header (hero): blurred cover backdrop, cover in front, genre pills on top, action icons along the bottom ── */
+body.ui-modern .detail-hero { position: relative; margin: -1.7rem -1.57rem 1rem; padding: 4.6rem 1rem 0.9rem; overflow: hidden; isolation: isolate; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; min-height: 21rem; }
+body.ui-modern .hero-back { position: absolute; inset: -2rem; z-index: -2; background-size: cover; background-position: center; filter: blur(26px) saturate(1.35) brightness(.62); transform: scale(1.1); }
+body.ui-modern .hero-fade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(to bottom, rgba(0,0,0,.28) 0%, rgba(0,0,0,0) 35%, color-mix(in srgb, var(--bg-2) 96%, transparent) 100%); }
+body.ui-modern .detail-hero > .genre-pills { position: absolute; top: 4.7rem; left: 1rem; right: 1rem; margin: 0; justify-content: flex-start; z-index: 1; }
+body.ui-modern .detail-hero .genre-pill { background: rgba(10,12,18,.55); border-color: rgba(255,255,255,.18); color: #fff; backdrop-filter: blur(6px); }
+body.ui-modern .detail-hero > .detail-cover { margin: 1.9rem auto 0; width: min(62%, 12.5rem); box-shadow: 0 0.8rem 2rem rgba(0,0,0,.55); border-color: rgba(255,255,255,.2); }
+body.ui-modern .detail-hero > .detail-actions { margin: 0.3rem 0 0; padding: 0.45rem 0.6rem; width: 100%; box-sizing: border-box; justify-content: center; background: rgba(10,12,18,.5); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.12); border-radius: 0.9rem; }
+body.ui-modern .detail-hero > .detail-actions .ibtn-danger { margin-left: 0; }
+body.ui-modern .detail-hero > .detail-actions .ibtn:not(.ibtn-primary):not(.ibtn-play) { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+html[data-theme="light"] body.ui-modern .hero-back { filter: blur(26px) saturate(1.2) brightness(.95); }
+html[data-theme="light"] body.ui-modern .hero-fade { background: linear-gradient(to bottom, rgba(255,255,255,.1) 0%, rgba(255,255,255,0) 35%, color-mix(in srgb, var(--bg-2) 96%, transparent) 100%); }
+html[data-theme="light"] body.ui-modern .detail-hero .genre-pill { background: rgba(255,255,255,.7); color: #0f1219; border-color: rgba(0,0,0,.12); }
+html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions { background: rgba(255,255,255,.65); border-color: rgba(0,0,0,.1); }
+@media (max-width: 720px) { body.ui-modern .detail-hero { margin: -1.1rem -1.1rem 1rem; padding-top: 4.6rem; } }

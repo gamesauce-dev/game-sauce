@@ -877,7 +877,10 @@ async function renderSavesSection(rom, drawer) {
         <button class="btn btn-sm" data-save-del="${s.id}">Delete</button>
       </div>`).join('') : '<div class="side-empty">No saves yet — use Save state inside the player.</div>'}`;
   const anchor = $('.detail-actions', drawer);
-  anchor?.insertAdjacentElement('afterend', host);
+  // In Modern the action icons live inside the header block (.detail-hero); the saves go after the title that follows it, not inside the header.
+  const hero = anchor?.closest('.detail-hero');
+  if (hero) (hero.nextElementSibling || hero).insertAdjacentElement(hero.nextElementSibling ? 'afterend' : 'afterend', host);
+  else anchor?.insertAdjacentElement('afterend', host);
   $$('[data-save-del]', host).forEach((b) => b.addEventListener('click', async () => {
     const ok = await confirmDialog({ title: 'Delete this save?', body: 'This cannot be undone.', okLabel: 'Delete', danger: true });
     if (!ok) return;

@@ -581,3 +581,14 @@ test('Library: total beside the platform heading, tighter spacing; add-folder us
   assert.match(js, /\['\[data-act="add-folder"\]', 'source-add-2'\]/); assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-2.svg', import.meta.url)));
   assert.match(js, /const keepPinned = view === 'library' && document\.body\.classList\.contains\('details-pinned'\);/);
 });
+
+test('Modern details header: blurred cover backdrop with the pills and action icons laid on it, built from the existing elements', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(js, /function buildDetailHero\(/); assert.match(js, /buildDetailHero\(root\);/); assert.match(js, /hero\.append\(pills\)/); assert.match(js, /hero\.append\(cover, actions\)/);
+  assert.match(css, /body\.ui-modern \.detail-hero \{ position: relative;/); assert.match(css, /\.hero-back \{[^}]*filter: blur\(26px\)/);
+  assert.doesNotMatch(read('public/styles.css'), /detail-hero|hero-back/, 'Classic carries none of it');
+});
+
+test('My saves goes below the title, not inside the Modern details header', () => {
+  assert.match(read('public/app.js'), /const hero = anchor\?\.closest\('\.detail-hero'\);/);
+});
