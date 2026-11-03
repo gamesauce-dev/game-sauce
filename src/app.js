@@ -188,6 +188,29 @@ export function createApp() {
   // immediately because lookups read the DB each time.
   const PLATFORM_FIELDS = ['name', 'short_name', 'family', 'manufacturer', 'generation', 'accent', 'screenscraper_id', 'tgdb_id', 'extensions', 'icon'];
 
+  // A family is only a label that groups platforms (nothing in metadata lookups reads it). A name typed in a different case
+  // ("sega") joins the existing group ("Sega") instead of making a second one.
+  const canonFamily = (name) => {
+    const t = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+    if (!t) return '';
+    const hit = db.prepare('SELECT DISTINCT family FROM platforms WHERE family IS NOT NULL').all().map((r) => r.family).find((f) => f.toLowerCase() === t.toLowerCase());
+    return hit || t;
+  };
+
+  // Rename a family for every platform in it at once. If the new name is another existing family the two are merged.
+  api.post('/platforms/families/rename', requireAdmin, (req, res) => {
+    const from = String(req.body?.from || '').trim();
+    const to = canonFamily(req.body?.to);
+    if (!from) return res.status(400).json({ error: 'Which family?' });
+    if (!to) return res.status(400).json({ error: 'The new name cannot be empty' });
+    const exists = db.prepare('SELECT COUNT(*) AS n FROM platforms WHERE family = ?').get(from).n;
+    if (!exists) return res.status(404).json({ error: 'No such family' });
+    const merged = to !== from && db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(to) ? true : false;
+    const changed = to === from ? 0 : db.prepare('UPDATE platforms SET family = ? WHERE family = ?').run(to, from).changes;
+    req.auditDetail = { from, to, platforms: changed, merged };
+    res.json({ from, to, changed, merged });
+  });
+
   api.get('/platforms/all', requireAdmin, (req, res) => {
     res.json({
       items: db.prepare('SELECT * FROM platforms ORDER BY family COLLATE NOCASE, name COLLATE NOCASE').all().map(shapePlatform)
@@ -208,7 +231,7 @@ export function createApp() {
       slug,
       name,
       short_name: String(req.body?.short_name || slug.toUpperCase().slice(0, 6)).trim(),
-      family: String(req.body?.family || 'Others').trim() || 'Others',
+      family: canonFamily(req.body?.family) || 'Others',
       manufacturer: String(req.body?.manufacturer || '').trim() || null,
       generation: req.body?.generation === '' || req.body?.generation == null ? null : Number(req.body.generation),
       accent: String(req.body?.accent || '#6b7280').trim(),
@@ -248,6 +271,7 @@ export function createApp() {
         if (!Number.isFinite(v)) return res.status(400).json({ error: `${f} must be a number or empty` });
       }
       if ((f === 'manufacturer') && v === '') v = null;
+      if (f === 'family') v = canonFamily(v) || 'Others';
       if (f === 'icon') { v = v === '' || v == null ? null : String(v); if (v !== null && !ICON_TYPES.includes(v)) return res.status(400).json({ error: `icon must be one of: ${ICON_TYPES.join(', ')}` }); }
       sets.push(`${f} = @${f}`);
       params[f] = v;

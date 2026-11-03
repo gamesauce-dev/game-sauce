@@ -3033,7 +3033,7 @@ async function loadPlatformAdmin() {
   }
 
   list.innerHTML = [...byFamily.entries()].map(([fam, plats]) => `
-    <div class="section-label" style="margin-top:10px">${esc(fam)}</div>
+    <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
     ${plats.map((p) => `
       <div class="result-row ok" data-platform="${esc(p.slug)}" style="align-items:flex-start">
         <span class="status"></span>
@@ -3047,6 +3047,28 @@ async function loadPlatformAdmin() {
       </div>`).join('')}
   `).join('');
 
+  // Existing families, offered as suggestions in the Add and Edit forms (typing a new name still works).
+  { const dl = $('#family-list'); if (dl) dl.innerHTML = [...byFamily.keys()].map((f) => `<option value="${esc(f)}"></option>`).join(''); }
+
+  // Rename a whole family: the heading turns into a box. Enter saves, Escape cancels.
+  $$('[data-fam-rename]', list).forEach((btn) => btn.addEventListener('click', () => {
+    const from = btn.dataset.famRename, head = btn.closest('.fam-head');
+    head.innerHTML = `<input class="search fam-input" value="${esc(from)}" maxlength="40" aria-label="New name for the ${esc(from)} family" style="max-width:260px" /> <button class="btn btn-sm btn-primary" data-fam-save>Save</button> <button class="btn btn-sm btn-ghost" data-fam-cancel>Cancel</button>`;
+    const inp = $('.fam-input', head); inp.focus(); inp.select();
+    const done = async () => {
+      const to = inp.value.trim();
+      if (!to || to === from) { loadPlatformAdmin(); return; }
+      try {
+        const r = await api('/platforms/families/rename', { method: 'POST', body: JSON.stringify({ from, to }) });
+        toast(`${r.changed} platform${r.changed === 1 ? '' : 's'} moved to ${r.to}${r.merged ? ' (joined the existing family)' : ''}`);
+        loadPlatformAdmin(); loadPlatforms(); loadSources?.();
+      } catch (err) { toast(err.message, true); }
+    };
+    $('[data-fam-save]', head).onclick = done;
+    $('[data-fam-cancel]', head).onclick = () => loadPlatformAdmin();
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); done(); } else if (e.key === 'Escape') loadPlatformAdmin(); });
+  }));
+
   const fillEdit = (slug) => {
     const p = items.find((x) => x.slug === slug);
     if (!p) return;
@@ -3055,7 +3077,7 @@ async function loadPlatformAdmin() {
     host.innerHTML = `
       <label class="field"><span>Name</span><input data-pf="name" value="${esc(p.name)}" /></label>
       <label class="field"><span>Short name</span><input data-pf="short_name" value="${esc(p.short_name)}" /></label>
-      <label class="field"><span>Family</span><input data-pf="family" value="${esc(p.family || '')}" /></label>
+      <label class="field"><span>Family</span><input data-pf="family" value="${esc(p.family || '')}" list="family-list" autocomplete="off" /></label>
       <label class="field"><span>Manufacturer</span><input data-pf="manufacturer" value="${esc(p.manufacturer || '')}" /></label>
       <label class="field"><span>Extensions (comma separated)</span><input data-pf="extensions" value="${esc((p.extensions || []).join(', '))}" /></label>
       <label class="field"><span>Generation</span><input data-pf="generation" value="${p.generation ?? ''}" /></label>

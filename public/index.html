@@ -405,7 +405,8 @@
           <label class="field"><span>Name *</span><input name="name" required placeholder="Sega Model 2" /></label>
           <label class="field"><span>Slug * <span class="note">(the platform's short internal name: lowercase letters and digits, e.g. segacd. It cannot be changed later)</span></span><input name="slug" required placeholder="segamodel2" autocomplete="off" /></label>
           <label class="field"><span>Short name</span><input name="short_name" placeholder="M2" /></label>
-          <label class="field"><span>Family</span><input name="family" placeholder="Sega" /></label>
+          <label class="field"><span>Family</span><input name="family" placeholder="Sega" list="family-list" autocomplete="off" /></label>
+          <datalist id="family-list"></datalist>
           <label class="field"><span>Extensions (comma separated)</span><input name="extensions" placeholder="zip, 7z, chd" /></label>
           <label class="field"><span>ScreenScraper id</span><input name="screenscraper_id" inputmode="numeric" placeholder="130" /></label>
           <label class="field"><span>TheGamesDB id</span><input name="tgdb_id" inputmode="numeric" placeholder="" /></label>
