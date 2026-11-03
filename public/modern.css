@@ -447,3 +447,58 @@ html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn-dan
 /* With a real screenshot as the backdrop it is only lightly blurred (it is wide, so it fills the header properly); the cover stays sharp in front. */
 body.ui-modern .detail-hero.has-shot .hero-back { filter: blur(7px) saturate(1.15) brightness(.55); transform: scale(1.05); }
 html[data-theme="light"] body.ui-modern .detail-hero.has-shot .hero-back { filter: blur(7px) saturate(1.1) brightness(.9); }
+
+/* ── No green on these buttons: the neutral outlined look (the glass-neutral buttons of the rest of Modern), the icon carries the meaning.
+   Their icons use the text colour. Other primary buttons keep their colour. ── */
+body.ui-modern #edit-form button[type="submit"],
+body.ui-modern #new-collection,
+body.ui-modern #collection-create,
+body.ui-modern #add-source,
+body.ui-modern #create-source,
+body.ui-modern #emu-upload-form button[type="submit"],
+body.ui-modern #profile-upload,
+body.ui-modern #welcome-again,
+body.ui-modern #password-form button[type="submit"],
+body.ui-modern #dat-upload,
+body.ui-modern #names-apply,
+body.ui-modern #covers-apply,
+body.ui-modern #dup-hide-all,
+body.ui-modern #backup-download,
+body.ui-modern #backup-save,
+body.ui-modern #platform-add-toggle { background: var(--panel); border-color: var(--line-2); color: var(--text); }
+body.ui-modern #edit-form button[type="submit"]:hover:not(:disabled),
+body.ui-modern #new-collection:hover:not(:disabled),
+body.ui-modern #collection-create:hover:not(:disabled),
+body.ui-modern #add-source:hover:not(:disabled),
+body.ui-modern #create-source:hover:not(:disabled),
+body.ui-modern #emu-upload-form button[type="submit"]:hover:not(:disabled),
+body.ui-modern #profile-upload:hover:not(:disabled),
+body.ui-modern #welcome-again:hover:not(:disabled),
+body.ui-modern #password-form button[type="submit"]:hover:not(:disabled),
+body.ui-modern #dat-upload:hover:not(:disabled),
+body.ui-modern #names-apply:hover:not(:disabled),
+body.ui-modern #covers-apply:hover:not(:disabled),
+body.ui-modern #dup-hide-all:hover:not(:disabled),
+body.ui-modern #backup-download:hover:not(:disabled),
+body.ui-modern #backup-save:hover:not(:disabled),
+body.ui-modern #platform-add-toggle:hover:not(:disabled) { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
+body.ui-modern #edit-form button[type="submit"]:disabled,
+body.ui-modern #new-collection:disabled,
+body.ui-modern #collection-create:disabled,
+body.ui-modern #add-source:disabled,
+body.ui-modern #create-source:disabled,
+body.ui-modern #emu-upload-form button[type="submit"]:disabled,
+body.ui-modern #profile-upload:disabled,
+body.ui-modern #welcome-again:disabled,
+body.ui-modern #password-form button[type="submit"]:disabled,
+body.ui-modern #dat-upload:disabled,
+body.ui-modern #names-apply:disabled,
+body.ui-modern #covers-apply:disabled,
+body.ui-modern #dup-hide-all:disabled,
+body.ui-modern #backup-download:disabled,
+body.ui-modern #backup-save:disabled,
+body.ui-modern #platform-add-toggle:disabled { opacity: .45; }
+/* Welcome tour and Change password: an icon-sized button, not a full-width bar, with a properly sized icon. */
+body.ui-modern #welcome-again, body.ui-modern #password-form button[type="submit"] { width: 3.4rem; min-width: 3.4rem; height: 3.4rem; padding: 0; align-self: flex-start; }
+body.ui-modern #welcome-again[data-mi]::before, body.ui-modern #password-form button[type="submit"][data-mi]::before { width: 2rem; height: 2rem; }
+html[data-theme="light"] body.ui-modern #welcome-again, html[data-theme="light"] body.ui-modern #password-form button[type="submit"] { background: var(--panel); }

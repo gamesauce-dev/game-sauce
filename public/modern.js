@@ -524,35 +524,35 @@ const ICON_MAP = [
   ['.detail-actions [data-promo="addcoll"]', 'collection-new'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'scan-again'],
   ['label.btn:has(#cover-input)', 'upload-cover'], ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
   // Settings leftovers found by the 1 Nov audit
-  ['#names-apply', 'tick'], ['#export-csv', 'game-csv'], ['#covers-preview', 'preview'], ['#covers-apply', 'tick'], ['#export-covers', 'covers'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
+  ['#names-apply', 'tick'], ['#export-csv', 'game-csv'], ['#covers-preview', 'preview-2'], ['#covers-apply', 'tick'], ['#export-covers', 'covers'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"], [data-fam-rename]', 'edit'], ['[data-fam-save]', 'tick'], ['[data-fam-colour-reset]', 'clear-reset'], ['[data-logo-pick], [data-famlogo-pick]', 'upload-cover'], ['[data-logo-remove], [data-famlogo-remove]', 'delete'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],
   ['[data-act="toggle-user"][data-disabled="0"]', 'user-disable'], ['[data-act="toggle-user"][data-disabled="1"]', 'user-enable'],
-  ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#dup-hide-all, [data-dup-hide]', 'hidden'],
+  ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#password-form button[type="submit"]', 'save-password'],   /* after the general form rule above, so it wins */ ['#dup-hide-all, [data-dup-hide]', 'hidden'],
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
   ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
   ['[data-act="hidegames"][data-hidden="0"]', 'hidden'], ['[data-act="hidegames"][data-hidden="1"]', 'visible'], ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
-  ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
+  ['#scan-all', 'scan-again'], ['#add-source', 'source-add-2'], ['#create-source', 'source-add-and-scan-2'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
-  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
+  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],
   ['[data-save-release]:not(.emu-save-alt)', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-save-release].emu-save-alt', 'arrow-up'], ['[data-vault-del]', 'delete'],
   // Collections
-  ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
+  ['#new-collection', 'add-collection'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
   // Library selection bar
   ['#bulk-addcoll', 'collection-new'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-lock-btn', 'lock'], ['#bulk-cancel', 'done'],
   // Settings: account
-  ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour'], ['#revoke-others', 'sign-out-devices'],
+  ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour-2'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance
   ['#health-refresh, #dup-refresh', 'scan-again'], ['#enrich-missing-covers', 'fetch'], ['#check-ss-systems', 'recheck'], ['[data-pid-use], #pid-apply-all', 'tick'],
   ['#db-health-refresh', 'database-check'], ['#db-show-orphans', 'show-orphans'], ['#db-purge-orphans', 'delete'], ['#db-clear-covers', 'clear-covers'],
-  ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-save'], ['#backup-save', 'save-settings'], ['#restore-inspect', 'database-backup-check'],
-  ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview'],
+  ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-save'], ['#backup-save', 'save-settings-2'], ['#restore-inspect', 'database-backup-check'],
+  ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview-2'],
   ['#dat-upload', 'import-media'], ['#dat-rematch', 'rematch'], ['#dat-rematch-force', 'replace-text'], ['[data-act="delete-dat"]', 'delete'],
   // Settings: setup
-  ['#platform-add-toggle', 'game-controller'], ['#new-user-form button[type="submit"]', 'add-user'], ['[data-act="test-provider"]', 'test-connection'],
+  ['#platform-add-toggle', 'add-platform-2'], ['#new-user-form button[type="submit"]', 'add-user'], ['[data-act="test-provider"]', 'test-connection'],
   ['[data-act="save-provider"]', 'save'], ['[data-act="reset-password"]', 'password-reset'], ['[data-act="delete-user"]', 'delete']
 ];
 const miKnown = new Set();

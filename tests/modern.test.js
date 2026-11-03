@@ -230,9 +230,9 @@ test('Home: two equal boxes side by side with the same tile size; a whole family
 
 test('"Add and scan" is your source-add-and-scan icon in Modern, with the words as its tooltip', () => {
   const js = read('public/modern.js');
-  assert.match(js, /\['#create-source', 'source-add-and-scan'\]/);
-  assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-and-scan.svg', import.meta.url)));
-  assert.match(read('public/modern/icons/source-add-and-scan.svg'), /currentColor/);
+  assert.match(js, /\['#create-source', 'source-add-and-scan-2'\]/);
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-and-scan-2.svg', import.meta.url)));
+  assert.match(read('public/modern/icons/source-add-and-scan-2.svg'), /currentColor/);
 });
 
 test('close, tick, copy, clear-reset and show-more icons are wired to their buttons', () => {
@@ -336,7 +336,7 @@ test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover
 
 test('Settings icon swaps (upload-cover, replace-text, covers, database-check, providers-2, Library, game-controller, backup-save)', () => {
   const js = read('public/modern.js'), app = read('public/app.js');
-  for (const s of ["['#profile-upload', 'upload-cover']", "['#dat-rematch-force', 'replace-text']", "['#db-health-refresh', 'database-check']", "['#platform-add-toggle', 'game-controller']", "['#backup-run', 'database-backup-save']"]) assert.ok(js.includes(s), s);
+  for (const s of ["['#profile-upload', 'upload-cover']", "['#dat-rematch-force', 'replace-text']", "['#db-health-refresh', 'database-check']", "['#platform-add-toggle', 'add-platform-2']", "['#backup-run', 'database-backup-save']"]) assert.ok(js.includes(s), s);
   for (const s of ["mi: 'providers-2'", "mi: 'Library', ico: '🕹'", "mi: 'covers', ico: '🖼'"]) assert.ok(app.includes(s), s);
   for (const n of ['covers', 'database-check', 'replace-text', 'providers-2', 'upload-cover', 'Library', 'game-controller', 'database-backup-save']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
 });
@@ -619,4 +619,19 @@ test('a refresh keeps every picked platform, not just the first (so a whole fami
 test('the download button in the details header is glass like the rest, not green', () => {
   const css = read('public/modern.css');
   assert.doesNotMatch(css, /\.ibtn:not\(\.ibtn-primary\)/); assert.doesNotMatch(css, /detail-hero > \.detail-actions \.ibtn-primary/);
+});
+
+test('no-green buttons: neutral outline, new icons wired, welcome tour and change password are icon-sized', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  for (const id of ['#edit-form button[type="submit"]', '#new-collection', '#add-source', '#create-source', '#emu-upload-form button[type="submit"]', '#profile-upload', '#welcome-again', '#password-form button[type="submit"]', '#dat-upload', '#names-apply', '#covers-apply', '#dup-hide-all', '#backup-download', '#backup-save', '#platform-add-toggle'])
+    assert.ok(css.includes('body.ui-modern ' + id + ',') || css.includes('body.ui-modern ' + id + ' {'), 'neutral rule for ' + id);
+  for (const [sel, name] of [["'#new-collection', 'add-collection'", 'add-collection'], ["'#add-source', 'source-add-2'", 'source-add-2'], ["'#create-source', 'source-add-and-scan-2'", 'source-add-and-scan-2'], ["'save-to-vault-2'", 'save-to-vault-2'], ["'#welcome-again', 'welcome-tour-2'", 'welcome-tour-2'], ["'#password-form button[type=\"submit\"]', 'save-password'", 'save-password'], ["'#covers-preview', 'preview-2'", 'preview-2'], ["'#names-preview', 'preview-2'", 'preview-2'], ["'#backup-save', 'save-settings-2'", 'save-settings-2'], ["'#platform-add-toggle', 'add-platform-2'", 'add-platform-2']]) {
+    assert.ok(js.includes(sel), 'wired: ' + sel); assert.ok(fs.existsSync(new URL('../public/modern/icons/' + name + '.svg', import.meta.url)), name + '.svg exists');
+  }
+  assert.match(css, /#welcome-again, body\.ui-modern #password-form button\[type="submit"\] \{ width: 3\.4rem;/);
+});
+
+test('the change-password icon rule comes after the general settings-form rule, so it is not overwritten', () => {
+  const js = read('public/modern.js');
+  assert.ok(js.indexOf("'#password-form button[type=\"submit\"]', 'save-password'") > js.indexOf("'#view-settings form button.btn-primary[type=\"submit\"]', 'save-settings'"));
 });
