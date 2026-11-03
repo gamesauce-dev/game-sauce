@@ -20,7 +20,7 @@ const NAV = [
   { view: 'collections', icon: 'collection-new', label: 'Collections' },
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
-  { view: 'emulators', icon: 'emulators', label: 'Emulators' },
+  { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
   { view: 'settings', icon: 'settings', label: 'Settings' }
 ];
 
@@ -70,7 +70,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers', 'fetch-metadata', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'emulators-2', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-2', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators'].includes(n.view)));
@@ -271,9 +271,9 @@ function buildLibraryTools(ic) {
     ${po ? '' : `<button class="mb-btn" id="tl-sort" title="Sort" aria-label="Sort" aria-haspopup="menu">${ic.sort}</button>`}
     <button class="mb-btn" id="tl-fav" title="Favourites only" aria-label="Favourites only">${ic.favourite}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
-    <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['no-covers']}</button>
+    <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['no-covers-2']}</button>
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
-    ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
+    ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata-2']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue, lock: ic.lock });
   document.body.classList.add('mb-tools');
@@ -532,7 +532,7 @@ const ICON_MAP = [
   ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
-  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'scan-again'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
+  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
   ['[data-save-release]:not(.emu-save-alt)', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-save-release].emu-save-alt', 'arrow-up'], ['[data-vault-del]', 'delete'],
   // Collections
   ['#new-collection', 'collection-new'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],

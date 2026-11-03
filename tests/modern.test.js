@@ -65,9 +65,10 @@ test('Modern is a separate layer: Classic files carry no Modern rules, and every
 
 test('the top bar uses the supplied icon set and lists the pages in order', () => {
   const js = read('public/modern.js');
-  const order = [...js.matchAll(/\{ view: '([a-z]+)', icon: '([A-Za-z-]+)'/g)].map((m) => m[1]);
+  const order = [...js.matchAll(/\{ view: '([a-z]+)', icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
   assert.deepEqual(order, ['home', 'library', 'collections', 'sources', 'upload', 'emulators', 'settings']);
-  const names = [...js.matchAll(/icon: '([A-Za-z-]+)'/g)].map((m) => m[1]);
+  assert.match(js, /view: 'emulators', icon: 'emulators-2'/);
+  const names = [...js.matchAll(/icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
   for (const n of [...names, 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'pin', 'play']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `icon ${n}.svg is shipped`);
 });
 
@@ -472,9 +473,9 @@ test('Stats totals are links that open the Library with the same filter, so the 
 
 test('the No cover tool uses the no-covers icon', () => {
   const js = read('public/modern.js');
-  assert.match(js, /\$\{ic\['no-covers'\]\}<\/button>/); assert.ok(js.includes("'no-covers', 'fetch-metadata'"));
+  assert.match(js, /\$\{ic\['no-covers-2'\]\}<\/button>/); assert.ok(js.includes("'no-covers-2', 'fetch-metadata-2'"));
   assert.doesNotMatch(js, /ic\['empty-covers'\]/);
-  assert.ok(fs.existsSync(new URL('../public/modern/icons/no-covers.svg', import.meta.url)));
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/no-covers-2.svg', import.meta.url)));
 });
 
 test('the Modern bar is rebuilt for whoever signs in, so a play-only person never gets the last person\'s admin bar', () => {
@@ -516,10 +517,12 @@ test('the CSV import takes an optional cover zip and shows a combined preview', 
   assert.match(r, /planCoversForCsv\(entries, hits/);
 });
 
-test('Emulators starts at the same height as the other pages: its toolbar button sits in the corner on wide screens', () => {
-  const css = read('public/modern.css');
-  assert.match(css, /@media \(min-width: 1101px\)\s*\{\s*body\.ui-modern #view-emulators > \.toolbar \{[^}]*height: 0/);
-  assert.match(css, /body\.ui-modern #view-emulators > \.toolbar \.toolbar-right \{ position: absolute; right: 0; top: 0; \}/);
+test('Emulators: the refresh button sits between the Vault and the first emulator, with its own icon', () => {
+  const html = read('public/index.html'), js = read('public/modern.js');
+  assert.ok(html.indexOf('id="emu-refresh-latest"') > html.indexOf('id="emu-upload-form"') && html.indexOf('id="emu-refresh-latest"') < html.indexOf('id="emu-guide"'));
+  assert.match(js, /\['#emu-refresh-latest', 'emulators-refresh'\]/);
+  for (const n of ['emulators-2', 'emulators-refresh', 'no-covers-2', 'fetch-metadata-2', 'heart']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  assert.match(read('public/app.js'), /id: 'health',\s+label: 'Health',\s+mi: 'heart'/);
 });
 
 test('ticker: the game-sauce name is always the first line; health wording is calm; Lock hover says Lock / Unlock', () => {

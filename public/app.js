@@ -3778,7 +3778,7 @@ const SETTINGS_MODULES = [
   { id: 'dat',       label: 'DAT files',       mi: 'DAT-files', ico: '💾', adminOnly: true },
   { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
-  { id: 'health',    label: 'Health',          mi: 'health', ico: '🩺', adminOnly: true }
+  { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true }
 ];
 
 

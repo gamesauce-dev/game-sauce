@@ -1620,3 +1620,5 @@ body.play-only #empty .empty-add-text { display: none; }
 .pid-row { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 8px; }
 .pid-row.pid-done { opacity: .5; }
 .pid-fix { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.emu-refresh-bar { max-width: 980px; margin: 0 0 12px; display: flex; justify-content: flex-end; }

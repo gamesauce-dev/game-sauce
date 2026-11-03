@@ -360,12 +360,10 @@ html[data-theme="light"] body.ui-modern .btn-play[data-rom-play] { color: #0f7a4
 /* CSV tools: icon buttons in the Export / Import rows are as tall as the framed tick boxes beside them, so everything sits on one line. */
 body.ui-modern .export-row .btn[data-mi] { height: 2.4rem; }
 
-/* Emulators: the "Check latest releases" button sits in the top-right corner instead of a row of its own, so the page starts at the same height as Sources and Add ROMs. On a narrow screen it keeps its row (it would sit on the text). */
-@media (min-width: 1101px) {
-  body.ui-modern #view-emulators > .toolbar { height: 0; min-height: 0; margin: 0 0 14px; padding: 0; overflow: visible; position: relative; z-index: 3; }
-  body.ui-modern #view-emulators > .toolbar .toolbar-right { position: absolute; right: 0; top: 0; }
-}
 
 /* Reset: always in the same place (so nothing shifts), dim and inert while there is nothing to reset. */
 body.ui-modern .mb-btn.is-dim { opacity: .35; cursor: default; }
 body.ui-modern .mb-btn.is-dim:hover { background: transparent; }
+
+/* Emulators: the refresh button sits between the Vault and the first emulator. */
+body.ui-modern .emu-refresh-bar { display: flex; justify-content: flex-end; max-width: 980px; margin: 0 0 12px; }
