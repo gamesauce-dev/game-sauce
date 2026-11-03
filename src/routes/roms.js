@@ -447,7 +447,7 @@ router.get('/', (req, res) => {
   }
   // Cover and metadata filters (used by the clickable totals on Settings > Stats). 'matched' = a provider or a DAT matched it;
   // the rest are names taken from the file.
-  if (req.query.cover === '0') where.push('r.cover_path IS NULL');
+  if (req.query.cover === '0') { sweepMissingCovers(); where.push('r.cover_path IS NULL'); }
   if (req.query.cover === '1') where.push('r.cover_path IS NOT NULL');
   if (req.query.matched === '1') where.push("(r.meta_source IS NOT NULL AND r.meta_source NOT IN ('', 'none', 'filename', 'seed'))");
   if (req.query.matched === '0') where.push("(r.meta_source IS NULL OR r.meta_source IN ('', 'none', 'filename', 'seed'))");
@@ -713,9 +713,31 @@ router.get('/:id', (req, res) => {
 
 /* ------------------------------------------------------------ cover */
 
+/* A cover is recorded in the database but its picture file is gone from the disk (a cleaned media folder, a restored backup without
+ * the media...). The game then showed an empty tile yet was missing from the "No cover" filter and from "Fetch missing covers".
+ * Forget the dead record (and the lock, since the user's own picture is gone too) so both treat it as a game with no cover. */
+export function forgetMissingCovers(onlyId = null) {
+  const rows = onlyId == null
+    ? db.prepare('SELECT id, cover_path FROM roms WHERE cover_path IS NOT NULL').all()
+    : db.prepare('SELECT id, cover_path FROM roms WHERE id = ? AND cover_path IS NOT NULL').all(onlyId);
+  const clear = db.prepare("UPDATE roms SET cover_path = NULL, cover_locked = 0, updated_at = datetime('now') WHERE id = ?");
+  let n = 0;
+  for (const x of rows) if (!fs.existsSync(x.cover_path)) { clear.run(x.id); n++; }
+  return n;
+}
+
+/* The sweep reads every cover path once; asking for the "No cover" list repeatedly should not repeat it, so at most once a minute. */
+let lastCoverSweep = 0;
+function sweepMissingCovers() {
+  if (Date.now() - lastCoverSweep < 60_000) return;
+  lastCoverSweep = Date.now();
+  forgetMissingCovers();
+}
+
 router.get('/:id/cover', (req, res) => {
   const rom = db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(req.params.id);
   if (!rom?.cover_path || !fs.existsSync(rom.cover_path)) {
+    if (rom?.cover_path) forgetMissingCovers(Number(req.params.id));
     return res.status(404).json({ error: 'No cover' });
   }
   res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -1211,8 +1233,16 @@ async function runEnrichJob() {
   }
 }
 
+router.post('/bulk/repair-covers', requireAdmin, (req, res) => {
+  const n = forgetMissingCovers();
+  lastCoverSweep = 0;
+  req.auditDetail = { forgotten: n };
+  res.json({ forgotten: n });
+});
+
 router.post('/bulk/enrich-job', requireAdmin, (req, res) => {
   if (enrichJob.running) return res.status(409).json({ error: 'A metadata run is already in progress', ...enrichJob });
+  forgetMissingCovers(); // games whose picture file has vanished count as "no cover" before the run is sized
   const onlyMissingCovers = req.body?.only_missing_covers === true;
   // Optional platform scope (the Library's selected platform): only that platform's games are looked up.
   const platform = String(req.body?.platform || '').trim();

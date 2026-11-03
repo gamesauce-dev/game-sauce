@@ -99,3 +99,24 @@ test('a custom cover survives a metadata refresh and the admin clear-covers tool
   const unlocked = db.prepare('SELECT cover_locked FROM roms WHERE id = ?').get(b).cover_locked;
   assert.equal(unlocked, 0);
 });
+
+test('a cover whose picture file is gone counts as "no cover" (filter, repair route, and the lock is released)', async () => {
+  const f = path.join(TMP, 'gone.jpg'); fs.writeFileSync(f, JPG);
+  db.prepare("UPDATE roms SET cover_path = ?, cover_locked = 1 WHERE id = ?").run(f, a);
+  assert.equal((await j('/api/roms?cover=0&limit=500')).body.items.some((x) => x.id === a), false, 'a real file: has a cover');
+  fs.unlinkSync(f);
+  // asking for the picture notices it is gone and forgets the record
+  assert.equal((await j(`/api/roms/${a}/cover`)).status, 404);
+  const row = db.prepare('SELECT cover_path, cover_locked FROM roms WHERE id = ?').get(a);
+  assert.equal(row.cover_path, null); assert.equal(row.cover_locked, 0);
+  assert.equal((await j('/api/roms?cover=0&limit=500')).body.items.some((x) => x.id === a), true, 'now listed under No cover');
+  // the bulk repair finds dead records nobody has asked for yet
+  const g = path.join(TMP, 'gone2.jpg'); fs.writeFileSync(g, JPG); fs.unlinkSync(g);
+  db.prepare('UPDATE roms SET cover_path = ? WHERE id = ?').run(g, b);
+  const rep = await j('/api/roms/bulk/repair-covers', { method: 'POST' });
+  assert.equal(rep.status, 200); assert.equal(rep.body.forgotten, 1);
+  assert.equal(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(b).cover_path, null);
+  // a member may not run it
+  const mt = await (async () => { await j('/api/auth/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'cvm', password: 'cv-member-pass-12', role: 'user' }) }); return (await (await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'cvm', password: 'cv-member-pass-12' }) })).json()).token; })();
+  assert.equal((await fetch(base + '/api/roms/bulk/repair-covers', { method: 'POST', headers: { Authorization: 'Bearer ' + mt } })).status, 403);
+});
