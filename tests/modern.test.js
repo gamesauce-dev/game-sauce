@@ -473,7 +473,7 @@ test('Stats totals are links that open the Library with the same filter, so the 
 
 test('the No cover tool uses the no-covers icon', () => {
   const js = read('public/modern.js');
-  assert.match(js, /\$\{ic\['no-covers-2'\]\}<\/button>/); assert.ok(js.includes("'no-covers-2', 'fetch-metadata-2'"));
+  assert.match(js, /\$\{ic\['no-covers-2'\]\}<\/button>/); assert.ok(js.includes("'no-covers-2', 'fetch-metadata-3'"));
   assert.doesNotMatch(js, /ic\['empty-covers'\]/);
   assert.ok(fs.existsSync(new URL('../public/modern/icons/no-covers-2.svg', import.meta.url)));
 });
@@ -521,7 +521,7 @@ test('Emulators: the refresh button sits between the Vault and the first emulato
   const html = read('public/index.html'), js = read('public/modern.js');
   assert.ok(html.indexOf('id="emu-refresh-latest"') > html.indexOf('id="emu-upload-form"') && html.indexOf('id="emu-refresh-latest"') < html.indexOf('id="emu-guide"'));
   assert.match(js, /\['#emu-refresh-latest', 'emulators-refresh'\]/);
-  for (const n of ['emulators-2', 'emulators-refresh', 'no-covers-2', 'fetch-metadata-2', 'heart']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  for (const n of ['emulators-2', 'emulators-refresh', 'no-covers-2', 'fetch-metadata-3', 'heart']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
   assert.match(read('public/app.js'), /id: 'health',\s+label: 'Health',\s+mi: 'heart'/);
 });
 
