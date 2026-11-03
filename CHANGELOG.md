@@ -117,6 +117,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern details header: glass controls.** The previous / next row, pin, close, genre pills and action icons are now translucent with a fine border over the blurred backdrop (no solid bar behind the icons), so they blend in but still stand out; the top strip is see-through and picks up a soft back only once the window is scrolled. The genre pills are centred and sit just under the previous / next row. Light mode has its own glass.
 - **Modern: the game details header fills the wide window.** The cover now sits in front of a blurred, enlarged copy of itself (the colours follow each game), with the genre pills at the top and the action icons along the bottom on a translucent bar, instead of a small cover floating in an empty panel. A game with no cover gets a backdrop in its platform's colour. Light mode has its own lighter version. Classic is unchanged.
 - **Platform logos now fill their box**: a small logo is scaled up and a large one down, always keeping its proportions (before, a small picture stayed tiny). **Family chips in the Library are in capitals.**
 - **Modern: Fetch metadata uses the `fetch-metadata(3)` icon.**

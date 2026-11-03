@@ -606,6 +606,8 @@ function buildDetailHero(root = document) {
   // if the cover fails to load, fall back to the colour backdrop so the header is never a black hole
   img?.addEventListener('error', () => { back.style.backgroundImage = ''; back.style.background = `linear-gradient(160deg, ${accent}66, #12141a)`; });
 }
+// The details strip is see-through at the top and picks up a soft back once the window has scrolled (so its buttons never sit on top of text).
+document.addEventListener('scroll', (e) => { const d = e.target; if (d && d.id === 'drawer') document.querySelector('#drawer .drawer-bar')?.classList.toggle('is-scrolled', d.scrollTop > 8); }, true);
 /** Settings: the row of settings inside a group starts directly under that group's icon (kept inside the screen on narrow windows). */
 function alignSubtiles() {
   const row = $('#settings-subtiles'), act = $('#settings-tiles .tile.is-active');

@@ -585,10 +585,22 @@ test('Library: total beside the platform heading, tighter spacing; add-folder us
 test('Modern details header: blurred cover backdrop with the pills and action icons laid on it, built from the existing elements', () => {
   const js = read('public/modern.js'), css = read('public/modern.css');
   assert.match(js, /function buildDetailHero\(/); assert.match(js, /buildDetailHero\(root\);/); assert.match(js, /hero\.append\(pills\)/); assert.match(js, /hero\.append\(cover, actions\)/);
-  assert.match(css, /body\.ui-modern \.detail-hero \{ position: relative;/); assert.match(css, /\.hero-back \{[^}]*filter: blur\(26px\)/);
+  assert.match(css, /body\.ui-modern \.detail-hero \{ --bar-h: 4\.6rem; position: relative;/); assert.match(css, /\.hero-back \{[^}]*filter: blur\(26px\)/);
   assert.doesNotMatch(read('public/styles.css'), /detail-hero|hero-back/, 'Classic carries none of it');
 });
 
 test('My saves goes below the title, not inside the Modern details header', () => {
   assert.match(read('public/app.js'), /const hero = anchor\?\.closest\('\.detail-hero'\);/);
+});
+
+test('Details header controls are glass: translucent fill and border, genre pills centred, top strip see-through until scrolled', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  assert.match(css, /\.detail-hero > \.genre-pills \{[^}]*justify-content: center/);
+  assert.match(css, /\.drawer-bar \{ background: transparent;/); assert.match(css, /\.drawer-bar\.is-scrolled \{ background:/);
+  assert.match(css, /backdrop-filter: blur\(8px\)/); assert.match(js, /classList\.toggle\('is-scrolled', d\.scrollTop > 8\)/);
+  assert.doesNotMatch(css, /\.detail-hero > \.detail-actions \{[^}]*rgba\(10,12,18,\.5\)/, 'no solid bar behind the action icons');
+});
+
+test('genre pills sit below the previous / next row, not behind it', () => {
+  assert.match(read('public/modern.css'), /\.detail-hero > \.genre-pills \{ position: absolute; top: calc\(var\(--bar-h\) \+ 1\.4rem\)/);
 });
