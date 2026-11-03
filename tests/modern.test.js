@@ -654,3 +654,9 @@ test('every primary button with an icon is neutral in Modern (sign-in and the we
   assert.match(css, /\.btn-primary\[data-mi\]:not\(#login-submit\):not\(\[id\^="wz-"\]\) \{ background: var\(--panel\);/);
   assert.match(css, /\.btn-primary\[data-mi\]:not\(#login-submit\):not\(\[id\^="wz-"\]\)::before \{ background: currentColor; \}/);
 });
+
+test('chips: no coloured left edge, family chips round and tall like platform chips, glow on hover', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /\.chip\[style\*="--chip-c"\]:hover \{[^}]*box-shadow: 0 0 0 1px var\(--chip-c\), 0 0 14px/);
+  assert.doesNotMatch(css, /border-left-color: var\(--chip-c\)/);
+});

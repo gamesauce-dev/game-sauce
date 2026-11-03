@@ -100,7 +100,7 @@ test('family colour: set, refused when unreadable, reset to the default, listed 
 
 test('Modern chips: tint, no icon, bold; family colour picker in Settings', () => {
   const css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8'), app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-  assert.match(css, /\.chip\[style\*="--chip-c"\] \{ font-weight: 700; border-left: 5px solid var\(--chip-c\)/);
+  assert.match(css, /\.chip\[style\*="--chip-c"\] \{ font-weight: 700; height: 2\.1rem; border-radius: 0\.65rem;/);
   assert.match(css, /\.chip\.plat \.plat-ico \{ display: none; \}/);
   assert.match(js, /data-chip-plat="\$\{esc\(p\.slug\)\}" style="--chip-c:/); assert.ok(!/class="chip plat[^`]*\$\{ctx\.platformIconSvg/.test(js), 'the chip no longer draws the platform icon');
   assert.match(app, /data-fam-colour=/); assert.match(app, /\/platforms\/families\/colour/);

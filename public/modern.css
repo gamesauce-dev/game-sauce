@@ -389,9 +389,13 @@ body.ui-modern[data-mview="library"] .az-bar { margin: 0 0 0.35rem; padding-bott
 
 /* Platform and family chips take their colour as a tint: a coloured left edge and a soft wash behind the normal text, so every colour
    stays readable. Picked chips are stronger and bold. No icon in the chips: the colour does that job. */
-body.ui-modern .chip[style*="--chip-c"] { font-weight: 700; border-left: 5px solid var(--chip-c); background: color-mix(in srgb, var(--chip-c) 16%, var(--panel)); border-color: color-mix(in srgb, var(--chip-c) 50%, transparent); border-left-color: var(--chip-c); color: var(--text); }
-body.ui-modern .chip[style*="--chip-c"]:hover { background: color-mix(in srgb, var(--chip-c) 26%, var(--panel)); color: var(--text); }
-body.ui-modern .chip[style*="--chip-c"].on, body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 40%, var(--panel)); border-color: var(--chip-c); border-left-color: var(--chip-c); color: var(--text); }
+body.ui-modern .chip[style*="--chip-c"] { font-weight: 700; height: 2.1rem; border-radius: 0.65rem; background: color-mix(in srgb, var(--chip-c) 16%, var(--panel)); border: 1px solid color-mix(in srgb, var(--chip-c) 50%, transparent); color: var(--text); transition: box-shadow .15s, border-color .15s, background .15s; }
+/* Hover: the chip lights up in its own colour (a glow and a brighter edge); nothing moves. */
+body.ui-modern .chip[style*="--chip-c"]:hover { background: color-mix(in srgb, var(--chip-c) 28%, var(--panel)); border-color: var(--chip-c); color: var(--text); box-shadow: 0 0 0 1px var(--chip-c), 0 0 14px color-mix(in srgb, var(--chip-c) 60%, transparent); }
+body.ui-modern .chip[style*="--chip-c"].on, body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 40%, var(--panel)); border-color: var(--chip-c); color: var(--text); }
+/* Partly selected family (only some of its platforms picked): dashed edge, lighter wash. */
+body.ui-modern .chip[style*="--chip-c"].on.part { background: color-mix(in srgb, var(--chip-c) 20%, var(--panel)); border-style: dashed; border-color: var(--chip-c); }
+body.ui-modern .chip[style*="--chip-c"]:focus-visible { box-shadow: 0 0 0 2px var(--chip-c), 0 0 12px color-mix(in srgb, var(--chip-c) 55%, transparent); outline: none; }
 body.ui-modern .chip[style*="--chip-c"] small { color: var(--text); opacity: .72; font-weight: 600; }
 html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"] { background: color-mix(in srgb, var(--chip-c) 12%, #ffffff); }
 html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"].on, html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 28%, #ffffff); }
