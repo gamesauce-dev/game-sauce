@@ -625,7 +625,7 @@ test('no-green buttons: neutral outline, new icons wired, welcome tour and chang
   const css = read('public/modern.css'), js = read('public/modern.js');
   for (const id of ['#edit-form button[type="submit"]', '#new-collection', '#add-source', '#create-source', '#emu-upload-form button[type="submit"]', '#profile-upload', '#welcome-again', '#password-form button[type="submit"]', '#dat-upload', '#names-apply', '#covers-apply', '#dup-hide-all', '#backup-download', '#backup-save', '#platform-add-toggle'])
     assert.ok(css.includes('body.ui-modern ' + id + ',') || css.includes('body.ui-modern ' + id + ' {'), 'neutral rule for ' + id);
-  for (const [sel, name] of [["'#new-collection', 'add-collection'", 'add-collection'], ["'#add-source', 'source-add-2'", 'source-add-2'], ["'#create-source', 'source-add-and-scan-2'", 'source-add-and-scan-2'], ["'save-to-vault-2'", 'save-to-vault-2'], ["'#welcome-again', 'welcome-tour-2'", 'welcome-tour-2'], ["'#password-form button[type=\"submit\"]', 'save-password'", 'save-password'], ["'#covers-preview', 'preview-2'", 'preview-2'], ["'#names-preview', 'preview-2'", 'preview-2'], ["'#backup-save', 'save-settings-2'", 'save-settings-2'], ["'#platform-add-toggle', 'add-platform-2'", 'add-platform-2']]) {
+  for (const [sel, name] of [["'#new-collection', 'add-collection'", 'add-collection'], ["'#add-source, #empty-add-source', 'source-add-2'", 'source-add-2'], ["'#create-source', 'source-add-and-scan-2'", 'source-add-and-scan-2'], ["'save-to-vault-2'", 'save-to-vault-2'], ["'#welcome-again', 'welcome-tour-2'", 'welcome-tour-2'], ["'#password-form button[type=\"submit\"]', 'save-password'", 'save-password'], ["'#covers-preview', 'preview-2'", 'preview-2'], ["'#names-preview', 'preview-2'", 'preview-2'], ["'#backup-save', 'save-settings-2'", 'save-settings-2'], ["'#platform-add-toggle', 'add-platform-2'", 'add-platform-2']]) {
     assert.ok(js.includes(sel), 'wired: ' + sel); assert.ok(fs.existsSync(new URL('../public/modern/icons/' + name + '.svg', import.meta.url)), name + '.svg exists');
   }
   assert.match(css, /#welcome-again, body\.ui-modern #password-form button\[type="submit"\] \{ width: 3\.4rem;/);
@@ -634,4 +634,23 @@ test('no-green buttons: neutral outline, new icons wired, welcome tour and chang
 test('the change-password icon rule comes after the general settings-form rule, so it is not overwritten', () => {
   const js = read('public/modern.js');
   assert.ok(js.indexOf("'#password-form button[type=\"submit\"]', 'save-password'") > js.indexOf("'#view-settings form button.btn-primary[type=\"submit\"]', 'save-settings'"));
+});
+
+test('icons on the neutral (formerly green) buttons use the text colour, so they show on the light theme too', () => {
+  const css = read('public/modern.css');
+  for (const id of ['#add-source', '#welcome-again', '#names-apply', '#backup-save', '#platform-add-toggle', '#edit-form button[type="submit"]'])
+    assert.ok(css.includes('body.ui-modern ' + id + '[data-mi]::before'), id);
+  assert.match(css, /\[data-mi\]::before \{ background: currentColor; \}\n\/\* Welcome tour/);
+});
+
+test('Add user, provider Save, Download database and the empty-state Add folder are neutral too, with icons that show on both themes', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  for (const id of ['#new-user-form button[type="submit"]', '[data-act="save-provider"]', '[data-act="lb-update"]', '#empty-add-source']) { assert.ok(css.includes('body.ui-modern ' + id + ',') || css.includes('body.ui-modern ' + id + ' {'), id); assert.ok(css.includes('body.ui-modern ' + id + '[data-mi]::before'), id + ' icon'); }
+  assert.match(js, /\['#add-source, #empty-add-source', 'source-add-2'\]/);
+});
+
+test('every primary button with an icon is neutral in Modern (sign-in and the welcome wizard excepted)', () => {
+  const css = read('public/modern.css');
+  assert.match(css, /\.btn-primary\[data-mi\]:not\(#login-submit\):not\(\[id\^="wz-"\]\) \{ background: var\(--panel\);/);
+  assert.match(css, /\.btn-primary\[data-mi\]:not\(#login-submit\):not\(\[id\^="wz-"\]\)::before \{ background: currentColor; \}/);
 });

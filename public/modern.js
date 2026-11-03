@@ -534,7 +534,7 @@ const ICON_MAP = [
   ['[data-act="hidegames"][data-hidden="0"]', 'hidden'], ['[data-act="hidegames"][data-hidden="1"]', 'visible'], ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
-  ['#scan-all', 'scan-again'], ['#add-source', 'source-add-2'], ['#create-source', 'source-add-and-scan-2'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
+  ['#scan-all', 'scan-again'], ['#add-source, #empty-add-source', 'source-add-2'], ['#create-source', 'source-add-and-scan-2'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
   ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],

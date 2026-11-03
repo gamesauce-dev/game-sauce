@@ -117,6 +117,8 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern: no primary button with an icon is green any more.** One general rule now covers them all (Add platform, Save changes, Change password, Use this folder and so on), with the icon in the text colour so it shows on both themes. The sign-in button and the welcome wizard keep their own look.
+- **Modern: Add user, Metadata providers' Save, Download / Update database and the empty-state Add folder are neutral too** (found by sweeping every page for green buttons).
 - **Modern: no more green on the save / add / import buttons.** Save edits (game details), New collection (and its Create), Add folder, Add and scan, Save to vault, Upload picture, DAT import, Apply names / Apply covers, Hide the others (duplicate finder), Download a backup, Save settings (backups) and Add platform use the neutral outlined look; the icon carries the meaning. New icons: add-collection, source-add(2), source-add-and-scan(2), save-to-vault(2), save-settings(2), add-platform(2) and preview(2) (both Preview buttons). **Welcome tour** and **Change password** are now a proper icon-sized button (welcome-tour(2), save-password) instead of a full-width green bar with a tiny icon.
 - **Modern details header: the download button is glass like the other icons** (no longer solid green).
 - **Modern details header: a real screenshot as the backdrop.** When a game has a stored in-game screenshot (from IGDB, LaunchBox or ScreenScraper), it is used as the wide backdrop behind the cover, lightly blurred; a game without one keeps the blurred cover. The screenshot is used only if it loads.
@@ -196,6 +198,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Modern light mode: the icons on the buttons that lost their green were white on white.** Those buttons keep a rule that draws a primary button's icon white; they now draw it in the normal text colour, so they show in both themes.
 - **Refreshing the page kept only the first picked platform.** With a whole family (or several platforms) selected, a refresh brought back just one platform, so the family chip showed a dashed "part" outline and the list shrank (Nintendo, 16 games, became Game Boy, 2). The whole selection now survives a refresh.
 - **Library heading dot with several platforms picked** now uses the family's colour (Nintendo red), not the first platform's (Game Boy's olive).
 - **Modern: the pin, previous / next and close controls in the details window sit a little lower**, clear of the top bar.

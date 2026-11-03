@@ -498,7 +498,50 @@ body.ui-modern #dup-hide-all:disabled,
 body.ui-modern #backup-download:disabled,
 body.ui-modern #backup-save:disabled,
 body.ui-modern #platform-add-toggle:disabled { opacity: .45; }
+/* The icon on these buttons takes the button's text colour. (Primary buttons draw it white, which is right on green but disappears on the light theme's white button.) */
+body.ui-modern #edit-form button[type="submit"][data-mi]::before,
+body.ui-modern #new-collection[data-mi]::before,
+body.ui-modern #collection-create[data-mi]::before,
+body.ui-modern #add-source[data-mi]::before,
+body.ui-modern #create-source[data-mi]::before,
+body.ui-modern #emu-upload-form button[type="submit"][data-mi]::before,
+body.ui-modern #profile-upload[data-mi]::before,
+body.ui-modern #welcome-again[data-mi]::before,
+body.ui-modern #password-form button[type="submit"][data-mi]::before,
+body.ui-modern #dat-upload[data-mi]::before,
+body.ui-modern #names-apply[data-mi]::before,
+body.ui-modern #covers-apply[data-mi]::before,
+body.ui-modern #dup-hide-all[data-mi]::before,
+body.ui-modern #backup-download[data-mi]::before,
+body.ui-modern #backup-save[data-mi]::before,
+body.ui-modern #platform-add-toggle[data-mi]::before { background: currentColor; }
 /* Welcome tour and Change password: an icon-sized button, not a full-width bar, with a properly sized icon. */
 body.ui-modern #welcome-again, body.ui-modern #password-form button[type="submit"] { width: 3.4rem; min-width: 3.4rem; height: 3.4rem; padding: 0; align-self: flex-start; }
 body.ui-modern #welcome-again[data-mi]::before, body.ui-modern #password-form button[type="submit"][data-mi]::before { width: 2rem; height: 2rem; }
 html[data-theme="light"] body.ui-modern #welcome-again, html[data-theme="light"] body.ui-modern #password-form button[type="submit"] { background: var(--panel); }
+
+/* The same neutral look for the remaining primary buttons found in a full sweep: Add user, Metadata providers' Save, Download / Update database,
+   and the Add folder button on an empty Sources page. The icon takes the text colour, so it shows on both themes. */
+body.ui-modern #new-user-form button[type="submit"],
+body.ui-modern [data-act="save-provider"],
+body.ui-modern [data-act="lb-update"],
+body.ui-modern #empty-add-source { background: var(--panel); border-color: var(--line-2); color: var(--text); }
+body.ui-modern #new-user-form button[type="submit"]:hover:not(:disabled),
+body.ui-modern [data-act="save-provider"]:hover:not(:disabled),
+body.ui-modern [data-act="lb-update"]:hover:not(:disabled),
+body.ui-modern #empty-add-source:hover:not(:disabled) { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
+body.ui-modern #new-user-form button[type="submit"]:disabled,
+body.ui-modern [data-act="save-provider"]:disabled,
+body.ui-modern [data-act="lb-update"]:disabled,
+body.ui-modern #empty-add-source:disabled { opacity: .45; }
+body.ui-modern #new-user-form button[type="submit"][data-mi]::before,
+body.ui-modern [data-act="save-provider"][data-mi]::before,
+body.ui-modern [data-act="lb-update"][data-mi]::before,
+body.ui-modern #empty-add-source[data-mi]::before { background: currentColor; }
+
+/* ── One rule for every remaining primary button that carries an icon (so none is missed): neutral outline, icon in the text colour.
+   Exempt: the sign-in button and the welcome wizard's buttons (they keep words and their own look). ── */
+body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"]) { background: var(--panel); border-color: var(--line-2); color: var(--text); }
+body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"]):hover:not(:disabled) { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
+body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"]):disabled { opacity: .45; }
+body.ui-modern .btn-primary[data-mi]:not(#login-submit):not([id^="wz-"])::before { background: currentColor; }
