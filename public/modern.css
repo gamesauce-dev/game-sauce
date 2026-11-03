@@ -444,3 +444,7 @@ html[data-theme="light"] body.ui-modern .drawer:has(.detail-hero) .drawer-navbtn
 html[data-theme="light"] body.ui-modern .detail-hero .genre-pill:hover, html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn:not(.ibtn-primary):hover { background: rgba(255,255,255,.85); border-color: rgba(0,0,0,.35); color: #0f1219; }
 html[data-theme="light"] body.ui-modern .detail-hero > .detail-actions .ibtn-danger { color: #b3261e; }
 @media (max-width: 720px) { body.ui-modern .detail-hero { margin: calc(-1.1rem - var(--bar-h)) -1.1rem 1rem; } body.ui-modern .detail-hero > .genre-pills { top: calc(var(--bar-h) + 0.8rem); } }
+
+/* With a real screenshot as the backdrop it is only lightly blurred (it is wide, so it fills the header properly); the cover stays sharp in front. */
+body.ui-modern .detail-hero.has-shot .hero-back { filter: blur(7px) saturate(1.15) brightness(.55); transform: scale(1.05); }
+html[data-theme="light"] body.ui-modern .detail-hero.has-shot .hero-back { filter: blur(7px) saturate(1.1) brightness(.9); }

@@ -597,7 +597,15 @@ function buildDetailHero(root = document) {
   const accent = (/#[0-9a-f]{6}/i.exec(cover.getAttribute('style') || '') || [])[0] || '#6b7280';
   const hero = document.createElement('div'); hero.className = 'detail-hero';
   const back = document.createElement('div'); back.className = 'hero-back';
-  if (src) back.style.backgroundImage = `url("${src.replace(/"/g, '%22')}")`; else back.style.background = `linear-gradient(160deg, ${accent}66, #12141a)`;
+  const coverBack = () => { if (src) { back.style.backgroundImage = `url("${src.replace(/"/g, '%22')}")`; back.style.background = ''; back.style.backgroundImage = `url("${src.replace(/"/g, '%22')}")`; } else back.style.background = `linear-gradient(160deg, ${accent}66, #12141a)`; };
+  coverBack();
+  // A real wide picture (the game's stored screenshot) makes a better backdrop than a blurred box cover: use it when it loads, and keep the cover's blur otherwise.
+  const shot = cover.dataset.shot;
+  if (shot) {
+    const probe = new Image();
+    probe.onload = () => { if (probe.naturalWidth >= 200 && hero.isConnected) { back.style.backgroundImage = `url("${shot}")`; hero.classList.add('has-shot'); } };
+    probe.src = shot;
+  }
   const fade = document.createElement('div'); fade.className = 'hero-fade';
   body.insertBefore(hero, body.firstChild);
   hero.append(back, fade);

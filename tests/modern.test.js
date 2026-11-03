@@ -604,3 +604,10 @@ test('Details header controls are glass: translucent fill and border, genre pill
 test('genre pills sit below the previous / next row, not behind it', () => {
   assert.match(read('public/modern.css'), /\.detail-hero > \.genre-pills \{ position: absolute; top: calc\(var\(--bar-h\) \+ 1\.4rem\)/);
 });
+
+test('details header uses the stored screenshot as the backdrop when there is one, and keeps the blurred cover otherwise', () => {
+  const app = read('public/app.js'), js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(app, /data-shot="\/api\/roms\/\$\{rom\.id\}\/media\/screenshot"/);
+  assert.match(js, /const shot = cover\.dataset\.shot;/); assert.match(js, /probe\.naturalWidth >= 200/); assert.match(js, /hero\.classList\.add\('has-shot'\)/);
+  assert.match(css, /\.detail-hero\.has-shot \.hero-back \{ filter: blur\(7px\)/);
+});

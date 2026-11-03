@@ -1419,7 +1419,7 @@ async function openDetail(id) {
 
   $('#drawer-body').innerHTML = `
     ${genrePills(rom.genre)}
-    <div class="detail-cover" style="background:linear-gradient(160deg,${rom.platform_accent}22,#12141a)">
+    <div class="detail-cover" style="background:linear-gradient(160deg,${rom.platform_accent}22,#12141a)"${rom.media?.screenshot ? ` data-shot="/api/roms/${rom.id}/media/screenshot"` : ''}>
       <div class="card-fallback">${esc(initials)}</div>
       ${rom.cover_url ? `<img src="${esc(rom.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
     </div>
