@@ -660,3 +660,10 @@ test('chips: no coloured left edge, family chips round and tall like platform ch
   assert.match(css, /\.chip\[style\*="--chip-c"\]:hover \{[^}]*box-shadow: 0 0 0 1px var\(--chip-c\), 0 0 14px/);
   assert.doesNotMatch(css, /border-left-color: var\(--chip-c\)/);
 });
+
+test('Modern: every chip is a rounded square, selected chips glow, platform Save uses the save-platform icon', () => {
+  const css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8');
+  assert.match(css, /body\.ui-modern \.chip \{ display: inline-flex; align-items: center; gap: 0\.4rem; height: 2\.1rem;[^}]*border-radius: 0\.65rem;/);
+  assert.match(css, /body\.ui-modern \.chip\.on \{ box-shadow: 0 0 0 1px color-mix/);
+  assert.ok(js.includes("'save-platform'")); assert.ok(fs.existsSync(new URL('../public/modern/icons/save-platform.svg', import.meta.url)));
+});

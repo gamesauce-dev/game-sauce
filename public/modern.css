@@ -138,7 +138,7 @@ body.ui-modern .mb-menu-item.on { color: var(--accent-2); background: color-mix(
 .chip-rows { display: none; }
 body.ui-modern[data-mview="library"] .chip-rows { display: flex; flex-direction: column; gap: 0.45rem; margin: 0 0 0.7rem; }
 body.ui-modern .chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-body.ui-modern .chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2rem; padding: 0 0.75rem; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
+body.ui-modern .chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.1rem; padding: 0 0.75rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
 body.ui-modern .chip small { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
 body.ui-modern .chip:hover { color: var(--text); background: var(--panel-2); }
 body.ui-modern .chip.open { color: var(--text); border-color: var(--line-2); }
@@ -558,3 +558,8 @@ body.ui-modern .logo-edit .policy-row, body.ui-modern .fam-plate { display: inli
 body.ui-modern .logo-edit .policy-row[hidden], body.ui-modern .fam-plate[hidden] { display: none; }
 body.ui-modern .logo-edit .policy-row input, body.ui-modern .fam-plate input { margin: 0; flex: 0 0 auto; width: 1rem; height: 1rem; padding: 0; }
 body.ui-modern .logo-edit .policy-row span { display: inline; }
+
+/* Every chip (All included) has the same rounded-square shape; a selected chip keeps a soft glow so it reads as "on" at a glance. */
+body.ui-modern .chip.on { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent); }
+body.ui-modern .chip[style*="--chip-c"].on, body.ui-modern .chip[style*="--chip-c"].open { box-shadow: 0 0 0 1px var(--chip-c), 0 0 12px color-mix(in srgb, var(--chip-c) 50%, transparent); }
+body.ui-modern .chip.on.part { box-shadow: none; }

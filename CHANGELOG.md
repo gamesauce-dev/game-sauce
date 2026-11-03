@@ -118,6 +118,8 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern chips: every chip is the same rounded square; selected chips glow.** The "All" chip (and any other plain chip) was still pill-shaped; now all chips share one height and rounding. A selected chip keeps a soft glow (in its family colour for family chips); a partly selected family stays dashed with no glow.
+- **Modern: platform editor Save is an icon.** The green Save button in Settings > Platforms is now the `save-platform` icon (neutral, hover text "Save").
 - **Modern chips: no coloured left edge, matching shapes, hover glow.** The darker coloured strip on the left of the platform and family chips is gone (it was also the mark that appeared after a refresh). Family chips now have the same height and rounding as the platform chips. Hovering a chip lights it up in its own colour (a glow and a brighter edge); keyboard focus does the same. A partly selected family keeps a dashed edge.
 - **Modern: no primary button with an icon is green any more.** One general rule now covers them all (Add platform, Save changes, Change password, Use this folder and so on), with the icon in the text colour so it shows on both themes. The sign-in button and the welcome wizard keep their own look.
 - **Modern: Add user, Metadata providers' Save, Download / Update database and the empty-state Add folder are neutral too** (found by sweeping every page for green buttons).
