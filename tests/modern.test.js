@@ -560,3 +560,12 @@ test('details window keeps its previous / next row when the opened game leaves t
   assert.match(app, /state\.nav = \{ ids: state\.navSnap \}/);
   assert.ok((app.match(/state\.navSnap = null;/g) || []).length >= 5, 'every fresh open resets the snapshot');
 });
+
+test('Modern remembers Library vs Home across a refresh; refresh button left and larger; bigger A-Z, add-folder icon; calm light close button', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css');
+  assert.match(js, /sessionStorage\.setItem\('gamesauce_mview', view\)/); assert.match(js, /was === 'library' \? 'library' : 'home'/);
+  assert.match(read('public/app.js'), /removeItem\('gamesauce_mview'\)/);
+  assert.match(css, /\.az-l \{[^}]*font-size: 1\.05rem/); assert.match(css, /\.emu-refresh-bar \{ display: flex; justify-content: flex-start;/);
+  assert.match(css, /\.source-addfolder \.btn\[data-mi\]::before \{ width: 1\.7rem/);
+  assert.match(css, /data-theme="light"\] body\.ui-modern #player-close \{ background: transparent/);
+});

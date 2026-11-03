@@ -48,7 +48,7 @@ function saveNav() {
     sessionStorage.setItem(NAV_KEY, JSON.stringify(snap));
   } catch { /* storage unavailable: refresh just starts at the Library */ }
 }
-function clearNav() { try { sessionStorage.removeItem(NAV_KEY); } catch { /* ignore */ } }
+function clearNav() { try { sessionStorage.removeItem(NAV_KEY); sessionStorage.removeItem('gamesauce_mview'); } catch { /* ignore */ } }
 function readNav() {
   try { return JSON.parse(sessionStorage.getItem(NAV_KEY) || 'null'); } catch { return null; }
 }

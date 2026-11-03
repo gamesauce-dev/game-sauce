@@ -153,6 +153,7 @@ export function go(view) {
   if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
   refreshTicker(view === 'library');   // home: rebuild so the ticker starts again from the name
   document.body.dataset.mview = view;
+  try { sessionStorage.setItem('gamesauce_mview', view); } catch { /* storage unavailable */ }
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
   if (view === 'home') { showHome(); return; }
   hideHome();
@@ -685,7 +686,9 @@ export async function applyMode(mode, { fresh = false } = {}) {
     applyRetro(retro()); applyDeep(deep());
     watchIcons(); iconize(); tipify();
     paintToggles();
-    go(fresh || current === 'library' && false ? 'home' : (ctx.state().view === 'library' ? (current === 'home' ? 'home' : 'library') : ctx.state().view));
+    // A page refresh keeps you where you were: Library stays Library, Home stays Home. A fresh sign-in or a look switch starts at Home.
+    let was = null; try { was = sessionStorage.getItem('gamesauce_mview'); } catch { /* storage unavailable */ }
+    go(fresh ? 'home' : (ctx.state().view === 'library' ? (was === 'library' ? 'library' : 'home') : ctx.state().view));
   } else {
     untipify();
     restorePinIcon();

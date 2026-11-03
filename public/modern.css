@@ -153,7 +153,7 @@ body.ui-modern .chip-plats { padding: 0.45rem 0.5rem; background: color-mix(in s
 body.ui-modern[data-mview="library"] .az-bar { display: flex; align-items: center; gap: 0.8rem; margin: 0 0 0.6rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
 body.ui-modern .az-letters { display: flex; flex-wrap: wrap; gap: 0.1rem; min-width: 0; flex: 1 1 auto; }
 body.ui-modern .az-letters.off { visibility: hidden; }
-body.ui-modern .az-l { min-width: 1.55rem; height: 1.7rem; padding: 0 0.2rem; background: transparent; border: 0; border-radius: 0.4rem; color: var(--muted); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+body.ui-modern .az-l { min-width: 1.9rem; height: 2.1rem; padding: 0 0.2rem; background: transparent; border: 0; border-radius: 0.4rem; color: var(--muted); font-size: 1.05rem; font-weight: 600; cursor: pointer; }
 body.ui-modern .az-l:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
 body.ui-modern .az-l:disabled { opacity: .28; cursor: default; }
 body.ui-modern .az-l.on { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 16%, transparent); }
@@ -366,4 +366,14 @@ body.ui-modern .mb-btn.is-dim { opacity: .35; cursor: default; }
 body.ui-modern .mb-btn.is-dim:hover { background: transparent; }
 
 /* Emulators: the refresh button sits between the Vault and the first emulator. */
-body.ui-modern .emu-refresh-bar { display: flex; justify-content: flex-end; max-width: 980px; margin: 0 0 12px; }
+body.ui-modern .emu-refresh-bar { display: flex; justify-content: flex-start; max-width: 980px; margin: 0 0 12px; }
+
+/* Emulators refresh: on the left and larger. */
+body.ui-modern .emu-refresh-bar .btn[data-mi] { width: 3rem; height: 3rem; }
+body.ui-modern .emu-refresh-bar .btn[data-mi]::before { width: 1.7rem; height: 1.7rem; }
+/* Sources: "add another folder" icon, larger. */
+body.ui-modern .source-addfolder .btn[data-mi] { width: 2.8rem; height: 2.8rem; }
+body.ui-modern .source-addfolder .btn[data-mi]::before { width: 1.7rem; height: 1.7rem; }
+/* Light mode: the close button of the play window is not a bright white block (a still, bright shape on an OLED screen can burn in). */
+html[data-theme="light"] body.ui-modern #player-close { background: transparent; border-color: var(--line-2); color: var(--muted); }
+html[data-theme="light"] body.ui-modern #player-close:hover { background: var(--panel-2); color: var(--text); }

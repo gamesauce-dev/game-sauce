@@ -1621,4 +1621,4 @@ body.play-only #empty .empty-add-text { display: none; }
 .pid-row.pid-done { opacity: .5; }
 .pid-fix { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-.emu-refresh-bar { max-width: 980px; margin: 0 0 12px; display: flex; justify-content: flex-end; }
+.emu-refresh-bar { max-width: 980px; margin: 0 0 12px; display: flex; justify-content: flex-start; }
