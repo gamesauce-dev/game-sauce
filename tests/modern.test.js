@@ -574,3 +574,10 @@ test('Health: Copy report works without HTTPS (older copy command, then a select
   const app = read('public/app.js');
   assert.match(app, /navigator\.clipboard\?\.writeText/); assert.match(app, /document\.execCommand\('copy'\)/); assert.match(app, /id = 'health-report-box'/);
 });
+
+test('Library: total beside the platform heading, tighter spacing; add-folder uses source-add-2; pinned details release on other pages', () => {
+  const js = read('public/modern.js'), css = read('public/modern.css'), app = read('public/app.js');
+  assert.match(app, /class="lib-total"/); assert.match(css, /body\.ui-modern #result-count \{ display: none; \}/); assert.match(css, /\.filter-row \{ min-height: 0;/);
+  assert.match(js, /\['\[data-act="add-folder"\]', 'source-add-2'\]/); assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-2.svg', import.meta.url)));
+  assert.match(js, /const keepPinned = view === 'library' && document\.body\.classList\.contains\('details-pinned'\);/);
+});

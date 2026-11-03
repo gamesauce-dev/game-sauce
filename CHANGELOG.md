@@ -113,6 +113,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Previous / next arrows** in the game detail panel (and the ← / → keys) to step through the games without closing it. It follows the list you opened the game from: the library grid (loading more tiles as you go), the recently added row, or a collection.
 
 ### Changed
+- **Modern Library: the filtered total sits beside the platform name above the grid** ("All platforms  124 ROMs"), and the gaps between the platform chips, the selection controls and the grid are tighter. The "add another folder" icon on each source uses the new `source-add(2)` icon.
 - **Modern: larger A-Z jump letters, a larger "add another folder" icon on each source, and the Emulators refresh button on the left and bigger.**
 - **Modern icons:** Emulators (top bar), Fetch metadata, No cover and the System health sub-menu (now a heart) use the new icons; the Emulators refresh button has its own icon and now sits between the Vault and the first emulator instead of in the page corner. The supplied files hard-coded black strokes, so they were converted to take the text colour like the rest.
 - **Documentation screenshots** retaken in the Modern look from the invented-games demo (Home, Library, light mode, platforms, details window, Locked, Collections, CSV tools, Health, Emulators). Backups, Sources, Gamepad and Sign-in keep their Classic pictures.
@@ -184,6 +185,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Modern: a pinned details window no longer follows you to other pages.** It stays beside the games in the Library, but Home, Collections, Sources and the rest release it (the pin itself is remembered, so it is back when you open a game in the Library). Opening a collection can no longer end up replacing a pinned game.
 - **Health: the Copy report button did nothing on a server reached by plain `http://`** (browsers only allow the clipboard on HTTPS or localhost, and its fallback message pointed at text that was never shown). It now tries the clipboard, then the older copy command, and if the browser refuses both it shows the report selected in a box to copy with Ctrl+C.
 - **Modern: refreshing the page in Library took you back to Home.** It now remembers which of the two you were on and stays there. A fresh sign-in or switching look still starts at Home.
 - **Modern: light mode's play window has a calmer close button** (transparent with an outline, not a bright white block that could burn into an OLED screen).

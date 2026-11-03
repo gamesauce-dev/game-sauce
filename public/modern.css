@@ -377,3 +377,12 @@ body.ui-modern .source-addfolder .btn[data-mi]::before { width: 1.7rem; height: 
 /* Light mode: the close button of the play window is not a bright white block (a still, bright shape on an OLED screen can burn in). */
 html[data-theme="light"] body.ui-modern #player-close { background: transparent; border-color: var(--line-2); color: var(--muted); }
 html[data-theme="light"] body.ui-modern #player-close:hover { background: var(--panel-2); color: var(--text); }
+
+/* Library: the filtered total sits beside the platform name above the grid; the old count in the filter row is hidden, and the spacing between
+   the platform chips, the selection controls and the grid is tighter. */
+body.ui-modern #result-count { display: none; }
+body.ui-modern .lib-heading .lib-total { color: var(--muted); font-size: 0.95rem; font-weight: 600; margin-left: 0.2rem; }
+body.ui-modern .lib-heading { margin: 0 0 0.5rem; gap: 0.7rem; }
+body.ui-modern[data-mview="library"] .chip-rows { margin: 0 0 0.35rem; }
+body.ui-modern .filter-row { min-height: 0; margin-bottom: 0.3rem; }
+body.ui-modern[data-mview="library"] .az-bar { margin: 0 0 0.35rem; padding-bottom: 0.35rem; }

@@ -395,6 +395,13 @@ async function loadPlatforms() {
 function renderLibHeading() {
   const box = $('#lib-heading');
   if (!box) return;
+  const total = ($('#result-count')?.textContent || '').trim();
+  // Modern: the heading line above the grid always shows, with the filtered total beside the platform name (Classic keeps its own layout).
+  if (document.body.classList.contains('ui-modern') && (state.platform === 'all' || state.orphan || state.unmatched || state.locked)) {
+    box.classList.remove('hidden');
+    box.innerHTML = `<h2>${state.platform === 'all' ? 'All platforms' : 'Games'}</h2><span class="lib-total">${esc(total)}</span>`;
+    return;
+  }
   if (state.platform === 'all' || state.orphan || state.unmatched) { box.classList.add('hidden'); box.innerHTML = ''; return; }
   const p = (window.__platformsCache || []).find((x) => x.slug === state.platform);
   const cache = window.__platformsCache || [];
@@ -408,6 +415,7 @@ function renderLibHeading() {
   box.innerHTML = `
     <span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>
     <h2>${esc(name)}</h2>
+    <span class="lib-total">${esc(total)}</span>
     <button class="btn btn-sm btn-ghost lib-clear" id="lib-clear-platform" title="Show every platform again">✕ All platforms</button>`;
   $('#lib-clear-platform').onclick = () => { state.platform = 'all'; state.extraPlatforms = []; loadPlatforms(); loadLibrary(); };
 }

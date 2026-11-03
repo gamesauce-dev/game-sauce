@@ -149,7 +149,10 @@ export function go(view) {
   current = view;
   closePop();
   // Choosing a page releases the details window, unless it is pinned beside the games.
-  if (!document.body.classList.contains('details-pinned') && !$('#drawer')?.classList.contains('hidden')) ctx.closeDrawer?.();
+  // The details window can stay pinned beside the games, but only in the Library: any other page (Home, Collections, Sources...) releases it.
+  // The pin itself is remembered, so it is there again when a game is opened in the Library.
+  const keepPinned = view === 'library' && document.body.classList.contains('details-pinned');
+  if (!keepPinned && !$('#drawer')?.classList.contains('hidden')) ctx.closeDrawer?.();
   if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
   refreshTicker(view === 'library');   // home: rebuild so the ticker starts again from the name
   document.body.dataset.mview = view;
@@ -531,7 +534,7 @@ const ICON_MAP = [
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
   ['#scan-all', 'scan-again'], ['#add-source', 'source-add'], ['#create-source', 'source-add-and-scan'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
-  ['[data-act="add-folder"]', 'source-add'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
+  ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
   ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'upload-to-vault'],
   ['[data-save-release]:not(.emu-save-alt)', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-save-release].emu-save-alt', 'arrow-up'], ['[data-vault-del]', 'delete'],
