@@ -611,3 +611,7 @@ test('details header uses the stored screenshot as the backdrop when there is on
   assert.match(js, /const shot = cover\.dataset\.shot;/); assert.match(js, /probe\.naturalWidth >= 200/); assert.match(js, /hero\.classList\.add\('has-shot'\)/);
   assert.match(css, /\.detail-hero\.has-shot \.hero-back \{ filter: blur\(7px\)/);
 });
+
+test('a refresh keeps every picked platform, not just the first (so a whole family stays selected)', () => {
+  assert.match(read('public/app.js'), /const NAV_FIELDS = \['platform', 'extraPlatforms', 'q',/);
+});

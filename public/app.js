@@ -39,7 +39,7 @@ const state = {
  * sessionStorage: survives reload, not a new tab/browser; cleared on sign-in and sign-out. */
 let activeSettingsModule = null; // which Settings tile is open (declared early: saveNav reads it)
 const NAV_KEY = 'gamesauce_nav';
-const NAV_FIELDS = ['platform', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
+const NAV_FIELDS = ['platform', 'extraPlatforms', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
   'missing', 'hidden', 'orphan', 'locked', 'unmatched', 'datStatus', 'cover', 'matched', 'incl'];
 function saveNav() {
   try {

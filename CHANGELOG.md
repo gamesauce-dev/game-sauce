@@ -194,6 +194,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **Refreshing the page kept only the first picked platform.** With a whole family (or several platforms) selected, a refresh brought back just one platform, so the family chip showed a dashed "part" outline and the list shrank (Nintendo, 16 games, became Game Boy, 2). The whole selection now survives a refresh.
 - **Library heading dot with several platforms picked** now uses the family's colour (Nintendo red), not the first platform's (Game Boy's olive).
 - **Modern: the pin, previous / next and close controls in the details window sit a little lower**, clear of the top bar.
 - **Modern: a pinned details window no longer follows you to other pages.** It stays beside the games in the Library, but Home, Collections, Sources and the rest release it (the pin itself is remembered, so it is back when you open a game in the Library). Opening a collection can no longer end up replacing a pinned game.
