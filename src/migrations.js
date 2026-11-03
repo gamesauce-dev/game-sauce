@@ -393,3 +393,13 @@ db.exec(`CREATE TABLE IF NOT EXISTS family_colours (
   colour TEXT NOT NULL
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '25') ON CONFLICT(key) DO UPDATE SET value = '25'").run();
+
+/* ── v26: platform logos. An admin can upload a picture per platform (nothing is supplied by the system). Kept in the database, like
+   profile pictures, so a backup carries them; a separate table so the big picture never rides along with the platform list. */
+db.exec(`CREATE TABLE IF NOT EXISTS platform_logos (
+  slug    TEXT PRIMARY KEY,
+  data    BLOB NOT NULL,
+  type    TEXT NOT NULL,
+  updated INTEGER NOT NULL
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '26') ON CONFLICT(key) DO UPDATE SET value = '26'").run();

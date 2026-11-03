@@ -356,6 +356,8 @@ shows while you hold, and no other button is intercepted, so the game never lose
 
 **Platform families (admin).** The groups in the platform chips, the Platforms list and the pickers (Arcade, Nintendo, NEC / SNK...) come from each platform's **Family** field. In Settings > System setup > Platforms, **Rename** on a family heading renames it for all its platforms at once (naming an existing family merges the two); the Family box in Add and Edit suggests the existing names. A family is only a label for grouping: it does not affect metadata lookups, which use the platform's slug and provider numbers. Each family also has a **colour** (the swatch beside its name; **Reset colour** returns the default) that tints its chip in the Modern Library; the platform chips use each platform's own colour from its Edit form. Colours that could not be seen on both the dark and light themes are refused.
 
+**Platform logos (admin).** In Settings > System setup > Platforms > Edit, **Choose logo** adds your own picture to a platform (JPEG, PNG, WebP or SVG, up to 512 KB); **Remove logo** takes it away. game-sauce supplies no logos: use official ones or your own artwork as you see fit. When one platform is chosen in the Library, its logo shows beside the platform name above the grid, in a fixed-size box: the picture is fitted inside it and never stretched, so a large or oddly shaped logo cannot push the layout around. An SVG must be a plain drawing (no scripts or links to other files).
+
 ## 17. Tips and limits
 
 - **Play-only accounts** (set per person under User accounts → Screen) see only games that can be played in the browser, with no downloads, Add ROMs or admin pages. An admin can preview this from the avatar menu (Preview play-only).

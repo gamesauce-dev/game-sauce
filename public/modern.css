@@ -396,3 +396,8 @@ body.ui-modern .chip[style*="--chip-c"] small { color: var(--text); opacity: .72
 html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"] { background: color-mix(in srgb, var(--chip-c) 12%, #ffffff); }
 html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"].on, html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 28%, #ffffff); }
 body.ui-modern .chip.plat .plat-ico { display: none; }
+
+/* Platform logo beside the platform name above the grid: the box has a fixed size, so the heading never changes height. */
+body.ui-modern .lib-heading .lib-logo { width: 5.5rem; height: 2.2rem; }
+body.ui-modern .lib-logo { background: transparent; }
+body.ui-modern .logo-edit .lib-logo { border: 1px dashed var(--line-2); border-radius: 0.5rem; padding: 0.2rem; }

@@ -406,6 +406,8 @@ function renderLibHeading() {
   const p = (window.__platformsCache || []).find((x) => x.slug === state.platform);
   const cache = window.__platformsCache || [];
   const picked = [state.platform, ...(state.extraPlatforms || [])];
+  // One platform picked and it has a logo: show it in a fixed-size box, so the heading never changes height or width with the picture.
+  const logoOf = picked.length === 1 && p?.logo_v ? `<span class="lib-logo"><img src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="" onerror="this.remove()" /></span>` : '';
   const fam = cache.find((x) => x.slug === picked[0])?.family;
   const famAll = fam ? cache.filter((x) => x.count > 0 && x.family === fam).map((x) => x.slug) : [];
   const wholeFam = picked.length > 1 && famAll.length === picked.length && famAll.every((s) => picked.includes(s));
@@ -413,7 +415,7 @@ function renderLibHeading() {
   const name = wholeFam ? `${fam} (all platforms)` : names.length > 3 ? `${names.length} platforms` : names.join(' + ');
   box.classList.remove('hidden');
   box.innerHTML = `
-    <span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>
+    ${logoOf || `<span class="lib-dot" style="background:${esc(p?.accent || 'var(--accent)')}"></span>`}
     <h2>${esc(name)}</h2>
     <span class="lib-total">${esc(total)}</span>
     <button class="btn btn-sm btn-ghost lib-clear" id="lib-clear-platform" title="Show every platform again">✕ All platforms</button>`;
@@ -3094,6 +3096,13 @@ async function loadPlatformAdmin() {
       <label class="field"><span>ScreenScraper id</span><input data-pf="screenscraper_id" value="${p.screenscraper_id ?? ''}" /></label>
       <label class="field"><span>TheGamesDB id</span><input data-pf="tgdb_id" value="${p.tgdb_id ?? ''}" /></label>
       <label class="field"><span>Accent colour</span><input data-pf="accent" value="${esc(p.accent || '')}" /></label>
+      <div class="field" style="grid-column:1/-1"><span>Logo <span class="note">(optional: your own picture, shown beside the platform name in the Library. JPEG, PNG, WebP or SVG, up to 512 KB. The system supplies none.)</span></span>
+        <div class="logo-edit" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="lib-logo" data-logo-box>${p.logo_v ? `<img src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="" />` : '<i class="note">none</i>'}</span>
+          <label class="btn btn-sm" data-logo-pick title="Choose a logo picture">Choose logo<input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,.svg" data-logo-file hidden /></label>
+          <button type="button" class="btn btn-sm btn-ghost" data-logo-remove ${p.logo_v ? '' : 'hidden'} title="Remove this platform's logo">Remove logo</button>
+        </div>
+      </div>
       <div class="field" style="grid-column:1/-1"><span>Icon</span>
         <div class="icon-pick" data-iconpick>${PLATFORM_ICON_TYPES.map((t) => `<button type="button" class="icon-opt${iconTypeFor(p) === t.id ? ' is-on' : ''}" data-icon="${t.id}" title="${esc(t.label)}" aria-label="${esc(t.label)}">${platformIconSvg({ ...p, icon: t.id }, 22)}<small>${esc(t.label)}</small></button>`).join('')}</div>
         <input type="hidden" data-pf="icon" value="${esc(p.icon || '')}" />
@@ -3106,6 +3115,22 @@ async function loadPlatformAdmin() {
       host.querySelectorAll('[data-icon]').forEach((x) => x.classList.toggle('is-on', x === b));
       host.querySelector('[data-pf="icon"]').value = b.dataset.icon;
     }));
+    // Logo: uploads at once (it is not part of the Save button), with the server's reason if it is refused.
+    const logoFile = host.querySelector('[data-logo-file]'), logoBox = host.querySelector('[data-logo-box]'), logoRm = host.querySelector('[data-logo-remove]');
+    logoFile?.addEventListener('change', async () => {
+      const f = logoFile.files?.[0]; if (!f) return;
+      const fd = new FormData(); fd.append('logo', f);
+      try {
+        const j = await api(`/platforms/${encodeURIComponent(slug)}/logo`, { method: 'POST', body: fd });
+        logoBox.innerHTML = `<img src="/api/platforms/${encodeURIComponent(slug)}/logo?v=${j.logo_v}" alt="" />`; logoRm.hidden = false;
+        toast('Logo saved'); loadPlatforms();
+      } catch (err) { toast(err.message, true); }
+      logoFile.value = '';
+    });
+    logoRm?.addEventListener('click', async () => {
+      try { await api(`/platforms/${encodeURIComponent(slug)}/logo`, { method: 'DELETE' }); logoBox.innerHTML = '<i class="note">none</i>'; logoRm.hidden = true; toast('Logo removed'); loadPlatforms(); }
+      catch (err) { toast(err.message, true); }
+    });
     host.querySelector('[data-pact="save"]').onclick = async () => {
       const body = {};
       host.querySelectorAll('[data-pf]').forEach((inp) => { body[inp.dataset.pf] = inp.value.trim(); });

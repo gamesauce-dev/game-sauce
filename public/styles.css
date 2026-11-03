@@ -1625,3 +1625,7 @@ body.play-only #empty .empty-add-text { display: none; }
 
 .fam-colour { width: 2rem; height: 1.6rem; padding: 0; border: 1px solid var(--line, rgba(255,255,255,.2)); border-radius: 6px; background: transparent; cursor: pointer; vertical-align: middle; }
 .fam-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+/* Platform logo: a fixed box, so any picture fits inside it (contain) and the layout never moves. */
+.lib-logo { display: inline-flex; align-items: center; justify-content: center; width: 5.5rem; height: 2.2rem; flex: 0 0 auto; overflow: hidden; }
+.lib-logo img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }

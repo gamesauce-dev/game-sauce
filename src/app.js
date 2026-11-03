@@ -2,6 +2,8 @@ import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
 import { usable, FAMILY_DEFAULTS } from './lib/colours.js';
+import multer from 'multer';
+import { sniffLogo, MAX_LOGO_BYTES, LOGO_HEADERS } from './lib/logos.js';
 import express from 'express';
 import db from './db.js';
 // Side-effect import: forward-compatible schema migrations (sources, source paths,
@@ -174,6 +176,7 @@ export function createApp() {
         SELECT p.*, COUNT(r.id) AS count,
                COUNT(CASE WHEN ${playableSql()} AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
                COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
+        , (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
       `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' }))
@@ -228,9 +231,38 @@ export function createApp() {
   api.get('/platforms/all', requireAdmin, (req, res) => {
     const fc = familyColourMap();
     res.json({
-      items: db.prepare('SELECT * FROM platforms ORDER BY family COLLATE NOCASE, name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' })),
+      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280' })),
       defaults: FAMILY_DEFAULTS
     });
+  });
+
+  // ── Platform logos (admin uploads; anyone signed in can see them) ──
+  const logoUpload = multer({ limits: { fileSize: MAX_LOGO_BYTES } });
+  api.get('/platforms/:slug/logo', requireAuth, (req, res) => {
+    const row = db.prepare('SELECT data, type FROM platform_logos WHERE slug = ?').get(String(req.params.slug || '').toLowerCase());
+    if (!row) return res.status(404).end();
+    res.set(LOGO_HEADERS(row.type)).send(row.data);
+  });
+  api.post('/platforms/:slug/logo', requireAdmin, (req, res) => {
+    logoUpload.single('logo')(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That logo is over 512 KB' : err.message });
+      const slug = String(req.params.slug || '').toLowerCase();
+      if (!db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(slug)) return res.status(404).json({ error: 'Unknown platform' });
+      if (!req.file) return res.status(400).json({ error: 'Choose a picture first' });
+      const kind = sniffLogo(req.file.buffer);
+      if (!kind) return res.status(400).json({ error: 'That file is not a JPEG, PNG, WebP or SVG picture' });
+      if (kind.error) return res.status(400).json({ error: kind.error });
+      const v = Date.now();
+      db.prepare('INSERT INTO platform_logos (slug, data, type, updated) VALUES (?, ?, ?, ?) ON CONFLICT(slug) DO UPDATE SET data = excluded.data, type = excluded.type, updated = excluded.updated').run(slug, req.file.buffer, kind.type, v);
+      req.auditDetail = { platform: slug, type: kind.type, bytes: req.file.buffer.length };
+      res.json({ slug, logo_v: v, type: kind.type });
+    });
+  });
+  api.delete('/platforms/:slug/logo', requireAdmin, (req, res) => {
+    const slug = String(req.params.slug || '').toLowerCase();
+    db.prepare('DELETE FROM platform_logos WHERE slug = ?').run(slug);
+    req.auditDetail = { platform: slug, removed: true };
+    res.json({ slug, logo_v: null });
   });
 
   // Set (or, with an empty colour, reset) a family's colour. Refused when it could not be seen on both themes.
@@ -328,6 +360,7 @@ export function createApp() {
       return res.status(409).json({ error: `Platform still has ${inUse} ROM(s); pass ?reassign=other to move them to Other first`, roms: inUse });
     }
     const txn = db.transaction(() => {
+      db.prepare('DELETE FROM platform_logos WHERE slug = ?').run(slug);
       if (inUse > 0) {
         db.prepare(`UPDATE roms SET platform_id = (SELECT id FROM platforms WHERE slug = 'other') WHERE platform_id = (SELECT id FROM platforms WHERE slug = ?)`).run(slug);
       }
