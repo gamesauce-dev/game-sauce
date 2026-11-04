@@ -768,3 +768,12 @@ test('Digital: an Installed chip beside Favourites', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(app, /data-dg-installed/); assert.match(app, /params\.set\('installed', '1'\)/);
 });
+
+test('Welcome tour: an optional Steam step after the picture card, for everyone', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  const cards = app.slice(app.indexOf('function welcomeCards(isAdmin)'), app.indexOf('function startWelcome'));
+  const ids = [...cards.matchAll(/\{ id: '([a-z]+)'/g)].map((m) => m[1]);
+  assert.deepEqual(ids.slice(0, 5), ['hello', 'password', 'picture', 'steam', 'providers']);
+  assert.match(app, /steam: wireSteamCard/); assert.match(app, /function wireSteamCard\(\)/);
+  assert.match(app, /api\('\/digital\/steam\/sync', \{ method: 'POST' \}\);\s*form\.key\.value = ''/);
+});

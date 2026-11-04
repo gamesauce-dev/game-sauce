@@ -5171,7 +5171,19 @@ function welcomeCards(isAdmin) {
             <input type="file" id="wz-pic-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
             <span class="hint" id="wz-pic-msg"></span>
           </div>
-        </div>` }
+        </div>` },
+    { id: 'steam', title: 'Show your Steam games (optional)', body: () => `
+        <p>If you use Steam, your own library can appear on the <b>Digital</b> page with your hours played. Only you see it, and nothing changes on Steam. You can skip this and do it later in Settings &rarr; My account &rarr; Steam.</p>
+        <ol class="note dg-steps">
+          <li>Get a Web API key at <b>steamcommunity.com/dev/apikey</b> (any domain name will do, e.g. <i>localhost</i>).</li>
+          <li>Your 17-digit Steam ID (steamid.io shows it), or paste your <b>steamcommunity.com/profiles/&hellip;</b> link.</li>
+          <li>In Steam: Profile &rarr; Edit profile &rarr; Privacy settings &rarr; <b>Game details</b> set to <b>Public</b>.</li>
+        </ol>
+        <form class="edit-form" id="wz-steam" autocomplete="off">
+          <label class="field"><span>Steam ID or profile link</span><input type="text" name="steam_id" placeholder="76561197960287930" required /></label>
+          <label class="field"><span>Web API key</span><input type="password" name="key" placeholder="32 letters and numbers" autocomplete="new-password" required /></label>
+          <div class="wz-row"><button class="btn btn-primary" type="submit">Save and fetch my games</button><span class="hint" id="wz-steam-msg"></span></div>
+        </form>` }
   ];
   if (isAdmin) {
     cards.push(
@@ -5260,7 +5272,7 @@ function paintWelcome() {
   $('#wz-back').classList.toggle('hidden', WELCOME.step === 0);
   $('#wz-skip').classList.toggle('hidden', last);
   $('#wz-next').textContent = last ? 'Finish' : (WELCOME.step === 0 ? 'Start →' : 'Next →');
-  const wire = { password: wirePasswordCard, picture: wirePictureCard, providers: wireProvidersCard, launchbox: wireLaunchBoxCard, source: wireSourceCard }[card.id];
+  const wire = { password: wirePasswordCard, picture: wirePictureCard, steam: wireSteamCard, providers: wireProvidersCard, launchbox: wireLaunchBoxCard, source: wireSourceCard }[card.id];
   if (wire) wire();
 }
 
@@ -5284,6 +5296,22 @@ function wirePasswordCard() {
       if (res?.token) sessionStorage.setItem('gamesauce_token', res.token); // the old sign-in was replaced
       form.reset();
       msg.textContent = '✓ Password changed.';
+    } catch (err) { msg.textContent = ''; toast(err.message, true); }
+    finally { wzBusy(false); }
+  };
+}
+
+function wireSteamCard() {
+  const form = $('#wz-steam'), msg = $('#wz-steam-msg');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    wzSaying(msg, 'Saving…'); wzBusy(true);
+    try {
+      await api('/digital/steam', { method: 'PUT', body: JSON.stringify({ steam_id: form.steam_id.value, key: form.key.value }) });
+      wzSaying(msg, 'Fetching your games…');
+      const r = await api('/digital/steam/sync', { method: 'POST' });
+      form.key.value = '';
+      msg.textContent = `✓ ${r.count.toLocaleString()} games found. They are on the Digital page.`;
     } catch (err) { msg.textContent = ''; toast(err.message, true); }
     finally { wzBusy(false); }
   };
