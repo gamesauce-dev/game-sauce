@@ -178,7 +178,8 @@ test('chip row: a family selects the whole family (All goes off), a platform the
   assert.match(js, /g\.scrollTop = 0;\s*\n\s*await ctx\.loadLibrary\(\);/, 'scroll resets before loading a different list');
   assert.match(js, /requestAnimationFrame\(\(\) => \{ g\.scrollTop = 0; \}\)/, 'and again once the new tiles are drawn');
   assert.match(app, /wholeFam \? `\$\{fam\} \(all platforms\)`/, 'the heading names a whole family');
-  assert.match(css, /\.chip\.on\.part \{[^}]*dashed/);
+  assert.doesNotMatch(css, /\.chip(?:\[style\*="--chip-c"\])?\.on\.part \{[^}]*dashed/, 'a part-selected family is not dashed');
+  assert.doesNotMatch(css, /\.chip\.on\.part \{ box-shadow: none/, 'and it keeps the selected glow');
 });
 
 test('medium windows (snapped to half a screen): the library tools drop to their own line instead of overlapping the switches', () => {

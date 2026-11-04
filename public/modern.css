@@ -174,7 +174,7 @@ body.ui-modern .drawer-pin.is-on svg { transform: rotate(0); }
 body.ui-modern .drawer-pin.is-on svg path { fill: currentColor; fill-opacity: .25; }
 body.ui-modern .drawer-scrim { top: var(--mb-h, 50px); }
 body.ui-modern .chip.open:not(.on) { color: var(--text); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-body.ui-modern .chip.on.part { background: transparent; border-style: dashed; }
+body.ui-modern .chip.on.part { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 
 /* ── Icons in place of words (the icon files are wired up by modern.js; the words stay as the tooltip) ── */
 body.ui-modern [data-mi] { font-size: 0; line-height: 0; letter-spacing: 0; }
@@ -394,7 +394,7 @@ body.ui-modern .chip[style*="--chip-c"] { font-weight: 700; height: 2.1rem; bord
 body.ui-modern .chip[style*="--chip-c"]:hover { background: color-mix(in srgb, var(--chip-c) 28%, var(--panel)); border-color: var(--chip-c); color: var(--text); box-shadow: 0 0 0 1px var(--chip-c), 0 0 14px color-mix(in srgb, var(--chip-c) 60%, transparent); }
 body.ui-modern .chip[style*="--chip-c"].on, body.ui-modern .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 40%, var(--panel)); border-color: var(--chip-c); color: var(--text); }
 /* Partly selected family (only some of its platforms picked): dashed edge, lighter wash. */
-body.ui-modern .chip[style*="--chip-c"].on.part { background: color-mix(in srgb, var(--chip-c) 20%, var(--panel)); border-style: dashed; border-color: var(--chip-c); }
+body.ui-modern .chip[style*="--chip-c"].on.part { background: color-mix(in srgb, var(--chip-c) 32%, var(--panel)); border-color: var(--chip-c); }
 body.ui-modern .chip[style*="--chip-c"]:focus-visible { box-shadow: 0 0 0 2px var(--chip-c), 0 0 12px color-mix(in srgb, var(--chip-c) 55%, transparent); outline: none; }
 body.ui-modern .chip[style*="--chip-c"] small { color: var(--text); opacity: .72; font-weight: 600; }
 html[data-theme="light"] body.ui-modern .chip[style*="--chip-c"] { background: color-mix(in srgb, var(--chip-c) 12%, #ffffff); }
@@ -562,7 +562,7 @@ body.ui-modern .logo-edit .policy-row span { display: inline; }
 /* Every chip (All included) has the same rounded-square shape; a selected chip keeps a soft glow so it reads as "on" at a glance. */
 body.ui-modern .chip.on { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent); }
 body.ui-modern .chip[style*="--chip-c"].on, body.ui-modern .chip[style*="--chip-c"].open { box-shadow: 0 0 0 1px var(--chip-c), 0 0 12px color-mix(in srgb, var(--chip-c) 50%, transparent); }
-body.ui-modern .chip.on.part { box-shadow: none; }
+/* A family with only some of its platforms picked glows like any selected chip (it used to be dashed with no glow). */
 
 /* Home search: a platform list, the search box and a go button, in one row above Continue playing. */
 body.ui-modern .mh-search { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.9rem; }
