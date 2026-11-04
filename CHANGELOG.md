@@ -16,6 +16,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Idle timeout**: browser-only sessions sign out after 2 hours without activity (`GAMESAUCE_IDLE_MINUTES`); it can be enabled for persistent sessions too (`GAMESAUCE_IDLE_MINUTES_PERSISTENT`). Existing sessions stay persistent.
 
 ### Added
+- **Home search (Modern).** A search box with a platform list (every platform that has games, with its count) sits above Continue playing. Enter, or the arrow, opens the Library with that search and platform applied; Reset clears them as usual. On a phone the platform list takes its own line.
 - **Fold the platform and source lists.** In Settings > Platforms and in Sources, each family heading has a chevron (or click the family name) that hides or shows that family's rows. The folded families are remembered in this browser.
 - **Cover downloads are checked when they arrive.** A downloaded picture must really be an image (JPEG, PNG, WebP or GIF, judged by its bytes, not its label) and must read back from disk at the size that arrived; an error page sent as a picture, an empty body or a short write is retried like a busy server and never saved. An empty leftover file in the media cache is downloaded again instead of trusted. The check works on data already in memory, so it adds no noticeable time.
 - **System health: "Cover pictures".** Counts the games whose cover is recorded but whose picture file is missing, with a **Repair** button (marks them as having no cover so Fetch missing covers downloads them again).

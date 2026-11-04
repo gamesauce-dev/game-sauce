@@ -680,3 +680,11 @@ test('Settings > Platforms and Sources can be folded by family, and the choice i
   assert.match(app, /localStorage\.setItem\(key, JSON\.stringify\(\[\.\.\.folded\]\)\)/);
   assert.match(css, /\.fold-hidden \{ display: none !important; \}/);
 });
+
+test('Modern Home: a search box with a platform list sits above Continue playing and opens the Library with the results', () => {
+  const js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8');
+  assert.ok(js.indexOf('id="mh-search"') > 0 && js.indexOf('id="mh-search"') < js.indexOf('class="strips mh-strips"'), 'above the strips');
+  assert.match(js, /id="mh-plat"/); assert.match(js, /function submitHomeSearch\(\)/); assert.match(js, /Object\.assign\(st, \{ platform: plat, extraPlatforms: \[\], q: text \}\)/);
+  assert.match(js, /go\('library'\);\s*ctx\.loadLibrary/);
+  assert.match(css, /body\.ui-modern \.mh-search \{ display: flex;/);
+});

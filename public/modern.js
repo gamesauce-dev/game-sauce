@@ -175,17 +175,51 @@ function hideHome() { $('#modern-home')?.classList.add('hidden'); }
 /** Home: the ticker, Continue playing and Recently added. The game grid is cleared (Library shows it). */
 async function renderHome() {
   const host = $('#modern-home'); if (!host) return;
+  const hi = { search: await icon('search'), 'arrow-right': await icon('arrow-right') };
   host.innerHTML = `
+    <form class="mh-search" id="mh-search" role="search" autocomplete="off">
+      <select id="mh-plat" aria-label="Platform to search" title="Search one platform, or all"><option value="all">All platforms</option></select>
+      <label class="mh-q">${hi.search}<input id="mh-q" type="search" placeholder="Search your games" aria-label="Search your games" autocomplete="off" /></label>
+      <button type="submit" class="mb-btn" id="mh-go" title="Search" aria-label="Search">${hi['arrow-right']}</button>
+    </form>
     <div class="strips mh-strips">
       <div class="strip" data-strip="played"><button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span></button><div class="recent-row" id="mh-played"></div></div>
       <div class="strip" data-strip="recent"><button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span></button><div class="recent-row" id="mh-recent"></div></div>
     </div>`;
   ctx.applyStrips?.(host, false);
+  fillHomePlatforms();
+  $('#mh-search')?.addEventListener('submit', (e) => { e.preventDefault(); submitHomeSearch(); });
   try {
     const [stats, played] = await Promise.all([api('/stats'), api('/roms/recently-played?limit=24').catch(() => ({ items: [] }))]);
     fillRow('#mh-recent', stats.recent || []);
     fillRow('#mh-played', played.items || [], 'Nothing played yet');
   } catch { /* the home page degrades to empty rows */ }
+}
+
+/** The Home search box's platform list: every platform that has games, with its count (same list the Library chips use). */
+async function fillHomePlatforms() {
+  const sel = $('#mh-plat'); if (!sel) return;
+  try {
+    const items = (await api('/platforms')).items.filter((p) => p.count > 0);
+    const by = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
+    items.sort((a, b) => by(a.family || '', b.family || '') || by(a.name, b.name));
+    const fams = [...new Set(items.map((p) => p.family || 'Others'))];
+    const esc2 = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    sel.innerHTML = '<option value="all">All platforms</option>' + fams.map((f) => `<optgroup label="${esc2(f)}">${items.filter((p) => (p.family || 'Others') === f).map((p) => `<option value="${esc2(p.slug)}">${esc2(p.name)} (${p.count.toLocaleString()})</option>`).join('')}</optgroup>`).join('');
+  } catch { /* the box still searches everything */ }
+}
+
+/** Search from Home: set the Library's search text and platform, then show the Library with the results. */
+function submitHomeSearch() {
+  const text = ($('#mh-q')?.value || '').trim(), plat = $('#mh-plat')?.value || 'all';
+  const st = ctx.state();
+  Object.assign(st, { platform: plat, extraPlatforms: [], q: text });
+  const real = document.querySelector('#search'); if (real) real.value = text;
+  const tq = $('#tl-q'); if (tq) tq.value = text;
+  go('library');
+  ctx.loadLibrary?.();
+  ctx.loadPlatforms?.();
+  window.dispatchEvent(new Event('gs:filters'));
 }
 
 function fillRow(sel, items, empty = '') {
