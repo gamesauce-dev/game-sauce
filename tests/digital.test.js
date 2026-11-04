@@ -120,7 +120,7 @@ test('marks: favourite, hidden and play are per person, survive a refresh, and R
   assert.deepEqual((await call('/api/digital/games?favourites=1')).body.items.map((g) => g.name), ['Half-Life 2']);
   assert.deepEqual((await call('/api/digital/games?hidden=only')).body.items.map((g) => g.name), ['Portal']);
   assert.equal((await call('/api/digital/games?hidden=show')).body.items.length, 3);
-  assert.deepEqual((await call('/api/digital')).body.counts, { total: 3, visible: 2, favourites: 1, hidden: 1 });
+  assert.deepEqual((await call('/api/digital')).body.counts, { total: 3, visible: 2, favourites: 1, installed: 1, hidden: 1 });
   // a refresh replaces the list but keeps the marks
   await steam.syncSteam(adminId, good);
   l = (await call('/api/digital/games?hidden=show')).body.items;
@@ -187,5 +187,19 @@ test('search matches genres and developers from the cached store details; letter
   assert.deepEqual((await call('/api/digital/games?letter=A')).body.items.map((g) => g.name), ['Alpha Quest', 'Another One']);
   assert.deepEqual((await call('/api/digital/games?letter=%23')).body.items.map((g) => g.name), ['7 Days']);
   assert.equal((await call('/api/digital/games?letter=A')).body.letters.A, 2, 'counts stay those of the whole filtered list');
+  await call('/api/digital/steam', { method: 'DELETE' });
+});
+
+test('Installed filter: only games with the play switch on, counted for the chip', async () => {
+  const adminId = db.prepare("SELECT id FROM users WHERE username = 'dadmin'").get().id;
+  await call('/api/digital/steam', { method: 'PUT', body: { steam_id: ID, key: KEY } });
+  await steam.syncSteam(adminId, async () => ({ ok: true, status: 200, json: async () => ({ response: { games: [
+    { appid: 11, name: 'One', playtime_forever: 1 }, { appid: 12, name: 'Two', playtime_forever: 1 }, { appid: 13, name: 'Three', playtime_forever: 1 } ] } }) }));
+  const mark = (id, field, value) => call(`/api/digital/games/steam/${id}/mark`, { method: 'PUT', body: { field, value } });
+  await mark(11, 'play', true); await mark(12, 'play', true); await mark(12, 'hidden', true);
+  assert.deepEqual((await call('/api/digital/games?installed=1')).body.items.map((g) => g.name), ['One'], 'a hidden game is not listed unless Show hidden');
+  assert.deepEqual((await call('/api/digital/games?installed=1&hidden=show')).body.items.map((g) => g.name), ['One', 'Two']);
+  assert.equal((await call('/api/digital')).body.counts.installed, 1);
+  assert.equal((await call('/api/digital/games')).body.items.length, 2, 'without the chip everything visible is listed');
   await call('/api/digital/steam', { method: 'DELETE' });
 });

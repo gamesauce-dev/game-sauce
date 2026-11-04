@@ -763,3 +763,8 @@ test('Digital tiles: heart and hide icons appear on hover like the Library, hidd
   assert.doesNotMatch(css, /\.dg-card \.card-fav, \.dg-card \.card-hide \{ opacity: 1; \}/);
   assert.match(css, /\.dg-card\.is-hidden \.card-hide \{ opacity: 1; \}/);
 });
+
+test('Digital: an Installed chip beside Favourites', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /data-dg-installed/); assert.match(app, /params\.set\('installed', '1'\)/);
+});

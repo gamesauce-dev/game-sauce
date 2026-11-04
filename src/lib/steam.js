@@ -92,7 +92,7 @@ export function setMark(userId, store, appId, field, value) {
 
 /** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id.
  *  Hidden games stay out unless asked for (hidden: 'show' adds them, 'only' lists only them); favourites: true lists only favourites. */
-export function listGames(userId, { store = '', q = '', sort = 'name', favourites = false, hidden = '' } = {}) {
+export function listGames(userId, { store = '', q = '', sort = 'name', favourites = false, installed = false, hidden = '' } = {}) {
   const where = ['g.user_id = ?']; const args = [userId];
   if (store) { where.push('g.store = ?'); args.push(store); }
   if (q) {
@@ -103,6 +103,7 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
     args.push(like, '%"' + String(q).replace(/[\\%_"]/g, (c) => c === '"' ? '' : '\\' + c) + '%');
   }
   if (favourites) where.push('COALESCE(m.favourite, 0) = 1');
+  if (installed) where.push('COALESCE(m.play, 0) = 1');   // "installed" = the play button was switched on for it
   if (hidden === 'only') where.push('COALESCE(m.hidden, 0) = 1');
   else if (hidden !== 'show') where.push('COALESCE(m.hidden, 0) = 0');
   const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : 'g.name COLLATE NOCASE';
@@ -125,10 +126,11 @@ export function countGames(userId) {
   const r = db.prepare(`SELECT COUNT(*) AS total,
       SUM(CASE WHEN COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS visible,
       SUM(CASE WHEN COALESCE(m.favourite, 0) = 1 AND COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS favourites,
+      SUM(CASE WHEN COALESCE(m.play, 0) = 1 AND COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS installed,
       SUM(CASE WHEN COALESCE(m.hidden, 0) = 1 THEN 1 ELSE 0 END) AS hidden
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
     WHERE g.user_id = ?`).get(userId);
-  return { total: r.total || 0, visible: r.visible || 0, favourites: r.favourites || 0, hidden: r.hidden || 0 };
+  return { total: r.total || 0, visible: r.visible || 0, favourites: r.favourites || 0, installed: r.installed || 0, hidden: r.hidden || 0 };
 }
 
 /* ───────── store details (public; no key needed) ───────── */

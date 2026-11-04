@@ -3275,7 +3275,7 @@ async function loadPlatformAdmin() {
 
 /* ─────────────────────────── Digital (Steam): each person's own owned games ─────────────────────────── */
 
-const dg = { store: '', sort: 'name', q: '', fav: false, hidden: false, density: 'comfortable', letter: '' };
+const dg = { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, density: 'comfortable', letter: '' };
 /* Previous / next inside the Digital list: the tiles in the order shown now (hidden games only when Show hidden is on). */
 const dgIds = () => [...document.querySelectorAll('#dg-grid .dg-card')].map((c) => c.dataset.dgApp);
 function syncDigitalNav() {
@@ -3300,7 +3300,7 @@ function paintDigitalLetters(counts) {
   box.innerHTML = on ? DG_LETTERS.map((l) => `<button type="button" class="az-l${dg.letter === l ? ' on' : ''}" data-dg-letter="${l}"${(counts || {})[l] ? '' : ' disabled'} title="${(counts || {})[l] ? l + ': ' + counts[l].toLocaleString() + ' games' : 'No games under ' + l}">${l}</button>`).join('') : '';
   $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density));
 }
-function resetDigital() { Object.assign(dg, { store: '', sort: 'name', q: '', fav: false, hidden: false, letter: '' }); const q = $('#dg-q'); if (q) q.value = ''; const s = $('#dg-sort'); if (s) s.value = 'name'; }
+function resetDigital() { Object.assign(dg, { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, letter: '' }); const q = $('#dg-q'); if (q) q.value = ''; const s = $('#dg-sort'); if (s) s.value = 'name'; }
 let dgTimer;
 
 async function loadDigital() {
@@ -3315,6 +3315,7 @@ async function loadDigital() {
   $('#dg-chips').innerHTML = info.stores.length
     ? chips.map((c) => `<button type="button" class="chip${dg.store === c.store ? ' on' : ''}" data-dg-store="${esc(c.store)}">${esc(c.label)}${c.n != null ? ` <small>${c.n.toLocaleString()}</small>` : ''}</button>`).join('')
       + `<button type="button" class="chip${dg.fav ? ' on' : ''}" data-dg-fav title="Only your favourites">Favourites <small>${cn.favourites.toLocaleString()}</small></button>`
+      + `<button type="button" class="chip${dg.installed ? ' on' : ''}" data-dg-installed title="Only the games you switched the play button on for (installed on this PC)">Installed <small>${(cn.installed || 0).toLocaleString()}</small></button>`
       + `<button type="button" class="chip${dg.hidden ? ' on' : ''}" data-dg-hidden title="Also show the games you hid">Show hidden <small>${cn.hidden.toLocaleString()}</small></button>`
     : '';
   if (!connected) {
@@ -3325,14 +3326,14 @@ async function loadDigital() {
     return;
   }
   msg.innerHTML = info.steam.last_error ? `<div class="dg-warn">${esc(info.steam.last_error)}</div>` : '';
-  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.hidden) params.set('hidden', 'show'); if (dg.letter) params.set('letter', dg.letter);
+  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.installed) params.set('installed', '1'); if (dg.hidden) params.set('hidden', 'show'); if (dg.letter) params.set('letter', dg.letter);
   const { items, total, total_hours, letters } = await api('/digital/games?' + params);
   const asOf = info.steam.last_sync ? new Date(info.steam.last_sync.replace(' ', 'T') + 'Z') : null;
   $('#dg-total').textContent = total ? `${total.toLocaleString()} games · ${total_hours.toLocaleString()} h played${asOf ? ' · hours as of ' + asOf.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' ' + asOf.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}` : '';
   $('#dg-total').title = 'Hours played and last played are as of the last time you pressed Refresh (or Fetch my games). Press it again to update them.';
   paintDigitalLetters(letters);
   if (!total) {
-    grid.innerHTML = (dg.q || dg.fav) ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
+    grid.innerHTML = (dg.q || dg.fav || dg.installed) ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
     return;
   }
   grid.innerHTML = items.map((g) => {
@@ -3362,6 +3363,7 @@ document.addEventListener('click', async (e) => {
   if (dn) { dg.density = dn.dataset.dgDensity; $('#dg-grid')?.classList.toggle('compact', dg.density === 'compact'); $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density)); return; }
   if (e.target.closest('#dg-top')) { $('#dg-grid')?.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (e.target.closest('[data-dg-fav]')) { dg.fav = !dg.fav; dg.letter = ''; loadDigital(); return; }
+  if (e.target.closest('[data-dg-installed]')) { dg.installed = !dg.installed; dg.letter = ''; loadDigital(); return; }
   if (e.target.closest('[data-dg-hidden]')) { dg.hidden = !dg.hidden; dg.letter = ''; loadDigital(); return; }
   const tile = e.target.closest('.dg-card');
   if (tile && !e.target.closest('[data-dg-mark], .dg-launch')) { openDigitalDetail(tile.dataset.dgStoreOf, tile.dataset.dgApp); return; }

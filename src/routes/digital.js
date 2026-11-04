@@ -15,7 +15,7 @@ router.get('/games', (req, res) => {
   const store = ['steam'].includes(String(req.query.store || '')) ? String(req.query.store) : '';
   const sort = ['name', 'hours', 'recent'].includes(String(req.query.sort || '')) ? String(req.query.sort) : 'name';
   const hidden = ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : '';
-  const base = { store, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', hidden };
+  const base = { store, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', installed: req.query.installed === '1', hidden };
   const all = listGames(me(req), base);
   // How many games sit under each letter (# for names that start with a digit or symbol), of the list as filtered so far.
   const bucket = (n) => { const c = String(n).trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
