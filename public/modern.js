@@ -137,7 +137,13 @@ function onBarClick(e) {
   if (e.target.closest('[data-acct="account"]')) { closeMenu(); go('settings'); setTimeout(() => ctx.openAccount?.(), 60); return; }
   // Only the bar's own buttons: <body> also carries data-mview (the current page), and closest() would find it for every click.
   const nav = e.target.closest('[data-mview]');
-  if (nav && e.currentTarget.contains(nav)) { e.preventDefault(); go(nav.dataset.mview); return; }
+  if (nav && e.currentTarget.contains(nav)) {
+    e.preventDefault();
+    const v = nav.dataset.mview;
+    // Choosing Home or Library means "start fresh": the search box, platform picks and every filter are cleared first. (Other pages keep theirs.)
+    if (v === 'home' || v === 'library') { chipFamily = null; ctx.resetDigital?.(); ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
+    go(v); return;
+  }
   if (e.target.closest('#mb-theme')) { applyTheme(theme() === 'light' ? 'dark' : 'light'); return; }
   if (e.target.closest('#mb-gui')) { setUiMode('classic'); return; }
   if (e.target.closest('#mb-signout')) { closeMenu(); $('#logout')?.click(); }
@@ -400,7 +406,7 @@ export function renderChips() {
       <button class="chip${picked.size === 0 ? ' on' : ''}" data-chip-all title="All platforms">All <small>${total.toLocaleString()}</small></button>
       ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" style="--chip-c:${esc(famColour(f))}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
     </div>
-    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" style="--chip-c:${esc(/^#[0-9a-f]{6}$/i.test(p.accent || '') ? p.accent : (p.family_colour || '#6b7280'))}" title="${esc(p.name)}${picked.has(p.slug) ? ' (click to remove)' : ''}"><span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" style="--chip-c:${esc(/^#[0-9a-f]{6}$/i.test(p.accent || '') ? p.accent : (p.family_colour || '#6b7280'))}" title="${esc(p.name)}: click to ${picked.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
 }
 
 async function chipChanged() {

@@ -95,7 +95,13 @@ export function setMark(userId, store, appId, field, value) {
 export function listGames(userId, { store = '', q = '', sort = 'name', favourites = false, hidden = '' } = {}) {
   const where = ['g.user_id = ?']; const args = [userId];
   if (store) { where.push('g.store = ?'); args.push(store); }
-  if (q) { where.push("g.name LIKE ? ESCAPE '\\'"); args.push('%' + String(q).replace(/[\\%_]/g, (c) => '\\' + c) + '%'); }
+  if (q) {
+    // The words match the name, and also the genres and developer Steam gave (from the cached store details; a game whose details have not been
+    // fetched yet matches by name only). "action" finds Action games; "valve" finds Valve's.
+    const like = '%' + String(q).replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+    where.push("(g.name LIKE ? ESCAPE '\\' OR EXISTS (SELECT 1 FROM digital_details d WHERE d.store = g.store AND d.app_id = g.app_id AND d.found = 1 AND (d.json LIKE ? ESCAPE '\\')))");
+    args.push(like, '%"' + String(q).replace(/[\\%_"]/g, (c) => c === '"' ? '' : '\\' + c) + '%');
+  }
   if (favourites) where.push('COALESCE(m.favourite, 0) = 1');
   if (hidden === 'only') where.push('COALESCE(m.hidden, 0) = 1');
   else if (hidden !== 'show') where.push('COALESCE(m.hidden, 0) = 0');

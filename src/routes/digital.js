@@ -15,8 +15,14 @@ router.get('/games', (req, res) => {
   const store = ['steam'].includes(String(req.query.store || '')) ? String(req.query.store) : '';
   const sort = ['name', 'hours', 'recent'].includes(String(req.query.sort || '')) ? String(req.query.sort) : 'name';
   const hidden = ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : '';
-  const items = listGames(me(req), { store, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', hidden });
-  res.json({ items, total: items.length, total_hours: Math.round(items.reduce((s, g) => s + g.minutes, 0) / 6) / 10 });
+  const base = { store, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', hidden };
+  const all = listGames(me(req), base);
+  // How many games sit under each letter (# for names that start with a digit or symbol), of the list as filtered so far.
+  const bucket = (n) => { const c = String(n).trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
+  const letters = {}; for (const g of all) letters[bucket(g.name)] = (letters[bucket(g.name)] || 0) + 1;
+  const letter = String(req.query.letter || '').toUpperCase();
+  const items = /^[A-Z#]$/.test(letter) ? all.filter((g) => bucket(g.name) === letter) : all;
+  res.json({ items, total: items.length, total_hours: Math.round(items.reduce((s, g) => s + g.minutes, 0) / 6) / 10, letters });
 });
 
 // One mark on one game: { field: 'favourite' | 'hidden' | 'play', value: true | false }. Private to the person; a refresh keeps them.

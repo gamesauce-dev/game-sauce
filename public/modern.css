@@ -583,3 +583,13 @@ body.ui-modern .dg-badge .dg-badge-ico { display: block; width: 1.05rem; height:
  * the row and was cut off completely. Inside the header it opens upward, over the cover, and stays inside the window. */
 body.ui-modern .detail-hero .more-menu { top: auto; bottom: calc(100% + 0.5rem); left: auto; right: -0.2rem; max-width: min(19rem, calc(100vw - 2.4rem)); z-index: 40; }
 body.ui-modern .detail-hero > .detail-actions { position: relative; z-index: 5; }
+
+/* Modern: the Digital toolbar's icon buttons use the same icons as the Library's. */
+body.ui-modern .dg-az .mb-btn::before { content: ''; width: 1.25rem; height: 1.25rem; background: currentColor; -webkit-mask: var(--dg-ic) center / contain no-repeat; mask: var(--dg-ic) center / contain no-repeat; }
+body.ui-modern .dg-az [data-dg-density="comfortable"] { --dg-ic: url(/modern/icons/grid.svg); }
+body.ui-modern .dg-az [data-dg-density="compact"] { --dg-ic: url(/modern/icons/grid-condensed.svg); }
+body.ui-modern .dg-az #dg-top { --dg-ic: url(/modern/icons/back-to-top.svg); }
+body.ui-modern .dg-az .az-l { font-size: 1.05rem; color: var(--muted); opacity: 1; }
+body.ui-modern .dg-az .az-l:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
+body.ui-modern .dg-az .az-l.on { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+body.ui-modern .dg-az { border-bottom-color: var(--line); }

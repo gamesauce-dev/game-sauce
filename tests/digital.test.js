@@ -167,3 +167,25 @@ test('store details: reduced to plain fields, cached, shared, a missing page is 
   assert.equal((await call('/api/digital/games/steam/424242')).status, 404, 'not in your list');
   await call('/api/digital/steam', { method: 'DELETE' });
 });
+
+test('search matches genres and developers from the cached store details; letters are counted and filterable', async () => {
+  const adminId = db.prepare("SELECT id FROM users WHERE username = 'dadmin'").get().id;
+  await call('/api/digital/steam', { method: 'PUT', body: { steam_id: ID, key: KEY } });
+  await steam.syncSteam(adminId, async () => ({ ok: true, status: 200, json: async () => ({ response: { games: [
+    { appid: 1, name: 'Alpha Quest', playtime_forever: 60 }, { appid: 2, name: 'Beta Strike', playtime_forever: 0 }, { appid: 3, name: '7 Days', playtime_forever: 5 }, { appid: 4, name: 'Another One', playtime_forever: 1 } ] } }) }));
+  db.prepare("INSERT OR REPLACE INTO digital_details (store, app_id, json, found) VALUES ('steam', '1', ?, 1)").run(JSON.stringify({ genres: ['RPG', 'Action'], developers: ['Valve'] }));
+  db.prepare("INSERT OR REPLACE INTO digital_details (store, app_id, json, found) VALUES ('steam', '2', ?, 1)").run(JSON.stringify({ genres: ['Shooter'], developers: ['Other Studio'] }));
+  const names = async (q) => (await call('/api/digital/games?q=' + encodeURIComponent(q))).body.items.map((g) => g.name);
+  assert.deepEqual(await names('rpg'), ['Alpha Quest'], 'a genre finds the game');
+  assert.deepEqual(await names('shooter'), ['Beta Strike']);
+  assert.deepEqual(await names('valve'), ['Alpha Quest'], 'a developer too');
+  assert.deepEqual(await names('beta'), ['Beta Strike'], 'the name still works');
+  assert.deepEqual(await names('nothing-like-this'), []);
+  assert.deepEqual(await names('100%'), [], 'a percent sign is just text');
+  const r = (await call('/api/digital/games')).body;
+  assert.deepEqual(r.letters, { A: 2, B: 1, '#': 1 }, 'digits go under #');
+  assert.deepEqual((await call('/api/digital/games?letter=A')).body.items.map((g) => g.name), ['Alpha Quest', 'Another One']);
+  assert.deepEqual((await call('/api/digital/games?letter=%23')).body.items.map((g) => g.name), ['7 Days']);
+  assert.equal((await call('/api/digital/games?letter=A')).body.letters.A, 2, 'counts stay those of the whole filtered list');
+  await call('/api/digital/steam', { method: 'DELETE' });
+});

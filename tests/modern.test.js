@@ -712,8 +712,10 @@ test('the new logo files: square badge for icon uses, wide logo on the sign-in c
   assert.match(read('public/index.html'), /class="brand-logo auth-logo" src="\/logo-wide\.svg"/);
 });
 
-test('the Digital view is a scroll area like the other pages', () => {
-  assert.match(fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8'), /#view-emulators, #view-digital \{ overflow-y: auto;/);
+test('the Digital grid is the scroll area (like the Library), so its scrollbar sits inside the content', () => {
+  const css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+  assert.match(css, /#view-digital \{ overflow: hidden; \}/);
+  assert.match(css, /\.dg-grid \{ flex: 1 1 auto; min-height: 0; overflow-y: auto;/);
 });
 
 test('Modern details header: the More menu opens upward so the header cannot clip it', () => {
@@ -736,4 +738,15 @@ test('Steam details window: opened from a tile, trimmed actions, cover fallback'
   const body = app.slice(app.indexOf('async function openDigitalDetail'), app.indexOf('async function initSteamPanel'));
   for (const gone of ['download', 'data-act="delete"', 'data-act="refresh"', 'data-act="keep"', 'more-btn', 'identify-q']) assert.ok(!body.includes(gone), gone + ' is not offered for a Steam game');
   assert.match(app, /data-fb="\$\{esc\(g\.cover_fallback_url/);
+});
+
+test('Digital: prev/next, A-Z, grid size, back to top; Home/Library reset; chip hover says turn on / off', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.match(app, /function stepDigital\(dir\)/); assert.match(app, /function syncDigitalNav\(\)/);
+  assert.match(app, /state\.openRomId == null && state\.openDigital/);
+  assert.match(html, /id="dg-letters"/); assert.match(html, /data-dg-density="compact"/); assert.match(html, /id="dg-top"/);
+  assert.match(js, /click to \$\{picked\.has\(p\.slug\) && !wholeNow \? 'turn off' : 'turn on'\}/);
+  assert.doesNotMatch(js, /\(click to remove\)/);
+  assert.match(js, /if \(v === 'home' \|\| v === 'library'\) \{ chipFamily = null; ctx\.resetDigital\?\.\(\);/);
+  assert.match(app, /modern\.initModern\(\{ closeDrawer, resetDigital,/);
 });

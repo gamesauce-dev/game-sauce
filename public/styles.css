@@ -118,7 +118,7 @@ button { cursor: pointer; }
 
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .view { display: flex; flex-direction: column; min-height: 0; flex: 1; padding: 1.4286rem 1.7143rem 0; }
-#view-collections, #view-upload, #view-sources, #view-settings, #view-account, #view-emulators, #view-digital { overflow-y: auto; scrollbar-gutter: stable; padding-bottom: 1.7143rem; }
+#view-collections, #view-upload, #view-sources, #view-settings, #view-account, #view-emulators { overflow-y: auto; scrollbar-gutter: stable; padding-bottom: 1.7143rem; }
 #browse-source.is-on { border-color: var(--accent); color: var(--text); }
 #browse-source { white-space: nowrap; }
 
@@ -1674,3 +1674,22 @@ body.play-only #empty .empty-add-text { display: none; }
 /* The Steam details window: its wide header picture is a backdrop only, so a missing screenshot never leaves a gap. */
 .dg-detail-cover { aspect-ratio: 2 / 3; }
 .dg-card { cursor: pointer; }
+
+/* Digital scrolls inside its grid (like the Library), so the scrollbar sits within the content and not against the details window. */
+#view-digital { overflow: hidden; }
+.dg-grid { flex: 1 1 auto; min-height: 0; overflow-y: auto; align-content: start; padding: 0.4rem 0.4rem 1.7143rem; }
+.dg-grid.compact { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0.7rem; }
+.dg-az { display: flex; align-items: center; gap: 0.8rem; margin: 0 0 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--line, rgba(127,127,127,.3)); flex: 0 0 auto; }
+.dg-az .az-letters { display: flex; flex-wrap: wrap; gap: 0.1rem; min-width: 0; flex: 1 1 auto; }
+.dg-az .az-letters.off { visibility: hidden; }
+.dg-az .az-l { min-width: 1.7rem; height: 1.9rem; padding: 0 0.2rem; background: transparent; border: 0; border-radius: 0.4rem; color: inherit; opacity: .8; font-weight: 600; cursor: pointer; }
+.dg-az .az-l:disabled { opacity: .28; cursor: default; }
+.dg-az .az-l.on { opacity: 1; background: rgba(124,92,255,.22); }
+.dg-az .az-right { display: flex; align-items: center; gap: 0.2rem; margin-left: auto; }
+.dg-az .mb-btn { width: 2.1rem; height: 2.1rem; display: grid; place-items: center; border-radius: 0.55rem; border: 1px solid var(--line, rgba(127,127,127,.3)); background: transparent; color: inherit; cursor: pointer; }
+.dg-az .mb-btn.is-on { background: rgba(124,92,255,.22); }
+
+/* Classic has no icon set: plain glyphs on the Digital toolbar buttons (Modern replaces them with the Library's icons). */
+.dg-az [data-dg-density="comfortable"]::before { content: '▦'; }
+.dg-az [data-dg-density="compact"]::before { content: '▩'; }
+.dg-az #dg-top::before { content: '↑'; }

@@ -987,6 +987,7 @@ function keyScroller() {
   const view = $$('.view').find((v) => !v.classList.contains('hidden'));
   if (!view) return null;
   if (view.id === 'view-library') return canScroll($('#grid')) ? $('#grid') : (canScroll(view) ? view : null);
+  if (view.id === 'view-digital') return canScroll($('#dg-grid')) ? $('#dg-grid') : (canScroll(view) ? view : null);
   return up(view.firstElementChild) && canScroll(view) ? view : (canScroll(view) ? view : null);
 }
 document.addEventListener('keydown', (e) => {
@@ -1282,7 +1283,8 @@ function closeDrawer() {
   $$('.card.nav-current').forEach((c) => c.classList.remove('nav-current'));
   $('#drawer').classList.add('hidden');
   $('#scrim').classList.add('hidden');
-  state.openRomId = null;
+  state.openRomId = null; state.openDigital = null;
+  $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current'));
   document.body.classList.remove('details-open');
 }
 
@@ -1320,6 +1322,7 @@ function updateDrawerNav(id) {
   if (tile) { tile.classList.add('nav-current'); tile.scrollIntoView({ block: 'nearest' }); }
 }
 async function stepDetail(dir) {
+  if (state.openRomId == null && state.openDigital && !$('#drawer').classList.contains('hidden')) return stepDigital(dir);
   const id = state.openRomId;
   if (id == null) return;
   let ids = navIds();
@@ -1338,7 +1341,7 @@ $('#drawer-next')?.addEventListener('click', () => stepDetail(1));
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-  if ($('#drawer')?.classList.contains('hidden') || state.openRomId == null) return;
+  if ($('#drawer')?.classList.contains('hidden') || (state.openRomId == null && !state.openDigital)) return;
   if (!$('#player-scrim')?.classList.contains('hidden')) return; // game is running: keys belong to it
   if ($('.modal-scrim:not(.hidden)')) return; // a dialog is open: leave the keys alone
   const t = e.target;
@@ -1371,7 +1374,7 @@ const ICON = {
 
 async function openDetail(id) {
   const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
-  state.openRomId = id;
+  state.openRomId = id; state.openDigital = null;
   // Per-user prefs (default match provider). Cached after first fetch; failure is harmless.
   if (!state.prefs) { try { state.prefs = await api('/prefs'); } catch { state.prefs = {}; } }
   const drawer = $('#drawer');
@@ -3272,7 +3275,32 @@ async function loadPlatformAdmin() {
 
 /* ─────────────────────────── Digital (Steam): each person's own owned games ─────────────────────────── */
 
-const dg = { store: '', sort: 'name', q: '', fav: false, hidden: false };
+const dg = { store: '', sort: 'name', q: '', fav: false, hidden: false, density: 'comfortable', letter: '' };
+/* Previous / next inside the Digital list: the tiles in the order shown now (hidden games only when Show hidden is on). */
+const dgIds = () => [...document.querySelectorAll('#dg-grid .dg-card')].map((c) => c.dataset.dgApp);
+function syncDigitalNav() {
+  const box = $('#drawer-nav'), cur = state.openDigital; if (!box || !cur) return;
+  const ids = dgIds(), i = ids.indexOf(cur.appId);
+  box.classList.toggle('hidden', i < 0 || ids.length < 2);
+  $('#drawer-prev').disabled = i <= 0; $('#drawer-next').disabled = i < 0 || i >= ids.length - 1;
+  $('#drawer-pos').textContent = i < 0 ? '' : `${i + 1} / ${ids.length}`;
+  $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current'));
+  const tile = $(`.dg-card[data-dg-app="${CSS.escape(cur.appId)}"]`); if (tile) { tile.classList.add('nav-current'); tile.scrollIntoView({ block: 'nearest' }); }
+}
+function stepDigital(dir) {
+  const cur = state.openDigital; if (!cur) return;
+  const ids = dgIds(), t = ids[ids.indexOf(cur.appId) + dir];
+  if (t != null) openDigitalDetail(cur.store, t);
+}
+const DG_LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+function paintDigitalLetters(counts) {
+  const box = $('#dg-letters'); if (!box) return;
+  const on = dg.sort === 'name';   // a letter only means something in name order
+  box.classList.toggle('off', !on);
+  box.innerHTML = on ? DG_LETTERS.map((l) => `<button type="button" class="az-l${dg.letter === l ? ' on' : ''}" data-dg-letter="${l}"${(counts || {})[l] ? '' : ' disabled'} title="${(counts || {})[l] ? l + ': ' + counts[l].toLocaleString() + ' games' : 'No games under ' + l}">${l}</button>`).join('') : '';
+  $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density));
+}
+function resetDigital() { Object.assign(dg, { store: '', sort: 'name', q: '', fav: false, hidden: false, letter: '' }); const q = $('#dg-q'); if (q) q.value = ''; const s = $('#dg-sort'); if (s) s.value = 'name'; }
 let dgTimer;
 
 async function loadDigital() {
@@ -3282,6 +3310,7 @@ async function loadDigital() {
   const connected = info.steam.connected;
   $('#dg-sync').classList.toggle('hidden', !connected);
   const cn = info.counts || { visible: 0, favourites: 0, hidden: 0 };
+  grid.classList.toggle('compact', dg.density === 'compact');
   const chips = [{ store: '', label: 'All', n: cn.visible }, ...info.stores.map((s) => ({ store: s.store, label: s.store === 'steam' ? 'Steam' : s.store }))];
   $('#dg-chips').innerHTML = info.stores.length
     ? chips.map((c) => `<button type="button" class="chip${dg.store === c.store ? ' on' : ''}" data-dg-store="${esc(c.store)}">${esc(c.label)}${c.n != null ? ` <small>${c.n.toLocaleString()}</small>` : ''}</button>`).join('')
@@ -3296,9 +3325,12 @@ async function loadDigital() {
     return;
   }
   msg.innerHTML = info.steam.last_error ? `<div class="dg-warn">${esc(info.steam.last_error)}</div>` : '';
-  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.hidden) params.set('hidden', 'show');
-  const { items, total, total_hours } = await api('/digital/games?' + params);
-  $('#dg-total').textContent = total ? `${total.toLocaleString()} games · ${total_hours.toLocaleString()} h played` : '';
+  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.hidden) params.set('hidden', 'show'); if (dg.letter) params.set('letter', dg.letter);
+  const { items, total, total_hours, letters } = await api('/digital/games?' + params);
+  const asOf = info.steam.last_sync ? new Date(info.steam.last_sync.replace(' ', 'T') + 'Z') : null;
+  $('#dg-total').textContent = total ? `${total.toLocaleString()} games · ${total_hours.toLocaleString()} h played${asOf ? ' · hours as of ' + asOf.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' ' + asOf.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}` : '';
+  $('#dg-total').title = 'Hours played and last played are as of the last time you pressed Refresh (or Fetch my games). Press it again to update them.';
+  paintDigitalLetters(letters);
   if (!total) {
     grid.innerHTML = (dg.q || dg.fav) ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
     return;
@@ -3324,14 +3356,19 @@ async function loadDigital() {
 document.addEventListener('click', async (e) => {
   const chip = e.target.closest('[data-dg-store]');
   if (chip) { dg.store = chip.dataset.dgStore; loadDigital(); return; }
-  if (e.target.closest('[data-dg-fav]')) { dg.fav = !dg.fav; loadDigital(); return; }
-  if (e.target.closest('[data-dg-hidden]')) { dg.hidden = !dg.hidden; loadDigital(); return; }
+  const lt = e.target.closest('[data-dg-letter]');
+  if (lt && !lt.disabled) { dg.letter = dg.letter === lt.dataset.dgLetter ? '' : lt.dataset.dgLetter; loadDigital(); return; }
+  const dn = e.target.closest('[data-dg-density]');
+  if (dn) { dg.density = dn.dataset.dgDensity; $('#dg-grid')?.classList.toggle('compact', dg.density === 'compact'); $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density)); return; }
+  if (e.target.closest('#dg-top')) { $('#dg-grid')?.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (e.target.closest('[data-dg-fav]')) { dg.fav = !dg.fav; dg.letter = ''; loadDigital(); return; }
+  if (e.target.closest('[data-dg-hidden]')) { dg.hidden = !dg.hidden; dg.letter = ''; loadDigital(); return; }
   const tile = e.target.closest('.dg-card');
   if (tile && !e.target.closest('[data-dg-mark], .dg-launch')) { openDigitalDetail(tile.dataset.dgStoreOf, tile.dataset.dgApp); return; }
   const mk = e.target.closest('[data-dg-mark]');
   if (mk) {
     e.preventDefault(); e.stopPropagation();
-    const card = mk.closest('.dg-card'), scroller = $('#view-digital'), keep = scroller?.scrollTop || 0;
+    const card = mk.closest('.dg-card'), scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0;
     try { await api(`/digital/games/${encodeURIComponent(card.dataset.dgStoreOf)}/${encodeURIComponent(card.dataset.dgApp)}/mark`, { method: 'PUT', body: JSON.stringify({ field: mk.dataset.dgMark, value: mk.dataset.value === '1' }) }); }
     catch (err) { toast(err.message, true); return; }
     await loadDigital(); if (scroller) scroller.scrollTop = keep;   // the list is redrawn; stay where you were
@@ -3344,19 +3381,20 @@ document.addEventListener('click', async (e) => {
     b.disabled = false; loadDigital();
   }
 });
-$('#dg-q')?.addEventListener('input', (e) => { clearTimeout(dgTimer); dgTimer = setTimeout(() => { dg.q = e.target.value.trim(); loadDigital(); }, 200); });
-$('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; loadDigital(); });
+$('#dg-q')?.addEventListener('input', (e) => { clearTimeout(dgTimer); dgTimer = setTimeout(() => { dg.q = e.target.value.trim(); dg.letter = ''; loadDigital(); }, 200); });
+$('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; dg.letter = ''; loadDigital(); });
 
 /* The details window for a Steam game: the library's window, trimmed to what applies (favourite, hide, play switch, a store link). There is
  * nothing to edit, download, refresh, lock or delete: the details come from Steam's public store page and are cached on the server. */
 async function openDigitalDetail(store, appId) {
   const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
   state.openRomId = null;
+  state.openDigital = { store, appId: String(appId) };
   const drawer = $('#drawer');
   drawer.classList.remove('hidden'); syncPin(); $('#scrim').classList.toggle('hidden', pinned());
-  $('#drawer-nav')?.classList.add('hidden');
   $('#drawer-body').innerHTML = '<div class="skel" style="height:300px"></div>';
   $('#drawer').scrollTop = 0;
+  syncDigitalNav();
   let r;
   try { r = await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}`); }
   catch (err) { if (myOpen !== state.detailToken) return; toast(err.message, true); return closeDrawer(); }
@@ -3366,7 +3404,7 @@ async function openDigitalDetail(store, appId) {
   const when = g.last_played ? new Date(g.last_played * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
   const rows = [
     ['Store', 'Steam'],
-    ['Hours played', g.hours ? `${g.hours.toLocaleString()} h` : 'not played yet'],
+    ['Hours played', (g.hours ? `${g.hours.toLocaleString()} h` : 'not played yet') + ' <span class="note">(as of your last fetch)</span>'],
     ['Last played', when],
     ['Developer', d?.developers?.length ? esc(d.developers.join(', ')) : '—'],
     ['Publisher', d?.publishers?.length ? esc(d.publishers.join(', ')) : '—'],
@@ -3403,7 +3441,7 @@ async function openDigitalDetail(store, appId) {
     const field = b.dataset.dgd, value = field === 'favourite' ? !g.favourite : field === 'play' ? !g.play : !g.hidden;
     try { await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}/mark`, { method: 'PUT', body: JSON.stringify({ field, value }) }); }
     catch (err) { toast(err.message, true); return; }
-    const scroller = $('#view-digital'), keep = scroller?.scrollTop || 0;
+    const scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0;
     openDigitalDetail(store, appId);
     if (state.view === 'digital') { await loadDigital(); if (scroller) scroller.scrollTop = keep; }
   }));
@@ -3937,7 +3975,7 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  modern.initModern({ closeDrawer, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
+  modern.initModern({ closeDrawer, resetDigital, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
   api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
