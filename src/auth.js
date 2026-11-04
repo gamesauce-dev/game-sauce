@@ -235,6 +235,9 @@ export function deleteUser(userId) {
     if (admins <= 1) throw Object.assign(new Error('Cannot delete the last admin'), { status: 409 });
   }
   purgeSaveFiles({ userId });
+  // Their Steam key and owned-games list go with them (stored per person, nothing shared).
+  db.prepare('DELETE FROM digital_games WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM digital_accounts WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 }
 

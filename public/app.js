@@ -275,6 +275,7 @@ function setView(view) {
   if (view === 'sources') loadSources();
   if (view === 'settings') loadSettings();
   if (view === 'emulators') loadEmulators();
+  if (view === 'digital') loadDigital();
 }
 
 document.addEventListener('click', (e) => {
@@ -3269,6 +3270,90 @@ async function loadPlatformAdmin() {
 
 /* ─────────────────────────── collections ─────────────────────────── */
 
+/* ─────────────────────────── Digital (Steam): each person's own owned games ─────────────────────────── */
+
+const dg = { store: '', sort: 'name', q: '' };
+let dgTimer;
+
+async function loadDigital() {
+  const msg = $('#dg-msg'), grid = $('#dg-grid');
+  let info;
+  try { info = await api('/digital'); } catch (err) { msg.textContent = err.message; return; }
+  const connected = info.steam.connected;
+  $('#dg-sync').classList.toggle('hidden', !connected);
+  const chips = [{ store: '', label: 'All' }, ...info.stores.map((s) => ({ store: s.store, label: s.store === 'steam' ? 'Steam' : s.store, n: s.count }))];
+  $('#dg-chips').innerHTML = info.stores.length ? chips.map((c) => `<button type="button" class="chip${dg.store === c.store ? ' on' : ''}" data-dg-store="${esc(c.store)}">${esc(c.label)}${c.n != null ? ` <small>${c.n.toLocaleString()}</small>` : ''}</button>`).join('') : '';
+  if (!connected) {
+    $('#dg-total').textContent = '';
+    grid.innerHTML = '';
+    msg.innerHTML = `<div class="empty"><h2>Connect your Steam library</h2><p>Add your Steam key and ID once, and the games you own appear here with your hours played. Only you can see them.</p><button class="btn btn-primary" id="dg-setup">Set up Steam</button></div>`;
+    $('#dg-setup').onclick = () => { setView('settings'); showSettingsModule('steam'); };
+    return;
+  }
+  msg.innerHTML = info.steam.last_error ? `<div class="dg-warn">${esc(info.steam.last_error)}</div>` : '';
+  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q);
+  const { items, total, total_hours } = await api('/digital/games?' + params);
+  $('#dg-total').textContent = total ? `${total.toLocaleString()} games · ${total_hours.toLocaleString()} h played` : '';
+  if (!total) {
+    grid.innerHTML = dg.q ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
+    return;
+  }
+  grid.innerHTML = items.map((g) => {
+    const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+    return `<div class="card dg-card" data-dg-app="${esc(g.app_id)}">
+      <div class="card-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)">
+        <div class="card-fallback">${esc(initials)}</div>
+        ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
+        <span class="card-badge" style="background:#1b2838cc">STEAM</span>
+        ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
+        <span class="dg-hours" title="Hours played">${g.hours ? g.hours.toLocaleString() + ' h' : 'unplayed'}</span>
+      </div>
+      <div class="card-title">${esc(g.name)}</div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('click', async (e) => {
+  const chip = e.target.closest('[data-dg-store]');
+  if (chip) { dg.store = chip.dataset.dgStore; loadDigital(); return; }
+  if (e.target.closest('#dg-sync')) {
+    const b = $('#dg-sync'); b.disabled = true;
+    try { const r = await api('/digital/steam/sync', { method: 'POST' }); toast(`${r.count.toLocaleString()} Steam games fetched`); }
+    catch (err) { toast(err.message, true); }
+    b.disabled = false; loadDigital();
+  }
+});
+$('#dg-q')?.addEventListener('input', (e) => { clearTimeout(dgTimer); dgTimer = setTimeout(() => { dg.q = e.target.value.trim(); loadDigital(); }, 200); });
+$('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; loadDigital(); });
+
+async function initSteamPanel() {
+  const status = $('#steam-status'), id = $('#steam-id'), key = $('#steam-key');
+  const paint = (s) => {
+    id.value = s.steam_id || '';
+    key.value = ''; key.placeholder = s.connected ? 'Saved (leave empty to keep it)' : '32 letters and numbers';
+    $('#steam-sync').classList.toggle('hidden', !s.connected); $('#steam-remove').classList.toggle('hidden', !s.connected);
+    status.textContent = s.connected
+      ? `Connected.${s.last_sync ? ` Last fetched ${s.last_sync} UTC (${s.games.toLocaleString()} games).` : ' Press Fetch my games.'}${s.last_error ? ' Problem: ' + s.last_error : ''}`
+      : 'Not connected.';
+  };
+  try { paint((await api('/digital')).steam); } catch (err) { status.textContent = err.message; }
+  $('#steam-form').onsubmit = async (e) => {
+    e.preventDefault();
+    try { paint(await api('/digital/steam', { method: 'PUT', body: JSON.stringify({ steam_id: id.value, key: key.value }) })); toast('Steam details saved'); }
+    catch (err) { toast(err.message, true); }
+  };
+  $('#steam-sync').onclick = async () => {
+    const b = $('#steam-sync'); b.disabled = true;
+    try { const r = await api('/digital/steam/sync', { method: 'POST' }); paint(r); toast(`${r.count.toLocaleString()} Steam games fetched`); }
+    catch (err) { toast(err.message, true); try { paint((await api('/digital')).steam); } catch { /* keep the message */ } }
+    b.disabled = false;
+  };
+  $('#steam-remove').onclick = async () => {
+    if (!(await confirmDialog({ title: 'Remove Steam?', body: 'This removes your Steam key and the games list from game-sauce. Nothing changes on Steam.', okLabel: 'Remove', danger: true }))) return;
+    try { paint(await api('/digital/steam', { method: 'DELETE' })); toast('Steam removed'); } catch (err) { toast(err.message, true); }
+  };
+}
+
 async function loadCollections() {
   const { items } = await api('/collections');
   const wrap = $('#collections');
@@ -3796,7 +3881,7 @@ function showApp(user, { restore = false } = {}) {
   const saved = restore ? readNav() : null;
   if (saved && $(`#view-${saved.view}`)) {
     for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
-    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings'].includes(saved.view)) saved.view = 'library';
+    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'digital'].includes(saved.view)) saved.view = 'library';
     if (playOnly && saved.view !== 'settings') saved.view = 'library'; // a play-only account lives on the Play screen
     if (state.sort) $('#sort').value = state.sort;
     $('#search').value = state.q || '';
@@ -3891,6 +3976,7 @@ $('#to-top')?.addEventListener('click', () => {
 const SETTINGS_MODULES = [
   { id: 'profile', label: 'Profile picture', mi: 'profile-pic', ico: '🖼', adminOnly: false },
   { id: 'welcome', label: 'Welcome tour', mi: 'welcome-tour', ico: '👋', adminOnly: false },
+  { id: 'steam', label: 'Steam', mi: 'game-console', ico: '🎮', adminOnly: false },
   { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
   { id: 'controller', label: 'Controller', mi: 'gamepad', ico: '🎮', adminOnly: false },
@@ -3911,7 +3997,7 @@ const SETTINGS_MODULES = [
 
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
-  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password', 'controller'] },
+  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'steam', 'password', 'controller'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
@@ -4209,6 +4295,7 @@ function showSettingsModule(id) {
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
   if (id === 'profile') initProfilePanel();
+  if (id === 'steam') initSteamPanel();
   if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
   if (id === 'names') initNamesPanel();
   if (id === 'health') loadHealth();

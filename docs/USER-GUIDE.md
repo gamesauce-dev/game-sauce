@@ -383,3 +383,14 @@ The CSV import reads every column the export writes, so you can edit titles, dev
 To bring in details and covers in one go, choose the CSV and add the zip from **Export covers** in the **Cover pictures (zip)** box of the same import. The CSV's `cover_file` column names the picture for each game, so the pictures do not have to be named after the games' files. One Preview shows both parts, and one Apply saves them.
 
 **Locked games.** A game locked with Keep (from the duplicate finder or the details window) cannot be deleted. To clear a batch of them, open the **Locked** filter, choose Select, Select all, then **Unlock**. They are then ordinary games and can be deleted. Admins only.
+
+## Digital: your Steam library
+
+Under **Settings → My account → Steam** each person can show the games they own on Steam, with their hours played, on the **Digital** page. Only you see your list.
+
+1. Get a Web API key at steamcommunity.com/dev/apikey (any domain name will do).
+2. Find your 17-digit Steam ID (steamid.io shows it) or copy your steamcommunity.com/profiles/... link.
+3. In Steam, set Profile → Edit profile → Privacy settings → **Game details** to **Public**. Without that Steam returns nothing.
+4. Paste both into game-sauce, press **Save**, then **Fetch my games**.
+
+The play button on a tile opens the game in Steam (`steam://rungameid/...`). That only works in a browser on a PC that has Steam installed, and the browser asks permission the first time. game-sauce never downloads or changes anything on Steam. **Remove** deletes your key and list from game-sauce.

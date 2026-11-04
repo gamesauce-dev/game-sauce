@@ -1638,3 +1638,18 @@ body.play-only #empty .empty-add-text { display: none; }
 .fold-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .fam-head .fam-name, .source-family { cursor: pointer; }
 .fold-hidden { display: none !important; }
+
+/* Digital (owned online games): the library's tiles, with a store badge, hours played and an "open in Steam" button. */
+.dg-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0 0 1rem; }
+.dg-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.dg-q { flex: 1 1 14rem; display: flex; }
+.dg-q input, .dg-bar select { height: 2.4rem; padding: 0 0.8rem; border-radius: 0.65rem; border: 1px solid var(--line, rgba(127,127,127,.35)); background: var(--panel, transparent); color: inherit; font: inherit; }
+.dg-q input { flex: 1; min-width: 0; }
+.dg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+.dg-card .card-title { padding: 0.5rem 0.2rem 0; font-size: 0.85rem; line-height: 1.25; min-height: 2.5em; }
+.dg-hours { position: absolute; left: 0.45rem; bottom: 0.45rem; padding: 0.12rem 0.45rem; border-radius: 0.4rem; background: rgba(0,0,0,.65); color: #fff; font-size: 0.72rem; }
+.dg-launch { text-decoration: none; display: flex; align-items: center; justify-content: center; }
+.dg-msg:empty { display: none; }
+.dg-warn { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border: 1px solid #c9a227; border-radius: 0.65rem; background: rgba(201,162,39,.12); }
+.dg-steps { margin: 0.4rem 0 0.9rem 1.2rem; line-height: 1.5; }
+.dg-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; grid-column: 1 / -1; }

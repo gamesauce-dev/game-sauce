@@ -82,6 +82,10 @@
       <button class="nav-item" data-view="upload">
         <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4.5"/><path d="M7 9l5-5 5 5"/><path d="M4.5 15v3.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V15"/></svg></span> Add ROMs
       </button>
+      <button class="nav-item" data-view="digital">
+        <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="3"/><path d="M7 10v4M5 12h4M16 11h.01M18 13h.01"/></svg></span>
+        <span>Digital</span>
+      </button>
       <button class="nav-item" data-view="emulators">
         <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.6 2.6 0 0 1-4.4 1.2L14 15.5h-4l-2.2 2.1a2.6 2.6 0 0 1-4.4-1.2l-.8-4A4.5 4.5 0 0 1 7 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.5" r=".7" fill="currentColor"/><circle cx="17.5" cy="12.5" r=".7" fill="currentColor"/></svg></span> Emulators
       </button>
@@ -288,6 +292,26 @@
         <h3>Welcome tour</h3>
         <p class="hint" style="margin-top:0">A short walk through the first things to set up: your password and picture (and, for an admin, game sources and the database).</p>
         <button class="btn btn-primary" id="welcome-again" type="button">Run the welcome tour again</button>
+      </div>
+
+      <div class="panel hidden" id="mod-steam">
+        <h3>Steam</h3>
+        <p class="note">Your own Steam library, shown on the Digital page. Only you see it. game-sauce reads the list of games you own and your hours played; it never launches, downloads or changes anything on Steam.</p>
+        <ol class="note dg-steps">
+          <li>Get a Web API key at <b>steamcommunity.com/dev/apikey</b> (any domain name will do, e.g. <i>localhost</i>).</li>
+          <li>Find your 17-digit Steam ID (steamid.io shows it), or paste your <b>steamcommunity.com/profiles/…</b> link.</li>
+          <li>In Steam: Profile → Edit profile → Privacy settings → set <b>Game details</b> to <b>Public</b>.</li>
+        </ol>
+        <form class="edit-form" id="steam-form" autocomplete="off">
+          <label class="field"><span>Steam ID or profile link</span><input type="text" name="steam_id" id="steam-id" placeholder="76561197960287930" required /></label>
+          <label class="field"><span>Web API key</span><input type="password" name="key" id="steam-key" placeholder="32 letters and numbers" autocomplete="new-password" /></label>
+          <div class="dg-actions">
+            <button class="btn btn-primary" type="submit" id="steam-save">Save</button>
+            <button class="btn" type="button" id="steam-sync">Fetch my games</button>
+            <button class="btn btn-danger" type="button" id="steam-remove">Remove</button>
+          </div>
+          <p class="note" id="steam-status"></p>
+        </form>
       </div>
 
       <div class="panel hidden" id="mod-password">
@@ -693,6 +717,22 @@
     </section>
 
     <!-- ───────────── emulators ───────────── -->
+    <!-- ───────────── digital (owned games from online stores; each person's own) ───────────── -->
+    <section class="view hidden" id="view-digital">
+      <header class="toolbar">
+        <h1 class="page-title">Digital</h1>
+        <span class="dg-total note" id="dg-total"></span>
+      </header>
+      <div class="dg-bar" id="dg-bar">
+        <nav class="dg-chips" id="dg-chips" aria-label="Stores"></nav>
+        <label class="dg-q"><input id="dg-q" type="search" placeholder="Search your digital games" autocomplete="off" aria-label="Search your digital games" /></label>
+        <select id="dg-sort" aria-label="Sort"><option value="name">Name</option><option value="hours">Most played</option><option value="recent">Recently played</option></select>
+        <button class="btn btn-sm" id="dg-sync" title="Fetch your Steam library again">Refresh</button>
+      </div>
+      <div id="dg-msg" class="dg-msg"></div>
+      <div id="dg-grid" class="dg-grid"></div>
+    </section>
+
     <section class="view hidden" id="view-emulators">
       <header class="toolbar">
         <h1 class="page-title">Emulators</h1>

@@ -420,3 +420,17 @@ for (const t of ['platform_logos', 'family_logos']) {
   if (!db.prepare(`PRAGMA table_info(${t})`).all().some((c) => c.name === 'plate')) db.exec(`ALTER TABLE ${t} ADD COLUMN plate INTEGER NOT NULL DEFAULT 0`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '28') ON CONFLICT(key) DO UPDATE SET value = '28'").run();
+
+/* ── v29: Digital (owned games from online stores), per person. Steam first. The key is stored encrypted (same scheme as provider keys). ── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS digital_accounts (
+    user_id INTEGER NOT NULL, store TEXT NOT NULL, steam_id TEXT, key_enc TEXT, last_sync TEXT, last_error TEXT,
+    PRIMARY KEY (user_id, store)
+  );
+  CREATE TABLE IF NOT EXISTS digital_games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, store TEXT NOT NULL, app_id TEXT NOT NULL, name TEXT NOT NULL,
+    minutes INTEGER NOT NULL DEFAULT 0, last_played INTEGER, img_icon TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_digital_user ON digital_games (user_id, store);
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '29') ON CONFLICT(key) DO UPDATE SET value = '29'").run();

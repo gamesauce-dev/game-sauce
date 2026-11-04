@@ -66,7 +66,7 @@ test('Modern is a separate layer: Classic files carry no Modern rules, and every
 test('the top bar uses the supplied icon set and lists the pages in order', () => {
   const js = read('public/modern.js');
   const order = [...js.matchAll(/\{ view: '([a-z]+)', icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['home', 'library', 'collections', 'sources', 'upload', 'emulators', 'settings']);
+  assert.deepEqual(order, ['home', 'library', 'collections', 'sources', 'upload', 'digital', 'emulators', 'settings']);
   assert.match(js, /view: 'emulators', icon: 'emulators-2'/);
   const names = [...js.matchAll(/icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
   for (const n of [...names, 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'pin', 'play']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `icon ${n}.svg is shipped`);
@@ -688,4 +688,12 @@ test('Modern Home: a search box with a platform list sits above Continue playing
   assert.match(js, /id="mh-plat"/); assert.match(js, /function submitHomeSearch\(\)/); assert.match(js, /Object\.assign\(st, \{ platform: plat, extraPlatforms: \[\], q: text \}\)/);
   assert.match(js, /go\('library'\);\s*ctx\.loadLibrary/);
   assert.match(css, /body\.ui-modern \.mh-search \{ display: flex;/);
+});
+
+test('Digital page: view, Steam panel, nav entries and launch link exist', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8');
+  assert.match(html, /id="view-digital"/); assert.match(html, /id="mod-steam"/); assert.match(html, /data-view="digital"/);
+  assert.match(js, /view: 'digital'/); assert.match(app, /async function loadDigital\(\)/); assert.match(app, /if \(view === 'digital'\) loadDigital\(\)/);
+  assert.match(app, /modules: \['profile', 'welcome', 'steam', 'password', 'controller'\]/);
+  assert.ok(!/dg-card[^`]*download/.test(app), 'no download on a digital tile');
 });
