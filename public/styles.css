@@ -1669,7 +1669,8 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-playsw svg { width: 1.1rem; height: 1.1rem; }
 .dg-playsw.on { color: #4ade80; border-color: #4ade80; }
 .dg-playsw:hover { color: #fff; }
-.dg-card .card-fav, .dg-card .card-hide { opacity: 1; }
+/* Like the Library: the heart and hide icons show on hover (and the heart stays on once favourited); a hidden game, seen only with Show hidden, keeps its Unhide icon showing. */
+.dg-card.is-hidden .card-hide { opacity: 1; }
 
 /* The Steam details window: its wide header picture is a backdrop only, so a missing screenshot never leaves a gap. */
 .dg-detail-cover { aspect-ratio: 2 / 3; }

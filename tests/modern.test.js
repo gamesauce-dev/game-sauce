@@ -757,3 +757,9 @@ test('playable-in-browser marker glows green like the Steam play switch; Digital
   assert.match(css, /\.card-cover \.card-play \{\s*display: grid;[^}]*color: #4ade80;[^}]*box-shadow: 0 0 0\.6rem rgba\(74, 222, 128/);
   assert.match(css, /\.dg-grid::-webkit-scrollbar-thumb \{ background: var\(--line-2\)/);
 });
+
+test('Digital tiles: heart and hide icons appear on hover like the Library, hidden games keep their Unhide icon', () => {
+  const css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+  assert.doesNotMatch(css, /\.dg-card \.card-fav, \.dg-card \.card-hide \{ opacity: 1; \}/);
+  assert.match(css, /\.dg-card\.is-hidden \.card-hide \{ opacity: 1; \}/);
+});
