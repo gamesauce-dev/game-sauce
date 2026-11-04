@@ -750,3 +750,10 @@ test('Digital: prev/next, A-Z, grid size, back to top; Home/Library reset; chip 
   assert.match(js, /if \(v === 'home' \|\| v === 'library'\) \{ chipFamily = null; ctx\.resetDigital\?\.\(\);/);
   assert.match(app, /modern\.initModern\(\{ closeDrawer, resetDigital,/);
 });
+
+test('playable-in-browser marker glows green like the Steam play switch; Digital grid shares the Library scrollbar', () => {
+  const css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8'), app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /<span class="card-play" title="Playable in the browser"/);
+  assert.match(css, /\.card-cover \.card-play \{\s*display: grid;[^}]*color: #4ade80;[^}]*box-shadow: 0 0 0\.6rem rgba\(74, 222, 128/);
+  assert.match(css, /\.dg-grid::-webkit-scrollbar-thumb \{ background: var\(--line-2\)/);
+});
