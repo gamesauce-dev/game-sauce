@@ -578,3 +578,8 @@ body.ui-modern .mh-search #mh-go { flex: 0 0 auto; width: 2.6rem; height: 2.6rem
 body.ui-modern .dg-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; padding: 0; border-radius: 50%; background: #1b2838; color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.25), 0 1px 4px rgba(0,0,0,.5); }
 body.ui-modern .dg-badge .dg-badge-txt { display: none; }
 body.ui-modern .dg-badge .dg-badge-ico { display: block; width: 1.05rem; height: 1.05rem; background: currentColor; -webkit-mask: url(/modern/icons/steam-badge.svg) center / contain no-repeat; mask: url(/modern/icons/steam-badge.svg) center / contain no-repeat; }
+
+/* The details header clips whatever spills past its bottom edge, and the icon row sits right on that edge: the More menu opened below
+ * the row and was cut off completely. Inside the header it opens upward, over the cover, and stays inside the window. */
+body.ui-modern .detail-hero .more-menu { top: auto; bottom: calc(100% + 0.5rem); left: auto; right: -0.2rem; max-width: min(19rem, calc(100vw - 2.4rem)); z-index: 40; }
+body.ui-modern .detail-hero > .detail-actions { position: relative; z-index: 5; }

@@ -715,3 +715,8 @@ test('the new logo files: square badge for icon uses, wide logo on the sign-in c
 test('the Digital view is a scroll area like the other pages', () => {
   assert.match(fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8'), /#view-emulators, #view-digital \{ overflow-y: auto;/);
 });
+
+test('Modern details header: the More menu opens upward so the header cannot clip it', () => {
+  const css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8');
+  assert.match(css, /body\.ui-modern \.detail-hero \.more-menu \{ top: auto; bottom: calc\(100% \+ 0\.5rem\);/);
+});

@@ -209,6 +209,7 @@ Highlights: the **Modern look** (icon bar, ticker, platform chips, pinned detail
 - **Game detail window:** the previous / next / count controls are squared green tiles centred above the cover, the cover is smaller, and the action buttons are now icon-only with a hover tip (download, play, favourite, collection, browser-play switch, hide, refresh metadata, upload cover, delete).
 
 ### Fixed
+- **The More menu in the Modern details window opens again.** The details header clips anything past its bottom edge and the icon row sits on that edge, so the menu was cut off completely. It now opens upward over the cover.
 - **The Digital page scrolls.** It had no scroll area, so a long Steam library could not be scrolled by wheel, scrollbar or Page Up/Down/Home/End. It now behaves like the other pages.
 - **A family chip glows when only some of its platforms are picked.** It used to turn dashed with no glow; now it has the same solid border and glow as any selected chip (in the family's colour).
 - **A shared cover picture is no longer deleted while another game still uses it.** Provider covers are cached by the picture's address, so games with the same art share one file; clearing covers, re-matching, deleting a game or giving it a custom cover used to delete that file even when other games still showed it, leaving them with a cover recorded and an empty tile. A cover file is now removed only when no other game uses it.
