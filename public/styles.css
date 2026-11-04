@@ -1662,3 +1662,11 @@ body.play-only #empty .empty-add-text { display: none; }
 .auth-card .auth-brand { flex-direction: column; justify-content: center; text-align: center; gap: 0.3rem; margin-bottom: 18px; }
 .auth-card .auth-logo { width: min(21rem, 100%); height: auto; flex: none; border-radius: 0; }
 .card-cover .card-play { padding: 0.12rem; box-sizing: border-box; }
+
+/* Digital tiles: a hidden game is dimmed (only seen with Show hidden), and the play switch sits in the bottom-right corner. */
+.dg-card.is-hidden { opacity: 0.55; }
+.dg-playsw { position: absolute; right: 0.45rem; bottom: 0.45rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center; padding: 0; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,.28); background: rgba(8,9,14,.78); color: #9aa3b5; cursor: pointer; }
+.dg-playsw svg { width: 1.1rem; height: 1.1rem; }
+.dg-playsw.on { color: #4ade80; border-color: #4ade80; }
+.dg-playsw:hover { color: #fff; }
+.dg-card .card-fav, .dg-card .card-hide { opacity: 1; }

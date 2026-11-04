@@ -720,3 +720,11 @@ test('Modern details header: the More menu opens upward so the header cannot cli
   const css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8');
   assert.match(css, /body\.ui-modern \.detail-hero \.more-menu \{ top: auto; bottom: calc\(100% \+ 0\.5rem\);/);
 });
+
+test('Digital tiles: heart, hide and play switch, Favourites and Show hidden chips, marks keep the scroll position', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /data-dg-mark="favourite"/); assert.match(app, /data-dg-mark="hidden"/); assert.match(app, /data-dg-mark="play"/);
+  assert.match(app, /data-dg-fav/); assert.match(app, /data-dg-hidden/); assert.match(app, /Show hidden/);
+  assert.match(app, /scroller\.scrollTop = keep/);
+  assert.match(app, /your favourites, hidden games and play-button choices/);
+});

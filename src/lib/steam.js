@@ -34,6 +34,7 @@ export function saveAccount(userId, steamId, key) {
 }
 
 export function removeAccount(userId) {
+  db.prepare("DELETE FROM digital_marks WHERE user_id = ? AND store = 'steam'").run(userId);
   db.prepare("DELETE FROM digital_games WHERE user_id = ? AND store = 'steam'").run(userId);
   db.prepare("DELETE FROM digital_accounts WHERE user_id = ? AND store = 'steam'").run(userId);
 }
@@ -78,18 +79,46 @@ function fail(userId, message) {
   throw Object.assign(new Error(message), { status: 502 });
 }
 
-/** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id. */
-export function listGames(userId, { store = '', q = '', sort = 'name' } = {}) {
-  const where = ['user_id = ?']; const args = [userId];
-  if (store) { where.push('store = ?'); args.push(store); }
-  if (q) { where.push('name LIKE ?'); args.push('%' + String(q).replace(/[%_]/g, (c) => '\\' + c) + '%'); }
-  where[where.length - 1] += q ? " ESCAPE '\\'" : '';
-  const order = sort === 'hours' ? 'minutes DESC, name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(last_played, 0) DESC, name COLLATE NOCASE' : 'name COLLATE NOCASE';
-  const rows = db.prepare(`SELECT store, app_id, name, minutes, last_played FROM digital_games WHERE ${where.join(' AND ')} ORDER BY ${order}`).all(...args);
+/** Set one mark on one game: field is 'favourite' | 'hidden' | 'play'. The game must be in this person's list. */
+export function setMark(userId, store, appId, field, value) {
+  if (!['favourite', 'hidden', 'play'].includes(field)) throw Object.assign(new Error('Unknown mark'), { status: 400 });
+  const own = db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (!own) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
+  db.prepare(`INSERT INTO digital_marks (user_id, store, app_id, ${field}) VALUES (?, ?, ?, ?)
+    ON CONFLICT(user_id, store, app_id) DO UPDATE SET ${field} = excluded.${field}`).run(userId, store, String(appId), value ? 1 : 0);
+  return db.prepare('SELECT favourite, hidden, play FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+}
+
+/** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id.
+ *  Hidden games stay out unless asked for (hidden: 'show' adds them, 'only' lists only them); favourites: true lists only favourites. */
+export function listGames(userId, { store = '', q = '', sort = 'name', favourites = false, hidden = '' } = {}) {
+  const where = ['g.user_id = ?']; const args = [userId];
+  if (store) { where.push('g.store = ?'); args.push(store); }
+  if (q) { where.push("g.name LIKE ? ESCAPE '\\'"); args.push('%' + String(q).replace(/[\\%_]/g, (c) => '\\' + c) + '%'); }
+  if (favourites) where.push('COALESCE(m.favourite, 0) = 1');
+  if (hidden === 'only') where.push('COALESCE(m.hidden, 0) = 1');
+  else if (hidden !== 'show') where.push('COALESCE(m.hidden, 0) = 0');
+  const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : 'g.name COLLATE NOCASE';
+  const rows = db.prepare(`SELECT g.store, g.app_id, g.name, g.minutes, g.last_played,
+      COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play
+    FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
+    WHERE ${where.join(' AND ')} ORDER BY ${order}`).all(...args);
   return rows.map((r) => ({
     ...r,
     hours: Math.round((r.minutes / 60) * 10) / 10,
     cover_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/library_600x900.jpg` : null,
-    launch_url: r.store === 'steam' ? `steam://rungameid/${r.app_id}` : null
+    // The launch link is only offered where the person switched "play" on for that game (not every game is installed).
+    launch_url: r.store === 'steam' && r.play ? `steam://rungameid/${r.app_id}` : null
   }));
+}
+
+/** Counts for the chips: everything visible, favourites, and hidden. */
+export function countGames(userId) {
+  const r = db.prepare(`SELECT COUNT(*) AS total,
+      SUM(CASE WHEN COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS visible,
+      SUM(CASE WHEN COALESCE(m.favourite, 0) = 1 AND COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS favourites,
+      SUM(CASE WHEN COALESCE(m.hidden, 0) = 1 THEN 1 ELSE 0 END) AS hidden
+    FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
+    WHERE g.user_id = ?`).get(userId);
+  return { total: r.total || 0, visible: r.visible || 0, favourites: r.favourites || 0, hidden: r.hidden || 0 };
 }

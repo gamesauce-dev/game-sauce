@@ -434,3 +434,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_digital_user ON digital_games (user_id, store);
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '29') ON CONFLICT(key) DO UPDATE SET value = '29'").run();
+
+/* ── v30: Digital marks (favourite / hidden / play button on), kept apart from the games list: a refresh replaces the list but keeps these. ── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS digital_marks (
+    user_id INTEGER NOT NULL, store TEXT NOT NULL, app_id TEXT NOT NULL,
+    favourite INTEGER NOT NULL DEFAULT 0, hidden INTEGER NOT NULL DEFAULT 0, play INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, store, app_id)
+  );
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '30') ON CONFLICT(key) DO UPDATE SET value = '30'").run();

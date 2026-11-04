@@ -3272,7 +3272,7 @@ async function loadPlatformAdmin() {
 
 /* ─────────────────────────── Digital (Steam): each person's own owned games ─────────────────────────── */
 
-const dg = { store: '', sort: 'name', q: '' };
+const dg = { store: '', sort: 'name', q: '', fav: false, hidden: false };
 let dgTimer;
 
 async function loadDigital() {
@@ -3281,8 +3281,13 @@ async function loadDigital() {
   try { info = await api('/digital'); } catch (err) { msg.textContent = err.message; return; }
   const connected = info.steam.connected;
   $('#dg-sync').classList.toggle('hidden', !connected);
-  const chips = [{ store: '', label: 'All' }, ...info.stores.map((s) => ({ store: s.store, label: s.store === 'steam' ? 'Steam' : s.store, n: s.count }))];
-  $('#dg-chips').innerHTML = info.stores.length ? chips.map((c) => `<button type="button" class="chip${dg.store === c.store ? ' on' : ''}" data-dg-store="${esc(c.store)}">${esc(c.label)}${c.n != null ? ` <small>${c.n.toLocaleString()}</small>` : ''}</button>`).join('') : '';
+  const cn = info.counts || { visible: 0, favourites: 0, hidden: 0 };
+  const chips = [{ store: '', label: 'All', n: cn.visible }, ...info.stores.map((s) => ({ store: s.store, label: s.store === 'steam' ? 'Steam' : s.store }))];
+  $('#dg-chips').innerHTML = info.stores.length
+    ? chips.map((c) => `<button type="button" class="chip${dg.store === c.store ? ' on' : ''}" data-dg-store="${esc(c.store)}">${esc(c.label)}${c.n != null ? ` <small>${c.n.toLocaleString()}</small>` : ''}</button>`).join('')
+      + `<button type="button" class="chip${dg.fav ? ' on' : ''}" data-dg-fav title="Only your favourites">Favourites <small>${cn.favourites.toLocaleString()}</small></button>`
+      + `<button type="button" class="chip${dg.hidden ? ' on' : ''}" data-dg-hidden title="Also show the games you hid">Show hidden <small>${cn.hidden.toLocaleString()}</small></button>`
+    : '';
   if (!connected) {
     $('#dg-total').textContent = '';
     grid.innerHTML = '';
@@ -3291,21 +3296,24 @@ async function loadDigital() {
     return;
   }
   msg.innerHTML = info.steam.last_error ? `<div class="dg-warn">${esc(info.steam.last_error)}</div>` : '';
-  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q);
+  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.hidden) params.set('hidden', 'show');
   const { items, total, total_hours } = await api('/digital/games?' + params);
   $('#dg-total').textContent = total ? `${total.toLocaleString()} games · ${total_hours.toLocaleString()} h played` : '';
   if (!total) {
-    grid.innerHTML = dg.q ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
+    grid.innerHTML = (dg.q || dg.fav) ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
     return;
   }
   grid.innerHTML = items.map((g) => {
     const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-    return `<div class="card dg-card" data-dg-app="${esc(g.app_id)}">
+    return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">
       <div class="card-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)">
         <div class="card-fallback">${esc(initials)}</div>
         ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
         <span class="card-badge dg-badge" data-store="steam" title="Steam" aria-label="Steam"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">STEAM</span></span>
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
+        <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
+        <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
+        <button type="button" class="dg-playsw ${g.play ? 'on' : ''}" data-dg-mark="play" data-value="${g.play ? 0 : 1}" tabindex="-1" title="${g.play ? 'Play button is on (click to turn it off)' : 'Play button is off: turn it on for games installed on this PC'}" aria-label="Play button ${g.play ? 'on' : 'off'}">${g.play ? ICON.gamepad : ICON.gamepadOff}</button>
         <span class="dg-hours" title="Hours played">${g.hours ? g.hours.toLocaleString() + ' h' : 'unplayed'}</span>
       </div>
       <div class="card-title">${esc(g.name)}</div>
@@ -3316,6 +3324,17 @@ async function loadDigital() {
 document.addEventListener('click', async (e) => {
   const chip = e.target.closest('[data-dg-store]');
   if (chip) { dg.store = chip.dataset.dgStore; loadDigital(); return; }
+  if (e.target.closest('[data-dg-fav]')) { dg.fav = !dg.fav; loadDigital(); return; }
+  if (e.target.closest('[data-dg-hidden]')) { dg.hidden = !dg.hidden; loadDigital(); return; }
+  const mk = e.target.closest('[data-dg-mark]');
+  if (mk) {
+    e.preventDefault(); e.stopPropagation();
+    const card = mk.closest('.dg-card'), scroller = $('#view-digital'), keep = scroller?.scrollTop || 0;
+    try { await api(`/digital/games/${encodeURIComponent(card.dataset.dgStoreOf)}/${encodeURIComponent(card.dataset.dgApp)}/mark`, { method: 'PUT', body: JSON.stringify({ field: mk.dataset.dgMark, value: mk.dataset.value === '1' }) }); }
+    catch (err) { toast(err.message, true); return; }
+    await loadDigital(); if (scroller) scroller.scrollTop = keep;   // the list is redrawn; stay where you were
+    return;
+  }
   if (e.target.closest('#dg-sync')) {
     const b = $('#dg-sync'); b.disabled = true;
     try { const r = await api('/digital/steam/sync', { method: 'POST' }); toast(`${r.count.toLocaleString()} Steam games fetched`); }
@@ -3349,7 +3368,7 @@ async function initSteamPanel() {
     b.disabled = false;
   };
   $('#steam-remove').onclick = async () => {
-    if (!(await confirmDialog({ title: 'Remove Steam?', body: 'This removes your Steam key and the games list from game-sauce. Nothing changes on Steam.', okLabel: 'Remove', danger: true }))) return;
+    if (!(await confirmDialog({ title: 'Remove Steam?', body: 'This removes your Steam key, your games list, and your favourites, hidden games and play-button choices from game-sauce. Nothing changes on Steam.', okLabel: 'Remove', danger: true }))) return;
     try { paint(await api('/digital/steam', { method: 'DELETE' })); toast('Steam removed'); } catch (err) { toast(err.message, true); }
   };
 }

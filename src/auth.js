@@ -236,6 +236,7 @@ export function deleteUser(userId) {
   }
   purgeSaveFiles({ userId });
   // Their Steam key and owned-games list go with them (stored per person, nothing shared).
+  db.prepare('DELETE FROM digital_marks WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_games WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_accounts WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);

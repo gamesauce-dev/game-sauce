@@ -64,7 +64,7 @@ test('sync: Steam answers are stored per person; private profile and refused key
   const list = (await call('/api/digital/games')).body;
   assert.equal(list.total, 2);
   const hl = list.items.find((g) => g.name === 'Half-Life 2');
-  assert.equal(hl.hours, 1.5); assert.equal(hl.launch_url, 'steam://rungameid/220'); assert.match(hl.cover_url, /steamstatic\.com\/steam\/apps\/220\//);
+  assert.equal(hl.hours, 1.5); assert.equal(hl.launch_url, null, 'no launch link until the play switch is on'); assert.match(hl.cover_url, /steamstatic\.com\/steam\/apps\/220\//);
   assert.equal((await call('/api/digital/games?sort=hours')).body.items[0].name, 'Half-Life 2');
   assert.equal((await call('/api/digital/games?q=portal')).body.items.length, 1);
   assert.equal((await call('/api/digital/games', { token: annTok })).body.total, 0, 'Ann sees none of the admin\'s games');
@@ -97,4 +97,39 @@ test('private to the person: another member has their own account; removing clea
 test('signed-out requests are refused', async () => {
   assert.equal((await fetch(base + '/api/digital')).status, 401);
   assert.equal((await fetch(base + '/api/digital/games')).status, 401);
+});
+
+test('marks: favourite, hidden and play are per person, survive a refresh, and Remove clears them', async () => {
+  const adminId = db.prepare("SELECT id FROM users WHERE username = 'dadmin'").get().id;
+  await call('/api/digital/steam', { method: 'PUT', body: { steam_id: ID, key: KEY } });
+  const good = async () => ({ ok: true, status: 200, json: async () => ({ response: { games: [
+    { appid: 220, name: 'Half-Life 2', playtime_forever: 90 }, { appid: 400, name: 'Portal', playtime_forever: 10 }, { appid: 620, name: 'Portal 2', playtime_forever: 0 } ] } }) });
+  await steam.syncSteam(adminId, good);
+  const mark = (appId, field, value, token) => call(`/api/digital/games/steam/${appId}/mark`, { method: 'PUT', body: { field, value }, token });
+  assert.equal((await mark(220, 'favourite', true)).status, 200);
+  assert.equal((await mark(400, 'hidden', true)).status, 200);
+  assert.equal((await mark(220, 'play', true)).status, 200);
+  assert.equal((await mark(999, 'favourite', true)).status, 404, 'a game that is not in your list');
+  assert.equal((await mark(220, 'nonsense', true)).status, 400);
+  await call('/api/auth/users', { method: 'POST', body: { username: 'bob', password: 'bob-password-12', role: 'user' } });
+  const bobTok = (await (await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'bob', password: 'bob-password-12' }) })).json()).token;
+  assert.equal((await mark(220, 'favourite', true, bobTok)).status, 404, 'another person cannot mark it (not in their list)');
+  let l = (await call('/api/digital/games')).body.items;
+  assert.deepEqual(l.map((g) => g.name), ['Half-Life 2', 'Portal 2'], 'hidden games are left out');
+  assert.equal(l[0].favourite, 1); assert.equal(l[0].launch_url, 'steam://rungameid/220'); assert.equal(l[1].launch_url, null);
+  assert.deepEqual((await call('/api/digital/games?favourites=1')).body.items.map((g) => g.name), ['Half-Life 2']);
+  assert.deepEqual((await call('/api/digital/games?hidden=only')).body.items.map((g) => g.name), ['Portal']);
+  assert.equal((await call('/api/digital/games?hidden=show')).body.items.length, 3);
+  assert.deepEqual((await call('/api/digital')).body.counts, { total: 3, visible: 2, favourites: 1, hidden: 1 });
+  // a refresh replaces the list but keeps the marks
+  await steam.syncSteam(adminId, good);
+  l = (await call('/api/digital/games?hidden=show')).body.items;
+  assert.equal(l.find((g) => g.name === 'Half-Life 2').favourite, 1); assert.equal(l.find((g) => g.name === 'Portal').hidden, 1); assert.equal(l.find((g) => g.name === 'Half-Life 2').play, 1);
+  // un-marking works
+  await mark(400, 'hidden', false);
+  assert.equal((await call('/api/digital/games')).body.items.length, 3);
+  // Remove clears everything, marks included
+  await call('/api/digital/steam', { method: 'DELETE' });
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM digital_marks WHERE user_id = ?').get(adminId).n, 0);
+  assert.equal((await call('/api/digital/games')).body.total, 0);
 });
