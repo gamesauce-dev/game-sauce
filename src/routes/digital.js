@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../db.js';
-import { describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
+import { getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -25,6 +25,15 @@ router.put('/games/:store/:appId/mark', (req, res) => {
   if (store !== 'steam') return res.status(400).json({ error: 'Unknown store' });
   try { res.json(setMark(me(req), store, req.params.appId, String(req.body?.field || ''), req.body?.value === true)); }
   catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; }
+});
+
+// One game's own entry (hours, marks) plus Steam's public store details (cached; may be null when Steam has no page for it).
+router.get('/games/:store/:appId', async (req, res, next) => {
+  if (req.params.store !== 'steam') return res.status(400).json({ error: 'Unknown store' });
+  const game = listGames(me(req), { store: 'steam', hidden: 'show' }).find((g) => g.app_id === String(req.params.appId));
+  if (!game) return res.status(404).json({ error: 'That game is not in your list' });
+  try { res.json({ game, details: await getDetails(game.app_id) }); }
+  catch (err) { if (err.status) return res.status(err.status).json({ error: err.message, game }); next(err); }
 });
 
 router.put('/steam', (req, res) => {

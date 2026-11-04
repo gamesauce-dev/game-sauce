@@ -133,3 +133,37 @@ test('marks: favourite, hidden and play are per person, survive a refresh, and R
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM digital_marks WHERE user_id = ?').get(adminId).n, 0);
   assert.equal((await call('/api/digital/games')).body.total, 0);
 });
+
+test('store details: reduced to plain fields, cached, shared, a missing page is remembered, and the route is private', async () => {
+  const adminId = db.prepare("SELECT id FROM users WHERE username = 'dadmin'").get().id;
+  await call('/api/digital/steam', { method: 'PUT', body: { steam_id: ID, key: KEY } });
+  await steam.syncSteam(adminId, async () => ({ ok: true, status: 200, json: async () => ({ response: { games: [
+    { appid: 220, name: 'Half-Life 2', playtime_forever: 90 }, { appid: 555, name: 'Delisted Thing', playtime_forever: 0 } ] } }) }));
+  let calls = 0;
+  const store = async (url) => {
+    calls++;
+    const id = new URL(url).searchParams.get('appids');
+    if (id === '220') return { ok: true, status: 200, json: async () => ({ 220: { success: true, data: { name: 'Half-Life 2', short_description: 'Gordon <b>Freeman</b> &amp; friends.<br>Again.', developers: ['Valve'], publishers: ['Valve'], release_date: { date: '16 Nov, 2004' }, genres: [{ description: 'Action' }], metacritic: { score: 96 }, is_free: false, price_overview: { final_formatted: 'A$9.95' }, header_image: 'https://x/h.jpg', screenshots: [{ path_thumbnail: 'https://x/s1.jpg' }], platforms: { windows: true, mac: false, linux: true } } } }) };
+    return { ok: true, status: 200, json: async () => ({ [id]: { success: false } }) };
+  };
+  const d = await steam.getDetails('220', store);
+  assert.equal(d.description, 'Gordon Freeman & friends.\nAgain.', 'tags removed, entities decoded');
+  assert.deepEqual(d.developers, ['Valve']); assert.equal(d.metacritic, 96); assert.equal(d.price, 'A$9.95'); assert.deepEqual(d.platforms, ['windows', 'linux']);
+  assert.equal(calls, 1);
+  await steam.getDetails('220', store); assert.equal(calls, 1, 'second look comes from the cache');
+  assert.equal(await steam.getDetails('555', store), null, 'a game with no store page gives null'); assert.equal(calls, 2);
+  assert.equal(await steam.getDetails('555', store), null); assert.equal(calls, 2, 'and that is remembered for a day');
+  await assert.rejects(() => steam.getDetails('abc', store), /Bad app id/);
+  // Steam down: the cached copy still serves, an unknown game gets a plain message
+  db.prepare("UPDATE digital_details SET fetched_at = datetime('now', '-40 days') WHERE app_id = '220'").run();
+  assert.equal((await steam.getDetails('220', async () => { throw new Error('offline'); })).name, 'Half-Life 2', 'stale copy beats an error');
+  await assert.rejects(() => steam.getDetails('999', async () => { throw new Error('offline'); }), /could not be reached/);
+  await assert.rejects(() => steam.getDetails('998', async () => ({ ok: false, status: 429 })), /slow down/);
+  // the route: only games in your own list; details come back with the game and its marks
+  db.prepare("INSERT OR REPLACE INTO digital_details (store, app_id, json, found) VALUES ('steam', '220', ?, 1)").run(JSON.stringify({ name: 'Half-Life 2', description: 'cached' }));
+  const r = await call('/api/digital/games/steam/220');
+  assert.equal(r.status, 200); assert.equal(r.body.game.name, 'Half-Life 2'); assert.equal(r.body.details.description, 'cached'); assert.match(r.body.game.cover_fallback_url, /header\.jpg$/);
+  assert.equal((await call('/api/digital/games/steam/220', { token: annTok })).status, 401, 'signed-out/other tokens are refused');
+  assert.equal((await call('/api/digital/games/steam/424242')).status, 404, 'not in your list');
+  await call('/api/digital/steam', { method: 'DELETE' });
+});

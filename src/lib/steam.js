@@ -4,6 +4,7 @@ import db from '../db.js';
 import { encryptSecret, decryptSecret } from '../settings.js';
 
 const STEAM = (process.env.GAMESAUCE_STEAM_API_BASE || 'https://api.steampowered.com').replace(/\/+$/, '');
+const STORE = (process.env.GAMESAUCE_STEAM_STORE_BASE || 'https://store.steampowered.com').replace(/\/+$/, '');
 
 export const looksLikeKey = (k) => /^[A-Fa-f0-9]{32}$/.test(String(k || '').trim());
 export const looksLikeSteamId = (s) => /^7656119\d{10}$/.test(String(s || '').trim());
@@ -107,6 +108,7 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
     ...r,
     hours: Math.round((r.minutes / 60) * 10) / 10,
     cover_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/library_600x900.jpg` : null,
+    cover_fallback_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/header.jpg` : null,
     // The launch link is only offered where the person switched "play" on for that game (not every game is installed).
     launch_url: r.store === 'steam' && r.play ? `steam://rungameid/${r.app_id}` : null
   }));
@@ -121,4 +123,49 @@ export function countGames(userId) {
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
     WHERE g.user_id = ?`).get(userId);
   return { total: r.total || 0, visible: r.visible || 0, favourites: r.favourites || 0, hidden: r.hidden || 0 };
+}
+
+/* ───────── store details (public; no key needed) ───────── */
+
+const strip = (html) => String(html || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/\s+\n/g, '\n').trim();
+
+/** Steam's appdetails answer, reduced to what the panel shows. Returns null when Steam has no store page for the app (delisted, DLC...). */
+export function mapDetails(json, appId) {
+  const e = json?.[String(appId)];
+  if (!e || e.success !== true || !e.data) return null;
+  const d = e.data;
+  return {
+    name: d.name || null,
+    description: strip(d.short_description || d.about_the_game || '').slice(0, 1500),
+    developers: (d.developers || []).slice(0, 4),
+    publishers: (d.publishers || []).slice(0, 4),
+    release: d.release_date?.date || null,
+    genres: (d.genres || []).map((g) => g.description).slice(0, 8),
+    categories: (d.categories || []).map((g) => g.description).slice(0, 8),
+    metacritic: d.metacritic?.score || null,
+    price: d.is_free ? 'Free' : (d.price_overview?.final_formatted || null),
+    header: d.header_image || null,
+    background: d.background_raw || d.background || null,
+    screenshots: (d.screenshots || []).slice(0, 8).map((x) => x.path_thumbnail || x.path_full).filter(Boolean),
+    platforms: Object.entries(d.platforms || {}).filter(([, v]) => v).map(([k]) => k),
+    website: d.website || null
+  };
+}
+
+/** Cached details for an app: fresh for 30 days (a game Steam has no page for is retried after a day). Fetched once, then shared. */
+export async function getDetails(appId, fetchImpl = fetch) {
+  const id = String(appId);
+  if (!/^\d{1,10}$/.test(id)) throw Object.assign(new Error('Bad app id'), { status: 400 });
+  const row = db.prepare("SELECT json, found, fetched_at, (julianday('now') - julianday(fetched_at)) AS age FROM digital_details WHERE store = 'steam' AND app_id = ?").get(id);
+  if (row && row.age < (row.found ? 30 : 1)) return row.found ? JSON.parse(row.json) : null;
+  let res;
+  try { res = await fetchImpl(`${STORE}/api/appdetails?appids=${id}&l=english`, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'game-sauce/0.2' } }); }
+  catch { if (row?.found) return JSON.parse(row.json); throw Object.assign(new Error('The Steam store could not be reached. Try again in a moment.'), { status: 502 }); }
+  if (res.status === 429) { if (row?.found) return JSON.parse(row.json); throw Object.assign(new Error('Steam asked us to slow down. Try again in a minute.'), { status: 429 }); }
+  if (!res.ok) { if (row?.found) return JSON.parse(row.json); throw Object.assign(new Error(`The Steam store answered with an error (${res.status}).`), { status: 502 }); }
+  let json; try { json = await res.json(); } catch { throw Object.assign(new Error('The Steam store sent something unreadable.'), { status: 502 }); }
+  const d = mapDetails(json, id);
+  db.prepare("INSERT INTO digital_details (store, app_id, json, fetched_at, found) VALUES ('steam', ?, ?, datetime('now'), ?) ON CONFLICT(store, app_id) DO UPDATE SET json = excluded.json, fetched_at = excluded.fetched_at, found = excluded.found")
+    .run(id, d ? JSON.stringify(d) : null, d ? 1 : 0);
+  return d;
 }

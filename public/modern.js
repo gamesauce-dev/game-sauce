@@ -565,7 +565,7 @@ const ICON_MAP = [
   ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#password-form button[type="submit"]', 'save-password'],   /* after the general form rule above, so it wins */ ['#dup-hide-all, [data-dup-hide]', 'hidden'],
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
-  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#dg-sync, #steam-sync', 'fetch-games'], ['#dg-setup', 'steam'], ['#steam-save', 'game-save'], ['#steam-remove', 'game-remove'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
+  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#dg-sync, #steam-sync', 'fetch-games'], ['.detail-actions [data-act="dgplay"]', 'gamepad'], ['.detail-actions [data-act="dghide"]', 'hidden'], ['#dg-setup', 'steam'], ['#steam-save', 'game-save'], ['#steam-remove', 'game-remove'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
   ['[data-act="hidegames"][data-hidden="0"]', 'hidden'], ['[data-act="hidegames"][data-hidden="1"]', 'visible'], ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources

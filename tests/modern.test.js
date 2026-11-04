@@ -728,3 +728,12 @@ test('Digital tiles: heart, hide and play switch, Favourites and Show hidden chi
   assert.match(app, /scroller\.scrollTop = keep/);
   assert.match(app, /your favourites, hidden games and play-button choices/);
 });
+
+test('Steam details window: opened from a tile, trimmed actions, cover fallback', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /async function openDigitalDetail\(store, appId\)/);
+  assert.match(app, /openDigitalDetail\(tile\.dataset\.dgStoreOf, tile\.dataset\.dgApp\)/);
+  const body = app.slice(app.indexOf('async function openDigitalDetail'), app.indexOf('async function initSteamPanel'));
+  for (const gone of ['download', 'data-act="delete"', 'data-act="refresh"', 'data-act="keep"', 'more-btn', 'identify-q']) assert.ok(!body.includes(gone), gone + ' is not offered for a Steam game');
+  assert.match(app, /data-fb="\$\{esc\(g\.cover_fallback_url/);
+});

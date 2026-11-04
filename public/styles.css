@@ -1670,3 +1670,7 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-playsw.on { color: #4ade80; border-color: #4ade80; }
 .dg-playsw:hover { color: #fff; }
 .dg-card .card-fav, .dg-card .card-hide { opacity: 1; }
+
+/* The Steam details window: its wide header picture is a backdrop only, so a missing screenshot never leaves a gap. */
+.dg-detail-cover { aspect-ratio: 2 / 3; }
+.dg-card { cursor: pointer; }

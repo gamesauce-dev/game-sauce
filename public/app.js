@@ -3308,7 +3308,7 @@ async function loadDigital() {
     return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">
       <div class="card-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)">
         <div class="card-fallback">${esc(initials)}</div>
-        ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
+        ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
         <span class="card-badge dg-badge" data-store="steam" title="Steam" aria-label="Steam"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">STEAM</span></span>
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
         <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
@@ -3326,6 +3326,8 @@ document.addEventListener('click', async (e) => {
   if (chip) { dg.store = chip.dataset.dgStore; loadDigital(); return; }
   if (e.target.closest('[data-dg-fav]')) { dg.fav = !dg.fav; loadDigital(); return; }
   if (e.target.closest('[data-dg-hidden]')) { dg.hidden = !dg.hidden; loadDigital(); return; }
+  const tile = e.target.closest('.dg-card');
+  if (tile && !e.target.closest('[data-dg-mark], .dg-launch')) { openDigitalDetail(tile.dataset.dgStoreOf, tile.dataset.dgApp); return; }
   const mk = e.target.closest('[data-dg-mark]');
   if (mk) {
     e.preventDefault(); e.stopPropagation();
@@ -3344,6 +3346,68 @@ document.addEventListener('click', async (e) => {
 });
 $('#dg-q')?.addEventListener('input', (e) => { clearTimeout(dgTimer); dgTimer = setTimeout(() => { dg.q = e.target.value.trim(); loadDigital(); }, 200); });
 $('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; loadDigital(); });
+
+/* The details window for a Steam game: the library's window, trimmed to what applies (favourite, hide, play switch, a store link). There is
+ * nothing to edit, download, refresh, lock or delete: the details come from Steam's public store page and are cached on the server. */
+async function openDigitalDetail(store, appId) {
+  const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
+  state.openRomId = null;
+  const drawer = $('#drawer');
+  drawer.classList.remove('hidden'); syncPin(); $('#scrim').classList.toggle('hidden', pinned());
+  $('#drawer-nav')?.classList.add('hidden');
+  $('#drawer-body').innerHTML = '<div class="skel" style="height:300px"></div>';
+  $('#drawer').scrollTop = 0;
+  let r;
+  try { r = await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}`); }
+  catch (err) { if (myOpen !== state.detailToken) return; toast(err.message, true); return closeDrawer(); }
+  if (myOpen !== state.detailToken) return;
+  const g = r.game, d = r.details;
+  const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const when = g.last_played ? new Date(g.last_played * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+  const rows = [
+    ['Store', 'Steam'],
+    ['Hours played', g.hours ? `${g.hours.toLocaleString()} h` : 'not played yet'],
+    ['Last played', when],
+    ['Developer', d?.developers?.length ? esc(d.developers.join(', ')) : '—'],
+    ['Publisher', d?.publishers?.length ? esc(d.publishers.join(', ')) : '—'],
+    ['Released', d?.release ? esc(d.release) : '—'],
+    ['Genre', d?.genres?.length ? esc(d.genres.join(', ')) : '—'],
+    ['Metacritic', d?.metacritic ? `${d.metacritic} / 100` : '—'],
+    ['Store price', d?.price ? esc(d.price) : '—'],
+    ['Runs on', d?.platforms?.length ? esc(d.platforms.map((p) => ({ windows: 'Windows', mac: 'Mac', linux: 'Linux' })[p] || p).join(', ')) : '—'],
+    ['Steam app ID', `<span class="mono">${esc(g.app_id)}</span>`]
+  ];
+  const pills = (d?.genres || []).length ? `<div class="genre-pills" aria-label="Genres">${d.genres.map((x) => `<span class="genre-pill">${esc(x)}</span>`).join('')}</div>` : '';
+  $('#drawer-body').innerHTML = `
+    ${pills}
+    <div class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)"${d?.header ? ` data-shot="${esc(d.header)}"` : ''}>
+      <div class="card-fallback">${esc(initials)}</div>
+      ${g.cover_url ? `<img src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
+    </div>
+    <div class="detail-head"><div style="flex:1">
+      <h2 class="detail-title">${esc(g.name)}</h2>
+      <div class="detail-plat"><i style="background:#1b2838"></i>Steam${d?.release ? ` · ${esc(d.release)}` : ''}</div>
+    </div></div>
+    <div class="detail-actions">
+      ${g.launch_url ? `<a class="ibtn ibtn-play" data-act="play" href="${esc(g.launch_url)}" data-tip="Open in Steam (works on a PC that has Steam installed)" aria-label="Open in Steam">${ICON.play}</a>` : ''}
+      <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-act="favorite" data-dgd="favourite" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
+      <button class="ibtn${g.play ? ' is-on' : ''}" data-act="dgplay" data-dgd="play" data-tip="${g.play ? 'Play button is on (click to turn it off)' : 'Play button is off: turn it on for games installed on this PC'}" aria-label="Play button ${g.play ? 'on' : 'off'}">${g.play ? ICON.gamepad : ICON.gamepadOff}</button>
+      <button class="ibtn" data-act="dghide" data-dgd="hidden" data-tip="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
+      <a class="ibtn" data-act="dgstore" href="https://store.steampowered.com/app/${encodeURIComponent(g.app_id)}" target="_blank" rel="noreferrer" data-tip="Open the Steam store page" aria-label="Open the Steam store page"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+    </div>
+    ${d?.description ? `<p class="detail-desc">${esc(d.description)}</p>` : `<p class="hint">Steam has no store page for this game (it may be delisted or an add-on), so only your own details are shown.</p>`}
+    ${d?.screenshots?.length ? `<div class="section-label">Screenshots</div><div class="media-strip">${d.screenshots.map((u) => `<a href="${esc(u)}" target="_blank" rel="noreferrer"><img loading="lazy" src="${esc(u)}" alt="" onerror="this.parentElement.remove()" /></a>`).join('')}</div>` : ''}
+    <div class="section-label">Details</div>
+    <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  $$('[data-dgd]', $('#drawer-body')).forEach((b) => b.addEventListener('click', async () => {
+    const field = b.dataset.dgd, value = field === 'favourite' ? !g.favourite : field === 'play' ? !g.play : !g.hidden;
+    try { await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}/mark`, { method: 'PUT', body: JSON.stringify({ field, value }) }); }
+    catch (err) { toast(err.message, true); return; }
+    const scroller = $('#view-digital'), keep = scroller?.scrollTop || 0;
+    openDigitalDetail(store, appId);
+    if (state.view === 'digital') { await loadDigital(); if (scroller) scroller.scrollTop = keep; }
+  }));
+}
 
 async function initSteamPanel() {
   const status = $('#steam-status'), id = $('#steam-id'), key = $('#steam-key');

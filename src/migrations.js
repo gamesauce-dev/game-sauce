@@ -444,3 +444,12 @@ db.exec(`
   );
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '30') ON CONFLICT(key) DO UPDATE SET value = '30'").run();
+
+/* ── v31: cached Steam store details (description, developer, genres, screenshots...). Public information, shared by everyone. ── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS digital_details (
+    store TEXT NOT NULL, app_id TEXT NOT NULL, json TEXT, fetched_at TEXT NOT NULL DEFAULT (datetime('now')), found INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (store, app_id)
+  );
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '31') ON CONFLICT(key) DO UPDATE SET value = '31'").run();
