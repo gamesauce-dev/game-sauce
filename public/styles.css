@@ -1657,3 +1657,8 @@ body.play-only #empty .empty-add-text { display: none; }
 /* The Digital tile's store badge: the plain word in Classic. */
 .dg-badge { background: #1b2838cc; }
 .dg-badge-ico { display: none; }
+
+/* Sign-in card: the wide logo (controller, joystick and name) with the tagline under it. */
+.auth-card .auth-brand { flex-direction: column; justify-content: center; text-align: center; gap: 0.3rem; margin-bottom: 18px; }
+.auth-card .auth-logo { width: min(21rem, 100%); height: auto; flex: none; border-radius: 0; }
+.card-cover .card-play { padding: 0.12rem; box-sizing: border-box; }

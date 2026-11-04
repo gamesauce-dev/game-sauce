@@ -705,3 +705,9 @@ test('Digital tiles show the store badge icon in Modern and the word in Classic'
   assert.match(css, /body\.ui-modern \.dg-badge \.dg-badge-txt \{ display: none; \}/);
   assert.match(cls, /\.dg-badge-ico \{ display: none; \}/);
 });
+
+test('the new logo files: square badge for icon uses, wide logo on the sign-in card, both plain vectors with no live text', () => {
+  for (const f of ['public/logo.svg', 'public/logo-wide.svg']) { const s = read(f); assert.match(s, /viewBox=/); assert.doesNotMatch(s, /<image|base64|<text/, f + ' is a true vector with the text as shapes'); }
+  assert.match(read('public/logo.svg'), /viewBox="0 0 128 128"/);
+  assert.match(read('public/index.html'), /class="brand-logo auth-logo" src="\/logo-wide\.svg"/);
+});
