@@ -711,3 +711,7 @@ test('the new logo files: square badge for icon uses, wide logo on the sign-in c
   assert.match(read('public/logo.svg'), /viewBox="0 0 128 128"/);
   assert.match(read('public/index.html'), /class="brand-logo auth-logo" src="\/logo-wide\.svg"/);
 });
+
+test('the Digital view is a scroll area like the other pages', () => {
+  assert.match(fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8'), /#view-emulators, #view-digital \{ overflow-y: auto;/);
+});
