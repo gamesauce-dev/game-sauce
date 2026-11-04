@@ -671,3 +671,12 @@ test('Modern: every chip is a rounded square, selected chips glow, platform Save
 test('Modern: the health Repair button for missing covers has an icon', () => {
   assert.ok(fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8').includes("['#health-repair-covers', 'recheck']"));
 });
+
+test('Settings > Platforms and Sources can be folded by family, and the choice is remembered', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+  assert.match(app, /function makeFoldable\(container, headSelector, scope, nameOf\)/);
+  assert.match(app, /makeFoldable\(wrap, '\.source-family', 'sources'/);
+  assert.match(app, /makeFoldable\(list, '\.fam-head', 'platforms'/);
+  assert.match(app, /localStorage\.setItem\(key, JSON\.stringify\(\[\.\.\.folded\]\)\)/);
+  assert.match(css, /\.fold-hidden \{ display: none !important; \}/);
+});

@@ -1629,3 +1629,12 @@ body.play-only #empty .empty-add-text { display: none; }
 /* Platform logo: a fixed box, so any picture fits inside it (contain) and the layout never moves. */
 .lib-logo { display: inline-flex; align-items: center; justify-content: center; width: 5.5rem; height: 2.2rem; flex: 0 0 auto; overflow: hidden; }
 .lib-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }   /* fills the box: small logos are scaled up, big ones down, proportions kept */
+
+/* Foldable groups (Settings > Platforms, Sources): a chevron at the start of each family heading. */
+.fold-btn { all: unset; box-sizing: border-box; cursor: pointer; display: inline-block; width: 1.3rem; height: 1.3rem; margin-right: 0.35rem; vertical-align: middle; position: relative; border-radius: 0.35rem; }
+.fold-btn::before { content: ''; position: absolute; left: 50%; top: 50%; width: 0.42rem; height: 0.42rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translate(-50%, -70%) rotate(45deg); transition: transform .15s; }
+.is-folded > .fold-btn::before, .fold-btn[aria-expanded="false"]::before { transform: translate(-70%, -50%) rotate(-45deg); }
+.fold-btn:hover { background: rgba(127,127,127,.2); }
+.fold-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.fam-head .fam-name, .source-family { cursor: pointer; }
+.fold-hidden { display: none !important; }

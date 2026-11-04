@@ -1912,6 +1912,35 @@ async function loadSources() {
   }
 }
 
+/* Fold a flat list that is "heading, rows, heading, rows...": a chevron on each heading hides the rows up to the next heading.
+ * The folded headings are remembered per list (this browser), so a long list stays as the person left it. */
+function makeFoldable(container, headSelector, scope, nameOf) {
+  if (!container) return;
+  const key = 'gamesauce_fold_' + scope;
+  let folded; try { folded = new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch { folded = new Set(); }
+  const heads = [...container.querySelectorAll(headSelector)];
+  const apply = (head, fold) => {
+    head.classList.toggle('is-folded', fold);
+    head.querySelector('.fold-btn')?.setAttribute('aria-expanded', fold ? 'false' : 'true');
+    for (let el = head.nextElementSibling; el && !el.matches(headSelector); el = el.nextElementSibling) el.classList.toggle('fold-hidden', fold);
+  };
+  for (const head of heads) {
+    const name = nameOf(head);
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'fold-btn'; btn.title = 'Fold or unfold this group'; btn.setAttribute('aria-label', 'Fold or unfold ' + name);
+    head.prepend(btn);
+    const toggle = () => {
+      const fold = !head.classList.contains('is-folded');
+      apply(head, fold); fold ? folded.add(name) : folded.delete(name);
+      try { localStorage.setItem(key, JSON.stringify([...folded])); } catch { /* private mode */ }
+    };
+    btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+    head.querySelector('.fam-name')?.addEventListener('click', toggle);
+    if (head.matches('.source-family')) head.addEventListener('click', toggle);
+    apply(head, folded.has(name));
+  }
+}
+
 async function loadSourcesNow() {
   const [{ items }, roots, plats] = await Promise.all([api('/sources'), api('/sources/roots'), api('/platforms')]);
   const wrap = $('#sources-list');
@@ -1970,6 +1999,7 @@ async function loadSourcesNow() {
       </div>
     </div>
   `).join('');
+  makeFoldable(wrap, '.source-family', 'sources', (h) => h.textContent.trim());
 
   startScanPolling(); // picks up a scan already running (e.g. after a page refresh)
 
@@ -3056,6 +3086,8 @@ async function loadPlatformAdmin() {
       <div class="plat-edit hidden" data-pedit="${esc(p.slug)}" style="margin:6px 0 10px 18px;display:grid;gap:8px;grid-template-columns:1fr 1fr">
       </div>`).join('')}
   `).join('');
+
+  makeFoldable(list, '.fam-head', 'platforms', (h) => h.dataset.fam);
 
   // Existing families, offered as suggestions in the Add and Edit forms (typing a new name still works).
   { const dl = $('#family-list'); if (dl) dl.innerHTML = [...byFamily.keys()].map((f) => `<option value="${esc(f)}"></option>`).join(''); }
