@@ -20,7 +20,7 @@ const NAV = [
   { view: 'collections', icon: 'collection-new', label: 'Collections' },
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
-  { view: 'digital', icon: 'game-console', label: 'Digital' },
+  { view: 'digital', icon: 'digital-library', label: 'Digital' },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
   { view: 'settings', icon: 'settings', label: 'Settings' }
 ];
@@ -71,7 +71,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'game-console', 'emulators-2', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'digital-library', 'emulators-2', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital'].includes(n.view)));
@@ -565,7 +565,7 @@ const ICON_MAP = [
   ['#view-settings form button.btn-primary[type="submit"]', 'save-settings'], ['#password-form button[type="submit"]', 'save-password'],   /* after the general form rule above, so it wins */ ['#dup-hide-all, [data-dup-hide]', 'hidden'],
   // Dismiss / accept / copy / clear / more (icons you added on 1 Nov)
   ['#platform-add-cancel, #browser-cancel, #cancel-source, #collection-cancel, #modal-cancel, #pf-cancel, [data-pact="cancel"], #restore-cancel, #wz-bcancel', 'close'],
-  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#dg-sync', 'scan-again'], ['#dg-setup', 'tick'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
+  ['#addcoll-cancel, #browser-use, #pf-use, #wz-buse, #collection-create', 'tick'], ['#addcoll-new', 'collection-new'], ['#dg-sync, #steam-sync', 'fetch-games'], ['#dg-setup', 'steam'], ['#steam-save', 'game-save'], ['#steam-remove', 'game-remove'], ['#health-copy', 'copy'], ['#bulk-clear, #audit-clear', 'clear-reset-2'],
   ['[data-act="hidegames"][data-hidden="0"]', 'hidden'], ['[data-act="hidegames"][data-hidden="1"]', 'visible'], ['[data-act="toggle"][data-enabled="1"]', 'folder-disable'], ['[data-act="toggle"][data-enabled="0"]', 'folder-enable'],
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources

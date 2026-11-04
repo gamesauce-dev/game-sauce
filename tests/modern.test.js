@@ -697,3 +697,11 @@ test('Digital page: view, Steam panel, nav entries and launch link exist', () =>
   assert.match(app, /modules: \['profile', 'welcome', 'steam', 'password', 'controller'\]/);
   assert.ok(!/dg-card[^`]*download/.test(app), 'no download on a digital tile');
 });
+
+test('Digital tiles show the store badge icon in Modern and the word in Classic', () => {
+  const css = fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), cls = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+  assert.ok(fs.existsSync(new URL('../public/modern/icons/steam-badge.svg', import.meta.url)));
+  assert.match(css, /body\.ui-modern \.dg-badge \.dg-badge-ico \{[^}]*steam-badge\.svg/);
+  assert.match(css, /body\.ui-modern \.dg-badge \.dg-badge-txt \{ display: none; \}/);
+  assert.match(cls, /\.dg-badge-ico \{ display: none; \}/);
+});

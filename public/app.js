@@ -3304,7 +3304,7 @@ async function loadDigital() {
       <div class="card-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)">
         <div class="card-fallback">${esc(initials)}</div>
         ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
-        <span class="card-badge" style="background:#1b2838cc">STEAM</span>
+        <span class="card-badge dg-badge" data-store="steam" title="Steam" aria-label="Steam"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">STEAM</span></span>
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
         <span class="dg-hours" title="Hours played">${g.hours ? g.hours.toLocaleString() + ' h' : 'unplayed'}</span>
       </div>
@@ -3976,7 +3976,7 @@ $('#to-top')?.addEventListener('click', () => {
 const SETTINGS_MODULES = [
   { id: 'profile', label: 'Profile picture', mi: 'profile-pic', ico: '🖼', adminOnly: false },
   { id: 'welcome', label: 'Welcome tour', mi: 'welcome-tour', ico: '👋', adminOnly: false },
-  { id: 'steam', label: 'Steam', mi: 'game-console', ico: '🎮', adminOnly: false },
+  { id: 'steam', label: 'Steam', mi: 'steam', ico: '🎮', adminOnly: false },
   { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
   { id: 'controller', label: 'Controller', mi: 'gamepad', ico: '🎮', adminOnly: false },

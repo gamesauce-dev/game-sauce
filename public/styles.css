@@ -1653,3 +1653,7 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-warn { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border: 1px solid #c9a227; border-radius: 0.65rem; background: rgba(201,162,39,.12); }
 .dg-steps { margin: 0.4rem 0 0.9rem 1.2rem; line-height: 1.5; }
 .dg-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; grid-column: 1 / -1; }
+
+/* The Digital tile's store badge: the plain word in Classic. */
+.dg-badge { background: #1b2838cc; }
+.dg-badge-ico { display: none; }
