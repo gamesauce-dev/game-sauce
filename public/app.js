@@ -3284,7 +3284,24 @@ async function loadPlatformAdmin() {
 
 const dg = { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, density: 'comfortable', letter: '' };
 /* Previous / next inside the Digital list: the tiles in the order shown now (hidden games only when Show hidden is on). */
-const dgIds = () => [...document.querySelectorAll('#dg-grid .dg-card')].map((c) => c.dataset.dgApp);
+/* The Digital grid draws its tiles in chunks (60 at a time, more as you scroll), like the Library: drawing thousands at once, each with its
+ * own buttons, froze iPhones and iPads. dg.ids is the whole list in order, so previous / next still walk all of it. */
+const dgIds = () => dg.ids || [];
+function dgRender(reset) {
+  const grid = $('#dg-grid'); if (!grid) return;
+  if (reset) { grid.innerHTML = ''; dg.rendered = 0; }
+  grid.querySelector('.dg-sentinel')?.remove();
+  const html = dg.html || [], target = Math.min(html.length, Math.max(dg.shown || 60, dg.rendered || 0));
+  if (target > (dg.rendered || 0)) grid.insertAdjacentHTML('beforeend', html.slice(dg.rendered || 0, target).join(''));
+  dg.rendered = target; dg.shown = target;
+  dg.obs?.disconnect();
+  if (target < html.length) {
+    const s = document.createElement('div'); s.className = 'dg-sentinel'; s.style.cssText = 'grid-column:1/-1;height:1px';
+    grid.appendChild(s);
+    dg.obs = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { dg.shown = dg.rendered + 60; dgRender(false); } }, { root: grid, rootMargin: '800px' });
+    dg.obs.observe(s);
+  }
+}
 function syncDigitalNav() {
   const box = $('#drawer-nav'), cur = state.openDigital; if (!box || !cur) return;
   const ids = dgIds(), i = ids.indexOf(cur.appId);
@@ -3296,8 +3313,8 @@ function syncDigitalNav() {
 }
 function stepDigital(dir) {
   const cur = state.openDigital; if (!cur) return;
-  const ids = dgIds(), t = ids[ids.indexOf(cur.appId) + dir];
-  if (t != null) openDigitalDetail(cur.store, t);
+  const ids = dgIds(), at = ids.indexOf(cur.appId) + dir, t = ids[at];
+  if (t != null) { if (at >= (dg.rendered || 0)) { dg.shown = at + 20; dgRender(false); } openDigitalDetail(cur.store, t); }
 }
 const DG_LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 function paintDigitalLetters(counts) {
@@ -3310,7 +3327,8 @@ function paintDigitalLetters(counts) {
 function resetDigital() { Object.assign(dg, { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, letter: '' }); const q = $('#dg-q'); if (q) q.value = ''; const s = $('#dg-sort'); if (s) s.value = 'name'; }
 let dgTimer;
 
-async function loadDigital() {
+async function loadDigital(keep = false) {
+  if (keep !== true) dg.shown = 60;   // a new list starts with one screenful; a mark keeps what was drawn
   const msg = $('#dg-msg'), grid = $('#dg-grid');
   let info;
   try { info = await api('/digital'); } catch (err) { msg.textContent = err.message; return; }
@@ -3344,7 +3362,8 @@ async function loadDigital() {
     return;
   }
   grid.scrollTop = 0;
-  grid.innerHTML = items.map((g) => {
+  dg.ids = items.map((g) => g.app_id);
+  dg.html = items.map((g) => {
     const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
     return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">
       <div class="card-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)">
@@ -3359,7 +3378,8 @@ async function loadDigital() {
       </div>
       <div class="card-title">${esc(g.name)}</div>
     </div>`;
-  }).join('');
+  });
+  dgRender(true);
 }
 
 document.addEventListener('click', async (e) => {
@@ -3381,7 +3401,7 @@ document.addEventListener('click', async (e) => {
     const card = mk.closest('.dg-card'), scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0;
     try { await api(`/digital/games/${encodeURIComponent(card.dataset.dgStoreOf)}/${encodeURIComponent(card.dataset.dgApp)}/mark`, { method: 'PUT', body: JSON.stringify({ field: mk.dataset.dgMark, value: mk.dataset.value === '1' }) }); }
     catch (err) { toast(err.message, true); return; }
-    await loadDigital(); if (scroller) scroller.scrollTop = keep;   // the list is redrawn; stay where you were
+    await loadDigital(true); if (scroller) scroller.scrollTop = keep;   // the list is redrawn; stay where you were
     return;
   }
   if (e.target.closest('#dg-sync')) {
@@ -3453,7 +3473,7 @@ async function openDigitalDetail(store, appId) {
     catch (err) { toast(err.message, true); return; }
     const scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0;
     openDigitalDetail(store, appId);
-    if (state.view === 'digital') { await loadDigital(); if (scroller) scroller.scrollTop = keep; }
+    if (state.view === 'digital') { await loadDigital(true); if (scroller) scroller.scrollTop = keep; }
   }));
 }
 

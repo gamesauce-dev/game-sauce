@@ -1707,3 +1707,7 @@ body.play-only #empty .empty-add-text { display: none; }
 }
 .card-cover .card-play svg { width: 1.1rem; height: 1.1rem; }
 .dg-playsw.on { box-shadow: 0 0 0.6rem rgba(74, 222, 128, .6), 0 0 1.3rem rgba(74, 222, 128, .3); }
+
+/* Digital tiles: no blur behind the small buttons (a blur per button is what froze iPhones and iPads); the buttons are just more opaque. */
+.dg-card .card-fav, .dg-card .card-hide, .dg-card .card-badge, .dg-card .dg-hours { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 9, 14, .86); }
+.dg-card { content-visibility: auto; contain-intrinsic-size: auto 17rem; }

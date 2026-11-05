@@ -693,7 +693,7 @@ test('Modern Home: a search box with a platform list sits above Continue playing
 test('Digital page: view, Steam panel, nav entries and launch link exist', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8');
   assert.match(html, /id="view-digital"/); assert.match(html, /id="mod-steam"/); assert.match(html, /data-view="digital"/);
-  assert.match(js, /view: 'digital'/); assert.match(app, /async function loadDigital\(\)/); assert.match(app, /if \(view === 'digital'\) loadDigital\(\)/);
+  assert.match(js, /view: 'digital'/); assert.match(app, /async function loadDigital\(keep = false\)/); assert.match(app, /if \(view === 'digital'\) loadDigital\(\)/);
   assert.match(app, /modules: \['profile', 'welcome', 'steam', 'password', 'controller'\]/);
   assert.ok(!/dg-card[^`]*download/.test(app), 'no download on a digital tile');
 });
@@ -788,7 +788,7 @@ test('A-Z jump: the Library list starts AT the letter (one request, offset), Dig
   assert.match(js, /s\.azOffset = same \? 0 : offsetOf\(letter\);\s*s\.azLetter = same \? null : letter;/);
   assert.match(js, /await ctx\.loadLibrary\(\);\s*\/\/ one request that starts at the letter's first game/);
   assert.doesNotMatch(js, /while \(\(s\.libLoadedCount\?\.\(\) \|\| 0\) <= want/, 'no more loading every tile before the letter');
-  assert.match(app, /grid\.scrollTop = 0;\s*grid\.innerHTML = items\.map/, 'Digital: a new list starts at its top');
+  assert.match(app, /grid\.scrollTop = 0;\s*dg\.ids = items\.map/, 'Digital: a new list starts at its top');
 });
 
 test('Proxmox installer: generates a random secret key, writes it to the env file and prints it once', () => {
@@ -797,4 +797,12 @@ test('Proxmox installer: generates a random secret key, writes it to the env fil
   assert.match(sh, /GAMESAUCE_SECRET_KEY=\$SECRET_KEY\nENV\nchmod 600 \/etc\/game-sauce\.env/);
   assert.match(sh, /SECRET_KEY="\$SECRET_KEY" bash \/root\/gs-install\.sh/);
   assert.match(sh, /Secret key  \$SECRET_KEY/);
+});
+
+test('Digital grid draws in chunks and has no blur on its tiles (iPhone/iPad froze with thousands drawn at once)', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+  assert.match(app, /function dgRender\(reset\)/); assert.match(app, /dg\.shown = dg\.rendered \+ 60/);
+  assert.match(app, /const dgIds = \(\) => dg\.ids \|\| \[\];/);
+  assert.match(app, /loadDigital\(true\); if \(scroller\)/);
+  assert.match(css, /\.dg-card \.card-fav, \.dg-card \.card-hide, \.dg-card \.card-badge, \.dg-card \.dg-hours \{[^}]*backdrop-filter: none/);
 });
