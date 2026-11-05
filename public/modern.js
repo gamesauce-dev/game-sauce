@@ -484,7 +484,7 @@ async function refreshLetters() {
   box.classList.toggle('off', !dir);
   if (!dir) { azKey = null; azCounts = null; box.innerHTML = ''; return; }
   const key = (s.libKey || '') + '|' + dir;
-  if (key === azKey && azCounts) return;
+  if (key === azKey && azCounts) { document.querySelectorAll('.az-l').forEach((x) => x.classList.toggle('on', x.dataset.letter === litLetter())); return; }
   azKey = key;
   try {
     const qs = new URLSearchParams(s.libQuery || ''); qs.set('letters', '1');
@@ -495,9 +495,10 @@ async function refreshLetters() {
   } catch { azCounts = null; }
 }
 
+function litLetter() { const s = ctx.state(); return s.azLetter && s.azFor === (s.libQuery?.toString() || '') + '|' + s.sort ? s.azLetter : ''; }
 function paintLetters() {
   const box = $('#az-letters'); if (!box || !azCounts) return;
-  box.innerHTML = LETTERS.map((l) => `<button class="az-l" data-letter="${l}"${azCounts[l] ? '' : ' disabled'} title="${azCounts[l] ? l + ': ' + azCounts[l].toLocaleString() + ' games' : 'No games under ' + l}" aria-label="Jump to ${l}">${l}</button>`).join('');
+  box.innerHTML = LETTERS.map((l) => `<button class="az-l${litLetter() === l ? ' on' : ''}" data-letter="${l}"${azCounts[l] ? '' : ' disabled'} title="${azCounts[l] ? l + ': ' + azCounts[l].toLocaleString() + ' games' : 'No games under ' + l}" aria-label="Jump to ${l}">${l}</button>`).join('');
 }
 
 /** Offset of the first game under a letter in the current order. */
@@ -514,20 +515,19 @@ async function jumpTo(letter) {
   const btn = document.querySelector(`[data-letter="${letter}"]`);
   btn?.classList.add('busy');
   try {
-    const s = ctx.state(), grid = $('#grid'), want = offsetOf(letter);
-    // load further pages until the target game is on the page
-    let guard = 0;
-    while ((s.libLoadedCount?.() || 0) <= want && s.libLoadMore && guard++ < 60) { if (!(await s.libLoadMore())) break; }
-    const card = [...grid.children].filter((c) => c.classList.contains('card'))[want];
-    if (card) {
-      grid.scrollTo({ top: Math.max(0, card.offsetTop - grid.offsetTop - 8), behavior: 'smooth' });
-      // A row holds several tiles, so the first game under the letter can sit mid-row: mark it so the eye finds it.
-      grid.querySelectorAll('.card.az-hit').forEach((x) => x.classList.remove('az-hit'));
-      card.classList.add('az-hit');
-      setTimeout(() => card.classList.remove('az-hit'), 2400);
-    }
+    const s = ctx.state(), grid = $('#grid');
+    const same = s.azLetter === letter && s.azFor === (s.libQuery?.toString() || '') + '|' + s.sort;   // the lit letter again: back to the beginning
+    s.azOffset = same ? 0 : offsetOf(letter);
+    s.azLetter = same ? null : letter;
+    s.azFor = (s.libQuery?.toString() || '') + '|' + s.sort;
+    await ctx.loadLibrary();          // one request that starts at the letter's first game
+    grid.scrollTop = 0;
     document.querySelectorAll('.az-l.on').forEach((x) => x.classList.remove('on'));
-    btn?.classList.add('on');
+    if (!same) {
+      btn?.classList.add('on');
+      const card = grid.querySelector('.card');
+      if (card) { grid.querySelectorAll('.card.az-hit').forEach((x) => x.classList.remove('az-hit')); card.classList.add('az-hit'); setTimeout(() => card.classList.remove('az-hit'), 2400); }
+    }
   } finally { btn?.classList.remove('busy'); azBusy = false; }
 }
 

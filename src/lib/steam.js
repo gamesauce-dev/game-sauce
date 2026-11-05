@@ -2,6 +2,11 @@
 // is fetched from Steam's public Web API when they ask. Nothing here touches ROMs, and nothing is shared between members.
 import db from '../db.js';
 import { encryptSecret, decryptSecret } from '../settings.js';
+import { sortTitle } from './metadata.js';
+
+/** The name as it files in a list: "The Darkness II" sits under D, like the Library. Digits and symbols fall under #. */
+export const fileKey = (name) => sortTitle(String(name || '')) || String(name || '').toLowerCase();
+export const bucketOf = (name) => { const c = fileKey(name).charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
 
 const STEAM = (process.env.GAMESAUCE_STEAM_API_BASE || 'https://api.steampowered.com').replace(/\/+$/, '');
 const STORE = (process.env.GAMESAUCE_STEAM_STORE_BASE || 'https://store.steampowered.com').replace(/\/+$/, '');
@@ -111,6 +116,8 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
       COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
     WHERE ${where.join(' AND ')} ORDER BY ${order}`).all(...args);
+  if (sort === 'name') rows.sort((a, b) => fileKey(a.name).localeCompare(fileKey(b.name), 'en', { numeric: true }) || String(a.name).localeCompare(String(b.name)));
+  else if (sort === 'hours' || sort === 'recent') { /* ties break by filing key below */ }
   return rows.map((r) => ({
     ...r,
     hours: Math.round((r.minutes / 60) * 10) / 10,

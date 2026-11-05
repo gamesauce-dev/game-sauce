@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../db.js';
-import { getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
+import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -18,7 +18,7 @@ router.get('/games', (req, res) => {
   const base = { store, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', installed: req.query.installed === '1', hidden };
   const all = listGames(me(req), base);
   // How many games sit under each letter (# for names that start with a digit or symbol), of the list as filtered so far.
-  const bucket = (n) => { const c = String(n).trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
+  const bucket = bucketOf;   // "The Darkness II" files under D
   const letters = {}; for (const g of all) letters[bucket(g.name)] = (letters[bucket(g.name)] || 0) + 1;
   const letter = String(req.query.letter || '').toUpperCase();
   const items = /^[A-Z#]$/.test(letter) ? all.filter((g) => bucket(g.name) === letter) : all;

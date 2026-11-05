@@ -151,7 +151,7 @@ test('A-Z jump, grid size and back to top sit above the grid and work from the l
   assert.match(html, /id="az-bar"/);
   assert.match(js, /\['#', \.\.\.'ABCDEFGHIJKLMNOPQRSTUVWXYZ'\]/);
   assert.match(js, /s === 'title' \? 1 : s === '-title' \? -1 : 0/, 'only offered while sorted by title, either way');
-  assert.match(js, /libLoadMore/, 'it loads further pages until the letter exists, then scrolls');
+  assert.match(js, /await ctx\.loadLibrary\(\)/, 'it reloads the list starting at the letter (no loading every tile before it)');
   assert.match(js, /data-density="comfortable"[\s\S]*data-density="compact"[\s\S]*id="az-top"/);
   assert.match(js, /az-hit/, 'the first game under the letter is marked');
   assert.match(css, /^\.az-bar \{ display: none; \}/m, 'hidden everywhere but Modern Library');
@@ -776,4 +776,17 @@ test('Welcome tour: an optional Steam step after the picture card, for everyone'
   assert.deepEqual(ids.slice(0, 5), ['hello', 'password', 'picture', 'steam', 'providers']);
   assert.match(app, /steam: wireSteamCard/); assert.match(app, /function wireSteamCard\(\)/);
   assert.match(app, /api\('\/digital\/steam\/sync', \{ method: 'POST' \}\);\s*form\.key\.value = ''/);
+});
+
+test('A-Z jump: the Library list starts AT the letter (one request, offset), Digital resets to the top, Reset clears the jump', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8');
+  assert.match(app, /state\.azFor !== state\.libQuery\.toString\(\) \+ '\|' \+ state\.sort\) state\.azOffset = 0/);
+  assert.match(app, /params\.set\('offset', String\(azBase \+ loaded\)\)/);
+  assert.match(app, /state\.azOffset = 0; state\.azLetter = null; state\.azFor = null;/);
+  assert.match(app, /if \(!keepPlace\) grid\.scrollTop = 0;/);
+  const jump = js.slice(js.indexOf('async function jumpTo(letter)'), js.indexOf('function offsetOf') > js.indexOf('async function jumpTo') ? js.length : undefined);
+  assert.match(js, /s\.azOffset = same \? 0 : offsetOf\(letter\);\s*s\.azLetter = same \? null : letter;/);
+  assert.match(js, /await ctx\.loadLibrary\(\);\s*\/\/ one request that starts at the letter's first game/);
+  assert.doesNotMatch(js, /while \(\(s\.libLoadedCount\?\.\(\) \|\| 0\) <= want/, 'no more loading every tile before the letter');
+  assert.match(app, /grid\.scrollTop = 0;\s*grid\.innerHTML = items\.map/, 'Digital: a new list starts at its top');
 });

@@ -436,6 +436,7 @@ function filtersActive() {
 }
 /** Back to the whole library: search cleared, every platform and filter off. Sort and tile size stay as the person set them. */
 async function resetFilters() {
+  state.azOffset = 0; state.azLetter = null; state.azFor = null;   // the list starts at its beginning again
   Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
     missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null, libKey: null });
   const sb = $('#search'); if (sb) sb.value = '';
@@ -555,10 +556,15 @@ async function loadLibrary() {
   // Remember the active query (minus paging) so Select all can walk the whole result set.
   state.libQuery = new URLSearchParams(params);
   state.libQuery.delete('limit'); state.libQuery.delete('offset');
+  // A-Z jump: when a letter was picked for exactly this list, the grid starts at that letter's first game (one request, no scrolling through
+  // everything before it). Any other change of search, filter or sort puts the list back at its beginning.
+  if (state.azFor !== state.libQuery.toString() + '|' + state.sort) state.azOffset = 0;
+  const azBase = state.azOffset || 0;
+  if (azBase) params.set('offset', String(azBase));
 
   // Same filters as the last render (hide, refresh, favourite…): keep the reader's place by reloading
   // as many tiles as were showing and restoring the scroll position afterwards.
-  const libKey = state.libQuery.toString();
+  const libKey = state.libQuery.toString() + '|' + azBase;
   const keepPlace = grid.dataset.primed && state.libKey === libKey && (state.libLoadedCount?.() || 0) > 0;
   const wantLoaded = keepPlace ? state.libLoadedCount() : 0;
   if (keepPlace) params.set('limit', String(Math.min(500, Math.max(PAGE, wantLoaded))));
@@ -574,6 +580,7 @@ async function loadLibrary() {
   }
 
   const keepTop = keepPlace ? grid.scrollTop : 0;
+  if (!keepPlace) grid.scrollTop = 0;
   grid.dataset.primed = '1';
   grid.className = `grid ${state.density === 'compact' ? 'compact' : ''}${state.selectMode ? ' selecting' : ''}`;
   grid.innerHTML = data.items.map(cardHtml).join('');
@@ -591,7 +598,7 @@ async function loadLibrary() {
   let loaded = data.items.length;
   state.libTotal = data.total;
   state.libLoadedCount = () => loaded;
-  if (loaded < data.total) {
+  if (azBase + loaded < data.total) {
     const sentinel = document.createElement('div');
     sentinel.style.cssText = 'grid-column:1/-1;height:1px';
     grid.appendChild(sentinel);
@@ -602,7 +609,7 @@ async function loadLibrary() {
       if (busy || token !== state.libToken) return false;
       busy = true;
       try {
-        params.set('offset', String(loaded));
+        params.set('offset', String(azBase + loaded));
         const more = await api(`/roms?${params}`);
         if (token !== state.libToken) return false; // a newer load replaced this grid
         const tmp = document.createElement('div');
@@ -611,7 +618,7 @@ async function loadLibrary() {
         sentinel.before(...tmp.children);
         loaded += more.items.length;
         syncSelectUI();
-        if (!more.items.length || loaded >= more.total) {
+        if (!more.items.length || azBase + loaded >= more.total) {
           obs?.disconnect(); sentinel.remove();
           if (state.libLoadMore === loadMore) state.libLoadMore = null;
         }
@@ -3336,6 +3343,7 @@ async function loadDigital() {
     grid.innerHTML = (dg.q || dg.fav || dg.installed) ? '<div class="empty"><h2>No games match</h2></div>' : '<div class="empty"><h2>Nothing here yet</h2><p>Press Refresh to fetch your Steam library.</p></div>';
     return;
   }
+  grid.scrollTop = 0;
   grid.innerHTML = items.map((g) => {
     const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
     return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">

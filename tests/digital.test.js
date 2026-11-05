@@ -203,3 +203,20 @@ test('Installed filter: only games with the play switch on, counted for the chip
   assert.equal((await call('/api/digital/games')).body.items.length, 2, 'without the chip everything visible is listed');
   await call('/api/digital/steam', { method: 'DELETE' });
 });
+
+test('filing: "The Darkness II" sorts and counts under D, not T (names, letters and the letter filter agree)', async () => {
+  const adminId = db.prepare("SELECT id FROM users WHERE username = 'dadmin'").get().id;
+  await call('/api/digital/steam', { method: 'PUT', body: { steam_id: ID, key: KEY } });
+  await steam.syncSteam(adminId, async () => ({ ok: true, status: 200, json: async () => ({ response: { games: [
+    { appid: 1, name: 'The Darkness II', playtime_forever: 1 }, { appid: 2, name: 'Dota 2', playtime_forever: 1 }, { appid: 3, name: 'Doom', playtime_forever: 1 },
+    { appid: 4, name: 'A Hat in Time', playtime_forever: 1 }, { appid: 5, name: 'Terraria', playtime_forever: 1 }, { appid: 6, name: '7 Days to Die', playtime_forever: 1 } ] } }) }));
+  const order = (await call('/api/digital/games')).body.items.map((g) => g.name);
+  assert.deepEqual(order, ['7 Days to Die', 'The Darkness II', 'Doom', 'Dota 2', 'A Hat in Time', 'Terraria'].sort((a, b) => steam.fileKey(a).localeCompare(steam.fileKey(b), 'en', { numeric: true })));
+  assert.ok(order.indexOf('The Darkness II') < order.indexOf('Doom'), 'The Darkness II comes before Doom (D-a-r)');
+  assert.ok(order.indexOf('A Hat in Time') > order.indexOf('Dota 2') && order.indexOf('A Hat in Time') < order.indexOf('Terraria'), 'A Hat in Time files under H');
+  const r = (await call('/api/digital/games')).body;
+  assert.deepEqual(r.letters, { '#': 1, D: 3, H: 1, T: 1 });
+  assert.deepEqual((await call('/api/digital/games?letter=D')).body.items.map((g) => g.name), ['The Darkness II', 'Doom', 'Dota 2']);
+  assert.deepEqual((await call('/api/digital/games?letter=T')).body.items.map((g) => g.name), ['Terraria']);
+  await call('/api/digital/steam', { method: 'DELETE' });
+});
