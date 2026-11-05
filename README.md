@@ -406,8 +406,9 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/gamesauce-dev/game-sauce
 ```
 
 It shows what it is about to do and asks before it does it, then creates a small unprivileged
-Debian 12 container, installs Node 22 and game-sauce, generates an admin password (printed once at
-the end), and runs the app as a systemd service that starts on boot. Open `http://<container-ip>:8765`.
+Debian 12 container, installs Node 22 and game-sauce, generates an admin password and an encryption key
+for saved credentials (both printed once at the end, and kept in `/etc/game-sauce.env`; copy them somewhere
+safe), and runs the app as a systemd service that starts on boot. Open `http://<container-ip>:8765`.
 Read the script first if you like: [`install/proxmox-lxc.sh`](install/proxmox-lxc.sh).
 
 Everything has a default. Override any of these by putting them in front of the command, for example

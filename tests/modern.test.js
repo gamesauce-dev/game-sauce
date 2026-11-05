@@ -790,3 +790,11 @@ test('A-Z jump: the Library list starts AT the letter (one request, offset), Dig
   assert.doesNotMatch(js, /while \(\(s\.libLoadedCount\?\.\(\) \|\| 0\) <= want/, 'no more loading every tile before the letter');
   assert.match(app, /grid\.scrollTop = 0;\s*grid\.innerHTML = items\.map/, 'Digital: a new list starts at its top');
 });
+
+test('Proxmox installer: generates a random secret key, writes it to the env file and prints it once', () => {
+  const sh = fs.readFileSync(new URL('../install/proxmox-lxc.sh', import.meta.url), 'utf8');
+  assert.match(sh, /SECRET_KEY="\$\(openssl rand -hex 32\)"/);
+  assert.match(sh, /GAMESAUCE_SECRET_KEY=\$SECRET_KEY\nENV\nchmod 600 \/etc\/game-sauce\.env/);
+  assert.match(sh, /SECRET_KEY="\$SECRET_KEY" bash \/root\/gs-install\.sh/);
+  assert.match(sh, /Secret key  \$SECRET_KEY/);
+});

@@ -76,6 +76,12 @@ Recommended for production:
 GAMESAUCE_SECRET_KEY=<output of: openssl rand -base64 32>
 ```
 
+The **Proxmox installer sets this for you** (a random key, written to `/etc/game-sauce.env` and printed once with the admin
+password). With Docker or bare Node you set it yourself, **before first use**: the key encrypts the provider and Steam keys
+saved in the app, so adding it later (when keys are already saved under the key file) makes those unreadable until they are
+entered again. The `.env` file is plain text, so keep it readable only by the service (`chmod 600`), keep it out of the same
+backup as the data folder, and keep a copy of the key in a password manager: it cannot be recovered if lost.
+
 Optional providers (all can also be typed into the UI later):
 
 ```dotenv

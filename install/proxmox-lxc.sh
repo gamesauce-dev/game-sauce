@@ -66,6 +66,9 @@ fi
 
 # Admin password: 16 random alphanumerics plus a digit suffix (the app wants 10+ chars with a number).
 ADMIN_PASS="$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | head -c 16)7"
+# Encryption key for the provider and Steam keys saved in the app: 64 random hex characters. Kept in /etc/game-sauce.env, which is a
+# different place from the data, so a copy of the data folder or a backup of it cannot open the saved keys on its own.
+SECRET_KEY="$(openssl rand -hex 32)"
 
 cat <<EOF
 
@@ -160,6 +163,7 @@ GAMESAUCE_DATA_DIR=/var/lib/game-sauce/data
 GAMESAUCE_STORAGE_DIR=/var/lib/game-sauce/storage
 GAMESAUCE_ADMIN_USER=admin
 GAMESAUCE_ADMIN_PASSWORD=$ADMIN_PASS
+GAMESAUCE_SECRET_KEY=$SECRET_KEY
 ENV
 chmod 600 /etc/game-sauce.env
 
@@ -212,7 +216,7 @@ INNER
 pct push "$CTID" "$INSTALL" /root/gs-install.sh --perms 0755 >/dev/null
 rm -f "$INSTALL"
 info "Installing inside the container (this takes a few minutes)…"
-pct exec "$CTID" -- env GS_REPO="$GS_REPO" GS_BRANCH="$GS_BRANCH" APP_PORT="$APP_PORT" ADMIN_PASS="$ADMIN_PASS" bash /root/gs-install.sh
+pct exec "$CTID" -- env GS_REPO="$GS_REPO" GS_BRANCH="$GS_BRANCH" APP_PORT="$APP_PORT" ADMIN_PASS="$ADMIN_PASS" SECRET_KEY="$SECRET_KEY" bash /root/gs-install.sh
 pct exec "$CTID" -- rm -f /root/gs-install.sh
 
 IP="$(pct exec "$CTID" -- hostname -I 2>/dev/null | awk '{print $1}')"
@@ -226,6 +230,9 @@ ${c_ok}✔ game-sauce is running${c_off}
   Username    admin
   Password    $ADMIN_PASS
               (also stored in /etc/game-sauce.env inside the container — change it after signing in)
+  Secret key  $SECRET_KEY
+              (encrypts the keys you save in the app; also in /etc/game-sauce.env. Keep a copy somewhere safe, such as a
+              password manager: if it is lost, saved provider and Steam keys must be entered again)
 
   Container   pct enter $CTID   (opens a root shell, no password needed)
               Proxmox's Console tab shows a "login:" prompt: that is normal. The container has no root
