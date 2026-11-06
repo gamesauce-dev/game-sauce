@@ -263,6 +263,9 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('.sidebar')?.classList.contains('open')) setSidebar(false); });
 
 function setView(view) {
+  // A pinned details window stays beside the games, but only the games it belongs to: a Steam game's details do not follow you
+  // out of Digital, and a ROM's details do not follow you into it.
+  if (!$('#drawer')?.classList.contains('hidden') && (state.openDigital ? view !== 'digital' : view === 'digital')) closeDrawer();
   state.view = view;
   saveNav();
   $$('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
