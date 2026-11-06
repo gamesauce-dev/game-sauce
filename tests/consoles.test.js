@@ -223,3 +223,18 @@ test('migration: PlayStation 4 and 5 games move to the one PlayStation store wit
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM digital_games WHERE store IN ('ps4', 'ps5')").get().n, 0);
   db.prepare("DELETE FROM digital_games WHERE name = 'Bloodborne'").run();
 });
+
+test('disc / cartridge switch: console games only, private, kept in the list; the tile uses the Platforms icons', async () => {
+  const mk = (store, id, value, token) => call(`/api/digital/games/${store}/${id}/mark`, { method: 'PUT', body: { field: 'physical', value }, token });
+  assert.equal((await mk('playstation', 'astro-bot-ps5', true)).status, 200);
+  assert.equal((await mk('nintendo', 'mario-kart-world-switch2', true)).status, 200);
+  assert.equal((await mk('steam', '220', true)).status, 400, 'Steam games have no disc switch');
+  assert.equal((await mk('playstation', 'astro-bot-ps5', true, annTok)).status, 404, 'not another member\'s game');
+  const on = (await call('/api/digital/games')).body.items.filter((g) => g.physical).map((g) => g.app_id).sort();
+  assert.deepEqual(on, ['astro-bot-ps5', 'mario-kart-world-switch2']);
+  assert.equal((await mk('playstation', 'astro-bot-ps5', false)).body.physical, 0);
+  const app = read('public/app.js');
+  assert.match(app, /DG_CARTRIDGE = new Set\(\['switch2', 'switch', '3ds', 'ds'\]\)/); assert.match(app, /data-dg-mark="physical"/);
+  assert.match(app, /platformIconSvg\(\{ icon: type \}/);
+  assert.match(read('public/styles.css'), /\.dg-media\.on/);
+});

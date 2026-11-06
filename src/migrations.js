@@ -472,6 +472,10 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '33') ON CON
 mergePlaystationStores();
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '34') ON CONFLICT(key) DO UPDATE SET value = '34'").run();
 
+/* ── v35: console games can be marked as owned on a physical disc or cartridge (a switch on the tile, private to the person like the other marks). ── */
+if (!db.prepare('PRAGMA table_info(digital_marks)').all().some((c) => c.name === 'physical')) db.exec('ALTER TABLE digital_marks ADD COLUMN physical INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '35') ON CONFLICT(key) DO UPDATE SET value = '35'").run();
+
 /** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
 export function mergePlaystationStores() {
   db.transaction(() => {
