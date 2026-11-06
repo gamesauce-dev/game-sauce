@@ -384,7 +384,7 @@ To bring in details and covers in one go, choose the CSV and add the zip from **
 
 **Locked games.** A game locked with Keep (from the duplicate finder or the details window) cannot be deleted. To clear a batch of them, open the **Locked** filter, choose Select, Select all, then **Unlock**. They are then ordinary games and can be deleted. Admins only.
 
-## Digital: your Steam library
+## Digital: your Steam, PlayStation and Xbox games
 
 Under **Settings → My account → Steam** each person can show the games they own on Steam, with their hours played, on the **Digital** page. Only you see your list.
 
@@ -394,3 +394,23 @@ Under **Settings → My account → Steam** each person can show the games they 
 4. Paste both into game-sauce, press **Save**, then **Fetch my games**.
 
 The play button on a tile opens the game in Steam (`steam://rungameid/...`). That only works in a browser on a PC that has Steam installed, and the browser asks permission the first time. game-sauce never downloads or changes anything on Steam. **Remove** deletes your key and list from game-sauce.
+### PlayStation and Xbox games (from a CSV)
+
+There is no store login to read console libraries from, so an admin can bring them in from a CSV under **Settings → Library tools → CSV tools → Import console games into Digital**. The games go into that person's own Digital list, beside the Steam games, with a chip for each platform (PlayStation 4, PlayStation 5, Xbox).
+
+The CSV needs a header row with these columns (any order; the country is optional):
+
+```
+Platform Name,Game Title,Country of Source Store
+PS5,Astro Bot,Australia
+PlayStation 4,Ratchet & Clank,AU
+Xbox,Halo Infinite,United States
+```
+
+- **Platform Name**: `PS4` / `PlayStation 4`, `PS5` / `PlayStation 5`, or `Xbox` (Xbox One and Series X|S are both listed under Xbox). Other platforms are skipped and listed in the result.
+- **Country of Source Store**: a country name or its two letters. It is shown in the details window, and the store button opens that country's PlayStation or Xbox Store.
+
+Press **Preview** to see what would change, then **Import games**. Importing the same file again adds nothing twice; tick **Remove games no longer in the file** to make the list match the file (only for the platforms the file lists).
+
+Details and covers are looked up in the background with the providers under **Settings → Metadata providers** (as for the Library). The Digital page shows progress while it runs. Console games have no play button. A game whose details were not found can be tried again with **Refresh** on the Digital page, and any console game can be taken out of the list with the bin button in its details window.
+

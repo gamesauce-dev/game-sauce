@@ -453,3 +453,9 @@ db.exec(`
   );
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '31') ON CONFLICT(key) DO UPDATE SET value = '31'").run();
+
+/* ── v32: console games in Digital (PlayStation 4 / 5, Xbox), brought in from a CSV. Each game remembers the country of the store it was
+   bought from, and the cached details keep the cover picture downloaded for it (Steam's covers come from Steam's own address instead). ── */
+if (!db.prepare('PRAGMA table_info(digital_games)').all().some((c) => c.name === 'country')) db.exec('ALTER TABLE digital_games ADD COLUMN country TEXT');
+if (!db.prepare('PRAGMA table_info(digital_details)').all().some((c) => c.name === 'cover_path')) db.exec('ALTER TABLE digital_details ADD COLUMN cover_path TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '32') ON CONFLICT(key) DO UPDATE SET value = '32'").run();

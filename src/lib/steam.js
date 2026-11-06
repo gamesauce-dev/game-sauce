@@ -1,5 +1,6 @@
 // Steam, per person: a member's own Web API key + SteamID64 are kept encrypted, and the owned-games list (with hours played)
 // is fetched from Steam's public Web API when they ask. Nothing here touches ROMs, and nothing is shared between members.
+import path from 'node:path';
 import db from '../db.js';
 import { encryptSecret, decryptSecret } from '../settings.js';
 import { sortTitle } from './metadata.js';
@@ -112,16 +113,19 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
   if (hidden === 'only') where.push('COALESCE(m.hidden, 0) = 1');
   else if (hidden !== 'show') where.push('COALESCE(m.hidden, 0) = 0');
   const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : 'g.name COLLATE NOCASE';
-  const rows = db.prepare(`SELECT g.store, g.app_id, g.name, g.minutes, g.last_played,
+  // Console games (PlayStation, Xbox) carry the country of the store they came from, and their cover is the picture downloaded for them.
+  const rows = db.prepare(`SELECT g.store, g.app_id, g.name, g.minutes, g.last_played, g.country, dd.cover_path,
       COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
+      LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id AND g.store != 'steam'
     WHERE ${where.join(' AND ')} ORDER BY ${order}`).all(...args);
   if (sort === 'name') rows.sort((a, b) => fileKey(a.name).localeCompare(fileKey(b.name), 'en', { numeric: true }) || String(a.name).localeCompare(String(b.name)));
   else if (sort === 'hours' || sort === 'recent') { /* ties break by filing key below */ }
-  return rows.map((r) => ({
+  return rows.map(({ cover_path: coverPath, ...r }) => ({
     ...r,
     hours: Math.round((r.minutes / 60) * 10) / 10,
-    cover_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/library_600x900.jpg` : null,
+    cover_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/library_600x900.jpg`
+      : coverPath ? `/api/digital/cover/${encodeURIComponent(r.store)}/${encodeURIComponent(r.app_id)}?v=${encodeURIComponent(path.basename(coverPath))}` : null,
     cover_fallback_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/header.jpg` : null,
     // The launch link is only offered where the person switched "play" on for that game (not every game is installed).
     launch_url: r.store === 'steam' && r.play ? `steam://rungameid/${r.app_id}` : null
