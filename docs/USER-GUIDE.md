@@ -421,5 +421,5 @@ Xbox,Halo: Combat Evolved,AU
 
 Press **Preview** to see what would change, then **Import games**. Importing the same file again adds nothing twice; tick **Remove games no longer in the file** to make the list match the file (only for the platforms the file lists).
 
-Details and covers are looked up in the background with the providers under **Settings → Metadata providers** (as for the Library). The Digital page shows progress while it runs. Console games have no play button. A game whose details were not found can be tried again with **Refresh** on the Digital page, and any console game can be taken out of the list with the bin button in its details window.
+Details and covers are looked up in the background with the providers under **Settings → Metadata providers** (as for the Library). The Digital page shows progress while it runs. Console games have no play button; instead each tile has a switch at the bottom left, a disc (PlayStation, Xbox, Wii, Wii U) or a cartridge (Switch 2, Switch, 3DS, DS), that you turn on for games you own physically. It is private to you. A game whose details were not found can be tried again with **Refresh** on the Digital page, and any console game can be taken out of the list with the bin button in its details window.
 

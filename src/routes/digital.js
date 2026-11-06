@@ -30,11 +30,12 @@ router.get('/games', (req, res) => {
   res.json({ items, total: items.length, total_hours: Math.round(items.reduce((s, g) => s + g.minutes, 0) / 6) / 10, letters });
 });
 
-// One mark on one game: { field: 'favourite' | 'hidden' | 'play', value: true | false }. Private to the person; a refresh keeps them.
+// One mark on one game: { field: 'favourite' | 'hidden' | 'play' | 'physical', value: true | false }. Private to the person; a refresh keeps them.
 router.put('/games/:store/:appId/mark', (req, res) => {
   const store = String(req.params.store);
   if (!knownStore(store)) return res.status(400).json({ error: 'Unknown store' });
   if (store !== 'steam' && req.body?.field === 'play') return res.status(400).json({ error: 'Console games have no play button' });
+  if (store === 'steam' && req.body?.field === 'physical') return res.status(400).json({ error: 'Only console games have a disc or cartridge switch' });
   try { res.json(setMark(me(req), store, req.params.appId, String(req.body?.field || ''), req.body?.value === true)); }
   catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; }
 });

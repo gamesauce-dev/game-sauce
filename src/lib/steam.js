@@ -86,14 +86,14 @@ function fail(userId, message) {
   throw Object.assign(new Error(message), { status: 502 });
 }
 
-/** Set one mark on one game: field is 'favourite' | 'hidden' | 'play'. The game must be in this person's list. */
+/** Set one mark on one game: field is 'favourite' | 'hidden' | 'play' | 'physical'. The game must be in this person's list. */
 export function setMark(userId, store, appId, field, value) {
-  if (!['favourite', 'hidden', 'play'].includes(field)) throw Object.assign(new Error('Unknown mark'), { status: 400 });
+  if (!['favourite', 'hidden', 'play', 'physical'].includes(field)) throw Object.assign(new Error('Unknown mark'), { status: 400 });
   const own = db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
   if (!own) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
   db.prepare(`INSERT INTO digital_marks (user_id, store, app_id, ${field}) VALUES (?, ?, ?, ?)
     ON CONFLICT(user_id, store, app_id) DO UPDATE SET ${field} = excluded.${field}`).run(userId, store, String(appId), value ? 1 : 0);
-  return db.prepare('SELECT favourite, hidden, play FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  return db.prepare('SELECT favourite, hidden, play, physical FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
 }
 
 /** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id.
@@ -115,7 +115,7 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
   const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : 'g.name COLLATE NOCASE';
   // Console games (PlayStation, Xbox) carry the country of the store they came from, and their cover is the picture downloaded for them.
   const rows = db.prepare(`SELECT g.store, g.app_id, g.name, g.minutes, g.last_played, g.country, g.platform, dd.cover_path,
-      COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play
+      COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play, COALESCE(m.physical, 0) AS physical
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
       LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id AND g.store != 'steam'
     WHERE ${where.join(' AND ')} ORDER BY ${order}`).all(...args);
