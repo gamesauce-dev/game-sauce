@@ -147,3 +147,9 @@ test('page: chips, badges, details window and the CSV tools box', () => {
   assert.match(app, /\/digital\/consoles\/details/);
   assert.match(css, /\.dg-badge:not\(\[data-store="steam"\]\)/);
 });
+
+test('Modern: the import box buttons are icons (Preview reuses preview-2, Import games uses csv-import); the icon follows the theme colour', () => {
+  const js = read('public/modern.js'), svg = read('public/modern/icons/csv-import.svg');
+  assert.match(js, /\['#dgc-preview', 'preview-2'\]/); assert.match(js, /\['#dgc-apply', 'csv-import'\]/);
+  assert.match(svg, /stroke="currentColor"/); assert.doesNotMatch(svg, /#000|<style|<title/);
+});
