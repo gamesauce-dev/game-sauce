@@ -1,4 +1,4 @@
-// Console games in Digital: PlayStation 4, PlayStation 5 and Xbox. There is no store login to read them from, so a person brings their
+// Console games in Digital: PlayStation (3, 4, 5), Nintendo (Switch 2, Switch, Wii, Wii U, 3DS, DS) and Xbox. There is no store login to read them from, so a person brings their
 // list in from a CSV (platform, game title, country of the store it was bought from). The details and cover art are then looked up
 // with the same providers the Library uses for ROMs, in the background, and cached like Steam's store details (shared by everyone,
 // keyed by store + game). Nothing here can launch a game: consoles have no play button.
@@ -8,41 +8,61 @@ import { enrich, cacheMedia } from './providers.js';
 import { parseCsv } from './namecsv.js';
 import { decodeEntities } from './metadata.js';
 
-/** The console stores. `meta` lists the Library platforms to search, in order (a PS5 game not found as PS5 is tried as PS4, and so on). */
+/** The console stores, one chip each in Digital. `meta` is the default list of Library platforms to search when a game has no console of its own. */
 export const CONSOLE_STORES = {
-  ps4: { label: 'PlayStation 4', short: 'PS4', meta: ['ps4', 'ps5'] },
-  ps5: { label: 'PlayStation 5', short: 'PS5', meta: ['ps5', 'ps4'] },
+  playstation: { label: 'PlayStation', short: 'PS', meta: ['ps4', 'ps5', 'ps3'] },
+  nintendo: { label: 'Nintendo', short: 'NINTENDO', meta: ['switch', 'switch2', 'wii', 'wiiu', '3ds', 'nds'] },
   xbox: { label: 'Xbox', short: 'XBOX', meta: ['xboxseries', 'xboxone'] }
 };
 export const isConsoleStore = (s) => Object.prototype.hasOwnProperty.call(CONSOLE_STORES, String(s || ''));
 
-/** Xbox has one chip in Digital, but its games are told apart by console: each gets its own badge and is looked up as its own Library platform. */
-export const XBOX_PLATFORMS = {
-  xbox: { label: 'Xbox', badge: 'XBOX', meta: ['xbox'] },
-  x360: { label: 'Xbox 360', badge: 'XBOX 360', meta: ['xbox360'] },
-  xone: { label: 'Xbox One', badge: 'XBOX ONE', meta: ['xboxone', 'xboxseries'] },
-  xsx: { label: 'Xbox Series X|S', badge: 'X|S', meta: ['xboxseries', 'xboxone'] }
+/**
+ * Each store holds games from several consoles. A game carries the console it is for (its `platform`): that decides its badge and which Library
+ * platform it is looked up as (`meta`, in order: a game not found as a PS5 game is tried as a PS4 one, and so on). The ids are unique across stores.
+ */
+export const CONSOLE_PLATFORMS = {
+  ps3: { store: 'playstation', label: 'PlayStation 3', badge: 'PS3', meta: ['ps3'] },
+  ps4: { store: 'playstation', label: 'PlayStation 4', badge: 'PS4', meta: ['ps4', 'ps5'] },
+  ps5: { store: 'playstation', label: 'PlayStation 5', badge: 'PS5', meta: ['ps5', 'ps4'] },
+  switch2: { store: 'nintendo', label: 'Nintendo Switch 2', badge: 'SWITCH 2', meta: ['switch2', 'switch'] },
+  switch: { store: 'nintendo', label: 'Nintendo Switch', badge: 'SWITCH', meta: ['switch', 'switch2'] },
+  wii: { store: 'nintendo', label: 'Nintendo Wii', badge: 'WII', meta: ['wii'] },
+  wiiu: { store: 'nintendo', label: 'Nintendo Wii U', badge: 'WII U', meta: ['wiiu'] },
+  '3ds': { store: 'nintendo', label: 'Nintendo 3DS', badge: '3DS', meta: ['3ds'] },
+  ds: { store: 'nintendo', label: 'Nintendo DS', badge: 'DS', meta: ['nds'] },
+  xbox: { store: 'xbox', label: 'Xbox', badge: 'XBOX', meta: ['xbox'] },
+  x360: { store: 'xbox', label: 'Xbox 360', badge: 'XBOX 360', meta: ['xbox360'] },
+  xone: { store: 'xbox', label: 'Xbox One', badge: 'XBOX ONE', meta: ['xboxone', 'xboxseries'] },
+  xsx: { store: 'xbox', label: 'Xbox Series X|S', badge: 'X|S', meta: ['xboxseries', 'xboxone'] }
 };
-/** The name a game's platform is shown under (a PlayStation game's is its store's; an Xbox game from before the consoles were told apart has none). */
-export const platformLabel = (store, platform) => (store === 'xbox' ? (XBOX_PLATFORMS[platform] || XBOX_PLATFORMS.xbox).label : CONSOLE_STORES[store]?.label || store);
+const platformOf = (store, platform) => (CONSOLE_PLATFORMS[platform]?.store === store ? CONSOLE_PLATFORMS[platform] : null);
+/** The name a game's platform is shown under (an Xbox game from before the consoles were told apart has none, so it is just Xbox). */
+export const platformLabel = (store, platform) => platformOf(store, platform)?.label || CONSOLE_STORES[store]?.label || store;
 const CONSOLE_LIST = Object.keys(CONSOLE_STORES);
 
 const squash = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '');
 
 /**
- * "PS4", "PlayStation 4" → ps4; "PS5" → ps5; the Xbox family → xbox with its console: "Xbox" → xbox, "Xbox 360" → x360, "Xbox One" → xone,
- * "Xbox Series X|S" (or "X|S", "XSX") → xsx. Anything else → null.
+ * What a platform name in the CSV means, as { store, platform } (or null). PlayStation: "PS3", "PlayStation 4", "PS5 Pro"...; Nintendo: "Switch 2",
+ * "Switch" (Lite and OLED too), "Wii", "Wii U", "3DS" (2DS and New 3DS too), "DS" (DSi and DS Lite too); Xbox: "Xbox" → xbox, "Xbox 360" → x360,
+ * "Xbox One" → xone, "Xbox Series X|S" (or "X|S", "XSX") → xsx. A leading Sony, Nintendo or Microsoft is ignored.
  */
 export function platformFor(platformName) {
-  const s = squash(platformName).replace(/^sony/, '').replace(/^microsoft/, '');
+  const s = squash(platformName).replace(/^(sony|nintendo|microsoft)/, '');
   if (!s) return null;
-  if (['ps4', 'playstation4', 'ps4pro', 'psn4'].includes(s)) return { store: 'ps4', platform: null };
-  if (['ps5', 'playstation5', 'ps5pro'].includes(s)) return { store: 'ps5', platform: null };
-  const x = (platform) => ({ store: 'xbox', platform });
-  if (s.includes('360') || s === 'x360') return x('x360');
-  if (s.includes('series') || ['xs', 'xsx', 'xss', 'xsxs', 'xbs'].includes(s)) return x('xsx');
-  if (s.includes('one') || ['xb1', 'xone'].includes(s)) return x('xone');
-  if (s.startsWith('xbox')) return x('xbox');
+  const is = (platform) => ({ store: CONSOLE_PLATFORMS[platform].store, platform });
+  const ps = /^(?:ps|playstation|psn)([345])(?:pro|slim)?$/.exec(s);
+  if (ps) return is('ps' + ps[1]);
+  if (/^(?:switch2|ns2)/.test(s)) return is('switch2');
+  if (/^(?:switch|ns)(?:lite|oled)?$/.test(s)) return is('switch');
+  if (s === 'wiiu') return is('wiiu');
+  if (s === 'wii') return is('wii');
+  if (/^(?:new)?n?[32]ds(?:xl|ll)?$/.test(s)) return is('3ds');
+  if (/^n?dsi?(?:lite|xl|ll)?$/.test(s)) return is('ds');
+  if (s.includes('360') || s === 'x360') return is('x360');
+  if (s.includes('series') || ['xs', 'xsx', 'xss', 'xsxs', 'xbs'].includes(s)) return is('xsx');
+  if (s.includes('one') || ['xb1', 'xone'].includes(s)) return is('xone');
+  if (s.startsWith('xbox')) return is('xbox');
   return null;
 }
 export const storeFor = (platformName) => platformFor(platformName)?.store || null;
@@ -83,12 +103,12 @@ export function countryFor(input) {
 export function storeUrl(store, title, country) {
   const loc = countryFor(country)?.locale || 'en-us';
   const q = encodeURIComponent(String(title || ''));
-  if (store === 'ps4' || store === 'ps5') return `https://store.playstation.com/${loc}/search/${q}`;
+  if (store === 'playstation') return `https://store.playstation.com/${loc}/search/${q}`;
   if (store === 'xbox') {
     const [lang, ...rest] = loc.split('-');
     return `https://www.xbox.com/${lang}-${rest.join('-').toUpperCase()}/search/results/games?q=${q}`;
   }
-  return null;
+  return null;   // Nintendo's shops have no search address that works the same for every country
 }
 
 /* ───────── CSV import ───────── */
@@ -120,11 +140,11 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
     const platform = String(r[col.platform] || '').trim();
     const pf = platformFor(platform), store = pf?.store || null;
     if (!title) { skipped++; if (problems.length < 10) problems.push({ line, reason: 'No game title' }); return; }
-    if (!store) { skipped++; if (problems.length < 10) problems.push({ line, reason: platform ? `Unknown platform "${platform.slice(0, 40)}" (use PS4, PS5, Xbox, Xbox 360, Xbox One or Xbox Series X|S)` : 'No platform' }); return; }
+    if (!store) { skipped++; if (problems.length < 10) problems.push({ line, reason: platform ? `Unknown platform "${platform.slice(0, 40)}" (use PS3, PS4, PS5, Switch 2, Switch, Wii, Wii U, 3DS, DS, Xbox, Xbox 360, Xbox One or Xbox Series X|S)` : 'No platform' }); return; }
     const slug = appIdFor(title);
     if (!slug) { skipped++; if (problems.length < 10) problems.push({ line, reason: `The title "${title.slice(0, 40)}" has no letters or digits` }); return; }
-    // An Xbox game is filed per console, so the same title on the 360 and the One are two games.
-    const appId = pf.platform ? `${slug}-${pf.platform}` : slug;
+    // A game is filed per console, so the same title on the PS4 and the PS5 (or the 360 and the One) is two games.
+    const appId = `${slug}-${pf.platform}`;
     const key = store + '\n' + appId;
     if (seen.has(key)) { duplicates++; return; }
     const c = col.country >= 0 ? countryFor(r[col.country]) : null;
@@ -135,7 +155,7 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
   const stores = [...new Set(games.map((g) => g.store))];
   const existing = new Map(db.prepare(`SELECT store, app_id, name, country, platform FROM digital_games WHERE user_id = ? AND store IN (${CONSOLE_LIST.map(() => '?').join(',')})`)
     .all(userId, ...CONSOLE_LIST).map((g) => [g.store + '\n' + g.app_id, g]));
-  // Xbox games imported before the consoles were told apart have no console and a plain id: the first game of that title in the file takes
+  // Games imported before the consoles were told apart (Xbox ones) have no console and a plain id: the first game of that title in the file takes
   // such a row over (keeping its id, so its marks and cover stay), instead of adding a second copy.
   const kept = new Set();
   for (const g of games) {
@@ -178,7 +198,7 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
 
 /** Remove one console game from a person's list (its marks go too; the shared cached details stay for anyone else who owns it). */
 export function removeConsoleGame(userId, store, appId) {
-  if (!isConsoleStore(store)) throw Object.assign(new Error('Only PlayStation and Xbox games can be removed here.'), { status: 400 });
+  if (!isConsoleStore(store)) throw Object.assign(new Error('Only console games can be removed here.'), { status: 400 });
   const r = db.prepare('DELETE FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   db.prepare('DELETE FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   if (!r.changes) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
@@ -219,7 +239,7 @@ function platformRow(slug) {
 /** Look one console game up: each of its store's platforms in turn, keeping the first match that has a cover (or else the first match). */
 export async function lookupConsoleGame(store, name, enrichImpl = enrich, platform = null) {
   let best = null, lastError = null;
-  for (const slug of (store === 'xbox' && XBOX_PLATFORMS[platform]?.meta) || CONSOLE_STORES[store]?.meta || []) {
+  for (const slug of platformOf(store, platform)?.meta || CONSOLE_STORES[store]?.meta || []) {
     const meta = await enrichImpl({ title: name, platform: platformRow(slug), hashes: {}, filename: name, titleTrusted: true });
     if (meta?.error) { lastError = String(meta.error); continue; }
     const d = mapRecord(meta, slug);
