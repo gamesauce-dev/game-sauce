@@ -581,6 +581,8 @@ test('Library: total beside the platform heading, tighter spacing; add-folder us
   assert.match(app, /class="lib-total"/); assert.match(css, /body\.ui-modern #result-count \{ display: none; \}/); assert.match(css, /\.filter-row \{ min-height: 0;/);
   assert.match(js, /\['\[data-act="add-folder"\]', 'source-add-2'\]/); assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-2.svg', import.meta.url)));
   assert.match(js, /const keepPinned = view === 'library' && document\.body\.classList\.contains\('details-pinned'\);/);
+  // A pinned Steam game's details close on leaving Digital (and a ROM's on entering it).
+  assert.match(app, /function setView\(view\) \{\n[^]*?\(state\.openDigital \? view !== 'digital' : view === 'digital'\)\) closeDrawer\(\);\n  state\.view = view;/);
 });
 
 test('Modern details header: blurred cover backdrop with the pills and action icons laid on it, built from the existing elements', () => {
