@@ -1660,6 +1660,9 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-badge[data-store="ps4"] { background: #00439ccc; }
 .dg-badge[data-store="ps5"] { background: #0070d1cc; }
 .dg-badge[data-store="xbox"] { background: #107c10cc; }
+.dg-badge[data-platform="x360"] { background: #4a7c0fcc; }
+.dg-badge[data-platform="xone"] { background: #2e7d32cc; }
+.dg-badge[data-platform="xsx"] { background: #1b5e20cc; }
 .dg-note { margin: 0 0 1rem; padding: 0.6rem 0.9rem; border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted); }
 
 /* Sign-in card: the wide logo (controller, joystick and name) with the tagline under it. */
@@ -1717,4 +1720,7 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-card .card-badge.dg-badge[data-store="ps4"] { background: #00439c; }
 .dg-card .card-badge.dg-badge[data-store="ps5"] { background: #0070d1; }
 .dg-card .card-badge.dg-badge[data-store="xbox"] { background: #107c10; }
+.dg-card .card-badge.dg-badge[data-platform="x360"] { background: #4a7c0f; }
+.dg-card .card-badge.dg-badge[data-platform="xone"] { background: #2e7d32; }
+.dg-card .card-badge.dg-badge[data-platform="xsx"] { background: #1b5e20; }
 .dg-card { content-visibility: auto; contain-intrinsic-size: auto 17rem; }

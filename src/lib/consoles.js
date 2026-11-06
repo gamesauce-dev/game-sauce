@@ -15,19 +15,37 @@ export const CONSOLE_STORES = {
   xbox: { label: 'Xbox', short: 'XBOX', meta: ['xboxseries', 'xboxone'] }
 };
 export const isConsoleStore = (s) => Object.prototype.hasOwnProperty.call(CONSOLE_STORES, String(s || ''));
+
+/** Xbox has one chip in Digital, but its games are told apart by console: each gets its own badge and is looked up as its own Library platform. */
+export const XBOX_PLATFORMS = {
+  xbox: { label: 'Xbox', badge: 'XBOX', meta: ['xbox'] },
+  x360: { label: 'Xbox 360', badge: 'XBOX 360', meta: ['xbox360'] },
+  xone: { label: 'Xbox One', badge: 'XBOX ONE', meta: ['xboxone', 'xboxseries'] },
+  xsx: { label: 'Xbox Series X|S', badge: 'X|S', meta: ['xboxseries', 'xboxone'] }
+};
+/** The name a game's platform is shown under (a PlayStation game's is its store's; an Xbox game from before the consoles were told apart has none). */
+export const platformLabel = (store, platform) => (store === 'xbox' ? (XBOX_PLATFORMS[platform] || XBOX_PLATFORMS.xbox).label : CONSOLE_STORES[store]?.label || store);
 const CONSOLE_LIST = Object.keys(CONSOLE_STORES);
 
 const squash = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '');
 
-/** "PS4", "PlayStation 4", "Sony PlayStation 4" → ps4; "PS5" → ps5; "Xbox", "Xbox One", "Xbox Series X|S", "XSX" → xbox. Anything else → null. */
-export function storeFor(platformName) {
+/**
+ * "PS4", "PlayStation 4" → ps4; "PS5" → ps5; the Xbox family → xbox with its console: "Xbox" → xbox, "Xbox 360" → x360, "Xbox One" → xone,
+ * "Xbox Series X|S" (or "X|S", "XSX") → xsx. Anything else → null.
+ */
+export function platformFor(platformName) {
   const s = squash(platformName).replace(/^sony/, '').replace(/^microsoft/, '');
   if (!s) return null;
-  if (['ps4', 'playstation4', 'ps4pro', 'psn4'].includes(s)) return 'ps4';
-  if (['ps5', 'playstation5', 'ps5pro'].includes(s)) return 'ps5';
-  if (s.startsWith('xbox') || ['xb1', 'xbone', 'xsx', 'xss', 'xsxs', 'xbs'].includes(s)) return 'xbox';
+  if (['ps4', 'playstation4', 'ps4pro', 'psn4'].includes(s)) return { store: 'ps4', platform: null };
+  if (['ps5', 'playstation5', 'ps5pro'].includes(s)) return { store: 'ps5', platform: null };
+  const x = (platform) => ({ store: 'xbox', platform });
+  if (s.includes('360') || s === 'x360') return x('x360');
+  if (s.includes('series') || ['xs', 'xsx', 'xss', 'xsxs', 'xbs'].includes(s)) return x('xsx');
+  if (s.includes('one') || ['xb1', 'xone'].includes(s)) return x('xone');
+  if (s.startsWith('xbox')) return x('xbox');
   return null;
 }
+export const storeFor = (platformName) => platformFor(platformName)?.store || null;
 
 /** A game's id inside its store: its title, lower case, with everything but letters and digits made into dashes. Stable across imports. */
 export function appIdFor(title) {
@@ -76,13 +94,13 @@ export function storeUrl(store, title, country) {
 /* ───────── CSV import ───────── */
 
 const HEADER = {
-  platform: ['platformname', 'platform', 'console', 'system'],
-  title: ['gametitle', 'title', 'game', 'gamename', 'name'],
-  country: ['countryofsourcestore', 'countryofstore', 'storecountry', 'sourcestorecountry', 'country', 'region', 'store']
+  platform: ['platform', 'platformname', 'console', 'system'],
+  title: ['game', 'gametitle', 'title', 'gamename', 'name'],
+  country: ['country', 'countryofsourcestore', 'countryofstore', 'storecountry', 'sourcestorecountry', 'region', 'store']
 };
 
 /**
- * Read a console CSV (columns: Platform Name, Game Title, Country of Source Store; the header row is required, the order is not).
+ * Read a console CSV (columns: Platform, Game, Country; the header row is required, the order is not; the older names Platform Name, Game Title and Country of Source Store still work).
  * With apply: false nothing is saved and the answer says what would happen. With replace: true, games already in the person's list
  * for a platform that appears in the file are removed when the file no longer lists them; platforms not in the file are left alone.
  */
@@ -92,7 +110,7 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
   const head = rows[0].map(squash);
   const col = Object.fromEntries(Object.entries(HEADER).map(([k, names]) => [k, names.map((n) => head.indexOf(n)).find((i) => i >= 0) ?? -1]));
   if (col.platform < 0 || col.title < 0) {
-    throw Object.assign(new Error('The first row must name the columns: Platform Name, Game Title, Country of Source Store (the country is optional).'), { status: 400 });
+    throw Object.assign(new Error('The first row must name the columns: Platform, Game, Country (the country is optional).'), { status: 400 });
   }
   const seen = new Map();   // "store\napp_id" → row
   const problems = []; let skipped = 0, duplicates = 0;
@@ -100,40 +118,52 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
     const line = i + 2;
     const title = decodeEntities(String(r[col.title] || '').trim()).slice(0, 200);
     const platform = String(r[col.platform] || '').trim();
-    const store = storeFor(platform);
+    const pf = platformFor(platform), store = pf?.store || null;
     if (!title) { skipped++; if (problems.length < 10) problems.push({ line, reason: 'No game title' }); return; }
-    if (!store) { skipped++; if (problems.length < 10) problems.push({ line, reason: platform ? `Unknown platform "${platform.slice(0, 40)}" (use PS4, PS5 or Xbox)` : 'No platform' }); return; }
-    const appId = appIdFor(title);
-    if (!appId) { skipped++; if (problems.length < 10) problems.push({ line, reason: `The title "${title.slice(0, 40)}" has no letters or digits` }); return; }
+    if (!store) { skipped++; if (problems.length < 10) problems.push({ line, reason: platform ? `Unknown platform "${platform.slice(0, 40)}" (use PS4, PS5, Xbox, Xbox 360, Xbox One or Xbox Series X|S)` : 'No platform' }); return; }
+    const slug = appIdFor(title);
+    if (!slug) { skipped++; if (problems.length < 10) problems.push({ line, reason: `The title "${title.slice(0, 40)}" has no letters or digits` }); return; }
+    // An Xbox game is filed per console, so the same title on the 360 and the One are two games.
+    const appId = pf.platform ? `${slug}-${pf.platform}` : slug;
     const key = store + '\n' + appId;
     if (seen.has(key)) { duplicates++; return; }
     const c = col.country >= 0 ? countryFor(r[col.country]) : null;
-    seen.set(key, { store, app_id: appId, name: title, country: c ? (c.code || c.name) : null });
+    seen.set(key, { store, app_id: appId, slug, name: title, platform: pf.platform, country: c ? (c.code || c.name) : null });
   });
 
   const games = [...seen.values()];
   const stores = [...new Set(games.map((g) => g.store))];
-  const existing = new Map(db.prepare(`SELECT store, app_id, name, country FROM digital_games WHERE user_id = ? AND store IN (${CONSOLE_LIST.map(() => '?').join(',')})`)
+  const existing = new Map(db.prepare(`SELECT store, app_id, name, country, platform FROM digital_games WHERE user_id = ? AND store IN (${CONSOLE_LIST.map(() => '?').join(',')})`)
     .all(userId, ...CONSOLE_LIST).map((g) => [g.store + '\n' + g.app_id, g]));
+  // Xbox games imported before the consoles were told apart have no console and a plain id: the first game of that title in the file takes
+  // such a row over (keeping its id, so its marks and cover stay), instead of adding a second copy.
+  const kept = new Set();
+  for (const g of games) {
+    if (g.platform && !existing.has(g.store + '\n' + g.app_id)) {
+      const old = existing.get(g.store + '\n' + g.slug);
+      if (old && !old.platform && !kept.has(g.store + '\n' + g.slug)) g.app_id = g.slug;
+    }
+    kept.add(g.store + '\n' + g.app_id);
+  }
   let added = 0, updated = 0, unchanged = 0;
   for (const g of games) {
     const had = existing.get(g.store + '\n' + g.app_id);
     if (!had) added++;
-    else if (had.name !== g.name || (had.country || null) !== (g.country || null)) updated++;
+    else if (had.name !== g.name || (had.country || null) !== (g.country || null) || (had.platform || null) !== (g.platform || null)) updated++;
     else unchanged++;
   }
-  const removing = replace ? [...existing.values()].filter((g) => stores.includes(g.store) && !seen.has(g.store + '\n' + g.app_id)) : [];
+  const removing = replace ? [...existing.values()].filter((g) => stores.includes(g.store) && !kept.has(g.store + '\n' + g.app_id)) : [];
   const byStore = Object.fromEntries(CONSOLE_LIST.map((s) => [s, games.filter((g) => g.store === s).length]).filter(([, n]) => n));
 
   if (apply) {
-    const ins = db.prepare(`INSERT INTO digital_games (user_id, store, app_id, name, country) VALUES (?, ?, ?, ?, ?)`);
-    const upd = db.prepare('UPDATE digital_games SET name = ?, country = ? WHERE user_id = ? AND store = ? AND app_id = ?');
+    const ins = db.prepare(`INSERT INTO digital_games (user_id, store, app_id, name, country, platform) VALUES (?, ?, ?, ?, ?, ?)`);
+    const upd = db.prepare('UPDATE digital_games SET name = ?, country = ?, platform = ? WHERE user_id = ? AND store = ? AND app_id = ?');
     const delGame = db.prepare('DELETE FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?');
     const delMark = db.prepare('DELETE FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?');
     db.transaction(() => {
       for (const g of games) {
-        if (existing.has(g.store + '\n' + g.app_id)) upd.run(g.name, g.country, userId, g.store, g.app_id);
-        else ins.run(userId, g.store, g.app_id, g.name, g.country);
+        if (existing.has(g.store + '\n' + g.app_id)) upd.run(g.name, g.country, g.platform, userId, g.store, g.app_id);
+        else ins.run(userId, g.store, g.app_id, g.name, g.country, g.platform);
       }
       for (const g of removing) { delGame.run(userId, g.store, g.app_id); delMark.run(userId, g.store, g.app_id); }
     })();
@@ -142,7 +172,7 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
   return {
     applied: Boolean(apply), csv_rows: rows.length - 1, games: games.length, by_store: byStore,
     added, updated, unchanged, removed: removing.length, duplicates, skipped, problems,
-    sample: games.slice(0, 5).map((g) => ({ store: g.store, name: g.name, country: g.country }))
+    sample: games.slice(0, 5).map((g) => ({ store: g.store, platform: g.platform, name: g.name, country: g.country }))
   };
 }
 
@@ -187,9 +217,9 @@ function platformRow(slug) {
 }
 
 /** Look one console game up: each of its store's platforms in turn, keeping the first match that has a cover (or else the first match). */
-export async function lookupConsoleGame(store, name, enrichImpl = enrich) {
+export async function lookupConsoleGame(store, name, enrichImpl = enrich, platform = null) {
   let best = null, lastError = null;
-  for (const slug of CONSOLE_STORES[store]?.meta || []) {
+  for (const slug of (store === 'xbox' && XBOX_PLATFORMS[platform]?.meta) || CONSOLE_STORES[store]?.meta || []) {
     const meta = await enrichImpl({ title: name, platform: platformRow(slug), hashes: {}, filename: name, titleTrusted: true });
     if (meta?.error) { lastError = String(meta.error); continue; }
     const d = mapRecord(meta, slug);
@@ -201,8 +231,8 @@ export async function lookupConsoleGame(store, name, enrichImpl = enrich) {
 }
 
 /** Fetch and cache the details for one game; returns what the window shows (or null when no provider knows it). */
-export async function refreshConsoleDetails(store, appId, name, { enrichImpl = enrich, cacheImpl = cacheMedia } = {}) {
-  const { details, error } = await lookupConsoleGame(store, name, enrichImpl);
+export async function refreshConsoleDetails(store, appId, name, { enrichImpl = enrich, cacheImpl = cacheMedia, platform = null } = {}) {
+  const { details, error } = await lookupConsoleGame(store, name, enrichImpl, platform);
   let coverPath = null;
   if (details?.cover_url) { try { coverPath = await cacheImpl(details.cover_url, 'box2d'); } catch { coverPath = null; } }
   const json = details ? JSON.stringify({ ...details, cover_url: undefined }) : (error ? JSON.stringify({ error }) : null);
@@ -230,7 +260,7 @@ export function consoleCoverPath(store, appId) {
 const job = { running: false, total: 0, done: 0, found: 0, again: false, retry: false };
 export const detailsJobStatus = () => ({ running: job.running, total: job.total, done: job.done, found: job.found });
 
-const pendingSql = (retry) => `SELECT g.store, g.app_id, MIN(g.name) AS name FROM digital_games g
+const pendingSql = (retry) => `SELECT g.store, g.app_id, MIN(g.name) AS name, MIN(g.platform) AS platform FROM digital_games g
   LEFT JOIN digital_details d ON d.store = g.store AND d.app_id = g.app_id
   WHERE g.store IN (${CONSOLE_LIST.map(() => '?').join(',')}) AND (d.app_id IS NULL${retry ? ' OR d.found = 0' : ''})
   GROUP BY g.store, g.app_id ORDER BY MIN(g.id)`;
@@ -245,7 +275,7 @@ export function startDetailsJob({ retry = false, enrichImpl, cacheImpl } = {}) {
       let list = todo;
       while (list.length) {
         for (const g of list) {
-          try { if (await refreshConsoleDetails(g.store, g.app_id, g.name, { enrichImpl, cacheImpl })) job.found++; } catch { /* one game must not stop the run */ }
+          try { if (await refreshConsoleDetails(g.store, g.app_id, g.name, { enrichImpl, cacheImpl, platform: g.platform })) job.found++; } catch { /* one game must not stop the run */ }
           job.done++;
         }
         // Games imported while this ran are picked up before it ends.

@@ -585,6 +585,9 @@ body.ui-modern .dg-badge:not([data-store="steam"]) .dg-badge-txt { display: inli
 body.ui-modern .dg-badge[data-store="ps4"] { background: #00439c; }
 body.ui-modern .dg-badge[data-store="ps5"] { background: #0070d1; }
 body.ui-modern .dg-badge[data-store="xbox"] { background: #107c10; }
+body.ui-modern .dg-badge[data-platform="x360"] { background: #4a7c0f; }
+body.ui-modern .dg-badge[data-platform="xone"] { background: #2e7d32; }
+body.ui-modern .dg-badge[data-platform="xsx"] { background: #1b5e20; }
 
 /* The details header clips whatever spills past its bottom edge, and the icon row sits right on that edge: the More menu opened below
  * the row and was cut off completely. Inside the header it opens upward, over the cover, and stays inside the window. */

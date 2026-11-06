@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
-import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, storeUrl, countryFor, startDetailsJob, detailsJobStatus } from '../lib/consoles.js';
+import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
@@ -47,9 +47,9 @@ router.get('/games/:store/:appId', async (req, res, next) => {
     const game = listGames(me(req), { store, hidden: 'show' }).find((g) => g.app_id === String(req.params.appId));
     if (!game) return res.status(404).json({ error: 'That game is not in your list' });
     const c = countryFor(game.country);
-    const extra = { store_label: CONSOLE_STORES[store].label, country_name: c?.name || null, store_url: storeUrl(store, game.name, game.country) };
+    const extra = { store_label: platformLabel(store, game.platform), country_name: c?.name || null, store_url: storeUrl(store, game.name, game.country) };
     try {
-      const details = await getConsoleDetails(store, game.app_id, game.name);
+      const details = await getConsoleDetails(store, game.app_id, game.name, { platform: game.platform });
       // The cover may have arrived just now: list it again so the window gets its address.
       const fresh = details ? listGames(me(req), { store, hidden: 'show' }).find((g) => g.app_id === game.app_id) || game : game;
       return res.json({ game: { ...fresh, ...extra }, details });
@@ -72,7 +72,7 @@ router.get('/cover/:store/:appId', (req, res) => {
   res.sendFile(path.resolve(file));
 });
 
-// Console games from a CSV (Platform Name, Game Title, Country of Source Store) into the signed-in person's own list.
+// Console games from a CSV (Platform, Game, Country) into the signed-in person's own list.
 // { csv: text, apply?: boolean, replace?: boolean }. Without apply nothing is saved: the answer is the preview.
 router.post('/consoles/import', requireAdmin, (req, res) => {
   try {
