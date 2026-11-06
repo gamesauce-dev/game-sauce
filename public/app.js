@@ -3292,6 +3292,15 @@ const DG_STORE = {
   ps5: { label: 'PlayStation 5', short: 'PS5', bg: '#0070d1' },
   xbox: { label: 'Xbox', short: 'XBOX', bg: '#107c10' }
 };
+/* Xbox is one chip, but each Xbox game carries the badge of its console (games imported before consoles were told apart show XBOX). */
+const DG_XBOX = {
+  xbox: { label: 'Xbox', short: 'XBOX' }, x360: { label: 'Xbox 360', short: 'XBOX 360' },
+  xone: { label: 'Xbox One', short: 'XBOX ONE' }, xsx: { label: 'Xbox Series X|S', short: 'X|S' }
+};
+const dgBadgeOf = (g) => {
+  const st = DG_STORE[g.store] || { label: g.store, short: String(g.store || '').toUpperCase(), bg: '#1b2838' };
+  return g.store === 'xbox' ? { ...st, ...(DG_XBOX[g.platform] || DG_XBOX.xbox) } : st;
+};
 const dg = { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, density: 'comfortable', letter: '' };
 /* Previous / next inside the Digital list: the tiles in the order shown now (hidden games only when Show hidden is on). */
 /* The Digital grid draws its tiles in chunks (60 at a time, more as you scroll), like the Library: drawing thousands at once, each with its
@@ -3385,12 +3394,12 @@ async function loadDigital(keep = false) {
   dg.ids = items.map((g) => dgKey(g.store, g.app_id));
   dg.html = items.map((g) => {
     const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-    const st = DG_STORE[g.store] || { label: g.store, short: g.store.toUpperCase(), bg: '#1b2838' }, steam = g.store === 'steam';
+    const st = dgBadgeOf(g), steam = g.store === 'steam';
     return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">
       <div class="card-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
         <div class="card-fallback">${esc(initials)}</div>
         ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
-        <span class="card-badge dg-badge" data-store="${esc(g.store)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>
+        <span class="card-badge dg-badge" data-store="${esc(g.store)}"${g.store === 'xbox' ? ` data-platform="${esc(g.platform || 'xbox')}"` : ''} title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
         <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
         <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
@@ -3445,10 +3454,10 @@ $('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; dg.
 /* The details window for a PlayStation or Xbox game: the same window as Steam's, with what applies to a game brought in from a CSV.
  * There is no play button. The details and cover come from the Library's metadata providers; Remove takes it out of your list. */
 function renderConsoleDetail(g, d, store, appId) {
-  const st = DG_STORE[store] || { label: store, bg: '#1b2838' };
+  const st = dgBadgeOf({ ...g, store });
   const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const rows = [
-    ['Store', esc(g.store_label || st.label)],
+    ['Platform', esc(g.store_label || st.label)],
     ['Store country', g.country_name ? esc(g.country_name) : '—'],
     ['Developer', d?.developers?.length ? esc(d.developers.join(', ')) : '—'],
     ['Publisher', d?.publishers?.length ? esc(d.publishers.join(', ')) : '—'],

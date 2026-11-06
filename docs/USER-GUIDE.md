@@ -396,19 +396,22 @@ Under **Settings → My account → Steam** each person can show the games they 
 The play button on a tile opens the game in Steam (`steam://rungameid/...`). That only works in a browser on a PC that has Steam installed, and the browser asks permission the first time. game-sauce never downloads or changes anything on Steam. **Remove** deletes your key and list from game-sauce.
 ### PlayStation and Xbox games (from a CSV)
 
-There is no store login to read console libraries from, so an admin can bring them in from a CSV under **Settings → Library tools → CSV tools → Import console games into Digital**. The games go into that person's own Digital list, beside the Steam games, with a chip for each platform (PlayStation 4, PlayStation 5, Xbox).
+There is no store login to read console libraries from, so an admin can bring them in from a CSV under **Settings → Library tools → CSV tools → Import console games into Digital**. The games go into that person's own Digital list, beside the Steam games, with a chip for each platform (PlayStation 4, PlayStation 5, Xbox). Xbox games all sit under the one Xbox chip, each tile badged with its console: XBOX, XBOX 360, XBOX ONE or X|S.
 
 The CSV needs a header row with these columns (any order; the country is optional):
 
 ```
-Platform Name,Game Title,Country of Source Store
+Platform,Game,Country
 PS5,Astro Bot,Australia
 PlayStation 4,Ratchet & Clank,AU
-Xbox,Halo Infinite,United States
+Xbox Series X|S,Halo Infinite,United States
+Xbox One,Forza Horizon 5,Australia
+Xbox 360,Halo 3,AU
+Xbox,Halo: Combat Evolved,AU
 ```
 
-- **Platform Name**: `PS4` / `PlayStation 4`, `PS5` / `PlayStation 5`, or `Xbox` (Xbox One and Series X|S are both listed under Xbox). Other platforms are skipped and listed in the result.
-- **Country of Source Store**: a country name or its two letters. It is shown in the details window, and the store button opens that country's PlayStation or Xbox Store.
+- **Platform**: `PS4` / `PlayStation 4`, `PS5` / `PlayStation 5`, `Xbox`, `Xbox 360`, `Xbox One` or `Xbox Series X|S`. Other platforms are skipped and listed in the result. The same title on two Xbox consoles is two games. (The older column names Platform Name, Game Title and Country of Source Store still work.)
+- **Country**: a country name or its two letters. It is shown in the details window, and the store button opens that country's PlayStation or Xbox Store.
 
 Press **Preview** to see what would change, then **Import games**. Importing the same file again adds nothing twice; tick **Remove games no longer in the file** to make the list match the file (only for the platforms the file lists).
 

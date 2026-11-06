@@ -17,11 +17,12 @@ const call = async (p, { method = 'GET', body, token = adminTok } = {}) => {
 };
 const read = (rel) => fs.readFileSync(new URL('../' + rel, import.meta.url), 'utf8');
 const CSV = [
-  'Platform Name,Game Title,Country of Source Store',
+  'Platform,Game,Country',
   'PS5,Astro Bot,Australia',
   'PlayStation 4,"Ratchet & Clank",AU',
   'Xbox Series X|S,Halo Infinite,United States',
   'Xbox One,Forza Horizon 5,uk',
+  'XBOX 360,Halo Infinite,United States',
   'PS5,Astro Bot,Australia',
   'Switch,Mario Kart 8,Japan',
   'PS4,,AU'
@@ -46,7 +47,10 @@ after(async () => {
 });
 
 test('platform names, countries, ids and store links', () => {
-  for (const [t, s] of [['PS4', 'ps4'], ['PlayStation 4', 'ps4'], ['Sony PlayStation 5', 'ps5'], ['ps5', 'ps5'], ['Xbox', 'xbox'], ['Xbox One', 'xbox'], ['Xbox Series X|S', 'xbox'], ['XSX', 'xbox'], ['Switch', null], ['', null]]) assert.equal(consoles.storeFor(t), s, t);
+  for (const [t, s] of [['PS4', 'ps4'], ['PlayStation 4', 'ps4'], ['Sony PlayStation 5', 'ps5'], ['ps5', 'ps5'], ['Xbox', 'xbox'], ['Xbox One', 'xbox'], ['Xbox 360', 'xbox'], ['Xbox Series X|S', 'xbox'], ['XSX', 'xbox'], ['Switch', null], ['', null]]) assert.equal(consoles.storeFor(t), s, t);
+  for (const [t, p] of [['Xbox', 'xbox'], ['XBOX', 'xbox'], ['Microsoft Xbox', 'xbox'], ['Xbox 360', 'x360'], ['XBOX360', 'x360'], ['X360', 'x360'], ['Xbox One', 'xone'], ['XBOX ONE X', 'xone'], ['XB1', 'xone'],
+    ['Xbox Series X|S', 'xsx'], ['XBOX SERIES X|S', 'xsx'], ['X|S', 'xsx'], ['Xbox Series X', 'xsx'], ['XSX', 'xsx']]) assert.deepEqual(consoles.platformFor(t), { store: 'xbox', platform: p }, t);
+  assert.deepEqual(consoles.platformFor('PS5'), { store: 'ps5', platform: null });
   assert.deepEqual(consoles.countryFor('Australia'), { code: 'AU', name: 'Australia', locale: 'en-au' });
   assert.equal(consoles.countryFor('au').code, 'AU'); assert.equal(consoles.countryFor('UK').code, 'GB'); assert.equal(consoles.countryFor('USA').code, 'US');
   assert.deepEqual(consoles.countryFor('Atlantis'), { code: null, name: 'Atlantis', locale: null });
@@ -77,24 +81,26 @@ test('lookup tries each platform of the store and prefers a match with a cover',
 
 test('import: header required, preview saves nothing, apply adds, duplicates and bad rows are reported', async () => {
   const bad = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'a,b\n1,2' } });
-  assert.equal(bad.status, 400); assert.match(bad.body.error, /Platform Name, Game Title/);
+  assert.equal(bad.status, 400); assert.match(bad.body.error, /Platform, Game, Country/);
   assert.equal((await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV }, token: annTok })).status, 403, 'CSV tools are for admins');
 
   const pre = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV } });
   assert.equal(pre.status, 200); assert.equal(pre.body.applied, false);
-  assert.equal(pre.body.games, 4); assert.equal(pre.body.added, 4); assert.equal(pre.body.duplicates, 1); assert.equal(pre.body.skipped, 2);
-  assert.deepEqual(pre.body.by_store, { ps4: 1, ps5: 1, xbox: 2 });
+  assert.equal(pre.body.games, 5); assert.equal(pre.body.added, 5); assert.equal(pre.body.duplicates, 1); assert.equal(pre.body.skipped, 2);
+  assert.deepEqual(pre.body.by_store, { ps4: 1, ps5: 1, xbox: 3 });
   assert.ok(pre.body.problems.some((p) => /Unknown platform "Switch"/.test(p.reason)));
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM digital_games WHERE store != 'steam'").get().n, 0, 'preview saved nothing');
 
   const r = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV, apply: true } });
-  assert.equal(r.body.applied, true); assert.equal(r.body.added, 4);
+  assert.equal(r.body.applied, true); assert.equal(r.body.added, 5);
   await consoles.detailsJobIdle();
   const again = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV, apply: true } });
-  assert.equal(again.body.added, 0); assert.equal(again.body.unchanged, 4, 'importing the same file twice adds nothing');
+  assert.equal(again.body.added, 0); assert.equal(again.body.unchanged, 5, 'importing the same file twice adds nothing');
   await consoles.detailsJobIdle();
-  const country = db.prepare("SELECT country FROM digital_games WHERE store = 'xbox' AND app_id = 'forza-horizon-5'").get().country;
+  const country = db.prepare("SELECT country FROM digital_games WHERE store = 'xbox' AND app_id = 'forza-horizon-5-xone'").get().country;
   assert.equal(country, 'GB');
+  const plats = db.prepare("SELECT app_id, platform FROM digital_games WHERE store = 'xbox' ORDER BY app_id").all();
+  assert.deepEqual(plats, [{ app_id: 'forza-horizon-5-xone', platform: 'xone' }, { app_id: 'halo-infinite-x360', platform: 'x360' }, { app_id: 'halo-infinite-xsx', platform: 'xsx' }], 'the same title on two consoles is two games');
 });
 
 test('list, chips, marks and the details window for console games; no play button', async () => {
@@ -118,19 +124,20 @@ test('a found cover is served to its owner only, and shows on the tile', async (
   const img = path.join(TMP, 'storage', 'cover-test.png');
   fs.mkdirSync(path.dirname(img), { recursive: true });
   fs.writeFileSync(img, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'));
-  await consoles.refreshConsoleDetails('xbox', 'halo-infinite', 'Halo Infinite', { enrichImpl: async () => ({ title: 'Halo Infinite', developer: '343 Industries', cover_url: 'https://x/h.jpg', source: 'igdb' }), cacheImpl: async () => img });
-  const tile = (await call('/api/digital/games?store=xbox')).body.items.find((g) => g.app_id === 'halo-infinite');
-  assert.match(tile.cover_url, /^\/api\/digital\/cover\/xbox\/halo-infinite\?v=cover-test\.png$/);
+  await consoles.refreshConsoleDetails('xbox', 'halo-infinite-xsx', 'Halo Infinite', { platform: 'xsx', enrichImpl: async () => ({ title: 'Halo Infinite', developer: '343 Industries', cover_url: 'https://x/h.jpg', source: 'igdb' }), cacheImpl: async () => img });
+  const tile = (await call('/api/digital/games?store=xbox')).body.items.find((g) => g.app_id === 'halo-infinite-xsx');
+  assert.match(tile.cover_url, /^\/api\/digital\/cover\/xbox\/halo-infinite-xsx\?v=cover-test\.png$/);
   const res = await fetch(base + tile.cover_url, { headers: { Authorization: 'Bearer ' + adminTok } });
   assert.equal(res.status, 200);
   assert.equal((await fetch(base + tile.cover_url, { headers: { Authorization: 'Bearer ' + annTok } })).status, 404);
-  const d = (await call('/api/digital/games/xbox/halo-infinite')).body;
+  const d = (await call('/api/digital/games/xbox/halo-infinite-xsx')).body;
+  assert.equal(d.game.platform, 'xsx'); assert.equal(d.game.store_label, 'Xbox Series X|S');
   assert.deepEqual(d.details.developers, ['343 Industries']); assert.equal(d.game.cover_url, tile.cover_url);
 });
 
 test('replace removes games no longer in the file, only for platforms in the file; one game can be removed', async () => {
-  const r = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform Name,Game Title\nXbox,Halo Infinite', apply: true, replace: true } });
-  assert.equal(r.body.removed, 1);
+  const r = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform Name,Game Title\nXbox Series X|S,Halo Infinite', apply: true, replace: true } });
+  assert.equal(r.body.removed, 2, 'the Xbox 360 and Xbox One games are not in the file');
   await consoles.detailsJobIdle();
   const stores = Object.fromEntries((await call('/api/digital')).body.stores.map((s) => [s.store, s.count]));
   assert.deepEqual(stores, { ps4: 1, ps5: 1, xbox: 1 });
@@ -152,4 +159,30 @@ test('Modern: the import box buttons are icons (Preview reuses preview-2, Import
   const js = read('public/modern.js'), svg = read('public/modern/icons/csv-import.svg');
   assert.match(js, /\['#dgc-preview', 'preview-2'\]/); assert.match(js, /\['#dgc-apply', 'csv-import'\]/);
   assert.match(svg, /stroke="currentColor"/); assert.doesNotMatch(svg, /#000|<style|<title/);
+});
+
+test('Xbox consoles: each is looked up as its own Library platform, and older Xbox rows are taken over by the next import', async () => {
+  const asked = {};
+  for (const p of ['x360', 'xone', 'xsx', 'xbox']) { asked[p] = []; await consoles.lookupConsoleGame('xbox', 'Halo', async (q) => { asked[p].push(q.platform.slug); return null; }, p); }
+  assert.deepEqual(asked, { x360: ['xbox360'], xone: ['xboxone', 'xboxseries'], xsx: ['xboxseries', 'xboxone'], xbox: ['xbox'] });
+  assert.equal(consoles.platformLabel('xbox', 'xsx'), 'Xbox Series X|S'); assert.equal(consoles.platformLabel('xbox', null), 'Xbox'); assert.equal(consoles.platformLabel('ps4'), 'PlayStation 4');
+  // A row from before consoles were told apart: plain id, no console.
+  const uid = db.prepare("SELECT id FROM users WHERE username = 'cadmin'").get().id;
+  db.prepare("INSERT INTO digital_games (user_id, store, app_id, name) VALUES (?, 'xbox', 'gears-5', 'Gears 5')").run(uid);
+  const pre = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform,Game\nXbox One,Gears 5\nXbox Series X|S,Gears 5' } });
+  assert.equal(pre.body.updated, 1, 'the old row is adopted'); assert.equal(pre.body.added, 1, 'the second console is a new game');
+  await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform,Game\nXbox One,Gears 5\nXbox Series X|S,Gears 5', apply: true } });
+  await consoles.detailsJobIdle();
+  const rows = db.prepare("SELECT app_id, platform FROM digital_games WHERE store = 'xbox' AND name = 'Gears 5' ORDER BY app_id").all();
+  assert.deepEqual(rows, [{ app_id: 'gears-5', platform: 'xone' }, { app_id: 'gears-5-xsx', platform: 'xsx' }]);
+});
+
+test('the badges: XBOX, XBOX 360, XBOX ONE and X|S on the one Xbox chip', () => {
+  const app = read('public/app.js');
+  assert.match(app, /xsx: \{ label: 'Xbox Series X\|S', short: 'X\|S' \}/);
+  assert.match(app, /x360: \{ label: 'Xbox 360', short: 'XBOX 360' \}/);
+  assert.match(app, /xone: \{ label: 'Xbox One', short: 'XBOX ONE' \}/);
+  assert.match(app, /data-platform="\$\{esc\(g\.platform \|\| 'xbox'\)\}"/);
+  for (const f of ['public/styles.css', 'public/modern.css']) for (const p of ['x360', 'xone', 'xsx']) assert.match(read(f), new RegExp(`data-platform="${p}"`), f);
+  assert.match(read('public/index.html'), /<code>Platform<\/code>, <code>Game<\/code> and <code>Country<\/code>/);
 });

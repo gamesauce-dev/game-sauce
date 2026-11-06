@@ -459,3 +459,9 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '31') ON CON
 if (!db.prepare('PRAGMA table_info(digital_games)').all().some((c) => c.name === 'country')) db.exec('ALTER TABLE digital_games ADD COLUMN country TEXT');
 if (!db.prepare('PRAGMA table_info(digital_details)').all().some((c) => c.name === 'cover_path')) db.exec('ALTER TABLE digital_details ADD COLUMN cover_path TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '32') ON CONFLICT(key) DO UPDATE SET value = '32'").run();
+
+
+/* ── v33: Xbox games are told apart by console (Xbox, Xbox 360, Xbox One, Xbox Series X|S). Games imported before this have no console until
+   the CSV is imported again, which fills it in. ── */
+if (!db.prepare('PRAGMA table_info(digital_games)').all().some((c) => c.name === 'platform')) db.exec('ALTER TABLE digital_games ADD COLUMN platform TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '33') ON CONFLICT(key) DO UPDATE SET value = '33'").run();
