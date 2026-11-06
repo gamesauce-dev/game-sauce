@@ -48,4 +48,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # PR runs from bots/forks get a read-only cache token, so only write the cache on push.
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max' || '' }}
