@@ -4513,11 +4513,11 @@ function initConsoleImport() {
       const what = apply
         ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
         : `${n(r.games)} games in the file (${per || 'none'}): ${n(r.added)} would be added, ${n(r.updated)} updated, ${n(r.unchanged)} ${r.unchanged === 1 ? 'is' : 'are'} already there${r.removed ? `, ${n(r.removed)} would be removed` : ''}.`;
-      const notes = [r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
+      const notes = [r.physical_on ? `${n(r.physical_on)} marked as owned on disc or cartridge` : '', r.physical_off ? `${n(r.physical_off)} marked digital only` : '', r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
       out.innerHTML = what + (notes ? ` ${notes}.` : '')
         + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
         + (apply && r.details_job?.running ? `<br>Details and covers are being looked up now (${n(r.details_job.total)} games). Open <b>Digital</b> to watch them arrive.` : '');
-      applyBtn.disabled = apply || !(r.added || r.updated || r.removed);
+      applyBtn.disabled = apply || !(r.added || r.updated || r.removed || r.physical_on || r.physical_off);
       if (apply) toast(`${n(r.added)} console games added to Digital`);
     } catch (err) { out.textContent = err.message; toast(err.message, true); }
   };

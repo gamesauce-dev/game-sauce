@@ -398,14 +398,14 @@ The play button on a tile opens the game in Steam (`steam://rungameid/...`). Tha
 
 There is no store login to read console libraries from, so an admin can bring them in from a CSV under **Settings → Library tools → CSV tools → Import console games into Digital**. The games go into that person's own Digital list, beside the Steam games, with one chip each for PlayStation, Nintendo and Xbox. Every tile is badged with its console: PS3, PS4 or PS5; SWITCH 2, SWITCH, WII, WII U, 3DS or DS; XBOX, XBOX 360, XBOX ONE or X|S.
 
-The CSV needs a header row with these columns (any order; the country is optional):
+The CSV needs a header row with these columns (any order; Country and Media are optional):
 
 ```
-Platform,Game,Country
-PS5,Astro Bot,Australia
+Platform,Game,Country,Media
+PS5,Astro Bot,Australia,DISC
 PlayStation 4,Ratchet & Clank,AU
 PS3,Uncharted 2: Among Thieves,AU
-Switch 2,Mario Kart World,AU
+Switch 2,Mario Kart World,AU,CART
 Switch,Animal Crossing: New Horizons,United States
 Wii U,Super Mario 3D World,AU
 3DS,Fire Emblem Awakening,AU
@@ -417,6 +417,7 @@ Xbox,Halo: Combat Evolved,AU
 ```
 
 - **Platform**: `PS3`, `PS4`, `PS5` (or `PlayStation 4` and so on), `Switch 2`, `Switch`, `Wii`, `Wii U`, `3DS`, `DS`, `Xbox`, `Xbox 360`, `Xbox One` or `Xbox Series X|S`. Other platforms are skipped and listed in the result. The same title on two consoles is two games. (The older column names Platform Name, Game Title and Country of Source Store still work.)
+- **Media** (optional): `DISC` or `CART` for a game you also own as a physical copy, a disc or a cartridge, in your own collection. It switches on the disc or cartridge icon on that game's tile. Leave it empty to keep the icon as it is (so switches you set by hand are not undone by a re-import), or write `DIGITAL` to switch it off.
 - **Country**: a country name or its two letters. It is shown in the details window, and the store button opens that country's PlayStation or Xbox Store (Nintendo games have no store button).
 
 Press **Preview** to see what would change, then **Import games**. Importing the same file again adds nothing twice; tick **Remove games no longer in the file** to make the list match the file (only for the platforms the file lists).

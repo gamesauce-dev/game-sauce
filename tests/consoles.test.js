@@ -238,3 +238,22 @@ test('disc / cartridge switch: console games only, private, kept in the list; th
   assert.match(app, /platformIconSvg\(\{ icon: type \}/);
   assert.match(read('public/styles.css'), /\.dg-media\.on/);
 });
+
+test('CSV Media column: DISC / CART switch the icon on, DIGITAL off, empty leaves it', async () => {
+  const csv = 'Platform,Game,Country,Media\nPS5,Returnal,AU,DISC\nSwitch,Metroid Dread,AU,cart\nXbox One,Sea of Thieves,AU,\nPS5,Astro Bot,AU,DIGITAL\nPS4,Bloodborne,AU,maybe';
+  const mark = (id) => db.prepare("SELECT physical FROM digital_marks WHERE app_id = ?").get(id)?.physical;
+  await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform,Game\nPS5,Astro Bot', apply: true } });
+  await call('/api/digital/games/playstation/astro-bot-ps5/mark', { method: 'PUT', body: { field: 'physical', value: true } });
+  const pre = await call('/api/digital/consoles/import', { method: 'POST', body: { csv } });
+  assert.equal(pre.body.physical_on, 2); assert.equal(pre.body.physical_off, 1);
+  assert.ok(pre.body.problems.some((p) => /Media "maybe" not understood/.test(p.reason)));
+  assert.equal(mark('returnal-ps5'), undefined, 'preview saves nothing');
+  await call('/api/digital/consoles/import', { method: 'POST', body: { csv, apply: true } });
+  await consoles.detailsJobIdle();
+  assert.equal(mark('returnal-ps5'), 1); assert.equal(mark('metroid-dread-switch'), 1); assert.equal(mark('astro-bot-ps5'), 0);
+  assert.equal(mark('sea-of-thieves-xone'), undefined, 'empty leaves it alone');
+  await call('/api/digital/games/playstation/returnal-ps5/mark', { method: 'PUT', body: { field: 'physical', value: false } });
+  await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform,Game,Country,Media\nPS5,Returnal,AU,', apply: true } });
+  assert.equal(mark('returnal-ps5'), 0, 'a re-import with the cell empty does not change a hand-set switch');
+  assert.match(read('public/index.html'), /<code>Media<\/code>/);
+});

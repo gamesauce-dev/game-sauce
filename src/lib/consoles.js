@@ -116,11 +116,20 @@ export function storeUrl(store, title, country) {
 const HEADER = {
   platform: ['platform', 'platformname', 'console', 'system'],
   title: ['game', 'gametitle', 'title', 'gamename', 'name'],
-  country: ['country', 'countryofsourcestore', 'countryofstore', 'storecountry', 'sourcestorecountry', 'region', 'store']
+  country: ['country', 'countryofsourcestore', 'countryofstore', 'storecountry', 'sourcestorecountry', 'region', 'store'],
+  media: ['media', 'physical', 'physicalcopy', 'format', 'copy']
 };
+/** The fourth column: DISC or CART (also "cartridge", "physical", "yes") switches the tile's disc / cartridge icon on; "digital", "no" or "-" switches it off; empty leaves it as it is. */
+function mediaFor(v) {
+  const s = squash(v);
+  if (!s) return null;
+  if (['disc', 'disk', 'cart', 'cartridge', 'physical', 'yes', 'y', 'true', '1'].includes(s)) return true;
+  if (['digital', 'none', 'no', 'n', 'false', '0'].includes(s)) return false;
+  return undefined;
+}
 
 /**
- * Read a console CSV (columns: Platform, Game, Country; the header row is required, the order is not; the older names Platform Name, Game Title and Country of Source Store still work).
+ * Read a console CSV (columns: Platform, Game, Country and optionally Media (DISC or CART); the header row is required, the order is not; the older names Platform Name, Game Title and Country of Source Store still work).
  * With apply: false nothing is saved and the answer says what would happen. With replace: true, games already in the person's list
  * for a platform that appears in the file are removed when the file no longer lists them; platforms not in the file are left alone.
  */
@@ -148,7 +157,9 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
     const key = store + '\n' + appId;
     if (seen.has(key)) { duplicates++; return; }
     const c = col.country >= 0 ? countryFor(r[col.country]) : null;
-    seen.set(key, { store, app_id: appId, slug, name: title, platform: pf.platform, country: c ? (c.code || c.name) : null });
+    const media = col.media >= 0 ? mediaFor(r[col.media]) : null;
+    if (media === undefined && problems.length < 10) problems.push({ line, reason: `Media "${String(r[col.media]).trim().slice(0, 20)}" not understood (use DISC or CART); left as it is` });
+    seen.set(key, { store, app_id: appId, slug, name: title, platform: pf.platform, country: c ? (c.code || c.name) : null, physical: typeof media === 'boolean' ? media : null });
   });
 
   const games = [...seen.values()];
@@ -179,12 +190,14 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
     const ins = db.prepare(`INSERT INTO digital_games (user_id, store, app_id, name, country, platform) VALUES (?, ?, ?, ?, ?, ?)`);
     const upd = db.prepare('UPDATE digital_games SET name = ?, country = ?, platform = ? WHERE user_id = ? AND store = ? AND app_id = ?');
     const delGame = db.prepare('DELETE FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?');
+    const setPhysical = db.prepare(`INSERT INTO digital_marks (user_id, store, app_id, physical) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, store, app_id) DO UPDATE SET physical = excluded.physical`);
     const delMark = db.prepare('DELETE FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?');
     db.transaction(() => {
       for (const g of games) {
         if (existing.has(g.store + '\n' + g.app_id)) upd.run(g.name, g.country, g.platform, userId, g.store, g.app_id);
         else ins.run(userId, g.store, g.app_id, g.name, g.country, g.platform);
       }
+      for (const g of games) if (g.physical !== null) setPhysical.run(userId, g.store, g.app_id, g.physical ? 1 : 0);
       for (const g of removing) { delGame.run(userId, g.store, g.app_id); delMark.run(userId, g.store, g.app_id); }
     })();
     startDetailsJob();
@@ -192,6 +205,7 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
   return {
     applied: Boolean(apply), csv_rows: rows.length - 1, games: games.length, by_store: byStore,
     added, updated, unchanged, removed: removing.length, duplicates, skipped, problems,
+    physical_on: games.filter((g) => g.physical === true).length, physical_off: games.filter((g) => g.physical === false).length,
     sample: games.slice(0, 5).map((g) => ({ store: g.store, platform: g.platform, name: g.name, country: g.country }))
   };
 }
