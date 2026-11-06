@@ -465,3 +465,22 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '32') ON CON
    the CSV is imported again, which fills it in. ── */
 if (!db.prepare('PRAGMA table_info(digital_games)').all().some((c) => c.name === 'platform')) db.exec('ALTER TABLE digital_games ADD COLUMN platform TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '33') ON CONFLICT(key) DO UPDATE SET value = '33'").run();
+
+/* ── v34: one PlayStation chip. PlayStation 4 and 5 games (stores 'ps4' and 'ps5') move to the one 'playstation' store, each keeping its console as its
+   platform; their ids gain the console ("astro-bot" → "astro-bot-ps5") like Xbox's, so a title on both consoles is two games. Marks and the cached
+   details move with them. Nintendo needs nothing here: it is new. ── */
+mergePlaystationStores();
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '34') ON CONFLICT(key) DO UPDATE SET value = '34'").run();
+
+/** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
+export function mergePlaystationStores() {
+  db.transaction(() => {
+    for (const old of ['ps4', 'ps5']) {
+      db.prepare(`UPDATE digital_games SET platform = ?, app_id = app_id || '-' || ?, store = 'playstation' WHERE store = ?`).run(old, old, old);
+      db.prepare(`UPDATE OR IGNORE digital_marks SET app_id = app_id || '-' || ?, store = 'playstation' WHERE store = ?`).run(old, old);
+      db.prepare(`DELETE FROM digital_marks WHERE store = ?`).run(old);
+      db.prepare(`UPDATE OR IGNORE digital_details SET app_id = app_id || '-' || ?, store = 'playstation' WHERE store = ?`).run(old, old);
+      db.prepare(`DELETE FROM digital_details WHERE store = ?`).run(old);
+    }
+  })();
+}

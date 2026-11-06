@@ -3288,25 +3288,28 @@ async function loadPlatformAdmin() {
 /* The stores Digital lists: Steam from its Web API, and console games brought in from a CSV (Settings › CSV tools). */
 const DG_STORE = {
   steam: { label: 'Steam', short: 'STEAM', bg: '#1b2838' },
-  ps4: { label: 'PlayStation 4', short: 'PS4', bg: '#00439c' },
-  ps5: { label: 'PlayStation 5', short: 'PS5', bg: '#0070d1' },
+  playstation: { label: 'PlayStation', short: 'PS', bg: '#0070d1' },
+  nintendo: { label: 'Nintendo', short: 'NINTENDO', bg: '#e60012' },
   xbox: { label: 'Xbox', short: 'XBOX', bg: '#107c10' }
 };
-/* Xbox is one chip, but each Xbox game carries the badge of its console (games imported before consoles were told apart show XBOX). */
-const DG_XBOX = {
+/* A chip holds several consoles, and each game carries the badge of its own (games imported before consoles were told apart show XBOX). */
+const DG_PLATFORM = {
+  ps3: { label: 'PlayStation 3', short: 'PS3' }, ps4: { label: 'PlayStation 4', short: 'PS4' }, ps5: { label: 'PlayStation 5', short: 'PS5' },
+  switch2: { label: 'Nintendo Switch 2', short: 'SWITCH 2' }, switch: { label: 'Nintendo Switch', short: 'SWITCH' }, wii: { label: 'Nintendo Wii', short: 'WII' },
+  wiiu: { label: 'Nintendo Wii U', short: 'WII U' }, '3ds': { label: 'Nintendo 3DS', short: '3DS' }, ds: { label: 'Nintendo DS', short: 'DS' },
   xbox: { label: 'Xbox', short: 'XBOX' }, x360: { label: 'Xbox 360', short: 'XBOX 360' },
   xone: { label: 'Xbox One', short: 'XBOX ONE' }, xsx: { label: 'Xbox Series X|S', short: 'X|S' }
 };
 const dgBadgeOf = (g) => {
   const st = DG_STORE[g.store] || { label: g.store, short: String(g.store || '').toUpperCase(), bg: '#1b2838' };
-  return g.store === 'xbox' ? { ...st, ...(DG_XBOX[g.platform] || DG_XBOX.xbox) } : st;
+  return g.store === 'steam' ? st : { ...st, ...(DG_PLATFORM[g.platform] || (g.store === 'xbox' ? DG_PLATFORM.xbox : {})) };
 };
 const dg = { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, density: 'comfortable', letter: '' };
 /* Previous / next inside the Digital list: the tiles in the order shown now (hidden games only when Show hidden is on). */
 /* The Digital grid draws its tiles in chunks (60 at a time, more as you scroll), like the Library: drawing thousands at once, each with its
  * own buttons, froze iPhones and iPads. dg.ids is the whole list in order, so previous / next still walk all of it. */
 const dgIds = () => dg.ids || [];
-// One game in the list: its store and its id in that store (the same title can be on PS4 and PS5, with the same id in each).
+// One game in the list: its store and its id in that store (the same title on two consoles is two games, each with its own id).
 const dgKey = (store, appId) => `${store}:${appId}`;
 function dgRender(reset) {
   const grid = $('#dg-grid'); if (!grid) return;
@@ -3370,7 +3373,7 @@ async function loadDigital(keep = false) {
   if (!connected && !consoleGames) {
     $('#dg-total').textContent = '';
     grid.innerHTML = '';
-    msg.innerHTML = `<div class="empty"><h2>Connect your Steam library</h2><p>Add your Steam key and ID once, and the games you own appear here with your hours played. Only you can see them.</p><button class="btn btn-primary" id="dg-setup">Set up Steam</button>${authState.user?.role === 'admin' ? '<p class="hint">PlayStation and Xbox games can be brought in from a CSV: Settings › Library tools › CSV tools.</p>' : ''}</div>`;
+    msg.innerHTML = `<div class="empty"><h2>Connect your Steam library</h2><p>Add your Steam key and ID once, and the games you own appear here with your hours played. Only you can see them.</p><button class="btn btn-primary" id="dg-setup">Set up Steam</button>${authState.user?.role === 'admin' ? '<p class="hint">PlayStation, Nintendo and Xbox games can be brought in from a CSV: Settings › Library tools › CSV tools.</p>' : ''}</div>`;
     $('#dg-setup').onclick = () => { setView('settings'); showSettingsModule('steam'); };
     return;
   }
@@ -3399,7 +3402,7 @@ async function loadDigital(keep = false) {
       <div class="card-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
         <div class="card-fallback">${esc(initials)}</div>
         ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
-        <span class="card-badge dg-badge" data-store="${esc(g.store)}"${g.store === 'xbox' ? ` data-platform="${esc(g.platform || 'xbox')}"` : ''} title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>
+        <span class="card-badge dg-badge" data-store="${esc(g.store)}"${g.store !== 'steam' ? ` data-platform="${esc(g.platform || (g.store === 'xbox' ? 'xbox' : ''))}"` : ''} title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
         <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
         <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
@@ -3451,7 +3454,7 @@ document.addEventListener('click', async (e) => {
 $('#dg-q')?.addEventListener('input', (e) => { clearTimeout(dgTimer); dgTimer = setTimeout(() => { dg.q = e.target.value.trim(); dg.letter = ''; loadDigital(); }, 200); });
 $('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; dg.letter = ''; loadDigital(); });
 
-/* The details window for a PlayStation or Xbox game: the same window as Steam's, with what applies to a game brought in from a CSV.
+/* The details window for a console game: the same window as Steam's, with what applies to a game brought in from a CSV.
  * There is no play button. The details and cover come from the Library's metadata providers; Remove takes it out of your list. */
 function renderConsoleDetail(g, d, store, appId) {
   const st = dgBadgeOf({ ...g, store });
@@ -3480,7 +3483,7 @@ function renderConsoleDetail(g, d, store, appId) {
     <div class="detail-actions">
       <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-act="favorite" data-dgd="favourite" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
       <button class="ibtn" data-act="dghide" data-dgd="hidden" data-tip="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
-      ${g.store_url ? `<a class="ibtn" data-act="dgstore" href="${esc(g.store_url)}" target="_blank" rel="noreferrer" data-tip="Find it in the ${esc(st.label.startsWith('Xbox') ? 'Xbox' : 'PlayStation')} Store${g.country_name ? ' (' + esc(g.country_name) + ')' : ''}" aria-label="Open the store page"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>` : ''}
+      ${g.store_url ? `<a class="ibtn" data-act="dgstore" href="${esc(g.store_url)}" target="_blank" rel="noreferrer" data-tip="Find it in the ${esc(store === 'xbox' ? 'Xbox' : 'PlayStation')} Store${g.country_name ? ' (' + esc(g.country_name) + ')' : ''}" aria-label="Open the store page"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>` : ''}
       <button class="ibtn ibtn-danger" data-act="delete" data-dgremove data-tip="Remove from your Digital list" aria-label="Remove">${ICON.trash}</button>
     </div>
     ${d?.description ? `<p class="detail-desc">${esc(d.description)}</p>` : `<p class="hint">${d ? 'No description was found for this game.' : 'No details or cover were found for this game yet. They are looked up with the Library\'s metadata providers (Settings › Metadata); press Refresh on the Digital page to try again.'}</p>`}
@@ -4488,7 +4491,7 @@ function initCoverImport() {
   $('#covers-replace').onchange = () => { applyBtn.disabled = true; };
 }
 
-/* CSV tools › Import console games into Digital: PlayStation and Xbox games from a CSV into the signed-in person's own Digital list. */
+/* CSV tools › Import console games into Digital: PlayStation, Nintendo and Xbox games from a CSV into the signed-in person's own Digital list. */
 function initConsoleImport() {
   const file = $('#dgc-file'), out = $('#dgc-result'), applyBtn = $('#dgc-apply');
   if (!file || file.dataset.ready) return;

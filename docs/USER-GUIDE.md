@@ -384,7 +384,7 @@ To bring in details and covers in one go, choose the CSV and add the zip from **
 
 **Locked games.** A game locked with Keep (from the duplicate finder or the details window) cannot be deleted. To clear a batch of them, open the **Locked** filter, choose Select, Select all, then **Unlock**. They are then ordinary games and can be deleted. Admins only.
 
-## Digital: your Steam, PlayStation and Xbox games
+## Digital: your Steam, PlayStation, Nintendo and Xbox games
 
 Under **Settings → My account → Steam** each person can show the games they own on Steam, with their hours played, on the **Digital** page. Only you see your list.
 
@@ -394,9 +394,9 @@ Under **Settings → My account → Steam** each person can show the games they 
 4. Paste both into game-sauce, press **Save**, then **Fetch my games**.
 
 The play button on a tile opens the game in Steam (`steam://rungameid/...`). That only works in a browser on a PC that has Steam installed, and the browser asks permission the first time. game-sauce never downloads or changes anything on Steam. **Remove** deletes your key and list from game-sauce.
-### PlayStation and Xbox games (from a CSV)
+### PlayStation, Nintendo and Xbox games (from a CSV)
 
-There is no store login to read console libraries from, so an admin can bring them in from a CSV under **Settings → Library tools → CSV tools → Import console games into Digital**. The games go into that person's own Digital list, beside the Steam games, with a chip for each platform (PlayStation 4, PlayStation 5, Xbox). Xbox games all sit under the one Xbox chip, each tile badged with its console: XBOX, XBOX 360, XBOX ONE or X|S.
+There is no store login to read console libraries from, so an admin can bring them in from a CSV under **Settings → Library tools → CSV tools → Import console games into Digital**. The games go into that person's own Digital list, beside the Steam games, with one chip each for PlayStation, Nintendo and Xbox. Every tile is badged with its console: PS3, PS4 or PS5; SWITCH 2, SWITCH, WII, WII U, 3DS or DS; XBOX, XBOX 360, XBOX ONE or X|S.
 
 The CSV needs a header row with these columns (any order; the country is optional):
 
@@ -404,14 +404,20 @@ The CSV needs a header row with these columns (any order; the country is optiona
 Platform,Game,Country
 PS5,Astro Bot,Australia
 PlayStation 4,Ratchet & Clank,AU
+PS3,Uncharted 2: Among Thieves,AU
+Switch 2,Mario Kart World,AU
+Switch,Animal Crossing: New Horizons,United States
+Wii U,Super Mario 3D World,AU
+3DS,Fire Emblem Awakening,AU
+DS,Pokémon Black,AU
 Xbox Series X|S,Halo Infinite,United States
 Xbox One,Forza Horizon 5,Australia
 Xbox 360,Halo 3,AU
 Xbox,Halo: Combat Evolved,AU
 ```
 
-- **Platform**: `PS4` / `PlayStation 4`, `PS5` / `PlayStation 5`, `Xbox`, `Xbox 360`, `Xbox One` or `Xbox Series X|S`. Other platforms are skipped and listed in the result. The same title on two Xbox consoles is two games. (The older column names Platform Name, Game Title and Country of Source Store still work.)
-- **Country**: a country name or its two letters. It is shown in the details window, and the store button opens that country's PlayStation or Xbox Store.
+- **Platform**: `PS3`, `PS4`, `PS5` (or `PlayStation 4` and so on), `Switch 2`, `Switch`, `Wii`, `Wii U`, `3DS`, `DS`, `Xbox`, `Xbox 360`, `Xbox One` or `Xbox Series X|S`. Other platforms are skipped and listed in the result. The same title on two consoles is two games. (The older column names Platform Name, Game Title and Country of Source Store still work.)
+- **Country**: a country name or its two letters. It is shown in the details window, and the store button opens that country's PlayStation or Xbox Store (Nintendo games have no store button).
 
 Press **Preview** to see what would change, then **Import games**. Importing the same file again adds nothing twice; tick **Remove games no longer in the file** to make the list match the file (only for the platforms the file lists).
 
