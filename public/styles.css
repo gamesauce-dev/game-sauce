@@ -1657,6 +1657,10 @@ body.play-only #empty .empty-add-text { display: none; }
 /* The Digital tile's store badge: the plain word in Classic. */
 .dg-badge { background: #1b2838cc; }
 .dg-badge-ico { display: none; }
+.dg-badge[data-store="ps4"] { background: #00439ccc; }
+.dg-badge[data-store="ps5"] { background: #0070d1cc; }
+.dg-badge[data-store="xbox"] { background: #107c10cc; }
+.dg-note { margin: 0 0 1rem; padding: 0.6rem 0.9rem; border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted); }
 
 /* Sign-in card: the wide logo (controller, joystick and name) with the tagline under it. */
 .auth-card .auth-brand { flex-direction: column; justify-content: center; text-align: center; gap: 0.3rem; margin-bottom: 18px; }
@@ -1710,4 +1714,7 @@ body.play-only #empty .empty-add-text { display: none; }
 
 /* Digital tiles: no blur behind the small buttons (a blur per button is what froze iPhones and iPads); the buttons are just more opaque. */
 .dg-card .card-fav, .dg-card .card-hide, .dg-card .card-badge, .dg-card .dg-hours { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 9, 14, .86); }
+.dg-card .card-badge.dg-badge[data-store="ps4"] { background: #00439c; }
+.dg-card .card-badge.dg-badge[data-store="ps5"] { background: #0070d1; }
+.dg-card .card-badge.dg-badge[data-store="xbox"] { background: #107c10; }
 .dg-card { content-visibility: auto; contain-intrinsic-size: auto 17rem; }
