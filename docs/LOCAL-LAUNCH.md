@@ -103,6 +103,24 @@ Each launch is recorded in the download log as its own kind (`launch`), so it do
 
 To remove it: `launcher\uninstall-windows.bat`, `sh launcher/uninstall-linux.sh` or `sh launcher/uninstall-macos.sh`. Your config file is left alone.
 
+## Skip the browser's "Open game-sauce launcher?" question
+
+Your browser asks this itself, so game-sauce cannot restyle it or switch it off. Chrome and Edge show an
+"Always allow" tick box only on **secure** sites (HTTPS, or `localhost`). A server reached over plain `http://` on your
+network never gets the tick box, so the question comes back every time. Three ways round it:
+
+1. **Serve game-sauce over HTTPS.** Then the tick box appears, once per browser. With Tailscale this is
+   `tailscale serve`, but then the PC must be running Tailscale to reach that address, even at home.
+2. **Pre-approve the address on this PC (Windows, Chrome and Edge).** Right-click `launcher\allow-in-browser-windows.bat`,
+   choose **Run as administrator**, and type your game-sauce address exactly as in the browser's address bar (for example
+   `http://192.168.1.50:8765`). It sets the browsers' `AutoLaunchProtocolsFromOrigins` policy for the `gamesauce` link
+   from that one address only, and keeps any entries already there. Restart the browser and check `chrome://policy` or
+   `edge://policy`. Notes: it needs administrator rights, applies to every user of the PC, and makes the browser show
+   "managed by your organization". Undo with `allow-in-browser-windows.bat remove` (same address). Run it again for a second
+   address.
+3. **Firefox** has its own policy of the same name (a `policies.json` file; see Mozilla's enterprise documentation).
+   Firefox needs the full origin (`http://host:port`) and has no wildcard.
+
 ## For developers
 
 - Server: `POST /api/roms/:id/launch` (signed in, download rule) returns `{ token, expires_in, platform, title, ext }`;
