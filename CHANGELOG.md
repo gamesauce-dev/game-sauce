@@ -6,6 +6,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Added
 - **Play check window:** `node scripts/check-play-gui.mjs` opens a page on your own PC to run the play check by pointing and clicking: platform picker, quick / every-game / MAME cut-off modes, live progress, Stop, **Resume last run**, pictures of failures, and buttons to switch games on or off from saved results. See `docs/PLAY-CHECK.md`.
+- **`start-play-check.bat`:** double-click on Windows to open the play check window. It installs the test tools and browser the first time, skipping the database build the play check does not need.
 
 ### Changed
 - The play-check logic now lives in `scripts/lib/check-play-core.mjs`, shared by the command line and the window. The command line behaves as before, except that Ctrl+C stops cleanly (carry on with `--resume`) and a fresh run keeps the previous results file as `results-<date>.jsonl.bak` instead of overwriting it.
