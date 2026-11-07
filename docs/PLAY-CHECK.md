@@ -4,6 +4,26 @@ Games flagged **play in browser** use the EmulatorJS cores. A game a core cannot
 **RetroArch's own menu** ("Main Menu / Load Content / Quit RetroArch"). The emulator reports it as started either way, so the
 only reliable test is to look at the picture. `scripts/check-play.mjs` does that for you, from your own computer.
 
+## Prefer a window? Use the GUI
+
+```
+node scripts/check-play-gui.mjs
+```
+
+This opens a page in your browser (it runs on your PC only; nothing is exposed to the network). Sign in with your server address
+and an admin account, tick platforms, pick **Quick health check**, **Every game** or **Find the year MAME stops working**, and press
+**Start**. You get live progress, a **Stop** button, and pictures of every game that did not run.
+
+- **Resume**: stop any time (or close the PC) and come back. The page shows your earlier results with **Resume last run**, which
+  reuses your last settings and skips games already tested. It shares the `play-check` folder with the command line, so either can
+  carry on the other's run. Starting *without* "Carry on from the earlier run" begins fresh and keeps the old results as
+  `results-<date>.jsonl.bak`.
+- **Switch ON / OFF** buttons apply saved results to the server without testing anything again; **Switch off a whole platform** is
+  `--off`.
+- Options: `--port 5555`, `--out DIR`, `--server URL`, `--user NAME`, `--no-open`. The password is kept in memory only.
+
+The setup below is the same for both.
+
 ## One-time setup (on a PC, in the game-sauce folder)
 
 ```
@@ -30,7 +50,7 @@ a quick health check. Useful options:
 | `--seconds 15` | how long each game runs before it is judged (default 12) |
 | `--concurrency 3` | games checked at once (default 2) |
 | `--only ghouls` | only games whose title contains that text: re-test one game |
-| `--resume` | carry on a stopped run, skipping games already done |
+| `--resume` | carry on a stopped run, skipping games already done. Without it a new run starts fresh and the old results are kept as `results-<date>.jsonl.bak`. Ctrl+C now stops cleanly after the games in progress |
 | `--candidates` | also test games the app does not offer yet (MAME after the year cut-off, CPS3, Cave) |
 | `--cutoff` | find the year where games stop working: games tested oldest first, in steps of one or more years (years with few games are grouped so each step has enough), stops after two bad steps in a row. Failures only count after a stretch that mostly ran, because the very oldest games (Pong, Galaxy Game) fail anywhere |
 | `--per-year 8` | games tried per step with `--cutoff` |
