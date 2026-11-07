@@ -192,6 +192,18 @@ POST   /api/emulators/vault/from-release     { platform, asset? } — fetch offi
 DELETE /api/emulators/vault/:id              remove entry + file (admin)
 ```
 
+## Play locally (your own emulator)
+
+The monitor icon in a game's details window opens the game in an emulator installed on the PC you are browsing from.
+A small launcher on that PC downloads a temporary copy, starts the emulator you configured for that platform, and
+deletes the copy when the emulator closes. Set-up, the config file and the safety rules are in
+[docs/LOCAL-LAUNCH.md](docs/LOCAL-LAUNCH.md).
+
+```
+POST   /api/roms/:id/launch                  one-time launch token for this game (download rule applies)
+GET    /api/launch/:token                    the launcher swaps the token for the file, once (no session needed)
+```
+
 ## DAT files (offline verification)
 
 A DAT is a No-Intro / Redump / TOSEC catalogue of every known-good dump with its exact size,

@@ -15,6 +15,7 @@ import { csvLines, coverEntries, zipChunks, exportCounts } from '../lib/export.j
 import { listZip, planCovers, planCoversForCsv, applyCovers } from '../lib/coverzip.js';
 import os from 'node:os';
 import { clearDuplicateCache } from '../lib/duplicates.js';
+import { mintLaunchToken } from '../lib/launch.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -800,6 +801,21 @@ router.get('/:id/download', (req, res) => {
   res.download(rom.storage_path, downloadName, (err) => {
     if (err && !res.headersSent) res.status(500).end();
   });
+});
+
+/* ------------------------------------------------- play locally (launcher) */
+
+// Issues a one-time token for the game-sauce launcher on this person's own PC (see src/lib/launch.js and docs/LOCAL-LAUNCH.md).
+// Same rule as a download: the launcher receives the whole file, so only people allowed to download get a token.
+router.post('/:id/launch', (req, res) => {
+  if (!canDownload(req.user)) {
+    return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account. Ask the admin, or play it in the browser.' });
+  }
+  const rom = db.prepare('SELECT r.id, r.title, r.filename, r.storage_path, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(req.params.id);
+  if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  if (!fs.existsSync(rom.storage_path)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
+  const { token, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null);
+  res.json({ token, expires_in, platform: rom.platform, title: rom.title, ext: path.extname(rom.filename).toLowerCase() });
 });
 
 /* ── play: browser streaming for BIOS-free platforms (EmulatorJS) ──

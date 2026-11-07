@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Added
+- **Play locally:** a new button in the game details window opens the game in an emulator installed on the PC you are browsing from. A small launcher on that PC (`launcher/`, Node 18+, no dependencies) downloads a temporary copy with a one-time token, runs the emulator you set for that platform, and **deletes the copy when the emulator closes**. It follows the download rule (admins and members allowed to download; not play-only accounts), tokens work once for one game and expire after two minutes, only servers you list in `~/.gamesauce/launcher.json` are trusted, and emulators are started from that file only, never through a shell. Install scripts for Windows, Linux and macOS register the `gamesauce://` link. New routes `POST /api/roms/:id/launch` and `GET /api/launch/:token`; launches are logged as their own kind and do not count as downloads. See `docs/LOCAL-LAUNCH.md`.
 - **Play check window:** `node scripts/check-play-gui.mjs` opens a page on your own PC to run the play check by pointing and clicking: platform picker, quick / every-game / MAME cut-off modes, live progress, Stop, **Resume last run**, pictures of failures, and buttons to switch games on or off from saved results. See `docs/PLAY-CHECK.md`.
 - **`start-play-check.bat`:** double-click on Windows to open the play check window. It installs the test tools and browser the first time, skipping the database build the play check does not need.
 

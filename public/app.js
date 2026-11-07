@@ -1366,6 +1366,7 @@ const _star = 'M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9
 const ICON = {
   download: _ic('<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>'),
   play: _ic('<path d="M7 4.5v15l12-7.5z"/>', true),
+  desktop: _ic('<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/><path d="M10.5 8.2v4.6l3.8-2.3z"/>'),
   star: _ic(`<path d="${_star}"/>`),
   starFill: _ic(`<path d="${_star}"/>`, true),
   collection: _ic('<rect x="3.5" y="6" width="13" height="13" rx="2.5"/><path d="M8 3.5h10.5A2 2 0 0 1 20.5 5.5V16"/><path d="M10 9.5v6M7 12.5h6"/>'),
@@ -1447,6 +1448,7 @@ async function openDetail(id) {
 
     <div class="detail-actions">
       ${authState.user?.can_download === false ? '' : `<a class="ibtn ibtn-primary" href="/api/roms/${rom.id}/download" download data-tip="Download ROM" aria-label="Download ROM">${ICON.download}</a>`}
+      ${authState.user?.can_download === false ? '' : `<button class="ibtn" data-act="launch-local" data-tip="Play with the emulator installed on this PC" aria-label="Play locally">${ICON.desktop}</button>`}
       ${rom.playable ? `<button class="ibtn ibtn-play" data-act="play" data-tip="Play in browser${rom.platform === 'mame' ? ' (best effort)' : ''}" aria-label="Play in browser">${ICON.play}</button>` : ''}
       <button class="ibtn${rom.favorite ? ' is-on fav' : ''}" data-act="favorite" data-tip="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
       <div class="more-wrap">
@@ -1546,6 +1548,24 @@ async function openDetail(id) {
   // ▶ Play in browser (BIOS-free platforms only). Opens the EmulatorJS
   // overlay; the ROM itself never leaves your server except to your browser.
   $('[data-act="play"]', drawer)?.addEventListener('click', () => openPlayer(rom));
+  // 🖥 Play locally: ask the server for a one-time token, then hand it to the game-sauce launcher on this PC through a
+  // gamesauce:// link (the browser asks once whether to open it). The emulator and its paths live only in the launcher's own
+  // config, never here. See docs/LOCAL-LAUNCH.md.
+  $('[data-act="launch-local"]', drawer)?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const j = await api(`/roms/${rom.id}/launch`, { method: 'POST' });
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title });
+      toast('Opening your local emulator… this needs the game-sauce launcher installed on this PC (docs/LOCAL-LAUNCH.md).');
+      location.href = `gamesauce://launch?${q}`;
+    } catch (err) {
+      toast(err.message || 'Could not start a local launch', true);
+    } finally {
+      setTimeout(() => { btn.disabled = false; }, 2000);
+    }
+  });
   $('[data-act="playtoggle"]', drawer)?.addEventListener('click', async () => {
     const want = !rom.playable;
     // Going back to what the default already gives clears the override.
