@@ -15,6 +15,7 @@ fs.mkdirSync(LTMP);
 process.env.GAMESAUCE_LAUNCHER_TMP = LTMP;
 process.env.GAMESAUCE_LAUNCHER_LOG = path.join(TMP, 'launcher.log');
 process.env.GAMESAUCE_LAUNCHER_QUIET = '1';
+process.env.GAMESAUCE_LAUNCHER_RESCUE = path.join(TMP, 'rescued');
 
 let server, base, db, adminTok, memberTok, romId, launcher;
 const ROM_BYTES = Buffer.from('pretend this is a super nintendo rom');
@@ -173,6 +174,35 @@ test('download, launch the emulator with the ROM, then delete the temporary copy
   assert.ok(saw.rom.startsWith(LTMP), 'inside the temporary area');
   assert.equal(fs.existsSync(saw.rom), false, 'the copy is gone afterwards');
   assert.deepEqual(leftovers(), [], 'and so is its folder');
+});
+
+// An emulator that, like many, saves next to the ROM it was given (here: the temporary copy).
+const SAVER = path.join(TMP, 'saving-emulator.mjs');
+fs.writeFileSync(SAVER, `
+import fs from 'node:fs';
+fs.writeFileSync(process.argv[2] + '.srm', 'my battery save');
+fs.mkdirSync(process.argv[2] + '-states', { recursive: true });
+fs.writeFileSync(process.argv[2] + '-states/slot1.state', 'my save state');
+`);
+
+test('files an emulator wrote next to the ROM are rescued before the copy is deleted', async () => {
+  const cfg = writeConfig({ snes: { command: process.execPath, args: [SAVER, '{rom}'] } });
+  await launcher.launch(linkFor((await mint()).body), { configFile: cfg });
+  assert.deepEqual(leftovers(), [], 'the temporary folder is gone');
+  const rescued = path.join(TMP, 'rescued');
+  const dirs = fs.readdirSync(rescued);
+  assert.equal(dirs.length, 1);
+  assert.match(dirs[0], /^Test Game-/);
+  assert.equal(fs.readFileSync(path.join(rescued, dirs[0], 'Test Game.sfc.srm'), 'utf8'), 'my battery save');
+  assert.equal(fs.readFileSync(path.join(rescued, dirs[0], 'Test Game.sfc-states', 'slot1.state'), 'utf8'), 'my save state');
+  assert.ok(!fs.existsSync(path.join(rescued, dirs[0], 'Test Game.sfc')), 'the ROM itself is not kept');
+});
+
+test('a normal run (only the ROM) rescues nothing', async () => {
+  const before = fs.readdirSync(path.join(TMP, 'rescued')).length;
+  const cfg = writeConfig({ snes: { command: process.execPath, args: [FAKE, '{rom}'] } });
+  await launcher.launch(linkFor((await mint()).body), { configFile: cfg });
+  assert.equal(fs.readdirSync(path.join(TMP, 'rescued')).length, before);
 });
 
 test('"deleteOnExit": false keeps the copy', async () => {

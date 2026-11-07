@@ -75,12 +75,74 @@ Things to know:
   launcher as if the game ended at once, so the copy would be deleted while you are still playing. Point `command` at
   the real emulator program instead, or set `"deleteOnExit": false` for that platform and clear the temporary
   folder yourself.
-- **Saves.** Keep each emulator's save and save-state folders in their usual place (they are not in the temporary
-  folder, so nothing is lost). The launcher does not sync saves back to the server; the browser player does, this does not.
+- **Saves.** Where saves go is decided by the emulator, not the launcher. Most keep them in their own folders, which
+  is safe. Some write them **next to the ROM**, and here the ROM is the temporary copy. So that nothing is lost, anything
+  the emulator wrote into the temporary folder besides the ROM (battery saves such as `.srm`, save states) is **copied to
+  `~/.gamesauce/rescued/<game>-<time>/`** before the folder is deleted, and the launcher log says so. Better still, set the
+  emulator to use a fixed save folder (look for "save directory", "save files", "next to the ROM"). To test an emulator: start a
+  game, save, and look in your temporary folder (`%TEMP%` on Windows) for a `gamesauce-launch-...` folder; a `.srm`,
+  `.sav` or `.state` file in it means that emulator saves next to the ROM. The launcher does not sync saves back to the
+  server; the browser player does, this does not.
+- **One file per game.** The launcher downloads the one file the library has for the game, so games made of several
+  files (a `.bin` plus a `.cue`, a folder) will not open properly. Use single-file formats for discs (`.chd`, `.iso`).
 - **Zipped ROMs** are passed to the emulator as they are. Use an emulator that opens zips, or store those games unzipped.
 - **Windows `.bat`/`.cmd` files** cannot be used as `command`; use the `.exe`.
 - **macOS apps** are folders ending in `.app`; point `command` at the program inside, for example
   `/Applications/mGBA.app/Contents/MacOS/mGBA`.
+
+## Example configs
+
+Use these as a starting point. The paths are examples: use your own, with `/` or doubled `\\` backslashes. The platform names
+are the short names under Settings > Platforms. Emulators change their command-line options between versions, so if one does
+not behave, run it with `--help` or check its documentation. Each argument is its own string.
+
+Windows:
+
+```json
+{
+  "servers": ["http://192.168.1.50:8765"],
+  "emulators": {
+    "nes":      { "command": "C:/Emulators/RetroArch/retroarch.exe",
+                  "args": ["-f", "-L", "C:/Emulators/RetroArch/cores/fceumm_libretro.dll", "{rom}"] },
+    "snes":     { "command": "C:/Emulators/Snes9x/snes9x-x64.exe", "args": ["{rom}"] },
+    "gba":      { "command": "C:/Emulators/mGBA/mGBA.exe", "args": ["-f", "{rom}"] },
+    "nds":      { "command": "C:/Emulators/melonDS/melonDS.exe", "args": ["{rom}"] },
+    "gamecube": { "command": "C:/Emulators/Dolphin/Dolphin.exe", "args": ["-b", "-e", "{rom}"] },
+    "wii":      { "command": "C:/Emulators/Dolphin/Dolphin.exe", "args": ["-b", "-e", "{rom}"] },
+    "wiiu":     { "command": "C:/Emulators/Cemu/Cemu.exe", "args": ["-f", "-g", "{rom}"] },
+    "ps1":      { "command": "C:/Emulators/DuckStation/duckstation-qt-x64-ReleaseLTCG.exe",
+                  "args": ["-batch", "-fullscreen", "--", "{rom}"] },
+    "ps2":      { "command": "C:/Emulators/PCSX2/pcsx2-qt.exe", "args": ["-batch", "-fullscreen", "--", "{rom}"] },
+    "psp":      { "command": "C:/Emulators/PPSSPP/PPSSPPWindows64.exe",
+                  "args": ["--fullscreen", "--pause-menu-exit", "{rom}"] }
+  }
+}
+```
+
+- **RetroArch** runs many systems, but each needs the right *core* (`-L` and the path to that core's file in RetroArch's
+  `cores` folder): `fceumm` for NES, `snes9x` for SNES, `genesis_plus_gx` for Mega Drive, and so on. Add one entry per
+  platform, changing only the core. Install the cores from inside RetroArch first.
+- **Dolphin** `-b` hides the main window and runs just the game; `-e` names the game to open.
+- **DuckStation and PCSX2** need their BIOS files set up once in their own settings. The `--` marks the end of the options.
+- **If you already use LaunchBox**, point `command` at the same emulators it uses; nothing about them changes.
+
+Linux (examples):
+
+```json
+"snes": { "command": "/usr/bin/snes9x-gtk", "args": ["{rom}"] },
+"gba":  { "command": "/usr/bin/mgba-qt", "args": ["-f", "{rom}"] },
+"nes":  { "command": "/usr/bin/retroarch", "args": ["-L", "/usr/lib/libretro/fceumm_libretro.so", "{rom}"] }
+```
+
+macOS (point `command` at the program inside the `.app`):
+
+```json
+"gba": { "command": "/Applications/mGBA.app/Contents/MacOS/mGBA", "args": ["{rom}"] }
+```
+
+Flatpak and Snap emulators run in a sandbox that usually cannot see your system temporary folder, so they may not find the ROM.
+Either use a normal install of that emulator, or set the environment variable `GAMESAUCE_LAUNCHER_TMP` to a folder
+the sandbox can reach.
 
 ## Who can use it
 
