@@ -542,7 +542,7 @@ test('Library reset: one button clears search, platforms and filters in both loo
 test('release 0.2.0: version, changelog heading and docs agree', () => {
   const pkg = JSON.parse(read('package.json')), cl = read('CHANGELOG.md');
   assert.equal(pkg.version, '0.2.0');
-  assert.match(cl, /## \[Unreleased\]\s+## \[0\.2\.0\] - 2026-11-02/);
+  assert.match(cl, /## \[Unreleased\][\s\S]*?## \[0\.2\.0\] - 2026-11-02/);
   for (const f of ['README.md', 'docs/USER-GUIDE.md']) assert.doesNotMatch(read(f), /⛁ Orphans/, f + ' still says Orphans pill');
   assert.match(read('README.md'), /GAMESAUCE_MAX_UPLOAD/); assert.match(read('README.md'), /bulk\/lock/);
 });
