@@ -126,7 +126,7 @@ export function loadConfig(file) {
     throw new LaunchError(`Cannot read ${file}: ${e.message}`);
   }
   let cfg;
-  try { cfg = JSON.parse(text); } catch (e) { throw new LaunchError(`${file} is not valid JSON: ${e.message}`); }
+  try { cfg = JSON.parse(text); } catch (e) { throw new LaunchError(`${file} is not valid JSON (${e.message}). Common causes: a missing or doubled quote, or a single backslash in a Windows path (write \\\\ or use / instead).`); }
   if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) throw new LaunchError(`${file} must be a JSON object.`);
   const servers = (Array.isArray(cfg.servers) ? cfg.servers : []).map(normalizeOrigin).filter(Boolean);
   const emulators = cfg.emulators && typeof cfg.emulators === 'object' ? cfg.emulators : {};

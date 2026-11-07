@@ -55,6 +55,11 @@ from `start.bat` has it).
     `{rom}` out, the ROM path is added at the end. Leave `args` out entirely for "just the ROM".
   - `deleteOnExit`: `true` by default. Set `false` to keep the copy (see the next section).
 
+Config tips (it is a JSON file, so it is strict):
+- Every address and path goes inside **one pair** of double quotes, and each item in a list is separated by a comma.
+- In Windows paths write each backslash twice (`"C:\\Emulators\\mGBA\\mGBA.exe"`) or use forward slashes (`"C:/Emulators/mGBA/mGBA.exe"`). Do not put quotes inside the quotes, even if the path has spaces.
+- Each argument is its own string: `["--fullscreen", "--pause-menu-exit"]`, not `["--fullscreen --pause-menu-exit"]`.
+
 The emulator is only ever started from this file, as a program plus a list of arguments, never through a shell and
 never from anything in the link. The server and the web page never learn where your emulators are.
 
