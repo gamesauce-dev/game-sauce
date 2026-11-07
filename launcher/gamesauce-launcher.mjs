@@ -28,6 +28,7 @@ const homeDir = () => path.join(os.homedir(), '.gamesauce');
 export const configPath = () => process.env.GAMESAUCE_LAUNCHER_CONFIG || path.join(homeDir(), 'launcher.json');
 const logPath = () => process.env.GAMESAUCE_LAUNCHER_LOG || path.join(homeDir(), 'launcher.log');
 const tempParent = () => process.env.GAMESAUCE_LAUNCHER_TMP || os.tmpdir();
+const rescueParent = () => process.env.GAMESAUCE_LAUNCHER_RESCUE || path.join(homeDir(), 'rescued');
 
 /* ───────────────────────────── logging / messages ───────────────────────────── */
 
@@ -153,6 +154,29 @@ function removeDir(dir) {
   }
 }
 
+/** Some emulators write saves and save states next to the ROM they were given, which here is the temporary copy. Anything in
+ *  the temporary folder besides the ROM itself is copied to ~/.gamesauce/rescued/<title>-<time>/ before the folder is deleted,
+ *  so it is not lost. Returns { dest, count } or null when there was nothing. Throws if the copy fails. */
+export function rescueExtras(dir, romPath, title) {
+  const extras = [];
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (p !== romPath) extras.push(p);
+    }
+  };
+  walk(dir);
+  if (!extras.length) return null;
+  const dest = path.join(rescueParent(), `${safeFileName(title, '')}-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+  for (const p of extras) {
+    const to = path.join(dest, path.relative(dir, p));
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(p, to);
+  }
+  return { dest, count: extras.length };
+}
+
 /** Remove temporary folders an earlier run left behind (a crash, a power cut). Only ours, only old ones. */
 export function sweepStale(parent = tempParent(), now = Date.now()) {
   let removed = 0;
@@ -240,7 +264,17 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
     process.removeListener('SIGINT', onSignal);
     process.removeListener('SIGTERM', onSignal);
     if (entry.deleteOnExit === false) log(`Kept ${dir} ("deleteOnExit" is false for ${link.platform})`);
-    else if (removeDir(dir)) log('Deleted the temporary ROM copy');
+    else {
+      let keep = false;
+      try {
+        const r = rescueExtras(dir, romPath, link.title);
+        if (r) log(`The emulator wrote ${r.count} file(s) next to the ROM (saves?). Copied them to ${r.dest}`);
+      } catch (e) {
+        keep = true; // never delete something we could not copy out
+        log(`Could not copy out files the emulator wrote (${e.message}). Kept ${dir}`);
+      }
+      if (!keep && removeDir(dir)) log('Deleted the temporary ROM copy');
+    }
   }
 }
 
