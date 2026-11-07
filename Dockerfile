@@ -6,17 +6,14 @@ ENV PORT=8080
 
 WORKDIR /app
 
-# better-sqlite3 needs a native build when no prebuilt binary matches the
-# Node version. Node 22 has prebuilds, but a newer lockfile entry can still
-# fall back to node-gyp — which needs Python + a C++ toolchain. The slim
-# image doesn't include those, so install them here. Without this the build
-# fails with "gyp ERR! find Python ... Could not find any Python installation".
+# better-sqlite3 13+ ships ready-made binaries (installed with --ignore-scripts below, so nothing is compiled). The
+# toolchain is kept only as a safety net for anyone who swaps in a library version that has to be built from source.
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies first for better layer caching.
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 COPY public ./public
 COPY src ./src

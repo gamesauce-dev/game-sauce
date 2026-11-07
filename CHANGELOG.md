@@ -10,6 +10,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **`start-play-check.bat`:** double-click on Windows to open the play check window. It installs the test tools and browser the first time, skipping the database build the play check does not need.
 
 ### Changed
+- **Node 26 (and 24) now work; Node 22 or newer is required.** The database library `better-sqlite3` is upgraded from 11.10 to 13.0.3, which has builds for current Node versions; with the old one, `start.bat` failed on Node 26 (it tried to compile the library and could not). Node 20 is no longer supported (it reached end of life in April 2026). CI now runs the tests on Node 22, 24 and 26. `package.json` gains an `engines` entry, a new `.npmrc` (`ignore-scripts=true`) and `--ignore-scripts` in the start script, Dockerfile and Proxmox installer make npm use the ready-made binaries in the library instead of starting a native build that could fail (and would need Python and a compiler); and the start script's messages now say which Node version you have and what to do. The Docker image and the Proxmox installer already use Node 22, so installed servers are unaffected.
 - The play-check logic now lives in `scripts/lib/check-play-core.mjs`, shared by the command line and the window. The command line behaves as before, except that Ctrl+C stops cleanly (carry on with `--resume`) and a fresh run keeps the previous results file as `results-<date>.jsonl.bak` instead of overwriting it.
 
 ## [0.2.0] - 2026-11-02 (the Modern look)

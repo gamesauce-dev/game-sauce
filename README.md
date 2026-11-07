@@ -80,7 +80,7 @@ npm run seed     # optional: 25 demo entries so the UI has something to show
 npm start        # http://127.0.0.1:8080
 ```
 
-Node 20+. Data lives in `data/gamesauce.db`; imported files and cached artwork live in `storage/`.
+Node 22+. Data lives in `data/gamesauce.db`; imported files and cached artwork live in `storage/`.
 
 ## How it stores your ROMs
 
@@ -524,7 +524,7 @@ To pull in new code later: copy the folder over again, then `docker compose up -
 
 ### Option B — bare Node (Windows 11, Linux, macOS)
 
-Prerequisites: Node.js 20+.
+Prerequisites: Node.js 22+ (the current LTS lines 22, 24 and 26 are tested).
 
 ```bash
 cd game-sauce
@@ -626,7 +626,7 @@ round-tripping, tamper detection, masked secrets, clearing a value, admin-only a
 environment-pinned fields being refused. Further tests cover the scan progress and error handling,
 per-user save states, backups (read back with an independent `tar`, including a real restart that
 restores a backup), custom covers (content-sniffed, kept across refreshes), recently played,
-sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI runs it on Node 20 and 22.
+sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI runs it on Node 22, 24 and 26.
 
 ## Notes and limits
 
