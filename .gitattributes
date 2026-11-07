@@ -3,3 +3,5 @@
 install/*.sh text eol=lf
 # Windows launcher: batch files need Windows line endings.
 *.bat text eol=crlf
+# Windows Script Host files, same reason.
+*.vbs text eol=crlf
