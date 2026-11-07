@@ -20,10 +20,10 @@ const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : nu
 const say = (m = '') => console.log(m);
 const box = (lines) => { const w = Math.max(...lines.map((l) => l.length)) + 4; say('\n' + '─'.repeat(w)); for (const l of lines) say('  ' + l); say('─'.repeat(w) + '\n'); };
 
-// 1. Node version: the app needs 20 or newer.
+// 1. Node version: the app needs 22 or newer (its database library has no build for older ones).
 const major = Number(process.versions.node.split('.')[0]);
-if (major < 20) {
-  box([`game-sauce needs Node.js 20 or newer. You have ${process.versions.node}.`, 'Get the current version from https://nodejs.org (choose "LTS"), then run this again.']);
+if (major < 22) {
+  box([`game-sauce needs Node.js 22 or newer. You have ${process.versions.node}.`, 'Get the current version from https://nodejs.org (choose "LTS"), then run this again.']);
   process.exit(1);
 }
 
@@ -42,13 +42,17 @@ const firstRun = !fs.existsSync(path.join(dataDir, 'gamesauce.db'));
 if (!fs.existsSync(path.join(root, 'node_modules', 'express'))) {
   say('First run: installing game-sauce (this takes a minute)...');
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const r = spawnSync(npm, ['ci', '--omit=dev'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
+  const r = spawnSync(npm, ['ci', '--omit=dev', '--ignore-scripts'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
   if (r.status !== 0) {
     box(['The install did not finish.',
-      'On Linux this is usually because build tools are missing. Try one of:',
-      '  Ubuntu / Debian / Mint:  apt install build-essential python3   (as administrator)',
-      '  Fedora:                  dnf groupinstall "Development Tools"  (as administrator)',
-      'then run this again. If it still fails, see docs/QUICKSTART-DESKTOP.md.']);
+      `You are running Node.js ${process.versions.node}. game-sauce is tested on Node 22 and newer LTS versions (22, 24, 26).`,
+      'If the messages above mention "node-gyp" or a failed build, check your Node version:',
+      '  check it with  node --version  and install the current LTS from https://nodejs.org, then run this again.',
+      ...(process.platform === 'linux' ? [
+        'On Linux it can also be missing build tools:',
+        '  Ubuntu / Debian / Mint:  apt install build-essential python3   (as administrator)',
+        '  Fedora:                  dnf groupinstall "Development Tools"  (as administrator)'] : []),
+      'If it still fails, see docs/QUICKSTART-DESKTOP.md.']);
     process.exit(1);
   }
 }

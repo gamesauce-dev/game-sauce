@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22]   # README says Node 20+; the Docker image uses 22
+        node: [22, 24, 26]   # README says Node 22+; the Docker image and the Proxmox installer use 22
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

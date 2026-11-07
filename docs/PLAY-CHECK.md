@@ -11,7 +11,7 @@ node scripts/check-play-gui.mjs
 ```
 
 On Windows you can instead double-click **`start-play-check.bat`** in the game-sauce folder. The first time it installs what it
-needs (the test tools and the test browser); after that it just opens the window. It needs Node.js 20 or newer
+needs (the test tools and the test browser); after that it just opens the window. It needs Node.js 22 or newer
 (<https://nodejs.org>).
 
 This opens a page in your browser (it runs on your PC only; nothing is exposed to the network). Sign in with your server address

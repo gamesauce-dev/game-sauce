@@ -35,7 +35,7 @@ npm run seed        # optional: a few placeholder games to look at
 ```
 
 Use a throwaway data folder while developing (`GAMESAUCE_DATA_DIR` and `GAMESAUCE_STORAGE_DIR`), never
-your real library. Node 20 or 22.
+your real library. Node 22, 24 or 26.
 
 ## Tests
 
@@ -43,7 +43,7 @@ your real library. Node 20 or 22.
 npm test
 ```
 
-Everything must pass before a pull request is merged; CI runs the suite on Node 20 and 22 and builds the
+Everything must pass before a pull request is merged; CI runs the suite on Node 22, 24 and 26 and builds the
 Docker image. Please add a test for any behaviour you add or fix. The tests start the real app on a
 temporary folder, so look at an existing file such as `tests/downloadpolicy.test.js` for the pattern.
 

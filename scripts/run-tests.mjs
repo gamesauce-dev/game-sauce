@@ -1,6 +1,6 @@
 // Runs every tests/*.test.js with the built-in Node test runner.
 // Listing the files ourselves avoids glob handling, which differs between
-// Node 20 (no glob support in `node --test`) and Node 22+.
+// older Node (no glob support in `node --test`) and Node 22+.
 import { readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 

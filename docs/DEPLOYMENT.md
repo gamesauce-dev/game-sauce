@@ -28,7 +28,7 @@ Works on Windows 11, Linux, and macOS. One service, one SQLite file, no build st
 | Need | Windows | Linux / macOS |
 |------|---------|---------------|
 | Docker (option A) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) (WSL2 backend) | Docker Engine + Compose plugin (`docker compose version` should print a version) |
-| Node (option B only) | Node 20+ LTS from nodejs.org | Node 20+ via package manager or nodejs.org |
+| Node (option B only) | Node 22+ LTS from nodejs.org | Node 22+ via package manager or nodejs.org |
 | Ports | Allow `8080` inbound on the server's firewall if other devices should reach it | Same (`ufw allow 8080` on Ubuntu) |
 | Disk | Space for `storage/` if you use Add ROMs imports | Same |
 

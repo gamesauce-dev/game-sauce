@@ -7,7 +7,7 @@ browser. It does not change or move your game files, and nothing leaves your com
 
 ## 1. Install Node.js (once)
 
-game-sauce runs on **Node.js** (version 20 or newer). Check whether you already have it:
+game-sauce runs on **Node.js** (version 22 or newer). Check whether you already have it:
 
 ```
 node -v

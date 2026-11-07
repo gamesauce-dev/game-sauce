@@ -5,7 +5,7 @@ cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo The play check needs Node.js version 20 or newer, and it is not installed.
+  echo The play check needs Node.js version 22 or newer, and it is not installed.
   echo Download the LTS version from https://nodejs.org, install it, then double-click this file again.
   echo.
   pause
