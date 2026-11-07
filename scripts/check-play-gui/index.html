@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Play check</title>
+<style>
+  :root { --bg:#14161b; --card:#1c1f26; --line:#2d323d; --text:#e8eaf0; --dim:#9aa3b2; --accent:#5b8cff; --ok:#4cc38a; --bad:#ff6b6b; --warn:#ffcf6e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; align-items:center; gap:12px; padding:14px 22px; border-bottom:1px solid var(--line); }
+  header h1 { font-size:18px; margin:0; flex:1; }
+  main { max-width:1000px; margin:0 auto; padding:18px 22px 60px; display:grid; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+  .card h2 { font-size:15px; margin:0 0 10px; }
+  .dim { color:var(--dim); } .small { font-size:13px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  label.f { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--dim); flex:1; min-width:180px; }
+  input[type=text], input[type=password], input[type=number], select { background:#101217; border:1px solid var(--line); color:var(--text); border-radius:6px; padding:8px 10px; font:inherit; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:7px; padding:9px 16px; font:inherit; font-weight:600; cursor:pointer; }
+  button.sec { background:#2a2f3a; font-weight:500; }
+  button.danger { background:#7c2d2d; }
+  button:disabled { opacity:.45; cursor:default; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:flex; gap:6px; align-items:center; background:#101217; border:1px solid var(--line); border-radius:999px; padding:5px 12px; cursor:pointer; font-size:14px; user-select:none; }
+  .chip input { margin:0; } .chip.on { border-color:var(--accent); }
+  .chip small { color:var(--dim); }
+  .opt { display:flex; gap:10px; align-items:flex-start; padding:6px 0; }
+  .opt input { margin-top:4px; } .opt div b { font-weight:600; }
+  .err { color:var(--bad); margin-top:8px; } .note { color:var(--warn); margin-top:8px; }
+  .bar { height:12px; background:#101217; border-radius:6px; overflow:hidden; border:1px solid var(--line); }
+  .bar > i { display:block; height:100%; background:var(--accent); width:0; transition:width .3s; }
+  .bar.indet > i { width:30% !important; animation:slide 1.2s linear infinite; }
+  @keyframes slide { from { margin-left:-30%; } to { margin-left:100%; } }
+  .stats { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
+  .stat { background:#101217; border:1px solid var(--line); border-radius:8px; padding:8px 14px; min-width:90px; }
+  .stat b { display:block; font-size:20px; } .stat span { font-size:12px; color:var(--dim); }
+  .stat.ok b { color:var(--ok); } .stat.bad b { color:var(--bad); } .stat.warn b { color:var(--warn); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { padding:4px 8px; border-bottom:1px solid var(--line); text-align:left; }
+  th { color:var(--dim); font-weight:500; }
+  .v-runs { color:var(--ok); } .v-bad { color:var(--bad); } .v-other { color:var(--warn); }
+  .scroll { max-height:300px; overflow:auto; border:1px solid var(--line); border-radius:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:12px; }
+  .shot { background:#101217; border:1px solid var(--line); border-radius:8px; overflow:hidden; font-size:12px; }
+  .shot img { width:100%; display:block; background:#000; aspect-ratio:4/3; object-fit:contain; }
+  .shot div { padding:6px 8px; }
+  .hidden { display:none !important; }
+  details summary { cursor:pointer; color:var(--dim); margin:8px 0; }
+  .barline { font-family:ui-monospace,Consolas,monospace; }
+  pre { margin:0; padding:8px 10px; font-size:12px; white-space:pre-wrap; max-height:220px; overflow:auto; }
+  .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#2a2f3a; border:1px solid var(--line); padding:10px 18px; border-radius:8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Play check <span class="dim small">which games really start in the browser</span></h1>
+  <span id="conn" class="small dim"></span>
+  <button id="disconnect" class="sec hidden">Sign out</button>
+</header>
+<main>
+  <div id="nokey" class="card hidden"><h2>Open the link from the terminal</h2><p>This page needs the private link printed where you started the tool (it looks like <code>http://127.0.0.1:5555/?k=…</code>). That keeps other websites from driving it.</p></div>
+
+  <section id="connectCard" class="card hidden">
+    <h2>Sign in to your game-sauce server</h2>
+    <div class="row">
+      <label class="f" style="flex:2">Server address<input id="server" type="text" placeholder="http://192.168.1.50:8765" autocomplete="off"></label>
+      <label class="f">Admin account<input id="user" type="text" value="admin" autocomplete="username"></label>
+      <label class="f">Password<input id="password" type="password" autocomplete="current-password"></label>
+      <button id="connectBtn">Sign in</button>
+    </div>
+    <div id="connectErr" class="err"></div>
+    <p class="dim small">The password stays in this tool's memory while it runs. It is never saved.</p>
+  </section>
+
+  <section id="prevCard" class="card hidden"></section>
+
+  <section id="setup" class="hidden">
+    <div class="card">
+      <h2>1. Which platforms?</h2>
+      <div class="row small" style="margin-bottom:8px"><button class="sec" id="selArcade">Arcade set</button><button class="sec" id="selAll">All</button><button class="sec" id="selNone">None</button></div>
+      <div id="platforms" class="chips"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>2. How much?</h2>
+      <label class="opt"><input type="radio" name="mode" value="sample" checked><div><b>Quick health check</b> <input id="sample" type="number" min="1" value="20" style="width:80px"> random games per platform<br><span class="dim small">A few minutes. Good for seeing whether a platform works at all.</span></div></label>
+      <label class="opt"><input type="radio" name="mode" value="all"><div><b>Every game</b><br><span class="dim small">The real run, about 12 seconds per game. Leave it going; Stop and Resume work any time.</span></div></label>
+      <label class="opt"><input type="radio" name="mode" value="cutoff"><div><b>Find the year MAME stops working</b><br><span class="dim small">Tests oldest games first and suggests a cut-off year. Uses the MAME platform whatever is ticked above.</span></div></label>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>3. Options</h2>
+      <label class="opt"><input type="checkbox" id="candidates"><div><b>Also test games the app does not offer yet</b><br><span class="dim small">MAME after the year cut-off, CPS3, Cave. Without this nothing new can ever be switched on.</span></div></label>
+      <label class="opt"><input type="checkbox" id="apply"><div><b>Switch games on or off as it goes</b><br><span class="dim small">A game that runs is switched ON; one that shows the RetroArch menu or a core error is switched OFF. Leave this unticked to look first: nothing on the server changes.</span></div></label>
+      <label class="opt"><input type="checkbox" id="recheck"><div><b>Re-test games that are already switched on</b><br><span class="dim small">Normally skipped, since they passed before. Use after a core has changed.</span></div></label>
+      <label class="opt"><input type="checkbox" id="resume"><div><b>Carry on from the earlier run</b><br><span class="dim small" id="resumeHint">Skips games already tested. Without this, a new run starts fresh and the old results are kept as a backup file.</span></div></label>
+      <details>
+        <summary>More settings</summary>
+        <div class="row">
+          <label class="f">Seconds per game<input id="seconds" type="number" min="4" value="12"></label>
+          <label class="f">Games at once (1 to 6)<input id="concurrency" type="number" min="1" max="6" value="2"></label>
+          <label class="f">Only titles containing<input id="only" type="text" placeholder="e.g. ghouls"></label>
+          <label class="f">Games per year step (cut-off)<input id="perYear" type="number" min="3" value="8"></label>
+        </div>
+        <label class="opt"><input type="checkbox" id="headed"><div>Show the test browser window while it works</div></label>
+      </details>
+      <div class="row" style="margin-top:12px"><button id="startBtn">Start</button><span id="startHint" class="dim small"></span></div>
+      <div id="startErr" class="err"></div>
+    </div>
+  </section>
+
+  <section id="runCard" class="card hidden">
+    <div class="row"><h2 style="flex:1;margin:0" id="runTitle">Running</h2><button id="stopBtn" class="danger">Stop</button></div>
+    <div id="runMsg" class="dim small" style="margin:6px 0 10px"></div>
+    <div class="bar" id="bar"><i></i></div>
+    <div class="stats" id="stats"></div>
+    <div id="active" class="small dim"></div>
+    <div id="cutoff" class="hidden"></div>
+    <h2 style="margin-top:14px">Latest results</h2>
+    <div class="scroll"><table><thead><tr><th>Result</th><th>Platform</th><th>Year</th><th>Game</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <details><summary>Detailed log</summary><div class="scroll"><pre id="log"></pre></div></details>
+  </section>
+
+  <section id="failCard" class="card hidden">
+    <div class="row"><h2 style="flex:1;margin:0" id="failTitle">Games that did not run</h2>
+      <select id="failFilter"><option value="">All problems</option><option value="retroarch-menu">RetroArch menu</option><option value="core-error">Core error</option><option value="blank">Blank</option><option value="other">Other</option></select></div>
+    <p class="dim small">What the player showed for each game at the end of the wait. A picture of a menu or error screen means the core cannot run that game.</p>
+    <div id="fails" class="grid"></div>
+  </section>
+
+  <section id="offCard" class="card hidden">
+    <h2>Switch browser play off for a whole platform</h2>
+    <p class="dim small">For a platform where the in-browser player cannot work at all, such as Neo Geo with the wrong core. It does not test anything. Any game can be switched back on from its ⋯ menu.</p>
+    <div class="row"><select id="offPlat"></select><input id="offOnly" type="text" placeholder="only titles containing… (optional)"><button id="offBtn" class="danger">Switch off…</button></div>
+  </section>
+</main>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const ARCADE = ['mame', 'fba', 'neogeo', 'cps1', 'cps2', 'cps3', 'cave'];
+let KEY = new URLSearchParams(location.search).get('k') || '';
+try { if (KEY) sessionStorage.setItem('k', KEY); else KEY = sessionStorage.getItem('k') || ''; } catch { /* no storage: the link still works until reload */ }
+if (KEY && location.search) history.replaceState(null, '', location.pathname);
+
+let S = null;                 // the server's state
+const picked = new Set();     // platforms ticked
+const R = { total: 0, finished: 0, tally: {}, active: new Map(), rows: [], steps: [], log: [], status: 'idle', startedAt: 0, resume: false, cutoff: false, end: null };
+let results = [];             // saved results, for the pictures
+
+async function api(path, body) {
+  const r = await fetch('/api/' + path, body === undefined ? { headers: { 'x-check-key': KEY } } : { method: 'POST', headers: { 'x-check-key': KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.add('hidden'), 6000); }
+function el(tag, props = {}, ...kids) { const e = document.createElement(tag); Object.assign(e, props); for (const k of kids) e.append(k); return e; }
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const when = (iso) => (iso ? new Date(iso).toLocaleString() : '');
+const vclass = (v) => (v === 'runs' ? 'v-runs' : v === 'retroarch-menu' || v === 'core-error' ? 'v-bad' : 'v-other');
+const vlabel = (v) => ({ runs: 'ok', 'retroarch-menu': 'FAIL: RetroArch menu', 'core-error': 'FAIL: core error', blank: 'blank', 'rom-unreachable': 'file not found', 'not-playable-here': 'not playable', 'no-picture': 'no picture' }[v] || v);
+const running = () => S && S.running;
+
+// ---------- sign in
+$('connectBtn').onclick = async () => {
+  $('connectErr').textContent = ''; $('connectBtn').disabled = true;
+  try { S = await api('connect', { server: $('server').value, user: $('user').value, password: $('password').value }); $('password').value = ''; await afterState(); }
+  catch (e) { $('connectErr').textContent = e.message; }
+  $('connectBtn').disabled = false;
+};
+$('password').onkeydown = (e) => { if (e.key === 'Enter') $('connectBtn').click(); };
+$('disconnect').onclick = async () => { try { S = await api('disconnect', {}); render(); } catch (e) { toast(e.message); } };
+
+// ---------- choosing
+function drawPlatforms() {
+  const box = $('platforms'); box.replaceChildren();
+  for (const p of S.platforms.filter((x) => x.count > 0)) {
+    const cb = el('input', { type: 'checkbox', checked: picked.has(p.slug) });
+    const chip = el('label', { className: 'chip' + (cb.checked ? ' on' : '') }, cb, p.name || p.slug, el('small', { textContent: String(p.count) }));
+    cb.onchange = () => { cb.checked ? picked.add(p.slug) : picked.delete(p.slug); chip.classList.toggle('on', cb.checked); };
+    chip.title = p.slug;
+    box.append(chip);
+  }
+  const off = $('offPlat'); off.replaceChildren(...S.platforms.filter((x) => x.count > 0).map((p) => el('option', { value: p.slug, textContent: `${p.name || p.slug} (${p.slug})` })));
+}
+const setPicked = (list) => { picked.clear(); list.forEach((s) => picked.add(s)); drawPlatforms(); };
+$('selArcade').onclick = () => setPicked(S.platforms.filter((p) => p.count > 0 && ARCADE.includes(p.slug)).map((p) => p.slug));
+$('selAll').onclick = () => setPicked(S.platforms.filter((p) => p.count > 0).map((p) => p.slug));
+$('selNone').onclick = () => setPicked([]);
+
+function options() {
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  return {
+    platforms: [...picked], all: mode === 'all', cutoff: mode === 'cutoff', sample: Number($('sample').value) || 20,
+    candidates: $('candidates').checked, apply: $('apply').checked, recheck: $('recheck').checked,
+    seconds: Number($('seconds').value) || 12, concurrency: Number($('concurrency').value) || 2, only: $('only').value.trim(), perYear: Number($('perYear').value) || 8, headed: $('headed').checked,
+  };
+}
+function loadOptions(o) {
+  if (!o) return;
+  picked.clear(); (o.platforms || []).forEach((s) => picked.add(s));
+  document.querySelector(`input[name=mode][value=${o.cutoff ? 'cutoff' : o.all ? 'all' : 'sample'}]`).checked = true;
+  $('sample').value = o.sample || 20; $('candidates').checked = !!o.candidates; $('apply').checked = !!o.apply; $('recheck').checked = !!o.recheck;
+  $('seconds').value = o.seconds || 12; $('concurrency').value = o.concurrency || 2; $('only').value = o.only || ''; $('perYear').value = o.perYear || 8; $('headed').checked = !!o.headed;
+}
+async function start(resume) {
+  $('startErr').textContent = '';
+  const o = options();
+  if (!resume && S.previous.count > 0 && !confirm(`This starts a fresh run. Your earlier results (${plural(S.previous.count, 'game')}) are kept as a backup file in ${S.outDir}, but Resume will no longer see them.\n\nTick "Carry on from the earlier run" to keep them. Start fresh anyway?`)) return;
+  try { S = await api('start', { options: o, resume }); render(); } catch (e) { $('startErr').textContent = e.message; }
+}
+$('startBtn').onclick = () => start($('resume').checked);
+$('stopBtn').onclick = async () => { try { S = await api('stop', {}); render(); } catch (e) { toast(e.message); } };
+
+// ---------- earlier results: resume, apply
+function drawPrevious() {
+  const c = $('prevCard'); const p = S.previous;
+  if (!p.count || running()) { c.classList.add('hidden'); return; }
+  c.classList.remove('hidden'); c.replaceChildren();
+  const ran = Object.values(p.byPlatform).reduce((a, v) => a + (v.runs || 0), 0);
+  c.append(el('h2', { textContent: 'Earlier results' }),
+    el('p', { textContent: `${plural(p.count, 'game')} tested so far (${ran} ran, ${p.failures} did not). Last test ${when(p.lastAt)}.`, className: 'small' }));
+  const row = el('div', { className: 'row' });
+  if (S.lastOptions) { const b = el('button', { textContent: 'Resume last run' }); b.onclick = () => { loadOptions(S.lastOptions); $('resume').checked = true; drawPlatforms(); start(true); }; row.append(b); }
+  const mk = (label, mode, n) => { const b = el('button', { className: 'sec', textContent: label, disabled: !n }); b.onclick = () => applySaved(mode, n); return b; };
+  row.append(mk(`Switch ON ${p.toOn} that ran`, 'on', p.toOn), mk(`Switch OFF ${p.toOff} that failed`, 'off', p.toOff));
+  c.append(row, el('p', { className: 'dim small', textContent: 'Resume uses the settings from your last run and skips games already tested. The two switch buttons change the server from these saved results without testing anything again.' }));
+}
+async function applySaved(mode, n) {
+  if (!confirm(`Switch browser play ${mode === 'on' ? 'ON' : 'OFF'} for ${plural(n, 'game')} on the server? Each can be changed back from the game's ⋯ menu.`)) return;
+  try { const r = await api('apply', { mode }); S = r.state; toast(`Switched ON ${r.switchedOn}, OFF ${r.switchedOff}${r.failed ? `, ${r.failed} could not be changed` : ''}.`); render(); } catch (e) { toast(e.message); }
+}
+
+// ---------- the whole-platform switch off
+$('offBtn').onclick = async () => {
+  const body = { platforms: [$('offPlat').value], only: $('offOnly').value.trim() };
+  try {
+    const { count } = await api('off-preview', body);
+    if (!count) return toast('No game there is offered for browser play, so there is nothing to switch off.');
+    if (!confirm(`${plural(count, 'game')} on ${body.platforms[0]}${body.only ? ` matching "${body.only}"` : ''} will have browser play switched OFF. Continue?`)) return;
+    $('offBtn').disabled = true;
+    const r = await api('off', body); S = r.state; toast(`Browser play switched OFF for ${plural(r.n, 'game')}${r.failed ? ` (${r.failed} could not be changed)` : ''}.`);
+  } catch (e) { toast(e.message); }
+  $('offBtn').disabled = false; render();
+};
+
+// ---------- the live run
+function resetRun() { Object.assign(R, { total: 0, finished: 0, tally: {}, rows: [], steps: [], log: [], end: null, resume: false, cutoff: false }); R.active.clear(); }
+function connectEvents() {
+  const es = new EventSource('/api/events?k=' + encodeURIComponent(KEY));
+  const on = (t, f) => es.addEventListener(t, (m) => { f(JSON.parse(m.data)); schedule(); });
+  on('reset', () => { resetRun(); R.status = 'idle'; });
+  on('run-start', (d) => { R.status = 'running'; R.startedAt = d.startedAt; R.resume = d.resume; R.cutoff = d.options.cutoff; });
+  on('plan', (d) => { R.total = d.total; R.alreadyDone = d.alreadyDone; });
+  on('begin', (d) => R.active.set(d.id, d));
+  on('game', (d) => { R.active.delete(d.rec.id); R.finished = d.finished; R.tally = d.tally; R.rows.unshift(d.rec); if (R.rows.length > 300) R.rows.pop(); });
+  on('step', (d) => R.steps.push(d));
+  on('log', (t) => { R.log.push(t); if (R.log.length > 400) R.log.shift(); });
+  on('stopping', () => { R.status = 'stopping'; });
+  on('run-end', async (d) => { R.status = d.status; R.end = d; R.active.clear(); await refresh(); });
+  on('applied', () => {});
+  es.onerror = () => {};
+}
+let pending = false;
+function schedule() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; drawRun(); }); }
+function fmtMins(s) { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : m ? `${m} min` : `${s} s`; }
+function drawRun() {
+  const live = R.status === 'running' || R.status === 'stopping';
+  const card = $('runCard');
+  if (R.status === 'idle') { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  $('stopBtn').classList.toggle('hidden', !live);
+  $('stopBtn').disabled = R.status === 'stopping';
+  $('runTitle').textContent = { running: 'Running', stopping: 'Stopping…', finished: 'Finished', stopped: 'Stopped', error: 'Stopped by a problem' }[R.status] || 'Run';
+  const bar = $('bar'); const pct = R.total ? Math.min(100, R.finished / R.total * 100) : 0;
+  bar.classList.toggle('indet', live && !R.total); bar.firstChild.style.width = (R.total ? pct : 100) + '%';
+  if (!live && !R.total) bar.firstChild.style.width = '100%';
+  let msg = '';
+  if (R.status === 'error') msg = R.end?.error || 'Something went wrong.';
+  else if (R.end?.nothing) msg = 'Nothing left to check: every game there is already switched on, switched off, or cannot play. Tick "Re-test games already switched on" or "Also test games the app does not offer yet" to test more.';
+  else if (R.cutoff) msg = `${plural(R.finished, 'game')} tested${live ? ', oldest years first. It stops by itself once two year steps in a row mostly fail.' : '.'}`;
+  else if (R.total) {
+    const el_ = (Date.now() - R.startedAt) / 1000; const eta = R.finished ? el_ / R.finished * (R.total - R.finished) : null;
+    msg = `${R.finished} of ${R.total} tested${R.alreadyDone ? ` (${R.alreadyDone} already done earlier)` : ''}${live && eta != null ? `, about ${fmtMins(eta)} left` : ''}.`;
+  } else if (live) msg = 'Starting the test browser…';
+  if (R.status === 'stopped') msg += ' Press Resume to carry on where it stopped.';
+  if (R.end?.switchedOn || R.end?.switchedOff) msg += ` Switched ON ${R.end.switchedOn}, OFF ${R.end.switchedOff}.`;
+  $('runMsg').textContent = msg;
+  const t = R.tally; const ok = t.runs || 0; const bad = (t['retroarch-menu'] || 0) + (t['core-error'] || 0); const other = R.finished - ok - bad;
+  $('stats').replaceChildren(...[['ok', ok, 'ran'], ['bad', bad, 'did not start'], ['warn', other, 'blank or other'], ['', R.finished, 'tested']].map(([c, n, l]) => el('div', { className: 'stat ' + c }, el('b', { textContent: String(n) }), el('span', { textContent: l }))));
+  $('active').textContent = live && R.active.size ? 'Testing now: ' + [...R.active.values()].map((a) => a.title).join(' · ') : '';
+  const cut = $('cutoff');
+  if (R.cutoff && R.steps.length) {
+    cut.classList.remove('hidden'); cut.replaceChildren(el('h2', { textContent: 'Games that run, by year', style: 'margin-top:14px' }));
+    const tb = el('table'); for (const s of R.steps) { const p = s.tried ? Math.round(s.ran / s.tried * 100) : 0; tb.append(el('tr', {}, el('td', { textContent: s.from === s.to ? String(s.from) : `${s.from}-${s.to}` }), el('td', { textContent: `${s.ran}/${s.tried}` }), el('td', { className: 'barline', textContent: '#'.repeat(Math.round(p / 5)).padEnd(20, '.') }), el('td', { textContent: p + '%' + (s.tooFew ? ' (too few to count)' : '') }))); }
+    cut.append(tb);
+    for (const c of (R.end?.cutoffReport || [])) cut.append(el('p', { textContent: !c.seenGood ? `${c.platform}: no stretch of years mostly ran, so there is no cut-off to suggest.` : c.stop ? `${c.platform}: games up to ${c.lastGood} mostly run; from ${c.firstBad} two steps in a row mostly failed. Suggested cut-off year: ${c.lastGood}. Set GAMESAUCE_MAME_PLAY_MAX_YEAR to it on the server and restart game-sauce.` : `${c.platform}: every stretch after the first good one mostly ran, so there is no cut-off to suggest.` }));
+  } else cut.classList.add('hidden');
+  $('rows').replaceChildren(...R.rows.slice(0, 150).map((r) => el('tr', {}, el('td', { className: vclass(r.verdict), textContent: vlabel(r.verdict) }), el('td', { textContent: r.platform }), el('td', { textContent: r.year || '' }), el('td', { textContent: r.title }))));
+  $('log').textContent = R.log.join('\n');
+}
+
+// ---------- pictures of the games that did not run
+async function drawFails() {
+  try { results = (await api('results')).items; } catch { results = []; }
+  const bad = results.filter((r) => r.verdict !== 'runs');
+  const card = $('failCard'); card.classList.toggle('hidden', !bad.length);
+  if (!bad.length) return;
+  const f = $('failFilter').value;
+  const list = bad.filter((r) => !f || (f === 'other' ? !['retroarch-menu', 'core-error', 'blank'].includes(r.verdict) : r.verdict === f)).sort((a, b) => a.title.localeCompare(b.title));
+  $('failTitle').textContent = `Games that did not run (${bad.length})`;
+  $('fails').replaceChildren(...list.slice(0, 300).map((r) => el('div', { className: 'shot' }, r.shot ? el('img', { src: `/api/shot/${r.id}?k=${encodeURIComponent(KEY)}`, loading: 'lazy', alt: '' }) : el('div', { textContent: 'no picture', className: 'dim' }), el('div', {}, el('b', { textContent: r.title }), el('br'), `${r.platform}${r.year ? ' · ' + r.year : ''} · `, el('span', { className: vclass(r.verdict), textContent: vlabel(r.verdict) })))));
+  if (list.length > 300) $('fails').append(el('p', { className: 'dim small', textContent: `Showing the first 300 of ${list.length}. Use the filter to narrow it.` }));
+}
+$('failFilter').onchange = drawFails;
+
+// ---------- putting it together
+function render() {
+  if (!KEY) { $('nokey').classList.remove('hidden'); return; }
+  const c = S.connected;
+  $('connectCard').classList.toggle('hidden', c); $('setup').classList.toggle('hidden', !c || S.running); $('offCard').classList.toggle('hidden', !c || S.running);
+  $('disconnect').classList.toggle('hidden', !c || S.running);
+  $('conn').textContent = c ? `Signed in to ${S.server}` : '';
+  if (!c) { if (!$('server').value) $('server').value = S.server || ''; if (S.user) $('user').value = S.user; }
+  if (c) { drawPlatforms(); $('resume').disabled = !S.previous.count; if (!S.previous.count) $('resume').checked = false; }
+  drawPrevious();
+  if (S.runError && R.status === 'idle') { R.status = 'error'; R.end = { error: S.runError }; }
+  schedule();
+}
+let firstLoad = true;
+async function afterState() {
+  if (firstLoad && S.connected) { firstLoad = false; loadOptions(S.lastOptions); if (S.previous.count) $('resume').checked = true; }
+  else if (S.connected && !$('resume').dataset.touched && S.previous.count) $('resume').checked = true;
+  render(); await drawFails();
+}
+$('resume').onchange = () => { $('resume').dataset.touched = '1'; };
+async function refresh() { try { S = await api('state'); await afterState(); } catch (e) { toast(e.message); } }
+(async () => {
+  if (!KEY) return render();
+  try { S = await api('state'); } catch (e) { $('nokey').classList.remove('hidden'); return; }
+  connectEvents();
+  if (S.connected) await afterState(); else { firstLoad = false; render(); }
+  setInterval(() => { if (R.status === 'running') schedule(); }, 5000);
+})();
+</script>
+</body>
+</html>
