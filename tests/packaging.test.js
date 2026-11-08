@@ -100,3 +100,10 @@ test('the desktop app: one version everywhere, the server built in as resources,
   assert.match(y, /needs: \[bundle, desktop\]/);
   assert.ok(read('desktop/.gitignore').includes('server-stage/') && read('desktop/.gitignore').includes('target/'));
 });
+
+test('workflow files: no unquoted "word: word" in a step name or value (a colon there is a YAML error and the whole workflow fails to start)', () => {
+  for (const f of fs.readdirSync(new URL('../.github/workflows/', import.meta.url)).filter((x) => x.endsWith('.yml'))) {
+    const bad = read('.github/workflows/' + f).split('\n').map((l, i) => [i + 1, l]).filter(([, l]) => /^\s*(- )?(name|run|if|with|uses):\s+[^'"|>{\[#\s][^#]*:\s/.test(l) && !/^\s*(- )?(run|if):/.test(l));
+    assert.deepEqual(bad, [], `${f}: ${bad.map((b) => b[0]).join(', ')}`);
+  }
+});
