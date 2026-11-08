@@ -299,7 +299,9 @@ button.overview-card {
   transition: transform .15s ease, border-color .15s, box-shadow .15s;
 }
 .card:hover .card-cover { transform: translateY(-0.2143rem); border-color: var(--line-2); box-shadow: var(--shadow); }
-.card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* A cover that is not quite the tile's shape is trimmed from the bottom, never the top: the logo or banner (Wii U, Switch, the PlayStation and Xbox bars) sits at the top,
+   and the platform badge sits at the bottom-left, over the part that can go. Same in the ROM, Digital and Physical libraries. */
+.card-cover img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
 .card-fallback {
   position: absolute; inset: 0; display: grid; place-items: center;
   background: linear-gradient(160deg, rgba(255,255,255,.04), transparent 60%);
@@ -307,7 +309,7 @@ button.overview-card {
   background: radial-gradient(circle at 30% 20%, rgba(124, 92, 255, .25), transparent 60%);
 }
 .card-badge {
-  position: absolute; top: 0.5rem; left: 0.5rem;
+  position: absolute; bottom: 0.5rem; left: 0.5rem;
   font-size: 0.6786rem; font-weight: 700; letter-spacing: .06em;
   padding: 0.1786rem 0.4286rem; border-radius: 0.3571rem; color: #fff;
   background: rgba(0, 0, 0, .55); backdrop-filter: blur(0.4286rem);
@@ -315,7 +317,7 @@ button.overview-card {
 /* `.card-cover img` sets width:100% with higher specificity, so this rule
    must out-specify it too — hence `.card-cover .card-play`. */
 .card-cover .card-play {
-  position: absolute; bottom: 0.5714rem; right: 0.5714rem; width: 1.5714rem; height: 1.5714rem;
+  position: absolute; top: 0.5714rem; left: 0.5714rem; width: 1.5714rem; height: 1.5714rem;
   border-radius: 0.5rem; display: block; object-fit: contain;
   /* the game-sauce mark itself, shrunk: neon tile reads as "playable" */
   box-shadow: 0 0 0.7143rem rgba(255, 61, 104, .55), 0 0.1429rem 0.4286rem rgba(0, 0, 0, .6);
@@ -836,7 +838,7 @@ button.result-row:hover { border-color: var(--accent); }
 
 /* ───────────────────────── verification badge ───────────────────────── */
 .badge-dat {
-  position: absolute; bottom: 0.5rem; left: 0.5rem; font-size: 0.6429rem; font-weight: 700;
+  position: absolute; bottom: 0.5rem; right: 0.5rem; font-size: 0.6429rem; font-weight: 700;
   letter-spacing: .05em; padding: 0.1429rem 0.3571rem; border-radius: 0.2857rem; text-transform: uppercase;
   background: rgba(52, 211, 153, .18); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, .35);
 }
@@ -998,7 +1000,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .strip .recent-row .card { gap: 0.2857rem; }
 .strip .recent-row .card-title { font-size: 0.75rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .strip .recent-row .card-sub { display: none; }
-.strip .recent-row .card-badge { font-size: 0.5714rem; padding: 0.1071rem 0.2857rem; top: 0.3571rem; left: 0.3571rem; }
+.strip .recent-row .card-badge { font-size: 0.5714rem; padding: 0.1071rem 0.2857rem; bottom: 0.3571rem; left: 0.3571rem; }
 .strip .recent-row .card-play, .strip .recent-row .card-fav, .strip .recent-row .card-hide { display: none; }
 .strip .recent-row .card-playbtn { width: 2.2857rem; height: 2.2857rem; font-size: 0.9286rem; }
 .strip .recent-row .badge-dat { display: none; }
@@ -1266,7 +1268,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .card-fav.on:hover { color: #ffd964; }
 @media (hover: none) { .card-fav, .card-hide { opacity: 1; } } /* touch screens have no hover: always show them */
 .card-lock {
-  position: absolute; left: 0.5rem; bottom: 0.5rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center;
+  position: absolute; left: 0.5rem; top: 0.5rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center;
   border-radius: 0.5rem; background: rgba(20, 83, 45, .92); border: 1px solid #4ade80; color: #4ade80; box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, .6);
 }
 .card-lock svg { width: 1.1rem; height: 1.1rem; }
@@ -1370,14 +1372,14 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .bulk-bar .bulk-spacer { flex: 1 1 auto; min-width: 0.5rem; }
 #bulk-count { font-weight: 600; color: var(--text); padding-right: 0.3rem; }
 
-/* Select checkbox: bottom-left, so the platform badge (top-left) stays fully visible.
-   While selecting, the lock and DAT badges that normally sit there step up above it. */
-.card-select { top: auto; bottom: 0.5rem; left: 0.5rem; width: 1.7rem; height: 1.7rem; z-index: 4; }
-.grid.selecting .card-lock { bottom: 2.6rem; }
-.grid.selecting .badge-dat { bottom: 4.7rem; }
-/* A game that is both locked and DAT-verified: stack them instead of overlapping, in every mode. */
-.card-cover .card-lock ~ .badge-dat { bottom: 2.6rem; }
-.grid.selecting .card-cover .card-lock ~ .badge-dat { bottom: 4.7rem; }
+/* Select checkbox: top-left, so the platform badge (bottom-left) and the DAT badge (bottom-right) stay fully visible.
+   While selecting, the playable controller and the lock that normally sit there step down below it. */
+.card-select { top: 0.5rem; bottom: auto; left: 0.5rem; width: 1.7rem; height: 1.7rem; z-index: 4; }
+.grid.selecting .card-play { top: 2.6rem; }
+.grid.selecting .card-lock { top: 2.6rem; }
+/* A playable game that is also locked: stack them instead of overlapping, in every mode (the controller is drawn first, then the lock). */
+.card-cover .card-play ~ .card-lock { top: 2.6rem; }
+.grid.selecting .card-cover .card-play ~ .card-lock { top: 4.7rem; }
 
 /* Health: slow-request list */
 .slow-list { display: grid; gap: 0.3rem; }
@@ -1648,7 +1650,7 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-q input { flex: 1; min-width: 0; }
 .dg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
 .dg-card .card-title { padding: 0.5rem 0.2rem 0; font-size: 0.85rem; line-height: 1.25; min-height: 2.5em; }
-.dg-hours { position: absolute; left: 0.45rem; bottom: 0.45rem; padding: 0.12rem 0.45rem; border-radius: 0.4rem; background: rgba(0,0,0,.65); color: #fff; font-size: 0.72rem; }
+.dg-hours { position: absolute; right: 0.45rem; bottom: 0.45rem; padding: 0.12rem 0.45rem; border-radius: 0.4rem; background: rgba(0,0,0,.65); color: #fff; font-size: 0.72rem; }
 .dg-launch { text-decoration: none; display: flex; align-items: center; justify-content: center; }
 .dg-msg:empty { display: none; }
 .dg-warn { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border: 1px solid #c9a227; border-radius: 0.65rem; background: rgba(201,162,39,.12); }
@@ -1680,9 +1682,9 @@ body.play-only #empty .empty-add-text { display: none; }
 .auth-card .auth-logo { width: min(21rem, 100%); height: auto; flex: none; border-radius: 0; }
 .card-cover .card-play { padding: 0.12rem; box-sizing: border-box; }
 
-/* Digital tiles: a hidden game is dimmed (only seen with Show hidden), and the play switch sits in the bottom-right corner. */
+/* Digital tiles: a hidden game is dimmed (only seen with Show hidden), the play switch sits in the top-left corner and the hours played bottom-right. */
 .dg-card.is-hidden { opacity: 0.55; }
-.dg-playsw { position: absolute; right: 0.45rem; bottom: 0.45rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center; padding: 0; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,.28); background: rgba(8,9,14,.78); color: #9aa3b5; cursor: pointer; }
+.dg-playsw { position: absolute; left: 0.45rem; top: 0.45rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center; padding: 0; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,.28); background: rgba(8,9,14,.78); color: #9aa3b5; cursor: pointer; }
 .dg-playsw svg { width: 1.1rem; height: 1.1rem; }
 .dg-playsw.on { color: #4ade80; border-color: #4ade80; }
 .dg-playsw:hover { color: #fff; }
@@ -1718,7 +1720,7 @@ body.play-only #empty .empty-add-text { display: none; }
 
 /* "Playable in the browser" marker: a green controller that glows, the same as the Steam play switch when it is on. */
 .card-cover .card-play {
-  display: grid; place-items: center; padding: 0; width: 1.9rem; height: 1.9rem; border-radius: 0.5rem; right: 0.5rem; bottom: 0.5rem;
+  display: grid; place-items: center; padding: 0; width: 1.9rem; height: 1.9rem; border-radius: 0.5rem; left: 0.5rem; top: 0.5rem;
   color: #4ade80; background: rgba(8, 9, 14, .82); border: 1px solid #4ade80;
   box-shadow: 0 0 0.6rem rgba(74, 222, 128, .6), 0 0 1.3rem rgba(74, 222, 128, .3), 0 0.14rem 0.43rem rgba(0, 0, 0, .6);
 }

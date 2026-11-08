@@ -331,3 +331,13 @@ test('the platforms list carries every spine shape (so a kind of case is sized f
   const ph = read('public/physical.js');
   assert.match(ph, /spineShapes\(S\.platforms\)/); assert.match(ph, /aspect-ratio:\$\{g\.cover_ar\}/);
 });
+
+test('Physical tiles are the Library\'s standard tile (one size, the cover fills it), like the ROM and Digital libraries', () => {
+  const ph = read('public/physical.js'), css = read('public/physical.css');
+  const tile = ph.slice(ph.indexOf('const tileHtml'), ph.indexOf('function renderTiles'));
+  assert.doesNotMatch(tile, /aspect-ratio|--cover/, 'a tile takes no shape or backdrop of its own');
+  assert.doesNotMatch(css, /\.ph-card \.card-cover(?!-)[^{]*\{[^}]*(aspect-ratio|object-fit|filter)/, 'nothing overrides the shared tile\'s cover box');
+  // a cover is trimmed from the bottom (in the shared tile), so the logo or banner at the top always shows
+  assert.match(read('public/styles.css'), /\.card-cover img \{ width: 100%; height: 100%; object-fit: cover; object-position: top;/, 'the shared tile trims a cover from the bottom, for every library');
+  assert.doesNotMatch(css, /\.ph-card \.card-cover img/, 'Physical adds nothing of its own to the cover');
+});
