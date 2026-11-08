@@ -87,6 +87,15 @@ fs.cpSync(path.join(root, 'public'), path.join(app, 'public'), { recursive: true
 fs.copyFileSync(path.join(root, 'scripts', 'start.mjs'), path.join(app, 'scripts', 'start.mjs'));
 log('installing the modules');
 run(win ? 'npm.cmd' : 'npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: app });
+// The database library carries a ready-made file for every kind of computer (Windows, Mac, Linux, ARM, Alpine). Only this computer's is ever used: keep just that one.
+// It makes every download smaller, and the tool that builds the Linux AppImage stops at the Alpine one ("Could not find dependency: libc.musl-x86_64.so.1").
+const prebuilds = path.join(app, 'node_modules', 'better-sqlite3', 'prebuilds');
+const keep = `${process.platform}-${arch}.node`;
+if (fs.existsSync(prebuilds)) {
+  if (!fs.existsSync(path.join(prebuilds, keep))) die(`the database library has no ready-made file for this computer (${keep})`);
+  for (const f of fs.readdirSync(prebuilds)) if (f !== keep) fs.rmSync(path.join(prebuilds, f), { recursive: true, force: true });
+  log(`kept only the database file for this computer (${keep})`);
+}
 // The bundled Node must be able to load the database library, or the bundle is useless: stop here if not.
 const probe = spawnSync(path.join(stage, 'runtime', exe), ['-e', "import('better-sqlite3').then((m) => { new m.default(':memory:').prepare('select 1').get(); })"], { cwd: app, encoding: 'utf8' });
 if (probe.status !== 0) die('the bundled Node cannot load the database library:\n' + (probe.stderr || probe.stdout));

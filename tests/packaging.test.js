@@ -167,3 +167,9 @@ test('the README has a Download section naming the files each release really car
   assert.ok(r.indexOf('## Download') < r.indexOf('## What it does'), 'near the top');
   assert.ok(!r.includes('AppImage'), 'it does not promise the AppImage, which the release does not have yet');
 });
+
+test('the bundle keeps only the database library file for its own computer (smaller, and the AppImage tool cannot read the Alpine one)', () => {
+  const s = read('scripts/build-bundle.mjs');
+  assert.ok(s.includes("'better-sqlite3', 'prebuilds'") && s.includes('`${process.platform}-${arch}.node`') && s.includes('fs.rmSync(path.join(prebuilds, f)'));
+  assert.ok(s.indexOf("'better-sqlite3', 'prebuilds'") < s.indexOf('the bundled Node cannot load the database library'), 'pruned first, then proven to load');
+});
