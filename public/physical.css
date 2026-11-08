@@ -3,7 +3,6 @@
 .ph-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0 0 0.7rem; }
 .ph-bar .dg-q input, .ph-bar select { height: 2.4rem; padding: 0 0.8rem; border-radius: 0.65rem; border: 1px solid var(--line, rgba(127,127,127,.35)); background: var(--panel, transparent); color: inherit; font: inherit; }
 .ph-bar .dg-q input { flex: 1; min-width: 0; }
-.ph-bar .segmented button { height: 2.4rem; padding: 0 0.85rem; white-space: nowrap; cursor: pointer; }
 .ph-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .ph-pill, .ph-chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.1rem; padding: 0 0.75rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted, inherit); font: inherit; font-size: 0.82rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s, box-shadow .15s; }
 .ph-pill small, .ph-chip small { color: var(--dim, inherit); opacity: .85; font-variant-numeric: tabular-nums; font-size: 0.74rem; }
@@ -22,7 +21,11 @@
 .ph-chip[style*="--chip-c"].on.part { background: color-mix(in srgb, var(--chip-c) 32%, var(--panel)); }
 .ph-chip[data-ph-chip-fam]::after { content: ''; width: 0; height: 0; margin-left: 0.15rem; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid transparent; }
 .ph-chip[data-ph-chip-fam].open::after { border-top-color: currentColor; }
-.ph-az .ph-density { display: inline-flex; gap: 0.2rem; }
+.ph-az [data-ph-density="comfortable"]::before { content: '▦'; }
+.ph-az [data-ph-density="compact"]::before { content: '▩'; }
+.ph-az [data-ph-view="shelf"]::before { content: '▥'; }
+.ph-az #ph-top::before { content: '↑'; }
+#ph-heading { margin: 0 0 0.5rem; }
 .ph-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.4rem 0.4rem 1.7143rem; }
 .ph-scroll::-webkit-scrollbar { width: 0.7143rem; }
 .ph-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 0.3571rem; }
@@ -85,3 +88,10 @@
 }
 .ph-shelf { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 @media (prefers-reduced-motion: reduce) { .ph-shelf { transition: none; } }
+
+/* Details window: text in the title box and the drop-downs lines up with the other fields (the Library's .search box leaves room for a magnifier that is not here). */
+#ph-id-q { padding-left: 0.7143rem; }
+#ph-id-prov, #ph-id-plat, #ph-edit select, #ph-add select { padding-left: calc(0.7143rem - 4px); }
+/* The search box is only as long as it needs to be; the page's own buttons sit at the end of the same line. */
+.ph-bar .dg-q { flex: 0 1 16rem; min-width: 10rem; }
+.ph-bar [data-ph-act="import"] { margin-left: auto; }

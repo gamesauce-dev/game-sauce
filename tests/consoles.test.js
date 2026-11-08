@@ -234,9 +234,8 @@ test('disc / cartridge switch: console games only, private, kept in the list; th
   assert.deepEqual(on, ['astro-bot-ps5', 'mario-kart-world-switch2']);
   assert.equal((await mk('playstation', 'astro-bot-ps5', false)).body.physical, 0);
   const app = read('public/app.js');
-  assert.match(app, /DG_CARTRIDGE = new Set\(\['switch2', 'switch', '3ds', 'ds'\]\)/); assert.match(app, /data-dg-mark="physical"/);
-  assert.match(app, /platformIconSvg\(\{ icon: type \}/);
-  assert.match(read('public/styles.css'), /\.dg-media\.on/);
+  // The disc / cartridge switch is no longer drawn on the tiles (the mark itself and the CSV Media column still work).
+  assert.doesNotMatch(app, /dg-media/); assert.doesNotMatch(read('public/styles.css'), /\.dg-media/);
 });
 
 test('CSV Media column: DISC / CART switch the icon on, DIGITAL off, empty leaves it', async () => {

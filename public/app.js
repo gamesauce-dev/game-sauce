@@ -3307,11 +3307,6 @@ const DG_PLATFORM = {
   xbox: { label: 'Xbox', short: 'XBOX' }, x360: { label: 'Xbox 360', short: 'XBOX 360' },
   xone: { label: 'Xbox One', short: 'XBOX ONE' }, xsx: { label: 'Xbox Series X|S', short: 'X|S' }
 };
-/* Games on a disc (PlayStation, Xbox, Wii, Wii U) or a cartridge (Switch 2, Switch, 3DS, DS): the switch on a console tile shows the matching
- * icon from Settings › Platforms, lit when the person owns the game physically. */
-const DG_CARTRIDGE = new Set(['switch2', 'switch', '3ds', 'ds']);
-const dgMediaOf = (g) => (DG_CARTRIDGE.has(g.platform) ? 'cartridge' : 'disc');
-const dgMediaIcon = (type) => platformIconSvg({ icon: type }, 18);
 const dgBadgeOf = (g) => {
   const st = DG_STORE[g.store] || { label: g.store, short: String(g.store || '').toUpperCase(), bg: '#1b2838' };
   return g.store === 'steam' ? st : { ...st, ...(DG_PLATFORM[g.platform] || (g.store === 'xbox' ? DG_PLATFORM.xbox : {})) };
@@ -3420,7 +3415,7 @@ async function loadDigital(keep = false) {
         <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
         ${steam ? `<button type="button" class="dg-playsw ${g.play ? 'on' : ''}" data-dg-mark="play" data-value="${g.play ? 0 : 1}" tabindex="-1" title="${g.play ? 'Play button is on (click to turn it off)' : 'Play button is off: turn it on for games installed on this PC'}" aria-label="Play button ${g.play ? 'on' : 'off'}">${g.play ? ICON.gamepad : ICON.gamepadOff}</button>
         <span class="dg-hours" title="Hours played">${g.hours ? g.hours.toLocaleString() + ' h' : 'unplayed'}</span>`
-        : `<button type="button" class="dg-media ${g.physical ? 'on' : ''}" data-dg-mark="physical" data-value="${g.physical ? 0 : 1}" tabindex="-1" title="${dgMediaOf(g) === 'disc' ? 'Disc' : 'Cartridge'}: ${g.physical ? 'owned (click to turn it off)' : 'not marked (click if you own it on ' + (dgMediaOf(g) === 'disc' ? 'disc' : 'cartridge') + ')'}" aria-label="${dgMediaOf(g) === 'disc' ? 'Owned on disc' : 'Owned on cartridge'}" aria-pressed="${g.physical ? 'true' : 'false'}">${dgMediaIcon(dgMediaOf(g))}</button>`}
+        : ''}
       </div>
       <div class="card-title">${esc(g.name)}</div>
     </div>`;

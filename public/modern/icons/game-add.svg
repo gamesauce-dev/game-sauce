@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+	<mask id="gameAddMask" width="24" height="24" x="0" y="0" maskUnits="userSpaceOnUse">
+		<path fill="#fff" d="M0 0h24v24H0z" />
+		<circle cx="17.5" cy="17.5" r="6" />
+	</mask>
+	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+		<g mask="url(#gameAddMask)">
+			<path d="M6.25 2.75h11.5Q19 2.75 19 4v13.75q0 1.25-.77 2.24l-.21.27q-.77.99-2.02.99H8q-1.25 0-2.02-.99l-.21-.27Q5 19 5 17.75V4q0-1.25 1.25-1.25" />
+			<rect width="9" height="8" x="7.5" y="5.25" rx="1" />
+		</g>
+		<path d="M17.5 14.75v5.5m-2.75-2.75h5.5" />
+	</g>
+</svg>

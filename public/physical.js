@@ -65,7 +65,7 @@ export async function load(keep = false) {
   msg.innerHTML = job.running ? `<div class="dg-note">Looking up details and covers: ${n(job.done)} of ${n(job.total)} done. They appear as they are found.</div>` : '';
   watchJob(job);
   const empty = $('#ph-empty'), scroll = $('#ph-scroll');
-  $('#ph-total').textContent = S.counts.total ? `${n(list.total)}${list.total !== S.counts.total ? ' of ' + n(S.counts.total) : ''} games` : '';
+  renderHeading(list.total);
   $('#ph-bar').classList.toggle('hidden', !S.counts.total);
   $('#ph-az').classList.toggle('hidden', !S.counts.total);
   if (!S.counts.total) {
@@ -104,17 +104,38 @@ function watchJob(job) {
   } else if (S.jobWas) { S.jobWas = false; }
 }
 
+/* ───────────── the heading above the games: platform logo (or a dot), name, how many, and a way back to every platform (as in the Library) ───────────── */
+function renderHeading(total) {
+  const box = $('#ph-heading'); if (!box) return;
+  if (!S.counts.total) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const cache = window.__platformsCache || [], count = `${n(total)} ${total === 1 ? 'game' : 'games'}`;
+  box.classList.remove('hidden');
+  if (!S.picked.length) { box.innerHTML = `<span class="lib-dot" style="background:var(--accent)"></span><h2>All platforms</h2><span class="lib-total">${count}</span>`; return; }
+  const row = (s) => cache.find((x) => x.slug === s) || platOf(s);
+  const first = row(S.picked[0]), fam = first.family;
+  const sameFam = S.picked.length > 1 && S.picked.every((s) => row(s).family === fam);
+  const famAll = S.platforms.filter((p) => p.family === fam).map((p) => p.slug);
+  const wholeFam = S.picked.length > 1 && famAll.length === S.picked.length && famAll.every((s) => S.picked.includes(s));
+  const logo = S.picked.length === 1 && first.logo_v ? `<span class="lib-logo${first.logo_plate ? ' on-plate' : ''}"><img src="/api/platforms/${encodeURIComponent(first.slug)}/logo?v=${first.logo_v}" alt="" onerror="this.remove()" /></span>`
+    : sameFam && first.family_logo_v ? `<span class="lib-logo${first.family_logo_plate ? ' on-plate' : ''}"><img src="/api/platforms/families/logo?family=${encodeURIComponent(fam)}&v=${first.family_logo_v}" alt="" onerror="this.remove()" /></span>` : '';
+  const dot = S.picked.length > 1 && sameFam ? (first.family_colour || 'var(--accent)') : accentOf(first.slug);
+  const names = S.picked.map((s) => row(s).name || s);
+  const name = wholeFam ? `${fam} (all platforms)` : names.length > 3 ? `${names.length} platforms` : names.join(' + ');
+  box.innerHTML = `${logo || `<span class="lib-dot" style="background:${esc(dot)}"></span>`}<h2>${esc(name)}</h2><span class="lib-total">${count}</span>
+    <button type="button" class="btn btn-sm btn-ghost lib-clear" data-ph-clear title="Show every platform again">✕ All platforms</button>`;
+}
+
 /* ───────────── toolbar, chips, letters ───────────── */
 
 function paintToolbar() {
   const c = S.counts;
   $('#ph-toggles').innerHTML = `
-    <button type="button" class="ph-pill${S.fav ? ' on' : ''}" data-ph-toggle="fav" title="Only your favourites">★ Favourites <small>${n(c.favourites)}</small></button>
-    <button type="button" class="ph-pill${S.nocover ? ' on' : ''}" data-ph-toggle="nocover" title="Games with no cover picture yet">▢ No cover <small>${n(c.nocover)}</small></button>
-    <button type="button" class="ph-pill${S.unmatched ? ' on' : ''}" data-ph-toggle="unmatched" title="Games no provider has matched: the worklist for matching by hand">○ Needs match <small>${n(c.unmatched)}</small></button>`;
-  $$('[data-ph-view]').forEach((b) => b.classList.toggle('is-active', b.dataset.phView === S.view));
-  $$('[data-ph-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.phDensity === S.density));
-  $('#ph-density-wrap')?.classList.toggle('hidden', S.view === 'shelf');
+    <button type="button" class="ph-pill${S.fav ? ' on' : ''}" data-ph-toggle="fav" title="Favourites: only your favourites (${n(c.favourites)})">★ Favourites <small>${n(c.favourites)}</small></button>
+    <button type="button" class="ph-pill${S.nocover ? ' on' : ''}" data-ph-toggle="nocover" title="No cover: games with no cover picture yet (${n(c.nocover)})">▢ No cover <small>${n(c.nocover)}</small></button>
+    <button type="button" class="ph-pill${S.unmatched ? ' on' : ''}" data-ph-toggle="unmatched" title="Needs match: games no provider has matched, the worklist for matching by hand (${n(c.unmatched)})">○ Needs match <small>${n(c.unmatched)}</small></button>`;
+  // The three look buttons beside the A-Z row: two grid sizes (tiles) and the shelf; the lit one is the look in use.
+  $$('[data-ph-density]').forEach((b) => b.classList.toggle('is-on', S.view === 'tiles' && b.dataset.phDensity === S.density));
+  $$('[data-ph-view="shelf"]').forEach((b) => b.classList.toggle('is-on', S.view === 'shelf'));
   const anyFilter = S.picked.length || S.q || S.fav || S.nocover || S.unmatched || S.letter;
   $('#ph-reset')?.classList.toggle('hidden', !anyFilter);
 }
@@ -179,12 +200,20 @@ function onClick(e) {
   if (lt && !lt.disabled) { S.letter = S.letter === lt.dataset.phLetter ? '' : lt.dataset.phLetter; load(); return; }
   const tg = e.target.closest('[data-ph-toggle]');
   if (tg) { const k = tg.dataset.phToggle; S[k] = !S[k]; S.letter = ''; load(); return; }
-  const vw = e.target.closest('[data-ph-view]');
-  if (vw) { S.view = vw.dataset.phView === 'shelf' ? 'shelf' : 'tiles'; store.set('view', S.view); paintToolbar(); const sc = $('#ph-scroll'); if (S.items.length) { if (S.view === 'shelf') renderShelf(); else renderTiles(true); sc.scrollTop = 0; if (S.openId != null) markCurrent(true); } return; }
-  const dn = e.target.closest('[data-ph-density]');
-  if (dn) { S.density = dn.dataset.phDensity; store.set('density', S.density); $('#ph-tiles').classList.toggle('compact', S.density === 'compact'); paintToolbar(); return; }
+  const vw = e.target.closest('[data-ph-view]'), dn = e.target.closest('[data-ph-density]');
+  if (vw || dn) {
+    if (dn) { S.density = dn.dataset.phDensity; store.set('density', S.density); }
+    const next = vw ? 'shelf' : 'tiles';
+    store.set('view', next);
+    const changed = next !== S.view; S.view = next; paintToolbar();
+    if (!S.items.length) return;
+    if (changed) { const sc = $('#ph-scroll'); if (S.view === 'shelf') renderShelf(); else renderTiles(true); sc.scrollTop = 0; if (S.openId != null) markCurrent(true); }
+    else $('#ph-tiles').classList.toggle('compact', S.density === 'compact');
+    return;
+  }
   if (e.target.closest('#ph-top')) { $('#ph-scroll').scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (e.target.closest('#ph-reset')) { reset(); load(); return; }
+  if (e.target.closest('[data-ph-clear]')) { S.family = null; S.picked = []; S.letter = ''; load(); return; }
   const act = e.target.closest('[data-ph-act]');
   if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'lookup') lookupAgain(act); return; }
   const fav = e.target.closest('[data-ph-fav]');

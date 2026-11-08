@@ -16,12 +16,12 @@ export async function icon(name) {
 
 const NAV = [
   { view: 'home', icon: 'home', label: 'Home' },
-  { view: 'library', icon: 'Library', label: 'Library' },
+  { view: 'library', icon: 'Library', label: 'ROM Library' },
+  { view: 'digital', icon: 'digital-library', label: 'Digital Library' },
+  { view: 'physical', icon: 'physical-shelf', label: 'Physical Library' },
   { view: 'collections', icon: 'collection-new', label: 'Collections' },
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
-  { view: 'digital', icon: 'digital-library', label: 'Digital' },
-  { view: 'physical', icon: 'physical-shelf', label: 'Physical' },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
   { view: 'settings', icon: 'settings', label: 'Settings' }
 ];
@@ -560,6 +560,10 @@ function trackBarHeight() {
    words and draws the SVG in their place; the words stay as the hover text and the screen-reader label. Nothing is rewritten, so
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
+  // Physical: the page's own buttons (Classic keeps the words; here the words are the hover text)
+  ['#view-physical [data-ph-toggle="fav"]', 'favourite'], ['#view-physical [data-ph-toggle="nocover"]', 'no-covers-2'], ['#view-physical [data-ph-toggle="unmatched"]', 'issue'],
+  ['#view-physical #ph-reset', 'clear-reset-2'], ['#view-physical [data-ph-act="lookup"]', 'fetch-metadata-3'], ['#view-physical [data-ph-act="import"]', 'csv-import'], ['#view-physical [data-ph-act="add"]', 'game-add'],
+  ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save'], ['#ph-add button[type="submit"]', 'tick'], ['#ph-add-more', 'game-add'], ['#ph-imp-preview', 'preview-2'], ['#ph-imp-apply', 'csv-import'],
   // Details window: the row (the More menu keeps its words)
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],
   ['.detail-actions #more-btn', 'more-actions'], ['.detail-actions [data-act="delete"]', 'delete'],

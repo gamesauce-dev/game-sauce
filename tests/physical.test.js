@@ -167,7 +167,8 @@ test('the Physical page: nav entries, view, CSV destination choice, shelf and ti
   const html = read('public/index.html'), app = read('public/app.js'), ph = read('public/physical.js'), css = read('public/physical.css'), modern = read('public/modern.js');
   assert.match(html, /data-view="physical"/); assert.match(html, /id="view-physical"/); assert.match(html, /href="\/physical\.css/);
   for (const id of ['ph-chips', 'ph-q', 'ph-sort', 'ph-shelf', 'ph-tiles', 'ph-letters']) assert.match(html, new RegExp(`id="${id}"`), id);
-  assert.match(html, /data-ph-view="tiles"/); assert.match(html, /data-ph-view="shelf"/);
+  assert.match(html, /data-ph-density="comfortable"/); assert.match(html, /data-ph-density="compact"/); assert.match(html, /data-ph-view="shelf"/); assert.match(html, /id="ph-top"/);
+  assert.match(html, /id="ph-heading"/); assert.doesNotMatch(html, /id="ph-total"/, 'no total above the search: the heading carries it'); assert.doesNotMatch(html, /id="ph-views"/);
   // CSV tools: one box, a Digital / Physical choice
   assert.match(html, /name="dgc-dest" value="digital"/); assert.match(html, /name="dgc-dest" value="physical"/);
   assert.match(app, /\/physical\/import/); assert.match(app, /physical\.importSummary/);
@@ -184,4 +185,18 @@ test('the Physical page: nav entries, view, CSV destination choice, shelf and ti
   assert.match(css, /prefers-reduced-motion/); assert.match(ph, /ROWS_AT_A_TIME/);
   const spine = ph.slice(ph.indexOf('function spineHtml'), ph.indexOf('const rowHtml'));
   assert.ok(spine.length > 200 && !spine.includes('<img'), 'the spine markup holds no picture: covers load only for the opened game');
+});
+
+test('Modern: the Physical page uses icons with hover words (reusing the icon set); Classic keeps its words', () => {
+  const modern = read('public/modern.js'), mcss = read('public/modern.css'), ph = read('public/physical.js');
+  for (const [sel, icon] of [['[data-ph-toggle="fav"]', 'favourite'], ['[data-ph-toggle="nocover"]', 'no-covers-2'], ['[data-ph-toggle="unmatched"]', 'issue'], ['[data-ph-act="lookup"]', 'fetch-metadata-3'], ['[data-ph-act="import"]', 'csv-import'], ['[data-ph-act="add"]', 'game-add'], ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save']]) {
+    assert.ok(modern.includes(`['${sel.startsWith('#ph-') || sel.startsWith('#ph-edit') ? sel : '#view-physical ' + sel}', '${icon}']`), sel);
+    assert.ok(fs.existsSync(new URL(`../public/modern/icons/${icon}.svg`, import.meta.url)), icon + '.svg is shipped');
+  }
+  for (const icon of ['grid', 'grid-condensed', 'physical-shelf', 'back-to-top']) assert.ok(mcss.includes(`url(/modern/icons/${icon}.svg)`), icon);
+  assert.match(mcss, /html\[data-theme="light"\] body\.ui-modern \.ph-row \{ background: linear-gradient\(180deg, #e8e9ef, #ffffff/);
+  assert.match(mcss, /body\.ui-modern \.ph-pill\[data-mi\] small \{ display: none; \}/);
+  // the words are kept for Classic and become the hover text, with the counts
+  assert.match(ph, /title="Favourites: only your favourites \(\$\{n\(c\.favourites\)\}\)">★ Favourites/);
+  assert.match(read('public/physical.css'), /#ph-id-q \{ padding-left: 0\.7143rem; \}/);
 });

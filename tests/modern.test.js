@@ -66,7 +66,7 @@ test('Modern is a separate layer: Classic files carry no Modern rules, and every
 test('the top bar uses the supplied icon set and lists the pages in order', () => {
   const js = read('public/modern.js');
   const order = [...js.matchAll(/\{ view: '([a-z]+)', icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['home', 'library', 'collections', 'sources', 'upload', 'digital', 'physical', 'emulators', 'settings']);
+  assert.deepEqual(order, ['home', 'library', 'digital', 'physical', 'collections', 'sources', 'upload', 'emulators', 'settings']);
   assert.match(js, /view: 'emulators', icon: 'emulators-2'/);
   const names = [...js.matchAll(/icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
   for (const n of [...names, 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'pin', 'play']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `icon ${n}.svg is shipped`);
