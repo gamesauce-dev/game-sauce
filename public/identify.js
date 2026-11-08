@@ -13,6 +13,30 @@ export function platformSelect(selected, { any = false } = {}) {
   return (any ? '<option value="all">Any platform</option>' : '') + [...groups.keys()].sort(sorter).map((f) => `<optgroup label="${esc(f)}">${groups.get(f).sort((a, b) => sorter(a.name, b.name)).map((p) => `<option value="${esc(p.slug)}"${p.slug === selected ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>`).join('');
 }
 
+/* A type-to-find box in place of a long <select> (which can only jump by first letter): type any part of a name and the list narrows, pick one, or type it in full.
+   The visible box has no name; the hidden one carries the value (the slug / id) that the form sends, and is empty until what was typed is one of the options. */
+let comboN = 0;
+export function platformOptions() {
+  const sorted = (window.__platformsCache || []).filter((x) => x.slug !== 'other').map((p) => ({ value: p.slug, label: p.name, hint: p.family || 'Others' }));
+  return sorted.sort((a, b) => sorter(a.hint, b.hint) || sorter(a.label, b.label));
+}
+export function comboHtml({ name = 'platform', options, selected = '', placeholder = 'Type to find…', required = true }) {
+  const id = `combo-${name}-${++comboN}`, cur = options.find((o) => o.value === selected);
+  return `<input type="text" class="combo-text" data-combo="${name}" list="${id}" autocomplete="off" spellcheck="false" placeholder="${esc(placeholder)}" value="${esc(cur?.label || '')}"${required ? ' required' : ''} />`
+    + `<input type="hidden" name="${name}" value="${esc(cur?.value || '')}" />`
+    + `<datalist id="${id}">${options.map((o) => `<option value="${esc(o.label)}"${o.hint ? ` label="${esc(o.hint)}"` : ''}></option>`).join('')}</datalist>`;
+}
+export function wireCombo(form, name, options, what = 'platform') {
+  const text = form.querySelector(`[data-combo="${name}"]`), hid = form.elements[name]; if (!text || !hid) return;
+  const find = () => {
+    const t = text.value.trim().toLowerCase(); if (!t) return null;
+    const exact = options.find((o) => o.label.toLowerCase() === t); if (exact) return exact;
+    const part = options.filter((o) => o.label.toLowerCase().includes(t)); return part.length === 1 ? part[0] : null;   // one clear match is taken
+  };
+  const sync = (commit) => { const o = find(); hid.value = o?.value || ''; if (commit && o) text.value = o.label; text.setCustomValidity(o || !text.value.trim() ? '' : `Choose a ${what} from the list`); };
+  text.addEventListener('input', () => sync(false)); text.addEventListener('change', () => sync(true)); sync(false);
+}
+
 const PROVIDERS = [['thegamesdb', 'TheGamesDB'], ['igdb', 'IGDB'], ['launchbox', 'LaunchBox']];
 
 /** The section's markup. idp is a prefix for the element ids (so two pages never clash), platform a Library platform slug for the platform box. */

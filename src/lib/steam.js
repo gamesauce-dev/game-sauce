@@ -98,7 +98,7 @@ export function setMark(userId, store, appId, field, value) {
 
 /** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id.
  *  Hidden games stay out unless asked for (hidden: 'show' adds them, 'only' lists only them); favourites: true lists only favourites. */
-export function listGames(userId, { store = '', stores = [], platforms = [], q = '', sort = 'name', favourites = false, installed = false, hidden = '' } = {}) {
+export function listGames(userId, { store = '', stores = [], platforms = [], q = '', sort = 'name', favourites = false, nocover = false, installed = false, hidden = '' } = {}) {
   const where = ['g.user_id = ?']; const args = [userId];
   if (store) { where.push('g.store = ?'); args.push(store); }
   // A whole store (stores) and / or single consoles (platforms): a game is in the list when it is in either. A console game saved before consoles were told apart has no
@@ -117,6 +117,8 @@ export function listGames(userId, { store = '', stores = [], platforms = [], q =
     args.push(like, '%"' + String(q).replace(/[\\%_"]/g, (c) => c === '"' ? '' : '\\' + c) + '%');
   }
   if (favourites) where.push('COALESCE(m.favourite, 0) = 1');
+  // No cover: console games with no picture yet (a Steam game's cover is Steam's own public picture, so those are never counted here).
+  if (nocover) where.push("g.store != 'steam' AND COALESCE(NULLIF(um.cover_path, ''), NULLIF(dd.cover_path, '')) IS NULL");
   if (installed) where.push('COALESCE(m.play, 0) = 1');   // "installed" = the play button was switched on for it
   if (hidden === 'only') where.push('COALESCE(m.hidden, 0) = 1');
   else if (hidden !== 'show') where.push('COALESCE(m.hidden, 0) = 0');
@@ -162,10 +164,13 @@ export function countGames(userId) {
       SUM(CASE WHEN COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS visible,
       SUM(CASE WHEN COALESCE(m.favourite, 0) = 1 AND COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS favourites,
       SUM(CASE WHEN COALESCE(m.play, 0) = 1 AND COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS installed,
-      SUM(CASE WHEN COALESCE(m.hidden, 0) = 1 THEN 1 ELSE 0 END) AS hidden
+      SUM(CASE WHEN COALESCE(m.hidden, 0) = 1 THEN 1 ELSE 0 END) AS hidden,
+      SUM(CASE WHEN g.store != 'steam' AND COALESCE(m.hidden, 0) = 0 AND COALESCE(NULLIF(um.cover_path, ''), NULLIF(dd.cover_path, '')) IS NULL THEN 1 ELSE 0 END) AS nocover
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
+      LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id
+      LEFT JOIN digital_user_meta um ON um.user_id = g.user_id AND um.store = g.store AND um.app_id = g.app_id
     WHERE g.user_id = ?`).get(userId);
-  return { total: r.total || 0, visible: r.visible || 0, favourites: r.favourites || 0, installed: r.installed || 0, hidden: r.hidden || 0 };
+  return { total: r.total || 0, visible: r.visible || 0, favourites: r.favourites || 0, nocover: r.nocover || 0, installed: r.installed || 0, hidden: r.hidden || 0 };
 }
 
 /* ───────── store details (public; no key needed) ───────── */

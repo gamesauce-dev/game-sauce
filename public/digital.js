@@ -1,7 +1,7 @@
 // Digital Library: the games a person owns without a ROM or a disc on the shelf. Steam comes from the Steam Web API (hours played and all); PlayStation,
 // Nintendo and Xbox games come from a CSV or are added by hand. Laid out like the Physical Library: store chips with each console's own chips under them,
 // search, sort, filters, A-Z, a heading with how many (and, for Steam, the hours), tiles, and the details window. Each person has their own list.
-import { identifyBlock, wireIdentify } from './identify.js';
+import { identifyBlock, wireIdentify, comboHtml, wireCombo } from './identify.js';
 import { familyLabel, platformBadge } from './platform-names.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -43,7 +43,7 @@ const libAccent = (platform) => { const p = (window.__platformsCache || []).find
 const dg = {
   picked: [],            // chips: 's:playstation' is a whole store, 'p:ps4' one console
   family: null,          // the store whose consoles are showing
-  sort: 'name', q: '', fav: false, installed: false, hidden: false, density: 'comfortable', letter: '',
+  sort: 'name', q: '', fav: false, nocover: false, installed: false, hidden: false, density: 'comfortable', letter: '',
   info: { steam: {}, stores: [], platforms: [], counts: {}, details_job: {} }, ids: [], html: [], items: [], hours: 0, total: 0, rendered: 0, shown: 60, token: 0
 };
 const store = {
@@ -68,10 +68,10 @@ export function initDigital(c) {
 export { loadDigital as load };   // what app.js calls when the page is opened
 
 export function reset() {
-  Object.assign(dg, { picked: [], family: null, sort: 'name', q: '', fav: false, installed: false, hidden: false, letter: '' });
+  Object.assign(dg, { picked: [], family: null, sort: 'name', q: '', fav: false, nocover: false, installed: false, hidden: false, letter: '' });
   const q = $('#dg-q'); if (q) q.value = '';
 }
-export function forgetOpen() { $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current')); }
+export function forgetOpen() { lastAdd = { platform: '', country: '' }; $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current')); }
 
 /* ───────────── the tiles (drawn in chunks, 60 at a time, as you scroll) ─────────────
    Drawing thousands at once, each with its own buttons, froze iPhones and iPads. dg.ids is the whole list in order, so previous / next still walk all of it. */
@@ -135,9 +135,10 @@ function paintToolbar() {
   const cn = dg.info.counts || {}, hasSteam = (dg.info.stores || []).some((s) => s.store === 'steam');
   $('#dg-toggles').innerHTML = `
     <button type="button" class="ph-pill${dg.fav ? ' on' : ''}" data-dg-toggle="fav" title="Favourites: only your favourites (${n(cn.favourites)})">★ Favourites <small>${n(cn.favourites)}</small></button>`
+    + `<button type="button" class="ph-pill${dg.nocover ? ' on' : ''}" data-dg-toggle="nocover" title="No cover: console games with no cover picture yet (${n(cn.nocover)})">▢ No cover <small>${n(cn.nocover)}</small></button>`
     + (hasSteam ? `<button type="button" class="ph-pill${dg.installed ? ' on' : ''}" data-dg-toggle="installed" title="Installed: only the Steam games you switched the play button on for, installed on this PC (${n(cn.installed)})">▶ Installed <small>${n(cn.installed)}</small></button>` : '')
     + `<button type="button" class="ph-pill${dg.hidden ? ' on' : ''}" data-dg-toggle="hidden" title="Show hidden: also show the games you hid (${n(cn.hidden)})">◌ Show hidden <small>${n(cn.hidden)}</small></button>`;
-  const any = dg.picked.length || dg.q || dg.fav || dg.installed || dg.hidden || dg.letter;
+  const any = dg.picked.length || dg.q || dg.fav || dg.nocover || dg.installed || dg.hidden || dg.letter;
   $('#dg-reset')?.classList.toggle('hidden', !any);
   $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density));
 }
@@ -240,7 +241,7 @@ export async function loadDigital(keep = false) {
   const { stores, platforms } = picks();
   const params = new URLSearchParams({ sort: dg.sort });
   if (stores.length) params.set('stores', stores.join(',')); if (platforms.length) params.set('platforms', platforms.join(','));
-  if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.installed) params.set('installed', '1'); if (dg.hidden) params.set('hidden', 'show'); if (dg.letter) params.set('letter', dg.letter);
+  if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.nocover) params.set('nocover', '1'); if (dg.installed) params.set('installed', '1'); if (dg.hidden) params.set('hidden', 'show'); if (dg.letter) params.set('letter', dg.letter);
   let list;
   try { list = await ctx.api('/digital/games?' + params); } catch (err) { msg.textContent = err.message; return; }
   if (token !== dg.token) return;
@@ -481,7 +482,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
 
 /* ───────────── add a game by hand / import a CSV (both in the details window) ───────────── */
 
-const platformOptions = () => ['playstation', 'nintendo', 'xbox'].map((s) => `<optgroup label="${esc(DG_STORE[s].label)}">${Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => `<option value="${id}">${esc(p.label)}</option>`).join('')}</optgroup>`).join('');
+const consoleOptions = () => ['playstation', 'nintendo', 'xbox'].flatMap((s) => Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => ({ value: id, label: p.label, hint: DG_STORE[s].label })));
 
 let lastAdd = { platform: '', country: '' };   // kept while the form stays open (pinned, or "Add and another"), forgotten when it closes
 
@@ -495,12 +496,13 @@ function openAdd() {
     <form class="edit-form" id="dg-add">
       <label class="field"><span>Title</span><input name="title" required autocomplete="off" /></label>
       <div class="field-row">
-        <label class="field"><span>Console</span><select name="platform" class="select" required><option value="">Choose…</option>${platformOptions().replace(`value="${first}"`, `value="${first}" selected`)}</select></label>
+        <label class="field"><span>Console</span>${comboHtml({ options: consoleOptions(), selected: first, placeholder: 'Type to find a console…' })}</label>
         <label class="field"><span>Store country (optional)</span><input name="country" placeholder="Australia or AU" value="${esc(lastAdd.country)}" /></label>
       </div>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to Digital Library</button><button class="btn" type="button" id="dg-add-more" title="Add this game and keep the form open">Add and another</button></div>
     </form>`;
   const form = $('#dg-add');
+  wireCombo(form, 'platform', consoleOptions(), 'console');
   const submit = async (again) => {
     const body = Object.fromEntries(new FormData(form).entries());
     try { await ctx.api('/digital/games', { method: 'POST', body: JSON.stringify(body) }); } catch (err) { ctx.toast(err.message, true); return; }

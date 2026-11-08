@@ -261,3 +261,24 @@ test('chips and cover badges read the same on Physical and Digital: one shared s
   assert.match(ph, /from '\.\/platform-names\.js'/); assert.match(dg, /from '\.\/platform-names\.js'/);
   assert.doesNotMatch(ph, /short_name \|\| p\.name\)\.toUpperCase\(\)/); assert.match(ph, /platformBadge\(p\)/); assert.match(ph, /familyLabel\(f\)/); assert.match(dg, /familyLabel\(s\.label/);
 });
+
+test('No cover: console games with no picture yet (Steam covers are Steam\'s own, so never counted), with a count', async () => {
+  const all = await games('');
+  const covered = db.prepare("SELECT app_id FROM digital_games WHERE user_id = ? AND store != 'steam' ORDER BY id LIMIT 1").get(adminId).app_id;
+  db.prepare("INSERT INTO digital_user_meta (user_id, store, app_id, cover_path, json) VALUES (?, (SELECT store FROM digital_games WHERE user_id = ? AND app_id = ? LIMIT 1), ?, '/x/cover.jpg', '{}') ON CONFLICT DO UPDATE SET cover_path = excluded.cover_path").run(adminId, adminId, covered, covered);
+  const none = await games('nocover=1');
+  assert.ok(none.items.length > 0 && none.items.every((g) => g.store !== 'steam' && !g.cover_url), 'only console games with no cover');
+  assert.equal(none.items.some((g) => g.app_id === covered), false, 'a game with a cover is not listed');
+  assert.equal((await call('/api/digital')).body.counts.nocover, none.items.length, 'the pill shows the same number');
+  assert.equal(none.items.length, all.items.filter((g) => g.store !== 'steam').length - 1);
+});
+
+test('the platform box on the add forms is type-to-find, and the add forms are cleared when they close', () => {
+  const ph = read('public/physical.js'), dg = read('public/digital.js'), id = read('public/identify.js');
+  assert.match(id, /export function comboHtml/); assert.match(id, /export function wireCombo/); assert.match(id, /<datalist id=/);
+  assert.ok(ph.includes("comboHtml({ options: platformOptions(), selected: first") && ph.includes("wireCombo(form, 'platform', platformOptions())"));
+  assert.ok(dg.includes('comboHtml({ options: consoleOptions(), selected: first') && dg.includes("wireCombo(form, 'platform', consoleOptions(), 'console')"));
+  assert.ok(!/<select name="platform"/.test(dg) && !ph.slice(ph.indexOf('id="ph-add"'), ph.indexOf('id="ph-add"') + 1200).includes('<select'), 'no first-letter dropdown on the add forms');
+  assert.match(ph, /export function forgetOpen\(\) \{ lastAdd = /); assert.match(dg, /export function forgetOpen\(\) \{ lastAdd = /);
+  assert.ok(dg.includes('data-dg-toggle="nocover"') && dg.includes("params.set('nocover', '1')") && read('public/modern.js').includes("data-dg-toggle=\"nocover\"]', 'no-covers-2'"));
+});

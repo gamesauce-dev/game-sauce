@@ -24,7 +24,7 @@ router.get('/games', (req, res) => {
   const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolean).slice(0, 40);
   const hidden = ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : '';
   const stores = list(req.query.stores).filter(knownStore), platforms = list(req.query.platforms).filter((p) => /^[a-z0-9]{2,12}$/.test(p));
-  const base = { store, stores, platforms, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', installed: req.query.installed === '1', hidden };
+  const base = { store, stores, platforms, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', nocover: req.query.nocover === '1', installed: req.query.installed === '1', hidden };
   const all = listGames(me(req), base);
   // How many games sit under each letter (# for names that start with a digit or symbol), of the list as filtered so far.
   const bucket = bucketOf;   // "The Darkness II" files under D

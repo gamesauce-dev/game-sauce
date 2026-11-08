@@ -4,7 +4,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-import { platformSelect, identifyBlock, wireIdentify } from './identify.js';
+import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
 import { platformBadge, familyName, familyLabel } from './platform-names.js';
 
 let ctx = null;
@@ -43,7 +43,7 @@ export function initPhysical(c) {
 export const isOpen = () => S.openId != null;
 export const openIdNow = () => S.openId;
 export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
-export function forgetOpen() { S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
+export function forgetOpen() { lastAdd = { platform: '', region: '' }; S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
 
 /* ───────────── loading ───────────── */
 
@@ -585,13 +585,14 @@ function openAdd() {
     <form class="edit-form" id="ph-add">
       <label class="field"><span>Title</span><input name="title" required autocomplete="off" /></label>
       <div class="field-row">
-        <label class="field"><span>Platform</span><select name="platform" class="select" required><option value="">Choose…</option>${platformSelect(first)}</select></label>
+        <label class="field"><span>Platform</span>${comboHtml({ options: platformOptions(), selected: first, placeholder: 'Type to find a platform…' })}</label>
         <label class="field"><span>Region (optional)</span><input name="region" placeholder="PAL, NTSC-U, JP…" value="${esc(lastAdd.region)}" /></label>
       </div>
       <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Boxed, manual, disc only…" /></label>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add and another</button></div>
     </form>`;
   const form = $('#ph-add');
+  wireCombo(form, 'platform', platformOptions());
   const submit = async (again) => {
     const body = Object.fromEntries(new FormData(form).entries());
     try { await ctx.api('/physical/games', { method: 'POST', body: JSON.stringify(body) }); } catch (err) { ctx.toast(err.message, true); return; }

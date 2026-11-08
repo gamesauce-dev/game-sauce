@@ -120,7 +120,7 @@ test('marks: favourite, hidden and play are per person, survive a refresh, and R
   assert.deepEqual((await call('/api/digital/games?favourites=1')).body.items.map((g) => g.name), ['Half-Life 2']);
   assert.deepEqual((await call('/api/digital/games?hidden=only')).body.items.map((g) => g.name), ['Portal']);
   assert.equal((await call('/api/digital/games?hidden=show')).body.items.length, 3);
-  assert.deepEqual((await call('/api/digital')).body.counts, { total: 3, visible: 2, favourites: 1, installed: 1, hidden: 1 });
+  assert.deepEqual((await call('/api/digital')).body.counts, { total: 3, visible: 2, favourites: 1, installed: 1, hidden: 1, nocover: 0 });
   // a refresh replaces the list but keeps the marks
   await steam.syncSteam(adminId, good);
   l = (await call('/api/digital/games?hidden=show')).body.items;
