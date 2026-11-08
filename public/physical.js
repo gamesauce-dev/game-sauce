@@ -5,6 +5,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 import { platformSelect, identifyBlock, wireIdentify } from './identify.js';
+import { platformBadge, familyName, familyLabel } from './platform-names.js';
 
 let ctx = null;
 const S = {
@@ -161,9 +162,9 @@ function renderChips() {
   host.innerHTML = `
     <div class="ph-chip-row" role="tablist">
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-ph-chip-all title="All platforms">All <small>${n(total)}</small></button>
-      ${order.map((f) => `<button type="button" class="ph-chip${S.family === f ? ' open' : ''}${famState(f)}" data-ph-chip-fam="${esc(f)}" style="--chip-c:${famColourOf(f)}" aria-expanded="${S.family === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${n(famCount(f))}</small></button>`).join('')}
+      ${order.map((f) => `<button type="button" class="ph-chip${S.family === f ? ' open' : ''}${famState(f)}" data-ph-chip-fam="${esc(f)}" style="--chip-c:${famColourOf(f)}" aria-expanded="${S.family === f}" title="${esc(familyName(f))}: show its platforms">${esc(familyLabel(f))} <small>${n(famCount(f))}</small></button>`).join('')}
     </div>
-    ${S.family ? `<div class="ph-chip-row ph-chip-plats">${fams.get(S.family).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button type="button" class="ph-chip plat${pk.has(p.slug) && !wholeNow ? ' on' : ''}" data-ph-chip-plat="${esc(p.slug)}" style="--chip-c:${accentOf(p.slug)}" title="${esc(p.name)}: click to ${pk.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${S.family ? `<div class="ph-chip-row ph-chip-plats">${fams.get(S.family).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button type="button" class="ph-chip plat${pk.has(p.slug) && !wholeNow ? ' on' : ''}" data-ph-chip-plat="${esc(p.slug)}" style="--chip-c:${accentOf(p.slug)}" title="${esc(p.name)}: click to ${pk.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(platformBadge(p))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
 }
 
 function chipClick(e) {
@@ -249,7 +250,7 @@ const tileHtml = (g) => {
     <div class="card-cover" style="background:linear-gradient(160deg,${col},#12141a)">
       <div class="card-fallback${g.has_cover ? ' has-cover' : ''}">${esc(initials(g.title))}</div>
       ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onerror="this.style.display='none';this.previousElementSibling?.classList.remove('has-cover')" />` : ''}
-      <span class="card-badge ph-badge" style="background:${esc(col)}" title="${esc(p.name)}"><span class="dg-badge-txt">${esc(String(p.short_name || p.name).toUpperCase())}</span></span>
+      <span class="card-badge ph-badge" style="background:${esc(col)}" title="${esc(p.name)}"><span class="dg-badge-txt">${esc(platformBadge(p))}</span></span>
       <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-ph-fav="${g.id}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ctx.ICON.starFill : ctx.ICON.star}</button>
     </div>
     <div class="card-title">${esc(g.title)}${g.region ? ` <span class="ph-region">${esc(g.region)}</span>` : ''}</div>
@@ -339,7 +340,7 @@ function spineHtml(it, k) {
   const tone = shade < 0 ? `color-mix(in srgb, ${col} ${100 + shade * 9}%, #000)` : shade > 0 ? `color-mix(in srgb, ${col} ${100 - shade * 9}%, #fff)` : col;
   const art = g.has_spine ? `<img class="ph-sp-art" alt="" loading="lazy" src="${esc(g.spine_url)}" />` : '';
   return `<button type="button" class="ph-spine${g.favourite ? ' is-fav' : ''}${g.has_spine ? ' has-art' : ''}" data-ph-id="${g.id}" style="--w:${w}px;--h:${ht}px;--ow:${ow}px;--c:${esc(tone)};--i:${Math.min(k, 40)}" title="${esc(g.title)} · ${esc(p.name)}${g.region ? ' · ' + esc(g.region) : ''}" aria-label="${esc(g.title)}, ${esc(p.name)}">
-    <span class="ph-sp-band">${esc(String(p.short_name || p.name).toUpperCase())}</span>
+    <span class="ph-sp-band">${esc(platformBadge(p))}</span>
     <span class="ph-sp-title">${esc(g.title)}</span>
     <span class="ph-sp-foot">${g.favourite ? '★' : ''}</span>
     ${art}
@@ -347,7 +348,7 @@ function spineHtml(it, k) {
   </button>`;
 }
 const rowHtml = (row, ri) => `<div class="ph-row" data-row="${ri}"><div class="ph-books">${row.map((it, k) => it.plate
-  ? `<span class="ph-plate" style="--c:${accentOf(it.plate.slug)};--i:${Math.min(k, 40)}" title="${esc(it.plate.name)}"><b>${esc(String(it.plate.short_name || it.plate.name).toUpperCase())}</b></span>`
+  ? `<span class="ph-plate" style="--c:${accentOf(it.plate.slug)};--i:${Math.min(k, 40)}" title="${esc(it.plate.name)}"><b>${esc(platformBadge(it.plate))}</b></span>`
   : spineHtml(it, k)).join('')}</div><div class="ph-plank"></div></div>`;
 
 /* A spine picture arrived: it is shown and the drawn text steps aside. One that cannot be loaded is dropped, and that game keeps its drawn spine. */

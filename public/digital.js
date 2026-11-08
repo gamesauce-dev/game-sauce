@@ -2,6 +2,7 @@
 // Nintendo and Xbox games come from a CSV or are added by hand. Laid out like the Physical Library: store chips with each console's own chips under them,
 // search, sort, filters, A-Z, a heading with how many (and, for Steam, the hours), tiles, and the details window. Each person has their own list.
 import { identifyBlock, wireIdentify } from './identify.js';
+import { familyLabel, platformBadge } from './platform-names.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -154,9 +155,9 @@ function renderChips() {
   host.innerHTML = `
     <div class="ph-chip-row" role="tablist">
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-dg-chip-all title="All your games">All <small>${n(total)}</small></button>
-      ${stores.map((s) => `<button type="button" class="ph-chip${dg.family === s.store ? ' open' : ''}${famState(s.store)}" data-dg-chip-store="${esc(s.store)}" style="--chip-c:${DG_STORE[s.store]?.chip || '#6b7280'}"${subsOf(s.store).length ? ` aria-expanded="${dg.family === s.store}"` : ''} title="${esc(s.label || storeLabel(s.store))}${subsOf(s.store).length ? ': show its consoles' : ''}">${esc(s.label || storeLabel(s.store))} <small>${n(s.visible)}</small></button>`).join('')}
+      ${stores.map((s) => `<button type="button" class="ph-chip${dg.family === s.store ? ' open' : ''}${famState(s.store)}" data-dg-chip-store="${esc(s.store)}" style="--chip-c:${DG_STORE[s.store]?.chip || '#6b7280'}"${subsOf(s.store).length ? ` aria-expanded="${dg.family === s.store}"` : ''} title="${esc(s.label || storeLabel(s.store))}${subsOf(s.store).length ? ': show its consoles' : ''}">${esc(familyLabel(s.label || storeLabel(s.store)))} <small>${n(s.visible)}</small></button>`).join('')}
     </div>
-    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc((DG_PLATFORM[p.platform]?.short || p.platform).toUpperCase())}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc(platformBadge({ slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: DG_PLATFORM[p.platform]?.short }))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
 }
 
 function chipClick(e) {

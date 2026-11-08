@@ -239,3 +239,25 @@ test('every digital.* and physical.* that app.js calls is something the module e
     for (const name of used) assert.ok(exported.has(name), `${file} must export ${name} (app.js calls ${mod}.${name})`);
   }
 });
+
+test('chips and cover badges read the same on Physical and Digital: one shared set of names, in capitals', async () => {
+  const names = await import('../public/platform-names.js');
+  // Digital's names win; every other platform keeps the Library's short name; all in capitals
+  assert.equal(names.platformBadge({ slug: 'switch', short_name: 'NSW' }), 'SWITCH'); assert.equal(names.platformBadge({ slug: 'wiiu', short_name: 'WiiU' }), 'WII U');
+  assert.equal(names.platformBadge({ slug: 'xbox360', short_name: 'X360' }), 'XBOX 360'); assert.equal(names.platformBadge({ slug: 'xboxseries', short_name: 'XSX' }), 'X|S');
+  assert.equal(names.platformBadge({ slug: 'nds', short_name: 'NDS' }), 'DS'); assert.equal(names.platformBadge({ slug: 'xbox', short_name: 'XBX' }), 'XBOX');
+  assert.equal(names.platformBadge({ slug: 'snes', short_name: 'SNES' }), 'SNES'); assert.equal(names.platformBadge({ slug: 'gb', short_name: 'gb' }), 'GB');
+  assert.equal(names.platformBadge({ slug: 'odd', name: 'Odd Machine' }), 'ODD MACHINE', 'falls back to the name');
+  // families: the brand, in capitals (the Library files these consoles under Sony and Microsoft / Xbox)
+  for (const [f, label] of [['Sony', 'PLAYSTATION'], ['Microsoft', 'XBOX'], ['Xbox', 'XBOX'], ['PlayStation', 'PLAYSTATION'], ['Nintendo', 'NINTENDO'], ['Sega', 'SEGA'], ['NEC', 'NEC'], ['Steam', 'STEAM']]) assert.equal(names.familyLabel(f), label, f);
+  assert.equal(names.familyName('Sony'), 'PlayStation', 'the tooltip keeps the brand\'s own capitals');
+  // Digital's own table of consoles agrees with the shared one, console by console
+  const dg = read('public/digital.js');
+  const rows = [...dg.matchAll(/(?:^|[ ,{])'?(\w+)'?: \{ store: '[a-z]+', label: '[^']+', short: '([^']+)', lib: '([^']+)' \}/g)];
+  assert.equal(rows.length, 13, 'all thirteen consoles found');
+  for (const [, id, short, lib] of rows) assert.equal(names.BADGE[lib], short, `Digital's ${id} badge is the shared name for ${lib}`);
+  // both pages build their chip and badge text from it, not from the Library's short name directly
+  const ph = read('public/physical.js');
+  assert.match(ph, /from '\.\/platform-names\.js'/); assert.match(dg, /from '\.\/platform-names\.js'/);
+  assert.doesNotMatch(ph, /short_name \|\| p\.name\)\.toUpperCase\(\)/); assert.match(ph, /platformBadge\(p\)/); assert.match(ph, /familyLabel\(f\)/); assert.match(dg, /familyLabel\(s\.label/);
+});
