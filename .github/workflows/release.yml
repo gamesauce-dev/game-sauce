@@ -56,7 +56,7 @@ jobs:
         include:
           - { runner: windows-latest, label: windows-x64, bundles: nsis }
           - { runner: macos-latest, label: macos-arm64, bundles: dmg }
-          - { runner: ubuntu-22.04, label: linux-x64, bundles: 'deb,appimage' }
+          - { runner: ubuntu-22.04, label: linux-x64, bundles: deb, extra: appimage }
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -80,6 +80,19 @@ jobs:
           for i in 1 2 3; do
             npx tauri build --bundles ${{ matrix.bundles }} && exit 0
             echo "The build failed (attempt $i of 3), trying again in 30 seconds..."; sleep 30
+          done
+          exit 1
+      # The AppImage needs a packaging tool downloaded from GitHub, which is the part that fails when GitHub is having a bad moment. It is tried on its own and may fail
+      # without stopping the release: the .deb (and the portable bundle) are already built.
+      - name: Linux AppImage (optional)
+        if: matrix.extra
+        continue-on-error: true
+        working-directory: desktop
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            npx tauri build --bundles ${{ matrix.extra }} && exit 0
+            echo "The ${{ matrix.extra }} build failed (attempt $i of 3), trying again in 30 seconds..."; sleep 30
           done
           exit 1
       - uses: actions/upload-artifact@v4
