@@ -90,11 +90,12 @@ test('a backup from a newer database version is refused', async () => {
   const dir = fs.mkdtempSync(path.join(TMP, 'fut-'));
   ensureKey();
   fs.writeFileSync(path.join(dir, 'b.tar.gz'), await download());
-  assert.equal(spawnSync('tar', ['-xzf', path.join(dir, 'b.tar.gz'), '-C', dir]).status, 0);
+  // Relative names, run from the folder: GNU tar reads a Windows path like C:\x as host:path.
+  assert.equal(spawnSync('tar', ['-xzf', 'b.tar.gz', '-C', '.'], { cwd: dir }).status, 0);
   const d = new Database(path.join(dir, 'gamesauce.db'));
   d.prepare("UPDATE meta SET value = '999' WHERE key = 'schema_version'").run();
   d.pragma('wal_checkpoint(TRUNCATE)'); d.close();
-  assert.equal(spawnSync('tar', ['-czf', path.join(dir, 'new.tar.gz'), '-C', dir, 'manifest.json', 'gamesauce.db', 'secret.key']).status, 0);
+  assert.equal(spawnSync('tar', ['-czf', 'new.tar.gz', '-C', '.', 'manifest.json', 'gamesauce.db', 'secret.key'], { cwd: dir }).status, 0);
   const r = await upload(fs.readFileSync(path.join(dir, 'new.tar.gz')));
   assert.equal(r.status, 400);
   assert.match(r.body.error, /newer game-sauce/);

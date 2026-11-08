@@ -51,7 +51,8 @@ function extract(buf, name) {
   const dir = fs.mkdtempSync(path.join(TMP, 'x-'));
   const file = path.join(dir, name);
   fs.writeFileSync(file, buf);
-  const r = spawnSync('tar', ['-xzf', file, '-C', dir]);
+  // Relative names, run from the folder: GNU tar reads a Windows path like C:\x as host:path.
+  const r = spawnSync('tar', ['-xzf', name, '-C', '.'], { cwd: dir });
   assert.equal(r.status, 0, `tar could not read the archive: ${r.stderr?.toString()}`);
   return dir;
 }

@@ -16,7 +16,7 @@ const call = async (p, { token = adminTok, method = 'GET', body } = {}) => {
   return { status: res.status, body: await res.json().catch(() => null) };
 };
 const login = async (u, p) => (await call('/api/auth/login', { token: null, method: 'POST', body: { username: u, password: p } })).body.token;
-const read = (rel) => fs.readFileSync(new URL('../' + rel, import.meta.url), 'utf8');
+const read = (rel) => fs.readFileSync(new URL('../' + rel, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 before(async () => {
   const { prepareApp } = await import('../src/app.js');
