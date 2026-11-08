@@ -72,10 +72,16 @@ jobs:
           workspaces: desktop/src-tauri
       - name: Build the installer
         working-directory: desktop
+        shell: bash
         run: |
           npm ci
           npm run prepare-server
-          npx tauri build --bundles ${{ matrix.bundles }}
+          # Tauri downloads its packaging tools (NSIS, linuxdeploy...) from GitHub while bundling, and GitHub sometimes answers 502: try again a few times.
+          for i in 1 2 3; do
+            npx tauri build --bundles ${{ matrix.bundles }} && exit 0
+            echo "The build failed (attempt $i of 3), trying again in 30 seconds..."; sleep 30
+          done
+          exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.label }}

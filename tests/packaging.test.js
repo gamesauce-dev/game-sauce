@@ -107,3 +107,9 @@ test('workflow files: no unquoted "word: word" in a step name or value (a colon 
     assert.deepEqual(bad, [], `${f}: ${bad.map((b) => b[0]).join(', ')}`);
   }
 });
+
+test('the desktop build tries again when GitHub answers 502 while Tauri downloads its packaging tools', () => {
+  const y = read('.github/workflows/release.yml');
+  assert.match(y, /for i in 1 2 3; do\n\s+npx tauri build --bundles \$\{\{ matrix\.bundles \}\} && exit 0/);
+  assert.match(y, /shell: bash/, 'one shell on all three systems');
+});
