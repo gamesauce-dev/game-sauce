@@ -273,7 +273,11 @@ async function fillTicker(stats) {
       const j = await api('/roms/bulk/enrich-job').catch(() => null);
       if (j?.running) lines.unshift(`Fetching metadata: <b>${j.done}</b> of <b>${j.total}</b>`);
       const up = await api('/admin/update-check').catch(() => null);
-      if (up?.newer) lines.unshift(`Update available: game-sauce <b>${String(up.latest).replace(/^v/i, '').replace(/</g, '&lt;')}</b> (you have <b>${String(up.current).replace(/</g, '&lt;')}</b>)`);
+      if (up?.newer) {
+        const text = `Update available: game-sauce <b>${String(up.latest).replace(/^v/i, '').replace(/</g, '&lt;')}</b> (you have <b>${String(up.current).replace(/</g, '&lt;')}</b>)`;
+        // A link to the release page (only ever a github.com address, checked again here), and what to do about it as the hover text.
+        lines.unshift(/^https:\/\/github\.com\//.test(up.url || '') ? `<a class="mh-link" href="${String(up.url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" title="${String(up.how || '').replace(/[<>"]/g, '')}">${text}</a>` : text);
+      }
       const h = await api('/admin/health').catch(() => null);
       if (h && h.status && h.status !== 'ok') lines.unshift(`System health: <b>${h.status === 'bad' ? 'needs a look' : 'a few notes to read'}</b>`);
     }

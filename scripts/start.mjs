@@ -94,7 +94,7 @@ if (port !== want) say(`Port ${want} is busy, using ${port} instead.`);
 // 5. Start the server.
 const lan = flag('--lan');
 const host = lan ? '0.0.0.0' : '127.0.0.1';
-const env = { ...process.env, HOST: host, PORT: String(port), GAMESAUCE_DATA_DIR: dataDir, GAMESAUCE_STORAGE_DIR: storageDir };
+const env = { GAMESAUCE_INSTALL: 'download', ...process.env, HOST: host, PORT: String(port), GAMESAUCE_DATA_DIR: dataDir, GAMESAUCE_STORAGE_DIR: storageDir };   // GAMESAUCE_INSTALL: how an update notice words its advice
 const server = spawn(process.execPath, ['src/server.js'], { cwd: root, env, stdio: ['ignore', 'pipe', 'inherit'] });
 let ready = false, shown = false;
 server.stdout.on('data', (buf) => {

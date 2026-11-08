@@ -701,6 +701,17 @@ async function renderOverview() {
     }
   } catch { /* GitHub flakiness never breaks the library home */ }
 
+  // A newer game-sauce (admins only, the same check as the Modern ticker's): a slide that opens the release page.
+  let updateSlide = '';
+  try {
+    if (authState.user?.role === 'admin') {
+      const up = await api('/admin/update-check').catch(() => null);
+      if (up?.newer && /^https:\/\/github\.com\//.test(up.url || '')) {
+        updateSlide = `<button class="overview-card" data-slide data-ov-update="${esc(up.url)}" title="${esc(up.how || 'Open the release page')}"><span class="ov-ico">⬆</span><span>Update available: game-sauce <b>${esc(String(up.latest).replace(/^v/i, ''))}</b> <span class="ov-sub">(you have ${esc(up.current)})</span></span></button>`;
+      }
+    }
+  } catch { /* the notice is optional */ }
+
   // Every slide uses the SAME structure/style (the "my favourites" one):
   // icon + bold number + plain label. No per-slide colours or badges.
   const slides = [
@@ -708,6 +719,7 @@ async function renderOverview() {
     `<div class="overview-card" data-slide><span class="ov-ico">▦</span><span><b>${lib.platforms || 0}</b> platforms</span></div>`,
     `<button class="overview-card" data-slide data-ov-favs title="Show my favourites"><span class="ov-ico">★</span><span><b>${mine.favorites || 0}</b> my favourites</span></button>`,
     top ? `<button class="overview-card" data-slide data-open-rom="${top.id}" title="Most downloaded game — open it"><span class="ov-ico">⤓</span><span><b>${Number(top.dl_count).toLocaleString()}×</b> ${esc(top.title)} <span class="ov-sub">(${esc(top.platform_short)})</span></span></button>` : '',
+    updateSlide,
     emuAlert
   ].filter(Boolean);
 
@@ -729,6 +741,7 @@ async function renderOverview() {
   });
   $('[data-open-rom]', box)?.addEventListener('click', () => openDetail(Number($('[data-open-rom]', box).dataset.openRom)));
   $('[data-view="emulators"]', box)?.addEventListener('click', () => setView('emulators'));
+  $('[data-ov-update]', box)?.addEventListener('click', (e) => window.open(e.currentTarget.dataset.ovUpdate, '_blank', 'noopener,noreferrer'));
 
   // Rolling rotation: translate the track up by one slide-height per step and
   // loop. The frame box clips to a single slide (height 40px in styles.css —

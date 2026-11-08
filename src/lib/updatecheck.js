@@ -27,11 +27,27 @@ export function isNewer(latest, current) {
 
 export const updateCheckEnabled = () => !/^(0|false|off|no)$/i.test(String(process.env.GAMESAUCE_UPDATE_CHECK ?? '1').trim());
 
+/** How this copy was installed (set by the thing that starts it): 'docker', 'desktop' (the desktop app), 'download' (the portable download) or '' (anything else). */
+export const installKind = () => {
+  const k = String(process.env.GAMESAUCE_INSTALL || '').toLowerCase();
+  if (['docker', 'desktop', 'download'].includes(k)) return k;
+  return '';
+};
+const HOW = {
+  docker: 'Update by pulling the new image: "docker compose pull" then "docker compose up -d", or "apply update" on Unraid. Your library is kept.',
+  desktop: 'Download the new installer from the release page and run it. Your library is kept.',
+  download: 'Download the new version from the release page and unpack it (beside or over this one), then start that. Your library is kept outside the folder.',
+  '': 'The release page says how to update.'
+};
+export const howToUpdate = (kind = installKind()) => HOW[kind] || HOW[''];
+/** Only an address on github.com is ever offered as a link. */
+const safeUrl = (u) => (/^https:\/\/github\.com\//.test(String(u || '')) ? String(u) : null);
+
 export async function checkForUpdate(fetchLatestRelease) {
   const current = currentVersion();
   if (!updateCheckEnabled()) return { enabled: false, current };
   const out = await fetchLatestRelease(REPO);
   if (out.missing) return { enabled: true, current, latest: null, newer: false, reason: out.missing };
   const tag = out.payload?.tag || out.payload?.name || null;
-  return { enabled: true, current, latest: tag, newer: Boolean(tag) && isNewer(tag, current), url: out.payload?.url || null, stale: out.stale || null };
+  return { enabled: true, current, latest: tag, newer: Boolean(tag) && isNewer(tag, current), url: safeUrl(out.payload?.url), kind: installKind(), how: howToUpdate(), stale: out.stale || null };
 }

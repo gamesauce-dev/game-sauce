@@ -117,6 +117,7 @@ fn start_server(app: &AppHandle, lan: bool) -> Result<Started, String> {
         .arg("src/server.js")
         .env("HOST", if lan { "0.0.0.0" } else { "127.0.0.1" })
         .env("PORT", port.to_string())
+        .env("GAMESAUCE_INSTALL", "desktop")
         .env("GAMESAUCE_DATA_DIR", &data)
         .env("GAMESAUCE_STORAGE_DIR", &storage)
         .stdin(Stdio::null())
