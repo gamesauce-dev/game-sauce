@@ -4,6 +4,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 import * as modern from './modern.js';
+import * as physical from './physical.js';
 
 const state = {
   view: 'library',
@@ -265,7 +266,11 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('.side
 function setView(view) {
   // A pinned details window stays beside the games, but only the games it belongs to: a Steam game's details do not follow you
   // out of Digital, and a ROM's details do not follow you into it.
-  if (!$('#drawer')?.classList.contains('hidden') && (state.openDigital ? view !== 'digital' : view === 'digital')) closeDrawer();
+  // Physical is the same: its games' details stay in Physical, and a ROM's or a Steam game's do not follow you into it.
+  if (!$('#drawer')?.classList.contains('hidden')) {
+    const own = state.openDigital ? 'digital' : state.openPhysical != null ? 'physical' : 'library';
+    if (own === 'library' ? (view === 'digital' || view === 'physical') : view !== own) closeDrawer();
+  }
   state.view = view;
   saveNav();
   $$('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
@@ -279,6 +284,7 @@ function setView(view) {
   if (view === 'settings') loadSettings();
   if (view === 'emulators') loadEmulators();
   if (view === 'digital') loadDigital();
+  if (view === 'physical') physical.load();
 }
 
 document.addEventListener('click', (e) => {
@@ -1293,7 +1299,7 @@ function closeDrawer() {
   $$('.card.nav-current').forEach((c) => c.classList.remove('nav-current'));
   $('#drawer').classList.add('hidden');
   $('#scrim').classList.add('hidden');
-  state.openRomId = null; state.openDigital = null;
+  state.openRomId = null; state.openDigital = null; state.openPhysical = null; physical.forgetOpen();
   $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current'));
   document.body.classList.remove('details-open');
 }
@@ -1333,6 +1339,7 @@ function updateDrawerNav(id) {
 }
 async function stepDetail(dir) {
   if (state.openRomId == null && state.openDigital && !$('#drawer').classList.contains('hidden')) return stepDigital(dir);
+  if (state.openRomId == null && state.openPhysical && !$('#drawer').classList.contains('hidden')) return physical.step(dir);
   const id = state.openRomId;
   if (id == null) return;
   let ids = navIds();
@@ -1351,7 +1358,7 @@ $('#drawer-next')?.addEventListener('click', () => stepDetail(1));
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-  if ($('#drawer')?.classList.contains('hidden') || (state.openRomId == null && !state.openDigital)) return;
+  if ($('#drawer')?.classList.contains('hidden') || (state.openRomId == null && !state.openDigital && !state.openPhysical)) return;
   if (!$('#player-scrim')?.classList.contains('hidden')) return; // game is running: keys belong to it
   if ($('.modal-scrim:not(.hidden)')) return; // a dialog is open: leave the keys alone
   const t = e.target;
@@ -1384,7 +1391,7 @@ const ICON = {
 
 async function openDetail(id) {
   const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
-  state.openRomId = id; state.openDigital = null;
+  state.openRomId = id; state.openDigital = null; state.openPhysical = null;
   // Per-user prefs (default match provider). Cached after first fetch; failure is harmless.
   if (!state.prefs) { try { state.prefs = await api('/prefs'); } catch { state.prefs = {}; } }
   const drawer = $('#drawer');
@@ -3517,7 +3524,7 @@ function renderConsoleDetail(g, d, store, appId) {
 async function openDigitalDetail(store, appId) {
   const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
   state.openRomId = null;
-  state.openDigital = { store, appId: String(appId) };
+  state.openDigital = { store, appId: String(appId) }; state.openPhysical = null;
   const drawer = $('#drawer');
   drawer.classList.remove('hidden'); syncPin(); $('#scrim').classList.toggle('hidden', pinned());
   $('#drawer-body').innerHTML = '<div class="skel" style="height:300px"></div>';
@@ -4104,7 +4111,8 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  modern.initModern({ closeDrawer, resetDigital, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
+  physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON });
+  modern.initModern({ closeDrawer, resetDigital, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
   api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
@@ -4131,7 +4139,7 @@ function showApp(user, { restore = false } = {}) {
   const saved = restore ? readNav() : null;
   if (saved && $(`#view-${saved.view}`)) {
     for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
-    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'digital'].includes(saved.view)) saved.view = 'library';
+    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'digital', 'physical'].includes(saved.view)) saved.view = 'library';
     if (playOnly && saved.view !== 'settings') saved.view = 'library'; // a play-only account lives on the Play screen
     if (state.sort) $('#sort').value = state.sort;
     $('#search').value = state.q || '';
@@ -4503,11 +4511,24 @@ function initConsoleImport() {
   if (!file || file.dataset.ready) return;
   file.dataset.ready = '1';
   const n = (v) => Number(v || 0).toLocaleString();
+  const dest = () => $('input[name="dgc-dest"]:checked')?.value === 'physical' ? 'physical' : 'digital';
+  // The choice (Digital or Physical) decides where the games go and which help is shown; changing it starts over with a fresh preview.
+  const paintDest = () => { $('#dgc-physical-help').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-digital-help').style.display = dest() === 'digital' ? '' : 'none'; applyBtn.disabled = true; out.textContent = ''; };
+  $$('input[name="dgc-dest"]').forEach((r) => r.addEventListener('change', paintDest));
+  paintDest();
   const run = async (apply) => {
     const f = file.files?.[0];
     if (!f) return toast('Choose a CSV file first', true);
     let csv; try { csv = await f.text(); } catch { return toast('The file could not be read', true); }
     try {
+      if (dest() === 'physical') {
+        // Onto the Physical shelf: any Library platform, not only the consoles Digital knows.
+        const r = await api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked }) });
+        out.innerHTML = physical.importSummary(r, (s) => (window.__platformsCache || []).find((p) => p.slug === s)?.name || s);
+        applyBtn.disabled = apply || !(r.added || r.updated || r.removed);
+        if (apply) toast(`${n(r.added)} games added to your Physical shelf`);
+        return;
+      }
       const r = await api('/digital/consoles/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked }) });
       const per = Object.entries(r.by_store || {}).map(([k, v]) => `${esc(DG_STORE[k]?.label || k)} ${n(v)}`).join(', ');
       const what = apply

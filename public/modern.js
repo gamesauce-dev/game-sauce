@@ -21,6 +21,7 @@ const NAV = [
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
   { view: 'digital', icon: 'digital-library', label: 'Digital' },
+  { view: 'physical', icon: 'physical-shelf', label: 'Physical' },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
   { view: 'settings', icon: 'settings', label: 'Settings' }
 ];
@@ -71,10 +72,10 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'digital-library', 'emulators-2', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
-  const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital'].includes(n.view)));
+  const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital', 'physical'].includes(n.view)));
   bar.innerHTML = `
     <a class="mb-brand" href="#" data-mview="home" title="game-sauce: Home" aria-label="game-sauce, Home"><img src="/logo.svg" alt="" width="40" height="40" /></a>
     <nav class="mb-nav" aria-label="Main">${items.map((n) => `<button class="mb-btn mb-navbtn" data-mview="${n.view}" title="${n.label}" aria-label="${n.label}">${ic[n.icon] || n.label}</button>`).join('')}</nav>
@@ -141,7 +142,7 @@ function onBarClick(e) {
     e.preventDefault();
     const v = nav.dataset.mview;
     // Choosing Home or Library means "start fresh": the search box, platform picks and every filter are cleared first. (Other pages keep theirs.)
-    if (v === 'home' || v === 'library') { chipFamily = null; ctx.resetDigital?.(); ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
+    if (v === 'home' || v === 'library') { chipFamily = null; ctx.resetDigital?.(); ctx.resetPhysical?.(); ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
     go(v); return;
   }
   if (e.target.closest('#mb-theme')) { applyTheme(theme() === 'light' ? 'dark' : 'light'); return; }

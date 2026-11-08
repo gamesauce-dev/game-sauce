@@ -66,7 +66,7 @@ test('Modern is a separate layer: Classic files carry no Modern rules, and every
 test('the top bar uses the supplied icon set and lists the pages in order', () => {
   const js = read('public/modern.js');
   const order = [...js.matchAll(/\{ view: '([a-z]+)', icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['home', 'library', 'collections', 'sources', 'upload', 'digital', 'emulators', 'settings']);
+  assert.deepEqual(order, ['home', 'library', 'collections', 'sources', 'upload', 'digital', 'physical', 'emulators', 'settings']);
   assert.match(js, /view: 'emulators', icon: 'emulators-2'/);
   const names = [...js.matchAll(/icon: '([A-Za-z0-9-]+)'/g)].map((m) => m[1]);
   for (const n of [...names, 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'pin', 'play']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), `icon ${n}.svg is shipped`);
@@ -581,8 +581,8 @@ test('Library: total beside the platform heading, tighter spacing; add-folder us
   assert.match(app, /class="lib-total"/); assert.match(css, /body\.ui-modern #result-count \{ display: none; \}/); assert.match(css, /\.filter-row \{ min-height: 0;/);
   assert.match(js, /\['\[data-act="add-folder"\]', 'source-add-2'\]/); assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-2.svg', import.meta.url)));
   assert.match(js, /const keepPinned = view === 'library' && document\.body\.classList\.contains\('details-pinned'\);/);
-  // A pinned Steam game's details close on leaving Digital (and a ROM's on entering it).
-  assert.match(app, /function setView\(view\) \{\n[^]*?\(state\.openDigital \? view !== 'digital' : view === 'digital'\)\) closeDrawer\(\);\n  state\.view = view;/);
+  // A pinned Steam game's details close on leaving Digital (and a ROM's on entering it); a Physical game's stay in Physical in the same way.
+  assert.match(app, /function setView\(view\) \{\r?\n[^]*?const own = state\.openDigital \? 'digital' : state\.openPhysical != null \? 'physical' : 'library';\r?\n    if \(own === 'library' \? \(view === 'digital' \|\| view === 'physical'\) : view !== own\) closeDrawer\(\);\r?\n  \}\r?\n  state\.view = view;/);
 });
 
 test('Modern details header: blurred cover backdrop with the pills and action icons laid on it, built from the existing elements', () => {

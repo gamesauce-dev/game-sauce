@@ -1,0 +1,87 @@
+/* ───────────── Physical: games on your shelf (no ROM behind them), as tiles or as spines on a shelf ───────────── */
+#view-physical { overflow: hidden; }
+.ph-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0 0 0.7rem; }
+.ph-bar .dg-q input, .ph-bar select { height: 2.4rem; padding: 0 0.8rem; border-radius: 0.65rem; border: 1px solid var(--line, rgba(127,127,127,.35)); background: var(--panel, transparent); color: inherit; font: inherit; }
+.ph-bar .dg-q input { flex: 1; min-width: 0; }
+.ph-bar .segmented button { height: 2.4rem; padding: 0 0.85rem; white-space: nowrap; cursor: pointer; }
+.ph-toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ph-pill, .ph-chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.1rem; padding: 0 0.75rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted, inherit); font: inherit; font-size: 0.82rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s, box-shadow .15s; }
+.ph-pill small, .ph-chip small { color: var(--dim, inherit); opacity: .85; font-variant-numeric: tabular-nums; font-size: 0.74rem; }
+.ph-pill:hover, .ph-chip:hover { color: var(--text); background: var(--panel-2, var(--panel)); }
+.ph-pill.on { color: var(--accent-2, inherit); background: color-mix(in srgb, var(--accent, #7c5cff) 16%, transparent); border-color: color-mix(in srgb, var(--accent, #7c5cff) 50%, transparent); }
+.ph-pill:focus-visible, .ph-chip:focus-visible { outline: 2px solid var(--accent, #7c5cff); outline-offset: 1px; }
+.ph-chips { display: flex; flex-direction: column; gap: 0.45rem; margin: 0 0 0.7rem; }
+.ph-chips:empty { display: none; }
+.ph-chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ph-chip.on { color: var(--accent-2, inherit); background: color-mix(in srgb, var(--accent, #7c5cff) 16%, transparent); border-color: color-mix(in srgb, var(--accent, #7c5cff) 50%, transparent); }
+.ph-chip-plats { padding: 0.45rem 0.5rem; background: color-mix(in srgb, var(--panel) 60%, transparent); border: 1px dashed var(--line); border-radius: 0.8rem; }
+/* Family and platform chips are tinted by their own colour, like the Library's: a soft wash and a coloured edge, stronger when picked. */
+.ph-chip[style*="--chip-c"] { font-weight: 700; background: color-mix(in srgb, var(--chip-c) 16%, var(--panel)); border-color: color-mix(in srgb, var(--chip-c) 50%, transparent); color: var(--text); }
+.ph-chip[style*="--chip-c"]:hover { background: color-mix(in srgb, var(--chip-c) 28%, var(--panel)); border-color: var(--chip-c); box-shadow: 0 0 0 1px var(--chip-c), 0 0 14px color-mix(in srgb, var(--chip-c) 60%, transparent); }
+.ph-chip[style*="--chip-c"].on, .ph-chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 40%, var(--panel)); border-color: var(--chip-c); }
+.ph-chip[style*="--chip-c"].on.part { background: color-mix(in srgb, var(--chip-c) 32%, var(--panel)); }
+.ph-chip[data-ph-chip-fam]::after { content: ''; width: 0; height: 0; margin-left: 0.15rem; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid transparent; }
+.ph-chip[data-ph-chip-fam].open::after { border-top-color: currentColor; }
+.ph-az .ph-density { display: inline-flex; gap: 0.2rem; }
+.ph-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.4rem 0.4rem 1.7143rem; }
+.ph-scroll::-webkit-scrollbar { width: 0.7143rem; }
+.ph-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 0.3571rem; }
+.ph-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; align-content: start; }
+.ph-tiles.compact { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0.7rem; }
+.ph-card { cursor: pointer; }
+.ph-card .card-title { padding: 0.5rem 0.2rem 0; font-size: 0.85rem; line-height: 1.25; min-height: 2.5em; }
+.ph-region { display: inline-block; margin-left: 0.2rem; padding: 0 0.3rem; border-radius: 0.3rem; background: rgba(127,127,127,.22); font-size: 0.68rem; vertical-align: 0.05em; }
+.ph-card .card-fav, .ph-card .card-badge { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 9, 14, .86); }
+.ph-card .card-badge.ph-badge { color: #fff; }
+
+/* The shelf. A dark back panel, a wooden plank under each row, and the spines standing on it. */
+.ph-shelf { padding: 0.5rem 0.2rem 3rem; perspective: 1400px; }
+.ph-row { position: relative; margin: 0 0 0.9rem; padding: 1.6rem 1rem 0; border-radius: 0.45rem 0.45rem 0 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.14) 55%, rgba(0,0,0,.3)), repeating-linear-gradient(90deg, #30221a 0 9px, #34261c 9px 10px);
+  box-shadow: inset 0 1rem 1.3rem -0.6rem rgba(0,0,0,.6), inset 0.6rem 0 0.9rem -0.5rem rgba(0,0,0,.45), inset -0.6rem 0 0.9rem -0.5rem rgba(0,0,0,.45); }
+.ph-books { display: flex; align-items: flex-end; gap: 3px; min-height: 252px; position: relative; z-index: 2; margin-bottom: -2px; }
+.ph-plank { position: relative; z-index: 1; height: 1.15rem; margin: 0 -0.5rem; border-radius: 0.2rem; background: linear-gradient(180deg, #bb8450 0, #8f5f35 38%, #6a4325 100%); box-shadow: 0 0.6rem 0.9rem rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3); }
+.ph-sentinel { width: 100%; }
+
+.ph-spine { position: relative; flex: 0 0 auto; width: var(--w); height: var(--h); padding: 0; border: 0; border-radius: 2px 2px 1px 1px; overflow: hidden; cursor: pointer; color: #fff; font: inherit;
+  background: linear-gradient(90deg, rgba(0,0,0,.38) 0, rgba(255,255,255,.14) 12%, rgba(255,255,255,0) 34%, rgba(0,0,0,.2) 100%), var(--c);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), 2px 0 3px rgba(0,0,0,.4);
+  transform-origin: 50% 100%;
+  transition: width .42s cubic-bezier(.2,.8,.2,1), transform .42s cubic-bezier(.2,.8,.2,1), box-shadow .25s, filter .2s;
+  animation: ph-drop .55s cubic-bezier(.2,.9,.25,1.12) backwards; animation-delay: calc(var(--i, 0) * 16ms); }
+@keyframes ph-drop { from { opacity: 0; transform: translateY(-34px) rotate(-5deg); } to { opacity: 1; transform: none; } }
+.ph-spine:hover, .ph-spine:focus-visible { transform: translateY(-9px); filter: brightness(1.14); z-index: 4; outline: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), 0 0.6rem 0.8rem rgba(0,0,0,.45); }
+.ph-spine:hover + .ph-spine { transform: translateX(2px) rotate(.8deg); }
+.ph-spine:has(+ .ph-spine:hover) { transform: translateX(-2px) rotate(-.8deg); }
+.ph-spine:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0.6rem 0.8rem rgba(0,0,0,.45); }
+.ph-sp-band { position: absolute; top: 0; left: 0; right: 0; height: 1.9rem; display: grid; place-items: center; overflow: hidden; background: rgba(0,0,0,.34); border-bottom: 2px solid rgba(255,255,255,.28); font-size: 0.58rem; font-weight: 800; letter-spacing: .03em; text-shadow: 0 1px 1px rgba(0,0,0,.6); transition: opacity .2s; }
+.ph-sp-title { position: absolute; top: 2.25rem; bottom: 1.5rem; left: 50%; width: 1.3em; margin-left: -0.65em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; writing-mode: vertical-rl; line-height: 1.3em; font-size: 0.8rem; font-weight: 700; letter-spacing: .02em; text-shadow: 0 1px 2px rgba(0,0,0,.7); transition: opacity .2s; }
+.ph-sp-foot { position: absolute; left: 0; right: 0; bottom: 0; height: 1.3rem; display: grid; place-items: center; background: linear-gradient(0deg, rgba(0,0,0,.35), transparent); color: #ffd54a; font-size: 0.72rem; transition: opacity .2s; }
+.ph-spine.is-fav::after { content: ''; position: absolute; left: 0; right: 0; bottom: 1.3rem; height: 3px; background: #ffd54a; opacity: .8; }
+
+/* Opened: the spine is pulled off the shelf and turns to show its cover; the spines beside it slide apart (the row is flex, so its width does that). */
+.ph-spine.is-open { width: 118px; transform: translateY(-24px) rotate(-1.5deg); z-index: 5; filter: none; box-shadow: 0 1rem 1.5rem rgba(0,0,0,.6), 0 0 0 2px rgba(255,255,255,.6), 0 0 1.6rem color-mix(in srgb, var(--c) 75%, transparent); }
+.ph-spine.is-open .ph-sp-band, .ph-spine.is-open .ph-sp-title, .ph-spine.is-open .ph-sp-foot { opacity: 0; }
+.ph-spine.is-open::after { display: none; }
+.ph-face { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity .3s .14s; background: linear-gradient(160deg, var(--c), #12141a); }
+.ph-spine.is-open .ph-face { opacity: 1; }
+.ph-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s; }
+.ph-face.has-img img { opacity: 1; }
+.ph-face-fb { padding: 0.5rem; text-align: center; font-size: 0.8rem; font-weight: 800; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,.7); overflow-wrap: anywhere; }
+.ph-face.has-img .ph-face-fb { display: none; }
+
+/* With the list sorted by platform each platform starts with a small brass plate. */
+.ph-plate { position: relative; flex: 0 0 74px; align-self: flex-end; margin-bottom: 8px; height: 34px; display: grid; place-items: center; border-radius: 3px; border: 1px solid #5a4410; color: #2a1d05; font-size: 0.72rem; letter-spacing: .04em;
+  background: linear-gradient(180deg, #f0d57d, #b08a2e); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 2px 3px rgba(0,0,0,.5); animation: ph-drop .55s cubic-bezier(.2,.9,.25,1.12) backwards; animation-delay: calc(var(--i, 0) * 16ms); }
+.ph-plate::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--c); border-radius: 3px 0 0 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ph-spine, .ph-plate { animation: none; transition: none; }
+  .ph-face { transition: none; }
+}
+@media (max-width: 760px) {
+  .ph-bar .dg-q { flex-basis: 100%; }
+  .ph-row { padding: 1.3rem 0.5rem 0; }
+}
+.ph-shelf { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) { .ph-shelf { transition: none; } }

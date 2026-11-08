@@ -476,6 +476,22 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '34') ON CON
 if (!db.prepare('PRAGMA table_info(digital_marks)').all().some((c) => c.name === 'physical')) db.exec('ALTER TABLE digital_marks ADD COLUMN physical INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '35') ON CONFLICT(key) DO UPDATE SET value = '35'").run();
 
+/* ── v36: Physical: games on the shelf (boxed discs, cartridges) with no ROM behind them. Each person's own list, filed under a Library
+   platform slug; details and covers come from the same providers as the Library (matched automatically, or picked by hand). ── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS physical_games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, platform TEXT NOT NULL,
+    title TEXT NOT NULL, sort_title TEXT NOT NULL, dedupe_key TEXT NOT NULL,
+    region TEXT, notes TEXT, release_year INTEGER, developer TEXT, publisher TEXT, genre TEXT, players INTEGER, rating REAL, description TEXT,
+    cover_url TEXT, cover_path TEXT, meta_source TEXT, meta_synced_at TEXT, meta_tried_at TEXT,
+    favourite INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (user_id, platform, dedupe_key)
+  );
+  CREATE INDEX IF NOT EXISTS idx_physical_user ON physical_games (user_id, platform);
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '36') ON CONFLICT(key) DO UPDATE SET value = '36'").run();
+
 /** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
 export function mergePlaystationStores() {
   db.transaction(() => {

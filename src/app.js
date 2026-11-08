@@ -13,6 +13,7 @@ import { seedPlatforms, ICON_TYPES } from './lib/platforms.js';
 import romsRouter, { playableSql } from './routes/roms.js';
 import collectionsRouter from './routes/collections.js';
 import digitalRouter from './routes/digital.js';
+import physicalRouter from './routes/physical.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
 import datsRouter from './routes/dats.js';
@@ -488,6 +489,7 @@ export function createApp() {
   api.use('/roms', romsRouter);
   api.use('/collections', collectionsRouter);
   api.use('/digital', digitalRouter);
+  api.use('/physical', physicalRouter);
   api.use('/metadata', metadataRouter);
   api.use('/emulators', emulatorsRouter);
 

@@ -424,3 +424,27 @@ Press **Preview** to see what would change, then **Import games**. Importing the
 
 Details and covers are looked up in the background with the providers under **Settings → Metadata providers** (as for the Library). The Digital page shows progress while it runs. Console games have no play button; instead each tile has a switch at the bottom left, a disc (PlayStation, Xbox, Wii, Wii U) or a cartridge (Switch 2, Switch, 3DS, DS), that you turn on for games you own physically. It is private to you. A game whose details were not found can be tried again with **Refresh** on the Digital page, and any console game can be taken out of the list with the bin button in its details window.
 
+
+## Physical: the games on your shelf
+
+The Library holds games that have a ROM file. **Physical** is for the ones that sit on your shelf as a boxed disc or cartridge, with nothing to point a source at. Each person has their own shelf, and nobody else sees it.
+
+### Putting games on the shelf
+
+- **Add a game** (top right of the page): a title, a platform from the Library's list, and optionally a region and notes. **Add and another** keeps the form open.
+- **Import CSV**: a file with the columns `Platform` and `Game`, and optionally `Region`, `Notes` and `Year` (the first row names the columns, in any order). The platform can be any name from the Library's platform list: *SNES*, *Mega Drive*, *PS2*, *Game Boy* and so on, not only consoles. Preview shows what would change, then **Import games**. Importing the same file again adds nothing twice. A second copy of a game (another region, say) is kept when the region or note differs.
+- Admins can do the same from **Settings → Library tools → CSV tools**: choose **Physical** instead of **Digital** at the top of the console import box.
+
+Details and covers are looked up in the background with the providers under **Settings → Metadata providers**, as for the Library. **Find details** on the page tries again for games that have none.
+
+### Tiles or shelf
+
+Use **Tiles / Shelf** beside the search box. Tiles are the Library's cover tiles. **Shelf** stands each game on a wooden shelf by its spine: the colour is the platform's, the platform's name is on the band at the top and the title runs down the side. Click a spine to pull the game off the shelf and open its details; use the arrows in the details window (or the left and right keys) to walk along the shelf. Sort by **Platform** to start each platform with a brass plate. Your choice of view is remembered on this device.
+
+### Platform chips and filters
+
+The chips work like the Library's: pick a family to see its platforms, and pick one or more platforms (click a lit chip to drop it). **Favourites**, **No cover** and **Needs match** narrow the list; **Reset** clears everything.
+
+### Matching a game by hand
+
+A game with no cover, or the wrong one, is fixed in its details window under **Identify this game**: search by title (and platform) in TheGamesDB, IGDB or LaunchBox, and click the right entry. Its cover and details are put on the game; your own title is kept. The round arrows look the game up again by its title and platform, and the undo button clears a wrong match. You can also edit any field by hand under **Edit**.

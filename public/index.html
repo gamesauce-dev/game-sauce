@@ -6,6 +6,7 @@
 <title>game-sauce — ROM library</title>
 <link rel="stylesheet" href="/styles.css?v=9" />
 <link rel="stylesheet" href="/modern.css?v=1" />
+<link rel="stylesheet" href="/physical.css?v=1" />
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
 </head>
 <body>
@@ -84,6 +85,10 @@
       <button class="nav-item" data-view="digital">
         <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="3"/><path d="M7 10v4M5 12h4M16 11h.01M18 13h.01"/></svg></span>
         <span>Digital</span>
+      </button>
+      <button class="nav-item" data-view="physical">
+        <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20.5h18"/><rect x="4.5" y="5" width="3.6" height="15.5" rx="0.8"/><rect x="9.6" y="3.5" width="3.6" height="17" rx="0.8"/><path d="M15.4 20.5L14.7 6.2l3.4-.7 2.4 15"/></svg></span>
+        <span>Physical</span>
       </button>
       <button class="nav-item" data-view="emulators">
         <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.6 2.6 0 0 1-4.4 1.2L14 15.5h-4l-2.2 2.1a2.6 2.6 0 0 1-4.4-1.2l-.8-4A4.5 4.5 0 0 1 7 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.5" r=".7" fill="currentColor"/><circle cx="17.5" cy="12.5" r=".7" fill="currentColor"/></svg></span> Emulators
@@ -561,13 +566,15 @@
         <p class="hint" id="names-result" style="margin-top:10px"></p>
 
         <div class="export-box" id="dgc-box">
-          <h4>Import console games into Digital (PlayStation, Nintendo, Xbox)</h4>
-          <p class="hint" style="margin-top:0">Choose a CSV with the columns <code>Platform</code>, <code>Game</code> and <code>Country</code>, and optionally <code>Media</code> (the first row names the columns; the country is optional). The platform can be written <b>PS3</b>, <b>PS4</b> or <b>PS5</b> (or <b>PlayStation 4</b> and so on), <b>Switch 2</b>, <b>Switch</b>, <b>Wii</b>, <b>Wii U</b>, <b>3DS</b> or <b>DS</b>, and <b>Xbox</b>, <b>Xbox 360</b>, <b>Xbox One</b> or <b>Xbox Series X|S</b>. PlayStation, Nintendo and Xbox each get one chip in Digital, and every game carries the badge of its own console; an optional fourth column <code>Media</code> with <b>DISC</b> or <b>CART</b> for games you also own as a physical copy (a disc or a cartridge) in your own collection, which switches the disc or cartridge icon on that game's tile (leave it empty to keep the icon as it is, or write <b>DIGITAL</b> to switch it off); the country as a name (<i>Australia</i>) or its two letters (<i>AU</i>). The games go into <b>your own</b> Digital list beside your Steam games, with a chip each for PlayStation, Nintendo and Xbox. Details and covers are then looked up in the background with the metadata providers set up under Metadata providers, the same way as for the Library. Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
+          <h4>Import games from a CSV: into Digital or onto your Physical shelf</h4>
+          <div class="policy-row" role="radiogroup" aria-label="Where the games go" style="gap:1.2rem;margin:0.2rem 0 0.6rem"><label><input type="radio" name="dgc-dest" value="digital" checked /> <b>Digital</b> (console games you own as downloads)</label><label><input type="radio" name="dgc-dest" value="physical" /> <b>Physical</b> (games on your shelf: discs and cartridges with no ROM)</label></div>
+          <p class="hint" id="dgc-physical-help" style="margin-top:0;display:none"><b>Physical:</b> choose a CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code> and <code>Year</code> (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b> and so on, not only consoles. The games go onto <b>your own</b> shelf on the <b>Physical</b> page, where they show as tiles or as spines on a shelf. Details and covers are looked up in the background with the Library's metadata providers, and any game can be matched by hand. Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
+          <p class="hint" id="dgc-digital-help" style="margin-top:0"><b>Digital:</b> choose a CSV with the columns <code>Platform</code>, <code>Game</code> and <code>Country</code>, and optionally <code>Media</code> (the first row names the columns; the country is optional). The platform can be written <b>PS3</b>, <b>PS4</b> or <b>PS5</b> (or <b>PlayStation 4</b> and so on), <b>Switch 2</b>, <b>Switch</b>, <b>Wii</b>, <b>Wii U</b>, <b>3DS</b> or <b>DS</b>, and <b>Xbox</b>, <b>Xbox 360</b>, <b>Xbox One</b> or <b>Xbox Series X|S</b>. PlayStation, Nintendo and Xbox each get one chip in Digital, and every game carries the badge of its own console; an optional fourth column <code>Media</code> with <b>DISC</b> or <b>CART</b> for games you also own as a physical copy (a disc or a cartridge) in your own collection, which switches the disc or cartridge icon on that game's tile (leave it empty to keep the icon as it is, or write <b>DIGITAL</b> to switch it off); the country as a name (<i>Australia</i>) or its two letters (<i>AU</i>). The games go into <b>your own</b> Digital list beside your Steam games, with a chip each for PlayStation, Nintendo and Xbox. Details and covers are then looked up in the background with the metadata providers set up under Metadata providers, the same way as for the Library. Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
           <div class="export-row">
             <label class="field"><span>CSV file</span><input type="file" id="dgc-file" accept=".csv,text/csv" class="file-input" /></label>
             <label class="policy-row"><input type="checkbox" id="dgc-replace" /> <span>Remove games no longer in the file (only for the platforms the file lists)</span></label>
             <button class="btn" id="dgc-preview" title="Show what would change">Preview</button>
-            <button class="btn btn-primary" id="dgc-apply" disabled title="Add the games to Digital">Import games</button>
+            <button class="btn btn-primary" id="dgc-apply" disabled title="Add the games to the chosen list">Import games</button>
           </div>
           <p class="hint" id="dgc-result" style="margin-top:8px"></p>
         </div>
@@ -750,6 +757,46 @@
         </div>
       </div>
       <div id="dg-grid" class="dg-grid"></div>
+    </section>
+
+    <!-- ───────────── physical (games on your shelf with no ROM behind them; each person's own) ───────────── -->
+    <section class="view hidden" id="view-physical">
+      <header class="toolbar">
+        <h1 class="page-title">Physical</h1>
+        <span class="dg-total note" id="ph-total"></span>
+        <div class="toolbar-right">
+          <button class="btn btn-sm" data-ph-act="import" title="Bring games in from a CSV">Import CSV</button>
+          <button class="btn btn-sm btn-primary" data-ph-act="add" title="Add one game by hand">＋ Add a game</button>
+        </div>
+      </header>
+      <div class="ph-bar hidden" id="ph-bar">
+        <label class="dg-q"><input id="ph-q" type="search" placeholder="Search your shelf" autocomplete="off" aria-label="Search your shelf" /></label>
+        <select id="ph-sort" aria-label="Sort"><option value="title">Title A–Z</option><option value="-title">Title Z–A</option><option value="platform">Platform</option><option value="added">Recently added</option><option value="year">Year</option></select>
+        <div class="segmented" id="ph-views" role="group" aria-label="How to show the games">
+          <button type="button" data-ph-view="tiles" class="is-active" title="Tiles with covers">▦ Tiles</button>
+          <button type="button" data-ph-view="shelf" title="A shelf with the games' spines showing">▥ Shelf</button>
+        </div>
+        <div class="ph-toggles" id="ph-toggles"></div>
+        <button type="button" class="ph-pill hidden" id="ph-reset" title="Clear the search, the platform choice and every filter">↺ Reset</button>
+        <button class="btn btn-sm" data-ph-act="lookup" title="Look up details and covers again for games that have none">✦ Find details</button>
+      </div>
+      <nav class="ph-chips" id="ph-chips" aria-label="Platforms"></nav>
+      <div id="ph-msg" class="dg-msg"></div>
+      <div class="dg-az ph-az hidden" id="ph-az">
+        <div class="az-letters" id="ph-letters" role="toolbar" aria-label="Jump to a letter"></div>
+        <div class="az-right">
+          <span id="ph-density-wrap" class="ph-density">
+            <button type="button" class="mb-btn" data-ph-density="comfortable" title="Comfortable grid" aria-label="Comfortable grid">▦</button>
+            <button type="button" class="mb-btn" data-ph-density="compact" title="Condensed grid" aria-label="Condensed grid">▩</button>
+          </span>
+          <button type="button" class="mb-btn" id="ph-top" title="Back to the top" aria-label="Back to the top">↑</button>
+        </div>
+      </div>
+      <div id="ph-empty" class="hidden"></div>
+      <div id="ph-scroll" class="ph-scroll">
+        <div id="ph-tiles" class="ph-tiles"></div>
+        <div id="ph-shelf" class="ph-shelf hidden" aria-label="Your shelf"></div>
+      </div>
     </section>
 
     <section class="view hidden" id="view-emulators">
