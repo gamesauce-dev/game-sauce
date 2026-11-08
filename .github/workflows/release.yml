@@ -70,16 +70,30 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop/src-tauri
+      # Tauri downloads its packaging tools (NSIS on Windows, linuxdeploy on Linux) from GitHub while bundling, and GitHub's servers sometimes answer 502 or 504.
+      # Keeping them from one run to the next means a good download is only needed once.
+      - name: Keep Tauri's packaging tools (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\tauri
+          key: tauri-tools-${{ runner.os }}-1
+      - name: Keep Tauri's packaging tools (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tauri
+          key: tauri-tools-${{ runner.os }}-1
       - name: Build the installer
         working-directory: desktop
         shell: bash
         run: |
           npm ci
           npm run prepare-server
-          # Tauri downloads its packaging tools (NSIS, linuxdeploy...) from GitHub while bundling, and GitHub sometimes answers 502: try again a few times.
-          for i in 1 2 3; do
+          # When a download still fails, wait and try again: up to five attempts, a little longer each time.
+          for i in 1 2 3 4 5; do
             npx tauri build --bundles ${{ matrix.bundles }} && exit 0
-            echo "The build failed (attempt $i of 3), trying again in 30 seconds..."; sleep 30
+            echo "The build failed (attempt $i of 5), trying again in $((45 * i)) seconds..."; sleep $((45 * i))
           done
           exit 1
       # The AppImage needs a packaging tool downloaded from GitHub, which is the part that fails when GitHub is having a bad moment. It is tried on its own and may fail
@@ -93,9 +107,9 @@ jobs:
         working-directory: desktop
         shell: bash
         run: |
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5; do
             npx tauri build --bundles ${{ matrix.extra }} && exit 0
-            echo "The ${{ matrix.extra }} build failed (attempt $i of 3), trying again in 30 seconds..."; sleep 30
+            echo "The ${{ matrix.extra }} build failed (attempt $i of 5), trying again in $((45 * i)) seconds..."; sleep $((45 * i))
           done
           exit 1
       - uses: actions/upload-artifact@v4

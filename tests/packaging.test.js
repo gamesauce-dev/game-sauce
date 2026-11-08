@@ -110,7 +110,8 @@ test('workflow files: no unquoted "word: word" in a step name or value (a colon 
 
 test('the desktop build tries again when GitHub answers 502 while Tauri downloads its packaging tools', () => {
   const y = read('.github/workflows/release.yml');
-  assert.match(y, /for i in 1 2 3; do\n\s+npx tauri build --bundles \$\{\{ matrix\.bundles \}\} && exit 0/);
+  assert.match(y, /for i in 1 2 3 4 5; do\n\s+npx tauri build --bundles \$\{\{ matrix\.bundles \}\} && exit 0/);
+  assert.ok(y.includes('path: ~\\AppData\\Local\\tauri') && y.includes('path: ~/.cache/tauri'), "Tauri's downloaded packaging tools are kept between runs");
   assert.match(y, /shell: bash/, 'one shell on all three systems');
 });
 
