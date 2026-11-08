@@ -1,5 +1,6 @@
 import db from './db.js';
 import { purgeUser as purgeMessages } from './lib/messages.js';
+import { userColour, nextUserColour } from './lib/colours.js';
 import { purgeSaveFiles } from './lib/saves.js';
 import { hashPassword, hashToken, randomToken, verifyPassword } from './lib/auth.js';
 
@@ -70,6 +71,12 @@ if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'welcom
 if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'play_only')) {
   db.exec('ALTER TABLE users ADD COLUMN play_only INTEGER NOT NULL DEFAULT 0');
 }
+// A colour for each person (set by an admin; it tints them in the chat). Accounts that already exist are given one each, from the palette, in the order they were made.
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'colour')) {
+  db.exec('ALTER TABLE users ADD COLUMN colour TEXT');
+  const taken = [];
+  for (const u of db.prepare('SELECT id FROM users ORDER BY id').all()) { const c = nextUserColour(taken); taken.push(c); db.prepare('UPDATE users SET colour = ? WHERE id = ?').run(c, u.id); }
+}
 // Profile picture (small JPEG/PNG/WebP, stored in the database so backups carry it).
 for (const [col, ddl] of [['avatar', 'BLOB'], ['avatar_type', 'TEXT'], ['avatar_updated', 'INTEGER']]) {
   if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE users ADD COLUMN ${col} ${ddl}`);
@@ -97,8 +104,8 @@ export async function bootstrapAdmin() {
     // No password supplied: generate one and print it exactly once. Better than
     // shipping a default like "admin/admin".
     const generated = randomToken(12);
-    db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)')
-      .run(username, await hashPassword(generated), 'admin');
+    db.prepare('INSERT INTO users (username, password_hash, role, colour) VALUES (?, ?, ?, ?)')
+      .run(username, await hashPassword(generated), 'admin', nextUserColour(db.prepare('SELECT colour FROM users').all().map((u) => u.colour)));
     console.log('─'.repeat(64));
     console.log('game-sauce: created the first account');
     console.log(`  username: ${username}`);
@@ -113,8 +120,8 @@ export async function bootstrapAdmin() {
     throw new Error(`GAMESAUCE_ADMIN_PASSWORD needs ${problems.join(', ')}`);
   }
 
-  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)')
-    .run(username, await hashPassword(password), 'admin');
+  db.prepare('INSERT INTO users (username, password_hash, role, colour) VALUES (?, ?, ?, ?)')
+    .run(username, await hashPassword(password), 'admin', nextUserColour(db.prepare('SELECT colour FROM users').all().map((u) => u.colour)));
   console.log(`game-sauce: created admin account "${username}" from GAMESAUCE_ADMIN_PASSWORD`);
   return { username, generated: false };
 }
@@ -189,7 +196,7 @@ export function purgeExpiredSessions() {
 
 export function listUsers() {
   return db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated, u.play_only,
+    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated, u.play_only, u.colour,
            (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > datetime('now')) AS active_sessions
     FROM users u ORDER BY u.username
   `).all().map(({ download_override, avatar_updated, play_only, ...u }) => ({
@@ -198,7 +205,7 @@ export function listUsers() {
   }));
 }
 
-export async function createUser({ username, password, display_name = null, role = 'user' }) {
+export async function createUser({ username, password, display_name = null, role = 'user', colour = null }) {
   const name = String(username || '').trim();
   if (!/^[a-zA-Z0-9._-]{3,32}$/.test(name)) {
     throw Object.assign(new Error('Username must be 3–32 characters: letters, digits, dot, dash, underscore'), { status: 400 });
@@ -210,11 +217,18 @@ export async function createUser({ username, password, display_name = null, role
   if (problems.length) {
     throw Object.assign(new Error(`Password needs ${problems.join(', ')}`), { status: 400 });
   }
-  const info = db.prepare('INSERT INTO users (username, display_name, password_hash, role) VALUES (?, ?, ?, ?)')
-    .run(name, display_name, await hashPassword(password), role === 'admin' ? 'admin' : 'user');
+  // The admin may choose the person's colour here; without one they get the next palette colour nobody has.
+  let chosen;
+  if (colour !== null && colour !== undefined && String(colour).trim() !== '') {
+    const c = userColour(colour);
+    if (!c.ok) throw Object.assign(new Error(c.reason), { status: 400 });
+    chosen = c.colour;
+  } else chosen = nextUserColour(db.prepare('SELECT colour FROM users').all().map((u) => u.colour));
+  const info = db.prepare('INSERT INTO users (username, display_name, password_hash, role, colour) VALUES (?, ?, ?, ?, ?)')
+    .run(name, display_name, await hashPassword(password), role === 'admin' ? 'admin' : 'user', chosen);
   // New people start in the Modern look (they can switch to Classic any time). People who already exist are left as they are.
   try { db.prepare("INSERT OR IGNORE INTO user_prefs (user_id, key, value) VALUES (?, 'ui_mode', 'modern')").run(Number(info.lastInsertRowid)); } catch { /* prefs table missing: they simply start in Classic */ }
-  return { id: Number(info.lastInsertRowid), username: name, role };
+  return { id: Number(info.lastInsertRowid), username: name, role, colour: chosen };
 }
 
 export async function setPassword(userId, password) {

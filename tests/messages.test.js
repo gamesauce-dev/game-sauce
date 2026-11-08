@@ -40,7 +40,7 @@ const fresh = () => { db.prepare('DELETE FROM messages').run(); msgs._resetRate(
 test('who one can write to: enabled people with chat, as names and pictures only', async () => {
   const names = (await call('/api/messages/people', { as: 'ann' })).body.items;
   assert.deepEqual(names.map((p) => p.username).sort(), ['bob', 'dan', 'madmin'], 'not herself, and not pat (play-only)');
-  assert.deepEqual(Object.keys(names[0]).sort(), ['avatar_v', 'id', 'name', 'username']);
+  assert.deepEqual(Object.keys(names[0]).sort(), ['avatar_v', 'colour', 'id', 'name', 'username']);
   db.prepare('UPDATE users SET disabled = 1 WHERE id = ?').run(id.dan);
   assert.ok(!(await call('/api/messages/people', { as: 'ann' })).body.items.some((p) => p.username === 'dan'), 'a disabled account is not offered');
   assert.equal((await say('ann', 'dan', 'hello')).status, 404);
@@ -333,4 +333,13 @@ test('a whole conversation can be deleted: for me only, the other person keeps t
   const log = JSON.stringify((await call('/api/auth/audit?limit=300')).body);
   assert.ok(!/messages\/with/.test(log), 'and it is not in the audit log either');
   assert.match(read('public/messages.js'), /data-msg-act="delete-conv"/); assert.match(read('public/messages.js'), /Every message in it is deleted for you only\. The other person keeps their copy/);
+});
+
+test('in a conversation, what I wrote is green on the right and what I received is purple on the left (the colour of the highlighted conversation)', () => {
+  const css = read('public/messages.css');
+  assert.match(css, /\.msg \{ --mine: #2e9e5b; \}/);
+  assert.match(css, /\.msg\.mine \{ align-self: flex-end; background: color-mix\(in srgb, var\(--mine\) 26%, var\(--panel\)\);/);
+  assert.match(css, /\.msg\.theirs \{ align-self: flex-start; background: color-mix\(in srgb, var\(--who, var\(--accent, #7c5cff\)\) 18%, var\(--panel\)\);/, 'a received message takes the sender\'s colour');
+  assert.doesNotMatch(css.slice(css.indexOf('.msg.mine {'), css.indexOf('.msg.mine {') + 200), /--accent/, 'my bubble is not the accent colour the highlighted conversation uses');
+  assert.match(css, /\.msg-conv\.on \{ background: color-mix\(in srgb, var\(--who, var\(--accent, #7c5cff\)\) 18%, transparent\); \}/, 'the highlighted conversation has the same tint as the messages received from that person');
 });

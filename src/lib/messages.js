@@ -34,14 +34,14 @@ function cleanText(body, { required = true } = {}) {
 /** A play-only account (a cut-down screen for playing) reads the admin's notices but has no chat. The admin always can. */
 export const canChat = (user) => Boolean(user) && (user.role === 'admin' || !user.play_only);
 
-const person = (u) => ({ id: u.id, username: u.username, name: u.display_name || u.username, avatar_v: u.avatar_updated || null });
+const person = (u) => ({ id: u.id, username: u.username, name: u.display_name || u.username, avatar_v: u.avatar_updated || null, colour: u.colour || null });
 
 /** The other people one can write to: enabled accounts that have chat. Names and pictures only. */
 export function listPeople(userId) {
-  return db.prepare("SELECT id, username, display_name, avatar_updated FROM users WHERE id != ? AND disabled = 0 AND (role = 'admin' OR play_only = 0) ORDER BY lower(COALESCE(NULLIF(display_name, ''), username))")
+  return db.prepare("SELECT id, username, display_name, avatar_updated, colour FROM users WHERE id != ? AND disabled = 0 AND (role = 'admin' OR play_only = 0) ORDER BY lower(COALESCE(NULLIF(display_name, ''), username))")
     .all(userId).map(person);
 }
-const findPerson = (id) => db.prepare("SELECT id, username, display_name, avatar_updated, role, play_only, disabled FROM users WHERE id = ?").get(Number(id));
+const findPerson = (id) => db.prepare("SELECT id, username, display_name, avatar_updated, colour, role, play_only, disabled FROM users WHERE id = ?").get(Number(id));
 
 /* ───────── sending limits ───────── */
 

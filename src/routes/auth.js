@@ -5,6 +5,7 @@ import {
 } from '../auth.js';
 import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload, arcadeVerifiedOnly, setArcadeVerifiedOnly } from '../lib/policy.js';
 import db from '../db.js';
+import { userColour, nextUserColour, USER_COLOURS } from '../lib/colours.js';
 import express from 'express';
 import multer from 'multer';
 import { sniffImage } from './roms.js';
@@ -229,7 +230,9 @@ router.post('/password', requireAuth, async (req, res, next) => {
 /* ────────────────────────────── users ────────────────────────────── */
 
 router.get('/users', requireAdmin, (req, res) => {
-  res.json({ items: listUsers() });
+  const items = listUsers();
+  // the palette, and the first colour nobody has yet (what a new person gets unless the admin picks one)
+  res.json({ items, palette: USER_COLOURS, suggested: nextUserColour(items.map((u) => u.colour)) });
 });
 
 router.post('/users', requireAdmin, async (req, res, next) => {
@@ -238,7 +241,8 @@ router.post('/users', requireAdmin, async (req, res, next) => {
       username: req.body?.username,
       password: req.body?.password,
       display_name: req.body?.display_name || null,
-      role: req.body?.role === 'admin' ? 'admin' : 'user'
+      role: req.body?.role === 'admin' ? 'admin' : 'user',
+      colour: req.body?.colour
     });
     audit(req.user, 'user.created', { target: created.username, detail: { role: created.role }, ip: clientIp(req) });
     res.status(201).json(created);
@@ -283,6 +287,12 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
     if (!['full', 'play'].includes(req.body.mode)) return res.status(400).json({ error: "mode must be 'full' or 'play'" });
     if (user.role === 'admin' && req.body.mode === 'play') return res.status(400).json({ error: 'An admin always has the full screen' });
     db.prepare('UPDATE users SET play_only = ? WHERE id = ?').run(req.body.mode === 'play' ? 1 : 0, id);
+  }
+
+  // An admin sets a person's colour (empty = the next free palette colour). It must be readable on both themes and not green (green is for your own chat messages).
+  if (req.body?.colour !== undefined) {
+    if (req.body.colour === '' || req.body.colour === null) db.prepare('UPDATE users SET colour = ? WHERE id = ?').run(nextUserColour(db.prepare('SELECT colour FROM users WHERE id != ?').all(id).map((u) => u.colour)), id);
+    else { const c = userColour(req.body.colour); if (!c.ok) return res.status(400).json({ error: c.reason }); db.prepare('UPDATE users SET colour = ? WHERE id = ?').run(c.colour, id); }
   }
 
   if (req.body?.display_name !== undefined) {

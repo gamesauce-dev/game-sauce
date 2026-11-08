@@ -99,7 +99,8 @@ const when = (at) => {
   if (d.toDateString() === y.toDateString()) return `Yesterday ${hm}`;
   return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${hm}`;
 };
-const avatar = (p, size = '') => `<span class="msg-av ${size}${p.avatar_v ? ' has-pic' : ''}" style="${p.avatar_v ? `background-image:url(/api/auth/avatar/${p.id}?v=${esc(p.avatar_v)})` : ''}">${p.avatar_v ? '' : esc(String(p.name || p.username || '?').slice(0, 1).toUpperCase())}</span>`;
+const tint = (p) => (/^#[0-9a-f]{6}$/i.test(p?.colour || '') ? `--who:${p.colour}` : '');   // the person's colour, set by an admin
+const avatar = (p, size = '') => `<span class="msg-av ${size}${p.avatar_v ? ' has-pic' : ''}" style="${tint(p)};${p.avatar_v ? `background-image:url(/api/auth/avatar/${p.id}?v=${esc(p.avatar_v)})` : ''}">${p.avatar_v ? '' : esc(String(p.name || p.username || '?').slice(0, 1).toUpperCase())}</span>`;
 
 function paintShell() {
   const chat = M.summary.chat !== false;
@@ -122,7 +123,7 @@ function renderSide() {
   for (const n of M.notices.filter((x) => x.unread && viewOpen())) { n.unread = false; ctx.api(`/messages/notices/${n.id}/read`, { method: 'POST' }).then(() => { M.summary.notices_unread = Math.max(0, (M.summary.notices_unread || 0) - 1); paintBadge(); }).catch(() => {}); }
   if (M.summary.chat === false) { list.innerHTML = '<p class="hint msg-empty">Chat is not available for this account. Notices from the admin appear above.</p>'; return; }
   list.innerHTML = M.convs.length ? M.convs.map((c) => `
-    <button type="button" class="msg-conv${c.user.id === M.openId && M.mode === 'thread' ? ' on' : ''}${c.unread ? ' unread' : ''}" data-msg-act="open" data-id="${c.user.id}">
+    <button type="button" class="msg-conv${c.user.id === M.openId && M.mode === 'thread' ? ' on' : ''}${c.unread ? ' unread' : ''}" data-msg-act="open" data-id="${c.user.id}" style="${tint(c.user)}">
       ${avatar(c.user)}
       <span class="msg-conv-text"><span class="msg-conv-top"><b>${esc(c.user.name)}</b><small>${esc(when(c.last.at))}</small></span>
         <span class="msg-conv-last">${c.last.mine ? 'You: ' : ''}${esc(c.last.text)}</span></span>
@@ -142,7 +143,7 @@ async function renderPeople() {
   const main = $('#msg-main');
   main.innerHTML = '<div class="msg-head"><button type="button" class="msg-back" data-msg-act="back" aria-label="Back" title="Back">←</button><b>Write to…</b></div><div class="msg-people" id="msg-people"><p class="hint msg-empty">Loading…</p></div>';
   try { M.people = (await ctx.api('/messages/people')).items; } catch (err) { $('#msg-people').innerHTML = `<p class="hint msg-empty">${esc(err.message)}</p>`; return; }
-  $('#msg-people').innerHTML = M.people.length ? M.people.map((p) => `<button type="button" class="msg-conv" data-msg-act="open" data-id="${p.id}">${avatar(p)}<span class="msg-conv-text"><span class="msg-conv-top"><b>${esc(p.name)}</b></span><span class="msg-conv-last">${esc(p.username)}</span></span></button>`).join('') : '<p class="hint msg-empty">There is nobody else to write to yet.</p>';
+  $('#msg-people').innerHTML = M.people.length ? M.people.map((p) => `<button type="button" class="msg-conv" data-msg-act="open" data-id="${p.id}" style="${tint(p)}">${avatar(p)}<span class="msg-conv-text"><span class="msg-conv-top"><b>${esc(p.name)}</b></span><span class="msg-conv-last">${esc(p.username)}</span></span></button>`).join('') : '<p class="hint msg-empty">There is nobody else to write to yet.</p>';
 }
 
 const shareLine = (g) => g ? `<div class="msg-game"><span class="msg-game-ico" aria-hidden="true">🎮</span><span><b>${esc(g.title)}</b><small>${esc(g.platform)} · ${g.type === 'rom' ? 'ROM Library' : g.type === 'digital' ? 'their Digital Library' : 'their Physical Library'}</small></span>${g.type === 'rom' ? `<button type="button" class="btn btn-sm" data-msg-act="open-rom" data-id="${g.id}" title="Open this game in the ROM Library">Open</button>` : ''}</div>` : '';
@@ -167,7 +168,7 @@ function renderThread(scroll = true, full = false) {
   if (full || !$('#msg-list')) {
     main.innerHTML = `
       <div class="msg-head"><button type="button" class="msg-back" data-msg-act="back" aria-label="Back" title="Back">←</button>${avatar(who, 'sm')}<b>${esc(who.name)}</b><button type="button" class="msg-x msg-del-conv" data-msg-act="delete-conv" title="Delete this conversation (for you only: ${esc(who.name)} keeps their copy)" aria-label="Delete this conversation">${ctx.ICON.trash}</button></div>
-      <div class="msg-list" id="msg-list"></div>
+      <div class="msg-list" id="msg-list" style="${tint(who)}"></div>
       <div class="msg-compose">
         <div class="msg-chip hidden" id="msg-reply"></div>
         <div class="msg-chip hidden" id="msg-share-chip"></div>

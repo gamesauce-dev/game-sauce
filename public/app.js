@@ -4637,13 +4637,16 @@ async function loadUsersForModule() {
       };
     }
   } catch { /* the list below still works */ }
-  const { items: users } = await api('/auth/users');
+  const { items: users, suggested } = await api('/auth/users');
+  const newColour = $('#new-user-form [name="colour"]'); if (newColour && suggested) newColour.value = suggested;   // the first colour nobody has yet
   $('#user-list').innerHTML = users.map((u) => `
     <div class="user-list-row" data-user="${u.id}" data-name="${esc(u.username)}">
       <div class="grow">
         <div class="user-line"><span class="avatar avatar-sm${u.avatar_v ? ' has-pic' : ''}" style="${u.avatar_v ? `background-image:url(/api/auth/avatar/${u.id}?v=${u.avatar_v})` : ''}">${u.avatar_v ? '' : esc(u.username.slice(0, 1))}</span><span class="user-name">${esc(u.username)}</span>${u.role === 'admin' ? '<span class="pill accent user-badge">admin</span>' : ''}${u.disabled ? '<span class="pill bad user-badge">disabled</span>' : ''}</div>
         <div class="sub">${u.active_sessions} session(s) · last login ${u.last_login_at ? `${esc(u.last_login_at)} UTC` : 'never'}</div>
       </div>
+      <label class="dl-pick" title="This person's colour in the chat: their picture, their row in the list and the messages you receive from them. It saves when you close the picker. Green is kept for your own messages."><span>Colour</span>
+        <input type="color" class="user-colour" data-act="colour-setting" value="${esc(/^#[0-9a-f]{6}$/i.test(u.colour || '') ? u.colour : '#7c5cff')}" aria-label="Colour of ${esc(u.username)} in the chat" /></label>
       <label class="dl-pick" title="Admins manage the library, sources, providers and people. Members use the library. You cannot change your own role."><span>Role</span>
         <select class="select" data-act="role-setting" ${u.id === (authState.user?.id) ? 'disabled' : ''}><option value="user" ${u.role !== 'admin' ? 'selected' : ''}>Member</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></label>
       ${u.role === 'admin' ? '' : `<label class="dl-pick" title="What this person sees. Full: the whole app. Play only: a simple screen of games that can be played in the browser, with search and favourites."><span>Screen</span>
@@ -4660,6 +4663,10 @@ async function loadUsersForModule() {
       const disabled = row.textContent.includes('disabled');
       try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ disabled: !disabled }) }); loadUsersForModule(); }
       catch (err) { toast(err.message, true); }
+    });
+    $('[data-act="colour-setting"]', row)?.addEventListener('change', async (e) => {
+      try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ colour: e.target.value }) }); toast(`${row.dataset.name}'s colour saved`); }
+      catch (err) { toast(err.message, true); loadUsersForModule(); }   // refused (too dark, too light or green): the reason is shown and the old colour comes back
     });
     $('[data-act="role-setting"]', row)?.addEventListener('change', async (e) => {
       const name = row.dataset.name, role = e.target.value;
@@ -5046,7 +5053,8 @@ $('#new-user-form').addEventListener('submit', async (e) => {
       body: JSON.stringify({
         username: String(fd.get('username')).trim(),
         password: fd.get('password'),
-        role: fd.get('role')
+        role: fd.get('role'),
+        colour: fd.get('colour')
       })
     });
     e.target.reset();

@@ -10,14 +10,14 @@
 /* conversations and people */
 .msg-conv { width: 100%; display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 0.6rem; border: 0; border-radius: 0.6rem; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .msg-conv:hover { background: var(--panel-2, rgba(127,127,127,.12)); }
-.msg-conv.on { background: color-mix(in srgb, var(--accent, #7c5cff) 18%, transparent); }
+.msg-conv.on { background: color-mix(in srgb, var(--who, var(--accent, #7c5cff)) 18%, transparent); }
 .msg-conv-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 0.1rem; }
 .msg-conv-top { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
 .msg-conv-top small { color: var(--dim, inherit); opacity: .8; font-size: 0.72rem; white-space: nowrap; }
 .msg-conv-last { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted, inherit); font-size: 0.82rem; }
 .msg-conv.unread .msg-conv-last { color: var(--text); font-weight: 600; }
 .msg-unread { min-width: 1.35rem; height: 1.35rem; padding: 0 0.35rem; display: grid; place-items: center; border-radius: 0.7rem; background: var(--accent, #7c5cff); color: #fff; font-size: 0.72rem; font-weight: 700; }
-.msg-av { flex: 0 0 auto; width: 2.2rem; height: 2.2rem; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--accent, #7c5cff) 35%, var(--panel-2, #222)); color: #fff; font-weight: 700; background-size: cover; background-position: center; }
+.msg-av { flex: 0 0 auto; width: 2.2rem; height: 2.2rem; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--who, var(--accent, #7c5cff)) 70%, var(--panel-2, #222)); color: #fff; font-weight: 700; background-size: cover; background-position: center; }
 .msg-av.sm { width: 1.9rem; height: 1.9rem; font-size: 0.85rem; }
 
 /* notices */
@@ -42,8 +42,12 @@
 .msg-people { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.4rem; }
 .msg-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .msg { position: relative; max-width: min(34rem, 82%); padding: 0.45rem 0.7rem 0.3rem; border-radius: 0.85rem; border: 1px solid var(--line); overflow-wrap: anywhere; }
-.msg.theirs { align-self: flex-start; background: var(--panel-2, rgba(127,127,127,.12)); border-bottom-left-radius: 0.25rem; }
-.msg.mine { align-self: flex-end; background: color-mix(in srgb, var(--accent, #7c5cff) 24%, var(--panel)); border-color: color-mix(in srgb, var(--accent, #7c5cff) 45%, transparent); border-bottom-right-radius: 0.25rem; }
+/* Whose is whose, at a glance: what YOU wrote is green and on the right (in your own view, whoever you are); what you RECEIVED is on the left in the colour an admin gave that person
+   (--who: also their picture and their row in the list, the same tint as .msg-conv.on), so a bubble is never the colour of the person it is going to. Green is not an allowed colour for a person. */
+.msg { --mine: #2e9e5b; }
+.msg.theirs { align-self: flex-start; background: color-mix(in srgb, var(--who, var(--accent, #7c5cff)) 18%, var(--panel)); border-color: color-mix(in srgb, var(--who, var(--accent, #7c5cff)) 40%, transparent); border-bottom-left-radius: 0.25rem; }
+.msg.mine { align-self: flex-end; background: color-mix(in srgb, var(--mine) 26%, var(--panel)); border-color: color-mix(in srgb, var(--mine) 60%, transparent); border-bottom-right-radius: 0.25rem; }
+.msg.mine .msg-quote { border-left-color: var(--mine); }
 .msg.recalled { opacity: .65; font-style: italic; }
 .msg-text { white-space: pre-wrap; }
 .msg-quote { margin: 0 0 0.3rem; padding: 0.15rem 0.5rem; border-left: 3px solid var(--accent-2, #a78bfa); font-size: 0.78rem; color: var(--muted, inherit); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -88,3 +92,4 @@
 }
 .msg-del-conv { margin-left: auto; }
 .msg-del-conv svg { width: 1.1rem; height: 1.1rem; }
+.user-colour { width: 2.4rem; height: 2rem; padding: 0; border: 1px solid var(--line); border-radius: 0.4rem; background: transparent; cursor: pointer; }

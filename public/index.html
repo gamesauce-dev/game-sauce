@@ -410,14 +410,16 @@
             <small>Arcade games (MAME, FinalBurn Neo, Neo Geo, CPS, Cave) often fall into the RetroArch menu instead of starting. With this on, none is offered for browser play until it has been switched on for that game, which the play-check tool does for every game it saw running (<code>scripts/check-play.mjs --candidates --apply</code>). Off: the usual rules apply.</small></span>
         </label>
         <div id="user-list" class="counts"></div>
-        <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr auto;display:grid;gap:10px;align-items:end">
+        <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr 5.5rem auto;display:grid;gap:10px;align-items:end">
           <label class="field"><span>Username</span><input name="username" required /></label>
           <label class="field"><span>Password</span><input name="password" type="password" required /></label>
           <label class="field"><span>Role</span>
             <select name="role"><option value="user">User</option><option value="admin">Admin</option></select>
           </label>
+          <label class="field" title="This person's colour in the chat: their picture, their row in the list and the messages you receive from them. Green is kept for your own messages."><span>Colour</span><input name="colour" type="color" value="#7c5cff" /></label>
           <button class="btn btn-primary" type="submit">Add user</button>
         </form>
+        <p class="hint" style="margin:6px 0 0">The colour tints this person in the chat: their picture, their row in the list and the messages you receive from them. It is chosen here (and can be changed on their row above); green is kept for your own messages.</p>
       </div>
 
       <div class="panel hidden" id="mod-platforms">
