@@ -224,7 +224,11 @@ function onClick(e) {
   const fav = e.target.closest('[data-ph-fav]');
   if (fav) { e.stopPropagation(); toggleFav(Number(fav.dataset.phFav)); return; }
   const tile = e.target.closest('[data-ph-id]');
-  if (tile) openDetail(Number(tile.dataset.phId));
+  if (!tile) return;
+  const id = Number(tile.dataset.phId);
+  // On the shelf, a spine that is already pulled out (showing its cover) goes back when it is clicked again: the details window closes and the spine slides home.
+  if (S.view === 'shelf' && S.openId === id && tile.classList.contains('is-open')) { ctx.closeDrawer(); return; }
+  openDetail(id);
 }
 
 async function toggleFav(id) {

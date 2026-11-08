@@ -341,3 +341,12 @@ test('Physical tiles are the Library\'s standard tile (one size, the cover fills
   assert.match(read('public/styles.css'), /\.card-cover img \{ width: 100%; height: 100%; object-fit: cover; object-position: top;/, 'the shared tile trims a cover from the bottom, for every library');
   assert.doesNotMatch(css, /\.ph-card \.card-cover img/, 'Physical adds nothing of its own to the cover');
 });
+
+test('on the shelf, clicking a pulled-out cover puts it back: the spine slides home and the details window closes', () => {
+  const ph = read('public/physical.js');
+  assert.match(ph, /if \(S\.view === 'shelf' && S\.openId === id && tile\.classList\.contains\('is-open'\)\) \{ ctx\.closeDrawer\(\); return; \}/);
+  // closing the window is what puts the spine back (it clears the open spine and slides the shelf back)
+  const fo = ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading'));
+  assert.match(fo, /remove\('nav-current', 'is-open'\)/); assert.match(fo, /slideShelfBack\(\)/);
+  assert.match(read('public/app.js'), /physical\.forgetOpen\(\)/);
+});
