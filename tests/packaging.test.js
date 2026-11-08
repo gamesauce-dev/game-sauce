@@ -96,7 +96,7 @@ test('the desktop app: one version everywhere, the server built in as resources,
   const ui = read('desktop/ui/index.html');
   assert.ok(ui.includes('Run game-sauce on this computer') && ui.includes('Connect to a game-sauce server') && ui.includes("invoke('use_local'") && ui.includes("invoke('use_remote'"));
   const y = read('.github/workflows/release.yml');
-  for (const l of ['windows-x64, bundles: nsis', 'macos-arm64, bundles: dmg', 'linux-x64, bundles: \'deb,appimage\'']) assert.ok(y.includes(l), l);
+  for (const l of ['windows-x64, bundles: nsis', 'macos-arm64, bundles: dmg', 'linux-x64, bundles: deb, extra: appimage']) assert.ok(y.includes(l), l);
   assert.match(y, /needs: \[bundle, desktop\]/);
   assert.ok(read('desktop/.gitignore').includes('server-stage/') && read('desktop/.gitignore').includes('target/'));
 });
@@ -112,4 +112,11 @@ test('the desktop build tries again when GitHub answers 502 while Tauri download
   const y = read('.github/workflows/release.yml');
   assert.match(y, /for i in 1 2 3; do\n\s+npx tauri build --bundles \$\{\{ matrix\.bundles \}\} && exit 0/);
   assert.match(y, /shell: bash/, 'one shell on all three systems');
+});
+
+test('the Linux AppImage is optional (the .deb is required), and linuxdeploy can run on a runner without FUSE', () => {
+  const y = read('.github/workflows/release.yml');
+  assert.ok(y.includes('name: Linux AppImage (optional)') && y.includes('continue-on-error: true'));
+  assert.ok(y.includes('APPIMAGE_EXTRACT_AND_RUN: 1'), 'the packaging tool is itself an AppImage: it unpacks itself instead of needing FUSE');
+  assert.ok(y.includes('NO_STRIP: true'));
 });

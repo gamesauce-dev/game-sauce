@@ -87,6 +87,9 @@ jobs:
       - name: Linux AppImage (optional)
         if: matrix.extra
         continue-on-error: true
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1   # linuxdeploy is itself an AppImage, and the runners have no FUSE to run it the normal way
+          NO_STRIP: true
         working-directory: desktop
         shell: bash
         run: |
