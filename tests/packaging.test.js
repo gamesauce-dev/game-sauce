@@ -131,3 +131,9 @@ test('the desktop app: a menu bar on a Mac, a tray icon (not a menu bar) on Wind
   assert.ok(rs.includes('GAMESAUCE_DESKTOP_CONFIG'), 'tests can keep their saved choice apart from the real one');
   assert.match(read('docs/DESKTOP.md'), /tray/);
 });
+
+test('the release job flattens the downloaded artifacts (some keep a folder) before checksumming and publishing', () => {
+  const y = read('.github/workflows/release.yml');
+  assert.ok(y.includes('find . -mindepth 2 -type f -exec mv -t . {} +') && y.includes('sha256sum * > SHA256SUMS'));
+  assert.ok(y.indexOf('find . -mindepth 2') < y.indexOf('sha256sum * > SHA256SUMS'), 'flatten first, then checksum');
+});

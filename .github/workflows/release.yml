@@ -141,7 +141,14 @@ jobs:
           merge-multiple: true
       - name: One checksum file for everything
         working-directory: dist
-        run: rm -f *.sha256 && sha256sum * > SHA256SUMS && cat SHA256SUMS
+        run: |
+          # Some artifacts keep a folder (the Linux installers sit in deb/ and appimage/): put every file at the top, so the checksums and the release see plain files.
+          find . -mindepth 2 -type f -exec mv -t . {} +
+          find . -mindepth 1 -type d -empty -delete
+          rm -f *.sha256
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+          ls -la
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
