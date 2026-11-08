@@ -99,6 +99,7 @@ ${'='.repeat(('game-sauce ' + version).length)}
 TO START:  ${start}
 Your browser opens on game-sauce. The first time, sign in with the account shown in the window
 (it is shown once: write it down, then change the password under Settings).
+Forgotten the password? Use the "Reset admin password" file (or start with --reset-password): it gives the first admin a new one.
 
 Keep that window open while you use game-sauce; closing it stops the program.
 By default only this computer can open it. To let phones, TVs and other computers on your home network
@@ -114,6 +115,7 @@ https://github.com/gamesauce-dev/game-sauce
 if (win) {
   put('Start game-sauce.bat', '@echo off\ncd /d "%~dp0"\n"%~dp0runtime\\node.exe" "%~dp0app\\scripts\\start.mjs" %*\nif errorlevel 1 pause\n');
   put('Start game-sauce (share on my network).bat', '@echo off\ncd /d "%~dp0"\n"%~dp0runtime\\node.exe" "%~dp0app\\scripts\\start.mjs" --lan %*\nif errorlevel 1 pause\n');
+  put('Reset admin password.bat', '@echo off\ncd /d "%~dp0"\n"%~dp0runtime\\node.exe" "%~dp0app\\scripts\\start.mjs" --reset-password %*\npause\n');
   put('READ ME FIRST.txt', readme('double-click  "Start game-sauce.bat"', `
 Windows may say "Windows protected your PC" the first time (the file is new to it). Choose "More info", then "Run anyway".
 Windows Firewall may ask whether to allow it when you share on your network: choose "Private networks".
@@ -123,6 +125,7 @@ Windows Firewall may ask whether to allow it when you share on your network: cho
   if (process.platform === 'darwin') {
     put('Start game-sauce.command', sh(false), 0o755);
     put('Start game-sauce (share on my network).command', sh(true), 0o755);
+    put('Reset admin password.command', '#!/bin/sh\ncd "$(dirname "$0")" || exit 1\n./runtime/node app/scripts/start.mjs --reset-password "$@"\nprintf \'Press Return to close. \'; read _\n', 0o755);
     put('READ ME FIRST.txt', readme('double-click  "Start game-sauce.command"', `
 The first time, macOS may refuse because the file came from the internet. Right-click (or Control-click) it, choose Open,
 then Open again. Or run this once in Terminal, inside this folder:   xattr -dr com.apple.quarantine .
@@ -130,6 +133,7 @@ then Open again. Or run this once in Terminal, inside this folder:   xattr -dr c
   } else {
     put('start.sh', sh(false), 0o755);
     put('start-shared.sh', sh(true), 0o755);
+    put('reset-password.sh', '#!/bin/sh\ncd "$(dirname "$0")" || exit 1\nexec ./runtime/node app/scripts/start.mjs --reset-password "$@"\n', 0o755);
     put('READ ME FIRST.txt', readme('run  ./start.sh  (in a terminal, in this folder)', `
 For the "share on my network" version run ./start-shared.sh. To start it automatically at boot, see docs/DEPLOYMENT.md in the project.
 `));

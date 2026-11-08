@@ -5,6 +5,7 @@
 // starts the server for this computer only, waits until it answers, and opens your browser.
 // Options:  --lan  let other devices on your home network connect     --no-open  don't open the browser
 //           --port 9000  choose the port                              --data <folder>  choose where your data lives
+//           --reset-password [name]  forgotten the password? sets a new one for that account (default: the first admin), shows it, and exits
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -57,6 +58,30 @@ if (!fs.existsSync(path.join(root, 'node_modules', 'express'))) {
   }
 }
 
+// 3b. Forgotten password: set a new one for an account (the first admin unless a name is given), show it once, and stop (start it normally afterwards).
+if (flag('--reset-password')) {
+  const given = opt('--reset-password');
+  const who = given && !given.startsWith('--') ? given : '';
+  const code = `
+    import db from './src/db.js';
+    import { setPassword } from './src/auth.js';
+    import { randomToken, passwordProblems } from './src/lib/auth.js';
+    const who = ${JSON.stringify(who)};
+    const user = who ? db.prepare('SELECT id, username FROM users WHERE username = ? COLLATE NOCASE').get(who)
+                     : db.prepare("SELECT id, username FROM users WHERE role = 'admin' AND disabled = 0 ORDER BY id LIMIT 1").get();
+    if (!user) { console.log(who ? 'There is no account called "' + who + '".' : 'There is no account yet: start game-sauce normally and it will make one.'); process.exit(2); }
+    let pw; do { pw = randomToken(12); } while (passwordProblems(pw).length);
+    await setPassword(user.id, pw);
+    db.prepare('UPDATE users SET disabled = 0 WHERE id = ?').run(user.id);
+    try { db.prepare('DELETE FROM login_attempts').run(); } catch { /* no lockouts to clear */ }
+    console.log('username: ' + user.username);
+    console.log('password: ' + pw);`;
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', code], { cwd: root, env: { ...process.env, GAMESAUCE_DATA_DIR: dataDir, GAMESAUCE_STORAGE_DIR: storageDir }, encoding: 'utf8' });
+  if (r.status === 0) box(['The password has been reset. Sign in with:', ...String(r.stdout).trim().split('\n'), 'It is shown once: change it under Settings after signing in. Anyone signed in as that account was signed out.', 'Now start game-sauce as usual.']);
+  else box([String(r.stdout || r.stderr).trim().split('\n')[0] || 'The password could not be reset.', `Your data is in: ${home}`]);
+  process.exit(r.status === 0 ? 0 : 1);
+}
+
 // 4. A free port (8765 by default, then the next ones).
 const isFree = (port, host) => new Promise((resolve) => {
   const s = net.createServer().once('error', () => resolve(false)).once('listening', () => s.close(() => resolve(true))).listen(port, host);
@@ -93,6 +118,7 @@ box([
   `Open it here:   ${url}`,
   ...(lanIp ? [`On your network: http://${lanIp}:${port}`] : []),
   ...(firstRun && !shown ? ['First time: sign in with the account shown above.'] : []),
+  ...(!firstRun ? ['Welcome back: sign in with the account you made before.', 'Forgotten the password? Close this and start with  --reset-password  (see READ ME FIRST).'] : []),
   `Your library and accounts are kept in: ${home}`,
   'Stop it with Ctrl+C (or close this window). Start it again the same way.'
 ]);
