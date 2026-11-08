@@ -343,3 +343,38 @@ test('in a conversation, what I wrote is green on the right and what I received 
   assert.doesNotMatch(css.slice(css.indexOf('.msg.mine {'), css.indexOf('.msg.mine {') + 200), /--accent/, 'my bubble is not the accent colour the highlighted conversation uses');
   assert.match(css, /\.msg-conv\.on \{ background: color-mix\(in srgb, var\(--who, var\(--accent, #7c5cff\)\) 18%, transparent\); \}/, 'the highlighted conversation has the same tint as the messages received from that person');
 });
+
+test('a new game-sauce: the admins are told once per version in Messages (from game-sauce, with how to update), and members never see it', async () => {
+  const { noticeFromCheck } = await import('../src/lib/updatenotify.js');
+  db.prepare("DELETE FROM meta WHERE key = 'update_notified'").run();
+  const check = { enabled: true, newer: true, latest: 'v9.9.9', current: '0.3.0', how: 'Download the new installer and run it.' };
+  const first = noticeFromCheck(check);
+  assert.ok(first > 0, 'a notice was made');
+  const seen = (await call('/api/messages/notices', { as: 'admin' })).body.items.find((n) => n.id === first);
+  assert.ok(seen); assert.equal(seen.from, 'game-sauce'); assert.equal(seen.unread, true);
+  assert.match(seen.body, /game-sauce 9\.9\.9 is available \(you have 0\.3\.0\)\. Download the new installer/); assert.ok(!msgs.hasLink(seen.body), 'no link in it');
+  assert.equal((await call('/api/messages/summary', { as: 'admin' })).body.notice.id, first, 'so the admin gets the usual toast and badge');
+  for (const who of ['ann', 'bob', 'pat']) assert.ok(!(await call('/api/messages/notices', { as: who })).body.items.some((n) => n.id === first), who + ' does not see it');
+  assert.equal(noticeFromCheck(check), null, 'the same version is never announced twice');
+  // dismissed, and still not announced again
+  assert.equal((await call(`/api/messages/notices/${first}`, { method: 'DELETE', as: 'admin' })).status, 200);
+  assert.equal(noticeFromCheck(check), null);
+  const next = noticeFromCheck({ ...check, latest: 'v10.0.0' });
+  assert.ok(next > first, 'a later version is a new announcement');
+  assert.equal(noticeFromCheck({ ...check, newer: false }), null); assert.equal(noticeFromCheck(null), null); assert.equal(noticeFromCheck({ newer: true }), null);
+  const admins = db.prepare("SELECT audience FROM notices WHERE id = ?").get(next);
+  assert.equal(admins.audience, 'admins');
+  // an admin's own notice is still for everyone
+  const own = await call('/api/messages/notices', { method: 'POST', body: { body: 'Maintenance at 10' } });
+  assert.ok((await call('/api/messages/notices', { as: 'ann' })).body.items.some((n) => n.id === own.body.id));
+  await call(`/api/messages/notices/${own.body.id}/withdraw`, { method: 'POST' });
+  await call(`/api/messages/notices/${next}/withdraw`, { method: 'POST' });
+});
+
+test('the notifier runs from the server (a first check soon after start, then every six hours) and when an admin looks at the update notice', () => {
+  const srv = read('src/server.js'), app = read('src/app.js'), un = read('src/lib/updatenotify.js');
+  assert.ok(srv.includes('startUpdateNotifier(fetchLatestRelease)'));
+  assert.ok(app.includes("noticeFromCheck(result)"));
+  assert.ok(un.includes('2 * 60 * 1000') && un.includes('6 * 60 * 60 * 1000') && un.includes('.unref()'));
+  assert.ok(read('src/migrations.js').includes("ADD COLUMN audience TEXT NOT NULL DEFAULT 'all'"));
+});

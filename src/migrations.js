@@ -537,6 +537,10 @@ db.exec(`
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '40') ON CONFLICT(key) DO UPDATE SET value = '40'").run();
 
+/* ── v41: a notice can be meant for the admins only ('admins'), such as "a new game-sauce is available". The default, 'all', is what an admin's own notices are. ── */
+if (!db.prepare('PRAGMA table_info(notices)').all().some((c) => c.name === 'audience')) db.exec("ALTER TABLE notices ADD COLUMN audience TEXT NOT NULL DEFAULT 'all'");
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '41') ON CONFLICT(key) DO UPDATE SET value = '41'").run();
+
 /** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
 export function mergePlaystationStores() {
   db.transaction(() => {

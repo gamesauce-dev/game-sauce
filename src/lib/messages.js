@@ -171,6 +171,15 @@ export function recall(me, id) {
 
 /* ───────── notices from the admin ───────── */
 
+/** The sender of a notice the server makes itself (no person wrote it). */
+export const SYSTEM = 0;
+
+/** A notice from the server to the admins only. Returns its id. */
+export function postSystemNotice(body, { hours = NOTICE_DEFAULT_HOURS * 4 } = {}) {
+  const info = db.prepare("INSERT INTO notices (author_id, body, audience, expires_at) VALUES (?, ?, 'admins', datetime('now', ?))").run(SYSTEM, String(body).slice(0, 400), `+${Math.round(hours * 60)} minutes`);
+  return Number(info.lastInsertRowid);
+}
+
 /** A notice to everyone, such as scheduled maintenance. Admin only (the route checks). It lapses after `hours` (default a week). */
 export function postNotice(admin, { body, hours } = {}) {
   const text = cleanText(body);
@@ -185,8 +194,8 @@ export function listNotices(me) {
   db.prepare("DELETE FROM notices WHERE expires_at IS NOT NULL AND expires_at <= datetime('now')").run();
   return db.prepare(`SELECT n.id, n.body, n.created_at, n.expires_at, n.author_id, u.display_name, u.username, COALESCE(s.read_at, '') AS read_at
       FROM notices n LEFT JOIN users u ON u.id = n.author_id LEFT JOIN notice_state s ON s.notice_id = n.id AND s.user_id = ?
-      WHERE COALESCE(s.dismissed, 0) = 0 ORDER BY n.id DESC`).all(me)
-    .map((n) => ({ id: n.id, body: n.body, at: n.created_at, until: n.expires_at, from: n.display_name || n.username || 'Admin', unread: !n.read_at, mine: n.author_id === me }));
+      WHERE COALESCE(s.dismissed, 0) = 0 AND (n.audience = 'all' OR (SELECT role FROM users WHERE id = ?) = 'admin') ORDER BY n.id DESC`).all(me, me)
+    .map((n) => ({ id: n.id, body: n.body, at: n.created_at, until: n.expires_at, from: n.author_id === SYSTEM ? 'game-sauce' : n.display_name || n.username || 'Admin', unread: !n.read_at, mine: n.author_id === me }));
 }
 const noticeExists = (id) => db.prepare('SELECT id FROM notices WHERE id = ?').get(Number(id));
 export function markNoticeRead(me, id) {

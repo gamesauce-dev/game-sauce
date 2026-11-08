@@ -98,7 +98,9 @@ export function createApp() {
   api.get('/admin/update-check', requireAuth, requireAdmin, async (req, res) => {
     const { checkForUpdate } = await import('./lib/updatecheck.js');
     const { fetchLatestRelease } = await import('./routes/emulators.js');
-    res.json(await checkForUpdate(fetchLatestRelease));
+    const result = await checkForUpdate(fetchLatestRelease);
+    (await import('./lib/updatenotify.js')).noticeFromCheck(result);   // the first admin to look also gets it in Messages, if the timer has not already
+    res.json(result);
   });
 
   // Duplicate finder (read-only, admin): see src/lib/duplicates.js. Hiding the extras uses /roms/bulk/hide.
