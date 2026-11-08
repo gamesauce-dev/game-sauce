@@ -1,0 +1,299 @@
+#!/usr/bin/env node
+// game-sauce launcher: runs on the PC you play on (not on the server).
+//
+// The "Play locally" button in game-sauce opens a link like
+//     gamesauce://launch?server=http://host:3000&token=...&platform=snes&ext=.sfc&title=Some+Game
+// and the operating system hands that link to this program (see install-windows.bat / install-linux.sh).
+// It then:
+//   1. checks the server is one YOU listed in your config (a stray link cannot make it fetch from anywhere),
+//   2. downloads the ROM with the one-time token into a fresh temporary folder,
+//   3. starts the emulator YOU configured for that platform, with the ROM path,
+//   4. waits for the emulator to close, then deletes the temporary copy.
+//
+// No dependencies: Node 18 or newer. The emulator is only ever started from your own config file, never from anything
+// in the link, and never through a shell.
+
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { pathToFileURL } from 'node:url';
+
+export const TEMP_PREFIX = 'gamesauce-launch-';
+const STALE_MS = 24 * 60 * 60 * 1000;
+
+const homeDir = () => path.join(os.homedir(), '.gamesauce');
+export const configPath = () => process.env.GAMESAUCE_LAUNCHER_CONFIG || path.join(homeDir(), 'launcher.json');
+const logPath = () => process.env.GAMESAUCE_LAUNCHER_LOG || path.join(homeDir(), 'launcher.log');
+const tempParent = () => process.env.GAMESAUCE_LAUNCHER_TMP || os.tmpdir();
+const rescueParent = () => process.env.GAMESAUCE_LAUNCHER_RESCUE || path.join(homeDir(), 'rescued');
+
+/* ───────────────────────────── logging / messages ───────────────────────────── */
+
+function log(line) {
+  const text = `${new Date().toISOString()} ${line}`;
+  try { process.stderr.write(text + '\n'); } catch { /* no console when started by the OS */ }
+  try {
+    fs.mkdirSync(path.dirname(logPath()), { recursive: true });
+    // Keep the log small: when it passes 200 KB, start again.
+    try { if (fs.statSync(logPath()).size > 200 * 1024) fs.writeFileSync(logPath(), ''); } catch { /* not there yet */ }
+    fs.appendFileSync(logPath(), text + '\n');
+  } catch { /* logging must never stop a launch */ }
+}
+
+/** Tell the person something went wrong. The OS starts this program without a window, so a silent failure looks like
+ *  "nothing happened". Best effort: any failure here is ignored. */
+function notify(message) {
+  if (process.env.GAMESAUCE_LAUNCHER_QUIET === '1') return;
+  const text = String(message).replace(/['"`$\r\n]+/g, ' ').slice(0, 300);
+  try {
+    let cmd, args;
+    if (process.platform === 'win32') {
+      cmd = 'powershell.exe';
+      args = ['-NoProfile', '-WindowStyle', 'Hidden', '-Command',
+        `Add-Type -AssemblyName PresentationFramework; [void][System.Windows.MessageBox]::Show('${text}', 'game-sauce launcher')`];
+    } else if (process.platform === 'darwin') {
+      cmd = 'osascript';
+      args = ['-e', `display notification "${text}" with title "game-sauce launcher"`];
+    } else {
+      cmd = 'notify-send';
+      args = ['game-sauce launcher', text];
+    }
+    const c = spawn(cmd, args, { stdio: 'ignore', detached: true });
+    c.on('error', () => {});
+    c.unref();
+  } catch { /* ignore */ }
+}
+
+class LaunchError extends Error {}
+
+/* ───────────────────────────── the link ───────────────────────────── */
+
+export function normalizeOrigin(value) {
+  try {
+    const u = new URL(String(value));
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.origin.toLowerCase();
+  } catch { return null; }
+}
+
+/** Read and validate a gamesauce:// link. Throws LaunchError on anything unexpected. */
+export function parseLaunchUrl(raw) {
+  let u;
+  try { u = new URL(String(raw)); } catch { throw new LaunchError('That is not a valid gamesauce:// link.'); }
+  if (u.protocol !== 'gamesauce:' || u.hostname !== 'launch') throw new LaunchError('That is not a game-sauce launch link.');
+  const q = u.searchParams;
+  const server = normalizeOrigin(q.get('server'));
+  const token = String(q.get('token') || '');
+  const platform = String(q.get('platform') || '').toLowerCase();
+  let ext = String(q.get('ext') || '').toLowerCase();
+  const title = String(q.get('title') || 'game');
+  if (!server) throw new LaunchError('The link has no valid server address.');
+  if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) throw new LaunchError('The link has no valid launch token.');
+  if (!/^[a-z0-9_-]{1,40}$/.test(platform)) throw new LaunchError('The link has no valid platform.');
+  if (!/^\.[a-z0-9]{1,8}$/.test(ext)) ext = '';
+  return { server, token, platform, ext, title };
+}
+
+/** A safe file name for the temporary copy: the game's title (some emulators guess the system from the name) plus extension. */
+export function safeFileName(title, ext) {
+  const base = String(title || 'game').replace(/[^\w .()\-\[\]]+/g, '_').replace(/^[ .]+|[ .]+$/g, '').slice(0, 80) || 'game';
+  return base + (ext || '');
+}
+
+/* ───────────────────────────── config ───────────────────────────── */
+
+const TEMPLATE = {
+  _help: 'servers: the game-sauce addresses this launcher may download from. emulators: one entry per platform slug (e.g. nes, snes, gba, genesis, ps1). command = full path to the emulator program; args = its arguments, where {rom} is replaced by the ROM path (added at the end if you leave it out). Set "deleteOnExit": false for an emulator that hands over to another process and returns straight away.',
+  servers: [],
+  emulators: {
+    snes: { command: 'C:\\Emulators\\Snes9x\\snes9x-x64.exe', args: ['{rom}'] },
+    gba: { command: '/usr/bin/mgba-qt', args: ['{rom}'] },
+    nes: { command: 'C:\\Emulators\\RetroArch\\retroarch.exe', args: ['-L', 'C:\\Emulators\\RetroArch\\cores\\fceumm_libretro.dll', '{rom}'], deleteOnExit: true }
+  }
+};
+
+export function writeTemplate(file) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(TEMPLATE, null, 2) + '\n', { flag: 'wx' });
+}
+
+export function loadConfig(file) {
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw new LaunchError(`Cannot read ${file}: ${e.message}`);
+  }
+  let cfg;
+  try { cfg = JSON.parse(text); } catch (e) { throw new LaunchError(`${file} is not valid JSON (${e.message}). Common causes: a missing or doubled quote, or a single backslash in a Windows path (write \\\\ or use / instead).`); }
+  if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) throw new LaunchError(`${file} must be a JSON object.`);
+  const servers = (Array.isArray(cfg.servers) ? cfg.servers : []).map(normalizeOrigin).filter(Boolean);
+  const emulators = cfg.emulators && typeof cfg.emulators === 'object' ? cfg.emulators : {};
+  return { servers, emulators };
+}
+
+/** The command line for a ROM: the configured command, its args with {rom} / {romdir} filled in. No shell is involved. */
+export function buildCommand(entry, romPath) {
+  if (!entry || typeof entry.command !== 'string' || !entry.command.trim()) throw new LaunchError('This platform has no "command" in the config.');
+  const rawArgs = entry.args === undefined ? ['{rom}'] : entry.args;
+  if (!Array.isArray(rawArgs) || rawArgs.some((a) => typeof a !== 'string')) throw new LaunchError('"args" must be a list of strings.');
+  const sub = (a) => a.replaceAll('{rom}', romPath).replaceAll('{romdir}', path.dirname(romPath));
+  const args = rawArgs.map(sub);
+  if (!rawArgs.some((a) => a.includes('{rom}'))) args.push(romPath);
+  return { command: entry.command, args };
+}
+
+/* ───────────────────────────── download, run, clean up ───────────────────────────── */
+
+function removeDir(dir) {
+  try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); return true; } catch (e) {
+    log(`Could not delete ${dir}: ${e.message}`);
+    return false;
+  }
+}
+
+/** Some emulators write saves and save states next to the ROM they were given, which here is the temporary copy. Anything in
+ *  the temporary folder besides the ROM itself is copied to ~/.gamesauce/rescued/<title>-<time>/ before the folder is deleted,
+ *  so it is not lost. Returns { dest, count } or null when there was nothing. Throws if the copy fails. */
+export function rescueExtras(dir, romPath, title) {
+  const extras = [];
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (p !== romPath) extras.push(p);
+    }
+  };
+  walk(dir);
+  if (!extras.length) return null;
+  const dest = path.join(rescueParent(), `${safeFileName(title, '')}-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+  for (const p of extras) {
+    const to = path.join(dest, path.relative(dir, p));
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(p, to);
+  }
+  return { dest, count: extras.length };
+}
+
+/** Remove temporary folders an earlier run left behind (a crash, a power cut). Only ours, only old ones. */
+export function sweepStale(parent = tempParent(), now = Date.now()) {
+  let removed = 0;
+  let names = [];
+  try { names = fs.readdirSync(parent); } catch { return 0; }
+  for (const name of names) {
+    if (!name.startsWith(TEMP_PREFIX)) continue;
+    const dir = path.join(parent, name);
+    try {
+      if (now - fs.statSync(dir).mtimeMs > STALE_MS && removeDir(dir)) removed++;
+    } catch { /* gone already */ }
+  }
+  return removed;
+}
+
+async function download(server, token, destFile) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 30_000); // time to get a response; the body itself may take as long as it needs
+  let res;
+  try {
+    res = await fetch(`${server}/api/launch/${encodeURIComponent(token)}`, { signal: ctl.signal });
+  } catch (e) {
+    throw new LaunchError(`Could not reach ${server}: ${e.cause?.code || e.message}`);
+  } finally { clearTimeout(timer); }
+  if (!res.ok) {
+    let why = `HTTP ${res.status}`;
+    try { why = (await res.json()).error || why; } catch { /* not JSON */ }
+    throw new LaunchError(why);
+  }
+  if (!res.body) throw new LaunchError('The server sent an empty answer.');
+  await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(destFile));
+  if (fs.statSync(destFile).size === 0) throw new LaunchError('The downloaded ROM is empty.');
+}
+
+function waitForExit(child) {
+  return new Promise((resolve) => {
+    child.once('error', (error) => resolve({ error }));
+    child.once('close', (code, signal) => resolve({ code, signal }));
+  });
+}
+
+/** Do one launch from a gamesauce:// link. Resolves to a short result object; throws LaunchError for problems to show the person. */
+export async function launch(rawUrl, { configFile = configPath() } = {}) {
+  const link = parseLaunchUrl(rawUrl);
+
+  const cfg = loadConfig(configFile);
+  if (!cfg) {
+    try { writeTemplate(configFile); } catch { /* ignore */ }
+    throw new LaunchError(`No config yet. I created ${configFile}. Add "${link.server}" to "servers" and set your emulators, then click Play locally again.`);
+  }
+  if (!cfg.servers.includes(link.server)) {
+    throw new LaunchError(`${link.server} is not listed under "servers" in ${configFile}. Add it there if you trust it.`);
+  }
+  const entry = cfg.emulators[link.platform];
+  if (!entry) throw new LaunchError(`No emulator is set for "${link.platform}" in ${configFile}.`);
+
+  sweepStale();
+
+  const dir = fs.mkdtempSync(path.join(tempParent(), TEMP_PREFIX));
+  const romPath = path.join(dir, safeFileName(link.title, link.ext));
+  let child = null;
+  const onSignal = (sig) => {
+    try { child?.kill(); } catch { /* already gone */ }
+    removeDir(dir);
+    process.exit(sig === 'SIGINT' ? 130 : 143);
+  };
+  process.once('SIGINT', onSignal);
+  process.once('SIGTERM', onSignal);
+
+  try {
+    log(`Downloading "${link.title}" (${link.platform}) from ${link.server}`);
+    await download(link.server, link.token, romPath);
+
+    const { command, args } = buildCommand(entry, romPath);
+    log(`Starting ${command}`);
+    child = spawn(command, args, {
+      stdio: 'ignore',
+      cwd: path.isAbsolute(command) && fs.existsSync(path.dirname(command)) ? path.dirname(command) : undefined
+    });
+    const r = await waitForExit(child);
+    if (r.error) throw new LaunchError(`Could not start ${command}: ${r.error.code === 'ENOENT' ? 'file not found' : r.error.message}`);
+    log(`Emulator closed (${r.signal ? `signal ${r.signal}` : `exit code ${r.code}`})`);
+    return { ok: true, code: r.code, signal: r.signal };
+  } finally {
+    process.removeListener('SIGINT', onSignal);
+    process.removeListener('SIGTERM', onSignal);
+    if (entry.deleteOnExit === false) log(`Kept ${dir} ("deleteOnExit" is false for ${link.platform})`);
+    else {
+      let keep = false;
+      try {
+        const r = rescueExtras(dir, romPath, link.title);
+        if (r) log(`The emulator wrote ${r.count} file(s) next to the ROM (saves?). Copied them to ${r.dest}`);
+      } catch (e) {
+        keep = true; // never delete something we could not copy out
+        log(`Could not copy out files the emulator wrote (${e.message}). Kept ${dir}`);
+      }
+      if (!keep && removeDir(dir)) log('Deleted the temporary ROM copy');
+    }
+  }
+}
+
+/* ───────────────────────────── entry point ───────────────────────────── */
+
+async function main() {
+  const arg = process.argv[2];
+  if (!arg) {
+    console.error('Usage: gamesauce-launcher <gamesauce://launch?...>\nRegister it with install-windows.bat or install-linux.sh so the "Play locally" button can call it.');
+    process.exit(2);
+  }
+  try {
+    await launch(arg);
+  } catch (e) {
+    const msg = e instanceof LaunchError ? e.message : `Unexpected problem: ${e.stack || e.message}`;
+    log(`FAILED: ${msg}`);
+    notify(msg);
+    process.exit(1);
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main();

@@ -24,6 +24,7 @@ import authRouter, {
 } from './routes/auth.js';
 import { audit, bootstrapAdmin, initAuthTables, purgeExpiredSessions } from './auth.js';
 import { originGuard, rateLimit } from './lib/guard.js';
+import { launchFileHandler } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
 // admin catalogue below needs extensions as an array and must be auditable,
@@ -87,6 +88,10 @@ export function createApp() {
   });
 
   api.use('/auth', authRouter);
+
+  // Play locally: the launcher on the user's PC has no session, so the one-time token in the address is its credential
+  // (see src/lib/launch.js). Must stay above requireAuth.
+  api.get('/launch/:token', launchFileHandler);
 
   // Is a newer game-sauce published? Admin only (it is the admin who updates the server). See src/lib/updatecheck.js.
   api.get('/admin/update-check', requireAuth, requireAdmin, async (req, res) => {

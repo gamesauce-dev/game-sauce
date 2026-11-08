@@ -80,7 +80,7 @@ npm run seed     # optional: 25 demo entries so the UI has something to show
 npm start        # http://127.0.0.1:8080
 ```
 
-Node 20+. Data lives in `data/gamesauce.db`; imported files and cached artwork live in `storage/`.
+Node 22+. Data lives in `data/gamesauce.db`; imported files and cached artwork live in `storage/`.
 
 ## How it stores your ROMs
 
@@ -190,6 +190,18 @@ GET    /api/emulators/vault/:id/download     download a vault file
 POST   /api/emulators/vault/upload           multipart { file, name?, platform_slug?, version?, os?, notes? } (admin)
 POST   /api/emulators/vault/from-release     { platform, asset? } — fetch official release into the vault (admin)
 DELETE /api/emulators/vault/:id              remove entry + file (admin)
+```
+
+## Play locally (your own emulator)
+
+The monitor icon in a game's details window opens the game in an emulator installed on the PC you are browsing from.
+A small launcher on that PC downloads a temporary copy, starts the emulator you configured for that platform, and
+deletes the copy when the emulator closes. Set-up, the config file and the safety rules are in
+[docs/LOCAL-LAUNCH.md](docs/LOCAL-LAUNCH.md).
+
+```
+POST   /api/roms/:id/launch                  one-time launch token for this game (download rule applies)
+GET    /api/launch/:token                    the launcher swaps the token for the file, once (no session needed)
 ```
 
 ## DAT files (offline verification)
@@ -512,7 +524,7 @@ To pull in new code later: copy the folder over again, then `docker compose up -
 
 ### Option B — bare Node (Windows 11, Linux, macOS)
 
-Prerequisites: Node.js 20+.
+Prerequisites: Node.js 22+ (the current LTS lines 22, 24 and 26 are tested).
 
 ```bash
 cd game-sauce
@@ -614,7 +626,7 @@ round-tripping, tamper detection, masked secrets, clearing a value, admin-only a
 environment-pinned fields being refused. Further tests cover the scan progress and error handling,
 per-user save states, backups (read back with an independent `tar`, including a real restart that
 restores a backup), custom covers (content-sniffed, kept across refreshes), recently played,
-sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI runs it on Node 20 and 22.
+sessions and the idle timeout, and the MAME rules. Run it with `npm test`; CI runs it on Node 22, 24 and 26.
 
 ## Notes and limits
 

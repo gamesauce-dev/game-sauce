@@ -153,7 +153,7 @@ chown -R gamesauce:gamesauce /opt/game-sauce /var/lib/game-sauce
 
 echo "• Installing dependencies (compiles the SQLite module if needed)…"
 cd /opt/game-sauce
-runuser -u gamesauce -- npm ci --omit=dev --no-audit --no-fund >/dev/null
+runuser -u gamesauce -- npm ci --omit=dev --ignore-scripts --no-audit --no-fund >/dev/null
 
 cat >/etc/game-sauce.env <<ENV
 NODE_ENV=production
@@ -194,7 +194,7 @@ cat >/usr/local/bin/game-sauce-update <<'UPD'
 set -Eeuo pipefail
 cd /opt/game-sauce
 runuser -u gamesauce -- git pull --ff-only
-runuser -u gamesauce -- npm ci --omit=dev --no-audit --no-fund
+runuser -u gamesauce -- npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 systemctl restart game-sauce
 echo "game-sauce updated and restarted."
 UPD
