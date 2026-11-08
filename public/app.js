@@ -3115,12 +3115,17 @@ async function loadPlatformAdmin() {
     byFamily.get(fam).push(p);
   }
 
+  // What each platform looks like, shown on its row without opening Edit: its colour (the swatch, with the code as the hover text and in the line below) and its logo.
+  const hexOk = (c) => /^#[0-9a-f]{6}$/i.test(c || '');
+  const logoHtml = (slug, v, plate) => (v ? `<span class="lib-logo plat-logo${plate ? ' on-plate' : ''}"><img src="/api/platforms/${encodeURIComponent(slug)}/logo?v=${v}" alt="" loading="lazy" /></span>` : '<span class="lib-logo plat-logo plat-nologo" title="No logo yet: add one under Edit">no logo</span>');
+  const platId = (p) => `<span class="plat-id" data-plat-id>${hexOk(p.accent) ? `<i class="plat-swatch" style="background:${esc(p.accent)}" title="Colour ${esc(p.accent)}" aria-label="Colour ${esc(p.accent)}"></i>` : '<i class="plat-swatch none" title="No colour set" aria-label="No colour set"></i>'}${logoHtml(p.slug, p.logo_v, p.logo_plate)}</span>`;
   list.innerHTML = [...byFamily.entries()].map(([fam, plats]) => `
     <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <input type="color" class="fam-colour" data-fam-colour="${esc(fam)}" value="${esc(/^#[0-9a-f]{6}$/i.test(plats[0]?.family_colour || '') ? plats[0].family_colour : '#6b7280')}" title="The colour of the ${esc(fam)} chip (the platform chips keep their own colours)" aria-label="Colour of the ${esc(fam)} family" /> <button class="btn btn-sm btn-ghost" data-fam-colour-reset="${esc(fam)}" title="Back to the default colour for this family">Reset colour</button> <span class="lib-logo fam-logo-box" data-famlogo-box="${esc(fam)}">${plats[0]?.family_logo_v ? `<img src="/api/platforms/families/logo?family=${encodeURIComponent(fam)}&v=${plats[0].family_logo_v}" alt="" />` : ''}</span> <label class="btn btn-sm btn-ghost" data-famlogo-pick="${esc(fam)}" title="A logo for the ${esc(fam)} family, shown in the Library when several of its platforms are picked (optional; the system supplies none)">Logo<input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,.svg" hidden data-famlogo-file="${esc(fam)}" /></label> <button class="btn btn-sm btn-ghost" data-famlogo-remove="${esc(fam)}" ${plats[0]?.family_logo_v ? '' : 'hidden'} title="Remove the family logo">Remove logo</button> <label class="policy-row fam-plate" ${plats[0]?.family_logo_v ? '' : 'hidden'} title="For a logo drawn in black that vanishes on the dark theme: show it on a light plate when the theme is dark" style="margin:0"><input type="checkbox" data-famlogo-plate="${esc(fam)}" ${plats[0]?.family_logo_plate ? 'checked' : ''} /> <span>Light backing in dark mode</span></label> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
     ${plats.map((p) => `
       <div class="result-row ok" data-platform="${esc(p.slug)}" style="align-items:flex-start">
         <span class="status"></span>
-        <span class="name">${esc(p.name)}<br /><span class="note">slug: ${esc(p.slug)} · ext: ${esc((p.extensions || []).join(', ') || '—')} · SS: ${p.screenscraper_id ?? '—'} · TGDB: ${p.tgdb_id ?? '—'}</span></span>
+        ${platId(p)}
+        <span class="name">${esc(p.name)}<br /><span class="note">slug: ${esc(p.slug)} · colour: ${esc(hexOk(p.accent) ? p.accent : '—')} · ext: ${esc((p.extensions || []).join(', ') || '—')} · SS: ${p.screenscraper_id ?? '—'} · TGDB: ${p.tgdb_id ?? '—'}</span></span>
         <span class="note">
           <button class="btn btn-sm" data-pact="edit">Edit</button>
           <button class="btn btn-sm btn-danger" data-pact="delete">Delete</button>
@@ -3218,22 +3223,23 @@ async function loadPlatformAdmin() {
     }));
     // Logo: uploads at once (it is not part of the Save button), with the server's reason if it is refused.
     const logoFile = host.querySelector('[data-logo-file]'), logoBox = host.querySelector('[data-logo-box]'), logoRm = host.querySelector('[data-logo-remove]');
+    const repaintRowLogo = (v, plate) => { const t = list.querySelector(`[data-platform="${CSS.escape(slug)}"] .plat-logo`); if (t) t.outerHTML = logoHtml(slug, v, plate); };
     logoFile?.addEventListener('change', async () => {
       const f = logoFile.files?.[0]; if (!f) return;
       const fd = new FormData(); fd.append('logo', f);
       try {
         const j = await api(`/platforms/${encodeURIComponent(slug)}/logo`, { method: 'POST', body: fd });
         logoBox.innerHTML = `<img src="/api/platforms/${encodeURIComponent(slug)}/logo?v=${j.logo_v}" alt="" />`; logoRm.hidden = false; host.querySelector('[data-logo-plate-row]').hidden = false;
-        toast('Logo saved'); loadPlatforms();
+        repaintRowLogo(j.logo_v, host.querySelector('[data-logo-plate]')?.checked); toast('Logo saved'); loadPlatforms();
       } catch (err) { toast(err.message, true); }
       logoFile.value = '';
     });
     host.querySelector('[data-logo-plate]')?.addEventListener('change', async (e) => {
-      try { await api(`/platforms/${encodeURIComponent(slug)}/logo/plate`, { method: 'PUT', body: JSON.stringify({ plate: e.target.checked }) }); toast(e.target.checked ? 'Light backing on in dark mode' : 'Light backing off'); loadPlatforms(); }
+      try { await api(`/platforms/${encodeURIComponent(slug)}/logo/plate`, { method: 'PUT', body: JSON.stringify({ plate: e.target.checked }) }); list.querySelector(`[data-platform="${CSS.escape(slug)}"] .plat-logo`)?.classList.toggle('on-plate', e.target.checked); toast(e.target.checked ? 'Light backing on in dark mode' : 'Light backing off'); loadPlatforms(); }
       catch (err) { e.target.checked = !e.target.checked; toast(err.message, true); }
     });
     logoRm?.addEventListener('click', async () => {
-      try { await api(`/platforms/${encodeURIComponent(slug)}/logo`, { method: 'DELETE' }); logoBox.innerHTML = '<i class="note">none</i>'; logoRm.hidden = true; host.querySelector('[data-logo-plate-row]').hidden = true; toast('Logo removed'); loadPlatforms(); }
+      try { await api(`/platforms/${encodeURIComponent(slug)}/logo`, { method: 'DELETE' }); logoBox.innerHTML = '<i class="note">none</i>'; logoRm.hidden = true; host.querySelector('[data-logo-plate-row]').hidden = true; repaintRowLogo(null, false); toast('Logo removed'); loadPlatforms(); }
       catch (err) { toast(err.message, true); }
     });
     host.querySelector('[data-pact="save"]').onclick = async () => {
