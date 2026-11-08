@@ -31,3 +31,6 @@ Thumbs.db
 
 # Play check results (scripts/check-play.mjs)
 play-check/
+
+# Release bundles built by scripts/build-bundle.mjs
+dist/

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>game-sauce</Name>
+  <Repository>ghcr.io/gamesauce-dev/game-sauce:latest</Repository>
+  <Registry>https://github.com/gamesauce-dev/game-sauce/pkgs/container/game-sauce</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/gamesauce-dev/game-sauce/issues</Support>
+  <Project>https://github.com/gamesauce-dev/game-sauce</Project>
+  <Overview>A self-hosted game library for your household: your ROMs, your digital games (PlayStation, Nintendo, Xbox, Steam) and the boxed games on your shelf, with covers and details found for you, play in the browser, and a small private chat between the people in your home. Each person has their own library, favourites and accounts. Your ROM folders are only read, never changed. The first time it starts, sign in with the account shown in the container's log (or the password you set below) and change it under Settings.</Overview>
+  <Category>GameServers: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/unraid/game-sauce.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/public/logo.svg</Icon>
+  <ExtraParams>--user 99:100 --init</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Web UI port" Target="8080" Default="8765" Mode="tcp" Description="The port you open in your browser: http://your-server:8765" Type="Port" Display="always" Required="true" Mask="false">8765</Config>
+  <Config Name="Database and settings" Target="/app/data" Default="/mnt/user/appdata/game-sauce/data" Mode="rw" Description="The library database, accounts and the key that protects stored logins. Keep this private and back it up." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/game-sauce/data</Config>
+  <Config Name="Covers and imported ROMs" Target="/app/storage" Default="/mnt/user/appdata/game-sauce/storage" Mode="rw" Description="Downloaded covers and artwork, plus any ROMs you upload through the page." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/game-sauce/storage</Config>
+  <Config Name="ROM folder (read-only)" Target="/roms" Default="/mnt/user/roms" Mode="ro" Description="Where your ROMs already are. In game-sauce add /roms (or a folder inside it) as a source. It is mounted read-only, so nothing here can be changed." Type="Path" Display="always" Required="false" Mask="false">/mnt/user/roms</Config>
+  <Config Name="Admin username" Target="GAMESAUCE_ADMIN_USER" Default="admin" Mode="" Description="The first account, made the first time it starts (ignored once any account exists)." Type="Variable" Display="always" Required="false" Mask="false">admin</Config>
+  <Config Name="Admin password" Target="GAMESAUCE_ADMIN_PASSWORD" Default="" Mode="" Description="At least 10 characters with a letter and a number. Leave blank and a password is made for you and shown once in the container's log (click the container, then Logs)." Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Secret key (optional)" Target="GAMESAUCE_SECRET_KEY" Default="" Mode="" Description="Optional: your own key for protecting stored logins. Leave blank to have one made and kept in the data folder." Type="Variable" Display="advanced" Required="false" Mask="true"/>
+  <Config Name="IGDB client ID (optional)" Target="IGDB_CLIENT_ID" Default="" Mode="" Description="Optional extra source of game details, free from a Twitch developer app." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="IGDB client secret (optional)" Target="IGDB_CLIENT_SECRET" Default="" Mode="" Description="Goes with the IGDB client ID." Type="Variable" Display="advanced" Required="false" Mask="true"/>
+</Container>

@@ -9,6 +9,15 @@ Works on Windows 11, Linux, and macOS. One service, one SQLite file, no build st
 
 ---
 
+## Easier ways to install
+
+- **A download, nothing to install** (Windows, Apple Silicon Mac, Linux, Raspberry Pi): get the file for your system from the project's *Releases* page, unpack it and double-click **Start**. It carries its own Node.js, and your library is kept outside the folder, so updating is just unpacking the new version. It is built by `scripts/build-bundle.mjs` and published by `.github/workflows/release.yml` on each version tag.
+- **Docker, no build:** `install/docker-compose.ghcr.yml` uses the published image.
+- **Unraid:** see [UNRAID.md](UNRAID.md): one command adds a template, then it is a click to install.
+- **Proxmox:** `install/proxmox-lxc.sh`.
+
+---
+
 ## 1. What you're deploying
 
 - **App:** Node 22 + Express + SQLite (`better-sqlite3`)
