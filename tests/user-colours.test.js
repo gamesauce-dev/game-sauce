@@ -118,8 +118,8 @@ test('an account\'s colour is in the admin screens and the chat uses it for the 
 test('adding by hand: the form stays open when the window is pinned, and keeps the platform and region/country until it closes', () => {
   for (const [file, keep, id] of [['public/physical.js', 'region', 'ph-add'], ['public/digital.js', 'country', 'dg-add']]) {
     const s = read(file);
-    assert.match(s, /let lastAdd = \{ platform: '', /); assert.match(s, new RegExp(`value="\$\{esc\(lastAdd\.${keep}\)\}"`));
+    assert.match(s, /let lastAdd = \{ platform: '', /); assert.ok(s.includes('value="${esc(lastAdd.' + keep + ')}"'), file + ': the field starts with the last value');
     assert.match(s, /if \(again \|\| ctx\.pinned\(\)\)/, file + ': pinned keeps the form open');
-    assert.match(s, new RegExp(`!\$\('#${id}'\)\) lastAdd = `), file + ': opened afresh forgets the last one');
+    assert.ok(s.includes("!$('#" + id + "')) lastAdd = "), file + ': opened afresh forgets the last one');
   }
 });
