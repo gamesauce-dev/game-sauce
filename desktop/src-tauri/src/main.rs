@@ -16,9 +16,13 @@ use std::{
     time::{Duration, Instant},
 };
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
-    AppHandle, Manager, RunEvent,
+    menu::{MenuBuilder, MenuItem, MenuItemBuilder},
+    AppHandle, Manager, RunEvent, Wry,
 };
+#[cfg(target_os = "macos")]
+use tauri::menu::SubmenuBuilder;
+#[cfg(not(target_os = "macos"))]
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 struct Config {
@@ -31,6 +35,7 @@ struct Config {
 struct AppState {
     server: Mutex<Option<Child>>,
     home_url: Mutex<String>, // the app's own start page, to come back to when switching server
+    status: Mutex<Option<MenuItem<Wry>>>, // the line in the tray menu that says where game-sauce is running (Windows and Linux)
 }
 
 #[derive(Serialize)]
@@ -47,6 +52,9 @@ fn clean(p: PathBuf) -> PathBuf {
 }
 
 fn config_path(app: &AppHandle) -> PathBuf {
+    if let Ok(d) = std::env::var("GAMESAUCE_DESKTOP_CONFIG") {
+        return clean(PathBuf::from(d)).join("desktop.json"); // for testing: keep the saved choice somewhere else
+    }
     app.path().app_config_dir().unwrap_or_else(|_| PathBuf::from(".")).join("desktop.json")
 }
 
@@ -156,7 +164,53 @@ fn start_server(app: &AppHandle, lan: bool) -> Result<Started, String> {
         std::thread::sleep(Duration::from_millis(300));
     }
     let (username, password) = creds.lock().unwrap().clone();
+    match (lan, lan_ip()) {
+        (true, Some(ip)) => set_status(app, &format!("On your network: http://{ip}:{port}")),
+        _ => set_status(app, &format!("On this computer only: {url}")),
+    }
     Ok(Started { url, username, password })
+}
+
+/// The address other devices on the home network would use: the computer's own address on the network it reaches the internet through.
+fn lan_ip() -> Option<String> {
+    let s = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    s.connect("8.8.8.8:80").ok()?; // nothing is sent: this only picks the network interface
+    Some(s.local_addr().ok()?.ip().to_string())
+}
+
+fn set_status(app: &AppHandle, text: &str) {
+    if let Some(item) = app.state::<AppState>().status.lock().unwrap().as_ref() {
+        let _ = item.set_text(text);
+    }
+}
+
+fn show_main(app: &AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.unminimize();
+        let _ = w.show();
+        let _ = w.set_focus();
+    }
+}
+
+/// The menu entries (the menu bar on a Mac, the tray icon's menu on Windows and Linux).
+fn handle_menu(app: &AppHandle, id: &str) {
+    match id {
+        "open" => show_main(app),
+        "switch" => {
+            let st = app.state::<AppState>();
+            stop_server(&st);
+            write_config(app, &Config::default());
+            set_status(app, "Choose a server");
+            show_main(app);
+            if let Some(w) = app.get_webview_window("main") {
+                let home = st.home_url.lock().unwrap().clone();
+                let _ = w.eval(&format!("location.replace({})", serde_json::to_string(&home).unwrap_or_default()));
+            }
+        }
+        "data" => open_folder(data_home(app)),
+        "quit" => app.exit(0),
+        _ => {}
+    }
 }
 
 fn normalise(url: &str) -> Result<String, String> {
@@ -195,6 +249,7 @@ async fn use_remote(app: AppHandle, url: String) -> Result<String, String> {
     let u = url.clone();
     tauri::async_runtime::spawn_blocking(move || probe(&u)).await.map_err(|e| e.to_string())??;
     stop_server(&app.state::<AppState>());
+    set_status(&app, &format!("Connected to {url}"));
     write_config(&app, &Config { mode: Some("remote".into()), remote_url: Some(url.clone()), lan: false });
     Ok(url)
 }
@@ -207,7 +262,7 @@ fn open_folder(path: PathBuf) {
 
 fn main() {
     tauri::Builder::default()
-        .manage(AppState { server: Mutex::new(None), home_url: Mutex::new(String::new()) })
+        .manage(AppState { server: Mutex::new(None), home_url: Mutex::new(String::new()), status: Mutex::new(None) })
         .invoke_handler(tauri::generate_handler![get_config, use_local, use_remote])
         .setup(|app| {
             if let Some(w) = app.get_webview_window("main") {
@@ -218,23 +273,38 @@ fn main() {
             let switch = MenuItemBuilder::with_id("switch", "Switch server…").build(app)?;
             let data = MenuItemBuilder::with_id("data", "Open my data folder").build(app)?;
             let quit = MenuItemBuilder::with_id("quit", "Quit").accelerator("CmdOrCtrl+Q").build(app)?;
-            let game = SubmenuBuilder::new(app, "game-sauce").item(&switch).item(&data).separator().item(&quit).build()?;
-            let edit = SubmenuBuilder::new(app, "Edit").undo().redo().separator().cut().copy().paste().select_all().build()?;
-            app.set_menu(MenuBuilder::new(app).item(&game).item(&edit).build()?)?;
-            app.on_menu_event(|app, ev| match ev.id().as_ref() {
-                "switch" => {
-                    let st = app.state::<AppState>();
-                    stop_server(&st);
-                    write_config(app, &Config::default());
-                    if let Some(w) = app.get_webview_window("main") {
-                        let home = st.home_url.lock().unwrap().clone();
-                        let _ = w.eval(&format!("location.replace({})", serde_json::to_string(&home).unwrap_or_default()));
-                    }
+
+            // Mac: the menu at the top of the screen, as Mac apps have.
+            #[cfg(target_os = "macos")]
+            {
+                let game = SubmenuBuilder::new(app, "game-sauce").item(&switch).item(&data).separator().item(&quit).build()?;
+                let edit = SubmenuBuilder::new(app, "Edit").undo().redo().separator().cut().copy().paste().select_all().build()?;
+                app.set_menu(MenuBuilder::new(app).item(&game).item(&edit).build()?)?;
+                app.on_menu_event(|app, ev| handle_menu(app, ev.id().as_ref()));
+            }
+
+            // Windows and Linux: no menu bar in the window; a small icon in the tray (notification area) instead.
+            #[cfg(not(target_os = "macos"))]
+            {
+                let status = MenuItemBuilder::with_id("status", "Not started yet").enabled(false).build(app)?;
+                let open = MenuItemBuilder::with_id("open", "Open game-sauce").build(app)?;
+                let menu = MenuBuilder::new(app).item(&open).separator().item(&status).separator().item(&switch).item(&data).separator().item(&quit).build()?;
+                *app.state::<AppState>().status.lock().unwrap() = Some(status);
+                let mut tray = TrayIconBuilder::with_id("tray")
+                    .tooltip("game-sauce")
+                    .menu(&menu)
+                    .show_menu_on_left_click(false)
+                    .on_menu_event(|app, ev| handle_menu(app, ev.id().as_ref()))
+                    .on_tray_icon_event(|tray, ev| {
+                        if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = ev {
+                            show_main(tray.app_handle());
+                        }
+                    });
+                if let Some(icon) = app.default_window_icon() {
+                    tray = tray.icon(icon.clone());
                 }
-                "data" => open_folder(data_home(app)),
-                "quit" => app.exit(0),
-                _ => {}
-            });
+                tray.build(app)?;
+            }
             Ok(())
         })
         .build(tauri::generate_context!())

@@ -120,3 +120,13 @@ test('the Linux AppImage is optional (the .deb is required), and linuxdeploy can
   assert.ok(y.includes('APPIMAGE_EXTRACT_AND_RUN: 1'), 'the packaging tool is itself an AppImage: it unpacks itself instead of needing FUSE');
   assert.ok(y.includes('NO_STRIP: true'));
 });
+
+test('the desktop app: a menu bar on a Mac, a tray icon (not a menu bar) on Windows and Linux, with the same entries and the address it is running on', () => {
+  const rs = read('desktop/src-tauri/src/main.rs');
+  assert.match(read('desktop/src-tauri/Cargo.toml'), /features = \["tray-icon"\]/);
+  assert.ok(rs.includes('#[cfg(target_os = "macos")]') && rs.includes('#[cfg(not(target_os = "macos"))]'));
+  for (const id of ['"open"', '"switch"', '"data"', '"quit"']) assert.ok(rs.includes(id), id);
+  assert.ok(rs.includes('TrayIconBuilder') && rs.includes('fn lan_ip') && rs.includes('On your network: http://'));
+  assert.ok(rs.includes('GAMESAUCE_DESKTOP_CONFIG'), 'tests can keep their saved choice apart from the real one');
+  assert.match(read('docs/DESKTOP.md'), /tray/);
+});
