@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>game-sauce</title>
+<style>
+  :root { --bg:#0b0e14; --panel:#12141b; --line:#262b3a; --text:#e8ebf4; --dim:#98a1b8; --accent:#7c5cff; --bad:#ff6b81; color-scheme: dark; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f2f4fa; --panel:#fff; --line:#d5daea; --text:#171b2b; --dim:#566080; color-scheme: light; } }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, "Segoe UI", sans-serif; }
+  main { width:min(640px,100%); }
+  .brand { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+  .brand img { width:56px; height:56px; }
+  h1 { margin:0; font-size:1.7rem; letter-spacing:.01em; }
+  .sub { color:var(--dim); margin:0 0 22px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin-bottom:14px; }
+  .card h2 { margin:0 0 4px; font-size:1.05rem; }
+  .card p { margin:0 0 12px; color:var(--dim); }
+  label.row { display:flex; gap:8px; align-items:center; margin:0 0 12px; color:var(--dim); font-size:.92rem; }
+  input[type=text] { width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--line); background:transparent; color:var(--text); font:inherit; margin-bottom:12px; }
+  button { padding:10px 18px; border-radius:9px; border:1px solid var(--line); background:transparent; color:var(--text); font:inherit; cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button:disabled { opacity:.55; cursor:default; }
+  .msg { min-height:1.4em; margin:4px 0 0; color:var(--dim); }
+  .msg.bad { color:var(--bad); }
+  .cred { font-family: ui-monospace, Consolas, monospace; background:rgba(127,127,127,.14); border-radius:9px; padding:10px 12px; margin:0 0 12px; user-select:all; word-break:break-all; }
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:s .8s linear infinite; vertical-align:-2px; margin-right:8px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><img src="logo.svg" alt="" /><h1>game-sauce</h1></div>
+  <p class="sub" id="sub">Your household game library.</p>
+
+  <section id="working" class="card hidden"><p style="margin:0"><span class="spin"></span><span id="working-text">Starting…</span></p></section>
+
+  <section id="choose" class="hidden">
+    <div class="card">
+      <h2>Run game-sauce on this computer</h2>
+      <p>Starts the library here, inside this app. Your games and accounts are kept in a <b>game-sauce-data</b> folder in your home folder.</p>
+      <label class="row"><input type="checkbox" id="lan" /> Let phones, TVs and other computers on my home network use it too</label>
+      <button class="primary" id="go-local">Start here</button>
+    </div>
+    <div class="card">
+      <h2>Connect to a game-sauce server</h2>
+      <p>Already running game-sauce somewhere else (Docker, Unraid, another PC)? Type its address.</p>
+      <input type="text" id="remote" placeholder="http://192.168.1.20:8765" autocomplete="off" spellcheck="false" />
+      <button class="primary" id="go-remote">Connect</button>
+    </div>
+    <p class="msg" id="msg"></p>
+  </section>
+
+  <section id="first" class="card hidden">
+    <h2>Your first account</h2>
+    <p>This is the account that was made for you. It is shown <b>once</b>: copy it somewhere safe, then change the password under Settings after you sign in.</p>
+    <div class="cred" id="cred"></div>
+    <button id="copy">Copy</button>
+    <button class="primary" id="continue">I have saved it, continue</button>
+  </section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const invoke = (...a) => window.__TAURI__.core.invoke(...a);
+const show = (id) => { for (const s of ['working', 'choose', 'first']) $('#' + s).classList.toggle('hidden', s !== id); };
+const say = (t, bad) => { const m = $('#msg'); m.textContent = t || ''; m.classList.toggle('bad', !!bad); };
+const working = (t) => { $('#working-text').textContent = t; show('working'); };
+
+async function local(lan) {
+  working('Starting game-sauce… the first time takes a few seconds');
+  try {
+    const r = await invoke('use_local', { lan });
+    if (r.password) {
+      $('#cred').textContent = `username: ${r.username || 'admin'}\npassword: ${r.password}`;
+      $('#cred').style.whiteSpace = 'pre';
+      $('#copy').onclick = async () => { try { await navigator.clipboard.writeText(`${r.username || 'admin'} / ${r.password}`); $('#copy').textContent = 'Copied'; } catch { $('#copy').textContent = 'Select and copy it by hand'; } };
+      $('#continue').onclick = () => { location.href = r.url; };
+      show('first');
+    } else location.href = r.url;
+  } catch (e) { show('choose'); say(String(e), true); }
+}
+async function remote(url) {
+  working('Connecting…');
+  try { location.href = await invoke('use_remote', { url }); }
+  catch (e) { show('choose'); say(String(e), true); }
+}
+
+$('#go-local').onclick = () => local($('#lan').checked);
+$('#go-remote').onclick = () => remote($('#remote').value);
+$('#remote').addEventListener('keydown', (e) => { if (e.key === 'Enter') remote($('#remote').value); });
+
+(async () => {
+  let c = {};
+  try { c = await invoke('get_config'); } catch { /* shown as the chooser */ }
+  if (c.lan) $('#lan').checked = true;
+  if (c.remote_url) $('#remote').value = c.remote_url;
+  if (c.mode === 'local') return local(!!c.lan);
+  if (c.mode === 'remote' && c.remote_url) return remote(c.remote_url);
+  show('choose');
+})();
+</script>
+</body>
+</html>

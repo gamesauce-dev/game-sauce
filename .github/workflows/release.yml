@@ -3,7 +3,8 @@ name: Release
 # Pushing a version tag (git tag v0.3.0 && git push origin v0.3.0) builds the downloads and publishes a GitHub Release:
 #   game-sauce-vX.Y.Z-windows-x64.zip     game-sauce-vX.Y.Z-macos-arm64.tar.gz (Apple Silicon)
 #   game-sauce-vX.Y.Z-linux-x64.tar.gz    game-sauce-vX.Y.Z-linux-arm64.tar.gz (Raspberry Pi 4/5, ARM servers)
-# plus SHA256SUMS. Each is a portable bundle (the program, its modules and its own Node.js): unpack and start, nothing to install.
+# plus SHA256SUMS. Each of those is a portable bundle (the program, its modules and its own Node.js): unpack and start, nothing to install.
+# The desktop app installers (game-sauce in its own window: Windows .exe, Apple Silicon .dmg, Linux .deb / .AppImage) are attached to the same release.
 # The Docker image is published by docker.yml on the same tag.
 # "Run workflow" (manual) builds the bundles and keeps them as workflow artifacts without publishing a release: a safe dry run.
 on:
@@ -47,9 +48,47 @@ jobs:
             dist/*.sha256
           if-no-files-found: error
 
+  # The desktop app: game-sauce in its own window (Tauri), with the server built in or pointed at another one. Installers: Windows (.exe), Apple Silicon (.dmg), Linux (.deb, .AppImage).
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: windows-latest, label: windows-x64, bundles: nsis }
+          - { runner: macos-latest, label: macos-arm64, bundles: dmg }
+          - { runner: ubuntu-22.04, label: linux-x64, bundles: 'deb,appimage' }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Linux: the web view and packaging libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+      - name: Build the installer
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run prepare-server
+          npx tauri build --bundles ${{ matrix.bundles }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.label }}
+          path: |
+            desktop/src-tauri/target/release/bundle/nsis/*.exe
+            desktop/src-tauri/target/release/bundle/dmg/*.dmg
+            desktop/src-tauri/target/release/bundle/deb/*.deb
+            desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+
   release:
     if: github.ref_type == 'tag'
-    needs: bundle
+    needs: [bundle, desktop]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,12 +100,12 @@ jobs:
           [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match package.json version $v. Bump package.json, then tag again."; exit 1; }
       - uses: actions/download-artifact@v4
         with:
-          pattern: bundle-*
+          pattern: '*-*'
           path: dist
           merge-multiple: true
       - name: One checksum file for everything
         working-directory: dist
-        run: cat *.sha256 > SHA256SUMS && rm *.sha256 && cat SHA256SUMS
+        run: rm -f *.sha256 && sha256sum * > SHA256SUMS && cat SHA256SUMS
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

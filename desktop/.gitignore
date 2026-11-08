@@ -1,0 +1,4 @@
+node_modules/
+server-stage/
+src-tauri/target/
+src-tauri/gen/

@@ -6,6 +6,7 @@
 //   node scripts/build-bundle.mjs --smoke         ...and start the finished bundle once to prove it answers
 //   --out <folder>      where to put the result (default ./dist)
 //   --version <x.y.z>   the version in the file name (default: package.json)
+//   --name <folder>     a fixed folder name;  --stage-only  stop after the folder is built (no zip), used by the desktop app
 //   --node-version <v>  an exact Node.js (default: the newest release of the Node major this script runs on)
 //
 // A bundle can only be built on the OS and CPU it is for (the database library has a native part), so the release workflow
@@ -29,7 +30,7 @@ const [osName, nodeOs] = OS;
 const arch = process.arch;
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const version = (opt('--version') || pkg.version).replace(/^v/, '');
-const name = `game-sauce-v${version}-${osName}-${arch}`;
+const name = opt('--name') || `game-sauce-v${version}-${osName}-${arch}`;   // --name: a fixed folder name, for the desktop app to pick up
 const out = path.resolve(opt('--out') || path.join(root, 'dist'));
 const stage = path.join(out, name);
 const cache = path.join(out, '.cache');
@@ -139,6 +140,9 @@ For the "share on my network" version run ./start-shared.sh. To start it automat
 `));
   }
 }
+
+// --stage-only: the desktop app wants just the folder (runtime/ and app/), not a zip.
+if (args.includes('--stage-only')) { log(`staged in ${stage}`); process.exit(0); }
 
 // 4. Pack it, with a checksum beside it.
 const file = `${name}.${win ? 'zip' : 'tar.gz'}`;

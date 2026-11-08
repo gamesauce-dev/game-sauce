@@ -81,3 +81,22 @@ test('password boxes get an eye (everywhere, including boxes added later); the t
   const card = app.slice(app.indexOf('function wirePasswordCard'), app.indexOf('function wireSteamCard'));
   assert.match(card, /toast\('Password changed'\)/); assert.match(card, /WELCOME\.step\+\+; paintWelcome\(\)/, 'on to the next card');
 });
+
+test('the desktop app: one version everywhere, the server built in as resources, both ways to use it, and built for the three systems on release', () => {
+  const root = JSON.parse(read('package.json')).version;
+  assert.equal(JSON.parse(read('desktop/package.json')).version, root, 'desktop/package.json');
+  const conf = JSON.parse(read('desktop/src-tauri/tauri.conf.json'));
+  assert.equal(conf.version, root, 'tauri.conf.json'); assert.equal(conf.productName, 'game-sauce');
+  assert.match(read('desktop/src-tauri/Cargo.toml'), new RegExp(`^version = "${root.replace(/\./g, '\.')}"`, 'm'));
+  assert.deepEqual(Object.values(conf.bundle.resources).sort(), ['app/', 'runtime/'], 'Node and the server travel inside the app');
+  assert.equal(conf.bundle.windows.nsis.installMode, 'currentUser', 'no administrator rights to install');
+  const rs = read('desktop/src-tauri/src/main.rs');
+  for (const f of ['fn use_local', 'fn use_remote', 'fn get_config', '"game-sauce-data"', 'creation_flags', 'RunEvent::Exit']) assert.ok(rs.includes(f), f);
+  assert.ok(rs.includes('"password:"') || rs.includes('strip_prefix("password:")'), 'the first account is shown to the person');
+  const ui = read('desktop/ui/index.html');
+  assert.ok(ui.includes('Run game-sauce on this computer') && ui.includes('Connect to a game-sauce server') && ui.includes("invoke('use_local'") && ui.includes("invoke('use_remote'"));
+  const y = read('.github/workflows/release.yml');
+  for (const l of ['windows-x64, bundles: nsis', 'macos-arm64, bundles: dmg', 'linux-x64, bundles: \'deb,appimage\'']) assert.ok(y.includes(l), l);
+  assert.match(y, /needs: \[bundle, desktop\]/);
+  assert.ok(read('desktop/.gitignore').includes('server-stage/') && read('desktop/.gitignore').includes('target/'));
+});
