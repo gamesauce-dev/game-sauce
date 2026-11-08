@@ -1754,3 +1754,12 @@ body.play-only #empty .empty-add-text { display: none; }
 .plat-swatch.none { background: repeating-linear-gradient(45deg, transparent 0 4px, rgba(127,127,127,.35) 4px 5px); }
 .plat-logo { width: 4.4rem; height: 1.7rem; }
 .plat-nologo { color: var(--dim, inherit); opacity: .55; font-size: 0.68rem; border: 1px dashed var(--line-2, var(--line)); border-radius: 0.3rem; }
+
+/* The eye in password boxes (public/pwreveal.js): the same in Classic and Modern. */
+.pw-wrap { position: relative; display: flex; flex: 1 1 auto; min-width: 0; align-items: center; }
+.pw-wrap > input { width: 100%; padding-right: 2.5rem; }
+.pw-eye { position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 0.4rem; background: transparent; color: var(--dim, #8b93a7); cursor: pointer; }
+.pw-eye:hover, .pw-eye:focus-visible { color: var(--text, inherit); background: color-mix(in srgb, currentColor 12%, transparent); }
+.pw-eye .pw-slash { display: none; }
+.pw-eye.is-shown .pw-slash { display: inline; }
+input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none; }   /* the browser's own eye, so there are not two */

@@ -7,6 +7,7 @@ import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
 import * as messages from './messages.js';
+import './pwreveal.js';   // the eye in password boxes
 
 const state = {
   view: 'library',
@@ -5222,6 +5223,10 @@ function wirePasswordCard() {
       if (res?.token) sessionStorage.setItem('gamesauce_token', res.token); // the old sign-in was replaced
       form.reset();
       msg.textContent = '✓ Password changed.';
+      toast('Password changed');
+      wzBusy(false);
+      if (WELCOME.step < WELCOME.cards.length - 1) { WELCOME.step++; paintWelcome(); }   // on to the next card, as if Next had been pressed (Enter in the box does this too)
+      return;
     } catch (err) { msg.textContent = ''; toast(err.message, true); }
     finally { wzBusy(false); }
   };

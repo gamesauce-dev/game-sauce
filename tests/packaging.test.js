@@ -70,3 +70,14 @@ test('--reset-password: sets a new generated password for the first admin (or a 
   for (const f of ['Reset admin password.bat', 'Reset admin password.command', 'reset-password.sh']) assert.ok(s.includes(f), f);
   assert.match(read('scripts/start.mjs'), /Welcome back: sign in with the account you made before/);
 });
+
+test('password boxes get an eye (everywhere, including boxes added later); the tour moves on after a password change, with a toast', () => {
+  const js = read('public/pwreveal.js'), css = read('public/styles.css'), app = read('public/app.js');
+  assert.match(js, /querySelectorAll\?\.\('input\[type="password"\]'\)/); assert.match(js, /new MutationObserver/, 'boxes that appear later are covered');
+  assert.match(js, /'Show password'/); assert.match(js, /'Hide password'/); assert.match(js, /aria-pressed/);
+  assert.match(js, /addEventListener\('submit'/, 'hidden again when the form is sent');
+  assert.match(css, /\.pw-eye \{/); assert.match(css, /::-ms-reveal/, 'not two eyes in Edge');
+  assert.match(app, /import '\.\/pwreveal\.js'/);
+  const card = app.slice(app.indexOf('function wirePasswordCard'), app.indexOf('function wireSteamCard'));
+  assert.match(card, /toast\('Password changed'\)/); assert.match(card, /WELCOME\.step\+\+; paintWelcome\(\)/, 'on to the next card');
+});
