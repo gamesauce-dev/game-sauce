@@ -37,7 +37,7 @@ export function initPhysical(c) {
   for (const t of ['load', 'error']) $('#ph-shelf')?.addEventListener(t, onSpineLoad, true);   // load and error do not bubble: caught on the way down
   let t; $('#ph-q')?.addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value.trim(); S.letter = ''; load(); }, 200); });
   $('#ph-sort')?.addEventListener('change', (e) => { S.sort = e.target.value; S.letter = ''; load(); });
-  let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { if (S.view === 'shelf' && !view.classList.contains('hidden') && Math.abs(shelfWidth() - S.packW) > 8) renderShelf(); }, 160); }).observe($('#ph-scroll'));
+  let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { if (S.view === 'shelf' && !view.classList.contains('hidden') && Math.abs(shelfWidth() - S.packW) > 8) { const sc = $('#ph-scroll'), top = sc.scrollTop; renderShelf(rowsNeeded(top), false); sc.scrollTop = top; } }, 160); }).observe($('#ph-scroll'));
 }
 
 export const isOpen = () => S.openId != null;
@@ -87,7 +87,7 @@ export async function load(keep = false) {
   }
   empty.classList.add('hidden');
   const keepTop = keep ? scroll.scrollTop : 0;
-  if (S.view === 'shelf') renderShelf(); else renderTiles(true);
+  if (S.view === 'shelf') renderShelf(keep ? rowsNeeded(keepTop) : 0, !keep); else renderTiles(true);
   scroll.scrollTop = keepTop;
   if (S.openId != null) markCurrent(false);
 }
@@ -299,7 +299,17 @@ const caseOf = (slug) => PLATFORM_CASE[slug] || `own:${slug}`;
 const BOX_DEFAULT = [190, 0.08], PX_PER_MM = 1.2, SPINE_ART_MIN = 8, SPINE_ART_MAX = 56, OPEN_DEFAULT_AR = 0.7, MIN_SAMPLES = 3;
 // SLACK is the room kept at the end of each row for the one pulled-out game, whose cover is wider than its spine.
 const SPINE_GAP = 3, PLATE_W = 74, SLACK = 170, ROWS_AT_A_TIME = 4;
-const shelfWidth = () => Math.max(260, ($('#ph-scroll')?.clientWidth || 800) - 56);
+/* The room the details window takes when it is PINNED beside the games (the page makes room for it when it opens and gives it back when it closes). */
+const pinReserve = () => (ctx?.pinned?.() && innerWidth > 720 ? Math.round(Math.min(parseFloat(getComputedStyle(document.documentElement).fontSize) * 32.8571, innerWidth * 0.92)) : 0);
+/* The shelves are packed for the width they have with the window OPEN, always. Packed for the full width while it is closed, a pinned window made every shelf re-pack the moment
+   a game was opened or put back: each spine landed on another shelf and the page jumped. Now the same games stand on the same shelves either way. */
+const shelfWidth = () => {
+  let w = $('#ph-scroll')?.clientWidth || 800;
+  if ($('#drawer')?.classList.contains('hidden')) w -= pinReserve();   // closed: take off what the window will take when it opens
+  return Math.max(260, w - 56);
+};
+/** How many shelves must be drawn to cover down to a scroll position (and a screen's height below it), so a redraw can put you back where you were. */
+const rowsNeeded = (top) => { const sc = $('#ph-scroll'); const rh = ($('.ph-row')?.getBoundingClientRect().height || 300) + 14; return Math.ceil(((top || 0) + (sc?.clientHeight || 600)) / rh) + 1; };
 
 /** The median spine shape (width / height) of the spine pictures in each kind of case, for kinds with at least a few. */
 function spineShapes(platforms) {
@@ -364,11 +374,13 @@ function onSpineLoad(e) {
   spine.classList.add('art-ok');
 }
 
-function renderShelf(upTo = 0) {
+function renderShelf(upTo = 0, animate = true) {
   $('#ph-tiles').classList.add('hidden'); $('#ph-tiles').innerHTML = '';
   S.obs?.disconnect();
   const host = $('#ph-shelf'); host.classList.remove('hidden');
+  host.classList.toggle('no-anim', !animate);   // a redraw that only keeps your place does not drop every spine onto its shelf again
   buildRows();
+  host.style.maxWidth = pinReserve() ? `${S.packW + 56}px` : '';   // pinned: the shelves end where the details window begins, open or closed
   host.innerHTML = ''; S.rowsShown = 0;
   drawRows(Math.max(ROWS_AT_A_TIME, upTo + 1));
 }

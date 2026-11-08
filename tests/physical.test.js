@@ -350,3 +350,20 @@ test('on the shelf, clicking a pulled-out cover puts it back: the spine slides h
   assert.match(fo, /remove\('nav-current', 'is-open'\)/); assert.match(fo, /slideShelfBack\(\)/);
   assert.match(read('public/app.js'), /physical\.forgetOpen\(\)/);
 });
+
+test('the shelves do not re-pack or jump when a game is opened or put back, even with the details window pinned', () => {
+  const ph = read('public/physical.js'), css = read('public/physical.css');
+  // the width the shelves are packed for is the same with the pinned window open or closed (closed: the room it will take is already left)
+  assert.match(ph, /const pinReserve = \(\) => \(ctx\?\.pinned\?\.\(\) && innerWidth > 720 \?/);
+  assert.match(ph, /if \(\$\('#drawer'\)\?\.classList\.contains\('hidden'\)\) w -= pinReserve\(\);/);
+  assert.match(ph, /host\.style\.maxWidth = pinReserve\(\) \? `\$\{S\.packW \+ 56\}px` : ''/, 'pinned: the shelves end where the window begins, open or closed');
+  // a real redraw (a genuine resize, a favourite toggled) keeps your place and does not drop every spine in again
+  assert.match(ph, /const rowsNeeded = \(top\) =>/);
+  assert.match(ph, /renderShelf\(rowsNeeded\(top\), false\); sc\.scrollTop = top;/, 'a resize keeps the scroll position');
+  assert.match(ph, /renderShelf\(keep \? rowsNeeded\(keepTop\) : 0, !keep\)/, 'a reload that keeps your place draws down to it, without the entrance animation');
+  assert.match(ph, /host\.classList\.toggle\('no-anim', !animate\)/);
+  assert.match(css, /\.ph-shelf\.no-anim \.ph-spine, \.ph-shelf\.no-anim \.ph-plate \{ animation: none; \}/);
+  // opening and putting back never redraw: they only mark the spine (the redraw paths above are the only callers of renderShelf)
+  const open = ph.slice(ph.indexOf('function pullOut'), ph.indexOf('function markCurrent'));
+  assert.doesNotMatch(open, /renderShelf\(/); assert.doesNotMatch(ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading')), /renderShelf\(/);
+});

@@ -108,3 +108,5 @@
 #dg-heading { margin: 0 0 0.5rem; }
 #dg-heading .lib-total { color: var(--muted, inherit); }
 .ph-bar select optgroup { font-style: normal; }
+/* A redraw that only keeps your place (a window opened or closed, a favourite toggled) shows the shelves as they were, without the spines dropping in again. */
+.ph-shelf.no-anim .ph-spine, .ph-shelf.no-anim .ph-plate { animation: none; }
