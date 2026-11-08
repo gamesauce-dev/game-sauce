@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Package manager entries** for winget (the Windows desktop app), Scoop (the Windows portable download) and Homebrew (the Mac desktop app), written from a release's own checksums by `scripts/make-package-manifests.mjs`, with a guide to submitting each (`docs/PACKAGES.md`), including Unraid's Community Applications.
+
 ## [0.3.0] - 2026-11-08
 
 ### Added

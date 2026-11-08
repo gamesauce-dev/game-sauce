@@ -137,3 +137,25 @@ test('the release job flattens the downloaded artifacts (some keep a folder) bef
   assert.ok(y.includes('find . -mindepth 2 -type f -exec mv -t . {} +') && y.includes('sha256sum * > SHA256SUMS'));
   assert.ok(y.indexOf('find . -mindepth 2') < y.indexOf('sha256sum * > SHA256SUMS'), 'flatten first, then checksum');
 });
+
+test('package manager entries: for one version, pointing at the release files the workflow publishes, with real checksums', () => {
+  const v = JSON.parse(read('package.json')).version, base = `https://github.com/gamesauce-dev/game-sauce/releases/download/v${v}/`;
+  const dir = `install/packages/winget/${v}/`;
+  for (const f of ['gamesauce-dev.game-sauce.yaml', 'gamesauce-dev.game-sauce.installer.yaml', 'gamesauce-dev.game-sauce.locale.en-US.yaml']) assert.ok(exists(dir + f), f);
+  const inst = read(dir + 'gamesauce-dev.game-sauce.installer.yaml');
+  assert.ok(inst.includes(`PackageVersion: ${v}`) && inst.includes(`InstallerUrl: ${base}game-sauce_${v}_x64-setup.exe`));
+  assert.match(inst, /InstallerSha256: [0-9A-F]{64}\n/); assert.match(inst, /InstallerType: nullsoft/); assert.match(inst, /Scope: user/);
+  assert.match(read(dir + 'gamesauce-dev.game-sauce.locale.en-US.yaml'), /^Description: ".*"$/m, 'a description with a colon is quoted');
+  const scoop = JSON.parse(read('install/packages/scoop/game-sauce.json'));
+  assert.equal(scoop.version, v); assert.equal(scoop.architecture['64bit'].url, `${base}game-sauce-v${v}-windows-x64.zip`);
+  assert.match(scoop.architecture['64bit'].hash, /^[0-9a-f]{64}$/); assert.equal(scoop.architecture['64bit'].extract_dir, `game-sauce-v${v}-windows-x64`);
+  assert.ok(scoop.checkver && scoop.autoupdate.hash.url.endsWith('/SHA256SUMS'));
+  const cask = read('install/packages/homebrew/Casks/game-sauce.rb');
+  assert.ok(cask.includes(`version "${v}"`) && /sha256 "[0-9a-f]{64}"/.test(cask) && cask.includes('game-sauce_#{version}_aarch64.dmg') && cask.includes('depends_on arch: :arm64'));
+  assert.ok(cask.includes('com.apple.quarantine'));
+  assert.ok(!/zap trash:[\s\S]*game-sauce-data/.test(cask), 'zap never removes the library');
+  // the file names the release workflow produces are the ones the entries use
+  const sc = read('scripts/make-package-manifests.mjs');
+  assert.ok(sc.includes('SHA256SUMS') && sc.includes('x64-setup.exe') && sc.includes('windows-x64.zip') && sc.includes('aarch64.dmg'));
+  assert.ok(read('docs/PACKAGES.md').includes('winget') && read('docs/PACKAGES.md').includes('Community Applications'));
+});

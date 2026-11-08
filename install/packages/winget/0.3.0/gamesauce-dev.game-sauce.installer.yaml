@@ -1,0 +1,16 @@
+PackageIdentifier: gamesauce-dev.game-sauce
+PackageVersion: 0.3.0
+InstallerLocale: en-US
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+  - interactive
+  - silent
+  - silentWithProgress
+UpgradeBehavior: install
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/gamesauce-dev/game-sauce/releases/download/v0.3.0/game-sauce_0.3.0_x64-setup.exe
+    InstallerSha256: C0A573CA982BF5C440B88D2666B4C98DC621986D98ED42B8B83A380F6B1DFDA2
+ManifestType: installer
+ManifestVersion: 1.6.0

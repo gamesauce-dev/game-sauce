@@ -1,0 +1,21 @@
+PackageIdentifier: gamesauce-dev.game-sauce
+PackageVersion: 0.3.0
+PackageLocale: en-US
+Publisher: gamesauce-dev
+PublisherUrl: https://github.com/gamesauce-dev
+PackageName: game-sauce
+PackageUrl: https://github.com/gamesauce-dev/game-sauce
+License: MIT
+LicenseUrl: https://github.com/gamesauce-dev/game-sauce/blob/main/LICENSE
+ShortDescription: "A self-hosted game library for your household, in its own window."
+Description: "A self-hosted game library for your household: your ROMs, your digital games and the boxed games on your shelf, with covers and details found for you, play in the browser, and a small private chat."
+Moniker: game-sauce
+Tags:
+  - games
+  - roms
+  - retro
+  - emulation
+  - self-hosted
+ReleaseNotesUrl: https://github.com/gamesauce-dev/game-sauce/releases/tag/v0.3.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

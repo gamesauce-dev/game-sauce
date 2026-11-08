@@ -1,0 +1,37 @@
+{
+  "version": "0.3.0",
+  "description": "A self-hosted game library for your household (portable: unpack and start).",
+  "homepage": "https://github.com/gamesauce-dev/game-sauce",
+  "license": "MIT",
+  "notes": "Start it from the Start menu (game-sauce), or run \"Start game-sauce.bat\" in the app folder. Your library and accounts are kept in \"game-sauce-data\" in your home folder, so updating loses nothing.",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/gamesauce-dev/game-sauce/releases/download/v0.3.0/game-sauce-v0.3.0-windows-x64.zip",
+      "hash": "0aeb0e876a24e23c607526a37e0728ed690855a7194ea060fba1efa0b873c691",
+      "extract_dir": "game-sauce-v0.3.0-windows-x64"
+    }
+  },
+  "shortcuts": [
+    [
+      "Start game-sauce.bat",
+      "game-sauce"
+    ],
+    [
+      "Start game-sauce (share on my network).bat",
+      "game-sauce (share on my network)"
+    ]
+  ],
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/gamesauce-dev/game-sauce/releases/download/v$version/game-sauce-v$version-windows-x64.zip",
+        "extract_dir": "game-sauce-v$version-windows-x64"
+      }
+    },
+    "hash": {
+      "url": "https://github.com/gamesauce-dev/game-sauce/releases/download/v$version/SHA256SUMS",
+      "regex": "$sha256\\s+\\*?$basename"
+    }
+  }
+}
