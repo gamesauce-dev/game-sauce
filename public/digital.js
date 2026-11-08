@@ -483,9 +483,12 @@ function renderConsoleDetail(g, d, store, appId, custom) {
 
 const platformOptions = () => ['playstation', 'nintendo', 'xbox'].map((s) => `<optgroup label="${esc(DG_STORE[s].label)}">${Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => `<option value="${id}">${esc(p.label)}</option>`).join('')}</optgroup>`).join('');
 
+let lastAdd = { platform: '', country: '' };   // kept while the form stays open (pinned, or "Add and another"), forgotten when it closes
+
 function openAdd() {
+  if ($('#drawer')?.classList.contains('hidden') || !$('#dg-add')) lastAdd = { platform: '', country: '' };
   openShell(true); $('#drawer-nav')?.classList.add('hidden');
-  const first = dg.picked.length === 1 && dg.picked[0].startsWith('p:') ? dg.picked[0].slice(2) : '';
+  const first = lastAdd.platform || (dg.picked.length === 1 && dg.picked[0].startsWith('p:') ? dg.picked[0].slice(2) : '');
   $('#drawer-body').innerHTML = `
     <h2 class="detail-title">Add a game to your Digital Library</h2>
     <p class="hint">For PlayStation, Nintendo and Xbox games you own as downloads. Steam games come from Steam (set that up under Settings → My account → Steam), so they are not added by hand. Details and a cover are looked up afterwards, and you can match the game by hand if they are wrong.</p>
@@ -493,7 +496,7 @@ function openAdd() {
       <label class="field"><span>Title</span><input name="title" required autocomplete="off" /></label>
       <div class="field-row">
         <label class="field"><span>Console</span><select name="platform" class="select" required><option value="">Choose…</option>${platformOptions().replace(`value="${first}"`, `value="${first}" selected`)}</select></label>
-        <label class="field"><span>Store country (optional)</span><input name="country" placeholder="Australia or AU" /></label>
+        <label class="field"><span>Store country (optional)</span><input name="country" placeholder="Australia or AU" value="${esc(lastAdd.country)}" /></label>
       </div>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to Digital Library</button><button class="btn" type="button" id="dg-add-more" title="Add this game and keep the form open">Add and another</button></div>
     </form>`;
@@ -502,8 +505,10 @@ function openAdd() {
     const body = Object.fromEntries(new FormData(form).entries());
     try { await ctx.api('/digital/games', { method: 'POST', body: JSON.stringify(body) }); } catch (err) { ctx.toast(err.message, true); return; }
     ctx.toast(`Added “${body.title}”`);
+    lastAdd = { platform: body.platform || '', country: body.country || '' };
     await loadDigital(true);
-    if (again) { form.title.value = ''; form.title.focus(); } else ctx.closeDrawer();
+    if (again || ctx.pinned()) { form.title.value = ''; form.title.focus(); }
+    else { lastAdd = { platform: '', country: '' }; ctx.closeDrawer(); }
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); submit(false); });
   $('#dg-add-more').onclick = () => { if (form.reportValidity()) submit(true); };

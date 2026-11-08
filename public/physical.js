@@ -571,10 +571,14 @@ function bindDetail(g) {
 
 /* ───────────── add a game / import a CSV (both in the details window) ───────────── */
 
+// What was last typed in the add form, kept for as long as the form stays open (pinned, or "Add and another") and forgotten when it closes.
+let lastAdd = { platform: '', region: '' };
+
 function openAdd() {
+  if ($('#drawer')?.classList.contains('hidden') || !$('#ph-add')) lastAdd = { platform: '', region: '' };   // opened afresh: start clean
   ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;
   openShell(); $('#drawer-nav')?.classList.add('hidden');
-  const first = S.picked.length === 1 ? S.picked[0] : '';
+  const first = lastAdd.platform || (S.picked.length === 1 ? S.picked[0] : '');
   $('#drawer-body').innerHTML = `
     <h2 class="detail-title">Add a game to your shelf</h2>
     <p class="hint">Type the title as it is on the box. Details and a cover are looked up for you afterwards, and you can match it by hand if they are wrong.</p>
@@ -582,7 +586,7 @@ function openAdd() {
       <label class="field"><span>Title</span><input name="title" required autocomplete="off" /></label>
       <div class="field-row">
         <label class="field"><span>Platform</span><select name="platform" class="select" required><option value="">Choose…</option>${platformSelect(first)}</select></label>
-        <label class="field"><span>Region (optional)</span><input name="region" placeholder="PAL, NTSC-U, JP…" /></label>
+        <label class="field"><span>Region (optional)</span><input name="region" placeholder="PAL, NTSC-U, JP…" value="${esc(lastAdd.region)}" /></label>
       </div>
       <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Boxed, manual, disc only…" /></label>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add and another</button></div>
@@ -592,8 +596,10 @@ function openAdd() {
     const body = Object.fromEntries(new FormData(form).entries());
     try { await ctx.api('/physical/games', { method: 'POST', body: JSON.stringify(body) }); } catch (err) { ctx.toast(err.message, true); return; }
     ctx.toast(`Added “${body.title}”`);
+    lastAdd = { platform: body.platform || '', region: body.region || '' };   // the next game is usually the same platform and region
     await load(true);
-    if (again) { form.title.value = ''; form.notes.value = ''; form.title.focus(); } else ctx.closeDrawer();
+    if (again || ctx.pinned()) { form.title.value = ''; form.notes.value = ''; form.title.focus(); }   // pinned: the window stays, ready for the next one
+    else { lastAdd = { platform: '', region: '' }; ctx.closeDrawer(); }
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); submit(false); });
   $('#ph-add-more').onclick = () => { if (form.reportValidity()) submit(true); };

@@ -114,3 +114,12 @@ test('an account\'s colour is in the admin screens and the chat uses it for the 
   assert.match(css, /\.msg\.theirs \{[^}]*var\(--who, var\(--accent, #7c5cff\)\)/); assert.match(css, /\.msg-conv\.on \{[^}]*var\(--who, var\(--accent, #7c5cff\)\)/);
   assert.match(css, /\.msg\.mine \{[^}]*var\(--mine\)/, 'what I wrote stays green');
 });
+
+test('adding by hand: the form stays open when the window is pinned, and keeps the platform and region/country until it closes', () => {
+  for (const [file, keep, id] of [['public/physical.js', 'region', 'ph-add'], ['public/digital.js', 'country', 'dg-add']]) {
+    const s = read(file);
+    assert.match(s, /let lastAdd = \{ platform: '', /); assert.match(s, new RegExp(`value="\$\{esc\(lastAdd\.${keep}\)\}"`));
+    assert.match(s, /if \(again \|\| ctx\.pinned\(\)\)/, file + ': pinned keeps the form open');
+    assert.match(s, new RegExp(`!\$\('#${id}'\)\) lastAdd = `), file + ': opened afresh forgets the last one');
+  }
+});
