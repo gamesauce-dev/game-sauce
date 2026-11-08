@@ -166,7 +166,7 @@ function renderThread(scroll = true, full = false) {
   M.openName = who.name;
   if (full || !$('#msg-list')) {
     main.innerHTML = `
-      <div class="msg-head"><button type="button" class="msg-back" data-msg-act="back" aria-label="Back" title="Back">←</button>${avatar(who, 'sm')}<b>${esc(who.name)}</b></div>
+      <div class="msg-head"><button type="button" class="msg-back" data-msg-act="back" aria-label="Back" title="Back">←</button>${avatar(who, 'sm')}<b>${esc(who.name)}</b><button type="button" class="msg-x msg-del-conv" data-msg-act="delete-conv" title="Delete this conversation (for you only: ${esc(who.name)} keeps their copy)" aria-label="Delete this conversation">${ctx.ICON.trash}</button></div>
       <div class="msg-list" id="msg-list"></div>
       <div class="msg-compose">
         <div class="msg-chip hidden" id="msg-reply"></div>
@@ -253,6 +253,12 @@ async function onClick(e) {
   if (act === 'cancel-share') { M.share = null; paintChips(); return; }
   if (act === 'reply') { M.replyTo = id; paintChips(); $('#msg-input')?.focus(); return; }
   if (act === 'cancel-reply') { M.replyTo = null; paintChips(); return; }
+  if (act === 'delete-conv') {
+    if (!(await ctx.confirmDialog({ title: `Delete your conversation with ${M.openName}?`, body: 'Every message in it is deleted for you only. The other person keeps their copy, and a new message from them starts a fresh conversation.', okLabel: 'Delete conversation', danger: true }))) return;
+    try { await ctx.api(`/messages/with/${M.openId}`, { method: 'DELETE' }); delete M.drafts[M.openId]; M.mode = 'idle'; M.openId = null; M.thread = []; M.replyTo = null; M.share = null; await Promise.all([loadConvs(), tick()]); renderMain(); ctx.toast('Conversation deleted'); }
+    catch (err) { ctx.toast(err.message, true); }
+    return;
+  }
   if (act === 'delete') {
     if (!(await ctx.confirmDialog({ title: 'Delete this message?', body: 'It is deleted for you only. The other person keeps their copy.', okLabel: 'Delete', danger: true }))) return;
     try { await ctx.api(`/messages/${id}`, { method: 'DELETE' }); if (M.replyTo === id) M.replyTo = null; await loadThread(M.openId); await loadConvs(); paintChips(); } catch (err) { ctx.toast(err.message, true); }

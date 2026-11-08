@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAdmin } from './auth.js';
-import { canChat, listPeople, sendMessage, thread, conversations, markRead, deleteForMe, recall, postNotice, listNotices, markNoticeRead, dismissNotice, withdrawNotice, summary, MAX_LEN, RECALL_MINUTES } from '../lib/messages.js';
+import { canChat, listPeople, sendMessage, thread, conversations, markRead, deleteConversation, deleteForMe, recall, postNotice, listNotices, markNoticeRead, dismissNotice, withdrawNotice, summary, MAX_LEN, RECALL_MINUTES } from '../lib/messages.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -18,6 +18,7 @@ router.post('/with/:id(\\d+)', chatOnly, (req, res) => {
   try { const m = sendMessage(req.user, Number(req.params.id), { body: req.body?.body, game: req.body?.game || null, replyTo: req.body?.reply_to ?? null }); res.status(201).json({ id: m.id }); }
   catch (err) { fail(res, err); }
 });
+router.delete('/with/:id(\\d+)', chatOnly, (req, res) => res.json(deleteConversation(me(req), req.params.id)));   // the whole conversation, for me only
 router.post('/with/:id(\\d+)/read', chatOnly, (req, res) => res.json({ read: markRead(me(req), req.params.id) }));
 
 // One message: delete it for me, or (the sender, in the first minutes) recall it for both.

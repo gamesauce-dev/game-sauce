@@ -150,6 +150,15 @@ export function deleteForMe(me, id) {
   return { deleted: true };
 }
 
+/** Delete a whole conversation for me: every message in it, both those I sent and those I received. The other person keeps their copy; a message both of us have deleted is gone for good. */
+export function deleteConversation(me, otherId) {
+  const other = Number(otherId);
+  const a = db.prepare('UPDATE messages SET del_sender = 1 WHERE sender_id = ? AND recipient_id = ? AND del_sender = 0').run(me, other).changes;
+  const b = db.prepare('UPDATE messages SET del_recipient = 1 WHERE recipient_id = ? AND sender_id = ? AND del_recipient = 0').run(me, other).changes;
+  db.prepare('DELETE FROM messages WHERE del_sender = 1 AND del_recipient = 1 AND ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?))').run(me, other, other, me);
+  return { deleted: a + b };
+}
+
 /** The sender can take a message back for a few minutes: its words and any shared game are wiped for both people, and "Message recalled" is left in its place. */
 export function recall(me, id) {
   const m = db.prepare('SELECT * FROM messages WHERE id = ? AND sender_id = ?').get(Number(id), me);

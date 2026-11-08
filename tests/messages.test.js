@@ -308,3 +308,29 @@ test('the Messages page: menu entries with an unread badge, the two panes, a com
   // narrow windows show the list or the conversation, one at a time
   assert.match(css, /\.msg-wrap\.in-thread \.msg-side \{ display: none; \}/);
 });
+
+test('a whole conversation can be deleted: for me only, the other person keeps theirs, and a message both delete is gone', async () => {
+  fresh();
+  await say('ann', 'bob', 'one'); await say('bob', 'ann', 'two'); await say('ann', 'bob', 'three'); await say('admin', 'bob', 'admin to bob');
+  assert.equal(await unread('bob'), 3);
+  assert.equal((await call(`/api/messages/with/${id.ann}`, { method: 'DELETE', as: 'bob' })).body.deleted, 3, 'all three, sent and received');
+  assert.equal((await call('/api/messages/conversations', { as: 'bob' })).body.items.map((c) => c.user.username).join(), 'madmin', 'bob\'s conversation with ann is gone from his list; the admin\'s stays');
+  assert.deepEqual(await thread('bob', 'ann'), []);
+  assert.equal(await unread('bob'), 1, 'what he deleted no longer counts as unread');
+  assert.deepEqual((await thread('ann', 'bob')).map((m) => m.body), ['one', 'two', 'three'], 'ann still has all of it');
+  assert.equal((await call('/api/messages/conversations', { as: 'ann' })).body.items.length, 1);
+  // a message arriving afterwards starts a fresh conversation for bob, without the old messages
+  await say('ann', 'bob', 'fresh start');
+  assert.deepEqual((await thread('bob', 'ann')).map((m) => m.body), ['fresh start']); assert.equal((await thread('ann', 'bob')).length, 4);
+  // when ann deletes hers too, everything older is gone for good
+  await call(`/api/messages/with/${id.bob}`, { method: 'DELETE', as: 'ann' });
+  assert.equal(db.prepare('SELECT COUNT(*) AS c FROM messages WHERE body IN (?, ?, ?)').get('one', 'two', 'three').c, 0, 'deleted by both: removed for good');
+  assert.equal(db.prepare("SELECT COUNT(*) AS c FROM messages WHERE body = 'fresh start'").get().c, 1, 'bob still has the new one');
+  // it only ever touches the caller's own conversation with that person; another pair is untouched, and a stranger's id does nothing
+  assert.equal((await call(`/api/messages/with/${id.ann}`, { method: 'DELETE', as: 'admin' })).body.deleted, 0, 'the admin has no conversation with ann, so there is nothing to delete');
+  assert.deepEqual((await thread('admin', 'bob')).map((m) => m.body), ['admin to bob']);
+  assert.equal((await call(`/api/messages/with/${id.ann}`, { method: 'DELETE', as: 'pat' })).status, 403, 'no chat for a play-only account');
+  const log = JSON.stringify((await call('/api/auth/audit?limit=300')).body);
+  assert.ok(!/messages\/with/.test(log), 'and it is not in the audit log either');
+  assert.match(read('public/messages.js'), /data-msg-act="delete-conv"/); assert.match(read('public/messages.js'), /Every message in it is deleted for you only\. The other person keeps their copy/);
+});
