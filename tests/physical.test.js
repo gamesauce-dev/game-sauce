@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'gamesauce-physical-test-'));
 process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
@@ -181,10 +182,10 @@ test('the Physical page: nav entries, view, CSV destination choice, shelf and ti
   // chips mirror the Library's (families, then platforms of the open family, several at once); identify uses the Library's search
   assert.match(ph, /data-ph-chip-fam/); assert.match(ph, /data-ph-chip-plat/); assert.match(ph, /'\/metadata\/search'/); assert.match(ph, /\/physical\/games\/\$\{id\}\/match/);
   // the shelf: spines that pull out and turn to show the cover, plates by platform, no cover fetched until a game is opened
-  assert.match(ph, /classList\.add\('is-open'\)/); assert.match(css, /\.ph-spine\.is-open \{ width: 118px;/); assert.match(css, /@keyframes ph-drop/);
+  assert.match(ph, /classList\.add\('is-open'\)/); assert.match(css, /\.ph-spine\.is-open \{ width: var\(--ow, 118px\);/); assert.match(css, /@keyframes ph-drop/);
   assert.match(css, /prefers-reduced-motion/); assert.match(ph, /ROWS_AT_A_TIME/);
   const spine = ph.slice(ph.indexOf('function spineHtml'), ph.indexOf('const rowHtml'));
-  assert.ok(spine.length > 200 && !spine.includes('<img'), 'the spine markup holds no picture: covers load only for the opened game');
+  assert.ok(spine.length > 200 && (spine.match(/<img/g) || []).length === 1 && spine.includes('class="ph-sp-art"'), 'the only picture in a spine is its own spine art: covers load only for the opened game');
 });
 
 test('Modern: the Physical page uses icons with hover words (reusing the icon set); Classic keeps its words', () => {
@@ -199,4 +200,134 @@ test('Modern: the Physical page uses icons with hover words (reusing the icon se
   // the words are kept for Classic and become the hover text, with the counts
   assert.match(ph, /title="Favourites: only your favourites \(\$\{n\(c\.favourites\)\}\)">★ Favourites/);
   assert.match(read('public/physical.css'), /#ph-id-q \{ padding-left: 0\.7143rem; \}/);
+});
+
+test('a match brings the spine picture; it is served only to its owner, counted, filterable and cleared with the match', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const a = phys.addPhysical(adminId, { platform: 'ps2', title: 'Spine Game' }); const b = phys.addPhysical(adminId, { platform: 'ps2', title: 'Plain Game' });
+  await phys.matchJobIdle();
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  const seen = [];
+  const cacheImpl = async (url, kind) => { seen.push(kind + ':' + url); const f = path.join(TMP, kind + '.png'); fs.writeFileSync(f, png); return f; };
+  const m = await phys.applyMatch(adminId, a.id, { title: 'Spine Game', publisher: 'X', cover_url: 'http://x/c.png', media: { box2d: 'http://x/c.png', spine: 'http://x/s.png' }, source: 'launchbox' }, { cacheImpl });
+  assert.deepEqual(seen.sort(), ['box2d:http://x/c.png', 'spine:http://x/s.png']);
+  assert.equal(m.has_spine, true); assert.match(m.spine_url, /^\/api\/physical\/spine\/\d+/);
+  const res = await fetch(base + m.spine_url, { headers: { Authorization: 'Bearer ' + adminTok } });
+  assert.equal(res.status, 200); assert.match(res.headers.get('content-type') || '', /image\/png/);
+  assert.equal((await fetch(base + m.spine_url, { headers: { Authorization: 'Bearer ' + annTok } })).status, 404, 'only the owner');
+  assert.equal((await call('/api/physical')).body.counts.spines, 1);
+  const only = (await call('/api/physical/games?spine=1')).body;
+  assert.equal(only.total, 1); assert.equal(only.items[0].title, 'Spine Game');
+  assert.equal((await call('/api/physical/games')).body.items.find((g) => g.title === 'Plain Game').has_spine, false);
+  const cleared = await call(`/api/physical/games/${a.id}/match`, { method: 'DELETE' });
+  assert.equal(cleared.body.has_spine, false); assert.equal((await call('/api/physical')).body.counts.spines, 0);
+  assert.equal(b.has_spine, false);
+});
+
+test('the lookup run adds a spine to a matched game without touching its details, and asks once', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const g = phys.addPhysical(adminId, { platform: 'snes', title: 'Edited By Hand' });
+  await phys.matchJobIdle();
+  db.prepare("UPDATE physical_games SET meta_source = 'manual', genre = 'My own genre', spine_path = NULL, spine_tried_at = NULL, spine_url = NULL WHERE id = ?").run(g.id);
+  const providers = await import('../src/lib/providers.js');
+  const realEnabled = Object.getOwnPropertyDescriptor(providers.launchbox, 'enabled');
+  Object.defineProperty(providers.launchbox, 'enabled', { get: () => true, configurable: true });   // as if the LaunchBox database were downloaded
+  try {
+    const asked = []; let enriched = 0;
+    const spineImpl = async (r) => { asked.push(r.title); return 'http://x/spine.png'; };
+    const cacheImpl = async () => { const f = path.join(TMP, 'sp2.png'); fs.writeFileSync(f, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')); return f; };
+    phys.startMatchJob({ spineImpl, cacheImpl, enrichImpl: async () => { enriched++; return null; } }); await phys.matchJobIdle();
+    assert.deepEqual(asked, ['Edited By Hand']); assert.equal(enriched, 0, 'a matched game is not looked up again, only its spine');
+    const row = db.prepare('SELECT genre, meta_source, spine_path, spine_tried_at FROM physical_games WHERE id = ?').get(g.id);
+    assert.equal(row.genre, 'My own genre'); assert.equal(row.meta_source, 'manual'); assert.ok(row.spine_path && row.spine_tried_at);
+    asked.length = 0; phys.startMatchJob({ spineImpl, cacheImpl }); await phys.matchJobIdle();
+    assert.deepEqual(asked, [], 'asked once');
+    // a game with no spine anywhere is stamped, so it is not asked again either; retry asks again
+    db.prepare("UPDATE physical_games SET spine_path = NULL, spine_url = NULL, spine_tried_at = NULL WHERE id = ?").run(g.id);
+    const none = async (r) => { asked.push(r.title); return null; };
+    phys.startMatchJob({ spineImpl: none, cacheImpl }); await phys.matchJobIdle();
+    phys.startMatchJob({ spineImpl: none, cacheImpl }); await phys.matchJobIdle();
+    assert.deepEqual(asked, ['Edited By Hand'], 'stamped after one try');
+    phys.startMatchJob({ retry: true, spineImpl: none, cacheImpl }); await phys.matchJobIdle();
+    assert.deepEqual(asked, ['Edited By Hand', 'Edited By Hand'], 'retry asks again');
+  } finally { Object.defineProperty(providers.launchbox, 'enabled', realEnabled); }
+});
+
+test('the shelf draws a real spine when there is one and the drawn spine otherwise', () => {
+  const ph = read('public/physical.js'), css = read('public/physical.css'), modern = read('public/modern.js');
+  assert.match(ph, /class="ph-sp-art"/); assert.match(ph, /g\.has_spine \? ' has-art' : ''/); assert.match(ph, /function onSpineLoad\(e\)/);
+  assert.match(ph, /spine\.classList\.add\('art-ok'\)/); assert.match(ph, /img\.remove\(\); spine\.classList\.remove\('has-art'\)/, 'a picture that fails to load is dropped: the drawn spine stays');
+  assert.match(css, /\.ph-spine\.art-ok \.ph-sp-band, \.ph-spine\.art-ok \.ph-sp-title \{ display: none; \}/);
+  assert.match(ph, /data-ph-toggle="spine"/); assert.match(ph, /params\.set\('spine', '1'\)/);
+  assert.ok(modern.includes("['#view-physical [data-ph-toggle=\"spine\"]', 'covers']"));
+  const spine = ph.slice(ph.indexOf('function spineHtml'), ph.indexOf('const rowHtml'));
+  assert.ok(spine.includes('loading="lazy"'), 'spine pictures load only as the rows come into view');
+});
+
+/** A PNG of a given size (all-black), just big enough for a header reader. */
+function pngOf(w, h) {
+  const crcT = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crcT[n] = c >>> 0; }
+  const crc = (b) => { let c = 0xffffffff; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (t, d) => { const l = Buffer.alloc(4); l.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t), d]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([l, td, c]); };
+  const ih = Buffer.alloc(13); ih.writeUInt32BE(w, 0); ih.writeUInt32BE(h, 4); ih[8] = 8; ih[9] = 0;
+  const raw = Buffer.alloc((w + 1) * h);
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ih), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+
+test('the shape of a picture is read from its file, and recorded so the shelf can size spines and pulled-out covers exactly', async () => {
+  await phys.matchJobIdle();
+  const thin = path.join(TMP, 'thin.png'), tall = path.join(TMP, 'tall.png');
+  fs.writeFileSync(thin, pngOf(118, 1902)); fs.writeFileSync(tall, pngOf(1164, 1893));
+  assert.equal(phys.imageAspect(thin), 0.062); assert.equal(phys.imageAspect(tall), 0.6149);
+  assert.equal(phys.imageAspect(path.join(TMP, 'missing.png')), null); assert.equal(phys.imageAspect(__filename_of()), null, 'not a picture');
+  db.prepare('DELETE FROM physical_games').run();
+  const g = phys.addPhysical(adminId, { platform: 'switch', title: 'Thin Spine' });
+  await phys.matchJobIdle();
+  const files = { box2d: tall, spine: thin };
+  const m = await phys.applyMatch(adminId, g.id, { title: 'Thin Spine', cover_url: 'http://x/c.png', media: { box2d: 'http://x/c.png', spine: 'http://x/s.png' }, source: 'launchbox' }, { cacheImpl: async (url, kind) => files[kind] });
+  assert.equal(m.spine_ar, 0.062); assert.equal(m.cover_ar, 0.6149);
+  // pictures saved before shapes were recorded get theirs when the list is read, once
+  db.prepare('UPDATE physical_games SET cover_ar = NULL, spine_ar = NULL WHERE id = ?').run(g.id);
+  const item = (await call('/api/physical/games')).body.items.find((x) => x.id === g.id);
+  assert.equal(item.spine_ar, 0.062); assert.equal(item.cover_ar, 0.6149);
+  assert.equal(db.prepare('SELECT spine_ar FROM physical_games WHERE id = ?').get(g.id).spine_ar, 0.062, 'kept, not read again');
+  const cleared = await call(`/api/physical/games/${g.id}/match`, { method: 'DELETE' });
+  assert.equal(cleared.body.spine_ar, null); assert.equal(cleared.body.cover_ar, null);
+});
+
+function __filename_of() { return new URL(import.meta.url).pathname.replace(/^\/(\w:)/, '$1'); }
+
+test('the shelf keeps every game of a platform the same size, from a per-platform table, and fits spine pictures to it', () => {
+  const ph = read('public/physical.js'), css = read('public/physical.css');
+  assert.match(ph, /const CASES = \{ dvd: \[190, 0\.074\]/); assert.match(ph, /switch: \[170, 0\.062\]/); assert.match(ph, /jewel: \[125, 0\.08\]/);
+  // Wii, Wii U, Xbox, Xbox 360, GameCube and PS2 share one case, so they stand exactly alike
+  assert.match(ph, /wii: 'dvd', wiiu: 'dvd', xbox: 'dvd', xbox360: 'dvd', gamecube: 'dvd', ps2: 'dvd'/);
+  // PS3, PS4, PS5, Xbox One and Series are one height; the PlayStation cases are a little thicker than the Xbox ones
+  assert.match(ph, /psbd: \[172, 0\.081\], xbbd: \[172, 0\.07\]/); assert.match(ph, /ps3: 'psbd', ps4: 'psbd', ps5: 'psbd', xboxone: 'xbbd', xboxseries: 'xbbd'/);
+  assert.match(ph, /CASES\[PLATFORM_CASE\[g\.platform\]\] \|\| BOX_DEFAULT/); assert.match(ph, /S\.shapes\.get\(caseOf\(g\.platform\)\) \|\| share/);
+  assert.doesNotMatch(ph.slice(ph.indexOf('function spineOf'), ph.indexOf('function buildRows')), /188 \+/, 'no per-game random height any more');
+  assert.match(ph, /ht \* \(Number\(g\.cover_ar\) \|\| OPEN_DEFAULT_AR\)/);   // a pulled-out cover still opens at the cover's own shape
+  assert.match(css, /\.ph-sp-art \{[^}]*object-fit: fill;/); assert.match(css, /font-size: clamp\(7px, calc\(var\(--w\) \* 0\.62\), 12\.5px\)/);
+});
+
+test('the platforms list carries every spine shape (so a kind of case is sized from the whole shelf), and a cover box takes its picture\'s shape', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const a = phys.addPhysical(adminId, { platform: 'wii', title: 'Shape A' }), b = phys.addPhysical(adminId, { platform: 'wiiu', title: 'Shape B' }); phys.addPhysical(adminId, { platform: 'snes', title: 'No Spine' });
+  await phys.matchJobIdle();
+  const f1 = path.join(TMP, 'sh1.png'), f2 = path.join(TMP, 'sh2.png'); fs.writeFileSync(f1, pngOf(76, 1000)); fs.writeFileSync(f2, pngOf(70, 1000));
+  const files = { spine: f1 };
+  await phys.applyMatch(adminId, a.id, { title: 'Shape A', media: { spine: 'http://x/a.png' }, source: 'launchbox' }, { cacheImpl: async () => f1 });
+  await phys.applyMatch(adminId, b.id, { title: 'Shape B', media: { spine: 'http://x/b.png' }, source: 'launchbox' }, { cacheImpl: async () => f2 });
+  void files;
+  const info = (await call('/api/physical')).body;
+  const by = Object.fromEntries(info.platforms.map((p) => [p.slug, p.spine_ars]));
+  assert.deepEqual(by.wii, [0.076]); assert.deepEqual(by.wiiu, [0.07]); assert.deepEqual(by.snes, []);
+  // filtering the list does not change the shapes the shelf has to size by
+  assert.equal((await call('/api/physical/games?platforms=snes')).body.total, 1);
+  assert.deepEqual((await call('/api/physical')).body.platforms.find((p) => p.slug === 'wii').spine_ars, [0.076]);
+  const ph = read('public/physical.js');
+  assert.match(ph, /spineShapes\(S\.platforms\)/); assert.match(ph, /aspect-ratio:\$\{g\.cover_ar\}/);
 });

@@ -561,7 +561,7 @@ function trackBarHeight() {
    Classic is untouched and turning Modern off puts every word back. Buttons whose meaning an icon cannot carry keep their text. */
 const ICON_MAP = [
   // Physical: the page's own buttons (Classic keeps the words; here the words are the hover text)
-  ['#view-physical [data-ph-toggle="fav"]', 'favourite'], ['#view-physical [data-ph-toggle="nocover"]', 'no-covers-2'], ['#view-physical [data-ph-toggle="unmatched"]', 'issue'],
+  ['#view-physical [data-ph-toggle="fav"]', 'favourite'], ['#view-physical [data-ph-toggle="nocover"]', 'no-covers-2'], ['#view-physical [data-ph-toggle="unmatched"]', 'issue'], ['#view-physical [data-ph-toggle="spine"]', 'covers'],
   ['#view-physical #ph-reset', 'clear-reset-2'], ['#view-physical [data-ph-act="lookup"]', 'fetch-metadata-3'], ['#view-physical [data-ph-act="import"]', 'csv-import'], ['#view-physical [data-ph-act="add"]', 'game-add'],
   ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save'], ['#ph-add button[type="submit"]', 'tick'], ['#ph-add-more', 'game-add'], ['#ph-imp-preview', 'preview-2'], ['#ph-imp-apply', 'csv-import'],
   // Details window: the row (the More menu keeps its words)

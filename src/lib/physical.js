@@ -3,10 +3,33 @@
 // from the same providers the Library uses: found automatically in the background, or picked by hand in the details window.
 import fs from 'node:fs';
 import db from '../db.js';
-import { enrich, cacheMedia } from './providers.js';
+import { enrich, cacheMedia, launchbox } from './providers.js';
 import { parseCsv } from './namecsv.js';
 import { decodeEntities, sortTitle } from './metadata.js';
 import { platformFor, CONSOLE_PLATFORMS, appIdFor } from './consoles.js';
+
+/** width / height of a JPEG, PNG or WebP file, read from its header (null when it cannot be read). */
+export function imageAspect(file) {
+  let b;
+  try { const fd = fs.openSync(file, 'r'); try { b = Buffer.alloc(262144); b = b.subarray(0, fs.readSync(fd, b, 0, b.length, 0)); } finally { fs.closeSync(fd); } } catch { return null; }
+  let w = 0, h = 0;
+  if (b.length > 24 && b.readUInt32BE(0) === 0x89504e47) { w = b.readUInt32BE(16); h = b.readUInt32BE(20); }
+  else if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < b.length) {
+      if (b[i] !== 0xff) { i++; continue; }
+      const m = b[i + 1];
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) { h = b.readUInt16BE(i + 5); w = b.readUInt16BE(i + 7); break; }
+      i += 2 + b.readUInt16BE(i + 2);
+    }
+  } else if (b.length > 30 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') {
+    const t = b.toString('ascii', 12, 16);
+    if (t === 'VP8 ') { w = b.readUInt16LE(26) & 0x3fff; h = b.readUInt16LE(28) & 0x3fff; }
+    else if (t === 'VP8L') { const v = b.readUInt32LE(21); w = (v & 0x3fff) + 1; h = ((v >> 14) & 0x3fff) + 1; }
+    else if (t === 'VP8X') { w = 1 + b.readUIntLE(24, 3); h = 1 + b.readUIntLE(27, 3); }
+  }
+  return w > 0 && h > 0 ? Math.round((w / h) * 10000) / 10000 : null;
+}
 
 const squash = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '');
 
@@ -130,18 +153,31 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
 const toGame = (r) => ({
   id: r.id, platform: r.platform, title: r.title, region: r.region, notes: r.notes, release_year: r.release_year, developer: r.developer, publisher: r.publisher,
   genre: r.genre, players: r.players, rating: r.rating, description: r.description, favourite: Boolean(r.favourite), matched: Boolean(r.meta_source), meta_source: r.meta_source,
-  cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), created_at: r.created_at
+  cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), created_at: r.created_at,
+  cover_ar: r.cover_ar || null, spine_ar: r.spine_ar || null,
+  spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path)
 });
 
 const bucketOf = (t) => { const c = String(t || '').replace(/^(the|a|an)\s+/i, '').trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
 
+/** Pictures saved before their shapes were recorded: read the shape once and keep it. */
+function backfillShapes(rows) {
+  const setAr = db.prepare('UPDATE physical_games SET cover_ar = COALESCE(?, cover_ar), spine_ar = COALESCE(?, spine_ar) WHERE id = ?');
+  for (const r of rows) {
+    const c = r.cover_path && !r.cover_ar ? imageAspect(r.cover_path) : null, sp = r.spine_path && !r.spine_ar ? imageAspect(r.spine_path) : null;
+    if (c || sp) { setAr.run(c, sp, r.id); if (c) r.cover_ar = c; if (sp) r.spine_ar = sp; }
+  }
+}
+
 /** The person's games, filtered and sorted. platforms: [] = all. */
-export function listPhysical(userId, { platforms = [], q = '', sort = 'title', favourites = false, nocover = false, unmatched = false, letter = '' } = {}) {
+export function listPhysical(userId, { platforms = [], q = '', sort = 'title', favourites = false, nocover = false, unmatched = false, spine = false, letter = '' } = {}) {
   let rows = db.prepare('SELECT * FROM physical_games WHERE user_id = ?').all(userId);
+  backfillShapes(rows);
   if (platforms.length) { const ps = new Set(platforms); rows = rows.filter((r) => ps.has(r.platform)); }
   if (favourites) rows = rows.filter((r) => r.favourite);
   if (nocover) rows = rows.filter((r) => !r.cover_path);
   if (unmatched) rows = rows.filter((r) => !r.meta_source);
+  if (spine) rows = rows.filter((r) => r.spine_path);
   const terms = squash(q) ? String(q).toLowerCase().split(/\s+/).filter(Boolean) : [];
   if (terms.length) rows = rows.filter((r) => { const hay = [r.title, r.developer, r.publisher, r.genre, r.region, r.notes, r.platform].join(' ').toLowerCase(); return terms.every((t) => hay.includes(t)); });
   const letters = {}; for (const r of rows) { const b = bucketOf(r.title); letters[b] = (letters[b] || 0) + 1; }
@@ -160,14 +196,18 @@ export function listPhysical(userId, { platforms = [], q = '', sort = 'title', f
 
 /** Per platform counts for the chips, with what the Library's platform table says about each (name, family, colour). */
 export function physicalPlatforms(userId) {
+  // Every spine picture's shape, by platform: the shelf sizes a kind of case from the whole shelf, so a game's size never depends on what is filtered.
+  backfillShapes(db.prepare('SELECT id, cover_path, cover_ar, spine_path, spine_ar FROM physical_games WHERE user_id = ? AND ((cover_path IS NOT NULL AND cover_ar IS NULL) OR (spine_path IS NOT NULL AND spine_ar IS NULL))').all(userId));
+  const ars = {};
+  for (const r of db.prepare('SELECT platform, spine_ar FROM physical_games WHERE user_id = ? AND spine_ar IS NOT NULL').all(userId)) (ars[r.platform] ||= []).push(r.spine_ar);
   return db.prepare(`SELECT g.platform AS slug, COUNT(*) AS count, p.name, p.short_name, p.family, p.accent FROM physical_games g
     LEFT JOIN platforms p ON p.slug = g.platform WHERE g.user_id = ? GROUP BY g.platform`).all(userId)
-    .map((r) => ({ ...r, name: r.name || r.slug, short_name: r.short_name || r.slug }));
+    .map((r) => ({ ...r, name: r.name || r.slug, short_name: r.short_name || r.slug, spine_ars: ars[r.slug] || [] }));
 }
 
 export function physicalCounts(userId) {
-  const r = db.prepare('SELECT COUNT(*) AS total, SUM(favourite) AS favourites, SUM(CASE WHEN cover_path IS NULL THEN 1 ELSE 0 END) AS nocover, SUM(CASE WHEN meta_source IS NULL THEN 1 ELSE 0 END) AS unmatched FROM physical_games WHERE user_id = ?').get(userId);
-  return { total: r.total || 0, favourites: r.favourites || 0, nocover: r.nocover || 0, unmatched: r.unmatched || 0 };
+  const r = db.prepare('SELECT COUNT(*) AS total, SUM(favourite) AS favourites, SUM(CASE WHEN cover_path IS NULL THEN 1 ELSE 0 END) AS nocover, SUM(CASE WHEN meta_source IS NULL THEN 1 ELSE 0 END) AS unmatched, SUM(CASE WHEN spine_path IS NULL THEN 0 ELSE 1 END) AS spines FROM physical_games WHERE user_id = ?').get(userId);
+  return { total: r.total || 0, favourites: r.favourites || 0, nocover: r.nocover || 0, unmatched: r.unmatched || 0, spines: r.spines || 0 };
 }
 
 const own = (userId, id) => db.prepare('SELECT * FROM physical_games WHERE id = ? AND user_id = ?').get(Number(id), userId);
@@ -225,6 +265,11 @@ export function removePhysical(userId, id) {
   return { removed: true };   // the cached picture is shared by URL with anyone matched to the same game, so it stays on disk
 }
 
+export function physicalSpinePath(userId, id) {
+  const f = own(userId, id)?.spine_path;
+  return f && fs.existsSync(f) ? f : null;
+}
+
 export function physicalCoverPath(userId, id) {
   const f = own(userId, id)?.cover_path;
   return f && fs.existsSync(f) ? f : null;
@@ -241,16 +286,21 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = 
   const url = c.cover_url || c.media?.box2d || null;
   let coverPath = null;
   if (url) { try { coverPath = await cacheImpl(url, 'box2d'); } catch { coverPath = null; } }
+  const spineUrl = c.media?.spine || c.spine_url || null;
+  let spinePath = null;
+  if (spineUrl) { try { spinePath = await cacheImpl(spineUrl, 'spine'); } catch { spinePath = null; } }
   const yr = Math.round(Number(c.release_year)), pl = Math.round(Number(c.players)), rt = Number(c.rating);
   db.prepare(`UPDATE physical_games SET
       developer = COALESCE(?, developer), publisher = COALESCE(?, publisher), genre = COALESCE(?, genre), description = COALESCE(?, description),
       release_year = COALESCE(?, release_year), players = COALESCE(?, players), rating = COALESCE(?, rating),
-      cover_url = COALESCE(?, cover_url), cover_path = COALESCE(?, cover_path), meta_source = ?, meta_synced_at = datetime('now'), meta_tried_at = datetime('now'),
+      cover_url = COALESCE(?, cover_url), cover_path = COALESCE(?, cover_path), spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path),
+      cover_ar = COALESCE(?, cover_ar), spine_ar = COALESCE(?, spine_ar),
+      meta_source = ?, meta_synced_at = datetime('now'), meta_tried_at = datetime('now'),
       updated_at = datetime('now')
     WHERE id = ? AND user_id = ?`)
     .run(text(c.developer), text(c.publisher), text(c.genre), text(c.description)?.slice(0, 4000) || null,
       yr >= 1950 && yr <= 2100 ? yr : null, pl >= 1 && pl <= 16 ? pl : null, Number.isFinite(rt) && c.rating !== null && c.rating !== '' && rt >= 0 && rt <= 5 ? rt : null,
-      url, coverPath, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
+      url, coverPath, spineUrl, spinePath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
   return getPhysical(userId, id);
 }
 
@@ -258,29 +308,53 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = 
 export function clearMatch(userId, id) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL,
+  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, cover_ar = NULL, spine_ar = NULL,
     meta_source = NULL, meta_synced_at = NULL, meta_tried_at = NULL, updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
   return getPhysical(userId, id);
 }
 
 const platformRow = (slug) => db.prepare('SELECT slug, name, family, screenscraper_id, tgdb_id FROM platforms WHERE slug = ?').get(slug) || { slug, name: slug };
 
+/** The spine picture link for a game, from the local LaunchBox database (null when it is not downloaded, or the game has none). */
+async function lookupSpineDefault(r) {
+  if (!launchbox.enabled) return null;
+  const lb = await launchbox.lookup({ title: r.title, platform: platformRow(r.platform), hashes: {}, filename: r.title, year: r.release_year || null });
+  return lb?.media?.spine || null;
+}
+
 /** Look one game up with the Library's providers and keep the answer. A game nothing is found for is stamped as tried, so it is not asked again every run. */
-export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = cacheMedia } = {}) {
+export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = cacheMedia, spineImpl = lookupSpineDefault } = {}) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   const meta = await enrichImpl({ title: r.title, platform: platformRow(r.platform), hashes: {}, filename: r.title, titleTrusted: true, year: r.release_year || null });
   if (!meta || meta.error) { db.prepare("UPDATE physical_games SET meta_tried_at = datetime('now') WHERE id = ?").run(r.id); return null; }
-  return applyMatch(userId, id, { ...meta, source: meta.source || 'provider' }, { cacheImpl });
+  // The provider that won may not be LaunchBox: ask it for the spine on its own.
+  let spine = meta.media?.spine || null;
+  if (!spine) { try { spine = await spineImpl(r); } catch { spine = null; } }
+  const game = await applyMatch(userId, id, { ...meta, media: { ...(meta.media || {}), ...(spine ? { spine } : {}) }, source: meta.source || 'provider' }, { cacheImpl });
+  if (launchbox.enabled || spine) db.prepare("UPDATE physical_games SET spine_tried_at = datetime('now') WHERE id = ?").run(r.id);
+  return game;
+}
+
+/** Only the spine, for a game that is already matched: its details (which may have been edited by hand) are left exactly as they are. */
+export async function fetchSpine(userId, id, { cacheImpl = cacheMedia, spineImpl = lookupSpineDefault } = {}) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  let url = null; try { url = await spineImpl(r); } catch { url = null; }
+  let file = null; if (url) { try { file = await cacheImpl(url, 'spine'); } catch { file = null; } }
+  db.prepare("UPDATE physical_games SET spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path), spine_ar = COALESCE(?, spine_ar), spine_tried_at = datetime('now'), updated_at = CASE WHEN ? IS NULL THEN updated_at ELSE datetime('now') END WHERE id = ?").run(url, file, file ? imageAspect(file) : null, file, r.id);
+  return Boolean(file);
 }
 
 /* One background run at a time looks up every game (anyone's) that has no match yet. With retry: true, games tried before are asked again too
    (for example after adding a provider key). */
 const job = { running: false, total: 0, done: 0, found: 0, again: false, retry: false };
 export const matchJobStatus = () => ({ running: job.running, total: job.total, done: job.done, found: job.found });
-const pending = (retry) => db.prepare(`SELECT id, user_id FROM physical_games WHERE meta_source IS NULL${retry ? '' : ' AND meta_tried_at IS NULL'} ORDER BY id`).all();
+// Games with no match yet, and (when the LaunchBox database is there) matched games that have no spine picture yet.
+const pending = (retry) => db.prepare(`SELECT id, user_id, meta_source IS NOT NULL AS matched FROM physical_games
+  WHERE (meta_source IS NULL${retry ? '' : ' AND meta_tried_at IS NULL'}) OR (? = 1 AND spine_path IS NULL${retry ? '' : ' AND spine_tried_at IS NULL'}) ORDER BY id`).all(launchbox.enabled ? 1 : 0);
 
-export function startMatchJob({ retry = false, enrichImpl, cacheImpl } = {}) {
+export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl } = {}) {
   if (job.running) { job.again = true; job.retry = job.retry || retry; return matchJobStatus(); }
   const todo = pending(retry);
   if (!todo.length) return matchJobStatus();
@@ -290,7 +364,10 @@ export function startMatchJob({ retry = false, enrichImpl, cacheImpl } = {}) {
       let list = todo;
       while (list.length) {
         for (const g of list) {
-          try { if (await matchOne(g.user_id, g.id, { enrichImpl, cacheImpl })) job.found++; } catch { /* one game must not stop the run */ }
+          try {
+            if (g.matched) { if (await fetchSpine(g.user_id, g.id, { cacheImpl, spineImpl })) job.found++; }
+            else if (await matchOne(g.user_id, g.id, { enrichImpl, cacheImpl, spineImpl })) job.found++;
+          } catch { /* one game must not stop the run */ }
           job.done++;
         }
         list = job.again ? pending(job.retry) : [];

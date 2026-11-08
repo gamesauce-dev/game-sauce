@@ -492,6 +492,18 @@ db.exec(`
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '36') ON CONFLICT(key) DO UPDATE SET value = '36'").run();
 
+/* ── v37: Physical games can carry a spine picture (from the LaunchBox database) for the shelf view. ── */
+for (const [col, type] of [['spine_url', 'TEXT'], ['spine_path', 'TEXT'], ['spine_tried_at', 'TEXT']]) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '37') ON CONFLICT(key) DO UPDATE SET value = '37'").run();
+
+/* ── v38: the shape (width / height) of a Physical game's cover and spine pictures, so the shelf can size a spine and a pulled-out cover exactly. ── */
+for (const col of ['cover_ar', 'spine_ar']) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} REAL`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '38') ON CONFLICT(key) DO UPDATE SET value = '38'").run();
+
 /** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
 export function mergePlaystationStores() {
   db.transaction(() => {

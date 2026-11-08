@@ -6,9 +6,9 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 let ctx = null;
 const S = {
-  platforms: [], picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, letter: '',
-  view: 'tiles', density: 'comfortable', items: [], byId: new Map(), counts: { total: 0, favourites: 0, nocover: 0, unmatched: 0 },
-  openId: null, jobWas: false, jobTimer: null, tilesShown: 80, rows: [], rowsShown: 0, rowOf: new Map(), packW: 0, obs: null, token: 0
+  platforms: [], picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '',
+  view: 'tiles', density: 'comfortable', items: [], byId: new Map(), counts: { total: 0, favourites: 0, nocover: 0, unmatched: 0, spines: 0 },
+  shapes: new Map(), openId: null, jobWas: false, jobTimer: null, tilesShown: 80, rows: [], rowsShown: 0, rowOf: new Map(), packW: 0, obs: null, token: 0
 };
 const store = {
   get(k, d) { try { return localStorage.getItem('gamesauce_ph_' + k) ?? d; } catch { return d; } },
@@ -31,6 +31,7 @@ export function initPhysical(c) {
   const view = $('#view-physical'); if (!view || view.dataset.ready) return;
   view.dataset.ready = '1';
   view.addEventListener('click', onClick);
+  for (const t of ['load', 'error']) $('#ph-shelf')?.addEventListener(t, onSpineLoad, true);   // load and error do not bubble: caught on the way down
   let t; $('#ph-q')?.addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value.trim(); S.letter = ''; load(); }, 200); });
   $('#ph-sort')?.addEventListener('change', (e) => { S.sort = e.target.value; S.letter = ''; load(); });
   let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { if (S.view === 'shelf' && !view.classList.contains('hidden') && Math.abs(shelfWidth() - S.packW) > 8) renderShelf(); }, 160); }).observe($('#ph-scroll'));
@@ -38,7 +39,7 @@ export function initPhysical(c) {
 
 export const isOpen = () => S.openId != null;
 export const openIdNow = () => S.openId;
-export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
+export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
 export function forgetOpen() { S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
 
 /* ───────────── loading ───────────── */
@@ -55,7 +56,7 @@ export async function load(keep = false) {
   S.picked = S.picked.filter((s) => S.platforms.some((p) => p.slug === s));
   const params = new URLSearchParams({ sort: S.sort });
   if (S.picked.length) params.set('platforms', S.picked.join(','));
-  if (S.q) params.set('q', S.q); if (S.fav) params.set('favourites', '1'); if (S.nocover) params.set('nocover', '1'); if (S.unmatched) params.set('unmatched', '1'); if (S.letter) params.set('letter', S.letter);
+  if (S.q) params.set('q', S.q); if (S.fav) params.set('favourites', '1'); if (S.nocover) params.set('nocover', '1'); if (S.unmatched) params.set('unmatched', '1'); if (S.spine) params.set('spine', '1'); if (S.letter) params.set('letter', S.letter);
   let list;
   try { list = await ctx.api('/physical/games?' + params); } catch (err) { msg.textContent = err.message; return; }
   if (token !== S.token) return;
@@ -132,11 +133,12 @@ function paintToolbar() {
   $('#ph-toggles').innerHTML = `
     <button type="button" class="ph-pill${S.fav ? ' on' : ''}" data-ph-toggle="fav" title="Favourites: only your favourites (${n(c.favourites)})">★ Favourites <small>${n(c.favourites)}</small></button>
     <button type="button" class="ph-pill${S.nocover ? ' on' : ''}" data-ph-toggle="nocover" title="No cover: games with no cover picture yet (${n(c.nocover)})">▢ No cover <small>${n(c.nocover)}</small></button>
-    <button type="button" class="ph-pill${S.unmatched ? ' on' : ''}" data-ph-toggle="unmatched" title="Needs match: games no provider has matched, the worklist for matching by hand (${n(c.unmatched)})">○ Needs match <small>${n(c.unmatched)}</small></button>`;
+    <button type="button" class="ph-pill${S.unmatched ? ' on' : ''}" data-ph-toggle="unmatched" title="Needs match: games no provider has matched, the worklist for matching by hand (${n(c.unmatched)})">○ Needs match <small>${n(c.unmatched)}</small></button>
+    <button type="button" class="ph-pill${S.spine ? ' on' : ''}" data-ph-toggle="spine" title="With spine art: games that have a real spine picture for the shelf (${n(c.spines)})">▯ With spine art <small>${n(c.spines)}</small></button>`;
   // The three look buttons beside the A-Z row: two grid sizes (tiles) and the shelf; the lit one is the look in use.
   $$('[data-ph-density]').forEach((b) => b.classList.toggle('is-on', S.view === 'tiles' && b.dataset.phDensity === S.density));
   $$('[data-ph-view="shelf"]').forEach((b) => b.classList.toggle('is-on', S.view === 'shelf'));
-  const anyFilter = S.picked.length || S.q || S.fav || S.nocover || S.unmatched || S.letter;
+  const anyFilter = S.picked.length || S.q || S.fav || S.nocover || S.unmatched || S.spine || S.letter;
   $('#ph-reset')?.classList.toggle('hidden', !anyFilter);
 }
 
@@ -274,19 +276,46 @@ function renderTiles(reset) {
    cover, and the spines beside it slide apart to make room; stepping to the next game slides one back in and pulls the next one out.
    With the list sorted by platform each platform starts with a small brass plate. */
 
-const SPINE_GAP = 3, PLATE_W = 74, SLACK = 118, ROWS_AT_A_TIME = 4;
+// Games in the same kind of case stand the same size, as on a real shelf: Wii, Wii U, Xbox, Xbox 360, GameCube and PS2 all share the DVD case, and a Switch
+// case is shorter and thinner. A CASE is [height in mm, spine thickness as a share of the height]: rough real sizes, easy to adjust. A platform that is in no
+// case below stands as its own kind, at the default size. Where games in a kind of case have spine pictures, the thickness is the median shape of those pictures
+// (pooled across the platforms that share the case), so the art fits exactly and nothing is stretched.
+// PlayStation and Xbox Blu-ray cases are the same height; the PlayStation ones are a little thicker.
+const CASES = { dvd: [190, 0.074], psbd: [172, 0.081], xbbd: [172, 0.07], switch: [170, 0.062], jewel: [125, 0.08] };
+const PLATFORM_CASE = {
+  wii: 'dvd', wiiu: 'dvd', xbox: 'dvd', xbox360: 'dvd', gamecube: 'dvd', ps2: 'dvd',
+  ps3: 'psbd', ps4: 'psbd', ps5: 'psbd', xboxone: 'xbbd', xboxseries: 'xbbd',
+  switch: 'switch', switch2: 'switch',
+  ps1: 'jewel', saturn: 'jewel', dreamcast: 'jewel'
+};
+const caseOf = (slug) => PLATFORM_CASE[slug] || `own:${slug}`;
+const BOX_DEFAULT = [190, 0.08], PX_PER_MM = 1.2, SPINE_ART_MIN = 8, SPINE_ART_MAX = 56, OPEN_DEFAULT_AR = 0.7, MIN_SAMPLES = 3;
+// SLACK is the room kept at the end of each row for the one pulled-out game, whose cover is wider than its spine.
+const SPINE_GAP = 3, PLATE_W = 74, SLACK = 170, ROWS_AT_A_TIME = 4;
 const shelfWidth = () => Math.max(260, ($('#ph-scroll')?.clientWidth || 800) - 56);
+
+/** The median spine shape (width / height) of the spine pictures in each kind of case, for kinds with at least a few. */
+function spineShapes(platforms) {
+  const by = new Map();
+  for (const p of platforms) for (const ar of p.spine_ars || []) if (Number(ar) > 0) { const k = caseOf(p.slug); if (!by.has(k)) by.set(k, []); by.get(k).push(Number(ar)); }
+  const out = new Map();
+  for (const [slug, list] of by) if (list.length >= MIN_SAMPLES) { list.sort((a, b) => a - b); out.set(slug, list[Math.floor(list.length / 2)]); }
+  return out;
+}
 
 function spineOf(g, i) {
   const h = hash(g.title + g.platform);
-  // Unsigned shifts: the hash is a 32-bit unsigned number, and a signed shift would turn half of them negative.
-  const w = 30 + (h % 5) * 5, ht = 188 + ((h >>> 3) % 6) * 9;
-  const shade = ((h >>> 7) % 7) - 3;   // -3 .. 3: darker .. lighter
-  return { g, w, ht, shade, i };
+  const [mm, share] = CASES[PLATFORM_CASE[g.platform]] || BOX_DEFAULT;
+  const ht = Math.round(mm * PX_PER_MM);
+  const w = Math.round(Math.min(SPINE_ART_MAX, Math.max(SPINE_ART_MIN, ht * (S.shapes.get(caseOf(g.platform)) || share))) * 2) / 2;
+  const shade = ((h >>> 7) % 7) - 3;   // -3 .. 3: darker .. lighter, so a run of one platform is not a flat block of colour
+  const ow = Math.round(ht * (Number(g.cover_ar) || OPEN_DEFAULT_AR));   // pulled out, the spine turns into the whole cover at the cover's own shape
+  return { g, w, ht, shade, ow, i };
 }
 
 function buildRows() {
   const width = shelfWidth(); S.packW = width;
+  S.shapes = spineShapes(S.platforms);   // the whole shelf, not the filtered list
   const items = []; let lastPlat = null;
   for (const g of S.items) {
     if (S.sort === 'platform' && g.platform !== lastPlat) { items.push({ plate: platOf(g.platform) }); lastPlat = g.platform; }
@@ -304,18 +333,29 @@ function buildRows() {
 }
 
 function spineHtml(it, k) {
-  const { g, w, ht, shade } = it, col = accentOf(g.platform), p = platOf(g.platform);
+  const { g, w, ht, shade, ow } = it, col = accentOf(g.platform), p = platOf(g.platform);
   const tone = shade < 0 ? `color-mix(in srgb, ${col} ${100 + shade * 9}%, #000)` : shade > 0 ? `color-mix(in srgb, ${col} ${100 - shade * 9}%, #fff)` : col;
-  return `<button type="button" class="ph-spine${g.favourite ? ' is-fav' : ''}" data-ph-id="${g.id}" style="--w:${w}px;--h:${ht}px;--c:${esc(tone)};--i:${Math.min(k, 40)}" title="${esc(g.title)} · ${esc(p.name)}${g.region ? ' · ' + esc(g.region) : ''}" aria-label="${esc(g.title)}, ${esc(p.name)}">
+  const art = g.has_spine ? `<img class="ph-sp-art" alt="" loading="lazy" src="${esc(g.spine_url)}" />` : '';
+  return `<button type="button" class="ph-spine${g.favourite ? ' is-fav' : ''}${g.has_spine ? ' has-art' : ''}" data-ph-id="${g.id}" style="--w:${w}px;--h:${ht}px;--ow:${ow}px;--c:${esc(tone)};--i:${Math.min(k, 40)}" title="${esc(g.title)} · ${esc(p.name)}${g.region ? ' · ' + esc(g.region) : ''}" aria-label="${esc(g.title)}, ${esc(p.name)}">
     <span class="ph-sp-band">${esc(String(p.short_name || p.name).toUpperCase())}</span>
     <span class="ph-sp-title">${esc(g.title)}</span>
     <span class="ph-sp-foot">${g.favourite ? '★' : ''}</span>
+    ${art}
     <span class="ph-face" aria-hidden="true"><span class="ph-face-fb">${esc(g.title)}</span></span>
   </button>`;
 }
 const rowHtml = (row, ri) => `<div class="ph-row" data-row="${ri}"><div class="ph-books">${row.map((it, k) => it.plate
   ? `<span class="ph-plate" style="--c:${accentOf(it.plate.slug)};--i:${Math.min(k, 40)}" title="${esc(it.plate.name)}"><b>${esc(String(it.plate.short_name || it.plate.name).toUpperCase())}</b></span>`
   : spineHtml(it, k)).join('')}</div><div class="ph-plank"></div></div>`;
+
+/* A spine picture arrived: it is shown and the drawn text steps aside. One that cannot be loaded is dropped, and that game keeps its drawn spine. */
+function onSpineLoad(e) {
+  const img = e.target;
+  if (!img?.classList?.contains('ph-sp-art')) return;
+  const spine = img.closest('.ph-spine'); if (!spine) return;
+  if (e.type === 'error' || !img.naturalWidth || !img.naturalHeight) { img.remove(); spine.classList.remove('has-art'); return; }
+  spine.classList.add('art-ok');
+}
 
 function renderShelf(upTo = 0) {
   $('#ph-tiles').classList.add('hidden'); $('#ph-tiles').innerHTML = '';
@@ -354,7 +394,7 @@ function pullOut(id, scroll) {
 
 /* The details window slides in over the right-hand side of the page. A spine standing under it would be pulled out where nobody can see it, so the
    whole shelf slides left, just far enough, and back again when the window closes. (Pinned, the page itself makes room, and the shelf is packed to fit.) */
-const OPEN_FACE_W = 118, EDGE = 28;
+const OPEN_FACE_W = 118, EDGE = 28;   // OPEN_FACE_W: used only if the spine has no width of its own for the open state
 function slideShelfClear(el) {
   const shelf = $('#ph-shelf'), scroll = $('#ph-scroll'), drawer = $('#drawer');
   if (!shelf || !scroll) return;
@@ -362,7 +402,8 @@ function slideShelfClear(el) {
   const avail = scroll.getBoundingClientRect().right - covered;
   const base = Number(shelf.dataset.shift || 0);
   const spineLeft = el.getBoundingClientRect().left + base;   // where it would be with the shelf at rest
-  const shift = Math.max(0, Math.round(spineLeft + OPEN_FACE_W + EDGE - avail));
+  const openW = parseFloat(el.style.getPropertyValue('--ow')) || OPEN_FACE_W;
+  const shift = Math.max(0, Math.round(spineLeft + openW + EDGE - avail));
   shelf.dataset.shift = String(shift);
   shelf.style.transform = shift ? `translateX(${-shift}px)` : '';
 }
@@ -433,6 +474,7 @@ export async function openDetail(id) {
     ['Players', g.players || '—'],
     ['Rating', g.rating != null ? `${g.rating} / 5` : '—'],
     ['Details from', g.matched ? esc(g.meta_source) : 'not matched yet'],
+    ['Spine art', g.has_spine ? `<img src="${esc(g.spine_url)}" alt="" style="height:5.5rem;max-width:100%;border-radius:2px;vertical-align:middle" />` : 'none found (the shelf draws one)'],
     ['Notes', g.notes ? esc(g.notes) : '—']
   ];
   const providers = [['thegamesdb', 'TheGamesDB'], ['igdb', 'IGDB'], ['launchbox', 'LaunchBox']];
@@ -440,7 +482,7 @@ export async function openDetail(id) {
   const I = ctx.ICON;
   $('#drawer-body').innerHTML = `
     ${g.genre ? `<div class="genre-pills" aria-label="Genres">${g.genre.split(/\s*[,;/]\s*/).filter(Boolean).slice(0, 6).map((x) => `<span class="genre-pill">${esc(x)}</span>`).join('')}</div>` : ''}
-    <div class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,${esc(col)},#12141a)">
+    <div class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,${esc(col)},#12141a)${g.has_cover && g.cover_ar ? `;aspect-ratio:${g.cover_ar}` : ''}">
       <div class="card-fallback${g.has_cover ? ' has-cover' : ''}">${esc(initials(g.title))}</div>
       ${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.style.display='none';this.previousElementSibling?.classList.remove('has-cover')" />` : ''}
     </div>

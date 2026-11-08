@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'node:path';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -17,7 +17,7 @@ router.get('/games', (req, res) => {
   const sort = ['title', '-title', 'added', 'year', 'platform'].includes(String(req.query.sort)) ? String(req.query.sort) : 'title';
   const out = listPhysical(me(req), {
     platforms, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', nocover: req.query.nocover === '1',
-    unmatched: req.query.unmatched === '1', letter: String(req.query.letter || '').toUpperCase()
+    unmatched: req.query.unmatched === '1', spine: req.query.spine === '1', letter: String(req.query.letter || '').toUpperCase()
   });
   res.json({ ...out, total: out.items.length });
 });
@@ -67,6 +67,13 @@ router.post('/match', (req, res) => { res.json(startMatchJob({ retry: req.body?.
 router.get('/cover/:id', (req, res) => {
   const file = physicalCoverPath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No cover' });
+  res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.sendFile(path.resolve(file));
+});
+
+router.get('/spine/:id', (req, res) => {
+  const file = physicalSpinePath(me(req), req.params.id);
+  if (!file) return res.status(404).json({ error: 'No spine' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
   res.sendFile(path.resolve(file));
 });

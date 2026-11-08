@@ -2374,7 +2374,7 @@ async function renderLaunchBox() {
       <a class="docs" href="https://gamesdb.launchbox-app.com/" target="_blank" rel="noreferrer">about ↗</a>
     </div>
     <p class="provider-note">A free game database that lives on this server: no key, no limit, and lookups are instant. It matches by exact name, so it fills in games the other providers cannot find. It is tried after IGDB. Download it once (about 110 MB), then update it whenever you like.</p>
-    ${s.available ? `<p class="hint">${esc(s.games.toLocaleString())} games indexed (${esc(s.covers.toLocaleString())} with covers) · ${esc(fmtBytes(s.bytes))} on disk · updated ${esc(when)}</p>` : ''}
+    ${s.available ? `<p class="hint">${esc(s.games.toLocaleString())} games indexed (${esc(s.covers.toLocaleString())} with covers${s.has_spines ? `, ${esc(s.spines.toLocaleString())} with spine art` : ''}) · ${esc(fmtBytes(s.bytes))} on disk · updated ${esc(when)}</p>${s.has_spines ? '' : '<p class="hint">This copy was made before spine art was kept. Press Update database to get spine pictures for the Physical shelf.</p>'}` : ''}
     ${running ? `
       <div class="lb-progress"><span class="spin" aria-hidden="true"></span><span class="lb-msg">${esc(s.job.message || 'Working…')}</span>
         <div class="lb-bar"><i style="width:${Number(s.job.pct) || 0}%"></i></div><b>${Number(s.job.pct) || 0}%</b></div>`

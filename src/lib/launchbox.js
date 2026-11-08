@@ -83,7 +83,8 @@ const toRecord = (g) => ({
   description: g.overview || null,
   cover_url: g.cover ? IMAGE_BASE + g.cover : null,
   has_cover: Boolean(g.cover),
-  media: { ...(g.cover ? { box2d: IMAGE_BASE + g.cover } : {}), ...(g.shot ? { screenshot: IMAGE_BASE + g.shot } : {}) },
+  media: { ...(g.cover ? { box2d: IMAGE_BASE + g.cover } : {}), ...(g.shot ? { screenshot: IMAGE_BASE + g.shot } : {}), ...(g.spine ? { spine: IMAGE_BASE + g.spine } : {}) },
+  spine_url: g.spine ? IMAGE_BASE + g.spine : null,
   game_id: String(g.id),
   source: 'launchbox'
 });
@@ -188,6 +189,7 @@ export async function openZipEntry(zipPath, wanted) {
 const REGION_RANK = { 'North America': 0, 'United States': 1, World: 2, Europe: 3, 'United Kingdom': 4, Australia: 5 };
 const regionRank = (r) => (r in REGION_RANK ? REGION_RANK[r] : 9);
 const COVER_TYPES = { 'Box - Front': 0, 'Box - Front - Reconstructed': 1 };
+const SPINE_TYPES = { 'Box - Spine': 0 };   // the spine of the box or case: used by the Physical shelf
 
 /**
  * Stream LaunchBox's Metadata.xml into a fresh index file, then swap it in. `xml` is a readable stream of the XML text.
@@ -202,7 +204,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   out.pragma('synchronous = OFF');
   out.exec(`
     CREATE TABLE games (id INTEGER PRIMARY KEY, platform TEXT NOT NULL, name TEXT NOT NULL, norm TEXT, rnorm TEXT, year INTEGER,
-      overview TEXT, genres TEXT, developer TEXT, publisher TEXT, players TEXT, rating REAL, cover TEXT, shot TEXT);
+      overview TEXT, genres TEXT, developer TEXT, publisher TEXT, players TEXT, rating REAL, cover TEXT, shot TEXT, spine TEXT);
     CREATE TABLE alt (game_id INTEGER NOT NULL, norm TEXT, rnorm TEXT);
     CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
   `);
@@ -213,6 +215,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   const ids = new Set();
   const covers = new Map(); // id -> { rank, file }
   const shots = new Map();  // id -> file
+  const spines = new Map(); // id -> { rank, file }
   let games = 0, alts = 0, ctx = null, rec = null, field = null, buf = '';
   const parser = new Parser();
 
@@ -245,6 +248,10 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
           const rank = COVER_TYPES[rec.Type] * 10 + regionRank(rec.Region);
           const cur = covers.get(id);
           if (!cur || rank < cur.rank) covers.set(id, { rank, file: rec.FileName });
+        } else if (rec.Type in SPINE_TYPES) {
+          const rank = SPINE_TYPES[rec.Type] * 10 + regionRank(rec.Region);
+          const cur = spines.get(id);
+          if (!cur || rank < cur.rank) spines.set(id, { rank, file: rec.FileName });
         } else if (rec.Type === 'Screenshot - Gameplay' && !shots.has(id)) shots.set(id, rec.FileName);
       }
     }
@@ -271,8 +278,10 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
 
     const setCover = out.prepare('UPDATE games SET cover = ? WHERE id = ?');
     const setShot = out.prepare('UPDATE games SET shot = ? WHERE id = ?');
+    const setSpine = out.prepare('UPDATE games SET spine = ? WHERE id = ?');
     for (const [id, c] of covers) setCover.run(c.file, id);
     for (const [id, f] of shots) setShot.run(f, id);
+    for (const [id, sp] of spines) setSpine.run(sp.file, id);
     out.exec('COMMIT');
     if (!games) throw new Error('No games were found in the download. Is it the LaunchBox Metadata file?');
     out.exec(`
@@ -286,6 +295,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
     put.run('games', String(games));
     put.run('alts', String(alts));
     put.run('covers', String(covers.size));
+    put.run('spines', String(spines.size));
     if (sourceModified) put.run('source_modified', sourceModified);
     out.close();
   } catch (err) {
@@ -295,7 +305,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   }
   closeIndex(); // release the old file before it is replaced
   fs.renameSync(tmp, dbFile());
-  return { games, alts, covers: covers.size };
+  return { games, alts, covers: covers.size, spines: spines.size };
 }
 
 /* ───────────────────────── the update job ───────────────────────── */
@@ -314,6 +324,8 @@ export function launchboxStatus() {
     games: Number(metaGet(c, 'games') || 0),
     alts: Number(metaGet(c, 'alts') || 0),
     covers: Number(metaGet(c, 'covers') || 0),
+    spines: Number(metaGet(c, 'spines') || 0),
+    has_spines: metaGet(c, 'spines') !== null,   // false for an index made before spine art was kept: update it to get spines
     imported_at: metaGet(c, 'imported_at'),
     source_modified: metaGet(c, 'source_modified'),
     bytes: size

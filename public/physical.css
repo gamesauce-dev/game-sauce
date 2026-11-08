@@ -57,13 +57,13 @@
 .ph-spine:hover + .ph-spine { transform: translateX(2px) rotate(.8deg); }
 .ph-spine:has(+ .ph-spine:hover) { transform: translateX(-2px) rotate(-.8deg); }
 .ph-spine:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0.6rem 0.8rem rgba(0,0,0,.45); }
-.ph-sp-band { position: absolute; top: 0; left: 0; right: 0; height: 1.9rem; display: grid; place-items: center; overflow: hidden; background: rgba(0,0,0,.34); border-bottom: 2px solid rgba(255,255,255,.28); font-size: 0.58rem; font-weight: 800; letter-spacing: .03em; text-shadow: 0 1px 1px rgba(0,0,0,.6); transition: opacity .2s; }
-.ph-sp-title { position: absolute; top: 2.25rem; bottom: 1.5rem; left: 50%; width: 1.3em; margin-left: -0.65em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; writing-mode: vertical-rl; line-height: 1.3em; font-size: 0.8rem; font-weight: 700; letter-spacing: .02em; text-shadow: 0 1px 2px rgba(0,0,0,.7); transition: opacity .2s; }
+.ph-sp-band { position: absolute; top: 0; left: 0; right: 0; height: 1.9rem; display: grid; place-items: center; overflow: hidden; background: rgba(0,0,0,.34); border-bottom: 2px solid rgba(255,255,255,.28); font-size: clamp(5px, calc(var(--w) * 0.5), 9px); font-weight: 800; letter-spacing: .03em; text-shadow: 0 1px 1px rgba(0,0,0,.6); transition: opacity .2s; }
+.ph-sp-title { position: absolute; top: 2.25rem; bottom: 1.5rem; left: 50%; width: 1.3em; margin-left: -0.65em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; writing-mode: vertical-rl; line-height: 1.3em; font-size: clamp(7px, calc(var(--w) * 0.62), 12.5px); font-weight: 700; letter-spacing: .02em; text-shadow: 0 1px 2px rgba(0,0,0,.7); transition: opacity .2s; }
 .ph-sp-foot { position: absolute; left: 0; right: 0; bottom: 0; height: 1.3rem; display: grid; place-items: center; background: linear-gradient(0deg, rgba(0,0,0,.35), transparent); color: #ffd54a; font-size: 0.72rem; transition: opacity .2s; }
 .ph-spine.is-fav::after { content: ''; position: absolute; left: 0; right: 0; bottom: 1.3rem; height: 3px; background: #ffd54a; opacity: .8; }
 
 /* Opened: the spine is pulled off the shelf and turns to show its cover; the spines beside it slide apart (the row is flex, so its width does that). */
-.ph-spine.is-open { width: 118px; transform: translateY(-24px) rotate(-1.5deg); z-index: 5; filter: none; box-shadow: 0 1rem 1.5rem rgba(0,0,0,.6), 0 0 0 2px rgba(255,255,255,.6), 0 0 1.6rem color-mix(in srgb, var(--c) 75%, transparent); }
+.ph-spine.is-open { width: var(--ow, 118px); transform: translateY(-24px) rotate(-1.5deg); z-index: 5; filter: none; box-shadow: 0 1rem 1.5rem rgba(0,0,0,.6), 0 0 0 2px rgba(255,255,255,.6), 0 0 1.6rem color-mix(in srgb, var(--c) 75%, transparent); }
 .ph-spine.is-open .ph-sp-band, .ph-spine.is-open .ph-sp-title, .ph-spine.is-open .ph-sp-foot { opacity: 0; }
 .ph-spine.is-open::after { display: none; }
 .ph-face { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity .3s .14s; background: linear-gradient(160deg, var(--c), #12141a); }
@@ -95,3 +95,10 @@
 /* The search box is only as long as it needs to be; the page's own buttons sit at the end of the same line. */
 .ph-bar .dg-q { flex: 0 1 16rem; min-width: 10rem; }
 .ph-bar [data-ph-act="import"] { margin-left: auto; }
+
+/* A spine with a real picture: the picture fills it, and the drawn band, title and foot only show until it has loaded (or if it cannot). */
+.ph-sp-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; opacity: 0; transition: opacity .25s; }
+.ph-spine.art-ok .ph-sp-art { opacity: 1; }
+.ph-spine.art-ok .ph-sp-band, .ph-spine.art-ok .ph-sp-title { display: none; }
+.ph-spine.art-ok .ph-sp-foot { background: none; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
+.ph-spine.art-ok.is-open .ph-sp-art { opacity: 0; }

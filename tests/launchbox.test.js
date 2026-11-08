@@ -29,6 +29,8 @@ ${game(7, 'Micro Machines', 'Sony Playstation 2', '<ReleaseYear>1996</ReleaseYea
 <GameAlternateName><AlternateName>Forbidden Siren</AlternateName><DatabaseID>5</DatabaseID><Region>Europe</Region></GameAlternateName>
 ${img(1, 'Screenshot - Gameplay', 'World', 'shot1.jpg')}
 ${img(1, 'Box - Front', 'Europe', 'eu.jpg')}
+${img(1, 'Box - Spine', 'Europe', 'spine-eu.jpg')}
+${img(1, 'Box - Spine', 'North America', 'spine-na.jpg')}
 ${img(1, 'Box - Front', 'North America', 'na.jpg')}
 ${img(2, 'Box - Front', 'North America', 'dah2.jpg')}
 ${img(7, 'Box - Front', 'North America', 'mm96.jpg')}
@@ -126,4 +128,14 @@ test('consoles ask LaunchBox first, arcade platforms do not', async () => {
   assert.equal(r.release_year, 2002);
   const arcade = await enrich({ title: 'Micro Machines', platform: { slug: 'mame' }, hashes: null, titleTrusted: true });
   assert.notEqual(arcade?.source, 'launchbox', 'arcade order is unchanged and needs a trusted title');
+});
+
+test('the best spine picture is kept per game, and the status says spines were indexed', () => {
+  const g = lb.launchboxFind(['Destroy All Humans!'], 'ps2');
+  assert.equal(g.media.spine, 'https://images.launchbox-app.com/spine-na.jpg', 'North America beats Europe');
+  assert.equal(g.spine_url, g.media.spine);
+  assert.equal(g.cover_url, 'https://images.launchbox-app.com/na.jpg', 'a spine is never taken for the cover');
+  assert.equal(lb.launchboxFind(['Destroy All Humans! 2'], 'ps2').media.spine, undefined, 'a game with no spine has none');
+  const st = lb.launchboxStatus();
+  assert.equal(st.spines, 1); assert.equal(st.has_spines, true);
 });
