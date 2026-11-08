@@ -102,3 +102,9 @@
 .ph-spine.art-ok .ph-sp-band, .ph-spine.art-ok .ph-sp-title { display: none; }
 .ph-spine.art-ok .ph-sp-foot { background: none; text-shadow: 0 1px 2px rgba(0,0,0,.9); }
 .ph-spine.art-ok.is-open .ph-sp-art { opacity: 0; }
+
+/* Digital Library uses Physical's bar, chips and heading. Its own buttons sit at the end of the same line. */
+.ph-bar-end { margin-left: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
+#dg-heading { margin: 0 0 0.5rem; }
+#dg-heading .lib-total { color: var(--muted, inherit); }
+.ph-bar select optgroup { font-style: normal; }

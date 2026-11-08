@@ -98,9 +98,17 @@ export function setMark(userId, store, appId, field, value) {
 
 /** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id.
  *  Hidden games stay out unless asked for (hidden: 'show' adds them, 'only' lists only them); favourites: true lists only favourites. */
-export function listGames(userId, { store = '', q = '', sort = 'name', favourites = false, installed = false, hidden = '' } = {}) {
+export function listGames(userId, { store = '', stores = [], platforms = [], q = '', sort = 'name', favourites = false, installed = false, hidden = '' } = {}) {
   const where = ['g.user_id = ?']; const args = [userId];
   if (store) { where.push('g.store = ?'); args.push(store); }
+  // A whole store (stores) and / or single consoles (platforms): a game is in the list when it is in either. A console game saved before consoles were told apart has no
+  // platform of its own and counts as its store's own console (Xbox).
+  if (stores.length || platforms.length) {
+    const parts = [];
+    if (stores.length) { parts.push(`g.store IN (${stores.map(() => '?').join(',')})`); args.push(...stores); }
+    if (platforms.length) { parts.push(`COALESCE(g.platform, CASE WHEN g.store = 'xbox' THEN 'xbox' END) IN (${platforms.map(() => '?').join(',')})`); args.push(...platforms); }
+    where.push('(' + parts.join(' OR ') + ')');
+  }
   if (q) {
     // The words match the name, and also the genres and developer Steam gave (from the cached store details; a game whose details have not been
     // fetched yet matches by name only). "action" finds Action games; "valve" finds Valve's.
@@ -112,16 +120,22 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
   if (installed) where.push('COALESCE(m.play, 0) = 1');   // "installed" = the play button was switched on for it
   if (hidden === 'only') where.push('COALESCE(m.hidden, 0) = 1');
   else if (hidden !== 'show') where.push('COALESCE(m.hidden, 0) = 0');
-  const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : 'g.name COLLATE NOCASE';
+  const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : sort === 'added' ? 'g.id DESC' : 'g.name COLLATE NOCASE';
   // Console games (PlayStation, Xbox) carry the country of the store they came from, and their cover is the picture downloaded for them.
-  const rows = db.prepare(`SELECT g.store, g.app_id, g.name, g.minutes, g.last_played, g.country, g.platform, dd.cover_path,
+  const rows = db.prepare(`SELECT g.id AS row_id, g.store, g.app_id, g.name, g.minutes, g.last_played, g.country, g.platform, COALESCE(um.cover_path, dd.cover_path) AS cover_path, dd.json AS details_json, um.json AS user_json,
       COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play, COALESCE(m.physical, 0) AS physical
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
-      LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id AND g.store != 'steam'
+      LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id
+      LEFT JOIN digital_user_meta um ON um.user_id = g.user_id AND um.store = g.store AND um.app_id = g.app_id
     WHERE ${where.join(' AND ')} ORDER BY ${order}`).all(...args);
-  if (sort === 'name') rows.sort((a, b) => fileKey(a.name).localeCompare(fileKey(b.name), 'en', { numeric: true }) || String(a.name).localeCompare(String(b.name)));
-  else if (sort === 'hours' || sort === 'recent') { /* ties break by filing key below */ }
-  return rows.map(({ cover_path: coverPath, ...r }) => ({
+  const byName = (a, b) => fileKey(a.name).localeCompare(fileKey(b.name), 'en', { numeric: true }) || String(a.name).localeCompare(String(b.name));
+  // The year a game came out: the person's own correction first, then what the store or provider said ("16 Nov, 2004", "2019"). None sorts last.
+  const yearOf = (r) => { for (const j of [r.user_json, r.details_json]) { try { const m = /(\d{4})/.exec(String(JSON.parse(j || 'null')?.release || '')); if (m) return Number(m[1]); } catch { /* not JSON */ } } return 9999; };
+  if (sort === 'name') rows.sort(byName);
+  else if (sort === '-name') rows.sort((a, b) => byName(b, a));
+  else if (sort === 'platform') rows.sort((a, b) => String(a.platform || a.store).localeCompare(String(b.platform || b.store)) || byName(a, b));
+  else if (sort === 'year') rows.sort((a, b) => yearOf(a) - yearOf(b) || byName(a, b));
+  return rows.map(({ cover_path: coverPath, details_json: _dj, user_json: _uj, row_id: _id, ...r }) => ({
     ...r,
     hours: Math.round((r.minutes / 60) * 10) / 10,
     cover_url: r.store === 'steam' ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${r.app_id}/library_600x900.jpg`
@@ -133,6 +147,16 @@ export function listGames(userId, { store = '', q = '', sort = 'name', favourite
 }
 
 /** Counts for the chips: everything visible, favourites, and hidden. */
+/** The chips: for each store, how many (not hidden) games, and for each console its own count. */
+export function countStores(userId) {
+  const rows = db.prepare(`SELECT g.store, COALESCE(g.platform, CASE WHEN g.store = 'xbox' THEN 'xbox' END) AS platform, COUNT(*) AS n
+    FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
+    WHERE g.user_id = ? AND COALESCE(m.hidden, 0) = 0 GROUP BY g.store, platform`).all(userId);
+  const stores = {}; const platforms = [];
+  for (const r of rows) { stores[r.store] = (stores[r.store] || 0) + r.n; if (r.platform) platforms.push({ store: r.store, platform: r.platform, count: r.n }); }
+  return { stores, platforms };
+}
+
 export function countGames(userId) {
   const r = db.prepare(`SELECT COUNT(*) AS total,
       SUM(CASE WHEN COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS visible,

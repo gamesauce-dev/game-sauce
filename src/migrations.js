@@ -504,6 +504,17 @@ for (const col of ['cover_ar', 'spine_ar']) {
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '38') ON CONFLICT(key) DO UPDATE SET value = '38'").run();
 
+/* ── v39: a person's own corrections to a console game's details (a hand match from the identify search, or edits), kept apart from the
+   cached details everyone shares, so one person's change never alters another's list. ── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS digital_user_meta (
+    user_id INTEGER NOT NULL, store TEXT NOT NULL, app_id TEXT NOT NULL, json TEXT, cover_path TEXT, source TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, store, app_id)
+  );
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '39') ON CONFLICT(key) DO UPDATE SET value = '39'").run();
+
 /** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
 export function mergePlaystationStores() {
   db.transaction(() => {

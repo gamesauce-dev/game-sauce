@@ -210,11 +210,27 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
   };
 }
 
+/** Add one console game by hand: a Library-style title, a console (an id such as ps5 or a name such as "PS5"), and optionally the country of the store. */
+export function addConsoleGame(userId, { platform, title, country = '' } = {}) {
+  const pf = CONSOLE_PLATFORMS[platform] ? { store: CONSOLE_PLATFORMS[platform].store, platform } : platformFor(platform);
+  if (!pf) throw Object.assign(new Error('Choose a console from the list.'), { status: 400 });
+  const name = decodeEntities(String(title || '').trim()).slice(0, 200);
+  const slug = appIdFor(name);
+  if (!slug) throw Object.assign(new Error('Type the game\'s title.'), { status: 400 });
+  const appId = `${slug}-${pf.platform}`;
+  if (db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, pf.store, appId)) throw Object.assign(new Error('That game is already in your Digital list for this console.'), { status: 409 });
+  const c = countryFor(country);
+  db.prepare('INSERT INTO digital_games (user_id, store, app_id, name, country, platform) VALUES (?, ?, ?, ?, ?, ?)').run(userId, pf.store, appId, name, c ? (c.code || c.name) : null, pf.platform);
+  startDetailsJob();
+  return { store: pf.store, app_id: appId, name, platform: pf.platform };
+}
+
 /** Remove one console game from a person's list (its marks go too; the shared cached details stay for anyone else who owns it). */
 export function removeConsoleGame(userId, store, appId) {
   if (!isConsoleStore(store)) throw Object.assign(new Error('Only console games can be removed here.'), { status: 400 });
   const r = db.prepare('DELETE FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   db.prepare('DELETE FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
+  db.prepare('DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   if (!r.changes) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
   return { removed: true };
 }
@@ -284,10 +300,102 @@ export async function getConsoleDetails(store, appId, name, opts) {
   return refreshConsoleDetails(store, appId, name, opts);
 }
 
-export function consoleCoverPath(store, appId) {
+export function consoleCoverPath(store, appId, userId = null) {
+  const own = userId == null ? null : db.prepare('SELECT cover_path FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (own?.cover_path && fs.existsSync(own.cover_path)) return own.cover_path;   // the cover a person picked by hand beats the shared one
   const row = db.prepare('SELECT cover_path FROM digital_details WHERE store = ? AND app_id = ?').get(store, String(appId));
   return row?.cover_path && fs.existsSync(row.cover_path) ? row.cover_path : null;
 }
+
+/* ───────── a person's own corrections to a console game's details ─────────
+   Kept in digital_user_meta, apart from the cached details everyone shares. A field the person changed (by hand or through a match picked in the identify search)
+   wins for them only; a field they never touched keeps following the shared details. */
+const FIELDS = ['description', 'developers', 'publishers', 'release', 'genres', 'rating'];
+const LISTS = new Set(['developers', 'publishers', 'genres']);
+const userMeta = (userId, store, appId) => db.prepare('SELECT json, cover_path, source, updated_at FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+const sharedJson = (store, appId) => { try { return JSON.parse(db.prepare('SELECT json FROM digital_details WHERE store = ? AND app_id = ? AND found = 1').get(store, String(appId))?.json || 'null'); } catch { return null; } };
+
+/** The shared details with the person's own corrections laid over them (null when there are neither). */
+export function mergeDetails(shared, own) {
+  let mine = null; try { mine = own?.json ? JSON.parse(own.json) : null; } catch { mine = null; }
+  if (!shared && !mine) return null;
+  const out = { ...(shared || { screenshots: [], source: null }) };
+  for (const f of FIELDS) if (mine && mine[f] !== undefined && mine[f] !== null) out[f] = mine[f];
+  if (mine?.source || own?.source) out.source = mine?.source || own.source;
+  for (const f of LISTS) if (!Array.isArray(out[f])) out[f] = [];
+  return out;
+}
+
+export function consoleDetailsFor(userId, store, appId, shared) {
+  const own = userMeta(userId, store, appId);
+  return { details: mergeDetails(shared ?? sharedJson(store, appId), own), custom: Boolean(own) };
+}
+
+const asList = (v) => (Array.isArray(v) ? v : splitList(v)).map((x) => String(x).trim()).filter(Boolean).slice(0, 12);
+const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+/** Edit by hand: description, developers, publishers, genres (lists may be comma separated text), release (year or date text), rating 0-5, and the store country. */
+export function editConsoleGame(userId, store, appId, body = {}) {
+  const game = db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (!game) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
+  const shared = sharedJson(store, appId) || {};
+  const cur = userMeta(userId, store, appId); let mine = {}; try { mine = cur?.json ? JSON.parse(cur.json) : {}; } catch { mine = {}; }
+  for (const f of FIELDS) {
+    if (body[f] === undefined) continue;
+    let v;
+    if (LISTS.has(f)) v = asList(body[f]);
+    else if (f === 'rating') { const x = body[f] === null || body[f] === '' ? null : Number(body[f]); if (x !== null && !(Number.isFinite(x) && x >= 0 && x <= 5)) throw Object.assign(new Error('The rating must be between 0 and 5'), { status: 400 }); v = x; }
+    else v = String(body[f] ?? '').trim().slice(0, f === 'description' ? 4000 : 40);
+    // Only what differs from the shared details is a correction: a field left as it is keeps following the shared details.
+    if (same(v, shared[f] ?? (LISTS.has(f) ? [] : (f === 'rating' ? null : '')))) delete mine[f]; else mine[f] = v;
+  }
+  if (body.country !== undefined) {
+    const c = countryFor(body.country);
+    db.prepare('UPDATE digital_games SET country = ? WHERE user_id = ? AND store = ? AND app_id = ?').run(c ? (c.code || c.name) : null, userId, store, String(appId));
+  }
+  const empty = !Object.keys(mine).length && !cur?.cover_path;
+  if (empty) db.prepare('DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
+  else db.prepare(`INSERT INTO digital_user_meta (user_id, store, app_id, json, cover_path, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(user_id, store, app_id) DO UPDATE SET json = excluded.json, updated_at = excluded.updated_at`).run(userId, store, String(appId), JSON.stringify(mine), cur?.cover_path || null, cur?.source || null);
+  return { custom: !empty };
+}
+
+/** A match picked in the identify search (the candidate POST /metadata/search returns): its details and cover become this person's own for the game. */
+export async function applyConsoleMatch(userId, store, appId, cand, { cacheImpl = cacheMedia } = {}) {
+  const game = db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (!game) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
+  const c = cand || {};
+  const text = (v) => (typeof v === 'string' ? decodeEntities(v).trim() : '') || null;
+  const rec = {
+    description: text(c.description)?.slice(0, 4000) || null,
+    developers: splitList(text(c.developer)).slice(0, 4), publishers: splitList(text(c.publisher)).slice(0, 4), genres: splitList(text(c.genre)).slice(0, 8),
+    release: c.release_year ? String(c.release_year) : null,
+    rating: Number.isFinite(Number(c.rating)) && c.rating !== null && c.rating !== '' && Number(c.rating) >= 0 && Number(c.rating) <= 5 ? Number(c.rating) : null
+  };
+  const json = {}; for (const f of FIELDS) { const v = rec[f]; if (v !== null && !(Array.isArray(v) && !v.length)) json[f] = v; }
+  const url = c.cover_url || c.media?.box2d || null;
+  let coverPath = null; if (url) { try { coverPath = await cacheImpl(url, 'box2d'); } catch { coverPath = null; } }
+  const source = String(c.source || 'manual').slice(0, 40);
+  db.prepare(`INSERT INTO digital_user_meta (user_id, store, app_id, json, cover_path, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(user_id, store, app_id) DO UPDATE SET json = excluded.json, cover_path = COALESCE(excluded.cover_path, digital_user_meta.cover_path), source = excluded.source, updated_at = excluded.updated_at`)
+    .run(userId, store, String(appId), JSON.stringify(json), coverPath, source);
+  return { custom: true };
+}
+
+/** Forget this person's corrections and match: the game follows the shared details and cover again. */
+export function clearConsoleMatch(userId, store, appId) {
+  const r = db.prepare('DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
+  return { cleared: r.changes > 0 };
+}
+
+/** Ask the providers about this one game again (the shared details are refreshed, as the Refresh button does for every game). */
+export async function lookupConsoleAgain(userId, store, appId, opts) {
+  const g = db.prepare('SELECT name, platform FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (!g) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
+  return refreshConsoleDetails(store, appId, g.name, { ...opts, platform: g.platform });
+}
+
+
 
 /* One background run at a time looks up every console game (anyone's) that has no details yet. With retry: true, games nothing was
    found for are tried again too (for example after adding a provider key). */

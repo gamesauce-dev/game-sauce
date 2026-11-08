@@ -628,3 +628,6 @@ body.ui-modern #ph-heading .lib-logo { width: 5.5rem; height: 2.2rem; }
 body.ui-modern #ph-heading .lib-total { color: var(--muted); font-size: 0.95rem; font-weight: 600; margin-left: 0.2rem; }
 /* Light mode: the back of each shelf is white (the planks stay wood). */
 html[data-theme="light"] body.ui-modern .ph-row { background: linear-gradient(180deg, #e8e9ef, #ffffff 38%, #f6f6f9); box-shadow: inset 0 0.9rem 1.1rem -0.8rem rgba(20,20,40,.22), inset 0.5rem 0 0.8rem -0.6rem rgba(20,20,40,.14), inset -0.5rem 0 0.8rem -0.6rem rgba(20,20,40,.14); }
+/* Digital Library: the same bar, heading and icons as Physical. */
+body.ui-modern #dg-heading { margin: 0 0 0.5rem; gap: 0.7rem; }
+body.ui-modern #dg-heading .lib-total { color: var(--muted); font-size: 0.95rem; font-weight: 600; margin-left: 0.2rem; }

@@ -563,6 +563,9 @@ const ICON_MAP = [
   // Physical: the page's own buttons (Classic keeps the words; here the words are the hover text)
   ['#view-physical [data-ph-toggle="fav"]', 'favourite'], ['#view-physical [data-ph-toggle="nocover"]', 'no-covers-2'], ['#view-physical [data-ph-toggle="unmatched"]', 'issue'], ['#view-physical [data-ph-toggle="spine"]', 'covers'],
   ['#view-physical #ph-reset', 'clear-reset-2'], ['#view-physical [data-ph-act="lookup"]', 'fetch-metadata-3'], ['#view-physical [data-ph-act="import"]', 'csv-import'], ['#view-physical [data-ph-act="add"]', 'game-add'],
+  ['#view-digital [data-dg-toggle="fav"]', 'favourite'], ['#view-digital [data-dg-toggle="installed"]', 'gamepad'], ['#view-digital [data-dg-toggle="hidden"]', 'hidden'],
+  ['#view-digital #dg-reset', 'clear-reset-2'], ['#view-digital [data-dg-act="import"]', 'csv-import'], ['#view-digital [data-dg-act="add"]', 'game-add'],
+  ['#dg-id-go', 'search'], ['#dg-edit button[type="submit"]', 'save'], ['#dg-add button[type="submit"]', 'tick'], ['#dg-add-more', 'game-add'], ['#dg-imp-preview', 'preview-2'], ['#dg-imp-apply', 'csv-import'],
   ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save'], ['#ph-add button[type="submit"]', 'tick'], ['#ph-add-more', 'game-add'], ['#ph-imp-preview', 'preview-2'], ['#ph-imp-apply', 'csv-import'],
   // Details window: the row (the More menu keeps its words)
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],

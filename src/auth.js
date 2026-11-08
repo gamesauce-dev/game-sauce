@@ -240,6 +240,7 @@ export function deleteUser(userId) {
   db.prepare('DELETE FROM digital_games WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_accounts WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM physical_games WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM digital_user_meta WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 }
 

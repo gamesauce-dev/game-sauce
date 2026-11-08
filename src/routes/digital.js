@@ -2,8 +2,8 @@ import express from 'express';
 import path from 'node:path';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
-import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus } from '../lib/consoles.js';
-import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
+import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
+import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -13,14 +13,18 @@ const STORE_LABELS = { steam: 'Steam', ...Object.fromEntries(Object.entries(CONS
 // Everything here is the signed-in person's own: nobody (admins included) sees another member's key or list.
 router.get('/', (req, res) => {
   const stores = db.prepare("SELECT store, COUNT(*) AS count FROM digital_games WHERE user_id = ? GROUP BY store ORDER BY store").all(me(req));
-  res.json({ steam: describeAccount(me(req)), stores: stores.map((s) => ({ ...s, label: STORE_LABELS[s.store] || s.store })), counts: countGames(me(req)), details_job: detailsJobStatus() });
+  // visible = not hidden, which is what the chips show (count keeps the total, hidden games included); platforms = each console's own count.
+  const seen = countStores(me(req));
+  res.json({ steam: describeAccount(me(req)), stores: stores.map((s) => ({ ...s, visible: seen.stores[s.store] || 0, label: STORE_LABELS[s.store] || s.store })), platforms: seen.platforms.map((p) => ({ ...p, label: platformLabel(p.store, p.platform) })), counts: countGames(me(req)), details_job: detailsJobStatus() });
 });
 
 router.get('/games', (req, res) => {
   const store = knownStore(String(req.query.store || '')) ? String(req.query.store) : '';
-  const sort = ['name', 'hours', 'recent'].includes(String(req.query.sort || '')) ? String(req.query.sort) : 'name';
+  const sort = ['name', '-name', 'platform', 'added', 'year', 'hours', 'recent'].includes(String(req.query.sort || '')) ? String(req.query.sort) : 'name';
+  const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolean).slice(0, 40);
   const hidden = ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : '';
-  const base = { store, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', installed: req.query.installed === '1', hidden };
+  const stores = list(req.query.stores).filter(knownStore), platforms = list(req.query.platforms).filter((p) => /^[a-z0-9]{2,12}$/.test(p));
+  const base = { store, stores, platforms, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', installed: req.query.installed === '1', hidden };
   const all = listGames(me(req), base);
   // How many games sit under each letter (# for names that start with a digit or symbol), of the list as filtered so far.
   const bucket = bucketOf;   // "The Darkness II" files under D
@@ -28,6 +32,12 @@ router.get('/games', (req, res) => {
   const letter = String(req.query.letter || '').toUpperCase();
   const items = /^[A-Z#]$/.test(letter) ? all.filter((g) => bucket(g.name) === letter) : all;
   res.json({ items, total: items.length, total_hours: Math.round(items.reduce((s, g) => s + g.minutes, 0) / 6) / 10, letters });
+});
+
+// One console game added by hand (Steam games come from Steam and cannot be added): { platform, title, country? }.
+router.post('/games', (req, res) => {
+  try { res.status(201).json(addConsoleGame(me(req), req.body || {})); }
+  catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; }
 });
 
 // One mark on one game: { field: 'favourite' | 'hidden' | 'play' | 'physical', value: true | false }. Private to the person; a refresh keeps them.
@@ -50,10 +60,12 @@ router.get('/games/:store/:appId', async (req, res, next) => {
     const c = countryFor(game.country);
     const extra = { store_label: platformLabel(store, game.platform), country_name: c?.name || null, store_url: storeUrl(store, game.name, game.country) };
     try {
-      const details = await getConsoleDetails(store, game.app_id, game.name, { platform: game.platform });
+      const shared = await getConsoleDetails(store, game.app_id, game.name, { platform: game.platform });
+      // The person's own corrections (a hand match, edits) are laid over the shared details.
+      const { details, custom } = consoleDetailsFor(me(req), store, game.app_id, shared);
       // The cover may have arrived just now: list it again so the window gets its address.
       const fresh = details ? listGames(me(req), { store, hidden: 'show' }).find((g) => g.app_id === game.app_id) || game : game;
-      return res.json({ game: { ...fresh, ...extra }, details });
+      return res.json({ game: { ...fresh, ...extra }, details, custom });
     } catch (err) { return next(err); }
   }
   if (store !== 'steam') return res.status(400).json({ error: 'Unknown store' });
@@ -63,11 +75,28 @@ router.get('/games/:store/:appId', async (req, res, next) => {
   catch (err) { if (err.status) return res.status(err.status).json({ error: err.message, game }); next(err); }
 });
 
+// Edit a console game's details by hand, take a match picked in the identify search, clear it again, or ask the providers about it once more.
+// All of it is this person's own; a Steam game's details come from Steam's store page and are not edited here.
+const consoleOnly = (req, res) => { if (!isConsoleStore(req.params.store)) { res.status(400).json({ error: 'Only console games can be edited here. A Steam game\'s details come from Steam.' }); return false; } return true; };
+const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
+router.patch('/games/:store/:appId', (req, res) => { if (!consoleOnly(req, res)) return; try { res.json(editConsoleGame(me(req), req.params.store, req.params.appId, req.body || {})); } catch (err) { fail(res, err); } });
+router.post('/games/:store/:appId/match', async (req, res, next) => {
+  if (!consoleOnly(req, res)) return;
+  const cand = req.body?.candidate;
+  if (!cand || typeof cand !== 'object') return res.status(400).json({ error: 'candidate object is required' });
+  try { res.json(await applyConsoleMatch(me(req), req.params.store, req.params.appId, cand)); } catch (err) { if (err.status) return fail(res, err); next(err); }
+});
+router.delete('/games/:store/:appId/match', (req, res) => { if (!consoleOnly(req, res)) return; try { res.json(clearConsoleMatch(me(req), req.params.store, req.params.appId)); } catch (err) { fail(res, err); } });
+router.post('/games/:store/:appId/lookup', async (req, res, next) => {
+  if (!consoleOnly(req, res)) return;
+  try { const d = await lookupConsoleAgain(me(req), req.params.store, req.params.appId); res.json({ found: Boolean(d) }); } catch (err) { if (err.status) return fail(res, err); next(err); }
+});
+
 // The picture found for a console game (Steam's covers come straight from Steam's own address).
 router.get('/cover/:store/:appId', (req, res) => {
   if (!isConsoleStore(req.params.store)) return res.status(404).json({ error: 'No cover' });
   const own = db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(me(req), req.params.store, String(req.params.appId));
-  const file = own ? consoleCoverPath(req.params.store, req.params.appId) : null;
+  const file = own ? consoleCoverPath(req.params.store, req.params.appId, me(req)) : null;
   if (!file) return res.status(404).json({ error: 'No cover' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
   res.sendFile(path.resolve(file));

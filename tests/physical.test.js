@@ -180,7 +180,7 @@ test('the Physical page: nav entries, view, CSV destination choice, shelf and ti
   assert.match(modern, /view: 'physical', icon: 'physical-shelf'/); assert.ok(fs.existsSync(new URL('../public/modern/icons/physical-shelf.svg', import.meta.url)));
   assert.match(read('public/styles.css'), /body\.play-only \.nav-item\[data-view="physical"\]/);
   // chips mirror the Library's (families, then platforms of the open family, several at once); identify uses the Library's search
-  assert.match(ph, /data-ph-chip-fam/); assert.match(ph, /data-ph-chip-plat/); assert.match(ph, /'\/metadata\/search'/); assert.match(ph, /\/physical\/games\/\$\{id\}\/match/);
+  assert.match(ph, /data-ph-chip-fam/); assert.match(ph, /data-ph-chip-plat/); assert.match(read('public/identify.js'), /'\/metadata\/search'/); assert.match(ph, /wireIdentify\(body, \{ idp: 'ph'/); assert.match(ph, /\/physical\/games\/\$\{id\}\/match/);
   // the shelf: spines that pull out and turn to show the cover, plates by platform, no cover fetched until a game is opened
   assert.match(ph, /classList\.add\('is-open'\)/); assert.match(css, /\.ph-spine\.is-open \{ width: var\(--ow, 118px\);/); assert.match(css, /@keyframes ph-drop/);
   assert.match(css, /prefers-reduced-motion/); assert.match(ph, /ROWS_AT_A_TIME/);

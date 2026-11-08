@@ -152,12 +152,12 @@ test('replace removes games no longer in the file, only for platforms in the fil
 });
 
 test('page: chips, badges, details window and the CSV tools box', () => {
-  const app = read('public/app.js'), html = read('public/index.html'), css = read('public/modern.css');
+  const app = read('public/app.js'), dgjs = read('public/digital.js'), html = read('public/index.html'), css = read('public/modern.css');
   assert.match(html, /id="dgc-file"/); assert.match(html, /id="dgc-preview"/); assert.match(html, /id="dgc-apply"/); assert.match(html, /id="dgc-replace"/);
   assert.match(app, /function initConsoleImport\(/); assert.match(app, /\/digital\/consoles\/import/);
-  assert.match(app, /data-store="\$\{esc\(g\.store\)\}"/);
-  assert.match(app, /playstation: \{ label: 'PlayStation'/); assert.match(app, /nintendo: \{ label: 'Nintendo'/);
-  assert.match(app, /\/digital\/consoles\/details/);
+  assert.match(dgjs, /data-store="\$\{esc\(g\.store\)\}"/);
+  assert.match(dgjs, /playstation: \{ label: 'PlayStation'/); assert.match(dgjs, /nintendo: \{ label: 'Nintendo'/);
+  assert.match(dgjs, /\/digital\/consoles\/details/);
   assert.match(css, /\.dg-badge:not\(\[data-store="steam"\]\)/);
 });
 
@@ -184,19 +184,19 @@ test('Xbox consoles: each is looked up as its own Library platform, and older Xb
 });
 
 test('the badges: XBOX, XBOX 360, XBOX ONE and X|S on the one Xbox chip', () => {
-  const app = read('public/app.js');
-  assert.match(app, /xsx: \{ label: 'Xbox Series X\|S', short: 'X\|S' \}/);
-  assert.match(app, /x360: \{ label: 'Xbox 360', short: 'XBOX 360' \}/);
-  assert.match(app, /xone: \{ label: 'Xbox One', short: 'XBOX ONE' \}/);
+  const app = read('public/digital.js');
+  assert.match(app, /xsx: \{ store: 'xbox', label: 'Xbox Series X\|S', short: 'X\|S'/);
+  assert.match(app, /x360: \{ store: 'xbox', label: 'Xbox 360', short: 'XBOX 360'/);
+  assert.match(app, /xone: \{ store: 'xbox', label: 'Xbox One', short: 'XBOX ONE'/);
   assert.match(app, /data-platform="\$\{esc\(g\.platform \|\| \(g\.store === 'xbox' \? 'xbox' : ''\)\)\}"/);
   for (const f of ['public/styles.css', 'public/modern.css']) for (const p of ['x360', 'xone', 'xsx']) assert.match(read(f), new RegExp(`data-platform="${p}"`), f);
   assert.match(read('public/index.html'), /<code>Platform<\/code>, <code>Game<\/code> and <code>Country<\/code>/);
 });
 
 test('PlayStation and Nintendo: one chip each, a badge per console, each console looked up as its own Library platform', async () => {
-  const app = read('public/app.js');
+  const app = read('public/digital.js');
   for (const [k, short] of [['ps3', 'PS3'], ['ps4', 'PS4'], ['ps5', 'PS5'], ['switch2', 'SWITCH 2'], ['switch', 'SWITCH'], ['wii', 'WII'], ['wiiu', 'WII U'], ["'3ds'", '3DS'], ['ds', 'DS']]) {
-    assert.match(app, new RegExp(`${k}: \\{ label: '[^']+', short: '${short}' \\}`), k);
+    assert.match(app, new RegExp(`${k}: \\{ store: '[a-z]+', label: '[^']+', short: '${short}'`), k);
     assert.equal(consoles.CONSOLE_PLATFORMS[k.replace(/'/g, '')].badge, short);
   }
   for (const f of ['public/styles.css', 'public/modern.css']) for (const p of ['ps3', 'ps4', 'ps5', 'switch2', 'switch', 'wii', 'wiiu', '3ds', 'ds']) assert.match(read(f), new RegExp(`data-platform="${p}"`), f + ' ' + p);

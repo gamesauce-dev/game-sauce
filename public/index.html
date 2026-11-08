@@ -737,16 +737,18 @@
     <!-- ───────────── emulators ───────────── -->
     <!-- ───────────── digital (owned games from online stores; each person's own) ───────────── -->
     <section class="view hidden" id="view-digital">
-      <header class="toolbar">
-        <h1 class="page-title">Digital Library</h1>
-        <span class="dg-total note" id="dg-total"></span>
-      </header>
-      <div class="dg-bar" id="dg-bar">
-        <nav class="dg-chips" id="dg-chips" aria-label="Stores"></nav>
-        <label class="dg-q"><input id="dg-q" type="search" placeholder="Search your digital games" autocomplete="off" aria-label="Search your digital games" /></label>
-        <select id="dg-sort" aria-label="Sort"><option value="name">Name</option><option value="hours">Most played</option><option value="recent">Recently played</option></select>
-        <button class="btn btn-sm" id="dg-sync" title="Fetch your Steam library again">Refresh</button>
+      <div class="ph-bar" id="dg-bar">
+        <label class="dg-q"><input id="dg-q" type="search" placeholder="Search your games" autocomplete="off" aria-label="Search your games" /></label>
+        <select id="dg-sort" aria-label="Sort"></select>
+        <div class="ph-toggles" id="dg-toggles"></div>
+        <button type="button" class="ph-pill hidden" id="dg-reset" title="Clear the search, the platform choice and every filter">↺ Reset</button>
+        <span class="ph-bar-end">
+          <button class="btn btn-sm" id="dg-sync" title="Fetch your Steam library again">✦ Refresh</button>
+          <button class="btn btn-sm hidden" data-dg-act="import" title="Bring games in from a CSV">Import CSV</button>
+          <button class="btn btn-sm btn-primary" data-dg-act="add" title="Add one console game by hand">＋ Add a game</button>
+        </span>
       </div>
+      <nav class="ph-chips" id="dg-chips" aria-label="Stores and consoles"></nav>
       <div id="dg-msg" class="dg-msg"></div>
       <div class="dg-az" id="dg-az">
         <div class="az-letters" id="dg-letters" role="toolbar" aria-label="Jump to a letter"></div>
@@ -756,6 +758,8 @@
           <button type="button" class="mb-btn" id="dg-top" title="Back to the top" aria-label="Back to the top"></button>
         </div>
       </div>
+      <div id="dg-heading" class="lib-heading hidden"></div>
+      <div id="dg-empty" class="hidden"></div>
       <div id="dg-grid" class="dg-grid"></div>
     </section>
 

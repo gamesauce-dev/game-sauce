@@ -425,6 +425,18 @@ Press **Preview** to see what would change, then **Import games**. Importing the
 Details and covers are looked up in the background with the providers under **Settings → Metadata providers** (as for the Library). The Digital page shows progress while it runs. Console games have no play button; instead each tile has a switch at the bottom left, a disc (PlayStation, Xbox, Wii, Wii U) or a cartridge (Switch 2, Switch, 3DS, DS), that you turn on for games you own physically. It is private to you. A game whose details were not found can be tried again with **Refresh** on the Digital page, and any console game can be taken out of the list with the bin button in its details window.
 
 
+## Digital Library: layout, chips and details
+
+The Digital Library is laid out like the Physical Library. Under the search box are your **store chips**: All, Steam, PlayStation, Nintendo and Xbox, each with its count. Open a store with a console list (PlayStation, Nintendo, Xbox) and its consoles appear as chips underneath (PS3, PS4, PS5; Switch, Switch 2, Wii, Wii U, 3DS, DS; Xbox, Xbox 360, Xbox One, Xbox Series). Pick one or several; click a lit chip to drop it; **All platforms** in the heading clears the choice.
+
+The heading under the A-Z row says what is picked and how many games it holds. With **Steam alone** picked it also shows the **hours played** (as of the last Refresh). **Sort** offers Title A-Z, Title Z-A, Platform, Recently added and Year; Steam's **Most played** and **Recently played** sit below a "Steam only" divider and appear only when Steam is in the picture.
+
+- **Add a game** adds one PlayStation, Nintendo or Xbox game by hand: a title, the console, and optionally the country of the store. Steam games come from Steam and cannot be added by hand.
+- **Import CSV** (admins) brings console games in from a CSV, as under Settings → Library tools → CSV tools.
+- **Refresh** fetches your Steam library again and looks up details for console games that have none.
+
+Open a console game and its window offers the same tools as the Physical Library: **Identify this game** (search TheGamesDB, IGDB or LaunchBox and pick the right entry, cover included), look up again, clear your match, and **Edit** for the developer, publisher, genre, release, rating, description and store country. Your matches and edits are yours alone: nobody else's list changes, and a field you never edited keeps following the shared details. A Steam game's details come from Steam's own store page, so a Steam game has nothing to match or edit.
+
 ## Physical: the games on your shelf
 
 The Library holds games that have a ROM file. **Physical** is for the ones that sit on your shelf as a boxed disc or cartridge, with nothing to point a source at. Each person has their own shelf, and nobody else sees it.

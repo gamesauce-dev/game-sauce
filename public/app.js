@@ -5,6 +5,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 import * as modern from './modern.js';
 import * as physical from './physical.js';
+import * as digital from './digital.js';
 
 const state = {
   view: 'library',
@@ -283,7 +284,7 @@ function setView(view) {
   if (view === 'sources') loadSources();
   if (view === 'settings') loadSettings();
   if (view === 'emulators') loadEmulators();
-  if (view === 'digital') loadDigital();
+  if (view === 'digital') digital.load();
   if (view === 'physical') physical.load();
 }
 
@@ -1299,8 +1300,7 @@ function closeDrawer() {
   $$('.card.nav-current').forEach((c) => c.classList.remove('nav-current'));
   $('#drawer').classList.add('hidden');
   $('#scrim').classList.add('hidden');
-  state.openRomId = null; state.openDigital = null; state.openPhysical = null; physical.forgetOpen();
-  $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current'));
+  state.openRomId = null; state.openDigital = null; state.openPhysical = null; physical.forgetOpen(); digital.forgetOpen();
   document.body.classList.remove('details-open');
 }
 
@@ -1338,7 +1338,7 @@ function updateDrawerNav(id) {
   if (tile) { tile.classList.add('nav-current'); tile.scrollIntoView({ block: 'nearest' }); }
 }
 async function stepDetail(dir) {
-  if (state.openRomId == null && state.openDigital && !$('#drawer').classList.contains('hidden')) return stepDigital(dir);
+  if (state.openRomId == null && state.openDigital && !$('#drawer').classList.contains('hidden')) return digital.step(dir);
   if (state.openRomId == null && state.openPhysical && !$('#drawer').classList.contains('hidden')) return physical.step(dir);
   const id = state.openRomId;
   if (id == null) return;
@@ -3310,293 +3310,7 @@ async function loadPlatformAdmin() {
 
 /* ─────────────────────────── collections ─────────────────────────── */
 
-/* ─────────────────────────── Digital (Steam): each person's own owned games ─────────────────────────── */
-
-/* The stores Digital lists: Steam from its Web API, and console games brought in from a CSV (Settings › CSV tools). */
-const DG_STORE = {
-  steam: { label: 'Steam', short: 'STEAM', bg: '#1b2838' },
-  playstation: { label: 'PlayStation', short: 'PS', bg: '#0070d1' },
-  nintendo: { label: 'Nintendo', short: 'NINTENDO', bg: '#e60012' },
-  xbox: { label: 'Xbox', short: 'XBOX', bg: '#107c10' }
-};
-/* A chip holds several consoles, and each game carries the badge of its own (games imported before consoles were told apart show XBOX). */
-const DG_PLATFORM = {
-  ps3: { label: 'PlayStation 3', short: 'PS3' }, ps4: { label: 'PlayStation 4', short: 'PS4' }, ps5: { label: 'PlayStation 5', short: 'PS5' },
-  switch2: { label: 'Nintendo Switch 2', short: 'SWITCH 2' }, switch: { label: 'Nintendo Switch', short: 'SWITCH' }, wii: { label: 'Nintendo Wii', short: 'WII' },
-  wiiu: { label: 'Nintendo Wii U', short: 'WII U' }, '3ds': { label: 'Nintendo 3DS', short: '3DS' }, ds: { label: 'Nintendo DS', short: 'DS' },
-  xbox: { label: 'Xbox', short: 'XBOX' }, x360: { label: 'Xbox 360', short: 'XBOX 360' },
-  xone: { label: 'Xbox One', short: 'XBOX ONE' }, xsx: { label: 'Xbox Series X|S', short: 'X|S' }
-};
-const dgBadgeOf = (g) => {
-  const st = DG_STORE[g.store] || { label: g.store, short: String(g.store || '').toUpperCase(), bg: '#1b2838' };
-  return g.store === 'steam' ? st : { ...st, ...(DG_PLATFORM[g.platform] || (g.store === 'xbox' ? DG_PLATFORM.xbox : {})) };
-};
-const dg = { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, density: 'comfortable', letter: '' };
-/* Previous / next inside the Digital list: the tiles in the order shown now (hidden games only when Show hidden is on). */
-/* The Digital grid draws its tiles in chunks (60 at a time, more as you scroll), like the Library: drawing thousands at once, each with its
- * own buttons, froze iPhones and iPads. dg.ids is the whole list in order, so previous / next still walk all of it. */
-const dgIds = () => dg.ids || [];
-// One game in the list: its store and its id in that store (the same title on two consoles is two games, each with its own id).
-const dgKey = (store, appId) => `${store}:${appId}`;
-function dgRender(reset) {
-  const grid = $('#dg-grid'); if (!grid) return;
-  if (reset) { grid.innerHTML = ''; dg.rendered = 0; }
-  grid.querySelector('.dg-sentinel')?.remove();
-  const html = dg.html || [], target = Math.min(html.length, Math.max(dg.shown || 60, dg.rendered || 0));
-  if (target > (dg.rendered || 0)) grid.insertAdjacentHTML('beforeend', html.slice(dg.rendered || 0, target).join(''));
-  dg.rendered = target; dg.shown = target;
-  dg.obs?.disconnect();
-  if (target < html.length) {
-    const s = document.createElement('div'); s.className = 'dg-sentinel'; s.style.cssText = 'grid-column:1/-1;height:1px';
-    grid.appendChild(s);
-    dg.obs = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { dg.shown = dg.rendered + 60; dgRender(false); } }, { root: grid, rootMargin: '800px' });
-    dg.obs.observe(s);
-  }
-}
-function syncDigitalNav() {
-  const box = $('#drawer-nav'), cur = state.openDigital; if (!box || !cur) return;
-  const ids = dgIds(), i = ids.indexOf(dgKey(cur.store, cur.appId));
-  box.classList.toggle('hidden', i < 0 || ids.length < 2);
-  $('#drawer-prev').disabled = i <= 0; $('#drawer-next').disabled = i < 0 || i >= ids.length - 1;
-  $('#drawer-pos').textContent = i < 0 ? '' : `${i + 1} / ${ids.length}`;
-  $$('.dg-card.nav-current').forEach((c) => c.classList.remove('nav-current'));
-  const tile = $(`.dg-card[data-dg-store-of="${CSS.escape(cur.store)}"][data-dg-app="${CSS.escape(cur.appId)}"]`); if (tile) { tile.classList.add('nav-current'); tile.scrollIntoView({ block: 'nearest' }); }
-}
-function stepDigital(dir) {
-  const cur = state.openDigital; if (!cur) return;
-  const ids = dgIds(), at = ids.indexOf(dgKey(cur.store, cur.appId)) + dir, t = ids[at];
-  if (t != null) { if (at >= (dg.rendered || 0)) { dg.shown = at + 20; dgRender(false); } const cut = t.indexOf(':'); openDigitalDetail(t.slice(0, cut), t.slice(cut + 1)); }
-}
-const DG_LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
-function paintDigitalLetters(counts) {
-  const box = $('#dg-letters'); if (!box) return;
-  const on = dg.sort === 'name';   // a letter only means something in name order
-  box.classList.toggle('off', !on);
-  box.innerHTML = on ? DG_LETTERS.map((l) => `<button type="button" class="az-l${dg.letter === l ? ' on' : ''}" data-dg-letter="${l}"${(counts || {})[l] ? '' : ' disabled'} title="${(counts || {})[l] ? l + ': ' + counts[l].toLocaleString() + ' games' : 'No games under ' + l}">${l}</button>`).join('') : '';
-  $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density));
-}
-function resetDigital() { Object.assign(dg, { store: '', sort: 'name', q: '', fav: false, installed: false, hidden: false, letter: '' }); const q = $('#dg-q'); if (q) q.value = ''; const s = $('#dg-sort'); if (s) s.value = 'name'; }
-let dgTimer;
-
-async function loadDigital(keep = false) {
-  if (keep !== true) dg.shown = 60;   // a new list starts with one screenful; a mark keeps what was drawn
-  const msg = $('#dg-msg'), grid = $('#dg-grid');
-  let info;
-  try { info = await api('/digital'); } catch (err) { msg.textContent = err.message; return; }
-  const connected = info.steam.connected;
-  const consoleGames = info.stores.some((s) => s.store !== 'steam');
-  // Refresh fetches the Steam library again and looks up details for console games that have none yet.
-  $('#dg-sync').classList.toggle('hidden', !connected && !consoleGames);
-  $('#dg-sync').title = connected && consoleGames ? 'Fetch your Steam library again, and look up details for console games that have none' : connected ? 'Fetch your Steam library again' : 'Look up details and covers for console games that have none';
-  const cn = info.counts || { visible: 0, favourites: 0, hidden: 0 };
-  grid.classList.toggle('compact', dg.density === 'compact');
-  const chips = [{ store: '', label: 'All', n: cn.visible }, ...info.stores.map((s) => ({ store: s.store, label: s.label || DG_STORE[s.store]?.label || s.store, n: s.count }))];
-  $('#dg-chips').innerHTML = info.stores.length
-    ? chips.map((c) => `<button type="button" class="chip${dg.store === c.store ? ' on' : ''}" data-dg-store="${esc(c.store)}">${esc(c.label)}${c.n != null ? ` <small>${c.n.toLocaleString()}</small>` : ''}</button>`).join('')
-      + `<button type="button" class="chip${dg.fav ? ' on' : ''}" data-dg-fav title="Only your favourites">Favourites <small>${cn.favourites.toLocaleString()}</small></button>`
-      + `<button type="button" class="chip${dg.installed ? ' on' : ''}" data-dg-installed title="Only the games you switched the play button on for (installed on this PC)">Installed <small>${(cn.installed || 0).toLocaleString()}</small></button>`
-      + `<button type="button" class="chip${dg.hidden ? ' on' : ''}" data-dg-hidden title="Also show the games you hid">Show hidden <small>${cn.hidden.toLocaleString()}</small></button>`
-    : '';
-  if (!connected && !consoleGames) {
-    $('#dg-total').textContent = '';
-    grid.innerHTML = '';
-    msg.innerHTML = `<div class="empty"><h2>Connect your Steam library</h2><p>Add your Steam key and ID once, and the games you own appear here with your hours played. Only you can see them.</p><button class="btn btn-primary" id="dg-setup">Set up Steam</button>${authState.user?.role === 'admin' ? '<p class="hint">PlayStation, Nintendo and Xbox games can be brought in from a CSV: Settings › Library tools › CSV tools.</p>' : ''}</div>`;
-    $('#dg-setup').onclick = () => { setView('settings'); showSettingsModule('steam'); };
-    return;
-  }
-  const job = info.details_job || {};
-  msg.innerHTML = (connected && info.steam.last_error ? `<div class="dg-warn">${esc(info.steam.last_error)}</div>` : '')
-    + (job.running ? `<div class="dg-note">Looking up details and covers for console games: ${job.done.toLocaleString()} of ${job.total.toLocaleString()} done. They appear as they are found.</div>` : '');
-  // While the lookup runs, the page checks back every few seconds so covers appear without a reload.
-  clearTimeout(dg.jobTimer);
-  if (job.running) dg.jobTimer = setTimeout(() => { if (state.view === 'digital' && !$('#view-digital')?.classList.contains('hidden')) { const sc = $('#dg-grid'), keep = sc?.scrollTop || 0; loadDigital(true).then(() => { if (sc) sc.scrollTop = keep; }); } }, 4000);
-  const params = new URLSearchParams({ sort: dg.sort }); if (dg.store) params.set('store', dg.store); if (dg.q) params.set('q', dg.q); if (dg.fav) params.set('favourites', '1'); if (dg.installed) params.set('installed', '1'); if (dg.hidden) params.set('hidden', 'show'); if (dg.letter) params.set('letter', dg.letter);
-  const { items, total, total_hours, letters } = await api('/digital/games?' + params);
-  const asOf = info.steam.last_sync ? new Date(info.steam.last_sync.replace(' ', 'T') + 'Z') : null;
-  $('#dg-total').textContent = total ? `${total.toLocaleString()} games${total_hours ? ` · ${total_hours.toLocaleString()} h played` : ''}${total_hours && asOf ? ' · hours as of ' + asOf.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' ' + asOf.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''}` : '';
-  $('#dg-total').title = 'Hours played and last played are as of the last time you pressed Refresh (or Fetch my games). Press it again to update them.';
-  paintDigitalLetters(letters);
-  if (!total) {
-    grid.innerHTML = (dg.q || dg.fav || dg.installed) ? '<div class="empty"><h2>No games match</h2></div>' : `<div class="empty"><h2>Nothing here yet</h2><p>${connected ? 'Press Refresh to fetch your Steam library.' : ''}</p></div>`;
-    return;
-  }
-  grid.scrollTop = 0;
-  dg.ids = items.map((g) => dgKey(g.store, g.app_id));
-  dg.html = items.map((g) => {
-    const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-    const st = dgBadgeOf(g), steam = g.store === 'steam';
-    return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">
-      <div class="card-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
-        <div class="card-fallback">${esc(initials)}</div>
-        ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
-        <span class="card-badge dg-badge" data-store="${esc(g.store)}"${g.store !== 'steam' ? ` data-platform="${esc(g.platform || (g.store === 'xbox' ? 'xbox' : ''))}"` : ''} title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>
-        ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
-        <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
-        <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
-        ${steam ? `<button type="button" class="dg-playsw ${g.play ? 'on' : ''}" data-dg-mark="play" data-value="${g.play ? 0 : 1}" tabindex="-1" title="${g.play ? 'Play button is on (click to turn it off)' : 'Play button is off: turn it on for games installed on this PC'}" aria-label="Play button ${g.play ? 'on' : 'off'}">${g.play ? ICON.gamepad : ICON.gamepadOff}</button>
-        <span class="dg-hours" title="Hours played">${g.hours ? g.hours.toLocaleString() + ' h' : 'unplayed'}</span>`
-        : ''}
-      </div>
-      <div class="card-title">${esc(g.name)}</div>
-    </div>`;
-  });
-  dgRender(true);
-}
-
-document.addEventListener('click', async (e) => {
-  const chip = e.target.closest('[data-dg-store]');
-  if (chip) { dg.store = chip.dataset.dgStore; loadDigital(); return; }
-  const lt = e.target.closest('[data-dg-letter]');
-  if (lt && !lt.disabled) { dg.letter = dg.letter === lt.dataset.dgLetter ? '' : lt.dataset.dgLetter; loadDigital(); return; }
-  const dn = e.target.closest('[data-dg-density]');
-  if (dn) { dg.density = dn.dataset.dgDensity; $('#dg-grid')?.classList.toggle('compact', dg.density === 'compact'); $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density)); return; }
-  if (e.target.closest('#dg-top')) { $('#dg-grid')?.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-  if (e.target.closest('[data-dg-fav]')) { dg.fav = !dg.fav; dg.letter = ''; loadDigital(); return; }
-  if (e.target.closest('[data-dg-installed]')) { dg.installed = !dg.installed; dg.letter = ''; loadDigital(); return; }
-  if (e.target.closest('[data-dg-hidden]')) { dg.hidden = !dg.hidden; dg.letter = ''; loadDigital(); return; }
-  const tile = e.target.closest('.dg-card');
-  if (tile && !e.target.closest('[data-dg-mark], .dg-launch')) { openDigitalDetail(tile.dataset.dgStoreOf, tile.dataset.dgApp); return; }
-  const mk = e.target.closest('[data-dg-mark]');
-  if (mk) {
-    e.preventDefault(); e.stopPropagation();
-    const card = mk.closest('.dg-card'), scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0;
-    try { await api(`/digital/games/${encodeURIComponent(card.dataset.dgStoreOf)}/${encodeURIComponent(card.dataset.dgApp)}/mark`, { method: 'PUT', body: JSON.stringify({ field: mk.dataset.dgMark, value: mk.dataset.value === '1' }) }); }
-    catch (err) { toast(err.message, true); return; }
-    await loadDigital(true); if (scroller) scroller.scrollTop = keep;   // the list is redrawn; stay where you were
-    return;
-  }
-  if (e.target.closest('#dg-sync')) {
-    const b = $('#dg-sync'); b.disabled = true;
-    let steamOn = false;
-    try { steamOn = (await api('/digital')).steam.connected; } catch { /* the sync below says what is wrong */ }
-    if (steamOn) {
-      try { const r = await api('/digital/steam/sync', { method: 'POST' }); toast(`${r.count.toLocaleString()} Steam games fetched`); }
-      catch (err) { toast(err.message, true); }
-    }
-    // Console games with no details yet (or none found last time) are looked up again.
-    try { const j = await api('/digital/consoles/details', { method: 'POST', body: JSON.stringify({ retry: true }) }); if (j.running && !steamOn) toast(`Looking up ${j.total.toLocaleString()} console games`); else if (!steamOn) toast('Every console game already has its details'); }
-    catch (err) { if (!steamOn) toast(err.message, true); }
-    b.disabled = false; loadDigital();
-  }
-});
-$('#dg-q')?.addEventListener('input', (e) => { clearTimeout(dgTimer); dgTimer = setTimeout(() => { dg.q = e.target.value.trim(); dg.letter = ''; loadDigital(); }, 200); });
-$('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; dg.letter = ''; loadDigital(); });
-
-/* The details window for a console game: the same window as Steam's, with what applies to a game brought in from a CSV.
- * There is no play button. The details and cover come from the Library's metadata providers; Remove takes it out of your list. */
-function renderConsoleDetail(g, d, store, appId) {
-  const st = dgBadgeOf({ ...g, store });
-  const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  const rows = [
-    ['Platform', esc(g.store_label || st.label)],
-    ['Store country', g.country_name ? esc(g.country_name) : '—'],
-    ['Developer', d?.developers?.length ? esc(d.developers.join(', ')) : '—'],
-    ['Publisher', d?.publishers?.length ? esc(d.publishers.join(', ')) : '—'],
-    ['Released', d?.release ? esc(d.release) : '—'],
-    ['Genre', d?.genres?.length ? esc(d.genres.join(', ')) : '—'],
-    ['Rating', d?.rating != null ? `${esc(String(d.rating))} / 5` : '—'],
-    ['Details from', d?.source ? esc(d.source) : '—']
-  ];
-  const pills = (d?.genres || []).length ? `<div class="genre-pills" aria-label="Genres">${d.genres.map((x) => `<span class="genre-pill">${esc(x)}</span>`).join('')}</div>` : '';
-  $('#drawer-body').innerHTML = `
-    ${pills}
-    <div class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
-      <div class="card-fallback">${esc(initials)}</div>
-      ${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
-    </div>
-    <div class="detail-head"><div style="flex:1">
-      <h2 class="detail-title">${esc(g.name)}</h2>
-      <div class="detail-plat"><i style="background:${st.bg}"></i>${esc(st.label)}${d?.release ? ` · ${esc(d.release)}` : ''}</div>
-    </div></div>
-    <div class="detail-actions">
-      <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-act="favorite" data-dgd="favourite" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
-      <button class="ibtn" data-act="dghide" data-dgd="hidden" data-tip="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
-      ${g.store_url ? `<a class="ibtn" data-act="dgstore" href="${esc(g.store_url)}" target="_blank" rel="noreferrer" data-tip="Find it in the ${esc(store === 'xbox' ? 'Xbox' : 'PlayStation')} Store${g.country_name ? ' (' + esc(g.country_name) + ')' : ''}" aria-label="Open the store page"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>` : ''}
-      <button class="ibtn ibtn-danger" data-act="delete" data-dgremove data-tip="Remove from your Digital list" aria-label="Remove">${ICON.trash}</button>
-    </div>
-    ${d?.description ? `<p class="detail-desc">${esc(d.description)}</p>` : `<p class="hint">${d ? 'No description was found for this game.' : 'No details or cover were found for this game yet. They are looked up with the Library\'s metadata providers (Settings › Metadata); press Refresh on the Digital page to try again.'}</p>`}
-    ${d?.screenshots?.length ? `<div class="section-label">Screenshots</div><div class="media-strip">${d.screenshots.map((u) => `<a href="${esc(u)}" target="_blank" rel="noreferrer"><img loading="lazy" src="${esc(u)}" alt="" onerror="this.parentElement.remove()" /></a>`).join('')}</div>` : ''}
-    <div class="section-label">Details</div>
-    <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
-  const after = async () => { const scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0; if (state.view === 'digital') { await loadDigital(true); if (scroller) scroller.scrollTop = keep; } };
-  $$('[data-dgd]', $('#drawer-body')).forEach((b) => b.addEventListener('click', async () => {
-    const field = b.dataset.dgd, value = field === 'favourite' ? !g.favourite : !g.hidden;
-    try { await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}/mark`, { method: 'PUT', body: JSON.stringify({ field, value }) }); }
-    catch (err) { toast(err.message, true); return; }
-    openDigitalDetail(store, appId); after();
-  }));
-  $('[data-dgremove]', $('#drawer-body'))?.addEventListener('click', async () => {
-    const ok = await confirmDialog({ title: `Remove ${g.name}?`, body: 'It is taken out of your Digital list. Importing your CSV again brings it back.', okLabel: 'Remove', danger: true });
-    if (!ok) return;
-    try { await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}`, { method: 'DELETE' }); }
-    catch (err) { toast(err.message, true); return; }
-    toast(`${g.name} removed`); closeDrawer(); after();
-  });
-}
-
-/* The details window for a Steam game: the library's window, trimmed to what applies (favourite, hide, play switch, a store link). There is
- * nothing to edit, download, refresh, lock or delete: the details come from Steam's public store page and are cached on the server. */
-async function openDigitalDetail(store, appId) {
-  const myOpen = (state.detailToken = (state.detailToken || 0) + 1);
-  state.openRomId = null;
-  state.openDigital = { store, appId: String(appId) }; state.openPhysical = null;
-  const drawer = $('#drawer');
-  drawer.classList.remove('hidden'); syncPin(); $('#scrim').classList.toggle('hidden', pinned());
-  $('#drawer-body').innerHTML = '<div class="skel" style="height:300px"></div>';
-  $('#drawer').scrollTop = 0;
-  syncDigitalNav();
-  let r;
-  try { r = await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}`); }
-  catch (err) { if (myOpen !== state.detailToken) return; toast(err.message, true); return closeDrawer(); }
-  if (myOpen !== state.detailToken) return;
-  const g = r.game, d = r.details;
-  if (store !== 'steam') return renderConsoleDetail(g, d, store, appId);
-  const initials = g.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  const when = g.last_played ? new Date(g.last_played * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-  const rows = [
-    ['Store', 'Steam'],
-    ['Hours played', (g.hours ? `${g.hours.toLocaleString()} h` : 'not played yet') + ' <span class="note">(as of your last fetch)</span>'],
-    ['Last played', when],
-    ['Developer', d?.developers?.length ? esc(d.developers.join(', ')) : '—'],
-    ['Publisher', d?.publishers?.length ? esc(d.publishers.join(', ')) : '—'],
-    ['Released', d?.release ? esc(d.release) : '—'],
-    ['Genre', d?.genres?.length ? esc(d.genres.join(', ')) : '—'],
-    ['Metacritic', d?.metacritic ? `${d.metacritic} / 100` : '—'],
-    ['Store price', d?.price ? esc(d.price) : '—'],
-    ['Runs on', d?.platforms?.length ? esc(d.platforms.map((p) => ({ windows: 'Windows', mac: 'Mac', linux: 'Linux' })[p] || p).join(', ')) : '—'],
-    ['Steam app ID', `<span class="mono">${esc(g.app_id)}</span>`]
-  ];
-  const pills = (d?.genres || []).length ? `<div class="genre-pills" aria-label="Genres">${d.genres.map((x) => `<span class="genre-pill">${esc(x)}</span>`).join('')}</div>` : '';
-  $('#drawer-body').innerHTML = `
-    ${pills}
-    <div class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,#1b2838,#12141a)"${d?.header ? ` data-shot="${esc(d.header)}"` : ''}>
-      <div class="card-fallback">${esc(initials)}</div>
-      ${g.cover_url ? `<img src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
-    </div>
-    <div class="detail-head"><div style="flex:1">
-      <h2 class="detail-title">${esc(g.name)}</h2>
-      <div class="detail-plat"><i style="background:#1b2838"></i>Steam${d?.release ? ` · ${esc(d.release)}` : ''}</div>
-    </div></div>
-    <div class="detail-actions">
-      ${g.launch_url ? `<a class="ibtn ibtn-play" data-act="play" href="${esc(g.launch_url)}" data-tip="Open in Steam (works on a PC that has Steam installed)" aria-label="Open in Steam">${ICON.play}</a>` : ''}
-      <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-act="favorite" data-dgd="favourite" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ICON.starFill : ICON.star}</button>
-      <button class="ibtn${g.play ? ' is-on' : ''}" data-act="dgplay" data-dgd="play" data-tip="${g.play ? 'Play button is on (click to turn it off)' : 'Play button is off: turn it on for games installed on this PC'}" aria-label="Play button ${g.play ? 'on' : 'off'}">${g.play ? ICON.gamepad : ICON.gamepadOff}</button>
-      <button class="ibtn" data-act="dghide" data-dgd="hidden" data-tip="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ICON.eye : ICON.eyeOff}</button>
-      <a class="ibtn" data-act="dgstore" href="https://store.steampowered.com/app/${encodeURIComponent(g.app_id)}" target="_blank" rel="noreferrer" data-tip="Open the Steam store page" aria-label="Open the Steam store page"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
-    </div>
-    ${d?.description ? `<p class="detail-desc">${esc(d.description)}</p>` : `<p class="hint">Steam has no store page for this game (it may be delisted or an add-on), so only your own details are shown.</p>`}
-    ${d?.screenshots?.length ? `<div class="section-label">Screenshots</div><div class="media-strip">${d.screenshots.map((u) => `<a href="${esc(u)}" target="_blank" rel="noreferrer"><img loading="lazy" src="${esc(u)}" alt="" onerror="this.parentElement.remove()" /></a>`).join('')}</div>` : ''}
-    <div class="section-label">Details</div>
-    <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
-  $$('[data-dgd]', $('#drawer-body')).forEach((b) => b.addEventListener('click', async () => {
-    const field = b.dataset.dgd, value = field === 'favourite' ? !g.favourite : field === 'play' ? !g.play : !g.hidden;
-    try { await api(`/digital/games/${encodeURIComponent(store)}/${encodeURIComponent(appId)}/mark`, { method: 'PUT', body: JSON.stringify({ field, value }) }); }
-    catch (err) { toast(err.message, true); return; }
-    const scroller = $('#dg-grid'), keep = scroller?.scrollTop || 0;
-    openDigitalDetail(store, appId);
-    if (state.view === 'digital') { await loadDigital(true); if (scroller) scroller.scrollTop = keep; }
-  }));
-}
+/* ─────────────────────────── Digital Library: see public/digital.js ─────────────────────────── */
 
 async function initSteamPanel() {
   const status = $('#steam-status'), id = $('#steam-id'), key = $('#steam-key');
@@ -4127,7 +3841,8 @@ function showApp(user, { restore = false } = {}) {
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
   physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON });
-  modern.initModern({ closeDrawer, resetDigital, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
+  digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, user: () => authState.user });
+  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
   api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
@@ -4545,7 +4260,7 @@ function initConsoleImport() {
         return;
       }
       const r = await api('/digital/consoles/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked }) });
-      const per = Object.entries(r.by_store || {}).map(([k, v]) => `${esc(DG_STORE[k]?.label || k)} ${n(v)}`).join(', ');
+      const per = Object.entries(r.by_store || {}).map(([k, v]) => `${esc(digital.storeLabel(k))} ${n(v)}`).join(', ');
       const what = apply
         ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
         : `${n(r.games)} games in the file (${per || 'none'}): ${n(r.added)} would be added, ${n(r.updated)} updated, ${n(r.unchanged)} ${r.unchanged === 1 ? 'is' : 'are'} already there${r.removed ? `, ${n(r.removed)} would be removed` : ''}.`;

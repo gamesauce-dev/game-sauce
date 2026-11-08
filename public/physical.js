@@ -4,6 +4,8 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
+import { platformSelect, identifyBlock, wireIdentify } from './identify.js';
+
 let ctx = null;
 const S = {
   platforms: [], picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '',
@@ -441,12 +443,6 @@ export function step(dir) {
 
 /* ───────────── the details window ───────────── */
 
-function platformSelect(selected, { any = false } = {}) {
-  const groups = new Map();
-  for (const p of (window.__platformsCache || []).filter((x) => x.slug !== 'other')) { const f = p.family || 'Others'; if (!groups.has(f)) groups.set(f, []); groups.get(f).push(p); }
-  return (any ? '<option value="all">Any platform</option>' : '') + [...groups.keys()].sort(chipSort).map((f) => `<optgroup label="${esc(f)}">${groups.get(f).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<option value="${esc(p.slug)}"${p.slug === selected ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>`).join('');
-}
-
 function openShell() {
   const drawer = $('#drawer');
   drawer.classList.remove('hidden'); ctx.syncPin(); $('#scrim').classList.toggle('hidden', ctx.pinned());
@@ -477,8 +473,6 @@ export async function openDetail(id) {
     ['Spine art', g.has_spine ? `<img src="${esc(g.spine_url)}" alt="" style="height:5.5rem;max-width:100%;border-radius:2px;vertical-align:middle" />` : 'none found (the shelf draws one)'],
     ['Notes', g.notes ? esc(g.notes) : '—']
   ];
-  const providers = [['thegamesdb', 'TheGamesDB'], ['igdb', 'IGDB'], ['launchbox', 'LaunchBox']];
-  const prov = ctx.state.prefs?.identify_provider || 'thegamesdb';
   const I = ctx.ICON;
   $('#drawer-body').innerHTML = `
     ${g.genre ? `<div class="genre-pills" aria-label="Genres">${g.genre.split(/\s*[,;/]\s*/).filter(Boolean).slice(0, 6).map((x) => `<span class="genre-pill">${esc(x)}</span>`).join('')}</div>` : ''}
@@ -498,17 +492,7 @@ export async function openDetail(id) {
     </div>
     ${g.description ? `<p class="detail-desc">${esc(g.description)}</p>` : `<p class="hint">${g.matched ? 'The match has no description.' : 'No details or cover were found for this game yet. Search for it below and pick the right entry: the cover comes with it.'}</p>`}
 
-    <div class="section-label">Identify this game</div>
-    <div class="panel" style="padding:12px">
-      <p class="hint" style="margin:0 0 10px">No match, wrong game, or missing art? Search and pick the right entry — cover included.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input id="ph-id-q" class="search" style="flex:1;min-width:180px" type="search" placeholder="Title to search…" value="${esc(g.title)}" autocomplete="off" />
-        <select id="ph-id-prov" class="select" title="Which catalogue to search">${providers.map(([v, l]) => `<option value="${v}"${v === prov ? ' selected' : ''}>${l}</option>`).join('')}</select>
-        <select id="ph-id-plat" class="select" style="max-width:190px">${platformSelect(g.platform, { any: true })}</select>
-        <button class="btn" id="ph-id-go">Search</button>
-      </div>
-      <div id="ph-id-list" class="results" style="margin-top:10px"></div>
-    </div>
+    ${identifyBlock({ idp: 'ph', title: g.title, platform: g.platform, prefs: ctx.state.prefs })}
 
     <div class="section-label">Details</div>
     <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
@@ -565,31 +549,7 @@ function bindDetail(g) {
   });
 
   // Identify: the Library's search, with the picked entry (cover included) put on this game.
-  const q = $('#ph-id-q', body), list = $('#ph-id-list', body);
-  const run = async () => {
-    const text = q.value.trim(); if (!text) return ctx.toast('Type a title to search for', true);
-    const provider = $('#ph-id-prov', body).value, label = { igdb: 'IGDB', launchbox: 'LaunchBox' }[provider] || 'TheGamesDB';
-    list.innerHTML = `<div class="side-empty">Searching ${label}…</div>`;
-    try {
-      const data = await ctx.api('/metadata/search', { method: 'POST', body: JSON.stringify({ q: text, platform: $('#ph-id-plat', body).value || 'all', provider }) });
-      if (!data.items?.length) { list.innerHTML = `<div class="side-empty">${esc(data.error || 'No matches — try fewer words, another platform, or the other provider.')}</div>`; return; }
-      list.innerHTML = data.items.map((c, i) => `
-        <button class="result-row ${c.has_cover ? 'ok' : 'skip'}" data-cand="${i}">
-          <span class="status"></span>
-          ${c.cover_url ? `<img class="candidate-cover" loading="lazy" src="${esc(c.cover_url)}" alt="" onerror="this.remove()" />` : ''}
-          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${c.release_year})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : c.source === 'launchbox' ? 'LaunchBox' : 'TGDB')}</span></span>
-          <span class="note">${c.has_cover ? 'art ✓' : 'no art'}</span>
-        </button>`).join('');
-      $$('[data-cand]', list).forEach((btn) => btn.addEventListener('click', async () => {
-        const cand = data.items[Number(btn.dataset.cand)];
-        btn.disabled = true; btn.innerHTML = '<span class="status"></span><span class="name">Applying… downloading cover…</span>';
-        try { await ctx.api(`/physical/games/${id}/match`, { method: 'POST', body: JSON.stringify({ candidate: cand }) }); ctx.toast(`Matched as “${cand.title}”`); await refreshAll(); }
-        catch (err) { ctx.toast(err.message, true); btn.disabled = false; run(); }
-      }));
-    } catch (err) { list.innerHTML = `<div class="side-empty">${esc(err.message)}</div>`; }
-  };
-  $('#ph-id-go', body).onclick = run;
-  q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); run(); } });
+  wireIdentify(body, { idp: 'ph', ctx, onPick: async (cand) => { await ctx.api(`/physical/games/${id}/match`, { method: 'POST', body: JSON.stringify({ candidate: cand }) }); await refreshAll(); } });
 }
 
 /* ───────────── add a game / import a CSV (both in the details window) ───────────── */

@@ -695,9 +695,10 @@ test('Modern Home: a search box with a platform list sits above Continue playing
 test('Digital page: view, Steam panel, nav entries and launch link exist', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8');
   assert.match(html, /id="view-digital"/); assert.match(html, /id="mod-steam"/); assert.match(html, /data-view="digital"/);
-  assert.match(js, /view: 'digital'/); assert.match(app, /async function loadDigital\(keep = false\)/); assert.match(app, /if \(view === 'digital'\) loadDigital\(\)/);
+  const dgjs = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
+  assert.match(js, /view: 'digital'/); assert.match(dgjs, /async function loadDigital\(keep = false\)/); assert.match(app, /if \(view === 'digital'\) digital\.load\(\);/);
   assert.match(app, /modules: \['profile', 'welcome', 'steam', 'password', 'controller'\]/);
-  assert.ok(!/dg-card[^`]*download/.test(app), 'no download on a digital tile');
+  assert.ok(!/dg-card[^`]*download/.test(dgjs), 'no download on a digital tile');
 });
 
 test('Digital tiles show the store badge icon in Modern and the word in Classic', () => {
@@ -726,31 +727,32 @@ test('Modern details header: the More menu opens upward so the header cannot cli
 });
 
 test('Digital tiles: heart, hide and play switch, Favourites and Show hidden chips, marks keep the scroll position', () => {
-  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-  assert.match(app, /data-dg-mark="favourite"/); assert.match(app, /data-dg-mark="hidden"/); assert.match(app, /data-dg-mark="play"/);
-  assert.match(app, /data-dg-fav/); assert.match(app, /data-dg-hidden/); assert.match(app, /Show hidden/);
-  assert.match(app, /scroller\.scrollTop = keep/);
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), dgjs = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
+  assert.match(dgjs, /data-dg-mark="favourite"/); assert.match(dgjs, /data-dg-mark="hidden"/); assert.match(dgjs, /data-dg-mark="play"/);
+  assert.match(dgjs, /data-dg-toggle="fav"/); assert.match(dgjs, /data-dg-toggle="hidden"/); assert.match(dgjs, /Show hidden/);
+  assert.match(dgjs, /scroller\.scrollTop = keepTop/);
   assert.match(app, /your favourites, hidden games and play-button choices/);
 });
 
 test('Steam details window: opened from a tile, trimmed actions, cover fallback', () => {
-  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  const app = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
   assert.match(app, /async function openDigitalDetail\(store, appId\)/);
   assert.match(app, /openDigitalDetail\(tile\.dataset\.dgStoreOf, tile\.dataset\.dgApp\)/);
-  const body = app.slice(app.indexOf('async function openDigitalDetail'), app.indexOf('async function initSteamPanel'));
+  const body = app.slice(app.indexOf('function renderSteamDetail'), app.indexOf('function renderConsoleDetail'));
   for (const gone of ['download', 'data-act="delete"', 'data-act="refresh"', 'data-act="keep"', 'more-btn', 'identify-q']) assert.ok(!body.includes(gone), gone + ' is not offered for a Steam game');
   assert.match(app, /data-fb="\$\{esc\(g\.cover_fallback_url/);
 });
 
 test('Digital: prev/next, A-Z, grid size, back to top; Home/Library reset; chip hover says turn on / off', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), js = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.match(app, /function stepDigital\(dir\)/); assert.match(app, /function syncDigitalNav\(\)/);
+  const dgjs = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
+  assert.match(dgjs, /function stepDigital\(dir\)/); assert.match(dgjs, /function syncDigitalNav\(\)/);
   assert.match(app, /state\.openRomId == null && state\.openDigital/);
   assert.match(html, /id="dg-letters"/); assert.match(html, /data-dg-density="compact"/); assert.match(html, /id="dg-top"/);
   assert.match(js, /click to \$\{picked\.has\(p\.slug\) && !wholeNow \? 'turn off' : 'turn on'\}/);
   assert.doesNotMatch(js, /\(click to remove\)/);
   assert.match(js, /if \(v === 'home' \|\| v === 'library'\) \{ chipFamily = null; ctx\.resetDigital\?\.\(\);/);
-  assert.match(app, /modern\.initModern\(\{ closeDrawer, resetDigital,/);
+  assert.match(app, /modern\.initModern\(\{ closeDrawer, resetDigital: digital\.reset,/);
 });
 
 test('playable-in-browser marker glows green like the Steam play switch; Digital grid shares the Library scrollbar', () => {
@@ -767,8 +769,8 @@ test('Digital tiles: heart and hide icons appear on hover like the Library, hidd
 });
 
 test('Digital: an Installed chip beside Favourites', () => {
-  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-  assert.match(app, /data-dg-installed/); assert.match(app, /params\.set\('installed', '1'\)/);
+  const app = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
+  assert.match(app, /data-dg-toggle="installed"/); assert.match(app, /params\.set\('installed', '1'\)/);
 });
 
 test('Welcome tour: an optional Steam step after the picture card, for everyone', () => {
@@ -790,7 +792,7 @@ test('A-Z jump: the Library list starts AT the letter (one request, offset), Dig
   assert.match(js, /s\.azOffset = same \? 0 : offsetOf\(letter\);\s*s\.azLetter = same \? null : letter;/);
   assert.match(js, /await ctx\.loadLibrary\(\);\s*\/\/ one request that starts at the letter's first game/);
   assert.doesNotMatch(js, /while \(\(s\.libLoadedCount\?\.\(\) \|\| 0\) <= want/, 'no more loading every tile before the letter');
-  assert.match(app, /grid\.scrollTop = 0;\s*dg\.ids = items\.map/, 'Digital: a new list starts at its top');
+  assert.match(fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8'), /grid\.scrollTop = 0;\s*dg\.ids = items\.map/, 'Digital: a new list starts at its top');
 });
 
 test('Proxmox installer: generates a random secret key, writes it to the env file and prints it once', () => {
@@ -802,7 +804,7 @@ test('Proxmox installer: generates a random secret key, writes it to the env fil
 });
 
 test('Digital grid draws in chunks and has no blur on its tiles (iPhone/iPad froze with thousands drawn at once)', () => {
-  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+  const app = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
   assert.match(app, /function dgRender\(reset\)/); assert.match(app, /dg\.shown = dg\.rendered \+ 60/);
   assert.match(app, /const dgIds = \(\) => dg\.ids \|\| \[\];/);
   assert.match(app, /loadDigital\(true\); if \(scroller\)/);
