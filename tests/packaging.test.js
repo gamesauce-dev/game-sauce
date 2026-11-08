@@ -159,3 +159,11 @@ test('package manager entries: for one version, pointing at the release files th
   assert.ok(sc.includes('SHA256SUMS') && sc.includes('x64-setup.exe') && sc.includes('windows-x64.zip') && sc.includes('aarch64.dmg'));
   assert.ok(read('docs/PACKAGES.md').includes('winget') && read('docs/PACKAGES.md').includes('Community Applications'));
 });
+
+test('the README has a Download section naming the files each release really carries', () => {
+  const r = read('README.md');
+  assert.ok(r.includes('## Download') && r.includes('releases/latest'));
+  for (const f of ['game-sauce_<version>_x64-setup.exe', 'game-sauce-v<version>-windows-x64.zip', 'game-sauce_<version>_aarch64.dmg', 'game-sauce-v<version>-macos-arm64.tar.gz', 'game-sauce_<version>_amd64.deb', 'game-sauce-v<version>-linux-x64.tar.gz', 'game-sauce-v<version>-linux-arm64.tar.gz']) assert.ok(r.includes(f), f);
+  assert.ok(r.indexOf('## Download') < r.indexOf('## What it does'), 'near the top');
+  assert.ok(!r.includes('AppImage'), 'it does not promise the AppImage, which the release does not have yet');
+});

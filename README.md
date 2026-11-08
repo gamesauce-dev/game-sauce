@@ -11,9 +11,26 @@ Express + SQLite on the server, a single static page on the client, no build ste
 
 ![The Library (Modern look)](docs/screenshots/library.png)
 
-**New here? Want to try it on your own computer?** → [Quick start for a desktop](docs/QUICKSTART-DESKTOP.md): install Node.js, download the ZIP, run `./start.sh` (or double-click `start.bat` on Windows). No server, no Docker, no settings to edit.
+**New here? Want to try it on your own computer?** → [Download it](#download) and double-click Start: nothing to install, no server, no Docker, no settings to edit. (Prefer to run it from the source code? [Quick start for a desktop](docs/QUICKSTART-DESKTOP.md).)
 
 **Guides:** [Quick start (desktop)](docs/QUICKSTART-DESKTOP.md) · [Deployment](docs/DEPLOYMENT.md) · [User guide](docs/USER-GUIDE.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+
+## Download
+
+Get the latest version from the **[Releases page](https://github.com/gamesauce-dev/game-sauce/releases/latest)** (the files are listed under *Assets*). Nothing else needs installing: they carry everything they need.
+
+| You have | Download | Then |
+|---|---|---|
+| **Windows** | `game-sauce_<version>_x64-setup.exe` (the app, in its own window) | Run it. |
+| | or `game-sauce-v<version>-windows-x64.zip` (portable) | Unpack it, double-click **Start game-sauce.bat**. |
+| **Mac** (Apple Silicon: M1 and newer) | `game-sauce_<version>_aarch64.dmg` (the app) | Open it and drag game-sauce to Applications. If macOS refuses to open it, right-click it and choose **Open**. |
+| | or `game-sauce-v<version>-macos-arm64.tar.gz` (portable) | Unpack it, double-click **Start game-sauce.command**. |
+| **Linux** | `game-sauce_<version>_amd64.deb` (Debian, Ubuntu, Mint) | Install it. |
+| | or `game-sauce-v<version>-linux-x64.tar.gz` (portable) | Unpack it, run `./start.sh`. |
+| **Raspberry Pi** or another ARM Linux | `game-sauce-v<version>-linux-arm64.tar.gz` | Unpack it, run `./start.sh`. |
+| **A home server** (Docker, Unraid, Proxmox) | no download needed | See [Deployment](docs/DEPLOYMENT.md) and [Unraid](docs/UNRAID.md). |
+
+The first time it starts, the account that was made for you is shown once: write it down and change the password under Settings. Your library is kept in a `game-sauce-data` folder in your home folder, outside the download, so updating is just installing or unpacking the new version. Windows may say the app is from an unknown publisher (choose **More info**, then **Run anyway**): the downloads are not signed yet. Each release has a `SHA256SUMS` file if you want to check yours. More about the app: [Desktop app](docs/DESKTOP.md).
 
 ## What it does
 
