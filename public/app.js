@@ -6,6 +6,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
+import * as messages from './messages.js';
 
 const state = {
   view: 'library',
@@ -270,7 +271,7 @@ function setView(view) {
   // Physical is the same: its games' details stay in Physical, and a ROM's or a Steam game's do not follow you into it.
   if (!$('#drawer')?.classList.contains('hidden')) {
     const own = state.openDigital ? 'digital' : state.openPhysical != null ? 'physical' : 'library';
-    if (own === 'library' ? (view === 'digital' || view === 'physical') : view !== own) closeDrawer();
+    if (own === 'library' ? (view === 'digital' || view === 'physical' || view === 'messages') : view !== own) closeDrawer();
   }
   state.view = view;
   saveNav();
@@ -286,6 +287,7 @@ function setView(view) {
   if (view === 'emulators') loadEmulators();
   if (view === 'digital') digital.load();
   if (view === 'physical') physical.load();
+  if (view === 'messages') messages.load();
 }
 
 document.addEventListener('click', (e) => {
@@ -3841,6 +3843,7 @@ function showApp(user, { restore = false } = {}) {
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
   physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON });
+  messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, user: () => authState.user });
   modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
   api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
@@ -3869,7 +3872,7 @@ function showApp(user, { restore = false } = {}) {
   const saved = restore ? readNav() : null;
   if (saved && $(`#view-${saved.view}`)) {
     for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
-    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'digital', 'physical'].includes(saved.view)) saved.view = 'library';
+    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'digital', 'physical', 'messages'].includes(saved.view)) saved.view = 'library';
     if (playOnly && saved.view !== 'settings') saved.view = 'library'; // a play-only account lives on the Play screen
     if (state.sort) $('#sort').value = state.sort;
     $('#search').value = state.q || '';

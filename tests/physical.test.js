@@ -176,7 +176,7 @@ test('the Physical page: nav entries, view, CSV destination choice, shelf and ti
   // wired into the app like Digital: view switch, details window state, previous / next, saved view, Modern bar
   assert.match(app, /import \* as physical from '\.\/physical\.js'/); assert.match(app, /if \(view === 'physical'\) physical\.load\(\);/);
   assert.match(app, /return physical\.step\(dir\);/); assert.match(app, /state\.openPhysical = null; physical\.forgetOpen\(\);/);
-  assert.match(app, /'digital', 'physical'\]\.includes\(saved\.view\)/);
+  assert.match(app, /'digital', 'physical', 'messages'\]\.includes\(saved\.view\)/);
   assert.match(modern, /view: 'physical', icon: 'physical-shelf'/); assert.ok(fs.existsSync(new URL('../public/modern/icons/physical-shelf.svg', import.meta.url)));
   assert.match(read('public/styles.css'), /body\.play-only \.nav-item\[data-view="physical"\]/);
   // chips mirror the Library's (families, then platforms of the open family, several at once); identify uses the Library's search

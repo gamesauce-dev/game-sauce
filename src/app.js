@@ -14,6 +14,7 @@ import romsRouter, { playableSql } from './routes/roms.js';
 import collectionsRouter from './routes/collections.js';
 import digitalRouter from './routes/digital.js';
 import physicalRouter from './routes/physical.js';
+import messagesRouter from './routes/messages.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
 import datsRouter from './routes/dats.js';
@@ -145,6 +146,7 @@ export function createApp() {
   // point, hence the manual match. Single-row SELECT; display-only.
   api.use((req, res, next) => {
     if (req.method === 'GET' || req.method === 'HEAD') return next();
+    if (/^\/api\/messages(?!\/notices)(?:[/?#]|$)/.test(req.originalUrl || '')) return next();   // private: not in the audit log, which an admin reads
     const m = `${req.originalUrl || ''}`.match(/\/api\/roms\/(\d+)(?:\/|[?#]|$)/);
     if (m) {
       try {
@@ -495,6 +497,7 @@ export function createApp() {
   api.use('/collections', collectionsRouter);
   api.use('/digital', digitalRouter);
   api.use('/physical', physicalRouter);
+  api.use('/messages', messagesRouter);
   api.use('/metadata', metadataRouter);
   api.use('/emulators', emulatorsRouter);
 

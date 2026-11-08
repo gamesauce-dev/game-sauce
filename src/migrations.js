@@ -515,6 +515,28 @@ db.exec(`
 `);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '39') ON CONFLICT(key) DO UPDATE SET value = '39'").run();
 
+/* ── v40: Messages: a private one-to-one chat (each message can be deleted by either person for themselves, and recalled by its sender for a few minutes), and notices from
+   the admin to everyone. See src/lib/messages.js for the rules. ── */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id INTEGER NOT NULL, recipient_id INTEGER NOT NULL,
+    body TEXT NOT NULL DEFAULT '', game TEXT, reply_to INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')), read_at TEXT, recalled_at TEXT,
+    del_sender INTEGER NOT NULL DEFAULT 0, del_recipient INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages (recipient_id, read_at);
+  CREATE INDEX IF NOT EXISTS idx_messages_pair ON messages (sender_id, recipient_id);
+  CREATE TABLE IF NOT EXISTS notices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER, body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')), expires_at TEXT
+  );
+  CREATE TABLE IF NOT EXISTS notice_state (
+    user_id INTEGER NOT NULL, notice_id INTEGER NOT NULL, read_at TEXT, dismissed INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, notice_id)
+  );
+`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '40') ON CONFLICT(key) DO UPDATE SET value = '40'").run();
+
 /** Move any 'ps4' / 'ps5' Digital rows to the one 'playstation' store (safe to run again: it does nothing when none are left). */
 export function mergePlaystationStores() {
   db.transaction(() => {

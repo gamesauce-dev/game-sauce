@@ -8,6 +8,7 @@
 //   - play a game, and keep their own save states
 //   - mark favourites (their own)
 //   - see the platform list and the counts the screen needs
+//   - read the admin's notices and dismiss them (chat itself is not for them)
 // What they may not do: download ROM files, browse folders, change anything about games, collections, sources,
 // providers, emulators, backups or other people. (Admin-only routes stay admin-only on top of this.)
 
@@ -29,7 +30,8 @@ const ALLOW = [
   ['POST', /^\/roms\/\d+\/saves$/],
   ['PUT', /^\/roms\/\d+\/saves\/\d+\/screenshot$/],
   ['DELETE', /^\/roms\/\d+\/saves\/\d+$/],
-  ['POST', /^\/roms\/\d+\/favorite$/]
+  ['POST', /^\/roms\/\d+\/favorite$/],
+  ['GET', /^\/messages\/(summary|notices)$/], ['POST', /^\/messages\/notices\/\d+\/read$/], ['DELETE', /^\/messages\/notices\/\d+$/]
 ];
 
 export function playOnlyAllows(method, path) {

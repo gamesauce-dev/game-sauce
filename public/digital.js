@@ -31,6 +31,8 @@ const DG_PLATFORM = {
   xone: { store: 'xbox', label: 'Xbox One', short: 'XBOX ONE', lib: 'xboxone' }, xsx: { store: 'xbox', label: 'Xbox Series X|S', short: 'X|S', lib: 'xboxseries' }
 };
 export const storeLabel = (s) => DG_STORE[s]?.label || s;
+/** The name of a game's store or console, as its badge says it in full ("PlayStation 5", "Nintendo Switch"): used when a game is shared in a message. */
+export const badgeLabel = (g) => badgeOf(g).label;
 const STORE_ORDER = ['steam', 'playstation', 'nintendo', 'xbox'];
 const badgeOf = (g) => {
   const st = DG_STORE[g.store] || { label: g.store, short: String(g.store || '').toUpperCase(), bg: '#1b2838' };

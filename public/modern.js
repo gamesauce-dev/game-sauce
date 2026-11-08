@@ -23,6 +23,7 @@ const NAV = [
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
+  { view: 'messages', icon: 'messages', label: 'Messages' },
   { view: 'settings', icon: 'settings', label: 'Settings' }
 ];
 
@@ -72,7 +73,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection-new', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'messages', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital', 'physical'].includes(n.view)));
@@ -566,6 +567,7 @@ const ICON_MAP = [
   ['#view-digital [data-dg-toggle="fav"]', 'favourite'], ['#view-digital [data-dg-toggle="installed"]', 'gamepad'], ['#view-digital [data-dg-toggle="hidden"]', 'hidden'],
   ['#view-digital #dg-reset', 'clear-reset-2'], ['#view-digital [data-dg-act="import"]', 'csv-import'], ['#view-digital [data-dg-act="add"]', 'game-add'],
   ['#dg-id-go', 'search'], ['#dg-edit button[type="submit"]', 'save'], ['#dg-add button[type="submit"]', 'tick'], ['#dg-add-more', 'game-add'], ['#dg-imp-preview', 'preview-2'], ['#dg-imp-apply', 'csv-import'],
+  ['#view-messages [data-msg-act="new"]', 'edit'], ['#msg-send', 'arrow-right'], ['#msg-share', 'game-cartridge'], ['#msg-notice-toggle', 'issue'], ['#msg-notice-send', 'tick'],
   ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save'], ['#ph-add button[type="submit"]', 'tick'], ['#ph-add-more', 'game-add'], ['#ph-imp-preview', 'preview-2'], ['#ph-imp-apply', 'csv-import'],
   // Details window: the row (the More menu keeps its words)
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],

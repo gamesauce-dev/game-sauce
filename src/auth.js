@@ -1,4 +1,5 @@
 import db from './db.js';
+import { purgeUser as purgeMessages } from './lib/messages.js';
 import { purgeSaveFiles } from './lib/saves.js';
 import { hashPassword, hashToken, randomToken, verifyPassword } from './lib/auth.js';
 
@@ -241,6 +242,7 @@ export function deleteUser(userId) {
   db.prepare('DELETE FROM digital_accounts WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM physical_games WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_user_meta WHERE user_id = ?').run(userId);
+  purgeMessages(userId);   // every message they sent or received goes, on both sides
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 }
 

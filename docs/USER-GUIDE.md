@@ -437,6 +437,21 @@ The heading under the A-Z row says what is picked and how many games it holds. W
 
 Open a console game and its window offers the same tools as the Physical Library: **Identify this game** (search TheGamesDB, IGDB or LaunchBox and pick the right entry, cover included), look up again, clear your match, and **Edit** for the developer, publisher, genre, release, rating, description and store country. Your matches and edits are yours alone: nobody else's list changes, and a field you never edited keeps following the shared details. A Steam game's details come from Steam's own store page, so a Steam game has nothing to match or edit.
 
+## Messages: a small private chat
+
+**Messages** is a small chat between the people who use this server, and a way for the admin to tell everyone something (such as "The server restarts at 10pm"). The menu icon shows how many unread messages and notices you have, and a short pop-up tells you when something new arrives (the page checks every 30 seconds, or every 8 while you have Messages open).
+
+- **Private.** A conversation is only ever read by the two people in it. The admin cannot read anyone's messages, and what is said is not written to the activity log. (A backup of the database does contain everything, so keep backups safe.)
+- **Short and plain.** Messages are plain text, at most **200 characters**, with **no links**. No pictures and no files can be sent.
+- **Write to someone** with **New**, or open an existing conversation. **Reply** quotes the message you are answering.
+- **Delete** removes a message **for you only**; the other person keeps their copy. The sender can **recall** a message for the first **5 minutes**: it is wiped for both of you and "Message recalled" is left in its place.
+- **Share a game** with **Share a game**: pick a game from the ROM, Digital or Physical Library. Only its title and platform are sent, as a note. For a ROM Library game the other person gets an **Open** button that opens it in the Library (they see it only if they are allowed to see that game there).
+- **At most 10 messages a minute** per person.
+- When an account is deleted, **all of its messages go with it**, on both sides.
+
+### Notices (admins)
+Under the list of conversations, **Notice to everyone** sends a notice that all accounts see at the top of their Messages page, for a day up to four weeks. You can withdraw it for everyone; each person can also dismiss it for themselves. **Play-only accounts** have no chat and cannot be written to, but they do see notices.
+
 ## Physical: the games on your shelf
 
 The Library holds games that have a ROM file. **Physical** is for the ones that sit on your shelf as a boxed disc or cartridge, with nothing to point a source at. Each person has their own shelf, and nobody else sees it.
