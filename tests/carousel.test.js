@@ -66,7 +66,7 @@ test('carousel: the controller can choose chips (up from the covers), and both w
   assert.ok(js.includes('canBrowser') && js.includes('canLocalPlay') && js.includes("data-act=\"prefer\"") && js.includes("'gamesauce_cv_prefer'"), 'both buttons, and a switch for which one Enter uses');
   assert.ok(js.includes("preferred() === 'local' ? playLocal(g) : openBrowser(g)"), 'a game that can be played both ways uses the preferred one');
   assert.ok(pad.includes("cvPad(root, 'browser')") && pad.includes("cvPad(root, 'local')"), 'X plays in the browser, Y on this PC');
-  assert.ok(/\.cv-chip \{[^}]*color-mix\(in srgb, var\(--c\) 18%/.test(css.replace(/\r?\n/g, ' ')), 'a chip is tinted with its own platform colour, not grey');
+  assert.ok(/\.cv-chip \{[^}]*rgba\(255, 255, 255, \.62\)/.test(css.replace(/\r?\n/g, ' ')) && /\.cv-chip\.on \{ background: var\(--ink\); color: #fff; \}/.test(css), 'chips look like the Play buttons: a glass pill, and the chosen one dark with light text');
 });
 
 test('carousel: it has its own entry after Collections (Modern top bar and Classic sidebar), opens over any page, and starts on Steam when you come from Digital', () => {
@@ -75,4 +75,8 @@ test('carousel: it has its own entry after Collections (Modern top bar and Class
   assert.ok(modern.indexOf("view: 'collections'") < modern.indexOf("view: 'carousel'") && modern.indexOf("view: 'carousel'") < modern.indexOf("view: 'sources'"), 'Modern: after Collections');
   assert.ok(modern.includes("if (v === 'carousel') { ctx.openCarousel?.(); return; }") && modern.includes('openCarousel'), 'it is not a page: it opens over the current one');
   assert.ok(app.includes('function openCarouselView()') && app.includes("state.view === 'digital' ? 'steam:installed'") && app.includes('[data-open="carousel"]'));
+});
+
+test('carousel: the platform chips carry no disc or cartridge icon', () => {
+  assert.ok(!read('public/carousel.js').includes('cv-ico') && !read('public/carousel.css').includes('.cv-ico'));
 });
