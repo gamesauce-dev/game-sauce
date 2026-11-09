@@ -31,6 +31,10 @@ from `start.bat` has it).
 4. Edit that file (see below), then click **Play locally** again. Your browser asks once whether to open the
    launcher; tick "always allow".
 
+## The desktop app already has it
+
+If you use the game-sauce desktop app (Windows or Linux), the launcher is built in and the `gamesauce://` link is registered for you the first time the app runs, so you can skip "Set it up" above. Right-click the tray icon and choose **Set up emulators…** to open the setup page below. (An existing launcher that you registered yourself keeps being used. On a Mac, run `sh launcher/install-macos.sh` once; the entry is in the game-sauce menu.)
+
 ## The easy way: the setup page
 
 Instead of writing the file by hand, press **⚙ Set up emulators** in the cover carousel (Library bar → Carousel). The launcher
