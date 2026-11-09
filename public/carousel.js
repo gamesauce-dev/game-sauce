@@ -4,6 +4,7 @@
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HEX = /^#[0-9a-f]{6}$/i;
+const STEAM = 'steam:installed';   // the Steam games that have their Play button switched on (installed on this PC): a family and a platform of their own
 const PAGE = 500, MAX = 3000;       // games fetched for one platform, a page at a time
 
 /** The arc: where a cover sits for its distance `o` from the middle one (0 = middle, ±1 next to it...). Pure, so it can be tested. */
@@ -37,7 +38,8 @@ let root = null, off = null;
 export function openCarousel(host) {
   if (root) return;
   const st = { fam: null, plat: null, games: [], idx: 0, loading: 0, colours: new Map(), els: new Map(), wheel: 0 };
-  const plats = () => (host.platforms() || []).filter((p) => ((p.visible_count ?? p.count) || 0) > 0);
+  const steamPlat = () => (st.steam?.length ? [{ slug: STEAM, name: 'Steam', badge: 'STEAM', family: 'Steam', family_colour: '#2b79b8', accent: '#2b79b8', visible_count: st.steam.length }] : []);
+  const plats = () => [...(host.platforms() || []).filter((p) => ((p.visible_count ?? p.count) || 0) > 0), ...steamPlat()];
   const fams = () => { const m = new Map(); for (const p of plats()) { const f = p.family || 'Others'; if (!m.has(f)) m.set(f, []); m.get(f).push(p); } return m; };
   const famColour = (f) => { const c = fams().get(f)?.[0]?.family_colour; return HEX.test(c || '') ? c : '#7c8aa5'; };
   const platColour = (p) => (HEX.test(p?.accent || '') ? p.accent : famColour(p?.family || 'Others'));
@@ -84,7 +86,7 @@ export function openCarousel(host) {
     const accent = HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88';
     el.innerHTML = `<div class="cv-face" style="background:linear-gradient(160deg,${accent},#1a1d27)"><span class="cv-fb">${esc(g.title)}</span>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : ''}</div>`;
     const img = el.querySelector('img');
-    if (img) { img.onerror = () => img.remove(); img.onload = () => { img.parentElement.classList.add('has'); if (i === st.idx) tint(); else colourOf(g, img); }; }
+    if (img) { img.onerror = () => { if (g.cover_fallback_url && !img.dataset.fb) { img.dataset.fb = '1'; img.src = g.cover_fallback_url; } else img.remove(); }; img.onload = () => { img.parentElement.classList.add('has'); if (i === st.idx) tint(); else colourOf(g, img); }; }
     return el;
   };
   const colourOf = (g, img) => { if (!st.colours.has(g.id) && img?.complete && img.naturalWidth) st.colours.set(g.id, dominantColour(img)); return st.colours.get(g.id) || null; };
@@ -106,7 +108,7 @@ export function openCarousel(host) {
     const g = gameAt(st.idx);
     $('#cv-info').innerHTML = g ? `<div class="cv-title">${esc(g.title)}</div>
       <div class="cv-meta">${esc([g.platform_name, g.release_year, g.developer].filter(Boolean).join('  ·  '))}<span class="cv-pos">${(st.idx + 1).toLocaleString()} of ${n.toLocaleString()}</span></div>
-      <div class="cv-acts">${g.playable && !g.missing ? '<button type="button" class="cv-btn primary" data-act="play">▶ Play</button>' : ''}${host.user()?.can_download === false ? '' : '<button type="button" class="cv-btn" data-act="local" title="Play with the emulator installed on this PC">🖥 Play on this PC</button>'}</div>` : '';
+      <div class="cv-acts">${g.steam ? '<button type="button" class="cv-btn primary" data-act="play">▶ Play in Steam</button>' : g.playable && !g.missing ? '<button type="button" class="cv-btn primary" data-act="play">▶ Play</button>' : ''}${g.steam || host.user()?.can_download === false ? '' : '<button type="button" class="cv-btn" data-act="local" title="Play with the emulator installed on this PC">🖥 Play on this PC</button>'}</div>` : '';
     tint();
   };
   const go = (i) => { const n = st.games.length; if (!n) return; st.idx = Math.max(0, Math.min(n - 1, i)); render(); };
@@ -116,6 +118,10 @@ export function openCarousel(host) {
     st.plat = slug; st.games = []; st.idx = 0; st.els.clear(); $('#cv-rail').innerHTML = ''; $('#cv-info').innerHTML = '';
     const tok = ++st.loading, empty = $('#cv-empty'); empty.classList.remove('hidden'); empty.textContent = 'Loading…';
     drawSubs(); setBackdrop();
+    if (slug === STEAM) {   // already fetched: the Steam games that can be played from here
+      st.games = (st.steam || []).map((g) => ({ id: 'steam-' + g.app_id, title: g.name, cover_url: g.cover_url, cover_fallback_url: g.cover_fallback_url, platform_name: 'Steam', developer: g.hours ? `${g.hours} h played` : '', launch_url: g.launch_url, steam: true, platform_accent: '#1b2838' }));
+      empty.classList.toggle('hidden', st.games.length > 0); empty.textContent = 'No Steam games have their Play button on yet.'; render(); return;
+    }
     try {
       let all = [], total = Infinity;
       while (all.length < Math.min(total, MAX)) {
@@ -139,11 +145,15 @@ export function openCarousel(host) {
   // ── playing ──
   const play = (g) => {
     if (!g) return;
+    if (g.steam) return launchSteam(g);
     if (g.playable && !g.missing) openBrowser(g);
     else playLocal(g);
   };
-  const openBrowser = (g) => host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => host.toast(err.message, true));   // the player needs the full row
+  const launchSteam = (g) => { if (!g.launch_url) return; host.toast('Opening Steam…'); location.href = g.launch_url; };   // steam://rungameid/…: the Steam app on this PC starts it
+  const openBrowser = (g) => g.steam ? launchSteam(g) : host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => host.toast(err.message, true));   // the player needs the full row
   const playLocal = async (g) => {
+    if (!g) return;
+    if (g.steam) return launchSteam(g);
     if (host.user()?.can_download === false) { host.toast('This account cannot play on a local emulator', true); return; }
     try {
       const j = await host.api(`/roms/${g.id}/launch`, { method: 'POST' });
@@ -203,6 +213,9 @@ export function openCarousel(host) {
     try { prevFocus?.focus?.(); } catch { /* the opener is gone */ }
   }
   off = close;
+
+  // Steam games with their Play button on come in next to the platforms (Digital's own list; not for play-only accounts)
+  if (!host.user()?.play_only) host.api('/digital/games?store=steam&installed=1&sort=name').then((d) => { st.steam = d.items || []; if (st.steam.length && root) { drawFams(); drawSubs(); } }).catch(() => { /* no Steam, or no Digital: the platforms are all there is */ });
 
   // start where the Library is: its first chosen platform, else the family with most games
   const all = plats();

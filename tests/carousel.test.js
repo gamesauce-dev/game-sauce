@@ -42,3 +42,9 @@ test('carousel: the controller drives it (and the page underneath no longer gets
   assert.ok(!/(^|[^-])filter: blur\(/.test(css) && !/mix-blend-mode/.test(css), 'no full-screen blur or blend work behind the moving covers');
   assert.ok(css.includes('.cv-card.mid .cv-face::after') && css.includes('conic-gradient') && css.includes('@property --ang'), 'the middle cover has a border with a light point running round it');
 });
+
+test('carousel: Steam games with their Play button on are a family of their own, and play opens them in Steam', () => {
+  const js = read('public/carousel.js');
+  assert.ok(js.includes("'steam:installed'") && js.includes('/digital/games?store=steam&installed=1') && js.includes('launch_url') && js.includes('launchSteam'));
+  assert.ok(js.includes('cover_fallback_url'), 'a Steam cover that is missing falls back to its header picture');
+});
