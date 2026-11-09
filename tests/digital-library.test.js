@@ -254,7 +254,7 @@ test('chips and cover badges read the same on Physical and Digital: one shared s
   // Digital's own table of consoles agrees with the shared one, console by console
   const dg = read('public/digital.js');
   const rows = [...dg.matchAll(/(?:^|[ ,{])'?(\w+)'?: \{ store: '[a-z]+', label: '[^']+', short: '([^']+)', lib: '([^']+)' \}/g)];
-  assert.equal(rows.length, 13, 'all thirteen consoles found');
+  assert.equal(rows.length, 14, 'all fourteen consoles found');
   for (const [, id, short, lib] of rows) assert.equal(names.BADGE[lib], short, `Digital's ${id} badge is the shared name for ${lib}`);
   // both pages build their chip and badge text from it, not from the Library's short name directly
   const ph = read('public/physical.js');

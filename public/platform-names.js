@@ -4,7 +4,7 @@
 
 /** Badge text for the Library platforms Digital also covers, by Library platform slug. */
 export const BADGE = {
-  ps3: 'PS3', ps4: 'PS4', ps5: 'PS5',
+  ps2: 'PS2', ps3: 'PS3', ps4: 'PS4', ps5: 'PS5',
   switch2: 'SWITCH 2', switch: 'SWITCH', wii: 'WII', wiiu: 'WII U', '3ds': '3DS', nds: 'DS',
   xbox: 'XBOX', xbox360: 'XBOX 360', xboxone: 'XBOX ONE', xboxseries: 'X|S'
 };

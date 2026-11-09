@@ -23,6 +23,7 @@ export const isConsoleStore = (s) => Object.prototype.hasOwnProperty.call(CONSOL
  * platform it is looked up as (`meta`, in order: a game not found as a PS5 game is tried as a PS4 one, and so on). The ids are unique across stores.
  */
 export const CONSOLE_PLATFORMS = {
+  ps2: { store: 'playstation', label: 'PlayStation 2', badge: 'PS2', meta: ['ps2'] },
   ps3: { store: 'playstation', label: 'PlayStation 3', badge: 'PS3', meta: ['ps3'] },
   ps4: { store: 'playstation', label: 'PlayStation 4', badge: 'PS4', meta: ['ps4', 'ps5'] },
   ps5: { store: 'playstation', label: 'PlayStation 5', badge: 'PS5', meta: ['ps5', 'ps4'] },
@@ -53,7 +54,7 @@ export function platformFor(platformName) {
   const s = squash(platformName).replace(/^(sony|nintendo|microsoft)/, '');
   if (!s) return null;
   const is = (platform) => ({ store: CONSOLE_PLATFORMS[platform].store, platform });
-  const ps = /^(?:ps|playstation|psn)([345])(?:pro|slim)?$/.exec(s);
+  const ps = /^(?:ps|playstation|psn)([2345])(?:pro|slim)?$/.exec(s);
   if (ps) return is('ps' + ps[1]);
   if (/^(?:switch2|ns2)/.test(s)) return is('switch2');
   if (/^(?:switch|ns)(?:lite|oled)?$/.test(s)) return is('switch');

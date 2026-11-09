@@ -24,7 +24,7 @@ const DG_STORE = {
 /* A store holds several consoles, and each game carries the badge of its own (games imported before consoles were told apart show XBOX).
  * `lib` is the Library platform the console is looked up as (its colour and the identify search's platform box). */
 const DG_PLATFORM = {
-  ps3: { store: 'playstation', label: 'PlayStation 3', short: 'PS3', lib: 'ps3' }, ps4: { store: 'playstation', label: 'PlayStation 4', short: 'PS4', lib: 'ps4' },
+  ps2: { store: 'playstation', label: 'PlayStation 2', short: 'PS2', lib: 'ps2' },   ps3: { store: 'playstation', label: 'PlayStation 3', short: 'PS3', lib: 'ps3' }, ps4: { store: 'playstation', label: 'PlayStation 4', short: 'PS4', lib: 'ps4' },
   ps5: { store: 'playstation', label: 'PlayStation 5', short: 'PS5', lib: 'ps5' },
   switch2: { store: 'nintendo', label: 'Nintendo Switch 2', short: 'SWITCH 2', lib: 'switch2' }, switch: { store: 'nintendo', label: 'Nintendo Switch', short: 'SWITCH', lib: 'switch' },
   wii: { store: 'nintendo', label: 'Nintendo Wii', short: 'WII', lib: 'wii' }, wiiu: { store: 'nintendo', label: 'Nintendo Wii U', short: 'WII U', lib: 'wiiu' },
