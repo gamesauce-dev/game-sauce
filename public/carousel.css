@@ -1,25 +1,28 @@
-/* Cover carousel (the full-screen Library view). Colours: --fam is the family's colour, --tint the middle cover's own (it fades as you scroll). */
-@property --tint { syntax: '<color>'; inherits: true; initial-value: transparent; }
+/* Cover carousel (the full-screen Library view). Colours: --fam is the family's colour; the middle cover's own colours fade in over it as you scroll. */
 @property --fam { syntax: '<color>'; inherits: true; initial-value: #7c8aa5; }
 
 body.cv-open { overflow: hidden; }
 .cv {
-  --fam: #7c8aa5; --tint: transparent; --ink: #1d2233; --ink2: #4b5268; --cw: clamp(130px, 22vh, 240px);
+  --fam: #7c8aa5; --ink: #1d2233; --ink2: #4b5268; --cw: clamp(130px, 22vh, 240px);
   position: fixed; inset: 0; z-index: 80; overflow: hidden; color: var(--ink);
   background: color-mix(in srgb, var(--fam) 24%, #f7f5fb);
-  transition: --tint .9s ease, --fam .7s ease, background-color .7s ease;
+  transition: --fam .7s ease, background-color .7s ease;
   display: flex; flex-direction: column; animation: cv-in .28s ease;
 }
 @keyframes cv-in { from { opacity: 0; transform: scale(1.015); } }
 
 /* Backdrop: soft blobs of the family colour drifting slowly, a wash of the middle cover's colours, and a little grain so it never looks flat. */
 .cv-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.cv-blob { position: absolute; border-radius: 50%; filter: blur(70px); will-change: transform; }
-.cv-blob.b1 { width: 62vmax; height: 62vmax; left: -18vmax; top: -22vmax; background: color-mix(in srgb, color-mix(in srgb, var(--tint) 55%, var(--fam)) 62%, #fff); opacity: .7; animation: cv-d1 38s ease-in-out infinite alternate; }
-.cv-blob.b2 { width: 54vmax; height: 54vmax; right: -16vmax; bottom: -24vmax; background: color-mix(in srgb, color-mix(in srgb, var(--tint) 45%, var(--fam)) 55%, #fff); opacity: .65; animation: cv-d2 46s ease-in-out infinite alternate; }
-.cv-blob.b3 { width: 40vmax; height: 40vmax; left: 30%; top: 25%; background: color-mix(in srgb, var(--fam) 30%, #d9f0ff); opacity: .4; animation: cv-d3 54s ease-in-out infinite alternate; }
-.cv-wash { position: absolute; inset: 0; background: radial-gradient(ellipse 75% 70% at 50% 50%, color-mix(in srgb, color-mix(in srgb, var(--tint) 78%, #fff) 85%, transparent), transparent 78%); }
-.cv-grain { position: absolute; inset: 0; opacity: .16; mix-blend-mode: multiply;
+.cv-blob { position: absolute; border-radius: 50%; will-change: transform; }
+.cv-blob.b1 { width: 70vmax; height: 70vmax; left: -22vmax; top: -26vmax; background: radial-gradient(circle, color-mix(in srgb, var(--fam) 70%, #fff) 0%, transparent 66%); opacity: .85; animation: cv-d1 38s ease-in-out infinite alternate; }
+.cv-blob.b2 { width: 62vmax; height: 62vmax; right: -20vmax; bottom: -28vmax; background: radial-gradient(circle, color-mix(in srgb, var(--fam) 55%, #ffcfe6) 0%, transparent 66%); opacity: .8; animation: cv-d2 46s ease-in-out infinite alternate; }
+.cv-blob.b3 { width: 46vmax; height: 46vmax; left: 28%; top: 22%; background: radial-gradient(circle, color-mix(in srgb, var(--fam) 40%, #cfeaff) 0%, transparent 66%); opacity: .6; animation: cv-d3 54s ease-in-out infinite alternate; }
+/* The middle cover's colours: two layers that cross-fade (opacity only, so scrolling stays smooth), the newest colour fading in over the last. */
+.cv-tint { position: absolute; inset: -8%; opacity: 0; transition: opacity .8s ease; will-change: opacity;
+  background: radial-gradient(ellipse 72% 66% at 50% 52%, color-mix(in srgb, var(--tc) 88%, #fff) 0%, color-mix(in srgb, var(--tc) 58%, transparent) 46%, transparent 82%),
+    radial-gradient(circle at 10% 6%, color-mix(in srgb, var(--tc) 70%, #fff) 0%, transparent 58%), radial-gradient(circle at 92% 96%, color-mix(in srgb, var(--tc) 62%, #fff) 0%, transparent 58%); }
+.cv-tint.on { opacity: .92; }
+.cv-grain { position: absolute; inset: 0; opacity: .07;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 @keyframes cv-d1 { to { transform: translate(16vmax, 12vmax) scale(1.12); } }
 @keyframes cv-d2 { to { transform: translate(-14vmax, -10vmax) scale(.92); } }
@@ -35,6 +38,7 @@ body.cv-open { overflow: hidden; }
   transition: background .2s, box-shadow .2s, transform .2s;
 }
 .cv-chip:hover { background: rgba(255, 255, 255, .78); transform: translateY(-1px); }
+/* the chips' glass blur is on the (static) chips only, never over the moving covers */
 .cv-chip.on { background: color-mix(in srgb, var(--c) 82%, #fff); color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--c) 45%, transparent); text-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
 .cv-chip:focus-visible, .cv-close:focus-visible, .cv-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .cv-sub { padding: 5px 13px; font-size: .82rem; }
@@ -51,7 +55,7 @@ body.cv-open { overflow: hidden; }
 .cv-rail { position: absolute; left: 0; right: 0; top: 50%; height: 0; margin-top: calc(var(--cw) * -0.72); }
 .cv-card {
   position: absolute; left: 50%; top: 0; width: var(--cw); aspect-ratio: 3 / 4.2; cursor: pointer;
-  transition: transform .5s cubic-bezier(.2, .8, .2, 1), opacity .4s; will-change: transform;
+  transition: transform .36s cubic-bezier(.22, .7, .2, 1), opacity .3s; will-change: transform, opacity; backface-visibility: hidden;
 }
 .cv-card .cv-face { position: relative; width: 100%; height: 100%; border-radius: 9px; overflow: hidden; box-shadow: 0 14px 34px rgba(30, 30, 60, .28), 0 3px 8px rgba(30, 30, 60, .2); }
 .cv-card.mid .cv-face { box-shadow: 0 26px 60px rgba(30, 30, 60, .38), 0 6px 14px rgba(30, 30, 60, .25); }
@@ -87,3 +91,16 @@ body.cv-open #gp-legend { display: none !important; }
 .cv-pad-hint b { background: rgba(255, 255, 255, .62); border-radius: 6px; padding: 1px 7px; color: var(--ink); font-weight: 700; }
 .cv-pad-hint i { opacity: .5; font-style: normal; }
 body.gp-active .cv-pad-hint { display: flex; }
+
+/* The middle cover: a thin light border, and a bright point that runs slowly round it. */
+@property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.cv-card.mid .cv-face { box-shadow: 0 0 0 2px rgba(255, 255, 255, .92), 0 26px 60px rgba(30, 30, 60, .38), 0 6px 14px rgba(30, 30, 60, .25); }
+.cv-card.mid .cv-face::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 3px; pointer-events: none;
+  background: conic-gradient(from var(--ang), transparent 0 62%, rgba(255, 255, 255, .15) 72%, rgba(255, 255, 255, 1) 90%, rgba(255, 255, 255, .15) 96%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude;
+  animation: cv-spin 3.4s linear infinite;
+}
+@keyframes cv-spin { to { --ang: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .cv-card.mid .cv-face::after { animation: none; } }

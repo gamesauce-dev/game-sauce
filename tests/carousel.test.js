@@ -30,12 +30,15 @@ test('carousel: plays in the browser when the game can be, otherwise on this PC;
   assert.ok(js.includes("e.key === 'Escape'") && js.includes('can_download === false'));
   assert.ok(js.includes('play_only') && js.includes('/roms?'), 'a play-only account only sees playable games');
   assert.ok(/prefers-reduced-motion: reduce[\s\S]*animation: none/.test(css));
-  assert.ok(css.includes('@property --tint') && css.includes('.cv-grain') && css.includes('.cv-blob'));
+  assert.ok(css.includes('.cv-tint') && css.includes('.cv-grain') && css.includes('.cv-blob'));
 });
 
 test('carousel: the controller drives it (and the page underneath no longer gets the pad), and the backdrop follows the middle cover', () => {
   const pad = read('public/gamepad.js'), js = read('public/carousel.js'), css = read('public/carousel.css');
   assert.ok(pad.includes("$('.cv')") && pad.includes("new CustomEvent('cv-pad'"), 'while the carousel is open, the pad belongs to it');
   for (const a of ["'left'", "'right'", "'up'", "'down'", "'prev-family'", "'next-family'", "'select'", "'local'", "'back'"]) assert.ok(js.includes(`a === ${a}`), a);
-  assert.ok(/blob b1[^}]*var\(--tint\)/.test(css.replace(/\r?\n/g, ' ')) || css.includes('.cv-blob.b1') && css.includes('var(--tint) 55%'), 'the blobs take the middle cover\'s colour too, so the whole backdrop shifts, not just a patch');
+  const flat = css.replace(/\r?\n/g, ' ');
+  assert.ok(js.includes('cv-tint t1') && js.includes('cv-tint t2') && /\.cv-tint \{[^}]*transition: opacity/.test(flat), 'the middle cover colours cross-fade by opacity (cheap), instead of repainting blurred blobs every frame');
+  assert.ok(!/(^|[^-])filter: blur\(/.test(css) && !/mix-blend-mode/.test(css), 'no full-screen blur or blend work behind the moving covers');
+  assert.ok(css.includes('.cv-card.mid .cv-face::after') && css.includes('conic-gradient') && css.includes('@property --ang'), 'the middle cover has a border with a light point running round it');
 });

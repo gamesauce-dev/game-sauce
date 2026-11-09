@@ -45,7 +45,7 @@ export function openCarousel(host) {
   root = document.createElement('div');
   root.className = 'cv'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Cover carousel');
   root.innerHTML = `
-    <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-wash"></i><i class="cv-grain"></i></div>
+    <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-tint t1"></i><i class="cv-tint t2"></i><i class="cv-grain"></i></div>
     <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
     <div class="cv-subs" id="cv-subs"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
@@ -82,7 +82,7 @@ export function openCarousel(host) {
   const makeCard = (g, i) => {
     const el = document.createElement('div'); el.className = 'cv-card'; el.dataset.i = i; el.setAttribute('role', 'button'); el.setAttribute('aria-label', g.title);
     const accent = HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88';
-    el.innerHTML = `<div class="cv-face" style="background:linear-gradient(160deg,${accent},#1a1d27)"><span class="cv-fb">${esc(g.title)}</span>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" />` : ''}</div>`;
+    el.innerHTML = `<div class="cv-face" style="background:linear-gradient(160deg,${accent},#1a1d27)"><span class="cv-fb">${esc(g.title)}</span>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : ''}</div>`;
     const img = el.querySelector('img');
     if (img) { img.onerror = () => img.remove(); img.onload = () => { img.parentElement.classList.add('has'); if (i === st.idx) tint(); else colourOf(g, img); }; }
     return el;
@@ -92,7 +92,11 @@ export function openCarousel(host) {
     const g = gameAt(st.idx); if (!g) return;
     const img = st.els.get(st.idx)?.querySelector('img');
     const c = colourOf(g, img);
-    root.style.setProperty('--tint', c ? `rgb(${c})` : 'transparent');
+    if (c === st.shown) return;
+    st.shown = c; st.layer = !st.layer;                                        // the colour goes onto the layer that is hidden, then it fades in over the other
+    const on = root.querySelector(st.layer ? '.t1' : '.t2'), offL = root.querySelector(st.layer ? '.t2' : '.t1');
+    if (c) { on.style.setProperty('--tc', `rgb(${c})`); on.classList.add('on'); }
+    offL.classList.remove('on');
   };
   const render = () => {
     const n = st.games.length, rail = $('#cv-rail');
