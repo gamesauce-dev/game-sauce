@@ -1,9 +1,13 @@
 import express from 'express';
 import path from 'node:path';
+import multer from 'multer';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalManualPath, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+
+import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
 const router = express.Router();
+const manualUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MANUAL_BYTES } });
 const me = (req) => Number(req.user?.id ?? -1);
 const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
 
@@ -76,6 +80,29 @@ router.get('/disc/:id', (req, res) => {
   if (!file) return res.status(404).json({ error: 'No disc' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
   res.sendFile(path.resolve(file));
+});
+
+// A game's manual: a web link (PUT), or a file the person uploads (POST, a PDF or pictures), or neither (DELETE). Private to the person; nobody else can read the file.
+router.put('/games/:id/manual', (req, res) => {
+  try { res.json(setManualLink(me(req), req.params.id, req.body?.link)); } catch (err) { fail(res, err); }
+});
+router.post('/games/:id/manual', (req, res) => {
+  manualUpload.single('manual')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That file is over 50 MB.' : err.message });
+    try { res.json(setManualFile(me(req), req.params.id, req.file?.buffer, req.file?.originalname)); } catch (e) { fail(res, e); }
+  });
+});
+router.delete('/games/:id/manual', (req, res) => {
+  try { res.json(removeManual(me(req), req.params.id)); } catch (err) { fail(res, err); }
+});
+router.get('/manual/:id', (req, res) => {
+  const m = physicalManualPath(me(req), req.params.id);
+  if (!m) return res.status(404).json({ error: 'No manual' });
+  res.setHeader('Content-Type', manualType(m.file));
+  res.setHeader('Content-Disposition', `${req.query.download === '1' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(m.name)}`);
+  res.setHeader('Cache-Control', 'private, max-age=3600');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox");   // a file is shown, never run
+  res.sendFile(path.resolve(m.file));
 });
 
 router.get('/spine/:id', (req, res) => {

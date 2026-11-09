@@ -437,7 +437,7 @@ function caseHtml(g) {
     <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
-      <div class="ph-case-inside"><div class="ph-manual"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div class="ph-case-inside" title="${g.has_manual ? 'Click to read the manual' : 'No manual yet: add one in the details window'}"><div class="ph-manual${g.has_manual ? ' has-manual' : ''}"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i><em class="ph-man-tag">${g.has_manual ? 'Read the manual ▸' : 'No manual yet'}</em></div></div>
     </div></div>`;
 }
 
@@ -455,13 +455,19 @@ function showCase(id) {
   el.id = 'ph-case'; el.className = 'ph-case'; el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${g.title}: open the case`);
   el.style.cssText = `--cw:${w}px;--ch:${h}px;left:${Math.round(cx - w / 2)}px;top:${Math.round(cy - h / 2)}px`;
   el.innerHTML = caseHtml(g);
-  el.addEventListener('click', advanceCase);
+  el.addEventListener('click', onCaseClick);
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); } });
   document.body.append(el);
   CASE.el = el; CASE.id = id; CASE.open = false;
   spine.classList.add('is-fore');
   if (!reducedMotion()) el.animate([{ transform: `translate(${sr.left + sr.width / 2 - cx}px, ${sr.top + sr.height / 2 - cy}px) scale(${sr.width / w}, ${sr.height / h})`, opacity: 0.6 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
   el.focus({ preventScroll: true });
+}
+
+/** A click on the case: on the manual (the left side, once open) it reads the manual; anywhere else it goes on to the next step. */
+function onCaseClick(e) {
+  if (CASE.open && e.target.closest('.ph-case-inside')) { openManual(S.byId.get(CASE.id)); return; }
+  advanceCase();
 }
 
 /** Another click on the case in front: open it; on the open case: put everything back on the shelf. */
@@ -592,6 +598,8 @@ export async function openDetail(id) {
     <div class="section-label">Details</div>
     <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
 
+    ${manualBlock(g)}
+
     <div class="section-label">Edit</div>
     <form class="edit-form" id="ph-edit">
       <label class="field"><span>Title</span><input name="title" value="${esc(g.title)}" /></label>
@@ -643,8 +651,77 @@ function bindDetail(g) {
     try { await ctx.api(`/physical/games/${id}`, { method: 'PATCH', body: JSON.stringify(out) }); ctx.toast('Saved'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
   });
 
+  // Manual: a link, a file of your own, or neither.
+  $('#ph-man-open', body)?.addEventListener('click', () => openManual(g));
+  $('#ph-man-upload', body).onclick = () => $('#ph-man-file', body).click();
+  $('#ph-man-file', body).onchange = async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    const fd = new FormData(); fd.append('manual', f);
+    try { await ctx.api(`/physical/games/${id}/manual`, { method: 'POST', body: fd }); ctx.toast('Manual saved'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+    e.target.value = '';
+  };
+  $('#ph-man-find', body).onclick = () => window.open(`https://duckduckgo.com/?q=${encodeURIComponent(`${g.title} ${g.platform_name} manual pdf`)}`, '_blank', 'noopener,noreferrer');
+  $('#ph-man-remove', body)?.addEventListener('click', async () => {
+    const ok = await ctx.confirmDialog({ title: 'Remove this manual?', body: g.manual?.kind === 'file' ? 'The file you uploaded is deleted from the server.' : 'The link is taken off the game.', okLabel: 'Remove', danger: true });
+    if (!ok) return;
+    try { await ctx.api(`/physical/games/${id}/manual`, { method: 'DELETE' }); ctx.toast('Manual removed'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+  });
+  $('#ph-man-link', body).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const link = String(new FormData(e.target).get('link') || '').trim();
+    try { await ctx.api(`/physical/games/${id}/manual`, { method: 'PUT', body: JSON.stringify({ link }) }); ctx.toast(link ? 'Link saved' : 'Link removed'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+  });
+
   // Identify: the Library's search, with the picked entry (cover included) put on this game.
   wireIdentify(body, { idp: 'ph', ctx, onPick: async (cand) => { await ctx.api(`/physical/games/${id}/match`, { method: 'POST', body: JSON.stringify({ candidate: cand }) }); await refreshAll(); } });
+}
+
+/* ───────────── manuals ───────────── */
+
+const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
+
+/** The details window's Manual section: what the game has (a link or the person's own file), and ways to add or change it. */
+function manualBlock(g) {
+  const m = g.manual;
+  const now = m
+    ? `<p class="hint" style="margin:0">${m.kind === 'file' ? `Your file: <b>${esc(m.name)}</b>` : `A link: <b>${esc(hostOf(m.url))}</b>`}</p>`
+    : '<p class="hint" style="margin:0">No manual yet. Add a web link to one, or upload your own PDF. On the shelf, open the game\'s case and click the manual to read it.</p>';
+  return `<div class="section-label">Manual</div>
+    <div class="panel ph-manual-box" style="padding:12px;display:grid;gap:10px">
+      ${now}
+      <div class="ph-man-actions">
+        ${m ? '<button type="button" class="btn btn-sm btn-primary" id="ph-man-open" title="Read the manual">Read the manual</button>' : ''}
+        <button type="button" class="btn btn-sm" id="ph-man-upload" title="Upload a PDF or pictures of the pages. It is kept privately with your shelf">Upload a file</button>
+        <input type="file" id="ph-man-file" accept="application/pdf,image/png,image/jpeg,image/webp,.pdf" hidden />
+        <button type="button" class="btn btn-sm" id="ph-man-find" title="Search the web for this game's manual (opens a search page)">Look for one online</button>
+        ${m ? '<button type="button" class="btn btn-sm btn-ghost" id="ph-man-remove" title="Take this manual away from the game">Remove</button>' : ''}
+      </div>
+      <form class="edit-form" id="ph-man-link" style="grid-template-columns:1fr auto;align-items:end">
+        <label class="field"><span>Link to a manual</span><input name="link" type="url" inputmode="url" placeholder="https://…" value="${esc(g.manual_link || '')}" /></label>
+        <button class="btn btn-sm" id="ph-man-save" type="submit" title="Save this link">Save link</button>
+      </form>
+    </div>`;
+}
+
+/** Read a game's manual: a link opens in a new tab (in the desktop app, in your browser); a file you uploaded opens in a viewer over the page. */
+function openManual(g) {
+  const m = g?.manual;
+  if (!m) { ctx.toast('No manual for this game yet: add a link or upload one in its details window', true); return; }
+  if (m.kind === 'link') { window.open(m.url, '_blank', 'noopener,noreferrer'); return; }
+  $('#ph-manview')?.remove();
+  const el = document.createElement('div');
+  el.id = 'ph-manview'; el.className = 'ph-manview'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', `${g.title}: manual`);
+  const save = m.url.replace(/\?.*$/, '') + '?download=1';
+  el.innerHTML = `<div class="ph-mv-bar"><b>${esc(g.title)} · manual</b>
+      <a class="btn btn-sm" href="${esc(save)}" download="${esc(m.name)}" title="Save a copy of this manual">Download</a>
+      <button type="button" class="btn btn-sm btn-primary" data-mv-close title="Close the manual">Close</button></div>
+    ${m.type === 'application/pdf' ? `<iframe src="${esc(m.url)}" title="${esc(m.name)}"></iframe>` : `<div class="ph-mv-img"><img src="${esc(m.url)}" alt="" /></div>`}`;
+  document.body.append(el);
+  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  const close = () => { el.remove(); document.removeEventListener('keydown', onKey, true); };
+  document.addEventListener('keydown', onKey, true);
+  el.addEventListener('click', (e) => { if (e.target === el || e.target.closest('[data-mv-close]')) close(); });
+  $('[data-mv-close]', el)?.focus();
 }
 
 /* ───────────── add a game / import a CSV (both in the details window) ───────────── */
@@ -702,7 +779,7 @@ function openImport() {
   openShell(); $('#drawer-nav')?.classList.add('hidden');
   $('#drawer-body').innerHTML = `
     <h2 class="detail-title">Import a CSV</h2>
-    <p class="hint">A CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code> and <code>Year</code> (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b>… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
+    <p class="hint">A CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code>, <code>Year</code> and <code>Manual</code> (a web link to the game's manual) (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b>… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
     <div class="panel" style="padding:12px;display:grid;gap:10px">
       <label class="field"><span>CSV file</span><input type="file" id="ph-imp-file" accept=".csv,text/csv" class="file-input" /></label>
       <label class="policy-row"><input type="checkbox" id="ph-imp-replace" /> <span>Remove games no longer in the file (only for the platforms the file lists)</span></label>

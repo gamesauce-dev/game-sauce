@@ -563,3 +563,9 @@ for (const [col, type] of [['disc_url', 'TEXT'], ['disc_path', 'TEXT'], ['disc_t
   if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '43') ON CONFLICT(key) DO UPDATE SET value = '43'").run();
+
+/* ── v44: a Physical game can have a manual: a web link, or a file the person uploaded (src/lib/manuals.js). ── */
+for (const [col, type] of [['manual_link', 'TEXT'], ['manual_path', 'TEXT'], ['manual_name', 'TEXT']]) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '44') ON CONFLICT(key) DO UPDATE SET value = '44'").run();

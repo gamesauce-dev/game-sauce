@@ -147,3 +147,16 @@
 .ph-disc-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
 .ph-disc.has-art { background: none; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
 .ph-disc.has-art::before, .ph-disc.has-art::after, .ph-disc.has-art span { display: none; }
+
+/* Manuals: the section in the details window, the manual side of the open case, and the viewer for a file the person uploaded. */
+.ph-man-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ph-manual.has-manual { cursor: pointer; }
+.ph-manual.has-manual:hover { box-shadow: 0 4px 10px rgba(0,0,0,.5), 0 0 0 2px var(--c, #7c5cff); }
+.ph-man-tag { margin-top: auto; padding-top: 0.3rem; font-style: normal; font-size: 0.6rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #6b5a34; }
+.ph-manual:not(.has-manual) .ph-man-tag { opacity: .55; }
+.ph-manview { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: rgba(8, 9, 14, .95); }
+.ph-mv-bar { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border-bottom: 1px solid var(--line, #262b3a); }
+.ph-mv-bar b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ph-manview iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+.ph-mv-img { flex: 1; overflow: auto; display: grid; place-items: center; padding: 1rem; }
+.ph-mv-img img { max-width: 100%; max-height: 100%; object-fit: contain; }

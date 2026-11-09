@@ -7,6 +7,7 @@ import { enrich, cacheMedia, launchbox } from './providers.js';
 import { parseCsv } from './namecsv.js';
 import { decodeEntities, sortTitle } from './metadata.js';
 import { platformFor, CONSOLE_PLATFORMS, appIdFor } from './consoles.js';
+import { saveManual, deleteManualFile, cleanManualLink, manualType } from './manuals.js';
 
 /** width / height of a JPEG, PNG or WebP file, read from its header (null when it cannot be read). */
 export function imageAspect(file) {
@@ -77,7 +78,8 @@ const HEADER = {
   title: ['game', 'gametitle', 'title', 'gamename', 'name'],
   region: ['region', 'country', 'countryofsourcestore', 'territory'],
   notes: ['notes', 'note', 'condition', 'comment', 'comments', 'edition'],
-  year: ['year', 'releaseyear', 'released']
+  year: ['year', 'releaseyear', 'released'],
+  manual: ['manual', 'manuallink', 'manualurl', 'manuals', 'manualaddress']
 };
 
 const dedupeKey = (title, region) => `${appIdFor(title)}|${squash(region)}`;
@@ -93,9 +95,9 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
   if (!rows.length) throw Object.assign(new Error('The file is empty.'), { status: 400 });
   const head = rows[0].map(squash);
   const col = Object.fromEntries(Object.entries(HEADER).map(([k, names]) => [k, names.map((n) => head.indexOf(n)).find((i) => i >= 0) ?? -1]));
-  if (col.platform < 0 || col.title < 0) throw Object.assign(new Error('The first row must name the columns: Platform, Game (Region, Notes and Year are optional).'), { status: 400 });
+  if (col.platform < 0 || col.title < 0) throw Object.assign(new Error('The first row must name the columns: Platform, Game (Region, Notes, Year and Manual are optional).'), { status: 400 });
 
-  const seen = new Map(); const problems = []; let skipped = 0, duplicates = 0;
+  const seen = new Map(); const problems = []; let skipped = 0, duplicates = 0, badLinks = 0;
   const problem = (line, reason) => { skipped++; if (problems.length < 10) problems.push({ line, reason }); };
   rows.slice(1).forEach((r, i) => {
     const line = i + 2;
@@ -109,17 +111,22 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
     const key = slug + '\n' + dedupeKey(title, region);
     if (seen.has(key)) { duplicates++; return; }
     const y = col.year >= 0 ? Math.round(Number(r[col.year])) : NaN;
-    seen.set(key, { platform: slug, title, region: region || null, notes: col.notes >= 0 ? clean(r[col.notes], 300) || null : null, year: y >= 1950 && y <= 2100 ? y : null, key: dedupeKey(title, region) });
+    // A manual link must be a web address; one that is not is left out (the game itself is still imported) and mentioned.
+    let manual = null;
+    if (col.manual >= 0 && String(r[col.manual] || '').trim()) {
+      try { manual = cleanManualLink(r[col.manual]); } catch { badLinks++; if (problems.length < 10) problems.push({ line, reason: `The manual link for "${title.slice(0, 40)}" is not a web address (it must start with http:// or https://), so it was left out` }); }
+    }
+    seen.set(key, { platform: slug, title, region: region || null, notes: col.notes >= 0 ? clean(r[col.notes], 300) || null : null, year: y >= 1950 && y <= 2100 ? y : null, manual, key: dedupeKey(title, region) });
   });
 
   const games = [...seen.values()];
   const platforms = [...new Set(games.map((g) => g.platform))];
-  const existing = new Map(db.prepare('SELECT id, platform, dedupe_key, title, notes, region FROM physical_games WHERE user_id = ?').all(userId).map((g) => [g.platform + '\n' + g.dedupe_key, g]));
+  const existing = new Map(db.prepare('SELECT id, platform, dedupe_key, title, notes, region, manual_link FROM physical_games WHERE user_id = ?').all(userId).map((g) => [g.platform + '\n' + g.dedupe_key, g]));
   let added = 0, updated = 0, unchanged = 0;
   for (const g of games) {
     const had = existing.get(g.platform + '\n' + g.key);
     if (!had) added++;
-    else if ((g.notes && g.notes !== had.notes) || had.title !== g.title) updated++;
+    else if ((g.notes && g.notes !== had.notes) || had.title !== g.title || (g.manual && g.manual !== had.manual_link)) updated++;
     else unchanged++;
   }
   const inFile = new Set(games.map((g) => g.platform + '\n' + g.key));
@@ -127,15 +134,15 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
   const byPlatform = {}; for (const g of games) byPlatform[g.platform] = (byPlatform[g.platform] || 0) + 1;
 
   if (apply) {
-    const ins = db.prepare('INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, region, notes, release_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    const ins = db.prepare('INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, region, notes, release_year, manual_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     // A filled cell updates the game; an empty one never wipes what is there (the year only fills a blank, so a matched year is not overwritten).
-    const upd = db.prepare(`UPDATE physical_games SET title = ?, sort_title = ?, notes = COALESCE(?, notes), release_year = COALESCE(release_year, ?), updated_at = datetime('now') WHERE id = ?`);
+    const upd = db.prepare(`UPDATE physical_games SET title = ?, sort_title = ?, notes = COALESCE(?, notes), release_year = COALESCE(release_year, ?), manual_link = COALESCE(?, manual_link), updated_at = datetime('now') WHERE id = ?`);
     const del = db.prepare('DELETE FROM physical_games WHERE id = ? AND user_id = ?');
     db.transaction(() => {
       for (const g of games) {
         const had = existing.get(g.platform + '\n' + g.key);
-        if (had) upd.run(g.title, sortTitle(g.title), g.notes, g.year, had.id);
-        else ins.run(userId, g.platform, g.title, sortTitle(g.title), g.key, g.region, g.notes, g.year);
+        if (had) upd.run(g.title, sortTitle(g.title), g.notes, g.year, g.manual, had.id);
+        else ins.run(userId, g.platform, g.title, sortTitle(g.title), g.key, g.region, g.notes, g.year, g.manual);
       }
       for (const g of removing) del.run(g.id, userId);
     })();
@@ -143,7 +150,7 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
   }
   return {
     applied: Boolean(apply), csv_rows: rows.length - 1, games: games.length, by_platform: byPlatform,
-    added, updated, unchanged, removed: removing.length, duplicates, skipped, problems,
+    added, updated, unchanged, removed: removing.length, duplicates, skipped, problems, manuals: games.filter((g) => g.manual).length, bad_links: badLinks,
     sample: games.slice(0, 5).map((g) => ({ platform: g.platform, title: g.title, region: g.region }))
   };
 }
@@ -156,7 +163,11 @@ const toGame = (r) => ({
   cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), created_at: r.created_at,
   cover_ar: r.cover_ar || null, spine_ar: r.spine_ar || null,
   spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path),
-  disc_url: r.disc_path ? `/api/physical/disc/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_disc: Boolean(r.disc_path)
+  disc_url: r.disc_path ? `/api/physical/disc/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_disc: Boolean(r.disc_path),
+  // a manual: an uploaded file (it wins) or a link the person added; null when there is none
+  manual: r.manual_path ? { kind: 'file', name: r.manual_name || 'Manual', type: manualType(r.manual_path), url: `/api/physical/manual/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` }
+    : r.manual_link ? { kind: 'link', url: r.manual_link } : null,
+  manual_link: r.manual_link || null, has_manual: Boolean(r.manual_path || r.manual_link)
 });
 
 const bucketOf = (t) => { const c = String(t || '').replace(/^(the|a|an)\s+/i, '').trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
@@ -261,6 +272,7 @@ export function updatePhysical(userId, id, body = {}) {
 }
 
 export function removePhysical(userId, id) {
+  deleteManualFile(own(userId, id)?.manual_path);   // an uploaded manual goes with its game
   const r = db.prepare('DELETE FROM physical_games WHERE id = ? AND user_id = ?').run(Number(id), userId);
   if (!r.changes) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   return { removed: true };   // the cached picture is shared by URL with anyone matched to the same game, so it stays on disk
@@ -274,6 +286,38 @@ export function physicalSpinePath(userId, id) {
 export function physicalDiscPath(userId, id) {
   const f = own(userId, id)?.disc_path;
   return f && fs.existsSync(f) ? f : null;
+}
+
+export function physicalManualPath(userId, id) {
+  const r = own(userId, id);
+  return r?.manual_path && fs.existsSync(r.manual_path) ? { file: r.manual_path, name: r.manual_name || 'manual' } : null;
+}
+
+/** Set (or, with an empty value, clear) a game's manual link. An uploaded file, if there is one, is left alone. */
+export function setManualLink(userId, id, link) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  db.prepare("UPDATE physical_games SET manual_link = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").run(cleanManualLink(link), r.id, userId);
+  return getPhysical(userId, r.id);
+}
+
+/** Keep an uploaded manual (a PDF or pictures) for a game, replacing any file it had. */
+export function setManualFile(userId, id, buffer, originalName) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  const m = saveManual(userId, r.id, buffer, originalName);
+  if (r.manual_path && r.manual_path !== m.path) deleteManualFile(r.manual_path);
+  db.prepare("UPDATE physical_games SET manual_path = ?, manual_name = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").run(m.path, m.name, r.id, userId);
+  return getPhysical(userId, r.id);
+}
+
+/** Take a game's manual away: the file and the link. */
+export function removeManual(userId, id) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  deleteManualFile(r.manual_path);
+  db.prepare("UPDATE physical_games SET manual_link = NULL, manual_path = NULL, manual_name = NULL, updated_at = datetime('now') WHERE id = ? AND user_id = ?").run(r.id, userId);
+  return getPhysical(userId, r.id);
 }
 
 export function physicalCoverPath(userId, id) {
