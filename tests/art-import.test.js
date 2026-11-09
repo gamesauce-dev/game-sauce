@@ -155,5 +155,9 @@ test('the screens and the settings: Artwork folders (admin), Import pictures & m
   assert.ok(ui.includes("'/art/import'") && ui.includes("'/art/import/status'") && ui.includes('Replace pictures that are already there') && ui.includes('id="art-preview"') && ui.includes('id="art-apply" type="button" disabled'), 'preview first, then Import');
   assert.ok(ph.includes("renderArtImport(ctx, $('#drawer-body'), { target: 'physical'") && dg.includes("renderArtImport(ctx, $('#drawer-body'), { target: 'digital'"));
   assert.ok(html.includes('data-ph-act="art"') && html.includes('data-dg-act="art"'));
+  // an admin can add a folder from the import screen itself: type or paste a path, or browse the server's folders
+  assert.ok(ui.includes('function wireAddFolder(') && ui.includes('id="art-newpath"') && ui.includes('id="art-browse"') && ui.includes("`/sources/browse${p ? `?path=${encodeURIComponent(p)}` : ''}`") && ui.includes("'/art/folders', { method: 'PUT'"), 'type, paste or browse, then Add');
+  assert.ok(ui.includes('if (can_edit) wireAddFolder('), 'only for an admin (the folders list is theirs to set)');
+  assert.ok(ui.includes('O:\\\\Launchbox\\\\images'), 'the example path keeps its backslashes (doubled in the source, as it is inside a template)');
   for (const id of ['#art-preview', '#art-apply']) assert.ok(read('public/modern.js').includes(`'${id}'`), `Modern gives ${id} an icon`);
 });
