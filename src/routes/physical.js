@@ -2,12 +2,13 @@ import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalManualPath, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
 const router = express.Router();
 const manualUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MANUAL_BYTES } });
+const coverUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 const me = (req) => Number(req.user?.id ?? -1);
 const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
 
@@ -49,7 +50,7 @@ router.post('/games/:id/match', async (req, res, next) => {
   try {
     const cand = req.body?.candidate;
     if (!cand || typeof cand !== 'object') return res.status(400).json({ error: 'candidate object is required' });
-    res.json(await applyMatch(me(req), req.params.id, { ...cand, source: cand.source || 'thegamesdb' }));
+    res.json(await applyMatch(me(req), req.params.id, { ...cand, source: cand.source || 'thegamesdb' }, { explicit: true }));   // picked by hand: it replaces an uploaded cover
   } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 
@@ -80,6 +81,17 @@ router.get('/disc/:id', (req, res) => {
   if (!file) return res.status(404).json({ error: 'No disc' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
   res.sendFile(path.resolve(file));
+});
+
+// The person's own picture for a game: its cover, spine or disc (kind). Uploaded (POST, a JPEG, PNG or WebP up to 8 MB, checked) or put back to the automatic one (DELETE).
+router.post('/games/:id/art/:kind', (req, res) => {
+  coverUpload.single('image')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That image is over 8 MB.' : err.message });
+    try { res.json(setPhysicalArt(me(req), req.params.id, req.params.kind, req.file?.buffer)); } catch (e) { fail(res, e); }
+  });
+});
+router.delete('/games/:id/art/:kind', (req, res) => {
+  try { res.json(removePhysicalArt(me(req), req.params.id, req.params.kind)); } catch (err) { fail(res, err); }
 });
 
 // A game's manual: a web link (PUT), or a file the person uploads (POST, a PDF or pictures), or neither (DELETE). Private to the person; nobody else can read the file.

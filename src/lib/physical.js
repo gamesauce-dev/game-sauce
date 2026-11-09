@@ -8,9 +8,11 @@ import { parseCsv } from './namecsv.js';
 import { decodeEntities, sortTitle } from './metadata.js';
 import { platformFor, CONSOLE_PLATFORMS, appIdFor } from './consoles.js';
 import { saveManual, deleteManualFile, cleanManualLink, manualType } from './manuals.js';
+import { saveCover, dropCustomCover } from './storage.js';
+import { sniffImage, MAX_COVER_BYTES } from './coverzip.js';
 
-/** width / height of a JPEG, PNG or WebP file, read from its header (null when it cannot be read). */
-export function imageAspect(file) {
+/** { w, h } in pixels of a JPEG, PNG or WebP file, read from its header (null when it cannot be read). */
+export function imageSize(file) {
   let b;
   try { const fd = fs.openSync(file, 'r'); try { b = Buffer.alloc(262144); b = b.subarray(0, fs.readSync(fd, b, 0, b.length, 0)); } finally { fs.closeSync(fd); } } catch { return null; }
   let w = 0, h = 0;
@@ -29,7 +31,13 @@ export function imageAspect(file) {
     else if (t === 'VP8L') { const v = b.readUInt32LE(21); w = (v & 0x3fff) + 1; h = ((v >> 14) & 0x3fff) + 1; }
     else if (t === 'VP8X') { w = 1 + b.readUIntLE(24, 3); h = 1 + b.readUIntLE(27, 3); }
   }
-  return w > 0 && h > 0 ? Math.round((w / h) * 10000) / 10000 : null;
+  return w > 0 && h > 0 ? { w, h } : null;
+}
+
+/** width / height of a JPEG, PNG or WebP file (null when it cannot be read). */
+export function imageAspect(file) {
+  const d = imageSize(file);
+  return d ? Math.round((d.w / d.h) * 10000) / 10000 : null;
 }
 
 const squash = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '');
@@ -160,10 +168,10 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
 const toGame = (r) => ({
   id: r.id, platform: r.platform, title: r.title, region: r.region, notes: r.notes, release_year: r.release_year, developer: r.developer, publisher: r.publisher,
   genre: r.genre, players: r.players, rating: r.rating, description: r.description, favourite: Boolean(r.favourite), matched: Boolean(r.meta_source), meta_source: r.meta_source,
-  cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), created_at: r.created_at,
+  cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), cover_locked: Boolean(r.cover_locked), created_at: r.created_at,
   cover_ar: r.cover_ar || null, spine_ar: r.spine_ar || null,
-  spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path),
-  disc_url: r.disc_path ? `/api/physical/disc/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_disc: Boolean(r.disc_path),
+  spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path), spine_locked: Boolean(r.spine_path && r.spine_locked),
+  disc_url: r.disc_path ? `/api/physical/disc/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_disc: Boolean(r.disc_path), disc_locked: Boolean(r.disc_path && r.disc_locked),
   // a manual: an uploaded file (it wins) or a link the person added; null when there is none
   manual: r.manual_path ? { kind: 'file', name: r.manual_name || 'Manual', type: manualType(r.manual_path), url: `/api/physical/manual/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` }
     : r.manual_link ? { kind: 'link', url: r.manual_link } : null,
@@ -272,7 +280,9 @@ export function updatePhysical(userId, id, body = {}) {
 }
 
 export function removePhysical(userId, id) {
-  deleteManualFile(own(userId, id)?.manual_path);   // an uploaded manual goes with its game
+  const mine = own(userId, id);
+  deleteManualFile(mine?.manual_path);   // an uploaded manual goes with its game
+  for (const f of [mine?.cover_path, mine?.spine_path, mine?.disc_path]) dropCustomCover(f, 'physical-');   // and so do the pictures they uploaded
   const r = db.prepare('DELETE FROM physical_games WHERE id = ? AND user_id = ?').run(Number(id), userId);
   if (!r.changes) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   return { removed: true };   // the cached picture is shared by URL with anyone matched to the same game, so it stays on disk
@@ -286,6 +296,58 @@ export function physicalSpinePath(userId, id) {
 export function physicalDiscPath(userId, id) {
   const f = own(userId, id)?.disc_path;
   return f && fs.existsSync(f) ? f : null;
+}
+
+/* A picture of the person's own for a game: its cover, its spine or its disc (a JPEG, PNG or WebP, up to 8 MB). Kept, and never replaced by a lookup. */
+const ART = {
+  cover: { path: 'cover_path', url: 'cover_url', ar: 'cover_ar', lock: 'cover_locked', what: 'cover' },
+  spine: { path: 'spine_path', url: 'spine_url', ar: 'spine_ar', lock: 'spine_locked', what: 'spine' },
+  disc: { path: 'disc_path', url: 'disc_url', ar: null, lock: 'disc_locked', what: 'disc' }
+};
+const bad = (m) => Object.assign(new Error(m), { status: 400 });
+
+/** Is this picture fit for what it is said to be? The file is checked as well as its name: it must really be a JPEG, PNG or WebP of a sensible size and shape. */
+export function checkArt(kind, buffer, file) {
+  if (!buffer?.length) throw bad('Choose an image first.');
+  if (buffer.length > MAX_COVER_BYTES) throw bad('That image is over 8 MB.');
+  if (!sniffImage(buffer)) throw bad('That file is not a JPEG, PNG or WebP image');
+  const d = imageSize(file);
+  if (!d) throw bad('That picture could not be read.');
+  if (Math.max(d.w, d.h) > 10000) throw bad('That picture is too large (10,000 pixels on a side at most).');
+  const ar = d.w / d.h;
+  if (kind === 'cover' && (Math.min(d.w, d.h) < 64 || ar < 0.3 || ar > 3)) throw bad('That does not look like a cover: it is too small, or too long and thin (a cover is at least 64 pixels across).');
+  if (kind === 'spine' && (Math.min(d.w, d.h) < 16 || Math.max(d.w, d.h) < 64 || ar > 0.6)) throw bad('A spine picture is tall and narrow: this one is too wide or too small.');
+  if (kind === 'disc' && (Math.min(d.w, d.h) < 64 || ar < 0.5 || ar > 2)) throw bad('A disc picture should be roughly square (it is shown as a circle), at least 64 pixels across.');
+  return d;
+}
+
+export function setPhysicalArt(userId, id, kind, buffer) {
+  const k = ART[kind];
+  if (!k) throw bad('Choose cover, spine or disc.');
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  if (kind === 'disc' && !isDiscPlatform(r.platform)) throw bad('Only disc games (PlayStation 2 to 5, Xbox to Series X|S) have a disc picture.');
+  if (!buffer?.length) throw bad('Choose an image first.');
+  if (buffer.length > MAX_COVER_BYTES) throw bad('That image is over 8 MB.');
+  const type = sniffImage(buffer);
+  if (!type) throw bad('That file is not a JPEG, PNG or WebP image');
+  const file = saveCover(buffer, `physical-${Number(userId)}-${r.id}-${kind}-${Date.now()}`, type);
+  try { checkArt(kind, buffer, file); } catch (e) { dropCustomCover(file, 'physical-'); throw e; }   // not fit: nothing is kept
+  dropCustomCover(r[k.path], 'physical-');
+  db.prepare(`UPDATE physical_games SET ${k.path} = ?, ${k.url} = NULL, ${k.ar ? `${k.ar} = ${'?'},` : ''} ${k.lock} = 1, updated_at = datetime('now') WHERE id = ? AND user_id = ?`)
+    .run(...[file, ...(k.ar ? [imageAspect(file)] : []), r.id, userId]);
+  return getPhysical(userId, r.id);
+}
+
+/** Back to the automatic picture: the uploaded one is forgotten (Look up again fetches one). */
+export function removePhysicalArt(userId, id, kind) {
+  const k = ART[kind];
+  if (!k) throw bad('Choose cover, spine or disc.');
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  dropCustomCover(r[k.path], 'physical-');
+  db.prepare(`UPDATE physical_games SET ${k.path} = NULL, ${k.url} = NULL, ${k.ar ? `${k.ar} = NULL,` : ''} ${k.lock} = 0, ${kind === 'cover' ? '' : `${kind}_tried_at = NULL,`} updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
+  return getPhysical(userId, r.id);
 }
 
 export function physicalManualPath(userId, id) {
@@ -328,18 +390,19 @@ export function physicalCoverPath(userId, id) {
 /* ───────── details and covers ───────── */
 
 /** Put a chosen provider record (the candidate the identify search returns, or what enrich() found) on a game. Blank fields keep what is there. */
-export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = {}) {
+export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia, explicit = false } = {}) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   const c = cand || {};
   const text = (v) => (typeof v === 'string' ? decodeEntities(v).trim() : v) || null;
-  const url = c.cover_url || c.media?.box2d || null;
+  // A cover the person uploaded is kept unless they pick a match by hand (explicit): an automatic match never replaces it.
+  const url = r.cover_locked && !explicit ? null : (c.cover_url || c.media?.box2d || null);
   let coverPath = null;
   if (url) { try { coverPath = await cacheImpl(url, 'box2d'); } catch { coverPath = null; } }
-  const spineUrl = c.media?.spine || c.spine_url || null;
+  const spineUrl = r.spine_locked ? null : (c.media?.spine || c.spine_url || null);   // an uploaded spine is kept
   let spinePath = null;
   if (spineUrl) { try { spinePath = await cacheImpl(spineUrl, 'spine'); } catch { spinePath = null; } }
-  const discUrl = c.media?.disc || c.disc_url || null;
+  const discUrl = r.disc_locked ? null : (c.media?.disc || c.disc_url || null);   // so is an uploaded disc
   let discPath = null;
   if (discUrl && isDiscPlatform(r.platform)) { try { discPath = await cacheImpl(discUrl, 'disc'); } catch { discPath = null; } }
   const yr = Math.round(Number(c.release_year)), pl = Math.round(Number(c.players)), rt = Number(c.rating);
@@ -349,12 +412,13 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = 
       cover_url = COALESCE(?, cover_url), cover_path = COALESCE(?, cover_path), spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path),
       disc_url = COALESCE(?, disc_url), disc_path = COALESCE(?, disc_path),
       cover_ar = COALESCE(?, cover_ar), spine_ar = COALESCE(?, spine_ar),
+      cover_locked = CASE WHEN ? IS NOT NULL THEN 0 ELSE cover_locked END,
       meta_source = ?, meta_synced_at = datetime('now'), meta_tried_at = datetime('now'),
       updated_at = datetime('now')
     WHERE id = ? AND user_id = ?`)
     .run(text(c.developer), text(c.publisher), text(c.genre), text(c.description)?.slice(0, 4000) || null,
       yr >= 1950 && yr <= 2100 ? yr : null, pl >= 1 && pl <= 16 ? pl : null, Number.isFinite(rt) && c.rating !== null && c.rating !== '' && rt >= 0 && rt <= 5 ? rt : null,
-      url, coverPath, spineUrl, spinePath, discUrl, discPath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
+      url, coverPath, spineUrl, spinePath, discUrl, discPath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, coverPath, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
   return getPhysical(userId, id);
 }
 
@@ -362,7 +426,8 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = 
 export function clearMatch(userId, id) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, disc_url = NULL, disc_path = NULL, disc_tried_at = NULL, cover_ar = NULL, spine_ar = NULL,
+  for (const f of [r.cover_path, r.spine_path, r.disc_path]) dropCustomCover(f, 'physical-');
+  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, cover_locked = 0, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, spine_locked = 0, disc_url = NULL, disc_path = NULL, disc_tried_at = NULL, disc_locked = 0, cover_ar = NULL, spine_ar = NULL,
     meta_source = NULL, meta_synced_at = NULL, meta_tried_at = NULL, updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
   return getPhysical(userId, id);
 }
@@ -407,6 +472,7 @@ export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = ca
 export async function fetchSpine(userId, id, { cacheImpl = cacheMedia, spineImpl = lookupSpineDefault } = {}) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  if (r.spine_locked) return false;   // the person's own spine
   let url = null; try { url = await spineImpl(r); } catch { url = null; }
   let file = null; if (url) { try { file = await cacheImpl(url, 'spine'); } catch { file = null; } }
   db.prepare("UPDATE physical_games SET spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path), spine_ar = COALESCE(?, spine_ar), spine_tried_at = datetime('now'), updated_at = CASE WHEN ? IS NULL THEN updated_at ELSE datetime('now') END WHERE id = ?").run(url, file, file ? imageAspect(file) : null, file, r.id);
@@ -417,6 +483,7 @@ export async function fetchSpine(userId, id, { cacheImpl = cacheMedia, spineImpl
 export async function fetchDisc(userId, id, { cacheImpl = cacheMedia, discImpl = lookupDiscDefault } = {}) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  if (r.disc_locked) return false;   // the person's own disc
   let url = null; try { url = await discImpl(r); } catch { url = null; }
   let file = null; if (url) { try { file = await cacheImpl(url, 'disc'); } catch { file = null; } }
   db.prepare("UPDATE physical_games SET disc_url = COALESCE(?, disc_url), disc_path = COALESCE(?, disc_path), disc_tried_at = datetime('now'), updated_at = CASE WHEN ? IS NULL THEN updated_at ELSE datetime('now') END WHERE id = ?").run(url, file, file, r.id);

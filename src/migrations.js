@@ -569,3 +569,13 @@ for (const [col, type] of [['manual_link', 'TEXT'], ['manual_path', 'TEXT'], ['m
   if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '44') ON CONFLICT(key) DO UPDATE SET value = '44'").run();
+
+/* ── v45: a cover a person uploaded for a Physical game is kept (cover_locked): a later automatic match does not replace it. Picking a match by hand does. ── */
+if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === 'cover_locked')) db.exec('ALTER TABLE physical_games ADD COLUMN cover_locked INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '45') ON CONFLICT(key) DO UPDATE SET value = '45'").run();
+
+/* ── v46: a spine or disc picture a person uploaded is kept too (spine_locked, disc_locked): the background lookups never replace it. ── */
+for (const col of ['spine_locked', 'disc_locked']) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} INTEGER NOT NULL DEFAULT 0`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '46') ON CONFLICT(key) DO UPDATE SET value = '46'").run();

@@ -430,6 +430,9 @@ function renderConsoleDetail(g, d, store, appId, custom) {
       <button class="ibtn" data-act="dghide" data-dgd="hidden" data-tip="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? I.eye : I.eyeOff}</button>
       ${g.store_url ? `<a class="ibtn" data-act="dgstore" href="${esc(g.store_url)}" target="_blank" rel="noreferrer" data-tip="Find it in the ${esc(store === 'xbox' ? 'Xbox' : 'PlayStation')} Store${g.country_name ? ' (' + esc(g.country_name) + ')' : ''}" aria-label="Open the store page"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>` : ''}
       <button class="ibtn" data-d="lookup" data-tip="Look this game up again by its title and platform" aria-label="Look up again">${I.refresh}</button>
+      <button class="ibtn" data-d="cover" data-tip="Upload your own cover (JPEG, PNG or WebP, up to 8 MB)" aria-label="Upload a cover">${I.image}</button>
+      <input type="file" id="dg-cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+      ${g.own_cover ? `<button class="ibtn" data-d="coverreset" data-tip="Go back to the automatic cover" aria-label="Automatic cover">${I.undo}</button>` : ''}
       ${custom ? `<button class="ibtn" data-d="clear" data-tip="Clear your match and edits: back to the details the providers found" aria-label="Clear match">${I.undo}</button>` : ''}
       <button class="ibtn ibtn-danger" data-act="delete" data-dgremove data-tip="Remove from your Digital list" aria-label="Remove">${I.trash}</button>
     </div>
@@ -467,6 +470,18 @@ function renderConsoleDetail(g, d, store, appId, custom) {
     try { const r = await ctx.api(`${gameUrl(store, appId)}/lookup`, { method: 'POST' }); ctx.toast(r.found ? 'Details found' : 'No match found: search for it below', !r.found); await refreshAll(); }
     catch (err) { ctx.toast(err.message, true); b.disabled = false; b.classList.remove('spin'); }
   };
+  // Your own cover: choose a picture, or go back to the automatic one. It is yours alone.
+  $('[data-d="cover"]', body).onclick = () => $('#dg-cover-file', body).click();
+  $('#dg-cover-file', body).onchange = async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { ctx.toast('That image is over 8 MB', true); e.target.value = ''; return; }
+    const fd = new FormData(); fd.append('cover', f);
+    try { await ctx.api(`${gameUrl(store, appId)}/cover`, { method: 'POST', body: fd }); ctx.toast('Cover updated'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+    e.target.value = '';
+  };
+  $('[data-d="coverreset"]', body)?.addEventListener('click', async () => {
+    try { await ctx.api(`${gameUrl(store, appId)}/cover`, { method: 'DELETE' }); ctx.toast('Back to the automatic cover'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+  });
   $('[data-d="clear"]', body)?.addEventListener('click', async () => {
     try { await ctx.api(`${gameUrl(store, appId)}/match`, { method: 'DELETE' }); ctx.toast('Your match and edits are cleared'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
   });

@@ -48,7 +48,7 @@ export function identifyBlock({ idp, title, platform, prefs }) {
       <p class="hint" style="margin:0 0 10px">No match, wrong game, or missing art? Search and pick the right entry — cover included.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input id="${idp}-id-q" class="search" style="flex:1;min-width:180px" type="search" placeholder="Title to search…" value="${esc(title)}" autocomplete="off" />
-        <select id="${idp}-id-prov" class="select" title="Which catalogue to search">${PROVIDERS.map(([v, l]) => `<option value="${v}"${v === prov ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <div class="provpick" id="${idp}-id-prov" data-value="${esc(prov)}" title="Which catalogue to search — click ☆ to make one your default"></div>
         <select id="${idp}-id-plat" class="select" style="max-width:190px">${platformSelect(platform, { any: true })}</select>
         <button class="btn" id="${idp}-id-go">Search</button>
       </div>
@@ -56,9 +56,45 @@ export function identifyBlock({ idp, title, platform, prefs }) {
     </div>`;
 }
 
+/** The provider drop-down with a star on each entry, as in the Library: the starred one is your default (saved for you, chosen on every game). Reads like a field: el.value. */
+export function wireProviderPicker(el, ctx) {
+  if (!el) return;
+  const fav = () => ctx.state?.prefs?.identify_provider || null;
+  el.value = el.dataset.value || fav() || PROVIDERS[0][0];
+  const draw = (open) => {
+    const cur = PROVIDERS.find(([id]) => id === el.value) || PROVIDERS[0];
+    el.innerHTML = `
+      <button type="button" class="select provpick-btn" aria-haspopup="listbox" aria-expanded="${open}">${esc(cur[1])}${fav() === cur[0] ? ' ★' : ''} ▾</button>
+      ${open ? `<div class="provpick-menu" role="listbox">${PROVIDERS.map(([id, label]) => `
+        <div class="provpick-opt ${id === el.value ? 'is-cur' : ''}" role="option" data-pick="${id}">
+          <span class="provpick-name">${esc(label)}</span>
+          <button type="button" class="provpick-star ${fav() === id ? 'on' : ''}" data-star="${id}" title="${fav() === id ? 'Default provider — click to clear' : 'Make this my default provider'}" aria-label="Toggle default">${fav() === id ? '★' : '☆'}</button>
+        </div>`).join('')}</div>` : ''}`;
+    $('.provpick-btn', el).onclick = (e) => { e.stopPropagation(); draw(!open); };
+    $$('[data-pick]', el).forEach((row) => row.addEventListener('click', (e) => { if (e.target.closest('[data-star]')) return; el.value = row.dataset.pick; draw(false); }));
+    $$('[data-star]', el).forEach((b) => b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = b.dataset.star, next = fav() === id ? null : id;
+      try {
+        await ctx.api('/prefs/identify_provider', { method: 'PUT', body: JSON.stringify({ value: next }) });
+        ctx.state.prefs = { ...(ctx.state.prefs || {}), identify_provider: next };
+        if (!next) delete ctx.state.prefs.identify_provider;
+        if (next) el.value = next;
+        ctx.toast(next ? `${PROVIDERS.find(([x]) => x === next)[1]} is now your default provider` : 'Default provider cleared');
+        draw(true);
+      } catch (err) { ctx.toast(err.message, true); }
+    }));
+  };
+  draw(false);
+  const closeMenu = (e) => { if (!el.contains(e.target) && $('.provpick-menu', el)) draw(false); };
+  document.addEventListener('click', closeMenu);
+  new MutationObserver(() => { if (!document.body.contains(el)) document.removeEventListener('click', closeMenu); }).observe(document.body, { childList: true, subtree: true });
+}
+
 /** Make the section work. onPick(candidate) puts the entry on the game (and redraws); a failure is shown and the search runs again. */
 export function wireIdentify(root, { idp, ctx, onPick }) {
   const q = $(`#${idp}-id-q`, root), list = $(`#${idp}-id-list`, root);
+  wireProviderPicker($(`#${idp}-id-prov`, root), ctx);
   const run = async () => {
     const text = q.value.trim(); if (!text) return ctx.toast('Type a title to search for', true);
     const provider = $(`#${idp}-id-prov`, root).value, label = { igdb: 'IGDB', launchbox: 'LaunchBox' }[provider] || 'TheGamesDB';

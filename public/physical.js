@@ -434,7 +434,7 @@ function caseHtml(g) {
   const pic = g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : '';
   const tone = `linear-gradient(160deg,${esc(col)},#12141a)`;
   return `<div class="ph-case-slide">
-    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
+    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc${g.disc_locked ? ' is-own' : ''}" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
       <div class="ph-case-inside" title="${g.has_manual ? 'Click to read the manual' : 'No manual yet: add one in the details window'}"><div class="ph-manual${g.has_manual ? ' has-manual' : ''}"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i><em class="ph-man-tag">${g.has_manual ? 'Read the manual ▸' : 'No manual yet'}</em></div></div>
@@ -589,8 +589,10 @@ export async function openDetail(id) {
       <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-d="fav" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? I.starFill : I.star}</button>
       <button class="ibtn" data-d="auto" data-tip="Look this game up again by its title and platform" aria-label="Look up again">${I.refresh}</button>
       ${g.matched ? `<button class="ibtn" data-d="clear" data-tip="Clear the match: remove a wrong cover and details" aria-label="Clear match">${I.undo}</button>` : ''}
+      <button class="ibtn" data-d="art" data-tip="Upload your own picture: cover, spine or disc" aria-label="Upload a picture" aria-expanded="false">${I.image}</button>
       <button class="ibtn ibtn-danger" data-d="delete" data-tip="Remove from your shelf" aria-label="Remove">${I.trash}</button>
     </div>
+    ${artMenu(g)}
     ${g.description ? `<p class="detail-desc">${esc(g.description)}</p>` : `<p class="hint">${g.matched ? 'The match has no description.' : 'No details or cover were found for this game yet. Search for it below and pick the right entry: the cover comes with it.'}</p>`}
 
     ${identifyBlock({ idp: 'ph', title: g.title, platform: g.platform, prefs: ctx.state.prefs })}
@@ -638,6 +640,20 @@ function bindDetail(g) {
   $('[data-d="clear"]', body)?.addEventListener('click', async () => {
     try { await ctx.api(`/physical/games/${id}/match`, { method: 'DELETE' }); ctx.toast('Match cleared'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
   });
+  // Your own picture: choose what it is (cover, spine or disc), then the file; or go back to the automatic one.
+  const menu = $('#ph-art-menu', body), artFile = $('#ph-art-file', body);
+  $('[data-d="art"]', body).onclick = (e) => { const open = menu.classList.toggle('hidden') === false; e.currentTarget.setAttribute('aria-expanded', String(open)); };
+  $$('[data-art]', menu).forEach((b) => b.addEventListener('click', () => { artFile.dataset.kind = b.dataset.art; artFile.click(); }));
+  artFile.onchange = async (e) => {
+    const f = e.target.files?.[0], kind = artFile.dataset.kind; if (!f || !kind) return;
+    if (f.size > 8 * 1024 * 1024) { ctx.toast('That image is over 8 MB', true); e.target.value = ''; return; }
+    const fd = new FormData(); fd.append('image', f);
+    try { await ctx.api(`/physical/games/${id}/art/${kind}`, { method: 'POST', body: fd }); ctx.toast(`${kind[0].toUpperCase() + kind.slice(1)} picture updated`); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+    e.target.value = '';
+  };
+  $$('[data-art-reset]', menu).forEach((b) => b.addEventListener('click', async () => {
+    try { await ctx.api(`/physical/games/${id}/art/${b.dataset.artReset}`, { method: 'DELETE' }); ctx.toast('Back to the automatic picture: use Look up again to fetch one'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+  }));
   $('[data-d="delete"]', body).onclick = async () => {
     const ok = await ctx.confirmDialog({ title: `Remove ${g.title}?`, body: 'It is taken off your shelf. Importing a CSV that lists it brings it back.', okLabel: 'Remove', danger: true });
     if (!ok) return;
@@ -674,6 +690,18 @@ function bindDetail(g) {
 
   // Identify: the Library's search, with the picked entry (cover included) put on this game.
   wireIdentify(body, { idp: 'ph', ctx, onPick: async (cand) => { await ctx.api(`/physical/games/${id}/match`, { method: 'POST', body: JSON.stringify({ candidate: cand }) }); await refreshAll(); } });
+}
+
+/* ───────────── your own pictures ───────────── */
+
+/** The small panel under the details actions: what the picture you are about to choose is for. Hidden until the picture button is pressed. */
+function artMenu(g) {
+  const kinds = [['cover', 'Cover', g.cover_locked, 'The front of the box or case'], ['spine', 'Spine', g.spine_locked, 'Tall and narrow: it stands on the shelf'], ...(isDisc(g.platform) ? [['disc', 'Disc', g.disc_locked, 'Roughly square: shown as a circle in the open case']] : [])];
+  return `<div class="ph-art-menu hidden" id="ph-art-menu">
+    <p class="hint" style="margin:0">Upload a picture of your own as the game's… (JPEG, PNG or WebP, up to 8 MB). It is kept, and automatic lookups never replace it.</p>
+    <div class="ph-art-row">${kinds.map(([k, label, mine, tip]) => `<span class="ph-art-opt"><button type="button" class="btn btn-sm" data-art="${k}" title="${esc(tip)}">${label}</button>${mine ? `<button type="button" class="btn btn-sm btn-ghost" data-art-reset="${k}" title="Go back to the automatic ${k} picture">Automatic</button>` : ''}</span>`).join('')}</div>
+    <input type="file" id="ph-art-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+  </div>`;
 }
 
 /* ───────────── manuals ───────────── */

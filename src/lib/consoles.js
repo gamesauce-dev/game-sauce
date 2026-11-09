@@ -7,6 +7,8 @@ import db from '../db.js';
 import { enrich, cacheMedia } from './providers.js';
 import { parseCsv } from './namecsv.js';
 import { decodeEntities } from './metadata.js';
+import { saveCover, dropCustomCover } from './storage.js';
+import { sniffImage, MAX_COVER_BYTES } from './coverzip.js';
 
 /** The console stores, one chip each in Digital. `meta` is the default list of Library platforms to search when a game has no console of its own. */
 export const CONSOLE_STORES = {
@@ -300,6 +302,12 @@ export async function getConsoleDetails(store, appId, name, opts) {
   return refreshConsoleDetails(store, appId, name, opts);
 }
 
+/** Does this person have a cover of their own for the game (uploaded, or came with a match they picked)? */
+export function hasOwnConsoleCover(userId, store, appId) {
+  const own = db.prepare('SELECT cover_path FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  return Boolean(own?.cover_path && fs.existsSync(own.cover_path));
+}
+
 export function consoleCoverPath(store, appId, userId = null) {
   const own = userId == null ? null : db.prepare('SELECT cover_path FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
   if (own?.cover_path && fs.existsSync(own.cover_path)) return own.cover_path;   // the cover a person picked by hand beats the shared one
@@ -382,8 +390,35 @@ export async function applyConsoleMatch(userId, store, appId, cand, { cacheImpl 
   return { custom: true };
 }
 
+/** The person's own cover for a console game (a JPEG, PNG or WebP picture, up to 8 MB): theirs alone, and it wins over the shared one. */
+export function setConsoleCover(userId, store, appId, buffer) {
+  const game = db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (!game) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
+  if (!buffer?.length) throw Object.assign(new Error('Choose an image first.'), { status: 400 });
+  if (buffer.length > MAX_COVER_BYTES) throw Object.assign(new Error('That image is over 8 MB.'), { status: 400 });
+  const type = sniffImage(buffer);
+  if (!type) throw Object.assign(new Error('That file is not a JPEG, PNG or WebP image'), { status: 400 });
+  const file = saveCover(buffer, `digital-${Number(userId)}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, type);
+  dropCustomCover(userMeta(userId, store, appId)?.cover_path, 'digital-');
+  db.prepare(`INSERT INTO digital_user_meta (user_id, store, app_id, json, cover_path, source, updated_at) VALUES (?, ?, ?, '{}', ?, NULL, datetime('now'))
+    ON CONFLICT(user_id, store, app_id) DO UPDATE SET cover_path = excluded.cover_path, updated_at = excluded.updated_at`).run(userId, store, String(appId), file);
+  return { own_cover: true };
+}
+
+/** Back to the shared cover: the person's own picture is forgotten (their edits, if any, stay). */
+export function removeConsoleCover(userId, store, appId) {
+  const cur = userMeta(userId, store, appId);
+  if (!cur) return { own_cover: false };
+  dropCustomCover(cur.cover_path, 'digital-');
+  db.prepare("UPDATE digital_user_meta SET cover_path = NULL, updated_at = datetime('now') WHERE user_id = ? AND store = ? AND app_id = ?").run(userId, store, String(appId));
+  let mine = {}; try { mine = cur.json ? JSON.parse(cur.json) : {}; } catch { mine = {}; }
+  if (!Object.keys(mine).length && !cur.source) db.prepare('DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
+  return { own_cover: false };
+}
+
 /** Forget this person's corrections and match: the game follows the shared details and cover again. */
 export function clearConsoleMatch(userId, store, appId) {
+  dropCustomCover(userMeta(userId, store, appId)?.cover_path, 'digital-');
   const r = db.prepare('DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   return { cleared: r.changes > 0 };
 }

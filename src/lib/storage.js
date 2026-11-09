@@ -95,3 +95,14 @@ export function tempPath(originalName) {
   const name = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${safeExtension(originalName)}`;
   return path.join(ROM_DIR, '.incoming', name);
 }
+
+/** A cover a person uploaded for their own game is named for them (physical-<person>-..., digital-<person>-...): when their account goes, those go too. */
+export function purgeCustomCovers(userId) {
+  try {
+    for (const f of fs.readdirSync(COVER_DIR)) if (f.startsWith(`physical-${Number(userId)}-`) || f.startsWith(`digital-${Number(userId)}-`)) fs.rmSync(path.join(COVER_DIR, f), { force: true });
+  } catch { /* none */ }
+}
+/** Remove a stored cover only when it is one a person uploaded (never a provider's picture, which other games may share). */
+export function dropCustomCover(file, prefix) {
+  try { if (file && path.basename(file).startsWith(prefix) && fs.existsSync(file)) fs.rmSync(file, { force: true }); } catch { /* already gone */ }
+}

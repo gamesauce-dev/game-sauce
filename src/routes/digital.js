@@ -1,8 +1,9 @@
 import express from 'express';
 import path from 'node:path';
+import multer from 'multer';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
-import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
+import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
@@ -58,7 +59,7 @@ router.get('/games/:store/:appId', async (req, res, next) => {
     const game = listGames(me(req), { store, hidden: 'show' }).find((g) => g.app_id === String(req.params.appId));
     if (!game) return res.status(404).json({ error: 'That game is not in your list' });
     const c = countryFor(game.country);
-    const extra = { store_label: platformLabel(store, game.platform), country_name: c?.name || null, store_url: storeUrl(store, game.name, game.country) };
+    const extra = { store_label: platformLabel(store, game.platform), country_name: c?.name || null, store_url: storeUrl(store, game.name, game.country), own_cover: hasOwnConsoleCover(me(req), store, game.app_id) };
     try {
       const shared = await getConsoleDetails(store, game.app_id, game.name, { platform: game.platform });
       // The person's own corrections (a hand match, edits) are laid over the shared details.
@@ -86,6 +87,16 @@ router.post('/games/:store/:appId/match', async (req, res, next) => {
   if (!cand || typeof cand !== 'object') return res.status(400).json({ error: 'candidate object is required' });
   try { res.json(await applyConsoleMatch(me(req), req.params.store, req.params.appId, cand)); } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
+// A cover of the person's own for a console game (JPEG, PNG or WebP up to 8 MB), or back to the shared one. Steam's covers come from Steam.
+const coverUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+router.post('/games/:store/:appId/cover', (req, res) => {
+  if (!consoleOnly(req, res)) return;
+  coverUpload.single('cover')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That image is over 8 MB.' : err.message });
+    try { res.json(setConsoleCover(me(req), req.params.store, req.params.appId, req.file?.buffer)); } catch (e) { fail(res, e); }
+  });
+});
+router.delete('/games/:store/:appId/cover', (req, res) => { if (!consoleOnly(req, res)) return; try { res.json(removeConsoleCover(me(req), req.params.store, req.params.appId)); } catch (err) { fail(res, err); } });
 router.delete('/games/:store/:appId/match', (req, res) => { if (!consoleOnly(req, res)) return; try { res.json(clearConsoleMatch(me(req), req.params.store, req.params.appId)); } catch (err) { fail(res, err); } });
 router.post('/games/:store/:appId/lookup', async (req, res, next) => {
   if (!consoleOnly(req, res)) return;

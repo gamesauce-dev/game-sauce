@@ -3,6 +3,7 @@ import { purgeUser as purgeMessages } from './lib/messages.js';
 import { userColour, nextUserColour } from './lib/colours.js';
 import { purgeSaveFiles } from './lib/saves.js';
 import { purgeManualFiles } from './lib/manuals.js';
+import { purgeCustomCovers } from './lib/storage.js';
 import { hashPassword, hashToken, randomToken, verifyPassword } from './lib/auth.js';
 
 /* ───────────────────────────── users ───────────────────────────── */
@@ -256,6 +257,7 @@ export function deleteUser(userId) {
   db.prepare('DELETE FROM digital_games WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_accounts WHERE user_id = ?').run(userId);
   purgeManualFiles(userId);   // the manuals they uploaded
+  purgeCustomCovers(userId);  // and the covers
   db.prepare('DELETE FROM physical_games WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_user_meta WHERE user_id = ?').run(userId);
   purgeMessages(userId);   // every message they sent or received goes, on both sides
