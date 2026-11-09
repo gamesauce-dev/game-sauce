@@ -90,7 +90,7 @@ test('Settings groups: "System health", Stats and a Covers panel inside Library 
   const ui = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(ui, /label: 'System health'/);
   assert.match(ui, /id: 'coverage',\s+label: 'Stats'/);
-  assert.match(ui, /modules: \['dat', 'names', 'duplicates', 'covers'\]/);
+  assert.match(ui, /modules: \['dat', 'names', 'duplicates', 'covers', 'artfolders'\]/);
   assert.doesNotMatch(ui, /label: 'Health & coverage'/);
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   const stats = html.slice(html.indexOf('id="mod-coverage"'), html.indexOf('id="mod-covers"'));

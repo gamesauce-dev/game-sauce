@@ -14,6 +14,7 @@ import romsRouter, { playableSql } from './routes/roms.js';
 import collectionsRouter from './routes/collections.js';
 import digitalRouter from './routes/digital.js';
 import physicalRouter from './routes/physical.js';
+import artRouter from './routes/art.js';
 import messagesRouter from './routes/messages.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
@@ -500,6 +501,7 @@ export function createApp() {
   api.use('/collections', collectionsRouter);
   api.use('/digital', digitalRouter);
   api.use('/physical', physicalRouter);
+  api.use('/art', artRouter);   // import pictures and manuals from folders on the server
   api.use('/messages', messagesRouter);
   api.use('/metadata', metadataRouter);
   api.use('/emulators', emulatorsRouter);

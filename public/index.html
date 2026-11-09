@@ -453,6 +453,14 @@
         <div id="meta-counts" class="counts"></div>
       </div>
 
+      <div class="panel hidden" id="mod-artfolders">
+        <h3>Artwork folders <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Folders on the server that people can bring pictures and manuals in from (Physical &rarr; <b>Import pictures</b>, Digital &rarr; <b>Import covers</b>): for example a LaunchBox <b>Images</b> folder, or a RetroBat <b>roms</b> folder. One full path per line. They are only ever read, and nothing outside this list can be. In Docker or Unraid, mount the folder into the container first (read-only is fine) and list it as the container sees it, such as <code>/art/launchbox-images</code>.</p>
+        <textarea id="artfolders-text" rows="4" class="search" style="width:100%;font-family:ui-monospace,Consolas,monospace" spellcheck="false" placeholder="/art/launchbox-images&#10;/art/retrobat-roms"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary" id="artfolders-save" type="button">Save</button></div>
+        <p class="hint" id="artfolders-state"></p>
+      </div>
+
       <div class="panel hidden" id="mod-covers">
         <h3>Covers &amp; platform ids <span class="pill warn admin-only">admin</span></h3>
         <p class="hint" style="margin-top:0">Fetch pictures for games that were matched but have none, and check each platform's ScreenScraper and TheGamesDB numbers against the providers' own lists. Verify also finds platforms with no number and suggests the likely one by name; nothing changes until you accept it.</p>
@@ -745,6 +753,7 @@
         <span class="ph-bar-end">
           <button class="btn btn-sm" id="dg-sync" title="Fetch your Steam library again">✦ Refresh</button>
           <button class="btn btn-sm hidden" data-dg-act="import" title="Bring games in from a CSV">Import CSV</button>
+          <button class="btn btn-sm" data-dg-act="art" title="Bring in covers you already have, from a folder on the server">Import covers</button>
           <button class="btn btn-sm btn-primary" data-dg-act="add" title="Add one console game by hand">＋ Add a game</button>
         </span>
       </div>
@@ -772,6 +781,7 @@
         <button type="button" class="ph-pill hidden" id="ph-reset" title="Clear the search, the platform choice and every filter">↺ Reset</button>
         <button class="btn btn-sm" data-ph-act="lookup" title="Look up details and covers again for games that have none">✦ Find details</button>
         <button class="btn btn-sm" data-ph-act="import" title="Bring games in from a CSV">Import CSV</button>
+        <button class="btn btn-sm" data-ph-act="art" title="Bring in pictures and manuals you already have, from a folder on the server">Import pictures</button>
         <button class="btn btn-sm btn-primary" data-ph-act="add" title="Add one game by hand">＋ Add a game</button>
       </div>
       <nav class="ph-chips" id="ph-chips" aria-label="Platforms"></nav>

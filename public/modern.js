@@ -574,6 +574,7 @@ const ICON_MAP = [
   ['#view-digital #dg-reset', 'clear-reset-2'], ['#view-digital [data-dg-act="import"]', 'csv-import'], ['#view-digital [data-dg-act="add"]', 'game-add'],
   ['#dg-id-go', 'search'], ['#dg-edit button[type="submit"]', 'save'], ['#dg-add button[type="submit"]', 'tick'], ['#dg-add-more', 'game-add'], ['#dg-imp-preview', 'preview-2'], ['#dg-imp-apply', 'csv-import'],
   ['#view-messages [data-msg-act="new"]', 'edit'], ['#msg-send', 'arrow-right'], ['#msg-share', 'game-cartridge'], ['#msg-notice-toggle', 'issue'], ['#msg-notice-send', 'tick'],
+  ['#view-physical [data-ph-act="art"]', 'image-upload'], ['#view-digital [data-dg-act="art"]', 'image-upload'], ['#art-preview', 'preview-2'], ['#art-apply', 'csv-import'],
   ['#ph-man-open', 'preview-2'], ['#ph-man-upload', 'image-upload'], ['#ph-man-find', 'search'], ['#ph-man-remove', 'delete'], ['#ph-man-save', 'save'],
   ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save'], ['#ph-add button[type="submit"]', 'tick'], ['#ph-add-more', 'game-add'], ['#ph-imp-preview', 'preview-2'], ['#ph-imp-apply', 'csv-import'],
   // Details window: the row (the More menu keeps its words)

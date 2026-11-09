@@ -3,6 +3,7 @@
 // search, sort, filters, A-Z, a heading with how many (and, for Steam, the hours), tiles, and the details window. Each person has their own list.
 import { identifyBlock, wireIdentify, comboHtml, wireCombo } from './identify.js';
 import { landChips } from './chip-motion.js';
+import { renderArtImport } from './artimport-ui.js';
 import { familyLabel, platformBadge } from './platform-names.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -292,7 +293,7 @@ async function onClick(e) {
   if (e.target.closest('#dg-reset')) { reset(); loadDigital(); return; }
   if (e.target.closest('[data-dg-clear]')) { dg.family = null; dg.picked = []; dg.letter = ''; loadDigital(); return; }
   const act = e.target.closest('[data-dg-act]');
-  if (act) { if (act.dataset.dgAct === 'add') openAdd(); else if (act.dataset.dgAct === 'import') openImport(); return; }
+  if (act) { if (act.dataset.dgAct === 'add') openAdd(); else if (act.dataset.dgAct === 'import') openImport(); else if (act.dataset.dgAct === 'art') openArtImport(); return; }
   const mk = e.target.closest('[data-dg-mark]');
   if (mk) {
     e.preventDefault(); e.stopPropagation();
@@ -549,6 +550,12 @@ function importSummary(r) {
   return what + (notes ? ` ${notes}.` : '')
     + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
     + (r.applied && r.details_job?.running ? `<br>Details and covers are being looked up now (${n(r.details_job.total)} games). They appear here as they are found.` : '');
+}
+
+/** Bring in covers for your console games from a folder on the server (see public/artimport-ui.js). */
+function openArtImport() {
+  openShell(true); $('#drawer-nav')?.classList.add('hidden');
+  renderArtImport(ctx, $('#drawer-body'), { target: 'digital', onDone: () => loadDigital(true) });
 }
 
 function openImport() {

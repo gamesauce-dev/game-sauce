@@ -167,3 +167,9 @@
 .ph-art-menu { display: grid; gap: 0.6rem; margin: 0.7rem 0; padding: 0.7rem 0.8rem; border: 1px solid var(--line, #262b3a); border-radius: 0.6rem; background: var(--panel, #12141b); }
 .ph-art-row { display: flex; flex-wrap: wrap; gap: 0.7rem; }
 .ph-art-opt { display: inline-flex; gap: 0.3rem; align-items: center; }
+
+/* Import pictures & manuals: the preview table. */
+.art-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.art-table th, .art-table td { padding: 0.3rem 0.5rem; text-align: right; border-bottom: 1px solid var(--line, #262b3a); }
+.art-table thead th { color: var(--dim, #8b93a7); font-weight: 600; }
+.art-table tbody th { text-align: left; font-weight: 600; }

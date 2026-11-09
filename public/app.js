@@ -3991,6 +3991,7 @@ const SETTINGS_MODULES = [
   { id: 'platforms', label: 'Platforms',       mi: 'Library', ico: '🕹', adminOnly: true },
   { id: 'coverage',  label: 'Stats',           mi: 'stats', ico: '📊', adminOnly: true },
   { id: 'covers',    label: 'Covers & platform ids', mi: 'covers', ico: '🖼', adminOnly: true },
+  { id: 'artfolders', label: 'Artwork folders', mi: 'folder-enable', ico: '📁', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', mi: 'database-maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    mi: 'activity-log', ico: '📜', adminOnly: true },
   { id: 'names',     label: 'CSV tools', mi: 'game-csv', ico: '🏷', adminOnly: true },
@@ -4004,7 +4005,7 @@ const SETTINGS_MODULES = [
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'steam', 'password', 'controller'] },
-  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers'], adminOnly: true },
+  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
@@ -4613,6 +4614,7 @@ async function loadSettings() {
           ? `ScreenScraper quota used today: ${ss.quota.today} / ${ss.quota.max}.`
           : 'ScreenScraper configured. Quota is reported after the first request.')
       : 'ScreenScraper is not configured yet — covers fall back to filename initials until credentials are set.';
+    loadArtFolders().catch(() => {});
     await loadAuditForModule();
     await loadUsersForModule();
   } else {
@@ -4624,6 +4626,20 @@ async function loadSettings() {
   // flash of nothing after refresh.
   showSettingsModule(activeSettingsModule || 'profile');
 }
+
+/* Artwork folders (admin): the folders on the server that pictures and manuals can be imported from. */
+async function loadArtFolders() {
+  const { folders } = await api('/art/folders');
+  $('#artfolders-text').value = folders.map((f) => f.path).join('\n');
+  $('#artfolders-state').innerHTML = folders.length
+    ? folders.map((f) => `${f.exists ? '✓' : '✕'} ${esc(f.path)}${f.exists ? '' : ' <b>(the server cannot see this folder)</b>'}`).join('<br>')
+    : 'No folders yet.';
+}
+$('#artfolders-save')?.addEventListener('click', async () => {
+  const list = $('#artfolders-text').value.split('\n').map((l) => l.trim()).filter(Boolean);
+  try { await api('/art/folders', { method: 'PUT', body: JSON.stringify({ folders: list }) }); toast('Artwork folders saved'); await loadArtFolders(); }
+  catch (err) { toast(err.message, true); }
+});
 
 async function loadUsersForModule() {
   if (authState.user?.role !== 'admin') return;

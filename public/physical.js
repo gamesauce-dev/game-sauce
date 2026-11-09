@@ -7,6 +7,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
 import { platformBadge, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
+import { renderArtImport } from './artimport-ui.js';
 
 let ctx = null;
 const S = {
@@ -222,7 +223,7 @@ function onClick(e) {
   if (e.target.closest('#ph-reset')) { reset(); load(); return; }
   if (e.target.closest('[data-ph-clear]')) { S.family = null; S.picked = []; S.letter = ''; load(); return; }
   const act = e.target.closest('[data-ph-act]');
-  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'lookup') lookupAgain(act); return; }
+  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); return; }
   const fav = e.target.closest('[data-ph-fav]');
   if (fav) { e.stopPropagation(); toggleFav(Number(fav.dataset.phFav)); return; }
   const tile = e.target.closest('[data-ph-id]');
@@ -800,6 +801,13 @@ export function importSummary(r, platformName = (s) => s) {
   return what + (notes ? ` ${notes}.` : '')
     + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
     + (r.applied && r.match_job?.running ? `<br>Details and covers are being looked up now (${n(r.match_job.total)} games). Open <b>Physical</b> to watch them arrive.` : '');
+}
+
+/** Bring in pictures and manuals from a folder on the server (see public/artimport-ui.js). */
+function openArtImport() {
+  ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;
+  openShell(); $('#drawer-nav')?.classList.add('hidden');
+  renderArtImport(ctx, $('#drawer-body'), { target: 'physical', onDone: () => load(true) });
 }
 
 function openImport() {
