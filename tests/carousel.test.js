@@ -32,3 +32,10 @@ test('carousel: plays in the browser when the game can be, otherwise on this PC;
   assert.ok(/prefers-reduced-motion: reduce[\s\S]*animation: none/.test(css));
   assert.ok(css.includes('@property --tint') && css.includes('.cv-grain') && css.includes('.cv-blob'));
 });
+
+test('carousel: the controller drives it (and the page underneath no longer gets the pad), and the backdrop follows the middle cover', () => {
+  const pad = read('public/gamepad.js'), js = read('public/carousel.js'), css = read('public/carousel.css');
+  assert.ok(pad.includes("$('.cv')") && pad.includes("new CustomEvent('cv-pad'"), 'while the carousel is open, the pad belongs to it');
+  for (const a of ["'left'", "'right'", "'up'", "'down'", "'prev-family'", "'next-family'", "'select'", "'local'", "'back'"]) assert.ok(js.includes(`a === ${a}`), a);
+  assert.ok(/blob b1[^}]*var\(--tint\)/.test(css.replace(/\r?\n/g, ' ')) || css.includes('.cv-blob.b1') && css.includes('var(--tint) 55%'), 'the blobs take the middle cover\'s colour too, so the whole backdrop shifts, not just a patch');
+});

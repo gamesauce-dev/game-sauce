@@ -178,6 +178,20 @@ export function openCarousel(host) {
     }
   };
   document.addEventListener('keydown', onKey);
+  // The controller (public/gamepad.js sends what was pressed): left and right move through the games, up and down through the platforms, LB and RB through the families, A plays, X plays too, Y plays on this PC, B closes.
+  const step = (list, cur, d) => { const i = list.indexOf(cur); return list[Math.max(0, Math.min(list.length - 1, (i < 0 ? 0 : i) + d))]; };
+  const platList = () => [...root.querySelectorAll('[data-plat]')].map((b) => b.dataset.plat);
+  const famList = () => [...root.querySelectorAll('[data-fam]')].map((b) => b.dataset.fam);
+  root.addEventListener('cv-pad', (e) => {
+    const a = e.detail?.act;
+    if (a === 'left') go(st.idx - 1); else if (a === 'right') go(st.idx + 1);
+    else if (a === 'up') { const p = step(platList(), st.plat, -1); if (p && p !== st.plat) choose(p); }
+    else if (a === 'down') { const p = step(platList(), st.plat, 1); if (p && p !== st.plat) choose(p); }
+    else if (a === 'prev-family' || a === 'next-family') { const f = step(famList(), st.fam, a === 'next-family' ? 1 : -1); if (f && f !== st.fam) chooseFam(f); }
+    else if (a === 'select') play(gameAt(st.idx));
+    else if (a === 'local') playLocal(gameAt(st.idx));
+    else if (a === 'back') close();
+  });
   function close() {
     document.removeEventListener('keydown', onKey); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
     root.remove(); root = null; document.body.classList.remove('cv-open');

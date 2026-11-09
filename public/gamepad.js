@@ -65,6 +65,8 @@
     if (player && !player.classList.contains('hidden')) return null; // a game is running: hands off
     const auth = $('#auth-screen');
     if (auth && !auth.classList.contains('hidden')) return null;
+    const cv = $('.cv');
+    if (cv) return cv;                                                // the cover carousel is on top of everything: it takes the pad
     const modals = [...document.querySelectorAll('.modal-scrim:not(.hidden)')];
     if (modals.length) return modals[modals.length - 1];
     const drawer = $('#drawer');
@@ -128,9 +130,13 @@
     return true;
   }
 
+  /** The cover carousel is driven by its own listener (public/carousel.js): the pad only tells it what was pressed. */
+  const cvPad = (root, act) => { if (!root || !root.classList.contains('cv')) return false; root.dispatchEvent(new CustomEvent('cv-pad', { detail: { act } })); return true; };
+
   function move(dir) {
     const root = currentRoot();
     if (!root) return false;
+    if (cvPad(root, dir)) return true;
     if (ensureFocusIn(root)) return true; // first press only lands the focus
     const from = document.activeElement;
     const next = pick(from, candidates(root), dir);
@@ -141,6 +147,7 @@
   function activate() {
     const root = currentRoot();
     if (!root) return;
+    if (cvPad(root, 'select')) return;
     if (ensureFocusIn(root)) return;
     const el = document.activeElement;
     if (!el || el === document.body) return;
@@ -155,6 +162,7 @@
   function back() {
     const root = currentRoot();
     if (!root) return;
+    if (cvPad(root, 'back')) return;
     if (root.id === 'app') {
       const lib = $('.nav-item[data-view="library"]');
       if (lib && !lib.classList.contains('is-active')) lib.click();
@@ -168,6 +176,7 @@
   function shoulder(dir) {
     const root = currentRoot();
     if (!root) return;
+    if (cvPad(root, dir > 0 ? 'next-family' : 'prev-family')) return;
     const nav = $('#drawer-nav');
     if (root.id === 'drawer' && nav && !nav.classList.contains('hidden')) {
       const b = $(dir > 0 ? '#drawer-next' : '#drawer-prev');
@@ -184,6 +193,7 @@
 
   function playFocused() {
     const root = currentRoot();
+    if (cvPad(root, 'select')) return;
     if (!root || root.id !== 'app') return;
     const el = document.activeElement;
     const tile = el && el.closest ? el.closest('.card') : null;
@@ -193,6 +203,7 @@
 
   function focusSearch() {
     const root = currentRoot();
+    if (cvPad(root, 'local')) return;   // Y: play on this PC
     if (!root || root.id !== 'app') return;
     const s = $('#search');
     if (s && visible(s)) { s.focus(); s.select?.(); }
