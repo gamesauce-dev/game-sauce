@@ -204,7 +204,14 @@ router.get('/roots', (req, res) => {
 });
 
 /** Browse a folder server-side (localhost app), so the user can pick a path in the UI. */
+const DRIVES = '::drives';   // the "This PC" list on Windows: one entry per drive, reached by going Up from a drive's top folder
+function windowsDrives() {
+  const out = [];
+  for (let c = 65; c <= 90; c++) { const drive = `${String.fromCharCode(c)}:\\`; try { fs.accessSync(drive); out.push({ name: `${String.fromCharCode(c)}:`, path: drive }); } catch { /* not present */ } }
+  return out;
+}
 router.get('/browse', (req, res) => {
+  if (process.platform === 'win32' && String(req.query.path || '') === DRIVES) return res.json({ path: 'This PC', parent: null, dirs: windowsDrives(), sample_files: [] });
   const dir = path.resolve(String(req.query.path || (process.platform === 'win32' ? 'C:\\' : '/')));
   let entries;
   try {
@@ -221,7 +228,7 @@ router.get('/browse', (req, res) => {
   const parent = path.dirname(dir);
   res.json({
     path: dir,
-    parent: parent === dir ? null : parent,
+    parent: parent === dir ? (process.platform === 'win32' ? DRIVES : null) : parent,
     dirs,
     // A cheap preview of what we would find here, so the user can tell before adding.
     sample_files: entries.filter((e) => e.isFile()).slice(0, 12).map((e) => e.name)

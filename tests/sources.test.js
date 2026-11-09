@@ -262,6 +262,17 @@ test('browse endpoint lists folders for the path picker', async () => {
   assert.equal(res.body.parent, path.dirname(path.resolve(libraryC_ps4)));
 });
 
+test('browse: on Windows, Up from the top of a drive lists every drive (so D:, O: and network drives can be reached)', { skip: process.platform !== 'win32' }, async () => {
+  const top = await json(`/api/sources/browse?path=${encodeURIComponent('C:\\')}`);
+  assert.equal(top.body.parent, '::drives', 'Up from a drive root goes to the list of drives');
+  const all = await json(`/api/sources/browse?path=${encodeURIComponent(top.body.parent)}`);
+  assert.equal(all.status, 200);
+  assert.ok(all.body.dirs.some((d) => d.path === 'C:\\' && d.name === 'C:'), 'the C: drive is listed');
+  assert.equal(all.body.parent, null);
+  const again = await json(`/api/sources/browse?path=${encodeURIComponent(all.body.dirs[0].path)}`);
+  assert.equal(again.status, 200, 'a listed drive can be opened');
+});
+
 test('metadata provider status is reported and inert without credentials', async () => {
   const res = await json('/api/metadata');
   const ss = res.body.providers.find((p) => p.id === 'screenscraper');

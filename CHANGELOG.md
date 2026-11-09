@@ -4,6 +4,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Cover carousel** (Library bar → Carousel): a full-screen way to browse. Family chips along the top, the family's platforms under them, and the games as covers on a gentle arc with the chosen one in front. Scroll, drag, swipe or use the arrow keys; Enter plays it in the browser, or on your own emulator when it cannot be played there. The backdrop is the family's colour, drifting slowly, tinted by the middle cover.
+
+### Fixed
+- **Folder pickers on Windows reach every drive.** Pressing Up from the top of C: now lists all the drives (D:, O:, network drives), so ROM, artwork and other folders on another drive can be chosen.
+
 ## [0.3.1] - 2026-11-09
 
 ### Changed
