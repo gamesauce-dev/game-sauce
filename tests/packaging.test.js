@@ -181,3 +181,13 @@ test('desktop: Switch server goes back to the app\'s own choice screen at a fixe
   assert.ok(!rs.includes('home_url'), 'no start page remembered from setup');
   assert.ok(rs.includes('serde_json::to_string(APP_HOME)') && rs.includes('GAMESAUCE_TEST_SWITCH_MS'));
 });
+
+test('the desktop app carries the launcher: it is staged into the app, registered on first run (unless the person has their own), and has a tray item for its setup page', () => {
+  const b = read('scripts/build-bundle.mjs'), rs = read('desktop/src-tauri/src/main.rs'), vbs = read('launcher/gamesauce-launcher.vbs');
+  assert.ok(b.includes("path.join(root, 'launcher'), path.join(app, 'launcher')"), 'launcher/ is copied into the staged app');
+  assert.ok(rs.includes('"setup" => open_launcher_setup(app)') && rs.includes('Set up emulators…') && rs.includes('"--configure"'), 'the tray (and Mac menu) item opens the setup page');
+  assert.ok(rs.includes('register_launcher_link') && rs.includes('gamesauce-launcher.vbs') && rs.includes('x-scheme-handler/gamesauce'), 'Windows and Linux get the gamesauce:// link registered');
+  assert.ok(rs.includes('leave it') && /ends_with\("\.vbs"\)/.test(rs), 'a launcher the person already registered (and that still exists) is left alone');
+  assert.ok(/runtime.node\.exe/.test(vbs) && vbs.includes('nodeExe'), 'inside the app it uses the app\'s own Node, so no separate Node install is needed');
+  assert.ok(fs.existsSync(new URL('../launcher/platforms.json', import.meta.url)) && fs.existsSync(new URL('../launcher/configure.mjs', import.meta.url)));
+});

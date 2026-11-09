@@ -200,9 +200,81 @@ fn show_main(app: &AppHandle) {
     }
 }
 
+/// The launcher (the small helper that starts a game in an emulator on this PC) travels inside the app, next to its own Node.
+fn launcher_script(app: &AppHandle) -> Option<(PathBuf, PathBuf)> {
+    let dir = server_dir(app);
+    let exe = dir.join("runtime").join(if cfg!(windows) { "node.exe" } else { "node" });
+    let script = dir.join("app").join("launcher").join("gamesauce-launcher.mjs");
+    if exe.exists() && script.exists() { Some((exe, script)) } else { None }
+}
+
+/// "Set up emulators…": the launcher opens its setup page (a page on this PC only) in the browser.
+fn open_launcher_setup(app: &AppHandle) {
+    let Some((exe, script)) = launcher_script(app) else { return };
+    let mut cmd = Command::new(exe);
+    cmd.arg(script).arg("--configure").stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x0800_0000); // no console window
+    }
+    let _ = cmd.spawn();
+}
+
+/// Make "Play on this PC" work without any set-up: point the gamesauce:// link at the launcher inside the app, unless the person already
+/// has a working launcher registered (their own copy keeps being used). Windows and Linux; on a Mac use launcher/install-macos.sh.
+fn register_launcher_link(app: &AppHandle) {
+    let Some((node, script)) = launcher_script(app) else { return };
+    let _ = &node; // only the Linux entry needs the program's path
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let vbs = script.with_file_name("gamesauce-launcher.vbs");
+        if !vbs.exists() { return; }
+        let key = r"HKCU\Software\Classes\gamesauce";
+        let cmd_key = format!(r"{key}\shell\open\command");
+        let mut q = Command::new("reg");
+        q.args(["query", &cmd_key, "/ve"]).creation_flags(0x0800_0000);
+        if let Ok(out) = q.output() {
+            let text = String::from_utf8_lossy(&out.stdout).to_string();
+            // Registered to a launcher file that is still there (ours or the person's own): leave it.
+            if text.split('"').any(|s| s.to_lowercase().ends_with(".vbs") && std::path::Path::new(s).exists()) { return; }
+        }
+        let run = |args: &[&str]| { let _ = Command::new("reg").args(args).creation_flags(0x0800_0000).output(); };
+        run(&["add", key, "/ve", "/d", "URL:game-sauce launcher", "/f"]);
+        run(&["add", key, "/v", "URL Protocol", "/d", "", "/f"]);
+        run(&["add", &cmd_key, "/ve", "/d", &format!("wscript.exe \"{}\" \"%1\"", vbs.display()), "/f"]);
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else { return };
+        let apps = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from).unwrap_or_else(|| home.join(".local/share")).join("applications");
+        let file = apps.join("gamesauce-launcher.desktop");
+        if let Ok(old) = fs::read_to_string(&file) {
+            // Someone else's (the person's own copy of the launcher) and still there: leave it.
+            let ours = old.contains(&script.display().to_string());
+            let theirs_ok = old.lines().find(|l| l.starts_with("Exec=")).map(|l| l.split('"').skip(1).step_by(2).any(|s| s.ends_with("gamesauce-launcher.mjs") && std::path::Path::new(s).exists())).unwrap_or(false);
+            if !ours && theirs_ok { return; }
+        }
+        let _ = fs::create_dir_all(&apps);
+        let body = format!(
+            "[Desktop Entry]\nType=Application\nName=game-sauce launcher\nComment=Opens ROMs from game-sauce in your local emulator\nExec=\"{}\" \"{}\" %u\nTerminal=false\nNoDisplay=true\nMimeType=x-scheme-handler/gamesauce;\n",
+            node.display(),
+            script.display()
+        );
+        if fs::write(&file, body).is_ok() {
+            let _ = Command::new("update-desktop-database").arg(&apps).output();
+            let _ = Command::new("xdg-mime").args(["default", "gamesauce-launcher.desktop", "x-scheme-handler/gamesauce"]).output();
+        }
+    }
+    #[cfg(target_os = "macos")]
+    { let _ = (node, script); }
+}
+
 /// The menu entries (the menu bar on a Mac, the tray icon's menu on Windows and Linux).
 fn handle_menu(app: &AppHandle, id: &str) {
     match id {
+        "setup" => open_launcher_setup(app),
         "open" => show_main(app),
         "switch" => {
             let st = app.state::<AppState>();
@@ -301,12 +373,17 @@ fn main() {
             }
             let switch = MenuItemBuilder::with_id("switch", "Switch server…").build(app)?;
             let data = MenuItemBuilder::with_id("data", "Open my data folder").build(app)?;
+            let setup = MenuItemBuilder::with_id("setup", "Set up emulators…").build(app)?;
+            {
+                let handle = app.handle().clone();
+                std::thread::spawn(move || register_launcher_link(&handle));
+            }
             let quit = MenuItemBuilder::with_id("quit", "Quit").accelerator("CmdOrCtrl+Q").build(app)?;
 
             // Mac: the menu at the top of the screen, as Mac apps have.
             #[cfg(target_os = "macos")]
             {
-                let game = SubmenuBuilder::new(app, "game-sauce").item(&switch).item(&data).separator().item(&quit).build()?;
+                let game = SubmenuBuilder::new(app, "game-sauce").item(&switch).item(&setup).item(&data).separator().item(&quit).build()?;
                 let edit = SubmenuBuilder::new(app, "Edit").undo().redo().separator().cut().copy().paste().select_all().build()?;
                 app.set_menu(MenuBuilder::new(app).item(&game).item(&edit).build()?)?;
                 app.on_menu_event(|app, ev| handle_menu(app, ev.id().as_ref()));
@@ -317,7 +394,7 @@ fn main() {
             {
                 let status = MenuItemBuilder::with_id("status", "Not started yet").enabled(false).build(app)?;
                 let open = MenuItemBuilder::with_id("open", "Open game-sauce").build(app)?;
-                let menu = MenuBuilder::new(app).item(&open).separator().item(&status).separator().item(&switch).item(&data).separator().item(&quit).build()?;
+                let menu = MenuBuilder::new(app).item(&open).separator().item(&status).separator().item(&switch).item(&setup).item(&data).separator().item(&quit).build()?;
                 *app.state::<AppState>().status.lock().unwrap() = Some(status);
                 let mut tray = TrayIconBuilder::with_id("tray")
                     .tooltip("game-sauce")

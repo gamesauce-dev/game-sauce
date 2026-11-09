@@ -15,7 +15,11 @@ env("GAMESAUCE_LAUNCHER_QUIET") = "1"
 
 ' Window style 0 = hidden. True = wait until the launcher ends (it ends when the emulator closes).
 On Error Resume Next
-rc = sh.Run(q & "node" & q & " " & q & here & "\gamesauce-launcher.mjs" & q & " " & q & WScript.Arguments(0) & q, 0, True)
+' Inside the desktop app this folder sits at app\launcher next to the app's own runtime\node.exe: use that one. A launcher copied on its own uses the node on the PATH.
+Dim nodeExe
+nodeExe = "node"
+If fso.FileExists(here & "\..\..\runtime\node.exe") Then nodeExe = fso.GetAbsolutePathName(here & "\..\..\runtime\node.exe")
+rc = sh.Run(q & nodeExe & q & " " & q & here & "\gamesauce-launcher.mjs" & q & " " & q & WScript.Arguments(0) & q, 0, True)
 If Err.Number <> 0 Then
   MsgBox "Node.js was not found, so the game-sauce launcher could not start." & vbCrLf & vbCrLf & "Install Node.js 18 or newer from https://nodejs.org, then try again.", 48, "game-sauce launcher"
   WScript.Quit 1

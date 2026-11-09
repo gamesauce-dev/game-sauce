@@ -85,6 +85,8 @@ for (const f of ['package.json', 'package-lock.json', 'LICENSE', 'CHANGELOG.md']
 fs.cpSync(path.join(root, 'src'), path.join(app, 'src'), { recursive: true });
 fs.cpSync(path.join(root, 'public'), path.join(app, 'public'), { recursive: true });
 fs.copyFileSync(path.join(root, 'scripts', 'start.mjs'), path.join(app, 'scripts', 'start.mjs'));
+// The launcher (starts a game in an emulator on this PC) travels with the app: the desktop app registers it and offers its setup page.
+fs.cpSync(path.join(root, 'launcher'), path.join(app, 'launcher'), { recursive: true });
 log('installing the modules');
 run(win ? 'npm.cmd' : 'npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: app });
 // The database library carries a ready-made file for every kind of computer (Windows, Mac, Linux, ARM, Alpine). Only this computer's is ever used: keep just that one.
