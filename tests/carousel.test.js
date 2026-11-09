@@ -57,3 +57,14 @@ test('carousel: it hides games this PC cannot start once the launcher has report
   assert.ok(js.includes('can_download === false'), 'an account that cannot download has no launcher, so only browser games');
   assert.ok(app.includes("api.post('/launcher/sync', launcherSyncHandler)") && app.includes("'/launcher/sync-token'"));
 });
+
+test('carousel: the controller can choose chips (up from the covers), and both ways to play are offered, with the preferred one on Enter, A and a click', () => {
+  const js = read('public/carousel.js'), css = read('public/carousel.css'), pad = read('public/gamepad.js');
+  for (const w of ["setZone('subs')", "setZone('fams')", "setZone('covers')", 'hlStep(']) assert.ok(js.includes(w), w);
+  assert.ok(js.includes("a === 'select'") && js.includes("if (z === 'covers') close(); else setZone('covers')"), 'B steps back out of the chips before it closes the carousel');
+  assert.ok(css.includes('.cv-chip.pad'), 'the highlighted chip has a ring');
+  assert.ok(js.includes('canBrowser') && js.includes('canLocalPlay') && js.includes("data-act=\"prefer\"") && js.includes("'gamesauce_cv_prefer'"), 'both buttons, and a switch for which one Enter uses');
+  assert.ok(js.includes("preferred() === 'local' ? playLocal(g) : openBrowser(g)"), 'a game that can be played both ways uses the preferred one');
+  assert.ok(pad.includes("cvPad(root, 'browser')") && pad.includes("cvPad(root, 'local')"), 'X plays in the browser, Y on this PC');
+  assert.ok(/\.cv-chip \{[^}]*color-mix\(in srgb, var\(--c\) 18%/.test(css.replace(/\r?\n/g, ' ')), 'a chip is tinted with its own platform colour, not grey');
+});

@@ -37,7 +37,7 @@ let root = null, off = null;
 /** Open the carousel. host: { api, toast, platforms(), user(), openPlayer(rom), platformIcon(p, size), start?: { platform } }. */
 export function openCarousel(host) {
   if (root) return;
-  const st = { lp: null, fam: null, plat: null, games: [], idx: 0, loading: 0, colours: new Map(), els: new Map(), wheel: 0 };
+  const st = { zone: 'covers', hl: null, lp: null, fam: null, plat: null, games: [], idx: 0, loading: 0, colours: new Map(), els: new Map(), wheel: 0 };
   const steamPlat = () => (st.steam?.length ? [{ slug: STEAM, name: 'Steam', badge: 'STEAM', family: 'Steam', family_colour: '#2b79b8', accent: '#2b79b8', visible_count: st.steam.length }] : []);
   // Only games that can be started from this PC: those that play in the browser, plus every game of a platform the launcher reported an emulator for.
   // Until the launcher has reported (Check my PC), every platform is shown, because nothing is known yet. An account that cannot download has no launcher.
@@ -58,22 +58,36 @@ export function openCarousel(host) {
     <div class="cv-note hidden" id="cv-note"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
     <div class="cv-info" id="cv-info" aria-live="polite"></div>
-    <div class="cv-pad-hint" aria-hidden="true"><b>◀ ▶</b> games <i>·</i> <b>▲ ▼</b> platform <i>·</i> <b>LB RB</b> family <i>·</i> <b>A</b> play <i>·</i> <b>Y</b> on this PC <i>·</i> <b>B</b> close</div>`;
+    <div class="cv-pad-hint" aria-hidden="true"><b>◀ ▶</b> games <i>·</i> <b>▲ ▼</b> chips <i>·</i> <b>A</b> play or choose <i>·</i> <b>X</b> browser <i>·</i> <b>Y</b> emulator <i>·</i> <b>B</b> back</div>`;
   document.body.appendChild(root);
   document.body.classList.add('cv-open');
   const $ = (s) => root.querySelector(s);
   const prevFocus = document.activeElement;
 
+  // ── the controller on the chips: up goes from the covers to the platform chips, then to the family chips; left and right move, A chooses, B goes back ──
+  function paintHl() {
+    root?.querySelectorAll('.pad').forEach((e) => e.classList.remove('pad'));
+    if (!root || st.zone === 'covers' || !st.hl) return;
+    const attr = st.zone === 'subs' ? 'data-plat' : 'data-fam';
+    root.querySelector('[' + attr + '="' + CSS.escape(st.hl) + '"]')?.classList.add('pad');
+  }
+  function setZone(z) {
+    st.zone = z; st.hl = z === 'subs' ? st.plat : z === 'fams' ? st.fam : null;
+    root?.classList.toggle('on-chips', z !== 'covers'); paintHl();
+  }
+
   // ── chips ──
   const drawFams = () => {
     const f = fams(), names = [...f.keys()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     $('#cv-fams').innerHTML = names.map((n) => `<button type="button" class="cv-chip${st.fam === n ? ' on' : ''}" role="tab" aria-selected="${st.fam === n}" data-fam="${esc(n)}" style="--c:${esc(famColour(n))}">${esc(n)}</button>`).join('');
+    paintHl();
   };
   const drawSubs = () => {
     const list = st.fam ? [...(fams().get(st.fam) || [])].sort((a, b) => String(a.name).localeCompare(b.name, undefined, { sensitivity: 'base' })) : [];
     const box = $('#cv-subs');
     box.innerHTML = list.map((p, i) => `<button type="button" class="cv-chip cv-sub${st.plat === p.slug ? ' on' : ''}" data-plat="${esc(p.slug)}" style="--c:${esc(platColour(p))};--i:${Math.min(i, 20)}"><span class="cv-ico" aria-hidden="true">${host.platformIcon ? host.platformIcon(p, 16) : ''}</span>${esc(String(p.badge || p.short_name || p.name).toUpperCase())}<small>${(((p.visible_count ?? p.count) || 0)).toLocaleString()}</small></button>`).join('');
     box.classList.remove('land'); if (list.length && !reduced()) { void box.offsetWidth; box.classList.add('land'); }
+    paintHl();
   };
   const setBackdrop = () => {
     const p = plats().find((x) => x.slug === st.plat), c = HEX.test(p?.family_colour || '') ? p.family_colour : (st.fam ? famColour(st.fam) : '#7c8aa5');
@@ -106,6 +120,16 @@ export function openCarousel(host) {
     if (c) { on.style.setProperty('--tc', `rgb(${c})`); on.classList.add('on'); }
     offL.classList.remove('on');
   };
+  const actsHtml = (g) => {
+    if (g.steam) return '<button type="button" class="cv-btn primary" data-act="browser">▶ Play in Steam</button>';
+    const b = canBrowser(g), l = canLocalPlay(g), pf = preferred();
+    const btn = (act, label, main, tip) => `<button type="button" class="cv-btn${main ? ' primary' : ''}" data-act="${act}" title="${tip}">${label}</button>`;
+    const out = [];
+    if (b) out.push(btn('browser', '▶ Play in browser', !l || pf === 'browser', 'Play it here, in the browser'));
+    if (l) out.push(btn('local', '🖥 Play on this PC', !b || pf === 'local', 'Play with the emulator set up on this PC'));
+    if (b && l) out.push(`<button type="button" class="cv-link" data-act="prefer" title="Which one Enter, A and a click on the cover use">Enter plays: ${pf === 'local' ? 'your emulator' : 'the browser'} · switch</button>`);
+    return out.join('');
+  };
   const render = () => {
     const n = st.games.length, rail = $('#cv-rail');
     const lo = Math.max(0, st.idx - 8), hi = Math.min(n - 1, st.idx + 8);
@@ -114,7 +138,7 @@ export function openCarousel(host) {
     const g = gameAt(st.idx);
     $('#cv-info').innerHTML = g ? `<div class="cv-title">${esc(g.title)}</div>
       <div class="cv-meta">${esc([g.platform_name, g.release_year, g.developer].filter(Boolean).join('  ·  '))}<span class="cv-pos">${(st.idx + 1).toLocaleString()} of ${n.toLocaleString()}</span></div>
-      <div class="cv-acts">${g.steam ? '<button type="button" class="cv-btn primary" data-act="play">▶ Play in Steam</button>' : g.playable && !g.missing ? '<button type="button" class="cv-btn primary" data-act="play">▶ Play</button>' : ''}${g.steam || host.user()?.can_download === false ? '' : '<button type="button" class="cv-btn" data-act="local" title="Play with the emulator installed on this PC">🖥 Play on this PC</button>'}</div>` : '';
+      <div class="cv-acts">${actsHtml(g)}</div>` : '';
     tint();
   };
   const go = (i) => { const n = st.games.length; if (!n) return; st.idx = Math.max(0, Math.min(n - 1, i)); render(); };
@@ -149,11 +173,19 @@ export function openCarousel(host) {
   };
 
   // ── playing ──
+  // A game can often be played two ways: in the browser, and with the emulator set up on this PC. Both are offered; Enter, A and a click on the middle cover use the one you prefer
+  // (your emulator, until you switch it: the choice is kept on this device).
+  const canBrowser = (g) => Boolean(g && g.playable && !g.missing);
+  const canLocalPlay = (g) => Boolean(g && !g.steam && host.user()?.can_download !== false && (known() === null || known().includes(st.plat)));
+  const prefKey = 'gamesauce_cv_prefer';
+  const preferred = () => { try { return localStorage.getItem(prefKey) === 'browser' ? 'browser' : 'local'; } catch { return 'local'; } };
   const play = (g) => {
     if (!g) return;
     if (g.steam) return launchSteam(g);
-    if (g.playable && !g.missing) openBrowser(g);
-    else playLocal(g);
+    const b = canBrowser(g), l = canLocalPlay(g);
+    if (b && l) return preferred() === 'local' ? playLocal(g) : openBrowser(g);
+    if (b) return openBrowser(g);
+    return playLocal(g);
   };
   const launchSteam = (g) => { if (!g.launch_url) return; host.toast('Opening Steam…'); location.href = g.launch_url; };   // steam://rungameid/…: the Steam app on this PC starts it
   const openBrowser = (g) => g.steam ? launchSteam(g) : host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => host.toast(err.message, true));   // the player needs the full row
@@ -223,7 +255,12 @@ export function openCarousel(host) {
     if (e.target.closest('#cv-setup')) return setupEmulators();
     const fam = e.target.closest('[data-fam]'); if (fam) return chooseFam(fam.dataset.fam);
     const pl = e.target.closest('[data-plat]'); if (pl) return choose(pl.dataset.plat);
-    const act = e.target.closest('[data-act]'); if (act) return act.dataset.act === 'play' ? openBrowser(gameAt(st.idx)) : playLocal(gameAt(st.idx));
+    const act = e.target.closest('[data-act]');
+    if (act) {
+      const g = gameAt(st.idx), a = act.dataset.act;
+      if (a === 'prefer') { try { localStorage.setItem(prefKey, preferred() === 'local' ? 'browser' : 'local'); } catch { /* not kept */ } return render(); }
+      return a === 'local' ? playLocal(g) : openBrowser(g);
+    }
     const card = e.target.closest('.cv-card'); if (card && !drag.moved) { const i = Number(card.dataset.i); if (i === st.idx) play(gameAt(i)); else go(i); }
   });
   const stage = $('#cv-stage');
@@ -253,14 +290,20 @@ export function openCarousel(host) {
   const platList = () => [...root.querySelectorAll('[data-plat]')].map((b) => b.dataset.plat);
   const famList = () => [...root.querySelectorAll('[data-fam]')].map((b) => b.dataset.fam);
   root.addEventListener('cv-pad', (e) => {
-    const a = e.detail?.act;
-    if (a === 'left') go(st.idx - 1); else if (a === 'right') go(st.idx + 1);
-    else if (a === 'up') { const p = step(platList(), st.plat, -1); if (p && p !== st.plat) choose(p); }
-    else if (a === 'down') { const p = step(platList(), st.plat, 1); if (p && p !== st.plat) choose(p); }
+    const a = e.detail?.act, z = st.zone;
+    const hlStep = (d) => { const list = z === 'subs' ? platList() : famList(); st.hl = step(list, st.hl, d); paintHl(); };
+    if (a === 'left' || a === 'right') { const d = a === 'right' ? 1 : -1; if (z === 'covers') go(st.idx + d); else hlStep(d); }
+    else if (a === 'up') { if (z === 'covers') { if (platList().length) setZone('subs'); else if (famList().length) setZone('fams'); } else if (z === 'subs' && famList().length) setZone('fams'); }
+    else if (a === 'down') { if (z === 'fams' && platList().length) setZone('subs'); else if (z === 'subs') setZone('covers'); }
     else if (a === 'prev-family' || a === 'next-family') { const f = step(famList(), st.fam, a === 'next-family' ? 1 : -1); if (f && f !== st.fam) chooseFam(f); }
-    else if (a === 'select') play(gameAt(st.idx));
+    else if (a === 'select') {
+      if (z === 'covers') play(gameAt(st.idx));
+      else if (z === 'subs') { const p = st.hl; setZone('covers'); if (p && p !== st.plat) choose(p); }
+      else { const f = st.hl; setZone('covers'); if (f && f !== st.fam) chooseFam(f); }
+    }
+    else if (a === 'browser') openBrowser(gameAt(st.idx));
     else if (a === 'local') playLocal(gameAt(st.idx));
-    else if (a === 'back') close();
+    else if (a === 'back') { if (z === 'covers') close(); else setZone('covers'); }
   });
   function close() {
     document.removeEventListener('keydown', onKey); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);

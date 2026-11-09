@@ -193,7 +193,7 @@
 
   function playFocused() {
     const root = currentRoot();
-    if (cvPad(root, 'select')) return;
+    if (cvPad(root, 'browser')) return;   // X: play in the browser
     if (!root || root.id !== 'app') return;
     const el = document.activeElement;
     const tile = el && el.closest ? el.closest('.card') : null;
