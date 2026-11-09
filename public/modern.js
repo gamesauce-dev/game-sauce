@@ -74,7 +74,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'messages', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'carousel', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'messages', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital', 'physical'].includes(n.view)));
@@ -326,6 +326,7 @@ function buildLibraryTools(ic) {
     <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['no-covers-2']}</button>
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata-3']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
+    <button class="mb-btn" id="tl-carousel" title="Browse as a carousel of covers" aria-label="Browse as a carousel of covers">${ic.carousel}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue, lock: ic.lock });
   document.body.classList.add('mb-tools');
@@ -335,13 +336,14 @@ function buildLibraryTools(ic) {
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
 function toolClick(e) {
-  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
+  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more, #tl-carousel');
   if (!b) return false;
   if (b.id === 'tl-reset') { chipFamily = null; ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
   else if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
   else if (b.id === 'tl-hidden') proxy('[data-toggle="hidden"]');
   else if (b.id === 'tl-nocover') proxy('[data-toggle="nocover"]');
   else if (b.id === 'tl-select') proxy('#select-toggle');
+  else if (b.id === 'tl-carousel') q('#open-carousel')?.click();
   else if (b.id === 'tl-fetch') proxy('#bulk-enrich');
   else if (b.id === 'tl-sort') {
     const sel = q('#sort'); if (!sel) return true;

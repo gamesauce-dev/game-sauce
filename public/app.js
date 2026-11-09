@@ -6,6 +6,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
+import * as carousel from './carousel.js';
 import * as messages from './messages.js';
 import './pwreveal.js';   // the eye in password boxes
 
@@ -308,6 +309,12 @@ document.addEventListener('click', (e) => {
       setTimeout(top, 350); // again once the reload has re-rendered the tiles
     }
   }
+});
+
+// The cover carousel (full screen): opened from the Library bar, in Classic and in Modern.
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#open-carousel')) return;
+  carousel.openCarousel({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, start: { platform: state.platform !== 'all' ? state.platform : null } });
 });
 
 /* ─────────────────────────── sidebar ─────────────────────────── */

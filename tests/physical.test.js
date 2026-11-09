@@ -373,7 +373,7 @@ test('shelf, disc cases (PS2 to PS5, Xbox to Series X|S): the pulled-out cover c
   const ph = read('public/physical.js'), css = read('public/physical.css');
   assert.ok(ph.includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries']);"), 'exactly the disc-based platforms asked for');
   assert.ok(ph.includes('if (g && isDisc(g.platform) && CASE.id !== id) { showCase(id); return; }'), 'step 2: the pulled-out cover is clicked');
-  assert.ok(ph.includes("el.addEventListener('click', onCaseClick)") && ph.includes('  advanceCase();\n}') && ph.includes("CASE.el.classList.add('is-open')"), 'step 3: the case in front is clicked and opens');
+  assert.ok(ph.includes("el.addEventListener('click', onCaseClick)") && / {2}advanceCase\(\);\r?\n\}/.test(ph) && ph.includes("CASE.el.classList.add('is-open')"), 'step 3: the case in front is clicked and opens');
   assert.ok(/else ctx\.closeDrawer\(\);\s+\/\/ closing the details window puts the spine back too/.test(ph), 'the open case, clicked, goes back');
   assert.ok(ph.includes('if (CASE.id != null && CASE.id !== id) closeCase(true);'), 'another spine puts it back at any stage');
   const fo = ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading'));
