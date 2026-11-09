@@ -553,3 +553,7 @@ export function mergePlaystationStores() {
     }
   })();
 }
+
+/* ── v42: platforms.badge — the text on that platform's cover badges and chips, when an admin wants something other than the default (Settings > Platforms). NULL = the default. ── */
+if (!db.prepare('PRAGMA table_info(platforms)').all().some((c) => c.name === 'badge')) db.exec('ALTER TABLE platforms ADD COLUMN badge TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '42') ON CONFLICT(key) DO UPDATE SET value = '42'").run();

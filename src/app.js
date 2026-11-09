@@ -211,7 +211,7 @@ export function createApp() {
   // evolve: new rows, corrected provider ids, extra extensions. Admins can
   // manage them here without editing source; every change takes effect
   // immediately because lookups read the DB each time.
-  const PLATFORM_FIELDS = ['name', 'short_name', 'family', 'manufacturer', 'generation', 'accent', 'screenscraper_id', 'tgdb_id', 'extensions', 'icon'];
+  const PLATFORM_FIELDS = ['name', 'short_name', 'family', 'manufacturer', 'generation', 'accent', 'screenscraper_id', 'tgdb_id', 'extensions', 'icon', 'badge'];
 
   // A family is only a label that groups platforms (nothing in metadata lookups reads it). A name typed in a different case
   // ("sega") joins the existing group ("Sega") instead of making a second one.
@@ -396,6 +396,7 @@ export function createApp() {
         if (!Number.isFinite(v)) return res.status(400).json({ error: `${f} must be a number or empty` });
       }
       if ((f === 'manufacturer') && v === '') v = null;
+      if (f === 'badge') { v = String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, 12); if (v === '') v = null; }   // the text on its badges; empty = the default
       if (f === 'family') v = canonFamily(v) || 'Others';
       if (f === 'icon') { v = v === '' || v == null ? null : String(v); if (v !== null && !ICON_TYPES.includes(v)) return res.status(400).json({ error: `icon must be one of: ${ICON_TYPES.join(', ')}` }); }
       sets.push(`${f} = @${f}`);
@@ -446,7 +447,7 @@ export function createApp() {
       },
       recent: db.prepare(`
         SELECT r.id, r.title, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = ${mine == null ? -1 : mine}) AS favorite, r.cover_path, r.created_at,
-               p.short_name AS platform_short, p.accent AS platform_accent,
+               p.short_name AS platform_short, p.badge AS platform_badge, p.accent AS platform_accent,
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id
         WHERE r.hidden_all = 0 AND r.source_hidden = 0
@@ -458,7 +459,7 @@ export function createApp() {
       // real downloads, not fetch events.
       topDownloaded: db.prepare(`
         SELECT r.id, r.title, r.cover_path,
-               p.short_name AS platform_short, p.accent AS platform_accent,
+               p.short_name AS platform_short, p.badge AS platform_badge, p.accent AS platform_accent,
                p.slug AS platform, COUNT(*) AS dl_count
         FROM downloads d JOIN roms r ON r.id = d.rom_id
         JOIN platforms p ON p.id = r.platform_id

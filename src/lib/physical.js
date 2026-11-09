@@ -200,7 +200,7 @@ export function physicalPlatforms(userId) {
   backfillShapes(db.prepare('SELECT id, cover_path, cover_ar, spine_path, spine_ar FROM physical_games WHERE user_id = ? AND ((cover_path IS NOT NULL AND cover_ar IS NULL) OR (spine_path IS NOT NULL AND spine_ar IS NULL))').all(userId));
   const ars = {};
   for (const r of db.prepare('SELECT platform, spine_ar FROM physical_games WHERE user_id = ? AND spine_ar IS NOT NULL').all(userId)) (ars[r.platform] ||= []).push(r.spine_ar);
-  return db.prepare(`SELECT g.platform AS slug, COUNT(*) AS count, p.name, p.short_name, p.family, p.accent FROM physical_games g
+  return db.prepare(`SELECT g.platform AS slug, COUNT(*) AS count, p.name, p.short_name, p.badge, p.family, p.accent FROM physical_games g
     LEFT JOIN platforms p ON p.slug = g.platform WHERE g.user_id = ? GROUP BY g.platform`).all(userId)
     .map((r) => ({ ...r, name: r.name || r.slug, short_name: r.short_name || r.slug, spine_ars: ars[r.slug] || [] }));
 }
@@ -214,8 +214,8 @@ const own = (userId, id) => db.prepare('SELECT * FROM physical_games WHERE id = 
 export function getPhysical(userId, id) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  const p = db.prepare('SELECT name, family, accent, short_name FROM platforms WHERE slug = ?').get(r.platform);
-  return { ...toGame(r), platform_name: p?.name || r.platform, platform_short: p?.short_name || r.platform, platform_family: p?.family || null, platform_accent: p?.accent || null };
+  const p = db.prepare('SELECT name, family, accent, short_name, badge FROM platforms WHERE slug = ?').get(r.platform);
+  return { ...toGame(r), platform_name: p?.name || r.platform, platform_short: p?.short_name || r.platform, platform_badge: p?.badge || null, platform_family: p?.family || null, platform_accent: p?.accent || null };
 }
 
 export function addPhysical(userId, { platform, title, region = '', notes = '', year = null }) {

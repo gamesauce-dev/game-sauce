@@ -255,3 +255,11 @@ test('CSV Media column: DISC / CART switch the icon on, DIGITAL off, empty leave
   assert.equal(mark('returnal-ps5'), 0, 'a re-import with the cell empty does not change a hand-set switch');
   assert.match(read('public/index.html'), /<code>Media<\/code>/);
 });
+
+test('a console game\'s cover in the details window keeps its own shape (a Wii U, Switch or Xbox box is not cropped to a fixed 2:3)', () => {
+  const dg = read('public/digital.js');
+  const i = dg.indexOf('const st = badgeOf(g)') > 0 ? dg.indexOf('class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">') : -1;
+  assert.ok(i > 0, 'the console details cover');
+  const block = dg.slice(i, i + 700);
+  assert.ok(block.includes('this.parentElement.style.aspectRatio=Math.min(1.6,Math.max(0.5,this.naturalWidth/this.naturalHeight))'));
+});

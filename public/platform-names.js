@@ -12,8 +12,8 @@ export const BADGE = {
 /** The brand a Library family goes by (the Library files Sony's and Microsoft's consoles under those makers). Other families keep their own name. */
 export const FAMILY = { sony: 'PlayStation', playstation: 'PlayStation', microsoft: 'Xbox', xbox: 'Xbox' };
 
-/** The text on a platform's chip or cover badge, in capitals. p: { slug, short_name?, name? } (a Library platform row). */
-export const platformBadge = (p) => String(BADGE[p?.slug] || p?.short_name || p?.name || p?.slug || '').toUpperCase();
+/** The text on a platform's chip or cover badge, in capitals. p: { slug, short_name?, name?, badge? } (a Library platform row). A badge text an admin set for the platform (Settings > Platforms) wins over everything. */
+export const platformBadge = (p) => String(p?.badge || BADGE[p?.slug] || p?.short_name || p?.name || p?.slug || '').toUpperCase();
 
 /** A family's name as people say it (for a tooltip), and the same in capitals (for a chip). */
 export const familyName = (f) => FAMILY[String(f || '').toLowerCase()] || String(f || '');

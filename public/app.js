@@ -501,7 +501,7 @@ function cardHtml(rom) {
         <div class="card-fallback">${esc(initials)}</div>
         ${cover}
         <span class="card-select" data-select="${rom.id}" role="checkbox" title="Select for bulk delete"></span>
-        <span class="card-badge" style="background:${rom.platform_accent}cc">${esc(rom.platform_short)}</span>
+        <span class="card-badge" style="background:${rom.platform_accent}cc">${esc(rom.platform_badge ? String(rom.platform_badge).toUpperCase() : rom.platform_short)}</span>
         ${rom.playable ? `<span class="card-play" title="Playable in the browser" aria-label="Playable in the browser">${ICON.gamepad}</span>` : ''}
         ${rom.playable && !rom.missing ? `<button type="button" class="card-playbtn" tabindex="-1" data-play="${rom.id}" title="Play in browser" aria-label="Play ${esc(rom.title)} in browser">▶</button>` : ''}
         ${rom.missing ? '<span class="card-missing">missing</span>' : ''}
@@ -3208,6 +3208,7 @@ async function loadPlatformAdmin() {
     host.innerHTML = `
       <label class="field"><span>Name</span><input data-pf="name" value="${esc(p.name)}" /></label>
       <label class="field"><span>Short name</span><input data-pf="short_name" value="${esc(p.short_name)}" /></label>
+      <label class="field"><span>Badge text <span class="note">(optional: the text on this platform's cover badges and chips, in capitals. Empty = the default, up to 12 characters)</span></span><input data-pf="badge" maxlength="12" placeholder="${esc(String(p.short_name).toUpperCase())}" value="${esc(p.badge || '')}" /></label>
       <label class="field"><span>Family</span><input data-pf="family" value="${esc(p.family || '')}" list="family-list" autocomplete="off" /></label>
       <label class="field"><span>Manufacturer</span><input data-pf="manufacturer" value="${esc(p.manufacturer || '')}" /></label>
       <label class="field"><span>Extensions (comma separated)</span><input data-pf="extensions" value="${esc((p.extensions || []).join(', '))}" /></label>

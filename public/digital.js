@@ -38,6 +38,8 @@ const badgeOf = (g) => {
   const st = DG_STORE[g.store] || { label: g.store, short: String(g.store || '').toUpperCase(), bg: '#1b2838' };
   return g.store === 'steam' ? st : { ...st, ...(DG_PLATFORM[g.platform] || (g.store === 'xbox' ? DG_PLATFORM.xbox : {})) };
 };
+/** The badge text an admin set for the Library platform behind a Digital console (Settings > Platforms), or null for the default. */
+const customBadge = (platform) => { const p = (window.__platformsCache || []).find((x) => x.slug === DG_PLATFORM[platform]?.lib); const b = String(p?.badge || '').trim(); return b ? b.toUpperCase() : null; };
 const libAccent = (platform) => { const p = (window.__platformsCache || []).find((x) => x.slug === DG_PLATFORM[platform]?.lib); return /^#[0-9a-f]{6}$/i.test(p?.accent || '') ? p.accent : null; };
 
 const dg = {
@@ -160,7 +162,7 @@ function renderChips() {
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-dg-chip-all title="All your games">All <small>${n(total)}</small></button>
       ${stores.map((s) => `<button type="button" class="ph-chip${dg.family === s.store ? ' open' : ''}${famState(s.store)}" data-dg-chip-store="${esc(s.store)}" style="--chip-c:${DG_STORE[s.store]?.chip || '#6b7280'}"${subsOf(s.store).length ? ` aria-expanded="${dg.family === s.store}"` : ''} title="${esc(s.label || storeLabel(s.store))}${subsOf(s.store).length ? ': show its consoles' : ''}">${esc(familyLabel(s.label || storeLabel(s.store)))} <small>${n(s.visible)}</small></button>`).join('')}
     </div>
-    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc(platformBadge({ slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: DG_PLATFORM[p.platform]?.short }))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc(customBadge(p.platform) || platformBadge({ slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: DG_PLATFORM[p.platform]?.short }))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
 }
 
 function chipClick(e) {
@@ -261,7 +263,7 @@ export async function loadDigital(keep = false) {
         ${steam
           ? `<span class="card-badge dg-badge" data-store="${esc(g.store)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>`
           // A console game's badge is the same as in the Library and Physical: the platform's colour (Settings > Platforms) with its short name.
-          : `<span class="card-badge ph-badge" style="background:${esc(libAccent(g.platform) || st.bg)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-txt">${esc(st.short)}</span></span>`}
+          : `<span class="card-badge ph-badge" style="background:${esc(libAccent(g.platform) || st.bg)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-txt">${esc(customBadge(g.platform) || st.short)}</span></span>`}
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
         <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ctx.ICON.starFill : ctx.ICON.star}</button>
         <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ctx.ICON.eye : ctx.ICON.eyeOff}</button>
@@ -415,7 +417,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
     ${pills}
     <div class="detail-cover dg-detail-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
       <div class="card-fallback">${esc(initials(g.name))}</div>
-      ${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />` : ''}
+      ${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover');if(this.naturalWidth&&this.naturalHeight)this.parentElement.style.aspectRatio=Math.min(1.6,Math.max(0.5,this.naturalWidth/this.naturalHeight))" onerror="this.style.display='none'" />` : ''}
     </div>
     <div class="detail-head"><div style="flex:1">
       <h2 class="detail-title">${esc(g.name)}</h2>
