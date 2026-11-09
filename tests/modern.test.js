@@ -304,7 +304,7 @@ test('Modern: Retro font is a per-device switch that only swaps the font variabl
 
 test('Details window: nav arrows, search/save icons, upload-cover icon, no duplicates in More actions, genre pills like chips', () => {
   const css = read('public/modern.css'), js = read('public/modern.js');
-  for (const [sel, n] of [['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'], ['[data-promo="addcoll"]', 'collection-grid'], ['[data-promo="refresh"]', 'scan-again'], ['#new-collection', 'collection-new']]) {
+  for (const [sel, n] of [['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'], ['[data-promo="addcoll"]', 'collection-grid'], ['[data-promo="refresh"]', 'scan-again'], ['#new-collection', 'add-collection']]) {
     assert.ok(js.includes(`'${sel}'`) || js.includes(`${sel}"]', '${n}'`) || js.includes(sel), sel);
     assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
   }
@@ -317,8 +317,8 @@ test('Details window: nav arrows, search/save icons, upload-cover icon, no dupli
 
 test('Selection bar icons, platform chip counts match the list, storage in the ticker', () => {
   const js = read('public/modern.js'), app = read('src/app.js');
-  for (const n of ['select-2', 'done', 'collection-new', 'system', 'clear-reset', 'hidden', 'visible']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
-  for (const s of ["['#bulk-selectall', 'select-2']", "['#bulk-system-btn', 'system']", "['#bulk-clearmatch-btn', 'clear-reset']", "['#bulk-cancel', 'done']", "['#bulk-addcoll', 'collection-new']"]) assert.ok(js.includes(s), s);
+  for (const n of ['select-2', 'done', 'add-collection', 'system', 'clear-reset', 'hidden', 'visible']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  for (const s of ["['#bulk-selectall', 'select-2']", "['#bulk-system-btn', 'system']", "['#bulk-clearmatch-btn', 'clear-reset']", "['#bulk-cancel', 'done']", "['#bulk-addcoll', 'add-collection']"]) assert.ok(js.includes(s), s);
   assert.ok(js.includes("ic['select-2']"), 'top library menu select icon');
   assert.match(app, /AS visible_count/, 'the platforms API reports what the default list shows');
   assert.match(js, /const pc = \(p\) => \(p\.visible_count \?\? p\.count\) \|\| 0;/);
@@ -333,8 +333,8 @@ test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover
   assert.match(css, /\.card-fav::before[^}]*favourite\.svg/);
   assert.match(css, /data-act="clearmatch"\]::before[^}]*clear-reset\.svg/);
   assert.ok(js.includes("['label.btn:has(#cover-input)', 'upload-cover']"));
-  assert.ok(js.includes("{ view: 'collections', icon: 'collection-new'"));
-  assert.ok(js.includes("'[data-promo=\"addcoll\"]', 'collection-new'") || js.includes('data-promo="addcoll"]\', \'collection-new\''));
+  assert.ok(js.includes("{ view: 'collections', icon: 'collection'"));
+  assert.match(js, /data-promo="addcoll"\]', 'add-collection'/);
 });
 
 test('Settings icon swaps (upload-cover, replace-text, covers, database-check, providers-2, Library, game-controller, backup-save)', () => {
@@ -363,7 +363,7 @@ test('Emulators: second save button (arrow-up) does the same as Save to vault, D
 
 test('Collection picker: New collection and Create are icons; counts read correctly and are not cut off', () => {
   const js = read('public/modern.js'), app = read('public/app.js');
-  assert.ok(js.includes("['#addcoll-new', 'collection-new']")); assert.ok(js.includes('#collection-create'));
+  assert.ok(js.includes("['#addcoll-new', 'add-collection']")); assert.ok(js.includes('#collection-create'));
   assert.match(app, /\$\{c\.count === 1 \? 'game' : 'games'\}/);
   assert.match(app, /✓ in · remove/);
 });
