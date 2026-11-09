@@ -1750,3 +1750,8 @@ input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display:
 .chip-rows .chip[data-chip-fam].open::after { opacity: 1; }
 .chip-rows .chip-plats { padding: 0.45rem 0.5rem; border: 1px dashed var(--line); border-radius: 0.6rem; }
 .chip-rows .chip .plat-ico { display: none; }
+
+/* The platform chips of a family land one after another when the family row opens (public/chip-motion.js), the way the games drop onto the shelf. */
+@keyframes chip-land { from { opacity: 0; transform: translateY(-16px) rotate(-3deg) scale(.9); } to { opacity: 1; transform: none; } }
+.chip-plats.land > *, .ph-chip-plats.land > * { animation: chip-land .46s cubic-bezier(.2,.9,.25,1.12) backwards; animation-delay: calc(var(--i, 0) * 30ms); }
+@media (prefers-reduced-motion: reduce) { .chip-plats.land > *, .ph-chip-plats.land > * { animation: none; } }

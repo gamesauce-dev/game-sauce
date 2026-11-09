@@ -3,6 +3,7 @@
 // added) and light/dark, all switched on by the body class `ui-modern`. The choice is stored per person (prefs: ui_mode).
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+import { landChips } from './chip-motion.js';
 const ICON_BASE = '/modern/icons/';
 const cache = new Map();
 
@@ -413,6 +414,7 @@ export function renderChips() {
       ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" style="--chip-c:${esc(famColour(f))}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
     </div>
     ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" style="--chip-c:${esc(/^#[0-9a-f]{6}$/i.test(p.accent || '') ? p.accent : (p.family_colour || '#6b7280'))}" title="${esc(p.name)}: click to ${picked.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(String(p.badge || p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+  landChips(host, chipFamily);
 }
 
 async function chipChanged() {
