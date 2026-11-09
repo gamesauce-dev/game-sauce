@@ -37,9 +37,14 @@ let root = null, off = null;
 /** Open the carousel. host: { api, toast, platforms(), user(), openPlayer(rom), platformIcon(p, size), start?: { platform } }. */
 export function openCarousel(host) {
   if (root) return;
-  const st = { fam: null, plat: null, games: [], idx: 0, loading: 0, colours: new Map(), els: new Map(), wheel: 0 };
+  const st = { lp: null, fam: null, plat: null, games: [], idx: 0, loading: 0, colours: new Map(), els: new Map(), wheel: 0 };
   const steamPlat = () => (st.steam?.length ? [{ slug: STEAM, name: 'Steam', badge: 'STEAM', family: 'Steam', family_colour: '#2b79b8', accent: '#2b79b8', visible_count: st.steam.length }] : []);
-  const plats = () => [...(host.platforms() || []).filter((p) => ((p.visible_count ?? p.count) || 0) > 0), ...steamPlat()];
+  // Only games that can be started from this PC: those that play in the browser, plus every game of a platform the launcher reported an emulator for.
+  // Until the launcher has reported (Check my PC), every platform is shown, because nothing is known yet. An account that cannot download has no launcher.
+  const noLauncher = () => host.user()?.can_download === false;
+  const known = () => (noLauncher() ? [] : st.lp);
+  const launchable = (slug) => known() === null || known().includes(slug);
+  const plats = () => [...(host.platforms() || []).map((p) => (launchable(p.slug) ? p : { ...p, visible_count: p.playable_count || 0 })).filter((p) => ((p.visible_count ?? p.count) || 0) > 0), ...steamPlat()];
   const fams = () => { const m = new Map(); for (const p of plats()) { const f = p.family || 'Others'; if (!m.has(f)) m.set(f, []); m.get(f).push(p); } return m; };
   const famColour = (f) => { const c = fams().get(f)?.[0]?.family_colour; return HEX.test(c || '') ? c : '#7c8aa5'; };
   const platColour = (p) => (HEX.test(p?.accent || '') ? p.accent : famColour(p?.family || 'Others'));
@@ -48,8 +53,9 @@ export function openCarousel(host) {
   root.className = 'cv'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Cover carousel');
   root.innerHTML = `
     <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-tint t1"></i><i class="cv-tint t2"></i><i class="cv-grain"></i></div>
-    <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
+    <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-pc" id="cv-pc" title="Find out which emulators are set up on this PC, so only games it can start are shown"></button><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
     <div class="cv-subs" id="cv-subs"></div>
+    <div class="cv-note hidden" id="cv-note"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
     <div class="cv-info" id="cv-info" aria-live="polite"></div>
     <div class="cv-pad-hint" aria-hidden="true"><b>◀ ▶</b> games <i>·</i> <b>▲ ▼</b> platform <i>·</i> <b>LB RB</b> family <i>·</i> <b>A</b> play <i>·</i> <b>Y</b> on this PC <i>·</i> <b>B</b> close</div>`;
@@ -126,10 +132,10 @@ export function openCarousel(host) {
       let all = [], total = Infinity;
       while (all.length < Math.min(total, MAX)) {
         const q = new URLSearchParams({ platform: slug, sort: 'title', limit: String(PAGE), offset: String(all.length) });
-        if (host.user()?.play_only) q.set('playable', '1');
+        if (host.user()?.play_only || !launchable(slug)) q.set('playable', '1');   // no emulator of this platform on this PC: only the games that play in the browser
         const data = await host.api(`/roms?${q}`);
         if (tok !== st.loading) return;
-        total = data.total; all = all.concat(data.items);
+        total = data.total; all = all.concat(data.items.filter((g) => !g.missing));   // a game whose file is not reachable cannot be started either
         if (!data.items.length) break;
         if (all.length === data.items.length) { st.games = all; empty.classList.add('hidden'); render(); }   // show the first page at once
       }
@@ -163,9 +169,39 @@ export function openCarousel(host) {
     } catch (err) { host.toast(err.message || 'Could not start a local launch', true); }
   };
 
+  // ── which platforms this PC can start (the launcher reports it) ──
+  const parseLp = (prefs) => { try { const j = JSON.parse(prefs?.launcher_platforms || 'null'); return j && Array.isArray(j.platforms) ? j : null; } catch { return null; } };
+  const paintPc = () => {
+    const b = $('#cv-pc'), note = $('#cv-note');
+    if (noLauncher()) { b.classList.add('hidden'); note.classList.add('hidden'); return; }
+    b.textContent = st.lp === null ? '🖥 Check my PC' : '🖥 This PC: ' + st.lp.length + ' platform' + (st.lp.length === 1 ? '' : 's');
+    b.classList.toggle('attn', st.lp === null);
+    note.classList.toggle('hidden', st.lp !== null);
+    note.textContent = 'Showing every game. Press Check my PC so game-sauce can hide the ones this PC cannot start.';
+  };
+  const reload = () => { drawFams(); drawSubs(); const list = plats(); if (st.plat && st.plat !== STEAM && list.some((p) => p.slug === st.plat)) choose(st.plat); else if (st.fam && fams().has(st.fam)) chooseFam(st.fam); else if (list.length) chooseFam([...fams().keys()][0]); };
+  const checkPc = async () => {
+    let before = null;
+    try {
+      const prefs = await host.api('/prefs'); before = parseLp(prefs)?.at || null;
+      const { token } = await host.api('/launcher/sync-token', { method: 'POST' });
+      host.toast('Asking the launcher on this PC… (it needs to be set up: docs/LOCAL-LAUNCH.md)');
+      location.href = 'gamesauce://sync?' + new URLSearchParams({ server: location.origin, token }).toString();
+    } catch (err) { host.toast(err.message || 'Could not start the check', true); return; }
+    for (let i = 0; i < 20 && root; i++) {      // wait up to 40 seconds for the launcher's answer
+      await new Promise((ok) => setTimeout(ok, 2000));
+      try {
+        const lp = parseLp(await host.api('/prefs'));
+        if (lp && lp.at !== before) { st.lp = lp.platforms; paintPc(); host.toast(lp.platforms.length ? 'This PC can start: ' + lp.platforms.join(', ') : 'No emulators are set up on this PC yet: only games that play in the browser are shown'); reload(); return; }
+      } catch { /* try again */ }
+    }
+    if (root) host.toast('The launcher did not answer. Is it installed on this PC, and is this server listed in its launcher.json?', true);
+  };
+
   // ── input ──
   root.addEventListener('click', (e) => {
     if (e.target.closest('#cv-close')) return close();
+    if (e.target.closest('#cv-pc')) return checkPc();
     const fam = e.target.closest('[data-fam]'); if (fam) return chooseFam(fam.dataset.fam);
     const pl = e.target.closest('[data-plat]'); if (pl) return choose(pl.dataset.plat);
     const act = e.target.closest('[data-act]'); if (act) return act.dataset.act === 'play' ? openBrowser(gameAt(st.idx)) : playLocal(gameAt(st.idx));
@@ -216,6 +252,9 @@ export function openCarousel(host) {
 
   // Steam games with their Play button on come in next to the platforms (Digital's own list; not for play-only accounts)
   if (!host.user()?.play_only) host.api('/digital/games?store=steam&installed=1&sort=name').then((d) => { st.steam = d.items || []; if (st.steam.length && root) { drawFams(); drawSubs(); } }).catch(() => { /* no Steam, or no Digital: the platforms are all there is */ });
+
+  host.api('/prefs').then((p) => { const lp = parseLp(p); if (lp) { st.lp = lp.platforms; if (root) { paintPc(); reload(); } } }).catch(() => {});
+  paintPc();
 
   // start where the Library is: its first chosen platform, else the family with most games
   const all = plats();

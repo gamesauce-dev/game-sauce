@@ -48,3 +48,12 @@ test('carousel: Steam games with their Play button on are a family of their own,
   assert.ok(js.includes("'steam:installed'") && js.includes('/digital/games?store=steam&installed=1') && js.includes('launch_url') && js.includes('launchSteam'));
   assert.ok(js.includes('cover_fallback_url'), 'a Steam cover that is missing falls back to its header picture');
 });
+
+test('carousel: it hides games this PC cannot start once the launcher has reported (and shows everything until then)', () => {
+  const js = read('public/carousel.js'), app = read('src/app.js');
+  assert.ok(js.includes('launcher_platforms') && js.includes('/launcher/sync-token') && js.includes('gamesauce://sync?'), 'Check my PC asks the launcher');
+  assert.ok(js.includes('const launchable = (slug) => known() === null || known().includes(slug)'), 'nothing is hidden until the PC has reported');
+  assert.ok(js.includes("q.set('playable', '1')") && js.includes('!g.missing'), 'only browser-playable games for platforms with no emulator here; unreachable files are left out');
+  assert.ok(js.includes('can_download === false'), 'an account that cannot download has no launcher, so only browser games');
+  assert.ok(app.includes("api.post('/launcher/sync', launcherSyncHandler)") && app.includes("'/launcher/sync-token'"));
+});

@@ -104,3 +104,11 @@ body.gp-active .cv-pad-hint { display: flex; }
 }
 @keyframes cv-spin { to { --ang: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .cv-card.mid .cv-face::after { animation: none; } }
+
+/* Check my PC */
+.cv-pc { border: 0; cursor: pointer; font: inherit; font-weight: 600; font-size: .85rem; border-radius: 999px; padding: 8px 16px; color: var(--ink); background: rgba(255, 255, 255, .62); backdrop-filter: blur(8px); transition: background .2s; }
+.cv-pc:hover { background: #fff; }
+.cv-pc.hidden, .cv-note.hidden { display: none; }
+.cv-pc.attn { box-shadow: 0 0 0 2px color-mix(in srgb, var(--fam) 60%, #fff); }
+.cv-note { position: relative; padding: 4px 22px 0; font-size: .82rem; color: var(--ink2); }
+.cv-pc:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }

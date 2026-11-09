@@ -262,3 +262,53 @@ test('sweepStale removes only old gamesauce-launch folders', () => {
   assert.equal(fs.existsSync(other), true);
   fs.rmSync(fresh, { recursive: true }); fs.rmSync(other, { recursive: true });
 });
+
+/* ───────────── "Check my PC": the launcher reports which platforms it can start ───────────── */
+
+const syncLink = (token, server = base) => 'gamesauce://sync?' + new URLSearchParams({ server, token }).toString();
+const prefsOf = async (token) => (await call('/api/prefs', { token })).body;
+
+test('Check my PC: a sync token is for people who may download, works once, and stores platform names only', async () => {
+  assert.equal((await call('/api/launcher/sync-token', { token: memberTok, method: 'POST' })).status, 403, 'a member without download permission has no launcher');
+  assert.equal((await call('/api/launcher/sync-token', { method: 'POST' })).status, 401);
+  const { body: t } = await call('/api/launcher/sync-token', { token: adminTok, method: 'POST' });
+  assert.ok(t.token.length >= 40);
+  const send = (token, platforms) => call('/api/launcher/sync', { method: 'POST', body: { token, platforms } });
+  const ok = await send(t.token, ['snes', 'GBA', 'ps2', '../etc/passwd', 'not a slug', 'snes']);
+  assert.equal(ok.status, 200);
+  assert.deepEqual(ok.body.platforms, ['gba', 'ps2', 'snes'], 'only valid platform names, lower case, no repeats');
+  assert.equal((await send(t.token, ['nes'])).status, 404, 'the token is single use');
+  assert.equal((await send('x'.repeat(40), ['nes'])).status, 404);
+  const stored = JSON.parse((await prefsOf(adminTok)).launcher_platforms);
+  assert.deepEqual(stored.platforms, ['gba', 'ps2', 'snes']); assert.ok(stored.at);
+  assert.equal((await prefsOf(memberTok)).launcher_platforms, undefined, 'it is kept for that account only');
+});
+
+test('Check my PC: a sync token does not open a game file, and a launch token does not sync', async () => {
+  const { body: t } = await call('/api/launcher/sync-token', { token: adminTok, method: 'POST' });
+  assert.equal((await call(`/api/launch/${t.token}`)).status, 404, 'a sync token cannot download a ROM');
+  const m = (await mint()).body;
+  assert.equal((await call('/api/launcher/sync', { method: 'POST', body: { token: m.token, platforms: ['snes'] } })).status, 404, 'a launch token cannot sync');
+});
+
+test('launcher: parseSyncUrl and configuredPlatforms (a missing program file is left out, a bare program name is taken as it is)', () => {
+  const tok = 'a'.repeat(30);
+  assert.deepEqual(launcher.parseSyncUrl(`gamesauce://sync?server=http://h:3000&token=${tok}`), { server: 'http://h:3000', token: tok });
+  assert.throws(() => launcher.parseSyncUrl(`gamesauce://launch?server=http://h:3000&token=${tok}`), /not a game-sauce sync link/);
+  assert.throws(() => launcher.parseSyncUrl('gamesauce://sync?server=ftp://h&token=' + tok), /server address/);
+  assert.throws(() => launcher.parseSyncUrl('gamesauce://sync?server=http://h:3000&token=short'), /token/);
+  const cfg = { emulators: { snes: { command: 'C:\\Emu\\snes9x.exe' }, gba: { command: 'C:\\Emu\\gone.exe' }, nes: { command: 'retroarch' }, ps2: { command: '' }, '../x': { command: 'y' }, gb: {} } };
+  assert.deepEqual(launcher.configuredPlatforms(cfg, (p) => p.endsWith('snes9x.exe')), ['nes', 'snes']);
+});
+
+test('launcher: syncPlatforms reports the platforms to the server, only for a server listed in the config', async () => {
+  const cfg = writeConfig({ snes: { command: process.execPath }, gba: { command: process.execPath } });
+  const { body: t } = await call('/api/launcher/sync-token', { token: adminTok, method: 'POST' });
+  const r = await launcher.syncPlatforms(syncLink(t.token), { configFile: cfg });
+  assert.deepEqual(r.platforms, ['gba', 'snes']);
+  assert.deepEqual(JSON.parse((await prefsOf(adminTok)).launcher_platforms).platforms, ['gba', 'snes']);
+  const other = writeConfig({ snes: { command: process.execPath } }, ['http://somewhere-else.example:3000']);
+  const { body: t2 } = await call('/api/launcher/sync-token', { token: adminTok, method: 'POST' });
+  await assert.rejects(launcher.syncPlatforms(syncLink(t2.token), { configFile: other }), /not listed under "servers"/);
+  await assert.rejects(launcher.syncPlatforms(syncLink(t.token), { configFile: cfg }), /expired or was already used/, 'a spent token is explained');
+});

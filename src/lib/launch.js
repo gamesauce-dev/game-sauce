@@ -61,3 +61,45 @@ export function launchFileHandler(req, res) {
     if (err && !res.headersSent) res.status(500).end();
   });
 }
+
+/* ───────── which platforms this PC can start ─────────
+ * The launcher is the only program that can read ~/.gamesauce/launcher.json, so it reports to the server which platforms
+ * have an emulator set up (the platform names only: never a path or a command). The person's page asks for a one-time SYNC
+ * TOKEN, opens gamesauce://sync?... and the launcher swaps the token for the report. The list is kept per account. */
+const syncTokens = new Map(); // hashToken(token) -> { userId, expires }
+const SLUG = /^[a-z0-9_-]{1,40}$/;
+
+export function mintSyncToken(userId) {
+  const now = Date.now();
+  for (const [k, v] of syncTokens) if (v.expires <= now) syncTokens.delete(k);
+  while (syncTokens.size >= MAX_OUTSTANDING) syncTokens.delete(syncTokens.keys().next().value);
+  const token = randomToken(32);
+  syncTokens.set(hashToken(token), { userId: Number(userId), expires: now + LAUNCH_TTL_MS });
+  return { token, expires_in: Math.round(LAUNCH_TTL_MS / 1000) };
+}
+
+/** Use a sync token up (once): the account it was made for, or null. */
+export function takeSyncToken(token) {
+  if (typeof token !== 'string' || token.length < 20 || token.length > 100) return null;
+  const key = hashToken(token), entry = syncTokens.get(key);
+  if (!entry) return null;
+  syncTokens.delete(key);
+  return entry.expires > Date.now() ? entry : null;
+}
+
+/** Keep the platforms a PC reported (valid platform names only, no more than 200). Returns the stored list. */
+export function saveLauncherPlatforms(userId, platforms) {
+  const list = [...new Set((Array.isArray(platforms) ? platforms : []).map((s) => String(s || '').toLowerCase()).filter((s) => SLUG.test(s)))].slice(0, 200).sort();
+  db.prepare('INSERT INTO user_prefs (user_id, key, value) VALUES (?, ?, ?) ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value')
+    .run(Number(userId), 'launcher_platforms', JSON.stringify({ platforms: list, at: new Date().toISOString() }));
+  return list;
+}
+
+/** POST /api/launcher/sync — public (the sync token is the credential): { token, platforms: ['snes', ...] }. */
+export function launcherSyncHandler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const entry = takeSyncToken(req.body?.token);
+  if (!entry) return res.status(404).json({ error: 'This link has expired or was already used. Try again from game-sauce.' });
+  const list = saveLauncherPlatforms(entry.userId, req.body?.platforms);
+  res.json({ ok: true, platforms: list });
+}

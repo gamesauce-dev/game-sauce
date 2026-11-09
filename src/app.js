@@ -26,7 +26,8 @@ import authRouter, {
 } from './routes/auth.js';
 import { audit, bootstrapAdmin, initAuthTables, purgeExpiredSessions } from './auth.js';
 import { originGuard, rateLimit } from './lib/guard.js';
-import { launchFileHandler } from './lib/launch.js';
+import { canDownload } from './lib/policy.js';
+import { launchFileHandler, launcherSyncHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
 // admin catalogue below needs extensions as an array and must be auditable,
@@ -94,6 +95,8 @@ export function createApp() {
   // Play locally: the launcher on the user's PC has no session, so the one-time token in the address is its credential
   // (see src/lib/launch.js). Must stay above requireAuth.
   api.get('/launch/:token', launchFileHandler);
+  // The launcher reports which platforms it has an emulator for (the one-time sync token is its credential; see mintSyncToken below).
+  api.post('/launcher/sync', launcherSyncHandler);
 
   // Is a newer game-sauce published? Admin only (it is the admin who updates the server). See src/lib/updatecheck.js.
   api.get('/admin/update-check', requireAuth, requireAdmin, async (req, res) => {
@@ -474,6 +477,13 @@ export function createApp() {
         GROUP BY p.id ORDER BY count DESC LIMIT 10
       `).all()
     });
+  });
+
+  // "Check my PC": a one-time token the page hands to the launcher (gamesauce://sync?...), which answers with the platforms it has an emulator for.
+  // Same rule as playing locally: only people allowed to download use the launcher.
+  api.post('/launcher/sync-token', (req, res) => {
+    if (!canDownload(req.user)) return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account.' });
+    res.json(mintSyncToken(req.user.id));
   });
 
   // Per-user preferences (whitelisted keys only). Scoped to the signed-in user.

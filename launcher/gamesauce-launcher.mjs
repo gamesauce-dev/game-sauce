@@ -97,6 +97,17 @@ export function parseLaunchUrl(raw) {
   return { server, token, platform, ext, title };
 }
 
+/** Read a gamesauce://sync link ("Check my PC"): the server address and a one-time token. */
+export function parseSyncUrl(raw) {
+  let u;
+  try { u = new URL(String(raw)); } catch { throw new LaunchError('That is not a valid gamesauce:// link.'); }
+  if (u.protocol !== 'gamesauce:' || u.hostname !== 'sync') throw new LaunchError('That is not a game-sauce sync link.');
+  const server = normalizeOrigin(u.searchParams.get('server')), token = String(u.searchParams.get('token') || '');
+  if (!server) throw new LaunchError('The link has no valid server address.');
+  if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) throw new LaunchError('The link has no valid token.');
+  return { server, token };
+}
+
 /** A safe file name for the temporary copy: the game's title (some emulators guess the system from the name) plus extension. */
 export function safeFileName(title, ext) {
   const base = String(title || 'game').replace(/[^\w .()\-\[\]]+/g, '_').replace(/^[ .]+|[ .]+$/g, '').slice(0, 80) || 'game';
@@ -132,6 +143,19 @@ export function loadConfig(file) {
   const servers = (Array.isArray(cfg.servers) ? cfg.servers : []).map(normalizeOrigin).filter(Boolean);
   const emulators = cfg.emulators && typeof cfg.emulators === 'object' ? cfg.emulators : {};
   return { servers, emulators };
+}
+
+/** The platforms this PC can start: every emulator in the config with a command. A command written as a full path must exist; one written as just
+ *  a program name (found through the PATH) is taken as it is. A wrong setting inside the file cannot be told from here. */
+export function configuredPlatforms(cfg, exists = (p) => fs.existsSync(p)) {
+  const out = [];
+  for (const [slug, entry] of Object.entries(cfg?.emulators || {})) {
+    if (!/^[a-z0-9_-]{1,40}$/.test(slug) || !entry || typeof entry.command !== 'string' || !entry.command.trim()) continue;
+    const cmd = entry.command.trim();
+    if ((path.isAbsolute(cmd) || /^[A-Za-z]:[\\/]/.test(cmd)) && !exists(cmd)) continue;
+    out.push(slug);
+  }
+  return out.sort();
 }
 
 /** The command line for a ROM: the configured command, its args with {rom} / {romdir} filled in. No shell is involved. */
@@ -278,6 +302,25 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
   }
 }
 
+/** "Check my PC": tell the server which platforms have an emulator here (names only: no paths, no commands). */
+export async function syncPlatforms(rawUrl, { configFile = configPath(), fetchImpl = fetch, exists } = {}) {
+  const link = parseSyncUrl(rawUrl);
+  const cfg = loadConfig(configFile);
+  if (!cfg) {
+    try { writeTemplate(configFile); } catch { /* ignore */ }
+    throw new LaunchError(`No config yet. I created ${configFile}. Add "${link.server}" to "servers" and set your emulators, then press Check my PC again.`);
+  }
+  if (!cfg.servers.includes(link.server)) throw new LaunchError(`${link.server} is not listed under "servers" in ${configFile}. Add it there if you trust it.`);
+  const platforms = configuredPlatforms(cfg, exists);
+  let res;
+  try {
+    res = await fetchImpl(`${link.server}/api/launcher/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: link.token, platforms }) });
+  } catch (e) { throw new LaunchError(`Could not reach ${link.server}: ${e.message}`); }
+  if (!res.ok) { let m = ''; try { m = (await res.json()).error; } catch { /* no body */ } throw new LaunchError(m || `The server answered ${res.status}.`); }
+  log(`Told ${link.server} about ${platforms.length} platform(s): ${platforms.join(', ') || 'none'}`);
+  return { ok: true, platforms };
+}
+
 /* ───────────────────────────── entry point ───────────────────────────── */
 
 async function main() {
@@ -287,6 +330,11 @@ async function main() {
     process.exit(2);
   }
   try {
+    if (/^gamesauce:\/\/sync[?/]/i.test(arg)) {
+      const r = await syncPlatforms(arg);
+      notify(r.platforms.length ? `game-sauce now knows this PC can play: ${r.platforms.join(', ')}` : 'No emulators are set up in launcher.json yet, so game-sauce will only offer games that play in the browser.');
+      return;
+    }
     await launch(arg);
   } catch (e) {
     const msg = e instanceof LaunchError ? e.message : `Unexpected problem: ${e.stack || e.message}`;
