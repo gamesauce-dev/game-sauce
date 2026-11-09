@@ -557,3 +557,9 @@ export function mergePlaystationStores() {
 /* ── v42: platforms.badge — the text on that platform's cover badges and chips, when an admin wants something other than the default (Settings > Platforms). NULL = the default. ── */
 if (!db.prepare('PRAGMA table_info(platforms)').all().some((c) => c.name === 'badge')) db.exec('ALTER TABLE platforms ADD COLUMN badge TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '42') ON CONFLICT(key) DO UPDATE SET value = '42'").run();
+
+/* ── v43: Physical games can carry a disc picture (from the LaunchBox database) for the open case on the shelf. ── */
+for (const [col, type] of [['disc_url', 'TEXT'], ['disc_path', 'TEXT'], ['disc_tried_at', 'TEXT']]) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '43') ON CONFLICT(key) DO UPDATE SET value = '43'").run();

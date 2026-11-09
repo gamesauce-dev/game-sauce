@@ -44,7 +44,7 @@ export function initPhysical(c) {
 export const isOpen = () => S.openId != null;
 export const openIdNow = () => S.openId;
 export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
-export function forgetOpen() { lastAdd = { platform: '', region: '' }; closeCase(true); S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
+export function forgetOpen() { lastAdd = { platform: '', region: '' }; closeCase(true); S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open:not(.is-fore)').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
 
 /* ───────────── loading ───────────── */
 
@@ -434,7 +434,7 @@ function caseHtml(g) {
   const pic = g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : '';
   const tone = `linear-gradient(160deg,${esc(col)},#12141a)`;
   return `<div class="ph-case-slide">
-    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span></div></div></div>
+    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
       <div class="ph-case-inside"><div class="ph-manual"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i></div></div>
@@ -472,12 +472,21 @@ function advanceCase() {
 }
 
 function closeCase(animate) {
-  const el = CASE.el, id = CASE.id;
+  const el = CASE.el, id = CASE.id, wasOpen = CASE.open;
   CASE.el = null; CASE.id = null; CASE.open = false;
-  if (id != null) $(`.ph-spine[data-ph-id="${id}"]`)?.classList.remove('is-fore');
-  if (!el) return;
-  if (animate && !reducedMotion()) { const a = el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.9)' }], { duration: 220, easing: 'ease-in' }); a.onfinish = () => el.remove(); a.oncancel = () => el.remove(); }
-  else el.remove();
+  const spine = id != null ? $(`.ph-spine[data-ph-id="${id}"]`) : null;
+  if (!el) { spine?.classList.remove('is-fore'); return; }
+  if (!animate || reducedMotion()) { el.remove(); spine?.classList.remove('is-fore'); return; }
+  // Put away: an open case swings shut first, then the case slides back to its place on the shelf (the empty slot stays until it gets there).
+  const finish = () => { el.remove(); if (CASE.id === id) return; spine?.classList.remove('is-fore'); if (S.openId !== id) spine?.classList.remove('is-open'); };
+  const fly = () => {
+    const sr = spine?.getBoundingClientRect(), er = el.getBoundingClientRect();
+    const to = sr && sr.width ? `translate(${sr.left + sr.width / 2 - (er.left + er.width / 2)}px, ${sr.top + sr.height / 2 - (er.top + er.height / 2)}px) scale(${sr.width / er.width}, ${sr.height / er.height})` : 'scale(.9)';
+    const a = el.animate([{ transform: 'none', opacity: 1 }, { transform: to, opacity: 0.5 }], { duration: 300, easing: 'cubic-bezier(.5,0,.8,.4)', fill: 'forwards' });
+    a.onfinish = finish; a.oncancel = finish;
+  };
+  el.style.pointerEvents = 'none';
+  if (wasOpen) { el.classList.remove('is-open'); el.classList.add('is-closing'); setTimeout(fly, 560); } else fly();
 }
 
 /* The details window slides in over the right-hand side of the page. A spine standing under it would be pulled out where nobody can see it, so the

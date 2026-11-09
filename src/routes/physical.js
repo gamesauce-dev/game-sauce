@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'node:path';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -67,6 +67,13 @@ router.post('/match', (req, res) => { res.json(startMatchJob({ retry: req.body?.
 router.get('/cover/:id', (req, res) => {
   const file = physicalCoverPath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No cover' });
+  res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.sendFile(path.resolve(file));
+});
+
+router.get('/disc/:id', (req, res) => {
+  const file = physicalDiscPath(me(req), req.params.id);
+  if (!file) return res.status(404).json({ error: 'No disc' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
   res.sendFile(path.resolve(file));
 });

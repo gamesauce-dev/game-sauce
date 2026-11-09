@@ -155,7 +155,8 @@ const toGame = (r) => ({
   genre: r.genre, players: r.players, rating: r.rating, description: r.description, favourite: Boolean(r.favourite), matched: Boolean(r.meta_source), meta_source: r.meta_source,
   cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), created_at: r.created_at,
   cover_ar: r.cover_ar || null, spine_ar: r.spine_ar || null,
-  spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path)
+  spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path),
+  disc_url: r.disc_path ? `/api/physical/disc/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_disc: Boolean(r.disc_path)
 });
 
 const bucketOf = (t) => { const c = String(t || '').replace(/^(the|a|an)\s+/i, '').trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
@@ -270,6 +271,11 @@ export function physicalSpinePath(userId, id) {
   return f && fs.existsSync(f) ? f : null;
 }
 
+export function physicalDiscPath(userId, id) {
+  const f = own(userId, id)?.disc_path;
+  return f && fs.existsSync(f) ? f : null;
+}
+
 export function physicalCoverPath(userId, id) {
   const f = own(userId, id)?.cover_path;
   return f && fs.existsSync(f) ? f : null;
@@ -289,18 +295,22 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = 
   const spineUrl = c.media?.spine || c.spine_url || null;
   let spinePath = null;
   if (spineUrl) { try { spinePath = await cacheImpl(spineUrl, 'spine'); } catch { spinePath = null; } }
+  const discUrl = c.media?.disc || c.disc_url || null;
+  let discPath = null;
+  if (discUrl && isDiscPlatform(r.platform)) { try { discPath = await cacheImpl(discUrl, 'disc'); } catch { discPath = null; } }
   const yr = Math.round(Number(c.release_year)), pl = Math.round(Number(c.players)), rt = Number(c.rating);
   db.prepare(`UPDATE physical_games SET
       developer = COALESCE(?, developer), publisher = COALESCE(?, publisher), genre = COALESCE(?, genre), description = COALESCE(?, description),
       release_year = COALESCE(?, release_year), players = COALESCE(?, players), rating = COALESCE(?, rating),
       cover_url = COALESCE(?, cover_url), cover_path = COALESCE(?, cover_path), spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path),
+      disc_url = COALESCE(?, disc_url), disc_path = COALESCE(?, disc_path),
       cover_ar = COALESCE(?, cover_ar), spine_ar = COALESCE(?, spine_ar),
       meta_source = ?, meta_synced_at = datetime('now'), meta_tried_at = datetime('now'),
       updated_at = datetime('now')
     WHERE id = ? AND user_id = ?`)
     .run(text(c.developer), text(c.publisher), text(c.genre), text(c.description)?.slice(0, 4000) || null,
       yr >= 1950 && yr <= 2100 ? yr : null, pl >= 1 && pl <= 16 ? pl : null, Number.isFinite(rt) && c.rating !== null && c.rating !== '' && rt >= 0 && rt <= 5 ? rt : null,
-      url, coverPath, spineUrl, spinePath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
+      url, coverPath, spineUrl, spinePath, discUrl, discPath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
   return getPhysical(userId, id);
 }
 
@@ -308,10 +318,14 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia } = 
 export function clearMatch(userId, id) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, cover_ar = NULL, spine_ar = NULL,
+  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, disc_url = NULL, disc_path = NULL, disc_tried_at = NULL, cover_ar = NULL, spine_ar = NULL,
     meta_source = NULL, meta_synced_at = NULL, meta_tried_at = NULL, updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
   return getPhysical(userId, id);
 }
+
+/** The platforms whose games are boxed discs in a case that opens on the shelf (PlayStation 2 to 5, Xbox to Series X|S): only these ask for a disc picture. */
+export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries'];
+export const isDiscPlatform = (slug) => DISC_PLATFORMS.includes(slug);
 
 const platformRow = (slug) => db.prepare('SELECT slug, name, family, screenscraper_id, tgdb_id FROM platforms WHERE slug = ?').get(slug) || { slug, name: slug };
 
@@ -322,8 +336,15 @@ async function lookupSpineDefault(r) {
   return lb?.media?.spine || null;
 }
 
+/** The disc picture link for a game, from the local LaunchBox database (null when it is not downloaded, the game is not a disc, or it has none). */
+async function lookupDiscDefault(r) {
+  if (!launchbox.enabled || !isDiscPlatform(r.platform)) return null;
+  const lb = await launchbox.lookup({ title: r.title, platform: platformRow(r.platform), hashes: {}, filename: r.title, year: r.release_year || null });
+  return lb?.media?.disc || null;
+}
+
 /** Look one game up with the Library's providers and keep the answer. A game nothing is found for is stamped as tried, so it is not asked again every run. */
-export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = cacheMedia, spineImpl = lookupSpineDefault } = {}) {
+export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = cacheMedia, spineImpl = lookupSpineDefault, discImpl = lookupDiscDefault } = {}) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   const meta = await enrichImpl({ title: r.title, platform: platformRow(r.platform), hashes: {}, filename: r.title, titleTrusted: true, year: r.release_year || null });
@@ -331,8 +352,10 @@ export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = ca
   // The provider that won may not be LaunchBox: ask it for the spine on its own.
   let spine = meta.media?.spine || null;
   if (!spine) { try { spine = await spineImpl(r); } catch { spine = null; } }
-  const game = await applyMatch(userId, id, { ...meta, media: { ...(meta.media || {}), ...(spine ? { spine } : {}) }, source: meta.source || 'provider' }, { cacheImpl });
-  if (launchbox.enabled || spine) db.prepare("UPDATE physical_games SET spine_tried_at = datetime('now') WHERE id = ?").run(r.id);
+  let disc = meta.media?.disc || null;
+  if (!disc) { try { disc = await discImpl(r); } catch { disc = null; } }
+  const game = await applyMatch(userId, id, { ...meta, media: { ...(meta.media || {}), ...(spine ? { spine } : {}), ...(disc ? { disc } : {}) }, source: meta.source || 'provider' }, { cacheImpl });
+  if (launchbox.enabled || spine) db.prepare("UPDATE physical_games SET spine_tried_at = datetime('now'), disc_tried_at = datetime('now') WHERE id = ?").run(r.id);
   return game;
 }
 
@@ -346,15 +369,27 @@ export async function fetchSpine(userId, id, { cacheImpl = cacheMedia, spineImpl
   return Boolean(file);
 }
 
+/** Only the disc picture, for a game that is already matched (a disc case on the shelf): its details are left exactly as they are. */
+export async function fetchDisc(userId, id, { cacheImpl = cacheMedia, discImpl = lookupDiscDefault } = {}) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  let url = null; try { url = await discImpl(r); } catch { url = null; }
+  let file = null; if (url) { try { file = await cacheImpl(url, 'disc'); } catch { file = null; } }
+  db.prepare("UPDATE physical_games SET disc_url = COALESCE(?, disc_url), disc_path = COALESCE(?, disc_path), disc_tried_at = datetime('now'), updated_at = CASE WHEN ? IS NULL THEN updated_at ELSE datetime('now') END WHERE id = ?").run(url, file, file, r.id);
+  return Boolean(file);
+}
+
 /* One background run at a time looks up every game (anyone's) that has no match yet. With retry: true, games tried before are asked again too
    (for example after adding a provider key). */
 const job = { running: false, total: 0, done: 0, found: 0, again: false, retry: false };
 export const matchJobStatus = () => ({ running: job.running, total: job.total, done: job.done, found: job.found });
-// Games with no match yet, and (when the LaunchBox database is there) matched games that have no spine picture yet.
-const pending = (retry) => db.prepare(`SELECT id, user_id, meta_source IS NOT NULL AS matched FROM physical_games
-  WHERE (meta_source IS NULL${retry ? '' : ' AND meta_tried_at IS NULL'}) OR (? = 1 AND spine_path IS NULL${retry ? '' : ' AND spine_tried_at IS NULL'}) ORDER BY id`).all(launchbox.enabled ? 1 : 0);
+// Games with no match yet, and (when the LaunchBox database is there) matched games that have no spine picture yet, or (a disc case) no disc picture yet.
+const pending = (retry) => db.prepare(`SELECT id, user_id, platform, meta_source IS NOT NULL AS matched FROM physical_games
+  WHERE (meta_source IS NULL${retry ? '' : ' AND meta_tried_at IS NULL'})
+     OR (? = 1 AND ((spine_path IS NULL${retry ? '' : ' AND spine_tried_at IS NULL'})
+                 OR (platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND disc_path IS NULL${retry ? '' : ' AND disc_tried_at IS NULL'}))) ORDER BY id`).all(launchbox.enabled ? 1 : 0);
 
-export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl } = {}) {
+export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl, discImpl } = {}) {
   if (job.running) { job.again = true; job.retry = job.retry || retry; return matchJobStatus(); }
   const todo = pending(retry);
   if (!todo.length) return matchJobStatus();
@@ -365,8 +400,11 @@ export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl 
       while (list.length) {
         for (const g of list) {
           try {
-            if (g.matched) { if (await fetchSpine(g.user_id, g.id, { cacheImpl, spineImpl })) job.found++; }
-            else if (await matchOne(g.user_id, g.id, { enrichImpl, cacheImpl, spineImpl })) job.found++;
+            if (g.matched) {
+              const gotSpine = await fetchSpine(g.user_id, g.id, { cacheImpl, spineImpl });
+              const gotDisc = isDiscPlatform(g.platform) ? await fetchDisc(g.user_id, g.id, { cacheImpl, discImpl }) : false;
+              if (gotSpine || gotDisc) job.found++;
+            } else if (await matchOne(g.user_id, g.id, { enrichImpl, cacheImpl, spineImpl, discImpl })) job.found++;
           } catch { /* one game must not stop the run */ }
           job.done++;
         }

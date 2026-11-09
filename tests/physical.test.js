@@ -383,3 +383,37 @@ test('shelf, disc cases (PS2 to PS5, Xbox to Series X|S): the pulled-out cover c
   assert.ok(css.includes('.ph-case.is-open .ph-case-slide { transform: translateX(calc(var(--cw) / 2)); }'), 'the open pair is centred');
   assert.ok(/\.ph-case \{[^}]*z-index: 45;/.test(css), 'above the dimmed page, under the details window');
 });
+
+test('disc art: a disc game keeps its LaunchBox disc picture (cached, served only to its owner); other platforms never ask; clearing the match forgets it', async () => {
+  const mk = async (platform, title) => (await call('/api/physical/games', { method: 'POST', body: { platform, title } })).body;
+  const ps = await mk('ps4', 'Disc Art Test'), sn = await mk('snes', 'Cart Art Test');
+  const png = path.join(TMP, 'disc.png'); fs.writeFileSync(png, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'));
+  const kinds = []; const cacheImpl = async (url, kind) => { kinds.push(kind); return png; };
+  const asked = []; const discImpl = async (r) => { asked.push(r.title); return 'http://x/disc.png'; };
+  assert.equal(await phys.fetchDisc(adminId, ps.id, { cacheImpl, discImpl }), true);
+  assert.deepEqual(kinds, ['disc']); assert.deepEqual(asked, ['Disc Art Test']);
+  const one = (await call(`/api/physical/games/${ps.id}`)).body;
+  assert.equal(one.has_disc, true); assert.match(one.disc_url, /^\/api\/physical\/disc\/\d+/);
+  const mine = await fetch(base + one.disc_url, { headers: { Authorization: 'Bearer ' + adminTok } });
+  assert.equal(mine.status, 200);
+  assert.equal((await fetch(base + `/api/physical/disc/${ps.id}`, { headers: { Authorization: 'Bearer ' + annTok } })).status, 404, 'someone else\'s shelf');
+  // a disc picture that arrives with a match for a cartridge game (SNES) is ignored: only disc platforms keep one
+  await phys.applyMatch(adminId, sn.id, { title: 'x', media: { disc: 'http://x/d.png' }, source: 'test' }, { cacheImpl });
+  assert.equal(db.prepare('SELECT disc_path FROM physical_games WHERE id = ?').get(sn.id).disc_path, null);
+  assert.deepEqual(phys.DISC_PLATFORMS, ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries']);
+  assert.ok(read('public/physical.js').includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries']);"), 'the shelf and the server agree on which platforms have discs');
+  phys.clearMatch(adminId, ps.id);
+  const cleared = db.prepare('SELECT disc_path, disc_url, disc_tried_at FROM physical_games WHERE id = ?').get(ps.id);
+  assert.deepEqual(cleared, { disc_path: null, disc_url: null, disc_tried_at: null });
+  // the open case shows the picture once it has loaded, and the drawn disc is the fallback
+  const js = read('public/physical.js'), css = read('public/physical.css');
+  assert.ok(js.includes('class=\\"ph-disc-art\\"') || js.includes('class="ph-disc-art"')); assert.ok(css.includes('.ph-disc.has-art'));
+});
+
+test('the case closes before it goes back: the cover swings shut, then the case slides to its slot, which stays empty until it arrives', () => {
+  const js = read('public/physical.js'), css = read('public/physical.css');
+  assert.ok(js.includes("el.classList.remove('is-open'); el.classList.add('is-closing'); setTimeout(fly, 560)"));
+  assert.ok(js.includes("fill: 'forwards'") && js.includes("spine?.classList.remove('is-fore')"));
+  assert.ok(js.includes(".ph-spine.is-open:not(.is-fore)"), 'the slot keeps its width until the case is home');
+  assert.ok(css.includes('.ph-case.is-closing .ph-case-slide'));
+});

@@ -9,6 +9,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Digital: a console game's cover badge is the same as in the Library and Physical** (the platform's colour from Settings > Platforms, with its short name), and its cover in the details window keeps its own shape instead of being cropped.
 
 ### Added
+- **Disc pictures in the open case.** For disc games (PlayStation 2 to 5, Xbox family) the real disc picture from the LaunchBox database is shown on the right-hand side of the open case, in place of the drawn disc. It is fetched with the other pictures; games with none keep the drawn disc. **Press Update database in Settings > LaunchBox once** so the copy on your server includes disc pictures (it says so there when it does not).
+- **The case closes as it goes back:** the cover swings shut, then the case slides to its place on the shelf.
+- **Sub chips land one after another** when a family chip is opened (ROM Library, Physical and Digital), like the games dropping onto the shelf. Picking a platform afterwards does not replay it, and nothing moves if your system asks for less motion.
 - **Physical shelf: disc cases open.** For PlayStation 2 to 5 and Xbox, Xbox 360, Xbox One and Xbox Series X|S, clicking a spine pulls it out as before; clicking that cover brings the whole case to the front; clicking again opens it, with the manual on the left and the disc in its tray on the right. Clicking any other spine, or the open case, puts it back on the shelf. (The manual and the disc are drawn: there is no real picture of either yet.)
 - **Settings > Platforms: Badge text** for each platform, to replace the default text on its cover badges and chips everywhere (empty = the default; up to 12 characters, shown in capitals).
 

@@ -140,4 +140,10 @@
 .ph-disc::before { content: ''; position: absolute; inset: 31%; border-radius: 50%; background: radial-gradient(circle, #14161d 0 22%, transparent 23%), color-mix(in srgb, var(--c) 55%, #fff); opacity: .9; }
 .ph-disc::after { content: ''; position: absolute; inset: 44%; border-radius: 50%; background: #14161d; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
 .ph-disc span { position: absolute; top: 22%; font-size: 0.62rem; font-weight: 800; letter-spacing: .12em; color: #3b4254; }
+/* Put away: the cover swings shut a little faster than it opened. */
+.ph-case.is-closing .ph-case-slide, .ph-case.is-closing .ph-case-front { transition-duration: .5s; }
 @media (prefers-reduced-motion: reduce) { .ph-case-slide, .ph-case-front { transition: none; } }
+/* A real disc picture (from LaunchBox) replaces the drawn disc once it has loaded. */
+.ph-disc-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+.ph-disc.has-art { background: none; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
+.ph-disc.has-art::before, .ph-disc.has-art::after, .ph-disc.has-art span { display: none; }
