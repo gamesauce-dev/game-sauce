@@ -80,3 +80,7 @@ test('carousel: it has its own entry after Collections (Modern top bar and Class
 test('carousel: the platform chips carry no disc or cartridge icon', () => {
   assert.ok(!read('public/carousel.js').includes('cv-ico') && !read('public/carousel.css').includes('.cv-ico'));
 });
+
+test('carousel: the platform chips keep their own height (the row minimum height must not stretch them)', () => {
+  assert.ok(/\.cv-subs \{[^}]*align-items: flex-start/.test(read('public/carousel.css').replace(/\r?\n/g, ' ')));
+});
