@@ -48,8 +48,9 @@ export function openCarousel(host) {
     <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-wash"></i><i class="cv-grain"></i></div>
     <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
     <div class="cv-subs" id="cv-subs"></div>
-    <div class="cv-stage" id="cv-stage" tabindex="0" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
-    <div class="cv-info" id="cv-info" aria-live="polite"></div>`;
+    <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
+    <div class="cv-info" id="cv-info" aria-live="polite"></div>
+    <div class="cv-pad-hint" aria-hidden="true"><b>◀ ▶</b> games <i>·</i> <b>▲ ▼</b> platform <i>·</i> <b>LB RB</b> family <i>·</i> <b>A</b> play <i>·</i> <b>Y</b> on this PC <i>·</i> <b>B</b> close</div>`;
   document.body.appendChild(root);
   document.body.classList.add('cv-open');
   const $ = (s) => root.querySelector(s);
@@ -201,12 +202,12 @@ export function openCarousel(host) {
 
   // start where the Library is: its first chosen platform, else the family with most games
   const all = plats();
-  if (!all.length) { drawFams(); $('#cv-empty').classList.remove('hidden'); $('#cv-empty').textContent = 'No games in the Library yet.'; stage.focus(); return; }
+  if (!all.length) { drawFams(); $('#cv-empty').classList.remove('hidden'); $('#cv-empty').textContent = 'No games in the Library yet.';  return; }
   const want = all.find((p) => p.slug === host.start?.platform);
   const f = fams(), biggest = [...f.entries()].sort((a, b) => b[1].reduce((n, p) => n + ((p.visible_count ?? p.count) || 0), 0) - a[1].reduce((n, p) => n + ((p.visible_count ?? p.count) || 0), 0))[0][0];
   st.fam = want ? (want.family || 'Others') : biggest; drawFams(); drawSubs();
   choose(want ? want.slug : [...f.get(st.fam)].sort((a, b) => ((b.visible_count ?? b.count) || 0) - ((a.visible_count ?? a.count) || 0))[0].slug);
-  stage.focus();
+  
 }
 
 export const closeCarousel = () => off?.();
