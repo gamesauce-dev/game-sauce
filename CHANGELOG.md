@@ -7,6 +7,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ### Added
 - **Cover carousel** (Library bar → Carousel): a full-screen way to browse. Family chips along the top, the family's platforms under them, and the games as covers on a gentle arc with the chosen one in front. Scroll, drag, swipe or use the arrow keys; Enter plays it in the browser, or on your own emulator when it cannot be played there. The backdrop is the family's colour, drifting slowly, tinted by the middle cover.
 
+- **Steam in the carousel:** Steam games with their Play button on are a chip of their own, and Play opens them in Steam.
+- **Only games you can start.** The carousel hides games this PC cannot launch. **Check my PC** has the launcher report which platforms have an emulator set up (platform names only, never a path), and the carousel then shows games that play in the browser plus every game of those platforms. Until a PC has reported, everything is shown.
+- **A setup page for the launcher** (carousel → **⚙ Set up emulators**, or `node gamesauce-launcher.mjs --configure`): add your server, choose platforms, **Browse…** for each emulator's program, Save. It writes `launcher.json` for you (keeping a `.bak`), shows whether each program is found, and can tell game-sauce which platforms are ready. It runs on your own PC only, behind a secret key. Copy the new `launcher` folder over your old one to use it.
+
 ### Fixed
 - **Folder pickers on Windows reach every drive.** Pressing Up from the top of C: now lists all the drives (D:, O:, network drives), so ROM, artwork and other folders on another drive can be chosen.
 

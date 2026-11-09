@@ -312,3 +312,101 @@ test('launcher: syncPlatforms reports the platforms to the server, only for a se
   await assert.rejects(launcher.syncPlatforms(syncLink(t2.token), { configFile: other }), /not listed under "servers"/);
   await assert.rejects(launcher.syncPlatforms(syncLink(t.token), { configFile: cfg }), /expired or was already used/, 'a spent token is explained');
 });
+
+/* ───────────── the setup page for launcher.json ───────────── */
+
+const cfgUrl = async (extra = {}) => {
+  const { startConfigServer } = await import('../launcher/configure.mjs');
+  const file = path.join(TMP, `setup-${Math.random().toString(36).slice(2)}.json`);
+  const s = await startConfigServer({ configFile: file, open: false, pick: async () => process.execPath, ...extra });
+  const get = (p, init = {}) => fetch(`http://127.0.0.1:${s.port}${p}`, { ...init, headers: { 'x-key': s.key, 'Content-Type': 'application/json', ...(init.headers || {}) } });
+  const post = (p, body) => get(p, { method: 'POST', body: JSON.stringify(body || {}) });
+  return { s, file, get, post };
+};
+
+test('setup page: only reachable with its secret key, only as this machine, and it closes when asked', async () => {
+  const { s, get, post } = await cfgUrl();
+  try {
+    assert.equal((await fetch(`http://127.0.0.1:${s.port}/`)).status, 403, 'the page needs the key in its address');
+    assert.equal((await fetch(s.url)).status, 200);
+    assert.equal((await fetch(`http://127.0.0.1:${s.port}/api/config`)).status, 403, 'the API needs the key');
+    assert.equal((await fetch(`http://127.0.0.1:${s.port}/api/config`, { headers: { 'x-key': 'wrong' } })).status, 403);
+    const http = await import('node:http');
+    const status = await new Promise((resolve) => { const rq = http.request({ host: '127.0.0.1', port: s.port, path: '/api/config', headers: { host: 'evil.example', 'x-key': s.key } }, (r) => resolve(r.statusCode)); rq.end(); });
+    assert.equal(status, 403, 'a request for another host name (a DNS trick) is refused');
+    assert.equal((await fetch(`http://127.0.0.1:${s.port}/api/save`, { method: 'POST', headers: { 'x-key': s.key, 'Content-Type': 'text/plain' }, body: '{}' })).status, 400, 'JSON only');
+    assert.equal((await get('/api/config')).status, 200);
+    assert.equal((await post('/api/done')).status, 200);
+    await s.closed;
+  } finally { s.close(); }
+});
+
+test('setup page: it saves launcher.json from the choices (keeping a backup), and reads it back', async () => {
+  const { s, file, get, post } = await cfgUrl({ addServer: base });
+  try {
+    const first = await (await get('/api/config')).json();
+    assert.deepEqual(first.servers, []); assert.equal(first.add_server, base); assert.ok(first.platforms.some((p) => p.slug === 'snes'));
+    const save = await post('/api/save', { servers: [base + '/', 'http://nas.local:8765'], emulators: [
+      { slug: 'snes', command: process.execPath, args: ['--fullscreen', '{rom}'] },
+      { slug: 'gba', command: process.execPath, deleteOnExit: false },
+      { slug: '', command: '' }] });
+    assert.equal(save.status, 200);
+    const onDisk = JSON.parse(fs.readFileSync(file, 'utf8'));
+    assert.deepEqual(onDisk.servers, [base, 'http://nas.local:8765']);
+    assert.deepEqual(onDisk.emulators.snes, { command: process.execPath, args: ['--fullscreen', '{rom}'] });
+    assert.deepEqual(onDisk.emulators.gba, { command: process.execPath, deleteOnExit: false });
+    assert.deepEqual(Object.keys(onDisk.emulators), ['snes', 'gba'], 'the empty line is dropped');
+    const back = await (await get('/api/config')).json();
+    assert.equal(back.emulators.find((e) => e.slug === 'snes').found, true, 'it says the program is there');
+    await post('/api/save', { servers: [base], emulators: [] });
+    assert.ok(fs.existsSync(file + '.bak'), 'the old file is kept as a backup');
+    await post('/api/save', { servers: [base], emulators: [{ slug: 'snes', command: process.execPath, args: [FAKE, '{rom}'] }] });
+    const m = (await mint()).body;
+    assert.equal((await launcher.launch(linkFor(m), { configFile: file })).ok, true, 'the launcher can really use what the page wrote');
+  } finally { s.close(); }
+});
+
+test('setup page: mistakes are explained, and nothing is written', async () => {
+  const { s, file, post } = await cfgUrl();
+  try {
+    const bad = async (body, re) => { const r = await post('/api/save', body); assert.equal(r.status, 400); assert.match((await r.json()).error, re); };
+    await bad({ servers: ['not a server'], emulators: [] }, /not a server address/);
+    await bad({ servers: ['ftp://x'], emulators: [] }, /not a server address/);
+    await bad({ servers: [], emulators: [{ slug: 'snes', command: '' }] }, /Choose the emulator program for snes/);
+    await bad({ servers: [], emulators: [{ slug: '', command: 'x.exe' }] }, /Choose a platform/);
+    await bad({ servers: [], emulators: [{ slug: '../x', command: 'x.exe' }] }, /Choose a platform/);
+    await bad({ servers: [], emulators: [{ slug: 'snes', command: 'a' }, { slug: 'snes', command: 'b' }] }, /appears twice/);
+    assert.equal(fs.existsSync(file), false);
+  } finally { s.close(); }
+});
+
+test('setup page: Browse gives back the chosen program, a refused window is explained, and Save and tell game-sauce reports the platforms', async () => {
+  const a = await cfgUrl();
+  try { assert.equal((await (await a.post('/api/pick')).json()).path, process.execPath); } finally { a.s.close(); }
+  const b = await cfgUrl({ pick: async () => { throw new Error('No file window is available here: type the path instead.'); } });
+  try { const r = await b.post('/api/pick'); assert.equal(r.status, 400); assert.match((await r.json()).error, /type the path/); } finally { b.s.close(); }
+  const { body: t } = await call('/api/launcher/sync-token', { token: adminTok, method: 'POST' });
+  const c = await cfgUrl({ syncToken: { server: base, token: t.token } });
+  try {
+    assert.equal((await (await c.get('/api/config')).json()).can_sync, true);
+    await c.post('/api/save', { servers: [base], emulators: [{ slug: 'snes', command: process.execPath }, { slug: 'ps2', command: path.join(TMP, 'no-such-emulator.exe') }] });
+    const r = await (await c.post('/api/sync')).json();
+    assert.deepEqual(r.platforms, ['snes'], 'a program that is not there is left out');
+    assert.deepEqual(JSON.parse((await prefsOf(adminTok)).launcher_platforms).platforms, ['snes']);
+    assert.equal((await c.post('/api/sync')).status, 400, 'the token was spent');
+  } finally { c.s.close(); }
+  const d = await cfgUrl();
+  try { assert.equal((await d.post('/api/sync')).status, 400, 'not opened from game-sauce: nothing to report to'); } finally { d.s.close(); }
+});
+
+test('setup page: parseConfigureUrl, programExists, and the platform list matches the app', async () => {
+  const tok = 'b'.repeat(30);
+  assert.deepEqual(launcher.parseConfigureUrl('gamesauce://configure'), { server: null, token: null });
+  assert.deepEqual(launcher.parseConfigureUrl(`gamesauce://configure?server=http://h:1&token=${tok}`), { server: 'http://h:1', token: tok });
+  assert.throws(() => launcher.parseConfigureUrl(`gamesauce://configure?token=${tok}`), /token/);
+  assert.throws(() => launcher.parseConfigureUrl('gamesauce://launch?server=http://h:1'), /not a game-sauce setup link/);
+  const { programExists, platformList } = await import('../launcher/configure.mjs');
+  assert.equal(programExists(process.execPath), true); assert.equal(programExists(path.join(TMP, 'nope.exe')), false); assert.equal(programExists(''), false);
+  const { PLATFORMS } = await import('../src/lib/platforms.js');
+  assert.deepEqual(platformList().map((p) => p.slug).sort(), PLATFORMS.map((p) => p.slug).sort(), 'launcher/platforms.json is the platform list of the app (regenerate it when platforms change)');
+});

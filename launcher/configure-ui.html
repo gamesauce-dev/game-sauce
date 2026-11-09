@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>game-sauce launcher setup</title>
+<style>
+  :root { --bg: #f5f4fa; --card: #fff; --ink: #1d2233; --dim: #5b6279; --line: #d9dbe8; --acc: #5b4bd6; --ok: #1f8f5f; --bad: #c0392b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14161f; --card: #1d2030; --ink: #eceef8; --dim: #9aa1bd; --line: #343855; --acc: #8b7dff; --ok: #4cc38a; --bad: #ff7b6b; } }
+  * { box-sizing: border-box; } body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; } h1 { font-size: 1.5rem; margin: 0 0 4px; } h2 { font-size: 1.05rem; margin: 26px 0 8px; }
+  p.hint { color: var(--dim); margin: 0 0 10px; } code { background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: .88em; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  input[type=text], select { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  button.primary { background: var(--acc); border-color: var(--acc); color: #fff; font-weight: 600; } button:hover { filter: brightness(1.06); }
+  .row { display: grid; grid-template-columns: 250px 1.2fr auto 1fr auto auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+  .row:first-child { border-top: 0; } .head { color: var(--dim); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+  .srv { display: flex; gap: 8px; align-items: center; margin: 6px 0; } .srv span { flex: 1; font-family: ui-monospace, monospace; }
+  .st { font-size: .85rem; min-width: 7ch; } .st.ok { color: var(--ok); } .st.bad { color: var(--bad); }
+  label.chk { display: flex; gap: 6px; align-items: center; font-size: .85rem; color: var(--dim); white-space: nowrap; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); padding: 12px 16px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  #msg { min-height: 1.4em; font-weight: 600; } #msg.bad { color: var(--bad); } #msg.ok { color: var(--ok); }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>game-sauce launcher setup</h1>
+  <p class="hint">This page runs on your own PC and is only reachable from it. It edits <code id="file"></code>. Nothing here is sent to the server except the list of platform names, if you choose Save and tell game-sauce.</p>
+
+  <h2>Servers this launcher may download from</h2>
+  <p class="hint">A safety check: a link pointing anywhere else is refused. Use the address exactly as you type it in the browser, for example <code>http://192.168.1.50:8765</code>.</p>
+  <div class="card"><div id="servers"></div><div class="srv"><input type="text" id="newserver" placeholder="http://192.168.1.50:8765" spellcheck="false" autocomplete="off"><button id="addserver" type="button">Add</button></div></div>
+
+  <h2>Emulators on this PC</h2>
+  <p class="hint">One line per platform. <b>Browse…</b> finds the emulator's program. <b>Arguments</b> are what is passed to it: <code>{rom}</code> becomes the game's file. Leave it as <code>{rom}</code> if the emulator just takes the game's file.</p>
+  <div class="card">
+    <div class="row head"><div>Platform</div><div>Emulator program</div><div></div><div>Arguments</div><div></div><div></div></div>
+    <div id="emus"></div>
+    <div style="margin-top:10px"><button id="addemu" type="button">+ Add a platform</button></div>
+  </div>
+</main>
+<div class="bar"><span id="msg"></span><button id="save" class="primary" type="button">Save</button><button id="savesync" type="button" hidden>Save and tell game-sauce</button><button id="done" type="button">Close</button></div>
+
+<script>
+const K = new URLSearchParams(location.search).get('k') || '';
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const api = async (p, body) => {
+  const res = await fetch(p, { method: body ? 'POST' : 'GET', headers: { 'x-key': K, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.error || res.statusText); return j;
+};
+const say = (t, cls = '') => { const m = $('#msg'); m.textContent = t; m.className = cls; };
+let platforms = [], servers = [], emus = [], canSync = false;
+
+// "--fullscreen \"C:\\my roms\"" <-> ['--fullscreen', 'C:\\my roms']
+const splitArgs = (s) => { const out = []; let cur = '', q = false, has = false; for (const ch of String(s)) { if (ch === '"') { q = !q; has = true; } else if (/\s/.test(ch) && !q) { if (has || cur) out.push(cur); cur = ''; has = false; } else cur += ch; } if (has || cur) out.push(cur); return out; };
+const joinArgs = (a) => (a || []).map((x) => (/[\s"]/.test(x) || x === '' ? '"' + x.replace(/"/g, '') + '"' : x)).join(' ');
+
+function drawServers() {
+  $('#servers').innerHTML = servers.length ? servers.map((s, i) => `<div class="srv"><span>${esc(s)}</span><button type="button" data-rm-srv="${i}">Remove</button></div>`).join('') : '<p class="hint" style="margin:0">None yet: add your game-sauce address below.</p>';
+}
+function drawEmus() {
+  const opts = (sel) => '<option value="">Choose a platform…</option>' + platforms.map((p) => `<option value="${esc(p.slug)}"${p.slug === sel ? ' selected' : ''}>${esc(p.family)} · ${esc(p.name)}</option>`).join('')
+    + (sel && !platforms.some((p) => p.slug === sel) ? `<option value="${esc(sel)}" selected>${esc(sel)}</option>` : '');
+  $('#emus').innerHTML = emus.length ? emus.map((e, i) => `<div class="row" data-i="${i}">
+      <select data-f="slug">${opts(e.slug)}</select>
+      <input type="text" data-f="command" value="${esc(e.command)}" placeholder="C:\\Emulators\\Snes9x\\snes9x-x64.exe" spellcheck="false" autocomplete="off">
+      <button type="button" data-browse="${i}">Browse…</button>
+      <input type="text" data-f="args" value="${esc(e.args)}" placeholder="{rom}" spellcheck="false" autocomplete="off">
+      <span class="st" data-st="${i}">${e.found === true ? '<span class="ok">found</span>' : e.found === false ? '<span class="bad">not found</span>' : ''}</span>
+      <span style="display:flex;gap:8px;align-items:center"><label class="chk" title="Delete the temporary copy of the game when the emulator closes"><input type="checkbox" data-f="del" ${e.deleteOnExit === false ? '' : 'checked'}> delete copy</label><button type="button" data-rm="${i}" aria-label="Remove">✕</button></span></div>`).join('')
+    : '<p class="hint" style="margin:0">No emulators yet: press “Add a platform”.</p>';
+}
+async function check(i) {
+  const e = emus[i]; if (!e.command.trim()) { e.found = null; return drawSt(i); }
+  try { e.found = (await api('/api/test', { command: e.command })).found; } catch { e.found = null; }
+  drawSt(i);
+}
+function drawSt(i) { const s = $(`[data-st="${i}"]`); if (s) s.innerHTML = emus[i].found === true ? '<span class="ok">found</span>' : emus[i].found === false ? '<span class="bad">not found</span>' : ''; }
+const readRows = () => { document.querySelectorAll('#emus .row').forEach((row) => { const e = emus[Number(row.dataset.i)]; e.slug = $('[data-f=slug]', row).value; e.command = $('[data-f=command]', row).value; e.args = $('[data-f=args]', row).value; e.deleteOnExit = $('[data-f=del]', row).checked ? undefined : false; }); };
+const payload = () => { readRows(); return { servers, emulators: emus.filter((e) => e.slug || e.command.trim()).map((e) => ({ slug: e.slug, command: e.command, args: e.args.trim() === '' || e.args.trim() === '{rom}' ? undefined : splitArgs(e.args), deleteOnExit: e.deleteOnExit })) }; };
+
+document.addEventListener('click', async (ev) => {
+  const t = ev.target.closest('button'); if (!t) return;
+  if (t.dataset.rmSrv !== undefined) { servers.splice(Number(t.dataset.rmSrv), 1); drawServers(); }
+  else if (t.id === 'addserver') { const v = $('#newserver').value.trim(); if (v) { servers.push(v); $('#newserver').value = ''; drawServers(); } }
+  else if (t.id === 'addemu') { readRows(); emus.push({ slug: '', command: '', args: '{rom}' }); drawEmus(); }
+  else if (t.dataset.rm !== undefined) { readRows(); emus.splice(Number(t.dataset.rm), 1); drawEmus(); }
+  else if (t.dataset.browse !== undefined) {
+    const i = Number(t.dataset.browse); readRows(); say('Choose the emulator program in the window that opened…');
+    try { const r = await api('/api/pick', {}); if (r.path) { emus[i].command = r.path; emus[i].found = true; drawEmus(); } say(''); } catch (e) { say(e.message, 'bad'); }
+  }
+  else if (t.id === 'save' || t.id === 'savesync') {
+    say('Saving…');
+    try {
+      const r = await api('/api/save', payload()); servers = r.servers; emus = r.emulators.map((e) => ({ slug: e.slug, command: e.command, args: e.args ? joinArgs(e.args) : '{rom}', deleteOnExit: e.deleteOnExit, found: e.found })); drawServers(); drawEmus();
+      if (t.id === 'savesync') { const s = await api('/api/sync', {}); say(`Saved. game-sauce now knows this PC can play: ${s.platforms.join(', ') || 'nothing yet'}.`, 'ok'); }
+      else say(`Saved to ${r.file}.`, 'ok');
+    } catch (e) { say(e.message, 'bad'); }
+  }
+  else if (t.id === 'done') { try { await api('/api/done', {}); } catch { /* closing */ } say('You can close this tab.'); window.close(); }
+});
+document.addEventListener('change', (ev) => { const row = ev.target.closest('#emus .row'); if (row && ev.target.dataset.f === 'command') { readRows(); check(Number(row.dataset.i)); } });
+$('#newserver').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#addserver').click(); });
+
+(async () => {
+  try {
+    const c = await api('/api/config'); platforms = c.platforms; servers = c.servers; canSync = c.can_sync; $('#file').textContent = c.file;
+    emus = c.emulators.map((e) => ({ slug: e.slug, command: e.command, args: e.args ? joinArgs(e.args) : '{rom}', deleteOnExit: e.deleteOnExit, found: e.found }));
+    if (c.warning) say(c.warning, 'bad');
+    if (c.add_server && !servers.includes(c.add_server)) { servers.push(c.add_server); say(`Added ${c.add_server}: press Save to keep it.`); }
+    $('#savesync').hidden = !canSync; drawServers(); drawEmus();
+  } catch (e) { say(e.message, 'bad'); }
+})();
+</script>
+</body>
+</html>

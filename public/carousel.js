@@ -53,7 +53,7 @@ export function openCarousel(host) {
   root.className = 'cv'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Cover carousel');
   root.innerHTML = `
     <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-tint t1"></i><i class="cv-tint t2"></i><i class="cv-grain"></i></div>
-    <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-pc" id="cv-pc" title="Find out which emulators are set up on this PC, so only games it can start are shown"></button><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
+    <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-pc" id="cv-setup" title="Choose the emulators this PC uses (opens a small setup page on this PC)">⚙ Set up emulators</button><button type="button" class="cv-pc" id="cv-pc" title="Find out which emulators are set up on this PC, so only games it can start are shown"></button><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
     <div class="cv-subs" id="cv-subs"></div>
     <div class="cv-note hidden" id="cv-note"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
@@ -173,13 +173,31 @@ export function openCarousel(host) {
   const parseLp = (prefs) => { try { const j = JSON.parse(prefs?.launcher_platforms || 'null'); return j && Array.isArray(j.platforms) ? j : null; } catch { return null; } };
   const paintPc = () => {
     const b = $('#cv-pc'), note = $('#cv-note');
-    if (noLauncher()) { b.classList.add('hidden'); note.classList.add('hidden'); return; }
+    const s = $('#cv-setup');
+    if (noLauncher()) { b.classList.add('hidden'); s?.classList.add('hidden'); note.classList.add('hidden'); return; }
     b.textContent = st.lp === null ? '🖥 Check my PC' : '🖥 This PC: ' + st.lp.length + ' platform' + (st.lp.length === 1 ? '' : 's');
     b.classList.toggle('attn', st.lp === null);
     note.classList.toggle('hidden', st.lp !== null);
     note.textContent = 'Showing every game. Press Check my PC so game-sauce can hide the ones this PC cannot start.';
   };
   const reload = () => { drawFams(); drawSubs(); const list = plats(); if (st.plat && st.plat !== STEAM && list.some((p) => p.slug === st.plat)) choose(st.plat); else if (st.fam && fams().has(st.fam)) chooseFam(st.fam); else if (list.length) chooseFam([...fams().keys()][0]); };
+  // The launcher opens its setup page (on this PC only); saving there can also tell game-sauce, so the carousel updates.
+  const setupEmulators = async () => {
+    let before = null;
+    try {
+      before = parseLp(await host.api('/prefs'))?.at || null;
+      const { token } = await host.api('/launcher/sync-token', { method: 'POST' });
+      host.toast('Opening the setup page… (it needs the launcher installed on this PC: docs/LOCAL-LAUNCH.md)');
+      location.href = 'gamesauce://configure?' + new URLSearchParams({ server: location.origin, token }).toString();
+    } catch (err) { host.toast(err.message || 'Could not open the setup page', true); return; }
+    for (let i = 0; i < 450 && root; i++) {       // the page can stay open a while: watch for a report for up to 15 minutes
+      await new Promise((ok) => setTimeout(ok, 2000));
+      try {
+        const lp = parseLp(await host.api('/prefs'));
+        if (lp && lp.at !== before) { st.lp = lp.platforms; paintPc(); host.toast('This PC can start: ' + (lp.platforms.join(', ') || 'nothing yet')); reload(); return; }
+      } catch { /* try again */ }
+    }
+  };
   const checkPc = async () => {
     let before = null;
     try {
@@ -202,6 +220,7 @@ export function openCarousel(host) {
   root.addEventListener('click', (e) => {
     if (e.target.closest('#cv-close')) return close();
     if (e.target.closest('#cv-pc')) return checkPc();
+    if (e.target.closest('#cv-setup')) return setupEmulators();
     const fam = e.target.closest('[data-fam]'); if (fam) return chooseFam(fam.dataset.fam);
     const pl = e.target.closest('[data-plat]'); if (pl) return choose(pl.dataset.plat);
     const act = e.target.closest('[data-act]'); if (act) return act.dataset.act === 'play' ? openBrowser(gameAt(st.idx)) : playLocal(gameAt(st.idx));

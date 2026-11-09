@@ -31,6 +31,24 @@ from `start.bat` has it).
 4. Edit that file (see below), then click **Play locally** again. Your browser asks once whether to open the
    launcher; tick "always allow".
 
+## The easy way: the setup page
+
+Instead of writing the file by hand, press **⚙ Set up emulators** in the cover carousel (Library bar → Carousel). The launcher
+opens a small page **on your own PC** (it only listens on that computer, behind a secret key, and closes itself): add your
+game-sauce address, choose a platform, press **Browse…** to pick the emulator's program, and press **Save**. It shows
+"found" or "not found" beside each program, keeps the old file as `launcher.json.bak`, and **Save and tell game-sauce** lets
+the server know which platforms this PC can start. From a terminal you can open the same page with
+`node gamesauce-launcher.mjs --configure`.
+
+## Check my PC (and what the carousel shows)
+
+The carousel only shows games you can start from where you sit: games that play in the browser, plus every game of a
+platform that has an emulator set up here. The server cannot read `launcher.json`, so the launcher reports it: press
+**Check my PC** in the carousel (or save from the setup page with "Save and tell game-sauce"). Only the platform names go to the
+server, never a path or a command, and a program that is not at the path in the file is left out. Until a PC has reported,
+the carousel shows every game (nothing is known yet). What is wrong inside an emulator's own settings cannot be checked from
+here: that stays with you. The list is kept per account, so if you play from several PCs it is the list of the last PC that reported.
+
 ## The config file
 
 ```json

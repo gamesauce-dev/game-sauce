@@ -108,6 +108,17 @@ export function parseSyncUrl(raw) {
   return { server, token };
 }
 
+/** Read a gamesauce://configure link (the setup page): optionally the server to add, and a one-time token so Save can tell game-sauce. */
+export function parseConfigureUrl(raw) {
+  let u;
+  try { u = new URL(String(raw)); } catch { throw new LaunchError('That is not a valid gamesauce:// link.'); }
+  if (u.protocol !== 'gamesauce:' || u.hostname !== 'configure') throw new LaunchError('That is not a game-sauce setup link.');
+  const server = u.searchParams.get('server') ? normalizeOrigin(u.searchParams.get('server')) : null, token = String(u.searchParams.get('token') || '');
+  if (u.searchParams.get('server') && !server) throw new LaunchError('The link has no valid server address.');
+  if (token && (!server || !/^[A-Za-z0-9_-]{20,100}$/.test(token))) throw new LaunchError('The link has no valid token.');
+  return { server, token: token || null };
+}
+
 /** A safe file name for the temporary copy: the game's title (some emulators guess the system from the name) plus extension. */
 export function safeFileName(title, ext) {
   const base = String(title || 'game').replace(/[^\w .()\-\[\]]+/g, '_').replace(/^[ .]+|[ .]+$/g, '').slice(0, 80) || 'game';
@@ -325,6 +336,17 @@ export async function syncPlatforms(rawUrl, { configFile = configPath(), fetchIm
 
 async function main() {
   const arg = process.argv[2];
+  if (arg === '--configure' || /^gamesauce:\/\/configure([?/]|$)/i.test(arg || '')) {
+    try {
+      const link = arg === '--configure' ? {} : parseConfigureUrl(arg);
+      const { startConfigServer } = await import('./configure.mjs');
+      const s = await startConfigServer({ addServer: link.server || null, syncToken: link.token ? { server: link.server, token: link.token } : null });
+      log(`Setup page open at ${s.url.replace(/k=.*/, 'k=…')}`);
+      if (arg === '--configure') console.log(`If your browser did not open, go to: ${s.url}`);
+      await s.closed;
+      return;
+    } catch (e) { log(`FAILED: ${e.message}`); notify(e.message); process.exit(1); }
+  }
   if (!arg) {
     console.error('Usage: gamesauce-launcher <gamesauce://launch?...>\nRegister it with install-windows.bat or install-linux.sh so the "Play locally" button can call it.');
     process.exit(2);
