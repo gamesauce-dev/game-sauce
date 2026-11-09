@@ -143,7 +143,9 @@ test('the platform chip row: families, then the platforms of the opened family, 
   assert.match(app, /state\.extraPlatforms = \[\];\s*\/\/ the sidebar picks one platform/, 'choosing from the Classic sidebar clears the extras');
   assert.match(app, /confirmChoice\(\{ title: 'Fetch metadata for which games\?'/, 'with several platforms picked, a metadata run asks its scope instead of guessing');
   assert.match(css, /body\.ui-modern\[data-mview="library"\] \.chip-rows \{ display: flex/);
-  assert.match(css, /^\.chip-rows \{ display: none; \}/m, 'hidden everywhere else, so Classic never shows it');
+  assert.match(css, /body\.ui-modern:not\(\[data-mview="library"\]\) \.chip-rows \{ display: none; \}/, 'Modern shows the chips on the library page only; Classic has them too (styles.css)');
+  assert.match(read('public/styles.css'), /^\.chip-rows \{ display: flex; flex-direction: column;/m, 'Classic shows the chips above the games');
+  assert.doesNotMatch(read('public/index.html'), /id="platform-list"/, 'and no longer has a platform list down the left');
 });
 
 test('A-Z jump, grid size and back to top sit above the grid and work from the list as sorted', () => {

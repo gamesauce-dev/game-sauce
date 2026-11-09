@@ -50,11 +50,11 @@ test('the notice says how to update for how this copy was installed, and only ev
   } finally { if (was === undefined) delete process.env.GAMESAUCE_INSTALL; else process.env.GAMESAUCE_INSTALL = was; }
 });
 
-test('the update notice is a link in the Modern ticker and a slide in the Classic home strip; each kind of install says how it was started', () => {
+test('the update notice is a link in the Modern ticker (Classic has no ticker); each kind of install says how it was started', () => {
   const read = (f) => fs.readFileSync(new URL('../' + f, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const m = read('public/modern.js'), a = read('public/app.js');
   assert.ok(m.includes('class="mh-link"') && m.includes("rel=\"noopener noreferrer\"") && m.includes('^https:\\/\\/github\\.com\\/'));
-  assert.ok(a.includes('data-ov-update') && a.includes("'/admin/update-check'") && a.includes("authState.user?.role === 'admin'"));
+  assert.ok(!a.includes('data-ov-update') && a.includes("if (!document.body.classList.contains('ui-modern')) { clearInterval(overviewTimer)"), 'Classic has no rolling strip, so no update slide in it');
   assert.ok(read('Dockerfile').includes('ENV GAMESAUCE_INSTALL=docker'));
   assert.ok(read('scripts/start.mjs').includes("GAMESAUCE_INSTALL: 'download'"));
   assert.ok(read('desktop/src-tauri/src/main.rs').includes('.env("GAMESAUCE_INSTALL", "desktop")'));

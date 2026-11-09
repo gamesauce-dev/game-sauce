@@ -1733,3 +1733,20 @@ body.play-only #empty .empty-add-text { display: none; }
 .pw-eye .pw-slash { display: none; }
 .pw-eye.is-shown .pw-slash { display: inline; }
 input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none; }   /* the browser's own eye, so there are not two */
+
+/* The platform chips above the games (families, then the platforms of the chosen family). Classic has them in place of a platform list down the left; Modern restyles them in modern.css. */
+.chip-rows { display: flex; flex-direction: column; gap: 0.45rem; margin: 0 0 0.8rem; }
+.chip-rows .chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip-rows .chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2rem; padding: 0 0.7rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.6rem; color: var(--text); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.chip-rows .chip small { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 0.74rem; }
+.chip-rows .chip:hover { background: var(--panel-2); }
+.chip-rows .chip.on, .chip-rows .chip.open { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.chip-rows .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chip-rows .chip[style*="--chip-c"] { border-left: 4px solid var(--chip-c); background: color-mix(in srgb, var(--chip-c) 14%, var(--panel)); font-weight: 700; }
+.chip-rows .chip[style*="--chip-c"]:hover { background: color-mix(in srgb, var(--chip-c) 26%, var(--panel)); }
+.chip-rows .chip[style*="--chip-c"].on, .chip-rows .chip[style*="--chip-c"].open { background: color-mix(in srgb, var(--chip-c) 38%, var(--panel)); border-color: var(--chip-c); }
+.chip-rows .chip[data-chip-fam] { text-transform: uppercase; letter-spacing: .06em; font-size: 0.78rem; }
+.chip-rows .chip[data-chip-fam]::after { content: ''; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; opacity: .55; margin-left: 0.15rem; }
+.chip-rows .chip[data-chip-fam].open::after { opacity: 1; }
+.chip-rows .chip-plats { padding: 0.45rem 0.5rem; border: 1px dashed var(--line); border-radius: 0.6rem; }
+.chip-rows .chip .plat-ico { display: none; }

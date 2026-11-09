@@ -135,7 +135,8 @@ body.ui-modern .mb-pop .mb-menu-item small { display: block; color: var(--dim); 
 body.ui-modern .mb-menu-item.on { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
 /* ── Platform chips ── */
-.chip-rows { display: none; }
+/* The chips are in Classic too (styles.css); Modern shows them on the library page only. */
+body.ui-modern:not([data-mview="library"]) .chip-rows { display: none; }
 body.ui-modern[data-mview="library"] .chip-rows { display: flex; flex-direction: column; gap: 0.45rem; margin: 0 0 0.7rem; }
 body.ui-modern .chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 body.ui-modern .chip { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.1rem; padding: 0 0.75rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s; }

@@ -323,7 +323,7 @@ async function loadPlatforms() {
   try { modern.renderChips(); } catch { /* Modern chips are optional */ }
   refreshSourcePlatformPicker(items);
   renderLibHeading();
-  const list = $('#platform-list');
+  const list = $('#platform-list') || document.createElement('div');   // Classic no longer has a platform list down the left (the chips above the games do that job): this keeps the code below harmless
   const total = authState.user?.play_only ? items.reduce((n, p) => n + (p.count || 0), 0) : (stats.library.roms || 0);
 
   // Group the platforms that actually have ROMs under their family, so a
@@ -686,6 +686,9 @@ async function renderOverview() {
   const mine = stats.mine || { favorites: 0 };
   const top = stats.topDownloaded || null;
 
+  // Classic has no rolling strip any more (Modern has its own ticker in the top bar): only the Recently added row is drawn.
+  if (!document.body.classList.contains('ui-modern')) { clearInterval(overviewTimer); box.innerHTML = ''; box.classList.add('hidden'); paintRecentRow(stats); return; }
+
   let emuAlert = '';
   try {
     if (!emuUpdatesCache) emuUpdatesCache = api('/emulators/updates').catch(() => ({ updates: [] }));
@@ -701,17 +704,6 @@ async function renderOverview() {
     }
   } catch { /* GitHub flakiness never breaks the library home */ }
 
-  // A newer game-sauce (admins only, the same check as the Modern ticker's): a slide that opens the release page.
-  let updateSlide = '';
-  try {
-    if (authState.user?.role === 'admin') {
-      const up = await api('/admin/update-check').catch(() => null);
-      if (up?.newer && /^https:\/\/github\.com\//.test(up.url || '')) {
-        updateSlide = `<button class="overview-card" data-slide data-ov-update="${esc(up.url)}" title="${esc(up.how || 'Open the release page')}"><span class="ov-ico">⬆</span><span>Update available: game-sauce <b>${esc(String(up.latest).replace(/^v/i, ''))}</b> <span class="ov-sub">(you have ${esc(up.current)})</span></span></button>`;
-      }
-    }
-  } catch { /* the notice is optional */ }
-
   // Every slide uses the SAME structure/style (the "my favourites" one):
   // icon + bold number + plain label. No per-slide colours or badges.
   const slides = [
@@ -719,7 +711,6 @@ async function renderOverview() {
     `<div class="overview-card" data-slide><span class="ov-ico">▦</span><span><b>${lib.platforms || 0}</b> platforms</span></div>`,
     `<button class="overview-card" data-slide data-ov-favs title="Show my favourites"><span class="ov-ico">★</span><span><b>${mine.favorites || 0}</b> my favourites</span></button>`,
     top ? `<button class="overview-card" data-slide data-open-rom="${top.id}" title="Most downloaded game — open it"><span class="ov-ico">⤓</span><span><b>${Number(top.dl_count).toLocaleString()}×</b> ${esc(top.title)} <span class="ov-sub">(${esc(top.platform_short)})</span></span></button>` : '',
-    updateSlide,
     emuAlert
   ].filter(Boolean);
 
@@ -741,7 +732,6 @@ async function renderOverview() {
   });
   $('[data-open-rom]', box)?.addEventListener('click', () => openDetail(Number($('[data-open-rom]', box).dataset.openRom)));
   $('[data-view="emulators"]', box)?.addEventListener('click', () => setView('emulators'));
-  $('[data-ov-update]', box)?.addEventListener('click', (e) => window.open(e.currentTarget.dataset.ovUpdate, '_blank', 'noopener,noreferrer'));
 
   // Rolling rotation: translate the track up by one slide-height per step and
   // loop. The frame box clips to a single slide (height 40px in styles.css —
@@ -759,7 +749,11 @@ async function renderOverview() {
     }, 3500);
   }
 
-  // The recent-12 row: same tiles as the grid, same behaviour via bindCards.
+  paintRecentRow(stats);
+}
+
+/** The recent-12 row: same tiles as the grid, same behaviour via bindCards. */
+function paintRecentRow(stats) {
   const recent = stats.recent || [];
   const wrap = $('#lib-recent-wrap');
   const row = $('#recent-row');

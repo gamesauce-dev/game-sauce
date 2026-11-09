@@ -4,7 +4,15 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Classic: platform chips instead of a list down the left.** The Library now has the same family chips and platform chips as Digital and Physical, above the games, and the platform list in the sidebar is gone (so clicking a platform while in Digital or Physical no longer jumps back to the Library). **The rolling strip on the Library page is gone from Classic**; the "Recently added" row stays. (Modern keeps its ticker, including the update notice; admins are also told in Messages.)
+- **Digital: a console game's cover badge is the same as in the Library and Physical** (the platform's colour from Settings > Platforms, with its short name), and its cover in the details window keeps its own shape instead of being cropped.
+
+### Added
+- **Settings > Platforms: Badge text** for each platform, to replace the default text on its cover badges and chips everywhere (empty = the default; up to 12 characters, shown in capitals).
+
 ### Fixed
+- **Links that open a new window now work in the desktop app** ("Find it in the store", the Steam page, screenshots, the release page): they open in your browser. Before, the click did nothing.
 - **Desktop app: Switch server left a blank window on Windows.** It now returns to the choice screen.
 - **The Linux AppImage now builds** (the database library's files for other systems, such as Alpine, confused the AppImage tool), and every download is a few MB smaller because each now carries only the database file for its own system.
 

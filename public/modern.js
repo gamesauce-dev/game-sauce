@@ -31,7 +31,7 @@ let api = null, ctx = null, built = false, building = null, tickerTimer = null;
 export const isModern = () => document.body.classList.contains('ui-modern');
 
 /** Called once by app.js with the few things Modern needs from it (the API helper and navigation). */
-export function initModern(c) { ctx = c; api = c.api; window.addEventListener('gs:filters', () => { if (isModern()) { syncTools(); renderChips(); } }); }
+export function initModern(c) { ctx = c; api = c.api; window.addEventListener('gs:filters', () => { if (isModern()) syncTools(); renderChips(); }); }   // the chips are in Classic too
 
 /* ───────────── light / dark ───────────── */
 export function applyTheme(mode) {
@@ -453,7 +453,7 @@ function chipClick(e) {
   }
   return true;
 }
-document.addEventListener('click', (e) => { if (isModern() && e.target.closest('#chip-rows') && chipClick(e)) e.stopPropagation(); });
+document.addEventListener('click', (e) => { if (e.target.closest('#chip-rows') && chipClick(e)) e.stopPropagation(); });
 
 
 /* ───────────── A-Z jump, grid size, back to top ─────────────
