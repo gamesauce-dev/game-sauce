@@ -26,6 +26,7 @@ Get the latest version from the **[Releases page](https://github.com/gamesauce-d
 | **Mac** (Apple Silicon: M1 and newer) | `game-sauce_<version>_aarch64.dmg` (the app) | Open it and drag game-sauce to Applications. If macOS refuses to open it, right-click it and choose **Open**. |
 | | or `game-sauce-v<version>-macos-arm64.tar.gz` (portable) | Unpack it, double-click **Start game-sauce.command**. |
 | **Linux** | `game-sauce_<version>_amd64.deb` (Debian, Ubuntu, Mint) | Install it. |
+| | or `game-sauce_<version>_amd64.AppImage` (any x64 Linux, nothing to install) | Make it executable (right-click → Properties → Allow executing), then double-click it. |
 | | or `game-sauce-v<version>-linux-x64.tar.gz` (portable) | Unpack it, run `./start.sh`. |
 | **Raspberry Pi** or another ARM Linux | `game-sauce-v<version>-linux-arm64.tar.gz` | Unpack it, run `./start.sh`. |
 | **A home server** (Docker, Unraid, Proxmox) | no download needed | See [Deployment](docs/DEPLOYMENT.md) and [Unraid](docs/UNRAID.md). |

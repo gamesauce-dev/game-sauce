@@ -139,7 +139,8 @@ test('the release job flattens the downloaded artifacts (some keep a folder) bef
 });
 
 test('package manager entries: for one version, pointing at the release files the workflow publishes, with real checksums', () => {
-  const v = JSON.parse(read('package.json')).version, base = `https://github.com/gamesauce-dev/game-sauce/releases/download/v${v}/`;
+  // The version the entries were made for: they need a published release's checksums, so they follow the last release, not the app's own version.
+  const v = fs.readdirSync(new URL('../install/packages/winget/', import.meta.url)).filter((d) => /^\d+\.\d+\.\d+$/.test(d)).sort().pop(), base = `https://github.com/gamesauce-dev/game-sauce/releases/download/v${v}/`;
   const dir = `install/packages/winget/${v}/`;
   for (const f of ['gamesauce-dev.game-sauce.yaml', 'gamesauce-dev.game-sauce.installer.yaml', 'gamesauce-dev.game-sauce.locale.en-US.yaml']) assert.ok(exists(dir + f), f);
   const inst = read(dir + 'gamesauce-dev.game-sauce.installer.yaml');
@@ -165,7 +166,7 @@ test('the README has a Download section naming the files each release really car
   assert.ok(r.includes('## Download') && r.includes('releases/latest'));
   for (const f of ['game-sauce_<version>_x64-setup.exe', 'game-sauce-v<version>-windows-x64.zip', 'game-sauce_<version>_aarch64.dmg', 'game-sauce-v<version>-macos-arm64.tar.gz', 'game-sauce_<version>_amd64.deb', 'game-sauce-v<version>-linux-x64.tar.gz', 'game-sauce-v<version>-linux-arm64.tar.gz']) assert.ok(r.includes(f), f);
   assert.ok(r.indexOf('## Download') < r.indexOf('## What it does'), 'near the top');
-  assert.ok(!r.includes('AppImage'), 'it does not promise the AppImage, which the release does not have yet');
+  assert.ok(r.includes('amd64.AppImage'), 'the AppImage is in the table (it ships from 0.3.1)');
 });
 
 test('the bundle keeps only the database library file for its own computer (smaller, and the AppImage tool cannot read the Alpine one)', () => {
