@@ -110,3 +110,34 @@
 .ph-bar select optgroup { font-style: normal; }
 /* A redraw that only keeps your place (a window opened or closed, a favourite toggled) shows the shelves as they were, without the spines dropping in again. */
 .ph-shelf.no-anim .ph-spine, .ph-shelf.no-anim .ph-plate { animation: none; }
+
+/* Disc cases (PlayStation 2 to 5, Xbox to Series X|S): click the pulled-out cover and the case comes to the front; click again and it opens, the manual on the left, the disc in its tray on the right. */
+.ph-spine.is-fore { background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 2px rgba(255,255,255,.2); transform: translateY(-24px); }
+.ph-spine.is-fore .ph-face { opacity: 0; }
+.ph-case { position: fixed; z-index: 45; width: var(--cw); height: var(--ch); perspective: 1800px; cursor: pointer; filter: drop-shadow(0 1.2rem 1.6rem rgba(0,0,0,.65)); outline: none; }
+.ph-case-slide { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.2,.8,.2,1); }
+.ph-case.is-open .ph-case-slide { transform: translateX(calc(var(--cw) / 2)); }
+.ph-case-back, .ph-case-cover, .ph-case-inside { position: absolute; inset: 0; border-radius: 5px; overflow: hidden; }
+.ph-case-back { background: #0f1117; box-shadow: inset 0 0 0 3px #232733, inset 0 0 0 4px rgba(255,255,255,.07); }
+.ph-case-front { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; transition: transform .85s cubic-bezier(.3,.7,.2,1); }
+.ph-case.is-open .ph-case-front { transform: rotateY(-180deg); }
+.ph-case-cover, .ph-case-inside { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.ph-case-cover { box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset 5px 0 8px -4px rgba(255,255,255,.25); }
+.ph-case-cover img, .ph-man-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.ph-case-fb { position: absolute; inset: 0; display: grid; place-items: center; padding: 0.8rem; text-align: center; font-size: 1rem; line-height: 1.2; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+/* The inside of the cover (the left side once it is open): a booklet in its holder. */
+.ph-case-inside { transform: rotateY(180deg); background: #14161d; box-shadow: inset 0 0 0 3px #232733, inset 0 0 0 4px rgba(255,255,255,.07); }
+.ph-manual { position: absolute; inset: 6% 8%; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.6rem; background: linear-gradient(180deg, #f6f2e7, #e6e0d0); color: #2a2620; border-radius: 3px; box-shadow: 0 4px 10px rgba(0,0,0,.5), 2px 0 0 rgba(0,0,0,.12); overflow: hidden; }
+.ph-man-cover { position: relative; flex: 0 0 38%; border-radius: 2px; overflow: hidden; }
+.ph-manual b { font-size: 0.78rem; line-height: 1.2; letter-spacing: .02em; }
+.ph-manual i { display: block; height: 0.32rem; border-radius: 2px; background: rgba(40,34,26,.22); }
+.ph-manual i:nth-of-type(odd) { width: 92%; } .ph-manual i:nth-of-type(even) { width: 76%; }
+/* The back of the case (the right side once it is open): the tray, with the disc on its hub. */
+.ph-tray { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #1b1e28 0 22%, #14161d 23% 100%); }
+.ph-disc { position: absolute; left: 50%; top: 50%; width: 86%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle, transparent 0 17%, rgba(0,0,0,.28) 17.5% 18.5%, transparent 19%), conic-gradient(from 25deg, #eef1f6, #b6bfce, #fafbfd, #9ea9bc, #eef1f6 40%, #b0b9c9, #f7f9fc, #a3aec1, #eef1f6);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.35), 0 3px 10px rgba(0,0,0,.6); }
+.ph-disc::before { content: ''; position: absolute; inset: 31%; border-radius: 50%; background: radial-gradient(circle, #14161d 0 22%, transparent 23%), color-mix(in srgb, var(--c) 55%, #fff); opacity: .9; }
+.ph-disc::after { content: ''; position: absolute; inset: 44%; border-radius: 50%; background: #14161d; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
+.ph-disc span { position: absolute; top: 22%; font-size: 0.62rem; font-weight: 800; letter-spacing: .12em; color: #3b4254; }
+@media (prefers-reduced-motion: reduce) { .ph-case-slide, .ph-case-front { transition: none; } }

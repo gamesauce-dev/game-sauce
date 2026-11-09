@@ -344,7 +344,7 @@ test('Physical tiles are the Library\'s standard tile (one size, the cover fills
 
 test('on the shelf, clicking a pulled-out cover puts it back: the spine slides home and the details window closes', () => {
   const ph = read('public/physical.js');
-  assert.match(ph, /if \(S\.view === 'shelf' && S\.openId === id && tile\.classList\.contains\('is-open'\)\) \{ ctx\.closeDrawer\(\); return; \}/);
+  assert.ok(ph.includes("if (S.view === 'shelf' && S.openId === id && tile.classList.contains('is-open')) {") && /ctx\.closeDrawer\(\); return;\s+\}/.test(ph), 'a game that is not a disc case goes back at once');
   // closing the window is what puts the spine back (it clears the open spine and slides the shelf back)
   const fo = ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading'));
   assert.match(fo, /remove\('nav-current', 'is-open'\)/); assert.match(fo, /slideShelfBack\(\)/);
@@ -366,4 +366,20 @@ test('the shelves do not re-pack or jump when a game is opened or put back, even
   // opening and putting back never redraw: they only mark the spine (the redraw paths above are the only callers of renderShelf)
   const open = ph.slice(ph.indexOf('function pullOut'), ph.indexOf('function markCurrent'));
   assert.doesNotMatch(open, /renderShelf\(/); assert.doesNotMatch(ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading')), /renderShelf\(/);
+});
+
+
+test('shelf, disc cases (PS2 to PS5, Xbox to Series X|S): the pulled-out cover comes to the front, then opens (manual left, disc right); any other spine, or the open case, puts it back', () => {
+  const ph = read('public/physical.js'), css = read('public/physical.css');
+  assert.ok(ph.includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries']);"), 'exactly the disc-based platforms asked for');
+  assert.ok(ph.includes('if (g && isDisc(g.platform) && CASE.id !== id) { showCase(id); return; }'), 'step 2: the pulled-out cover is clicked');
+  assert.ok(ph.includes("el.addEventListener('click', advanceCase)") && ph.includes("CASE.el.classList.add('is-open')"), 'step 3: the case in front is clicked and opens');
+  assert.ok(/else ctx\.closeDrawer\(\);\s+\/\/ closing the details window puts the spine back too/.test(ph), 'the open case, clicked, goes back');
+  assert.ok(ph.includes('if (CASE.id != null && CASE.id !== id) closeCase(true);'), 'another spine puts it back at any stage');
+  const fo = ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading'));
+  assert.match(fo, /closeCase\(true\)/); assert.ok(ph.includes('if (changed) closeCase(false);'), 'and so do closing the window and leaving the shelf view');
+  // the open case: the cover swings away on its left edge, the manual is inside it (left), the disc is in the tray behind (right)
+  for (const f of ['.ph-case.is-open .ph-case-front { transform: rotateY(-180deg); }', '.ph-case-inside { transform: rotateY(180deg);', '.ph-manual {', '.ph-disc {', '.ph-tray {']) assert.ok(css.includes(f), f);
+  assert.ok(css.includes('.ph-case.is-open .ph-case-slide { transform: translateX(calc(var(--cw) / 2)); }'), 'the open pair is centred');
+  assert.ok(/\.ph-case \{[^}]*z-index: 45;/.test(css), 'above the dimmed page, under the details window');
 });

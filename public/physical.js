@@ -43,7 +43,7 @@ export function initPhysical(c) {
 export const isOpen = () => S.openId != null;
 export const openIdNow = () => S.openId;
 export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
-export function forgetOpen() { lastAdd = { platform: '', region: '' }; S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
+export function forgetOpen() { lastAdd = { platform: '', region: '' }; closeCase(true); S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
 
 /* ───────────── loading ───────────── */
 
@@ -210,7 +210,7 @@ function onClick(e) {
     if (dn) { S.density = dn.dataset.phDensity; store.set('density', S.density); }
     const next = vw ? 'shelf' : 'tiles';
     store.set('view', next);
-    const changed = next !== S.view; S.view = next; paintToolbar();
+    const changed = next !== S.view; S.view = next; paintToolbar(); if (changed) closeCase(false);
     if (!S.items.length) return;
     if (changed) { const sc = $('#ph-scroll'); if (S.view === 'shelf') renderShelf(); else renderTiles(true); sc.scrollTop = 0; if (S.openId != null) markCurrent(true); }
     else $('#ph-tiles').classList.toggle('compact', S.density === 'compact');
@@ -227,7 +227,12 @@ function onClick(e) {
   if (!tile) return;
   const id = Number(tile.dataset.phId);
   // On the shelf, a spine that is already pulled out (showing its cover) goes back when it is clicked again: the details window closes and the spine slides home.
-  if (S.view === 'shelf' && S.openId === id && tile.classList.contains('is-open')) { ctx.closeDrawer(); return; }
+  // (A disc case has more steps first: to the front, then open; see "disc cases" below.)
+  if (S.view === 'shelf' && S.openId === id && tile.classList.contains('is-open')) {
+    const g = S.byId.get(id);
+    if (g && isDisc(g.platform) && CASE.id !== id) { showCase(id); return; }   // a disc case: its cover is clicked to bring it to the front
+    ctx.closeDrawer(); return;
+  }
   openDetail(id);
 }
 
@@ -400,8 +405,10 @@ function drawRows(count) {
 
 /* The open game's spine is pulled out and shows its cover (loaded only now: a shelf of thousands must not fetch thousands of pictures). */
 function pullOut(id, scroll) {
+  if (CASE.id != null && CASE.id !== id) closeCase(true);   // any other spine puts the case in front (or open) back on the shelf
   const prev = $('.ph-spine.is-open'); if (prev && Number(prev.dataset.phId) !== id) prev.classList.remove('is-open');
   const el = $(`.ph-spine[data-ph-id="${id}"]`); if (!el) return;
+  el.classList.toggle('is-fore', CASE.id === id);
   const g = S.byId.get(id), face = $('.ph-face', el);
   if (g?.cover_url && face && !$('img', face)) {
     const img = new Image(); img.alt = ''; img.onload = () => face.classList.add('has-img'); img.onerror = () => img.remove(); img.src = g.cover_url; face.prepend(img);
@@ -409,6 +416,66 @@ function pullOut(id, scroll) {
   requestAnimationFrame(() => el.classList.add('is-open'));
   if (scroll) el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   slideShelfClear(el);
+}
+
+/* ───────────── disc cases: in front, then open ─────────────
+   Boxed discs (PlayStation 2 to 5, Xbox to Series X|S) have two more steps on the shelf. Click the spine: it is pulled out and shows its cover (as for every game).
+   Click that cover: the whole case comes to the front. Click it again: the case opens, the manual on the left and the disc in its tray on the right.
+   Clicking any other spine, or the open case, puts it back on the shelf. (There is no real manual or disc picture to show, so both are drawn.) */
+const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries']);
+const isDisc = (slug) => DISC.has(slug);
+const CASE = { el: null, id: null, open: false };
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function caseHtml(g) {
+  const col = accentOf(g.platform), p = platOf(g.platform);
+  const pic = g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : '';
+  const tone = `linear-gradient(160deg,${esc(col)},#12141a)`;
+  return `<div class="ph-case-slide">
+    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span></div></div></div>
+    <div class="ph-case-front">
+      <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
+      <div class="ph-case-inside"><div class="ph-manual"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i></div></div>
+    </div></div>`;
+}
+
+function showCase(id) {
+  closeCase(false);
+  const g = S.byId.get(id), spine = $(`.ph-spine[data-ph-id="${id}"]`), scroll = $('#ph-scroll');
+  if (!g || !spine || !scroll) return;
+  const sr = spine.getBoundingClientRect(), r = scroll.getBoundingClientRect(), drawer = $('#drawer');
+  const covered = ctx.pinned() || drawer.classList.contains('hidden') ? 0 : drawer.getBoundingClientRect().width;   // the room the details window takes
+  const left = r.left, right = r.right - covered, top = Math.max(r.top, 0), bottom = Math.min(r.bottom, innerHeight);
+  const ar = Number(g.cover_ar) > 0 ? Math.min(0.95, Math.max(0.55, Number(g.cover_ar))) : 0.72;   // width / height of the cover
+  const h = Math.round(Math.max(200, Math.min((bottom - top) * 0.8, 480, ((right - left) * 0.9) / (2 * ar))));   // opened, the case is two covers wide
+  const w = Math.round(h * ar), cx = (left + right) / 2, cy = (top + bottom) / 2;
+  const el = document.createElement('div');
+  el.id = 'ph-case'; el.className = 'ph-case'; el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${g.title}: open the case`);
+  el.style.cssText = `--cw:${w}px;--ch:${h}px;left:${Math.round(cx - w / 2)}px;top:${Math.round(cy - h / 2)}px`;
+  el.innerHTML = caseHtml(g);
+  el.addEventListener('click', advanceCase);
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); } });
+  document.body.append(el);
+  CASE.el = el; CASE.id = id; CASE.open = false;
+  spine.classList.add('is-fore');
+  if (!reducedMotion()) el.animate([{ transform: `translate(${sr.left + sr.width / 2 - cx}px, ${sr.top + sr.height / 2 - cy}px) scale(${sr.width / w}, ${sr.height / h})`, opacity: 0.6 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  el.focus({ preventScroll: true });
+}
+
+/** Another click on the case in front: open it; on the open case: put everything back on the shelf. */
+function advanceCase() {
+  if (!CASE.el) return;
+  if (!CASE.open) { CASE.open = true; CASE.el.classList.add('is-open'); CASE.el.setAttribute('aria-label', 'Put the case back on the shelf'); }
+  else ctx.closeDrawer();   // closing the details window puts the spine back too (forgetOpen)
+}
+
+function closeCase(animate) {
+  const el = CASE.el, id = CASE.id;
+  CASE.el = null; CASE.id = null; CASE.open = false;
+  if (id != null) $(`.ph-spine[data-ph-id="${id}"]`)?.classList.remove('is-fore');
+  if (!el) return;
+  if (animate && !reducedMotion()) { const a = el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.9)' }], { duration: 220, easing: 'ease-in' }); a.onfinish = () => el.remove(); a.oncancel = () => el.remove(); }
+  else el.remove();
 }
 
 /* The details window slides in over the right-hand side of the page. A spine standing under it would be pulled out where nobody can see it, so the
