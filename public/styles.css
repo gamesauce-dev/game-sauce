@@ -874,6 +874,8 @@ button.result-row:hover { border-color: var(--accent); }
    1. The title box reuses .search, whose left padding makes room for a magnifier
       icon that this box doesn't have — that was the indent. */
 #identify-q { padding-left: 0.8571rem; }
+#dg-id-q { padding-left: 0.7143rem; }
+#dg-id-prov, #dg-id-plat, #dg-edit select, #dg-add select { padding-left: calc(0.7143rem - 4px); }
 /*  2. Long candidate names must wrap inside the drawer, never widen it. Grid and flex
       children default to min-width:auto, so one long unbroken name stretched the track
       and produced the horizontal scrollbar. */
