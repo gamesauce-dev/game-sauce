@@ -313,7 +313,7 @@ export function openCarousel(host) {
   off = close;
 
   // Steam games with their Play button on come in next to the platforms (Digital's own list; not for play-only accounts)
-  if (!host.user()?.play_only) host.api('/digital/games?store=steam&installed=1&sort=name').then((d) => { st.steam = d.items || []; if (st.steam.length && root) { drawFams(); drawSubs(); } }).catch(() => { /* no Steam, or no Digital: the platforms are all there is */ });
+  if (!host.user()?.play_only) host.api('/digital/games?store=steam&installed=1&sort=name').then((d) => { st.steam = d.items || []; if (st.steam.length && root) { drawFams(); drawSubs(); if (!st.plat || host.start?.platform === STEAM) chooseFam('Steam'); } else if (host.start?.platform === STEAM && root && !st.plat) { /* no Steam games: the platforms stay */ } }).catch(() => { /* no Steam, or no Digital: the platforms are all there is */ });
 
   host.api('/prefs').then((p) => { const lp = parseLp(p); if (lp) { st.lp = lp.platforms; if (root) { paintPc(); reload(); } } }).catch(() => {});
   paintPc();

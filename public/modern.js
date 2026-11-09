@@ -21,6 +21,7 @@ const NAV = [
   { view: 'digital', icon: 'digital-library', label: 'Digital Library' },
   { view: 'physical', icon: 'physical-shelf', label: 'Physical Library' },
   { view: 'collections', icon: 'collection', label: 'Collections' },
+  { view: 'carousel', icon: 'carousel', label: 'Carousel' },
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
@@ -145,6 +146,7 @@ function onBarClick(e) {
     const v = nav.dataset.mview;
     // Choosing Home or Library means "start fresh": the search box, platform picks and every filter are cleared first. (Other pages keep theirs.)
     if (v === 'home' || v === 'library') { chipFamily = null; ctx.resetDigital?.(); ctx.resetPhysical?.(); ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
+    if (v === 'carousel') { ctx.openCarousel?.(); return; }   // not a page: the full-screen carousel opens over whatever is showing
     go(v); return;
   }
   if (e.target.closest('#mb-theme')) { applyTheme(theme() === 'light' ? 'dark' : 'light'); return; }

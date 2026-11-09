@@ -19,7 +19,7 @@ test('carousel: the arc puts the middle cover in front and its neighbours furthe
 test('carousel: it opens from the Library bar in Classic and Modern, with its own stylesheet and icon', () => {
   const html = read('public/index.html'), app = read('public/app.js'), modern = read('public/modern.js');
   assert.ok(html.includes('id="open-carousel"') && html.includes('/carousel.css'));
-  assert.ok(app.includes("import * as carousel from './carousel.js'") && app.includes("closest('#open-carousel')") && app.includes('carousel.openCarousel('));
+  assert.ok(app.includes("import * as carousel from './carousel.js'") && app.includes("#open-carousel, [data-open=\"carousel\"]") && app.includes('carousel.openCarousel('));
   assert.ok(modern.includes('id="tl-carousel"') && modern.includes("q('#open-carousel')?.click()") && modern.includes("'carousel'"));
   assert.ok(fs.existsSync(new URL('../public/modern/icons/carousel.svg', import.meta.url)));
 });
@@ -67,4 +67,12 @@ test('carousel: the controller can choose chips (up from the covers), and both w
   assert.ok(js.includes("preferred() === 'local' ? playLocal(g) : openBrowser(g)"), 'a game that can be played both ways uses the preferred one');
   assert.ok(pad.includes("cvPad(root, 'browser')") && pad.includes("cvPad(root, 'local')"), 'X plays in the browser, Y on this PC');
   assert.ok(/\.cv-chip \{[^}]*color-mix\(in srgb, var\(--c\) 18%/.test(css.replace(/\r?\n/g, ' ')), 'a chip is tinted with its own platform colour, not grey');
+});
+
+test('carousel: it has its own entry after Collections (Modern top bar and Classic sidebar), opens over any page, and starts on Steam when you come from Digital', () => {
+  const html = read('public/index.html'), modern = read('public/modern.js'), app = read('public/app.js');
+  assert.ok(html.indexOf('data-view="collections"') < html.indexOf('data-open="carousel"') && html.indexOf('data-open="carousel"') < html.indexOf('data-view="sources"'), 'Classic: after Collections');
+  assert.ok(modern.indexOf("view: 'collections'") < modern.indexOf("view: 'carousel'") && modern.indexOf("view: 'carousel'") < modern.indexOf("view: 'sources'"), 'Modern: after Collections');
+  assert.ok(modern.includes("if (v === 'carousel') { ctx.openCarousel?.(); return; }") && modern.includes('openCarousel'), 'it is not a page: it opens over the current one');
+  assert.ok(app.includes('function openCarouselView()') && app.includes("state.view === 'digital' ? 'steam:installed'") && app.includes('[data-open="carousel"]'));
 });

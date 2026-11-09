@@ -5,7 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Added
-- **Cover carousel** (Library bar → Carousel): a full-screen way to browse. Family chips along the top, the family's platforms under them, and the games as covers on a gentle arc with the chosen one in front. Scroll, drag, swipe or use the arrow keys; Enter plays it in the browser, or on your own emulator when it cannot be played there. The backdrop is the family's colour, drifting slowly, tinted by the middle cover.
+- **Cover carousel** (its own entry after Collections in the top bar and the sidebar, and a button in the Library bar): a full-screen way to browse your ROMs and Steam games, opening over any page (from Digital it starts on Steam). Family chips along the top, the family's platforms under them, and the games as covers on a gentle arc with the chosen one in front. Scroll, drag, swipe or use the arrow keys; Enter plays it in the browser, or on your own emulator when it cannot be played there. The backdrop is the family's colour, drifting slowly, tinted by the middle cover.
 
 - **Steam in the carousel:** Steam games with their Play button on are a chip of their own, and Play opens them in Steam.
 - **Only games you can start.** The carousel hides games this PC cannot launch. **Check my PC** has the launcher report which platforms have an emulator set up (platform names only, never a path), and the carousel then shows games that play in the browser plus every game of those platforms. Until a PC has reported, everything is shown.

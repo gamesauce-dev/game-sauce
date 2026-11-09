@@ -312,9 +312,14 @@ document.addEventListener('click', (e) => {
 });
 
 // The cover carousel (full screen): opened from the Library bar, in Classic and in Modern.
+// It starts where you are: the platform the Library shows, or the Steam games when you come from Digital.
+function openCarouselView() {
+  const start = state.view === 'digital' ? 'steam:installed' : (state.platform !== 'all' ? state.platform : null);
+  carousel.openCarousel({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, start: { platform: start } });
+}
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('#open-carousel')) return;
-  carousel.openCarousel({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, start: { platform: state.platform !== 'all' ? state.platform : null } });
+  if (!e.target.closest('#open-carousel, [data-open="carousel"]')) return;
+  openCarouselView();
 });
 
 /* ─────────────────────────── sidebar ─────────────────────────── */
@@ -3867,7 +3872,7 @@ function showApp(user, { restore = false } = {}) {
   physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON });
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, user: () => authState.user });
-  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive });
+  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView });
   api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
