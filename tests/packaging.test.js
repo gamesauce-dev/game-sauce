@@ -173,3 +173,10 @@ test('the bundle keeps only the database library file for its own computer (smal
   assert.ok(s.includes("'better-sqlite3', 'prebuilds'") && s.includes('`${process.platform}-${arch}.node`') && s.includes('fs.rmSync(path.join(prebuilds, f)'));
   assert.ok(s.indexOf("'better-sqlite3', 'prebuilds'") < s.indexOf('the bundled Node cannot load the database library'), 'pruned first, then proven to load');
 });
+
+test('desktop: Switch server goes back to the app\'s own choice screen at a fixed address (it was once read before the page had loaded, giving a blank window)', () => {
+  const rs = read('desktop/src-tauri/src/main.rs');
+  assert.ok(rs.includes('const APP_HOME: &str = "http://tauri.localhost/";') && rs.includes('const APP_HOME: &str = "tauri://localhost/";'));
+  assert.ok(!rs.includes('home_url'), 'no start page remembered from setup');
+  assert.ok(rs.includes('serde_json::to_string(APP_HOME)') && rs.includes('GAMESAUCE_TEST_SWITCH_MS'));
+});

@@ -34,7 +34,6 @@ struct Config {
 
 struct AppState {
     server: Mutex<Option<Child>>,
-    home_url: Mutex<String>, // the app's own start page, to come back to when switching server
     status: Mutex<Option<MenuItem<Wry>>>, // the line in the tray menu that says where game-sauce is running (Windows and Linux)
 }
 
@@ -90,6 +89,13 @@ fn server_dir(app: &AppHandle) -> PathBuf {
     }
     clean(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../server-stage/server"))
 }
+
+/// The app's own start page (the choice screen), where "Switch server" goes back to. Windows serves the app's pages from http://tauri.localhost, the other systems from tauri://localhost.
+/// (It used to be read from the window while starting, before the page had loaded, which gave a blank window.)
+#[cfg(windows)]
+const APP_HOME: &str = "http://tauri.localhost/";
+#[cfg(not(windows))]
+const APP_HOME: &str = "tauri://localhost/";
 
 fn stop_server(state: &AppState) {
     if let Some(mut child) = state.server.lock().unwrap().take() {
@@ -204,8 +210,7 @@ fn handle_menu(app: &AppHandle, id: &str) {
             set_status(app, "Choose a server");
             show_main(app);
             if let Some(w) = app.get_webview_window("main") {
-                let home = st.home_url.lock().unwrap().clone();
-                let _ = w.eval(&format!("location.replace({})", serde_json::to_string(&home).unwrap_or_default()));
+                let _ = w.eval(&format!("location.replace({})", serde_json::to_string(APP_HOME).unwrap_or_default()));
             }
         }
         "data" => open_folder(data_home(app)),
@@ -263,13 +268,15 @@ fn open_folder(path: PathBuf) {
 
 fn main() {
     tauri::Builder::default()
-        .manage(AppState { server: Mutex::new(None), home_url: Mutex::new(String::new()), status: Mutex::new(None) })
+        .manage(AppState { server: Mutex::new(None), status: Mutex::new(None) })
         .invoke_handler(tauri::generate_handler![get_config, use_local, use_remote])
         .setup(|app| {
-            if let Some(w) = app.get_webview_window("main") {
-                if let Ok(u) = w.url() {
-                    *app.state::<AppState>().home_url.lock().unwrap() = u.to_string();
-                }
+            if let Some(ms) = std::env::var("GAMESAUCE_TEST_SWITCH_MS").ok().and_then(|v| v.parse::<u64>().ok()) {
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(ms));
+                    handle_menu(&handle, "switch");
+                });
             }
             let switch = MenuItemBuilder::with_id("switch", "Switch server…").build(app)?;
             let data = MenuItemBuilder::with_id("data", "Open my data folder").build(app)?;

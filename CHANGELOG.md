@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **Desktop app: Switch server left a blank window on Windows.** It now returns to the choice screen.
+- **The Linux AppImage now builds** (the database library's files for other systems, such as Alpine, confused the AppImage tool), and every download is a few MB smaller because each now carries only the database file for its own system.
+
 ### Added
 - **Package manager entries** for winget (the Windows desktop app), Scoop (the Windows portable download) and Homebrew (the Mac desktop app), written from a release's own checksums by `scripts/make-package-manifests.mjs`, with a guide to submitting each (`docs/PACKAGES.md`), including Unraid's Community Applications.
 
