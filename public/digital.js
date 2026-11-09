@@ -258,7 +258,10 @@ export async function loadDigital(keep = false) {
       <div class="card-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
         <div class="card-fallback">${esc(initials(g.name))}</div>
         ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
-        <span class="card-badge dg-badge" data-store="${esc(g.store)}"${g.store !== 'steam' ? ` data-platform="${esc(g.platform || (g.store === 'xbox' ? 'xbox' : ''))}"` : ''} title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>
+        ${steam
+          ? `<span class="card-badge dg-badge" data-store="${esc(g.store)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>`
+          // A console game's badge is the same as in the Library and Physical: the platform's colour (Settings > Platforms) with its short name.
+          : `<span class="card-badge ph-badge" style="background:${esc(libAccent(g.platform) || st.bg)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-txt">${esc(st.short)}</span></span>`}
         ${g.launch_url ? `<a class="card-playbtn dg-launch" href="${esc(g.launch_url)}" title="Open in Steam (works on a PC that has Steam installed)" aria-label="Open ${esc(g.name)} in Steam">▶</a>` : ''}
         <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-dg-mark="favourite" data-value="${g.favourite ? 0 : 1}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ctx.ICON.starFill : ctx.ICON.star}</button>
         <button type="button" class="card-hide" data-dg-mark="hidden" data-value="${g.hidden ? 0 : 1}" tabindex="-1" title="${g.hidden ? 'Unhide' : 'Hide from your Digital list'}" aria-label="${g.hidden ? 'Unhide' : 'Hide'}">${g.hidden ? ctx.ICON.eye : ctx.ICON.eyeOff}</button>

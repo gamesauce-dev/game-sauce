@@ -156,9 +156,10 @@ test('page: chips, badges, details window and the CSV tools box', () => {
   assert.match(html, /id="dgc-file"/); assert.match(html, /id="dgc-preview"/); assert.match(html, /id="dgc-apply"/); assert.match(html, /id="dgc-replace"/);
   assert.match(app, /function initConsoleImport\(/); assert.match(app, /\/digital\/consoles\/import/);
   assert.match(dgjs, /data-store="\$\{esc\(g\.store\)\}"/);
+  assert.ok(dgjs.includes('card-badge ph-badge" style="background:${esc(libAccent(g.platform) || st.bg)}"'), 'a console game badge is the same as the Library and Physical badge: the platform colour with its short name');
   assert.match(dgjs, /playstation: \{ label: 'PlayStation'/); assert.match(dgjs, /nintendo: \{ label: 'Nintendo'/);
   assert.match(dgjs, /\/digital\/consoles\/details/);
-  assert.match(css, /\.dg-badge:not\(\[data-store="steam"\]\)/);
+  assert.doesNotMatch(css, /\.dg-badge:not\(\[data-store="steam"\]\)/, 'no separate pill style for console badges any more');
 });
 
 test('Modern: the import box buttons are icons (Preview reuses preview-2, Import games uses csv-import); the icon follows the theme colour', () => {
@@ -188,8 +189,7 @@ test('the badges: XBOX, XBOX 360, XBOX ONE and X|S on the one Xbox chip', () => 
   assert.match(app, /xsx: \{ store: 'xbox', label: 'Xbox Series X\|S', short: 'X\|S'/);
   assert.match(app, /x360: \{ store: 'xbox', label: 'Xbox 360', short: 'XBOX 360'/);
   assert.match(app, /xone: \{ store: 'xbox', label: 'Xbox One', short: 'XBOX ONE'/);
-  assert.match(app, /data-platform="\$\{esc\(g\.platform \|\| \(g\.store === 'xbox' \? 'xbox' : ''\)\)\}"/);
-  for (const f of ['public/styles.css', 'public/modern.css']) for (const p of ['x360', 'xone', 'xsx']) assert.match(read(f), new RegExp(`data-platform="${p}"`), f);
+  assert.ok(app.includes('libAccent(g.platform) || st.bg'), 'every console badge takes its colour from the platform (Settings > Platforms), as the Library and Physical do');
   assert.match(read('public/index.html'), /<code>Platform<\/code>, <code>Game<\/code> and <code>Country<\/code>/);
 });
 
@@ -199,7 +199,6 @@ test('PlayStation and Nintendo: one chip each, a badge per console, each console
     assert.match(app, new RegExp(`${k}: \\{ store: '[a-z]+', label: '[^']+', short: '${short}'`), k);
     assert.equal(consoles.CONSOLE_PLATFORMS[k.replace(/'/g, '')].badge, short);
   }
-  for (const f of ['public/styles.css', 'public/modern.css']) for (const p of ['ps3', 'ps4', 'ps5', 'switch2', 'switch', 'wii', 'wiiu', '3ds', 'ds']) assert.match(read(f), new RegExp(`data-platform="${p}"`), f + ' ' + p);
   const asked = {};
   for (const [store, p] of [['playstation', 'ps3'], ['nintendo', 'switch2'], ['nintendo', 'wiiu'], ['nintendo', '3ds'], ['nintendo', 'ds'], ['nintendo', 'wii']]) {
     asked[p] = []; await consoles.lookupConsoleGame(store, 'X', async (q) => { asked[p].push(q.platform.slug); return null; }, p);

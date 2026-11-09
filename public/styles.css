@@ -1660,21 +1660,6 @@ body.play-only #empty .empty-add-text { display: none; }
 /* The Digital tile's store badge: the plain word in Classic. */
 .dg-badge { background: #1b2838cc; }
 .dg-badge-ico { display: none; }
-.dg-badge[data-store="playstation"] { background: #0070d1cc; }
-.dg-badge[data-store="nintendo"] { background: #e60012cc; }
-.dg-badge[data-store="xbox"] { background: #107c10cc; }
-.dg-badge[data-platform="ps3"] { background: #283593cc; }
-.dg-badge[data-platform="ps4"] { background: #00439ccc; }
-.dg-badge[data-platform="ps5"] { background: #0070d1cc; }
-.dg-badge[data-platform="switch2"] { background: #b3000fcc; }
-.dg-badge[data-platform="switch"] { background: #e60012cc; }
-.dg-badge[data-platform="wii"] { background: #2b9fd9cc; }
-.dg-badge[data-platform="wiiu"] { background: #0288d1cc; }
-.dg-badge[data-platform="3ds"] { background: #d32f2fcc; }
-.dg-badge[data-platform="ds"] { background: #546e7acc; }
-.dg-badge[data-platform="x360"] { background: #4a7c0fcc; }
-.dg-badge[data-platform="xone"] { background: #2e7d32cc; }
-.dg-badge[data-platform="xsx"] { background: #1b5e20cc; }
 .dg-note { margin: 0 0 1rem; padding: 0.6rem 0.9rem; border: 1px solid var(--line); border-radius: 0.65rem; color: var(--muted); }
 
 /* Sign-in card: the wide logo (controller, joystick and name) with the tagline under it. */
@@ -1729,21 +1714,6 @@ body.play-only #empty .empty-add-text { display: none; }
 
 /* Digital tiles: no blur behind the small buttons (a blur per button is what froze iPhones and iPads); the buttons are just more opaque. */
 .dg-card .card-fav, .dg-card .card-hide, .dg-card .card-badge, .dg-card .dg-hours { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 9, 14, .86); }
-.dg-card .card-badge.dg-badge[data-store="playstation"] { background: #0070d1; }
-.dg-card .card-badge.dg-badge[data-store="nintendo"] { background: #e60012; }
-.dg-card .card-badge.dg-badge[data-store="xbox"] { background: #107c10; }
-.dg-card .card-badge.dg-badge[data-platform="ps3"] { background: #283593; }
-.dg-card .card-badge.dg-badge[data-platform="ps4"] { background: #00439c; }
-.dg-card .card-badge.dg-badge[data-platform="ps5"] { background: #0070d1; }
-.dg-card .card-badge.dg-badge[data-platform="switch2"] { background: #b3000f; }
-.dg-card .card-badge.dg-badge[data-platform="switch"] { background: #e60012; }
-.dg-card .card-badge.dg-badge[data-platform="wii"] { background: #2b9fd9; }
-.dg-card .card-badge.dg-badge[data-platform="wiiu"] { background: #0288d1; }
-.dg-card .card-badge.dg-badge[data-platform="3ds"] { background: #d32f2f; }
-.dg-card .card-badge.dg-badge[data-platform="ds"] { background: #546e7a; }
-.dg-card .card-badge.dg-badge[data-platform="x360"] { background: #4a7c0f; }
-.dg-card .card-badge.dg-badge[data-platform="xone"] { background: #2e7d32; }
-.dg-card .card-badge.dg-badge[data-platform="xsx"] { background: #1b5e20; }
 .dg-card { content-visibility: auto; contain-intrinsic-size: auto 17rem; }
 
 /* The disc / cartridge switch on a console tile (bottom left): dim until the game is marked as owned physically. */

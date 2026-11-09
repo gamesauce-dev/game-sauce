@@ -17,7 +17,8 @@ use std::{
 };
 use tauri::{
     menu::{MenuBuilder, MenuItem, MenuItemBuilder},
-    AppHandle, Manager, RunEvent, Wry,
+    webview::NewWindowResponse,
+    AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder, Wry,
 };
 #[cfg(target_os = "macos")]
 use tauri::menu::SubmenuBuilder;
@@ -260,6 +261,16 @@ async fn use_remote(app: AppHandle, url: String) -> Result<String, String> {
     Ok(url)
 }
 
+/// A link that wants a new window (target="_blank", window.open: the Steam and store pages, screenshots, the release page) opens in the person's own browser.
+/// Only web addresses are passed on. Without this the window would silently ignore the click.
+fn open_external(url: &tauri::Url) {
+    if !matches!(url.scheme(), "http" | "https") {
+        return;
+    }
+    let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+    let _ = Command::new(opener).arg(url.as_str()).spawn();
+}
+
 fn open_folder(path: PathBuf) {
     let _ = fs::create_dir_all(&path);
     let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
@@ -271,6 +282,16 @@ fn main() {
         .manage(AppState { server: Mutex::new(None), status: Mutex::new(None) })
         .invoke_handler(tauri::generate_handler![get_config, use_local, use_remote])
         .setup(|app| {
+            // The window is made here (not in tauri.conf.json) so that links meant for a new window can be handed to the browser.
+            WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+                .title("game-sauce")
+                .inner_size(1320.0, 860.0)
+                .min_inner_size(820.0, 560.0)
+                .on_new_window(|url, _features| {
+                    open_external(&url);
+                    NewWindowResponse::Deny
+                })
+                .build()?;
             if let Some(ms) = std::env::var("GAMESAUCE_TEST_SWITCH_MS").ok().and_then(|v| v.parse::<u64>().ok()) {
                 let handle = app.handle().clone();
                 std::thread::spawn(move || {
