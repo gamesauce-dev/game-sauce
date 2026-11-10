@@ -420,7 +420,8 @@ fn main() {
     // closing when a game starts or freezing on a busy page. Drawing without the DMA-BUF path avoids it and costs nothing visible.
     // (Set WEBKIT_DISABLE_DMABUF_RENDERER=0 before starting to turn it back on.)
     #[cfg(target_os = "linux")]
-    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+    // Only the AppImage carries its own copy of the web view; the .deb and .rpm use the computer's own, which matches its graphics drivers.
+    if std::env::var_os("APPIMAGE").is_some() && std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
     tauri::Builder::default()
