@@ -7,6 +7,8 @@
 //               <platform>/disc/[region/]<title>-01.png           -> disc       (disc games only)
 //   RetroBat    <system>/images/<rom name>-thumb.png              -> cover      (-image, -marquee ... are not box art and are left alone)
 //               <system>/manuals/<rom name>-manual.pdf            -> manual     (Physical only)
+//   Picked      the person says what the folder holds (covers, spines, discs or manuals) and, if they like, which platform: then every picture in it is that kind,
+//               whatever the folders are called (the platform is otherwise the nearest folder name that is one).
 //   Simple      <platform>/<kind folder>/[region/]<title ...>.png     the layout of most media packs (EmuMovies and others): the folder with the platform's name, a folder for
 //               each kind of picture (images, covers, box, front = cover; spines, spine = spine; discs, disc, cd = disc; manuals = manual), and optionally a region folder.
 //               Anything after the title in the file name ("(USA, Europe) (En,Fr)") is dropped; or the person says where the title ends ("cut at": a piece of text such as " (" or " - ").
@@ -120,6 +122,15 @@ export function classify(segs, fileName) {
   return null;
 }
 
+/** The person said what the folder holds (and maybe which platform): every picture (or PDF, for manuals) in it is that kind, whatever the folders are called. `platforms`: the folder names, nearest first, tried until one is a platform. */
+function forcedEntry(segs, fileName, force) {
+  const dot = fileName.lastIndexOf('.');
+  const ext = dot >= 0 ? fileName.slice(dot).toLowerCase() : '', base = dot >= 0 ? fileName.slice(0, dot) : fileName;
+  if (force.kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
+  const bracket = /\(([^)]*)\)/.exec(base);
+  return { layout: 'picked', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
+}
+
 /** The title part of a file name: everything before the first `cut` (when the person gave one), with a trailing -01 left for titleKey to ignore. */
 export function cutTitle(title, cut) {
   const t = String(title || ''), c = String(cut || '');
@@ -133,7 +144,7 @@ export function cutTitle(title, cut) {
 const scanCache = new Map();   // folder -> { at, result }
 const CACHE_MS = 5 * 60 * 1000;
 
-async function walk(root) {
+async function walk(root, force = null) {
   const files = []; let scanned = 0;
   const go = async (dir, depth, segs) => {
     if (depth > MAX_DEPTH || scanned > MAX_FILES) return;
@@ -143,7 +154,7 @@ async function walk(root) {
       if (it.name.startsWith('.')) continue;
       if (it.isSymbolicLink()) continue;   // never follow a link out of the folder
       if (it.isDirectory()) await go(path.join(dir, it.name), depth + 1, [...segs, it.name.toLowerCase()]);
-      else if (it.isFile()) { scanned++; const c = classify(segs, it.name); if (c) files.push({ ...c, file: path.join(dir, it.name) }); }
+      else if (it.isFile()) { scanned++; const c = force?.kind ? forcedEntry(segs, it.name, force) : classify(segs, it.name); if (c) files.push({ ...c, file: path.join(dir, it.name) }); }
     }
   };
   await go(root, 0, [path.basename(root).toLowerCase()]);   // the chosen folder's own name counts too (so a platform folder can be chosen on its own)
@@ -151,16 +162,17 @@ async function walk(root) {
 }
 
 /** Everything useful under one of the listed folders. Remembered for a few minutes so a preview and the import that follows do not scan twice. */
-export async function scanArtFolder(folder, { fresh = false } = {}) {
+export async function scanArtFolder(folder, { fresh = false, force = null } = {}) {
   const listed = getArtFolders().find((f) => f === folder);
   if (!listed) throw Object.assign(new Error('Choose one of the artwork folders the admin has listed.'), { status: 400 });
-  const hit = scanCache.get(listed);
+  const ckey = `${listed}\n${force?.kind || ''}\n${force?.platform || ''}`;
+  const hit = scanCache.get(ckey);
   if (!fresh && hit && Date.now() - hit.at < CACHE_MS) return hit.result;
   let ok = false; try { ok = (await fsp.stat(listed)).isDirectory(); } catch { /* missing */ }
   if (!ok) throw Object.assign(new Error('That folder is not available on the server right now.'), { status: 400 });
-  const { files, scanned } = await walk(listed);
+  const { files, scanned } = await walk(listed, force);
   const result = { files, scanned };
-  scanCache.set(listed, { at: Date.now(), result });
+  scanCache.set(ckey, { at: Date.now(), result });
   return result;
 }
 
@@ -190,8 +202,8 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
   const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0 };
   for (const e of scan.files) {
     if (!wanted.has(e.kind)) continue;
-    const slug = platOf(e.platform);
-    if (!slug) { unknownPlatforms.set(e.platform, (unknownPlatforms.get(e.platform) || 0) + 1); continue; }
+    const slug = e.platforms?.length ? (e.platforms.map(platOf).find(Boolean) || null) : platOf(e.platform);
+    if (!slug) { const nm = e.platforms?.length ? (e.platforms[0] || '(no folder)') : e.platform; unknownPlatforms.set(nm, (unknownPlatforms.get(nm) || 0) + 1); continue; }
     if (e.kind === 'disc' && !isDiscPlatform(slug)) continue;
     candidatesSeen[e.kind]++;
     const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
@@ -230,8 +242,9 @@ const publicPlan = (p, scan, folder) => ({
 });
 
 /** What an import would do (nothing is saved). */
-export async function previewArtImport(userId, { target, folder, replace = false, cut = '' }) {
-  const scan = await scanArtFolder(folder, { fresh: true });
+const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual'].includes(kind) ? { kind, platform: String(platform || '') } : null);
+export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '' }) {
+  const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
   return publicPlan(planArtImport(userId, scan, { target, replace, cut }), scan, folder);
 }
 
@@ -256,10 +269,10 @@ async function applyOne(userId, target, b) {
 }
 
 /** Start importing (returns at once; ask artJobStatus for progress). One run per person at a time. */
-export async function startArtImport(userId, { target, folder, replace = false, cut = '' }) {
+export async function startArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '' }) {
   const cur = jobs.get(userId);
   if (cur?.running) return artJobStatus(userId);
-  const scan = await scanArtFolder(folder);
+  const scan = await scanArtFolder(folder, { force: forceOf(kind, platform) });
   const plan = planArtImport(userId, scan, { target, replace, cut });
   const job = { ...blank(), running: true, target, total: plan.items.length, started_at: new Date().toISOString() };
   jobs.set(userId, job);

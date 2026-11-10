@@ -14,12 +14,17 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     <div class="panel" id="art-box" style="padding:12px;display:grid;gap:10px">
       <div id="art-add"></div>
       <label class="field" id="art-folder-row"><span>Folder to import from</span><select id="art-folder" class="select"></select></label>
+      <details id="art-pick"><summary>The folder names do not say what the pictures are? Tell me instead</summary>
+        <div style="display:grid;gap:10px;margin-top:8px">
+          <label class="field"><span>Everything in the folder is</span><select id="art-kind" class="select"><option value="">Work it out from the folder names</option>${kinds.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+          <label class="field"><span>for the platform</span><select id="art-plat" class="select"><option value="">Work it out from the folder names</option></select></label>
+        </div></details>
       <label class="field"><span>Where the game's name ends in the file name (optional)</span><input id="art-cut" placeholder="for example  ' ('  : \"Ace Combat 6 (USA, Japan) (En,Fr).png\" is read as Ace Combat 6" autocomplete="off" spellcheck="false" /></label>
       <label class="policy-row"><input type="checkbox" id="art-replace" /> <span>Replace pictures that are already there (the automatic ones only: your own are always kept)</span></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="art-preview" type="button">Preview</button><button class="btn btn-primary" id="art-apply" type="button" disabled>Import</button></div>
       <div id="art-result" style="margin:0"></div>
     </div>`;
-  const sel = $('#art-folder', body), res = $('#art-result', body), previewBtn = $('#art-preview', body), applyBtn = $('#art-apply', body), replace = $('#art-replace', body), cutBox = $('#art-cut', body);
+  const sel = $('#art-folder', body), res = $('#art-result', body), previewBtn = $('#art-preview', body), applyBtn = $('#art-apply', body), replace = $('#art-replace', body), cutBox = $('#art-cut', body), kindSel = $('#art-kind', body), platSel = $('#art-plat', body);
   let folders = [], can_edit = false;
   try { ({ folders, can_edit } = await ctx.api('/art/folders')); } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; previewBtn.disabled = true; return; }
   const usable = folders.filter((f) => f.exists);
@@ -30,9 +35,10 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     previewBtn.disabled = true; return;
   }
   sel.innerHTML = usable.map((f) => `<option value="${esc(f.path)}"${f.path === select ? ' selected' : ''}>${esc(f.path)}</option>`).join('');
-  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, apply }) });
+  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, kind: kindSel.value, platform: platSel.value, apply }) });
   const dirty = () => { applyBtn.disabled = true; res.innerHTML = ''; };
-  sel.onchange = dirty; replace.onchange = dirty; cutBox.oninput = dirty;
+  sel.onchange = dirty; replace.onchange = dirty; cutBox.oninput = dirty; kindSel.onchange = dirty; platSel.onchange = dirty;
+  ctx.api('/art/platforms').then((d) => { platSel.insertAdjacentHTML('beforeend', (d.items || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join('')); }).catch(() => { /* the folder names are enough */ });
 
   const showProgress = (s) => { res.innerHTML = `<p class="hint" style="margin:0"><span class="spin" aria-hidden="true"></span>Importing… ${n(s.done)} of ${n(s.total)}</p>`; };
   const showDone = (s) => {
@@ -40,14 +46,14 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     res.innerHTML = `<p style="margin:0"><b>Done.</b> ${parts.length ? `Imported ${parts.join(', ')}.` : 'Nothing needed importing.'}${s.failed ? ` ${n(s.failed)} could not be imported.` : ''}</p>`
       + (s.failures?.length ? `<ul class="hint" style="margin:6px 0 0 1.1rem">${s.failures.map((f) => `<li>${esc(f.title)} (${esc(f.kind)}): ${esc(f.reason)}</li>`).join('')}</ul>` : '')
       + (s.error ? `<p class="hint">${esc(s.error)}</p>` : '');
-    previewBtn.disabled = false; applyBtn.disabled = true; sel.disabled = false; replace.disabled = false;
+    previewBtn.disabled = false; applyBtn.disabled = true; sel.disabled = false; replace.disabled = false; kindSel.disabled = false; platSel.disabled = false;
     onDone();
   };
   const poll = async () => {
     try { const s = await ctx.api('/art/import/status'); if (s.running) { showProgress(s); setTimeout(poll, 1000); } else showDone(s); }
     catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; previewBtn.disabled = false; }
   };
-  const busy = (on) => { previewBtn.disabled = on; sel.disabled = on; replace.disabled = on; if (on) applyBtn.disabled = true; };
+  const busy = (on) => { previewBtn.disabled = on; sel.disabled = on; replace.disabled = on; kindSel.disabled = on; platSel.disabled = on; if (on) applyBtn.disabled = true; };
 
   previewBtn.onclick = async () => {
     busy(true); res.innerHTML = '<p class="hint" style="margin:0"><span class="spin" aria-hidden="true"></span>Looking through the folder…</p>';
@@ -62,7 +68,7 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
         ${total ? '' : '<p class="hint" style="margin:6px 0 0">Nothing to import: every match is already filled in.</p>'}`;
       applyBtn.disabled = total === 0;
     } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; }
-    finally { previewBtn.disabled = false; sel.disabled = false; replace.disabled = false; }
+    finally { previewBtn.disabled = false; sel.disabled = false; replace.disabled = false; kindSel.disabled = false; platSel.disabled = false; }
   };
   applyBtn.onclick = async () => {
     busy(true);

@@ -6,6 +6,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Changed
 - **The picture importer accepts the layout most media packs use** (EmuMovies and others): a folder named after the platform, a folder inside for each kind of picture (`images`, `covers`, `box` or `front` for covers; `spines`; `discs`, `disc` or `cd`; `manuals`), and optionally a region folder. LaunchBox and RetroBat folders are still recognised as before.
+- **Say what a folder holds** (new, under "The folder names do not say what the pictures are?" in the importer): pick covers, spines, discs or manuals, and optionally the platform, and every picture in the folder is imported as that, whatever its folders are called.
 - **"Where the game's name ends in the file name"** (new box in the importer): a piece of text such as `" ("`; everything before it is the game's name. Without it, anything in brackets is ignored as before.
 - **Region is only a tie-break** and no longer needs a region folder: it is also read from the brackets in the file name (`(USA)`, `(Europe)`, `(Japan)`).
 

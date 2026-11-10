@@ -184,3 +184,19 @@ test('the simple layout (a media pack): platform folder, a folder per kind of pi
   assert.equal(q.matched.cover, 0);
   assert.equal(row(g1.id).cover_path, null);
 });
+
+test('the pickers: the person says what a folder holds and which platform, whatever the folders are called', async () => {
+  const odd = path.join(TMP, 'art', 'Odd Pack');
+  const g = await add('xbox360', 'Halo 3');
+  put('Odd Pack/stuff/Halo 3 (USA).png', png(40, 400));
+  art.setArtFolders([...art.getArtFolders(), odd]);
+  assert.equal((await preview(odd)).body.files, 0, 'unknown folder names say nothing');
+  const bare = (await preview(odd, { kind: 'spine' })).body;
+  assert.equal(bare.files, 1); assert.equal(bare.matched.spine, 0, 'no platform could be read from "stuff" or "Odd Pack"');
+  assert.deepEqual(bare.unknown_platforms.map((u) => u.name), ['stuff']);
+  const withPlat = (await preview(odd, { kind: 'spine', platform: 'xbox360' })).body;
+  assert.deepEqual(withPlat.matched, { cover: 0, spine: 1, disc: 0, manual: 0 }); assert.equal(withPlat.will.spine, 1);
+  assert.equal(row(g.id).spine_path, null, 'a preview saves nothing');
+  assert.ok((await call('/api/art/platforms')).body.items.some((p) => p.slug === 'xbox360'));
+  assert.equal((await call('/api/art/platforms', { as: 'ann' })).status, 200, 'anyone may read the list');
+});
