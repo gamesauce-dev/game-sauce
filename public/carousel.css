@@ -116,3 +116,13 @@ body.gp-active .cv-pad-hint { display: flex; }
 .cv.on-chips .cv-card { filter: saturate(.85); }
 .cv-link { border: 0; background: none; cursor: pointer; font: inherit; font-size: .8rem; color: var(--ink2); text-decoration: underline; padding: 4px 8px; }
 .cv-link:hover { color: var(--ink); }
+
+/* Linux: the web view paints on the processor, so the costly extras go (the colours still change, the covers still arch) */
+.cv-lite .cv-blob { animation: none; }
+.cv-lite .cv-tint, .cv-lite .cv::after { transition: opacity .4s ease; }
+.cv-lite .cv-chip, .cv-lite .cv-close, .cv-lite .cv-btn, .cv-lite .cv-pc, .cv-lite .cv-sub { backdrop-filter: none; }
+.cv-lite .cv-card { transition: transform .22s ease-out, opacity .2s; }
+.cv-lite .cv-card .cv-face, .cv-lite .cv-card.mid .cv-face { box-shadow: 0 6px 14px rgba(30, 30, 60, .3); }
+.cv-lite .cv-card.mid .cv-face { box-shadow: 0 0 0 2px rgba(255, 255, 255, .92), 0 8px 18px rgba(30, 30, 60, .35); }
+.cv-lite .cv-card.mid .cv-face::after { animation: none; }
+.cv-lite .cv-subs.land .cv-sub { animation: none; }

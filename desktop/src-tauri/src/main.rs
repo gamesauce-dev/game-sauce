@@ -343,6 +343,36 @@ fn open_external(url: &tauri::Url) {
     let _ = Command::new(opener).arg(url.as_str()).spawn();
 }
 
+/// gamesauce:// (Play on this PC, Check my PC, Set up emulators) and steam:// links are not pages. The web view on Linux would try to load them
+/// and show "URL can't be shown", so they are caught here and handed to the launcher inside the app (or to the system for steam://).
+/// Returns true when the link was taken.
+fn handle_app_link(app: &AppHandle, url: &tauri::Url) -> bool {
+    match url.scheme() {
+        "gamesauce" => {
+            if let Some((exe, script)) = launcher_script(app) {
+                let mut cmd = Command::new(exe);
+                cmd.arg(script).arg(url.as_str()).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+                #[cfg(windows)]
+                {
+                    use std::os::windows::process::CommandExt;
+                    cmd.creation_flags(0x0800_0000);
+                }
+                let _ = cmd.spawn();
+            } else {
+                let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+                let _ = Command::new(opener).arg(url.as_str()).spawn();
+            }
+            true
+        }
+        "steam" => {
+            let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+            let _ = Command::new(opener).arg(url.as_str()).spawn();
+            true
+        }
+        _ => false,
+    }
+}
+
 fn open_folder(path: PathBuf) {
     let _ = fs::create_dir_all(&path);
     let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
@@ -362,8 +392,10 @@ fn main() {
         .invoke_handler(tauri::generate_handler![get_config, use_local, use_remote])
         .setup(|app| {
             // The window is made here (not in tauri.conf.json) so that links meant for a new window can be handed to the browser.
+            let nav_handle = app.handle().clone();
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                 .title("game-sauce")
+                .on_navigation(move |url| !handle_app_link(&nav_handle, url))
                 .inner_size(1320.0, 860.0)
                 .min_inner_size(820.0, 560.0)
                 .on_new_window(|url, _features| {

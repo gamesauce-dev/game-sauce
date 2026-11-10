@@ -1763,3 +1763,5 @@ input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display:
 .drawer-navbtn:focus, .drawer-navbtn:focus-visible, body.gp-active .drawer-navbtn:focus { position: relative; z-index: 3; outline-offset: 2px; }
 .drawer-bar .drawer-nav { gap: 0.6rem; }
 select option { background: var(--panel); color: var(--text); }
+
+.tile-mask { display: inline-block; width: 1.4em; height: 1.4em; vertical-align: -0.25em; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }

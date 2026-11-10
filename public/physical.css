@@ -113,7 +113,9 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 /* Disc cases (PlayStation 2 to 5, Xbox to Series X|S): click the pulled-out cover and the case comes to the front; click again and it opens, the manual on the left, the disc in its tray on the right. */
 .ph-spine.is-fore { background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 2px rgba(255,255,255,.2); transform: translateY(-24px); }
 .ph-spine.is-fore .ph-face { opacity: 0; }
-.ph-case { position: fixed; z-index: 45; width: var(--cw); height: var(--ch); perspective: 1800px; cursor: pointer; filter: drop-shadow(0 1.2rem 1.6rem rgba(0,0,0,.65)); outline: none; }
+.ph-case { position: fixed; z-index: 45; width: var(--cw); height: var(--ch); perspective: 1800px; cursor: pointer; outline: none; }
+/* The shadow is a box behind the case, not a filter: a filter on the case flattens the 3D turn of the cover in some web views (Linux), so only the left side showed, back to front. */
+.ph-case::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: 5px; box-shadow: 0 1.2rem 1.6rem rgba(0,0,0,.65); pointer-events: none; }
 .ph-case-slide { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.2,.8,.2,1); }
 .ph-case.is-open .ph-case-slide { transform: translateX(calc(var(--cw) / 2)); }
 .ph-case-back, .ph-case-cover, .ph-case-inside { position: absolute; inset: 0; border-radius: 5px; overflow: hidden; }

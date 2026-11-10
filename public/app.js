@@ -4033,6 +4033,8 @@ function settingsGroupMods(g) {
 function settingsGroupOf(id) { return SETTINGS_GROUPS.find((g) => g.modules.includes(id)) || null; }
 function settingsVisibleGroups() { return SETTINGS_GROUPS.filter((g) => (!g.adminOnly || settingsIsAdmin()) && settingsGroupMods(g).length); }
 
+// The tile pictures are drawn from the same line icons as the Modern look, not from the emoji font: on Linux a newer colour emoji can make the web view stop.
+function tileIco(x) { return x.mi ? `<span class="tile-mask" style="-webkit-mask-image:url(/modern/icons/${x.mi}.svg);mask-image:url(/modern/icons/${x.mi}.svg)"></span>` : x.ico; }
 function renderSettingsTiles(activeId = activeSettingsModule) {
   const wrap = $('#settings-tiles'), sub = $('#settings-subtiles');
   if (!wrap) return;
@@ -4044,7 +4046,7 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   const cur = settingsGroupOf(activeId) || groups[0];
   wrap.innerHTML = groups.map((g) => `
       <button class="tile group${g.id === cur.id ? ' is-active' : ''}"${g.mi ? ` data-mi="${g.mi}"` : ''} data-group="${g.id}" aria-label="${esc(g.label)}" title="${esc(g.label)}: ${esc(settingsGroupMods(g).map((m) => m.label).join(', '))}">
-        <span class="tile-ico">${g.ico}</span>
+        <span class="tile-ico">${tileIco(g)}</span>
         <span class="tile-label">${esc(g.label)}</span>
       </button>`).join('');
   $$('[data-group]', wrap).forEach((t) => t.addEventListener('click', () => {
@@ -4055,7 +4057,7 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   // The second row: the settings inside the chosen group (a group with a single setting needs no second row).
   const mods = settingsGroupMods(cur);
   sub.classList.toggle('hidden', mods.length < 2);
-  sub.innerHTML = mods.map((m) => `<button class="subtile${m.id === activeId ? ' is-active' : ''}"${m.mi ? ` data-mi="${m.mi}"` : ''} data-mod="${m.id}" title="${esc(m.label)}"><span class="tile-ico">${m.ico}</span>${esc(m.label)}</button>`).join('');
+  sub.innerHTML = mods.map((m) => `<button class="subtile${m.id === activeId ? ' is-active' : ''}"${m.mi ? ` data-mi="${m.mi}"` : ''} data-mod="${m.id}" title="${esc(m.label)}"><span class="tile-ico">${tileIco(m)}</span>${esc(m.label)}</button>`).join('');
   $$('[data-mod]', sub).forEach((t) => t.addEventListener('click', () => showSettingsModule(t.dataset.mod)));
   if (refocus) {
     // Choosing a group swaps the row beneath it: keep the focus on the group tile; choosing a tab keeps it on that tab.

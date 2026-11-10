@@ -50,7 +50,8 @@ export function openCarousel(host) {
   const platColour = (p) => (HEX.test(p?.accent || '') ? p.accent : famColour(p?.family || 'Others'));
 
   root = document.createElement('div');
-  root.className = 'cv'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Cover carousel');
+  root.className = 'cv' + (/Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent) ? ' cv-lite' : '');   // Linux web views draw in software: no drifting blobs, blur or turning light, so scrolling stays smooth
+   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Cover carousel');
   root.innerHTML = `
     <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-tint t1"></i><i class="cv-tint t2"></i><i class="cv-grain"></i></div>
     <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-pc" id="cv-setup" title="Choose the emulators this PC uses (opens a small setup page on this PC)">⚙ Set up emulators</button><button type="button" class="cv-pc" id="cv-pc" title="Find out which emulators are set up on this PC, so only games it can start are shown"></button><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
