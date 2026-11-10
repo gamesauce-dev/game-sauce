@@ -4,7 +4,7 @@ name: Release
 #   game-sauce-vX.Y.Z-windows-x64.zip     game-sauce-vX.Y.Z-macos-arm64.tar.gz (Apple Silicon)
 #   game-sauce-vX.Y.Z-linux-x64.tar.gz    game-sauce-vX.Y.Z-linux-arm64.tar.gz (Raspberry Pi 4/5, ARM servers)
 # plus SHA256SUMS. Each of those is a portable bundle (the program, its modules and its own Node.js): unpack and start, nothing to install.
-# The desktop app installers (game-sauce in its own window: Windows .exe, Apple Silicon .dmg, Linux .deb / .AppImage) are attached to the same release.
+# The desktop app installers (game-sauce in its own window: Windows .exe, Apple Silicon .dmg, Linux .deb / .rpm / .AppImage) are attached to the same release.
 # The Docker image is published by docker.yml on the same tag.
 # "Run workflow" (manual) builds the bundles and keeps them as workflow artifacts without publishing a release: a safe dry run.
 on:
@@ -114,6 +114,13 @@ jobs:
             echo "The ${{ matrix.extra }} build failed (attempt $i of 2)."; sleep 20
           done
           exit 1
+      # The .rpm is for Fedora-based systems (Bazzite, Nobara, Fedora): it uses the computer's own web view, which the AppImage's bundled one can disagree with. Optional, like the AppImage.
+      - name: Linux RPM (optional)
+        if: matrix.extra
+        continue-on-error: true
+        working-directory: desktop
+        shell: bash
+        run: npx tauri build --bundles rpm
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.label }}
@@ -121,6 +128,7 @@ jobs:
             desktop/src-tauri/target/release/bundle/nsis/*.exe
             desktop/src-tauri/target/release/bundle/dmg/*.dmg
             desktop/src-tauri/target/release/bundle/deb/*.deb
+            desktop/src-tauri/target/release/bundle/rpm/*.rpm
             desktop/src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: error
 
