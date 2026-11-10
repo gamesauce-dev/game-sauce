@@ -202,6 +202,18 @@ function paintLetters(counts = {}) {
 
 /* ───────────── clicks ───────────── */
 
+/* With the details window not pinned, a dark layer covers the page (the pulled-out cover too). A click on that cover still means "the cover": bring the case forward. */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest?.('#scrim') || S.view !== 'shelf' || S.openId == null) return;
+  const sp = $('.ph-spine.is-open'); if (!sp) return;
+  const r = sp.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+  const id = Number(sp.dataset.phId), g = S.byId.get(id);
+  if (!g || !isDisc(g.platform) || CASE.id === id) return;   // any other game: the click closes the window, as before
+  e.stopImmediatePropagation(); e.preventDefault();
+  showCase(id);
+}, true);
+
 function onClick(e) {
   if (chipClick(e)) return;
   const lt = e.target.closest('[data-ph-letter]');
@@ -236,6 +248,8 @@ function onClick(e) {
     if (g && isDisc(g.platform) && CASE.id !== id) { showCase(id); return; }   // a disc case: its cover is clicked to bring it to the front
     ctx.closeDrawer(); return;
   }
+  // On a phone the details window covers the whole screen, which would hide the case: so the case comes forward at once, and the details open on its last tap.
+  if (S.view === 'shelf' && narrow()) { const g = S.byId.get(id); if (g && isDisc(g.platform)) { if (CASE.id !== id) { if (S.openId != null) ctx.closeDrawer(); showCase(id); } return; } }
   openDetail(id);
 }
 
@@ -429,6 +443,7 @@ const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 
 const isDisc = (slug) => DISC.has(slug);
 const CASE = { el: null, id: null, open: false };
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const narrow = () => matchMedia('(max-width: 720px)').matches;   // the details window is as wide as the screen here
 
 function caseHtml(g) {
   const col = accentOf(g.platform), p = platOf(g.platform);
@@ -475,6 +490,7 @@ function onCaseClick(e) {
 function advanceCase() {
   if (!CASE.el) return;
   if (!CASE.open) { CASE.open = true; CASE.el.classList.add('is-open'); CASE.el.setAttribute('aria-label', 'Put the case back on the shelf'); }
+  else if (narrow() && $('#drawer').classList.contains('hidden')) { const id = CASE.id; closeCase(true); openDetail(id); }   // phone: the case goes back and the details open
   else ctx.closeDrawer();   // closing the details window puts the spine back too (forgetOpen)
 }
 
