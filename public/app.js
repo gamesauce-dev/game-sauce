@@ -2053,7 +2053,7 @@ async function loadSourcesNow() {
       </div>
       <div class="source-path">${esc(s.path)}</div>
       ${(s.extra_paths || []).map((x) => `<div class="source-path source-extra${x.exists ? '' : ' is-gone'}" data-extra="${x.id}"><span>${esc(x.path)}${x.exists ? '' : ' <em>(not reachable)</em>'}</span><button class="btn btn-sm btn-ghost" data-act="drop-folder" title="Stop scanning this folder (its games stay in the library)" aria-label="Remove this folder">✕</button></div>`).join('')}
-      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
+      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="relocate" title="Renamed or moved this folder? Point the source at its new place: every game keeps its details, covers and saves.">Folder renamed or moved?</button> <button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
       <div class="scan-progress hidden" data-progress="${s.id}"></div>
       <div class="source-stats">
         <span><b>${s.rom_count}</b> ROMs</span>
@@ -2089,6 +2089,20 @@ async function loadSourcesNow() {
         btn.disabled = false;
         btn.textContent = '↻ Scan';
       }
+    });
+
+    $('[data-act="relocate"]', card).addEventListener('click', async () => {
+      const name = card.querySelector('.source-name').textContent;
+      const chosen = await pickFolderDialog({ title: `Where is “${name}” now?`, start: card.querySelector('.source-path').textContent.trim() });
+      if (!chosen) return;
+      const ok = await confirmDialog({ title: 'Point this source at the new folder?', body: `${name} will look in ${chosen} from now on. Its games keep their details, covers and saves; nothing on disk is touched.`, okLabel: 'Use this folder' });
+      if (!ok) return;
+      try {
+        const r = await api(`/sources/${id}/relocate`, { method: 'POST', body: JSON.stringify({ path: chosen }) });
+        toast(`Done: ${r.found.toLocaleString()} of ${r.moved.toLocaleString()} games found in the new folder${r.not_found ? ` (${r.not_found.toLocaleString()} not there: they show as missing)` : ''}`);
+        await Promise.all([loadSources(), loadPlatforms()]);
+        loadLibrary();
+      } catch (err) { toast(err.message, true); }
     });
 
     $('[data-act="add-folder"]', card).addEventListener('click', async () => {

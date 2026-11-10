@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Folder renamed or moved?** (Settings → Sources, on each source): point a source at its new folder and every game keeps its entry, details, covers and saves; only where the file lives changes. It refuses a folder that holds none of the source's games.
+
 ### Changed
 - **The picture importer accepts the layout most media packs use** (EmuMovies and others): a folder named after the platform, a folder inside for each kind of picture (`images`, `covers`, `box` or `front` for covers; `spines`; `discs`, `disc` or `cd`; `manuals`), and optionally a region folder. LaunchBox and RetroBat folders are still recognised as before.
 - **Say what a folder holds** (new, under "The folder names do not say what the pictures are?" in the importer): pick covers, spines, discs or manuals, and optionally the platform, and every picture in the folder is imported as that, whatever its folders are called.

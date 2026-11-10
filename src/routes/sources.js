@@ -82,6 +82,38 @@ router.post('/:id/paths', (req, res) => {
   res.status(201).json(shape(db.prepare('SELECT * FROM sources WHERE id = ?').get(src.id)));
 });
 
+/** The folder was renamed or moved on disk: point the source at its new place. Every game of the source keeps its entry (details, covers, saves, locks); only where its file is changes. */
+router.post('/:id/relocate', (req, res) => {
+  const src = db.prepare('SELECT * FROM sources WHERE id = ?').get(req.params.id);
+  if (!src) return res.status(404).json({ error: 'Source not found' });
+  const raw = String(req.body?.path || '').trim();
+  if (!raw) return res.status(400).json({ error: 'path is required' });
+  const next = path.resolve(raw), old = path.resolve(src.path);
+  if (!isDir(next)) return res.status(400).json({ error: `Folder does not exist or is not readable: ${next}` });
+  const ci = process.platform === 'win32' || process.platform === 'darwin';
+  const key = (p) => (ci ? p.toLowerCase() : p);
+  if (key(old) === key(next)) return res.status(400).json({ error: "That is already this source's folder" });
+  const other = db.prepare('SELECT s.name FROM sources s WHERE s.id <> ? AND lower(s.path) = lower(?)').get(src.id, next)
+    || db.prepare('SELECT s.name FROM source_paths sp JOIN sources s ON s.id = sp.source_id WHERE lower(sp.path) = lower(?)').get(next);
+  if (other) return res.status(409).json({ error: `That folder already belongs to the source "${other.name}"` });
+
+  const inside = (p) => typeof p === 'string' && (key(p) === key(old) || key(p).startsWith(key(old) + path.sep));
+  const moved = (p) => next + p.slice(old.length);
+  const rows = db.prepare('SELECT id, source_path, storage_path FROM roms WHERE source_id = ? AND in_place = 1').all(src.id).filter((x) => inside(x.source_path));
+  const plan = rows.map((x) => ({ id: x.id, source_path: moved(x.source_path), storage_path: inside(x.storage_path) ? moved(x.storage_path) : x.storage_path }));
+  const found = plan.filter((x) => { try { return fs.statSync(x.source_path).isFile(); } catch { return false; } });
+  // A wrong folder would mark the whole source missing: refuse when none of its games are there.
+  if (plan.length && !found.length) return res.status(400).json({ error: `None of this source's ${plan.length} games were found in ${next}. Choose the folder that holds the same files.` });
+  const foundIds = new Set(found.map((x) => x.id));
+  const upd = db.prepare('UPDATE roms SET source_path = ?, storage_path = ?, missing = ?, updated_at = datetime(\'now\') WHERE id = ?');
+  db.transaction(() => {
+    for (const x of plan) upd.run(x.source_path, x.storage_path, foundIds.has(x.id) ? 0 : 1, x.id);
+    db.prepare('UPDATE sources SET path = ? WHERE id = ?').run(next, src.id);
+  })();
+  clearDuplicateCache();
+  res.json({ moved: plan.length, found: found.length, not_found: plan.length - found.length, source: shape(db.prepare('SELECT * FROM sources WHERE id = ?').get(src.id)) });
+});
+
 router.delete('/:id/paths/:pathId', (req, res) => {
   const row = db.prepare('SELECT * FROM source_paths WHERE id = ? AND source_id = ?').get(req.params.pathId, req.params.id);
   if (!row) return res.status(404).json({ error: 'Folder not found' });
