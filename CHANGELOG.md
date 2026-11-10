@@ -4,7 +4,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-10
+
 ### Added
+- **Linux: a Fedora `.rpm`** (Fedora, Bazzite, Nobara) next to the `.deb` and the AppImage. The `.deb` and `.rpm` use the computer's own web view, which matches its graphics drivers; the AppImage carries its own, which can clash (on Bazzite it stopped the app when a game started in the browser).
+- **Linux: a Graphics choice in the tray menu** (Standard, Hardware, Software), saved and applied on the next start. The `.deb` and `.rpm` draw with the graphics card by default; only the AppImage turns off the DMA-BUF path.
+- **Pull-out cases for Wii, Wii U and GameCube** discs (GameCube with its small disc), like the PlayStation and Xbox ones. Switch cartridges have no case yet.
 - **Cover carousel** (its own entry after Collections in the top bar and the sidebar, and a button in the Library bar): a full-screen way to browse your ROMs and Steam games, opening over any page (from Digital it starts on Steam). Family chips along the top, the family's platforms under them, and the games as covers on a gentle arc with the chosen one in front. Scroll, drag, swipe or use the arrow keys; Enter plays it in the browser, or on your own emulator when it cannot be played there. The backdrop is the family's colour, drifting slowly, tinted by the middle cover.
 
 - **Steam in the carousel:** Steam games with their Play button on are a chip of their own, and Play opens them in Steam.
@@ -13,10 +18,13 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **The desktop app carries the launcher.** It is built into the Windows, Mac and Linux apps (using the app's own Node, so no separate install). On Windows and Linux the app registers the `gamesauce://` link the first time it runs (an existing working launcher of your own is left alone), so **Play on this PC** works without any set-up, and the tray icon has a new **Set up emulators…** entry that opens the setup page. On a Mac the entry is in the game-sauce menu; register the link with `launcher/install-macos.sh`.
 
 ### Fixed
+- **Linux:** `gamesauce://` and `steam://` links (Play on this PC, Check my PC, Set up emulators) are caught by the app instead of showing "URL can't be shown"; the web view keeps its sign-in between launches; helper programs start with a clean environment so the setup page opens; Classic Settings tiles use line icons (a newer colour emoji could stop the web view); the carousel is lighter and draws fewer covers; browser play no longer asks for fullscreen.
+- **Disc case:** the cover now opens with a flat turn and the shadow is a plain box, so it no longer shows back to front in some web views.
+- **Carousel:** the "Enter plays: … · switch" line is gone (both Play buttons stay).
 - **Mac and Linux (and phones): the disc-case steps on the shelf.** With the details window not pinned, a dark layer covered the pulled-out cover, so clicking it only closed the window and the case never came forward. The click now counts as a click on the cover. On a phone the case comes forward first and the details open on its last tap.
 - **Dark look on Mac and Linux:** drop-downs and text boxes were white with pale text; they are drawn dark now. The Digital tiles no longer collapse to their top edge in some WebKit versions. The shelf back panel is a flat colour (near-black, or white in the light look) instead of striped gradients that showed bands.
 - **Controller on the shelf:** A on a spine keeps the pad on the shelf, so A again brings the case forward and opens it; B closes; X takes the pad into the details window. The focus ring on the details window's previous and next buttons is no longer clipped.
-- **Linux desktop app:** the web view starts without the DMA-BUF renderer (set `WEBKIT_DISABLE_DMABUF_RENDERER=0` to turn it back on), which should stop it closing when a game starts and freezing on busy pages. A **Play on this PC** card in Settings gives Linux (which may have no tray icon) a way to open Set up emulators.
+- **Linux desktop app (AppImage):** the web view starts without the DMA-BUF renderer (set `WEBKIT_DISABLE_DMABUF_RENDERER=0` to turn it back on). A **Play on this PC** card in Settings gives Linux (which may have no tray icon) a way to open Set up emulators.
 - **Folder pickers on Windows reach every drive.** Pressing Up from the top of C: now lists all the drives (D:, O:, network drives), so ROM, artwork and other folders on another drive can be chosen.
 
 ## [0.3.1] - 2026-11-09
