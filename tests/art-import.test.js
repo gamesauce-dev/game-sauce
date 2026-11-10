@@ -161,3 +161,26 @@ test('the screens and the settings: Artwork folders (admin), Import pictures & m
   assert.ok(ui.includes('O:\\\\Launchbox\\\\images'), 'the example path keeps its backslashes (doubled in the source, as it is inside a template)');
   for (const id of ['#art-preview', '#art-apply']) assert.ok(read('public/modern.js').includes(`'${id}'`), `Modern gives ${id} an icon`);
 });
+
+test('the simple layout (a media pack): platform folder, a folder per kind of picture, names cut at the text the person gives', async () => {
+  const c = art.classify; const pick = (o) => { const { fileRegion, ...rest } = o; return rest; };
+  assert.deepEqual(pick(c(['downloads', 'xbox 360', 'images'], 'Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It).png')), { layout: 'simple', kind: 'cover', platform: 'xbox 360', region: '', title: 'Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It)', n: 1, weak: false });
+  assert.equal(c(['xbox 360', 'spines', 'europe'], 'x (Europe).png').kind, 'spine'); assert.equal(c(['xbox 360', 'spines', 'europe'], 'x (Europe).png').region, 'europe');
+  assert.equal(c(['xbox 360', 'discs'], 'x.jpg').kind, 'disc'); assert.equal(c(['xbox 360', 'Box Art'.toLowerCase()], 'x.png').kind, 'cover');
+  assert.equal(c(['xbox 360', 'images'], 'x.txt'), null); assert.equal(c(['xbox 360', 'misc'], 'x.png'), null, 'a folder with an unknown name is left alone');
+  assert.equal(art.cutTitle('Ace Combat 6 (USA) (En,Fr)', ' ('), 'Ace Combat 6'); assert.equal(art.cutTitle('Zork - USA', ' - '), 'Zork'); assert.equal(art.cutTitle('Zork', ' ('), 'Zork'); assert.equal(art.cutTitle('Zork', ''), 'Zork');
+  assert.equal(art.cutTitle('Zork_USA_v1', '_'), 'Zork');
+
+  const root = path.join(TMP, 'art', 'Downloads');
+  const g1 = await add('xbox360', 'Ace Combat 6 - Fires of Liberation'), g2 = await add('xbox360', '007 - Blood Stone');
+  put('Downloads/xbox 360/images/Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It).png', png(300, 420));
+  put('Downloads/xbox 360/images/007 - Blood Stone (USA, Europe) (En,Fr,De).png', png(300, 420));
+  put('Downloads/xbox 360/spines/Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It).png', png(40, 400));
+  put('Downloads/xbox 360/discs/Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It).png', png(300, 300));
+  art.setArtFolders([...art.getArtFolders(), root]);
+  const p = (await preview(root)).body;
+  assert.deepEqual(p.matched, { cover: 2, spine: 1, disc: 1, manual: 0 }, 'the brackets after the title are ignored');
+  const q = (await preview(root, { cut: ' - ' })).body;   // cut at " - ": "007" and "Ace Combat 6" alone: Blood Stone no longer matches, Ace Combat 6 no longer matches the longer title
+  assert.equal(q.matched.cover, 0);
+  assert.equal(row(g1.id).cover_path, null);
+});

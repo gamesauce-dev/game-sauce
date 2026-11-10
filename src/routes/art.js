@@ -16,7 +16,7 @@ router.put('/folders', requireAdmin, (req, res) => {
 // body: { target: 'physical' | 'digital', folder, replace, apply }. Without apply: what it would do. With apply: starts it in the background.
 router.post('/import', async (req, res, next) => {
   const target = req.body?.target === 'digital' ? 'digital' : 'physical';
-  const opts = { target, folder: String(req.body?.folder || ''), replace: req.body?.replace === true };
+  const opts = { target, folder: String(req.body?.folder || ''), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 40) };
   try {
     if (req.body?.apply === true) { req.auditDetail = { target, apply: true }; return res.json(await startArtImport(me(req), opts)); }
     res.json(await previewArtImport(me(req), opts));

@@ -7,6 +7,9 @@
 //               <platform>/disc/[region/]<title>-01.png           -> disc       (disc games only)
 //   RetroBat    <system>/images/<rom name>-thumb.png              -> cover      (-image, -marquee ... are not box art and are left alone)
 //               <system>/manuals/<rom name>-manual.pdf            -> manual     (Physical only)
+//   Simple      <platform>/<kind folder>/[region/]<title ...>.png     the layout of most media packs (EmuMovies and others): the folder with the platform's name, a folder for
+//               each kind of picture (images, covers, box, front = cover; spines, spine = spine; discs, disc, cd = disc; manuals = manual), and optionally a region folder.
+//               Anything after the title in the file name ("(USA, Europe) (En,Fr)") is dropped; or the person says where the title ends ("cut at": a piece of text such as " (" or " - ").
 // A file is matched to a game by its platform (the folder name) and its title (letters and numbers only: "Marvel_ Ultimate Alliance 2" finds "Marvel: Ultimate Alliance 2";
 // anything in (brackets) or [square brackets] is ignored, and so is a trailing -01). Where one game has pictures for several regions, the game's own region decides.
 // Only gaps are filled by default; a picture the person uploaded themselves is never replaced.
@@ -54,6 +57,17 @@ const squash = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[
 /** The key a title is matched on: letters and numbers only, with anything in brackets left out. */
 export const titleKey = (t) => squash(String(t || '').replace(/\([^)]*\)/g, ' ').replace(/\[[^\]]*\]/g, ' '));
 
+/** Folder names (letters and numbers only, lower case) that say what kind of picture is inside. */
+const SIMPLE_KIND = {
+  cover: ['images', 'image', 'covers', 'cover', 'box', 'boxes', 'boxart', 'boxfront', 'front', 'frontcover', '2dbox', '2dboxart', 'thumbs', 'thumbnails'],
+  spine: ['spines', 'spine', 'boxspine', 'boxspines', 'sides'],
+  disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart'],
+  manual: ['manuals', 'manual']
+};
+const SIMPLE_LOOKUP = new Map(Object.entries(SIMPLE_KIND).flatMap(([kind, names]) => names.map((n) => [n, kind])));
+/** Not box art: the extra pictures a RetroBat or media pack puts next to the cover. */
+const NOT_COVER = /-(image|marquee|video|fanart|screenshot|titleshot|logo|wheel|map|mix|bezel|thumb)$/i;
+
 const LB_KIND = { 'box - front': 'cover', 'box - front - reconstructed': 'cover', 'box - spine': 'spine', disc: 'disc' };
 const REGION_GROUP = {
   eu: ['europe', 'united kingdom', 'australia', 'france', 'germany', 'spain', 'italy', 'netherlands', 'scandinavia', 'new zealand', 'russia'],
@@ -61,7 +75,10 @@ const REGION_GROUP = {
   jp: ['japan', 'asia', 'korea', 'china', 'hong kong', 'taiwan'],
   world: ['world']
 };
-const folderGroup = (name) => Object.keys(REGION_GROUP).find((g) => REGION_GROUP[g].includes(String(name || '').toLowerCase())) || null;
+const folderGroup = (name) => {
+  const n = String(name || '').toLowerCase();
+  return Object.keys(REGION_GROUP).find((g) => REGION_GROUP[g].includes(n)) || (/ntsc-?u|\busa\b|north america|canada/.test(n) ? 'na' : /ntsc-?j|japan|asia|korea/.test(n) ? 'jp' : /\bpal\b|europe|\buk\b|australia/.test(n) ? 'eu' : /world/.test(n) ? 'world' : null);
+};
 const gameGroup = (region) => {
   const r = String(region || '').toLowerCase();
   if (/ntsc-?u|\bus\b|usa|north america|canada/.test(r)) return 'na';
@@ -91,7 +108,24 @@ export function classify(segs, fileName) {
   if (img >= 1 && IMAGE_EXT.has(ext) && /-thumb$/i.test(base)) return { layout: 'retrobat', kind: 'cover', platform: segs[img - 1], region: '', title: base.replace(/-thumb$/i, ''), n: 1, weak: false };
   const man = segs.lastIndexOf('manuals');
   if (man >= 1 && ext === '.pdf') return { layout: 'retrobat', kind: 'manual', platform: segs[man - 1], region: '', title: base.replace(/-manual$/i, ''), n: 1, weak: false };
+  // The simple layout: the folder under the platform's says the kind of picture; a folder under that, if any, is the region.
+  for (let i = segs.length - 1; i >= 1; i--) {
+    const kind = SIMPLE_LOOKUP.get(squash(segs[i]));
+    if (!kind) continue;
+    if (kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
+    if (kind !== 'manual' && NOT_COVER.test(base)) return null;
+    const bracket = /\(([^)]*)\)/.exec(base);
+    return { layout: 'simple', kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
+  }
   return null;
+}
+
+/** The title part of a file name: everything before the first `cut` (when the person gave one), with a trailing -01 left for titleKey to ignore. */
+export function cutTitle(title, cut) {
+  const t = String(title || ''), c = String(cut || '');
+  if (!c) return t;
+  const i = t.toLowerCase().indexOf(c.toLowerCase());
+  return i > 0 ? t.slice(0, i) : t;
 }
 
 /* ───────── scanning a folder ───────── */
@@ -143,7 +177,7 @@ function digitalGames(userId) {
 }
 
 /** The best file for each (game, kind). `target`: 'physical' (cover, spine, disc, manual) or 'digital' (covers of console games). Nothing is changed. */
-export function planArtImport(userId, scan, { target = 'physical', replace = false } = {}) {
+export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '' } = {}) {
   const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual']);
   const games = target === 'digital' ? digitalGames(userId) : physicalGames(userId);
   const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
@@ -160,12 +194,12 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     if (!slug) { unknownPlatforms.set(e.platform, (unknownPlatforms.get(e.platform) || 0) + 1); continue; }
     if (e.kind === 'disc' && !isDiscPlatform(slug)) continue;
     candidatesSeen[e.kind]++;
-    const list = byKey.get(`${slug}\n${titleKey(e.title)}`);
+    const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
     if (!list) { unmatchedTotal++; if (unmatched.length < 25) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }
     for (const g of list) {
       const id = target === 'digital' ? `${g.store}/${g.app_id}` : g.id;
       const key = `${id}|${e.kind}`;
-      const rank = (e.weak ? 20 : 0) + regionRank(g.region, e.region) * 100 + (e.n || 1);
+      const rank = (e.weak ? 20 : 0) + regionRank(g.region, e.region || e.fileRegion) * 100 + (e.n || 1);
       const cur = best.get(key);
       if (!cur || rank < cur.rank) best.set(key, { game: g, id, kind: e.kind, entry: e, rank });
     }
@@ -196,9 +230,9 @@ const publicPlan = (p, scan, folder) => ({
 });
 
 /** What an import would do (nothing is saved). */
-export async function previewArtImport(userId, { target, folder, replace = false }) {
+export async function previewArtImport(userId, { target, folder, replace = false, cut = '' }) {
   const scan = await scanArtFolder(folder, { fresh: true });
-  return publicPlan(planArtImport(userId, scan, { target, replace }), scan, folder);
+  return publicPlan(planArtImport(userId, scan, { target, replace, cut }), scan, folder);
 }
 
 /* ───────── the import itself, in the background ───────── */
@@ -222,11 +256,11 @@ async function applyOne(userId, target, b) {
 }
 
 /** Start importing (returns at once; ask artJobStatus for progress). One run per person at a time. */
-export async function startArtImport(userId, { target, folder, replace = false }) {
+export async function startArtImport(userId, { target, folder, replace = false, cut = '' }) {
   const cur = jobs.get(userId);
   if (cur?.running) return artJobStatus(userId);
   const scan = await scanArtFolder(folder);
-  const plan = planArtImport(userId, scan, { target, replace });
+  const plan = planArtImport(userId, scan, { target, replace, cut });
   const job = { ...blank(), running: true, target, total: plan.items.length, started_at: new Date().toISOString() };
   jobs.set(userId, job);
   (async () => {

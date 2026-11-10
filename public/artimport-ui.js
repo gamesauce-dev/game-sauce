@@ -10,15 +10,16 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
   const what = target === 'digital' ? 'covers' : 'pictures and manuals';
   body.innerHTML = `
     <h2 class="detail-title">${target === 'digital' ? 'Import covers' : 'Import pictures &amp; manuals'}</h2>
-    <p class="hint">Bring in ${what} you already have: from a LaunchBox <b>Images</b> folder, or a RetroBat <b>roms</b> folder, on the server. They are matched to your games by platform and title. Nothing is saved until you press <b>Import</b>, and pictures you uploaded yourself are never replaced.</p>
+    <p class="hint">Bring in ${what} you already have, from a folder on the server. Put them in a folder named after the platform, with a folder inside for each kind: <b>images</b> (or covers, box, front), <b>spines</b>, <b>discs</b>${target === 'digital' ? '' : ', <b>manuals</b>'}, and a region folder inside that if you like (LaunchBox and RetroBat folders are recognised as they are). They are matched to your games by platform and title. Nothing is saved until you press <b>Import</b>, and pictures you uploaded yourself are never replaced.</p>
     <div class="panel" id="art-box" style="padding:12px;display:grid;gap:10px">
       <div id="art-add"></div>
       <label class="field" id="art-folder-row"><span>Folder to import from</span><select id="art-folder" class="select"></select></label>
+      <label class="field"><span>Where the game's name ends in the file name (optional)</span><input id="art-cut" placeholder="for example  ' ('  : \"Ace Combat 6 (USA, Japan) (En,Fr).png\" is read as Ace Combat 6" autocomplete="off" spellcheck="false" /></label>
       <label class="policy-row"><input type="checkbox" id="art-replace" /> <span>Replace pictures that are already there (the automatic ones only: your own are always kept)</span></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="art-preview" type="button">Preview</button><button class="btn btn-primary" id="art-apply" type="button" disabled>Import</button></div>
       <div id="art-result" style="margin:0"></div>
     </div>`;
-  const sel = $('#art-folder', body), res = $('#art-result', body), previewBtn = $('#art-preview', body), applyBtn = $('#art-apply', body), replace = $('#art-replace', body);
+  const sel = $('#art-folder', body), res = $('#art-result', body), previewBtn = $('#art-preview', body), applyBtn = $('#art-apply', body), replace = $('#art-replace', body), cutBox = $('#art-cut', body);
   let folders = [], can_edit = false;
   try { ({ folders, can_edit } = await ctx.api('/art/folders')); } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; previewBtn.disabled = true; return; }
   const usable = folders.filter((f) => f.exists);
@@ -29,9 +30,9 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     previewBtn.disabled = true; return;
   }
   sel.innerHTML = usable.map((f) => `<option value="${esc(f.path)}"${f.path === select ? ' selected' : ''}>${esc(f.path)}</option>`).join('');
-  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, apply }) });
+  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, apply }) });
   const dirty = () => { applyBtn.disabled = true; res.innerHTML = ''; };
-  sel.onchange = dirty; replace.onchange = dirty;
+  sel.onchange = dirty; replace.onchange = dirty; cutBox.oninput = dirty;
 
   const showProgress = (s) => { res.innerHTML = `<p class="hint" style="margin:0"><span class="spin" aria-hidden="true"></span>Importing… ${n(s.done)} of ${n(s.total)}</p>`; };
   const showDone = (s) => {
