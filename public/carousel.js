@@ -54,12 +54,12 @@ export function openCarousel(host) {
    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Cover carousel');
   root.innerHTML = `
     <div class="cv-bg" aria-hidden="true"><i class="cv-blob b1"></i><i class="cv-blob b2"></i><i class="cv-blob b3"></i><i class="cv-tint t1"></i><i class="cv-tint t2"></i><i class="cv-grain"></i></div>
-    <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-pc" id="cv-setup" title="Choose the emulators this PC uses (opens a small setup page on this PC)">⚙ Set up emulators</button><button type="button" class="cv-pc" id="cv-pc" title="Find out which emulators are set up on this PC, so only games it can start are shown"></button><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
+    <div class="cv-top"><div class="cv-fams" id="cv-fams" role="tablist"></div><button type="button" class="cv-pc" id="cv-setup" title="Choose the emulators this PC uses (opens a small setup page on this PC)">Set up emulators</button><button type="button" class="cv-pc" id="cv-pc" title="Find out which emulators are set up on this PC, so only games it can start are shown"></button><button type="button" class="cv-close" id="cv-close" aria-label="Close" title="Close (Esc)">✕</button></div>
     <div class="cv-subs" id="cv-subs"></div>
     <div class="cv-note hidden" id="cv-note"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
     <div class="cv-info" id="cv-info" aria-live="polite"></div>
-    <div class="cv-pad-hint" aria-hidden="true"><b>◀ ▶</b> games <i>·</i> <b>▲ ▼</b> chips <i>·</i> <b>A</b> play or choose <i>·</i> <b>X</b> browser <i>·</i> <b>Y</b> emulator <i>·</i> <b>B</b> back</div>`;
+    <div class="cv-pad-hint" aria-hidden="true"><b>◂ ▸</b> games <i>·</i> <b>▲ ▼</b> chips <i>·</i> <b>A</b> play or choose <i>·</i> <b>X</b> browser <i>·</i> <b>Y</b> emulator <i>·</i> <b>B</b> back</div>`;
   document.body.appendChild(root);
   document.body.classList.add('cv-open');
   const $ = (s) => root.querySelector(s);
@@ -122,12 +122,12 @@ export function openCarousel(host) {
     offL.classList.remove('on');
   };
   const actsHtml = (g) => {
-    if (g.steam) return '<button type="button" class="cv-btn primary" data-act="browser">▶ Play in Steam</button>';
+    if (g.steam) return '<button type="button" class="cv-btn primary" data-act="browser">Play in Steam</button>';
     const b = canBrowser(g), l = canLocalPlay(g), pf = preferred();
     const btn = (act, label, main, tip) => `<button type="button" class="cv-btn${main ? ' primary' : ''}" data-act="${act}" title="${tip}">${label}</button>`;
     const out = [];
-    if (b) out.push(btn('browser', '▶ Play in browser', !l || pf === 'browser', 'Play it here, in the browser'));
-    if (l) out.push(btn('local', '🖥 Play on this PC', !b || pf === 'local', 'Play with the emulator set up on this PC'));
+    if (b) out.push(btn('browser', 'Play in browser', !l || pf === 'browser', 'Play it here, in the browser'));
+    if (l) out.push(btn('local', 'Play on this PC', !b || pf === 'local', 'Play with the emulator set up on this PC'));
     if (b && l) out.push(`<button type="button" class="cv-link" data-act="prefer" title="Which one Enter, A and a click on the cover use">Enter plays: ${pf === 'local' ? 'your emulator' : 'the browser'} · switch</button>`);
     return out.join('');
   };
@@ -208,7 +208,7 @@ export function openCarousel(host) {
     const b = $('#cv-pc'), note = $('#cv-note');
     const s = $('#cv-setup');
     if (noLauncher()) { b.classList.add('hidden'); s?.classList.add('hidden'); note.classList.add('hidden'); return; }
-    b.textContent = st.lp === null ? '🖥 Check my PC' : '🖥 This PC: ' + st.lp.length + ' platform' + (st.lp.length === 1 ? '' : 's');
+    b.textContent = st.lp === null ? 'Check my PC' : 'This PC: ' + st.lp.length + ' platform' + (st.lp.length === 1 ? '' : 's');
     b.classList.toggle('attn', st.lp === null);
     note.classList.toggle('hidden', st.lp !== null);
     note.textContent = 'Showing every game. Press Check my PC so game-sauce can hide the ones this PC cannot start.';

@@ -208,11 +208,21 @@ fn launcher_script(app: &AppHandle) -> Option<(PathBuf, PathBuf)> {
     if exe.exists() && script.exists() { Some((exe, script)) } else { None }
 }
 
+/// Programs started from the Linux AppImage inherit the AppImage's own library settings, which can stop the computer's browser (xdg-open) or Node from starting.
+fn clean_env(cmd: &mut Command) {
+    #[cfg(target_os = "linux")]
+    for k in ["LD_LIBRARY_PATH", "LD_PRELOAD", "GTK_PATH", "GTK_EXE_PREFIX", "GTK_IM_MODULE_FILE", "GIO_EXTRA_MODULES", "GDK_PIXBUF_MODULE_FILE", "GSETTINGS_SCHEMA_DIR", "PYTHONHOME", "PERLLIB", "QT_PLUGIN_PATH"] {
+        cmd.env_remove(k);
+    }
+    let _ = cmd;
+}
+
 /// "Set up emulators…": the launcher opens its setup page (a page on this PC only) in the browser.
 fn open_launcher_setup(app: &AppHandle) {
     let Some((exe, script)) = launcher_script(app) else { return };
     let mut cmd = Command::new(exe);
     cmd.arg(script).arg("--configure").stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+    clean_env(&mut cmd);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -340,7 +350,10 @@ fn open_external(url: &tauri::Url) {
         return;
     }
     let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
-    let _ = Command::new(opener).arg(url.as_str()).spawn();
+    let mut cmd = Command::new(opener);
+    cmd.arg(url.as_str());
+    clean_env(&mut cmd);
+    let _ = cmd.spawn();
 }
 
 /// gamesauce:// (Play on this PC, Check my PC, Set up emulators) and steam:// links are not pages. The web view on Linux would try to load them
@@ -352,6 +365,7 @@ fn handle_app_link(app: &AppHandle, url: &tauri::Url) -> bool {
             if let Some((exe, script)) = launcher_script(app) {
                 let mut cmd = Command::new(exe);
                 cmd.arg(script).arg(url.as_str()).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+                clean_env(&mut cmd);
                 #[cfg(windows)]
                 {
                     use std::os::windows::process::CommandExt;
@@ -393,7 +407,14 @@ fn main() {
         .setup(|app| {
             // The window is made here (not in tauri.conf.json) so that links meant for a new window can be handed to the browser.
             let nav_handle = app.handle().clone();
-            WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+            let mut win = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()));
+            #[cfg(target_os = "linux")]
+            if let Ok(dir) = app.path().app_local_data_dir() {
+                let dir = dir.join("webview");
+                let _ = fs::create_dir_all(&dir);
+                win = win.data_directory(dir);
+            }
+            win
                 .title("game-sauce")
                 .on_navigation(move |url| !handle_app_link(&nav_handle, url))
                 .inner_size(1320.0, 860.0)

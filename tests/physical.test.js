@@ -379,7 +379,7 @@ test('shelf, disc cases (PS2 to PS5, Xbox to Series X|S): the pulled-out cover c
   const fo = ph.slice(ph.indexOf('export function forgetOpen'), ph.indexOf('/* ───────────── loading'));
   assert.match(fo, /closeCase\(true\)/); assert.ok(ph.includes('if (changed) closeCase(false);'), 'and so do closing the window and leaving the shelf view');
   // the open case: the cover swings away on its left edge, the manual is inside it (left), the disc is in the tray behind (right)
-  for (const f of ['.ph-case.is-open .ph-case-front { transform: rotateY(-180deg); }', '.ph-case-inside { transform: rotateY(180deg);', '.ph-manual {', '.ph-disc {', '.ph-tray {']) assert.ok(css.includes(f), f);
+  for (const f of ['.ph-case.is-open .ph-case-cover { transform: scaleX(0);', '.ph-case.is-open .ph-case-inside { transform: translateX(-100%) scaleX(1);', '.ph-manual {', '.ph-disc {', '.ph-tray {']) assert.ok(css.includes(f), f);
   assert.ok(css.includes('.ph-case.is-open .ph-case-slide { transform: translateX(calc(var(--cw) / 2)); }'), 'the open pair is centred');
   assert.ok(/\.ph-case \{[^}]*z-index: 45;/.test(css), 'above the dimmed page, under the details window');
 });

@@ -79,11 +79,18 @@ export function pickFile() {
   });
 }
 
+/** The AppImage's own library settings stop the computer's browser from starting: hand it a clean environment. */
+function cleanEnv() {
+  const e = { ...process.env };
+  for (const k of ['LD_LIBRARY_PATH', 'LD_PRELOAD', 'GTK_PATH', 'GIO_EXTRA_MODULES', 'GDK_PIXBUF_MODULE_FILE', 'GSETTINGS_SCHEMA_DIR', 'PYTHONHOME', 'PERLLIB', 'QT_PLUGIN_PATH']) delete e[k];
+  return e;
+}
+
 function openInBrowser(url) {
   try {
     const c = process.platform === 'win32' ? spawn('cmd', ['/c', 'start', '', url], { stdio: 'ignore', detached: true })
-      : spawn(process.platform === 'darwin' ? 'open' : 'xdg-open', [url], { stdio: 'ignore', detached: true });
-    c.on('error', () => {}); c.unref();
+      : spawn(process.platform === 'darwin' ? 'open' : 'xdg-open', [url], { stdio: 'ignore', detached: true, env: cleanEnv() });
+    c.on('error', () => { if (process.platform === 'linux') for (const alt of ['gio', 'sensible-browser', 'x-www-browser']) { try { const d = spawn(alt, alt === 'gio' ? ['open', url] : [url], { stdio: 'ignore', detached: true, env: cleanEnv() }); d.on('error', () => {}); d.unref(); break; } catch { /* next */ } } }); c.unref();
   } catch { /* the address is printed too */ }
 }
 
