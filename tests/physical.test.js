@@ -420,7 +420,7 @@ test('the case closes before it goes back: the cover swings shut, then the case 
 
 test('shelf, disc cases: a click on the pulled-out cover still works when the details window is not pinned (its dark layer covers the cover), and on a phone the case comes first', () => {
   const ph = read('public/physical.js');
-  assert.ok(ph.includes("e.target.closest?.('#scrim')") && ph.includes("document.addEventListener('click'") && ph.includes('showCase(id);\n}, true);'), 'a click on the dark layer over the open spine is a click on the cover');
+  assert.ok(ph.includes("e.target.closest?.('#scrim')") && ph.includes("document.addEventListener('click'") && /showCase\(id\);\r?\n\}, true\);/.test(ph), 'a click on the dark layer over the open spine is a click on the cover');
   assert.ok(ph.includes("const narrow = () => matchMedia('(max-width: 720px)').matches"), 'phones are told apart from desktops');
   assert.ok(ph.includes("if (S.view === 'shelf' && narrow())") && ph.includes('closeCase(true); openDetail(id);'), 'phone: the case first, the details on its last tap');
 });
