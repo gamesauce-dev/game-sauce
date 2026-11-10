@@ -20,8 +20,10 @@ use tauri::{
     webview::NewWindowResponse,
     AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder, Wry,
 };
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 use tauri::menu::SubmenuBuilder;
+#[cfg(target_os = "linux")]
+use tauri::menu::{CheckMenuItem, CheckMenuItemBuilder};
 #[cfg(not(target_os = "macos"))]
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
@@ -31,11 +33,15 @@ struct Config {
     remote_url: Option<String>,
     #[serde(default)]
     lan: bool, // local only: let other devices on the network connect
+    #[serde(default)]
+    graphics: Option<String>, // Linux: "standard" | "hardware" | "software" (how the window is drawn; applies on the next start)
 }
 
 struct AppState {
     server: Mutex<Option<Child>>,
     status: Mutex<Option<MenuItem<Wry>>>, // the line in the tray menu that says where game-sauce is running (Windows and Linux)
+    #[cfg(target_os = "linux")]
+    gfx: Mutex<Vec<(String, CheckMenuItem<Wry>)>>, // Linux: the Graphics choices in the tray menu
 }
 
 #[derive(Serialize)]
@@ -63,6 +69,11 @@ fn read_config(app: &AppHandle) -> Config {
 }
 
 fn write_config(app: &AppHandle, c: &Config) {
+    let mut c = c.clone();
+    if c.graphics.is_none() {
+        c.graphics = read_config(app).graphics; // switching server must not forget the graphics choice
+    }
+    let c = &c;
     let p = config_path(app);
     if let Some(dir) = p.parent() {
         let _ = fs::create_dir_all(dir);
@@ -297,6 +308,17 @@ fn handle_menu(app: &AppHandle, id: &str) {
             }
         }
         "data" => open_folder(data_home(app)),
+        #[cfg(target_os = "linux")]
+        id if id.starts_with("gfx-") => {
+            let mode = id.trim_start_matches("gfx-").to_string();
+            let mut c = read_config(app);
+            c.graphics = Some(mode.clone());
+            write_config(app, &c);
+            for (k, item) in app.state::<AppState>().gfx.lock().unwrap().iter() {
+                let _ = item.set_checked(*k == mode);
+            }
+            set_status(app, "Graphics change applies when you quit and reopen game-sauce");
+        }
         "quit" => app.exit(0),
         _ => {}
     }
@@ -328,7 +350,7 @@ fn get_config(app: AppHandle) -> Config {
 async fn use_local(app: AppHandle, lan: bool) -> Result<Started, String> {
     let a = app.clone();
     let started = tauri::async_runtime::spawn_blocking(move || start_server(&a, lan)).await.map_err(|e| e.to_string())??;
-    write_config(&app, &Config { mode: Some("local".into()), remote_url: None, lan });
+    write_config(&app, &Config { mode: Some("local".into()), remote_url: None, lan, graphics: None });
     Ok(started)
 }
 
@@ -339,7 +361,7 @@ async fn use_remote(app: AppHandle, url: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || probe(&u)).await.map_err(|e| e.to_string())??;
     stop_server(&app.state::<AppState>());
     set_status(&app, &format!("Connected to {url}"));
-    write_config(&app, &Config { mode: Some("remote".into()), remote_url: Some(url.clone()), lan: false });
+    write_config(&app, &Config { mode: Some("remote".into()), remote_url: Some(url.clone()), lan: false, graphics: None });
     Ok(url)
 }
 
@@ -402,9 +424,27 @@ fn main() {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
     tauri::Builder::default()
-        .manage(AppState { server: Mutex::new(None), status: Mutex::new(None) })
+        .manage(AppState {
+            server: Mutex::new(None),
+            status: Mutex::new(None),
+            #[cfg(target_os = "linux")]
+            gfx: Mutex::new(Vec::new()),
+        })
         .invoke_handler(tauri::generate_handler![get_config, use_local, use_remote])
         .setup(|app| {
+            // Linux: how the window is drawn, as chosen in the tray menu (Graphics). Standard leaves things as they are.
+            #[cfg(target_os = "linux")]
+            match read_config(app.handle()).graphics.as_deref() {
+                Some("hardware") => {
+                    std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER");
+                    std::env::remove_var("WEBKIT_DISABLE_COMPOSITING_MODE");
+                }
+                Some("software") => {
+                    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+                    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+                }
+                _ => {}
+            }
             // The window is made here (not in tauri.conf.json) so that links meant for a new window can be handed to the browser.
             let nav_handle = app.handle().clone();
             let mut win = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()));
@@ -454,7 +494,21 @@ fn main() {
             {
                 let status = MenuItemBuilder::with_id("status", "Not started yet").enabled(false).build(app)?;
                 let open = MenuItemBuilder::with_id("open", "Open game-sauce").build(app)?;
-                let menu = MenuBuilder::new(app).item(&open).separator().item(&status).separator().item(&switch).item(&setup).item(&data).separator().item(&quit).build()?;
+                let mut menu = MenuBuilder::new(app).item(&open).separator().item(&status).separator().item(&switch).item(&setup).item(&data);
+                #[cfg(target_os = "linux")]
+                {
+                    let cur = read_config(app.handle()).graphics.unwrap_or_else(|| "standard".into());
+                    let mut sub = SubmenuBuilder::new(app, "Graphics (restart to apply)");
+                    let mut items = Vec::new();
+                    for (k, label) in [("standard", "Standard"), ("hardware", "Hardware (uses the graphics card)"), ("software", "Software (slower, the safest)")] {
+                        let it = CheckMenuItemBuilder::with_id(format!("gfx-{k}"), label).checked(cur == k).build(app)?;
+                        sub = sub.item(&it);
+                        items.push((k.to_string(), it));
+                    }
+                    *app.state::<AppState>().gfx.lock().unwrap() = items;
+                    menu = menu.item(&sub.build()?);
+                }
+                let menu = menu.separator().item(&quit).build()?;
                 *app.state::<AppState>().status.lock().unwrap() = Some(status);
                 let mut tray = TrayIconBuilder::with_id("tray")
                     .tooltip("game-sauce")

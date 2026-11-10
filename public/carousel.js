@@ -132,7 +132,8 @@ export function openCarousel(host) {
   };
   const render = () => {
     const n = st.games.length, rail = $('#cv-rail');
-    const lo = Math.max(0, st.idx - 8), hi = Math.min(n - 1, st.idx + 8);
+    const reach = root.classList.contains('cv-lite') ? 4 : 8;   // Linux draws in software: fewer covers at once
+    const lo = Math.max(0, st.idx - reach), hi = Math.min(n - 1, st.idx + reach);
     for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
     for (let i = lo; i <= hi; i++) { if (!st.els.has(i)) { const el = makeCard(gameAt(i), i); st.els.set(i, el); rail.appendChild(el); } place(st.els.get(i), i - st.idx); }
     const g = gameAt(st.idx);
