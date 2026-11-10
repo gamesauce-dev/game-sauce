@@ -965,7 +965,9 @@ async function openPlayer(rom) {
   // Real fullscreen needs a user gesture; the Play click that got us here is
   // one, so ask now (before any await). Refusal is fine: the overlay already
   // fills the window via CSS.
-  try { scrim?.requestFullscreen?.().catch(() => {}); } catch { /* unsupported */ }
+  // (Not on Linux: the web view there can stop the whole app when a page goes fullscreen; the overlay fills the window anyway.)
+  const linuxView = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
+  try { if (!linuxView) scrim?.requestFullscreen?.().catch(() => {}); } catch { /* unsupported */ }
   $('#player-title').textContent = `${rom.title} — ${rom.platform_name}`;
   // MAME runs on an old browser core: be upfront that some games won't start.
   const hint = $('#player-hint');
