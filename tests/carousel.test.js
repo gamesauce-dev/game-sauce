@@ -84,3 +84,17 @@ test('carousel: the platform chips carry no disc or cartridge icon', () => {
 test('carousel: the platform chips keep their own height (the row minimum height must not stretch them)', () => {
   assert.ok(/\.cv-subs \{[^}]*align-items: flex-start/.test(read('public/carousel.css').replace(/\r?\n/g, ' ')));
 });
+
+test('controller on the shelf: A on a spine keeps the pad on the shelf (the case comes next), a disc case owns the pad, B closes, X goes into the details window', () => {
+  const pad = read('public/gamepad.js');
+  assert.ok(pad.includes("const pc = $('#ph-case');") && pad.includes('if (pc) return pc;'), 'a disc case in front owns the pad');
+  assert.ok(pad.includes("closest?.('.ph-shelf')) return $('#app')"), 'with the details window open, a spine on the shelf keeps the pad');
+  assert.ok(pad.includes('const onShelf = Boolean(el.closest?.(\'.ph-shelf\'));') && pad.includes('if (!onShelf) setTimeout('), 'A on a spine does not jump into the details window');
+  assert.ok(pad.includes('// X: into the details window') && pad.includes("key: 'Escape'"), 'X goes into the window, B closes it');
+});
+
+test('the Settings has a Play on this PC card (for anyone who can use the launcher): Set up emulators and Check my PC', () => {
+  const html = read('public/index.html'), app = read('public/app.js');
+  assert.ok(html.includes('id="mod-playpc"') && html.includes('id="playpc-setup"') && html.includes('id="playpc-check"'));
+  assert.ok(app.includes("{ id: 'playpc', label: 'Play on this PC'") && app.includes("launcherLink('configure')") && app.includes("launcherLink('sync')") && app.includes('can_download === false'));
+});

@@ -336,6 +336,14 @@
         </form>
       </div>
 
+      <div class="panel hidden" id="mod-playpc">
+        <h3>Play on this PC</h3>
+        <p class="hint">Play games with the emulators installed on this computer. A small <b>launcher</b> does the starting (it is built into the desktop app).
+          <b>Set up emulators</b> opens a page on this PC where you choose which program plays each platform. <b>Check my PC</b> tells game-sauce which platforms are ready, so the Carousel only shows games this PC can start.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="playpc-setup" type="button">Set up emulators</button><button class="btn" id="playpc-check" type="button">Check my PC</button></div>
+        <p class="hint" id="playpc-state"></p>
+      </div>
+
       <div class="panel hidden" id="mod-controller">
         <h3>Controller</h3>
         <p class="hint">Which button is <b>A</b>? Xbox-style pads put A at the bottom; Nintendo-style pads

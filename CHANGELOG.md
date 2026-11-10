@@ -13,6 +13,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **The desktop app carries the launcher.** It is built into the Windows, Mac and Linux apps (using the app's own Node, so no separate install). On Windows and Linux the app registers the `gamesauce://` link the first time it runs (an existing working launcher of your own is left alone), so **Play on this PC** works without any set-up, and the tray icon has a new **Set up emulators…** entry that opens the setup page. On a Mac the entry is in the game-sauce menu; register the link with `launcher/install-macos.sh`.
 
 ### Fixed
+- **Mac and Linux (and phones): the disc-case steps on the shelf.** With the details window not pinned, a dark layer covered the pulled-out cover, so clicking it only closed the window and the case never came forward. The click now counts as a click on the cover. On a phone the case comes forward first and the details open on its last tap.
+- **Dark look on Mac and Linux:** drop-downs and text boxes were white with pale text; they are drawn dark now. The Digital tiles no longer collapse to their top edge in some WebKit versions. The shelf back panel is a flat colour (near-black, or white in the light look) instead of striped gradients that showed bands.
+- **Controller on the shelf:** A on a spine keeps the pad on the shelf, so A again brings the case forward and opens it; B closes; X takes the pad into the details window. The focus ring on the details window's previous and next buttons is no longer clipped.
+- **Linux desktop app:** the web view starts without the DMA-BUF renderer (set `WEBKIT_DISABLE_DMABUF_RENDERER=0` to turn it back on), which should stop it closing when a game starts and freezing on busy pages. A **Play on this PC** card in Settings gives Linux (which may have no tray icon) a way to open Set up emulators.
 - **Folder pickers on Windows reach every drive.** Pressing Up from the top of C: now lists all the drives (D:, O:, network drives), so ROM, artwork and other folders on another drive can be chosen.
 
 ## [0.3.1] - 2026-11-09

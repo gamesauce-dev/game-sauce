@@ -69,8 +69,13 @@
     if (cv) return cv;                                                // the cover carousel is on top of everything: it takes the pad
     const modals = [...document.querySelectorAll('.modal-scrim:not(.hidden)')];
     if (modals.length) return modals[modals.length - 1];
+    const pc = $('#ph-case');
+    if (pc) return pc;                                                // a disc case in front: A opens it, B puts it back
     const drawer = $('#drawer');
-    if (drawer && !drawer.classList.contains('hidden')) return drawer;
+    if (drawer && !drawer.classList.contains('hidden')) {
+      if (document.activeElement?.closest?.('.ph-shelf')) return $('#app');   // the pad stays on the shelf: X takes it into the details window
+      return drawer;
+    }
     return $('#app');
   }
 
@@ -114,6 +119,7 @@
 
   /** Make sure the focus is inside the current layer; returns true if it had to move it. */
   function ensureFocusIn(root) {
+    if (root.id === 'ph-case') { if (document.activeElement === root) return false; root.focus({ preventScroll: true }); return true; }
     const ae = document.activeElement;
     if (ae && ae !== document.body && root.contains(ae) && visible(ae)) return false;
     let target = null;
@@ -154,15 +160,21 @@
     if (el.tagName === 'SELECT' && el.showPicker) { try { el.showPicker(); return; } catch { /* fall through */ } }
     if (el.tagName === 'INPUT' && /text|search|password|number|email|url/.test(el.type || 'text')) { el.focus(); return; }
     if (root.id === 'app') lastAppFocus = el;
+    const onShelf = Boolean(el.closest?.('.ph-shelf'));
     el.click();
-    // A tile opens the game panel: carry the focus into it.
-    setTimeout(() => { const r = currentRoot(); if (r) ensureFocusIn(r); }, 450);
+    // A tile opens the game panel: carry the focus into it. (A spine on the shelf keeps it: the next A brings the case forward, then opens it.)
+    if (!onShelf) setTimeout(() => { const r = currentRoot(); if (r) ensureFocusIn(r); }, 450);
   }
 
   function back() {
     const root = currentRoot();
     if (!root) return;
     if (cvPad(root, 'back')) return;
+    const drawerOpen = !$('#drawer')?.classList.contains('hidden');
+    if (root.id === 'app' && drawerOpen && document.activeElement?.closest?.('.ph-shelf')) {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      return;
+    }
     if (root.id === 'app') {
       const lib = $('.nav-item[data-view="library"]');
       if (lib && !lib.classList.contains('is-active')) lib.click();
@@ -194,6 +206,7 @@
   function playFocused() {
     const root = currentRoot();
     if (cvPad(root, 'browser')) return;   // X: play in the browser
+    if (root && root.id === 'app' && !$('#drawer')?.classList.contains('hidden') && document.activeElement?.closest?.('.ph-shelf')) { ensureFocusIn($('#drawer')); return; }   // X: into the details window
     if (!root || root.id !== 'app') return;
     const el = document.activeElement;
     const tile = el && el.closest ? el.closest('.card') : null;

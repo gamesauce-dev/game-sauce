@@ -350,6 +350,13 @@ fn open_folder(path: PathBuf) {
 }
 
 fn main() {
+    // Linux: the web view (WebKitGTK) inside the AppImage can disagree with the computer's own graphics drivers, which shows up as the app
+    // closing when a game starts or freezing on a busy page. Drawing without the DMA-BUF path avoids it and costs nothing visible.
+    // (Set WEBKIT_DISABLE_DMABUF_RENDERER=0 before starting to turn it back on.)
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
     tauri::Builder::default()
         .manage(AppState { server: Mutex::new(None), status: Mutex::new(None) })
         .invoke_handler(tauri::generate_handler![get_config, use_local, use_remote])

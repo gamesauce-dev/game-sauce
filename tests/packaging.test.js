@@ -191,3 +191,8 @@ test('the desktop app carries the launcher: it is staged into the app, registere
   assert.ok(/runtime.node\.exe/.test(vbs) && vbs.includes('nodeExe'), 'inside the app it uses the app\'s own Node, so no separate Node install is needed');
   assert.ok(fs.existsSync(new URL('../launcher/platforms.json', import.meta.url)) && fs.existsSync(new URL('../launcher/configure.mjs', import.meta.url)));
 });
+
+test('Linux desktop app: the web view is started without the DMA-BUF renderer (crashes and freezes with the AppImage), unless the person set it', () => {
+  const rs = read('desktop/src-tauri/src/main.rs');
+  assert.ok(rs.includes('WEBKIT_DISABLE_DMABUF_RENDERER') && rs.includes('cfg(target_os = "linux")') && rs.includes('.is_none()'));
+});

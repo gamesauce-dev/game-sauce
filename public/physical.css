@@ -37,11 +37,10 @@
 .ph-card .card-fav, .ph-card .card-badge { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 9, 14, .86); }
 .ph-card .card-badge.ph-badge { color: #fff; }
 
-/* The shelf. A dark back panel, a wooden plank under each row, and the spines standing on it. */
+/* The shelf. A flat back panel (near-black in the dark look, white in the light one: gradients here showed visible bands on some screens), a wooden plank under each row, and the spines standing on it. */
 .ph-shelf { padding: 0.5rem 0.2rem 3rem; perspective: 1400px; }
-.ph-row { position: relative; margin: 0 0 0.9rem; padding: 1.6rem 1rem 0; border-radius: 0.45rem 0.45rem 0 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.14) 55%, rgba(0,0,0,.3)), repeating-linear-gradient(90deg, #30221a 0 9px, #34261c 9px 10px);
-  box-shadow: inset 0 1rem 1.3rem -0.6rem rgba(0,0,0,.6), inset 0.6rem 0 0.9rem -0.5rem rgba(0,0,0,.45), inset -0.6rem 0 0.9rem -0.5rem rgba(0,0,0,.45); }
+.ph-row { position: relative; margin: 0 0 0.9rem; padding: 1.6rem 1rem 0; border-radius: 0.45rem 0.45rem 0 0; background: #07080b; }
+html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shadow: inset 0 0 0 1px #e3e5ec; }
 .ph-books { display: flex; align-items: flex-end; gap: 3px; min-height: 252px; position: relative; z-index: 2; margin-bottom: -2px; }
 .ph-plank { position: relative; z-index: 1; height: 1.15rem; margin: 0 -0.5rem; border-radius: 0.2rem; background: linear-gradient(180deg, #bb8450 0, #8f5f35 38%, #6a4325 100%); box-shadow: 0 0.6rem 0.9rem rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3); }
 .ph-sentinel { width: 100%; }

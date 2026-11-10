@@ -701,7 +701,7 @@ test('Digital page: view, Steam panel, nav entries and launch link exist', () =>
   assert.match(html, /id="view-digital"/); assert.match(html, /id="mod-steam"/); assert.match(html, /data-view="digital"/);
   const dgjs = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
   assert.match(js, /view: 'digital'/); assert.match(dgjs, /async function loadDigital\(keep = false\)/); assert.match(app, /if \(view === 'digital'\) digital\.load\(\);/);
-  assert.match(app, /modules: \['profile', 'welcome', 'steam', 'password', 'controller'\]/);
+  assert.match(app, /modules: \['profile', 'welcome', 'steam', 'password', 'controller', 'playpc'\]/);
   assert.ok(!/dg-card[^`]*download/.test(dgjs), 'no download on a digital tile');
 });
 
@@ -813,4 +813,13 @@ test('Digital grid draws in chunks and has no blur on its tiles (iPhone/iPad fro
   assert.match(app, /const dgIds = \(\) => dg\.ids \|\| \[\];/);
   assert.match(app, /loadDigital\(true\); if \(scroller\)/);
   assert.match(css, /\.dg-card \.card-fav, \.dg-card \.card-hide, \.dg-card \.card-badge, \.dg-card \.dg-hours \{[^}]*backdrop-filter: none/);
+});
+
+test('WebKit (Mac and Linux): native controls follow the look, the Digital tiles do not use content-visibility, and the shelf back panel is flat', () => {
+  const css = read('public/styles.css'), ph = read('public/physical.css');
+  assert.match(css, /:root \{\s*color-scheme: dark;/, 'dark by default: drop-downs and text boxes are not drawn white with pale text');
+  assert.ok(read('public/modern.css').includes('html[data-theme="light"]:has(body.ui-modern) { color-scheme: light; }'), 'the Modern light look stays light');
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /content-visibility/, 'tiles collapsed to their top edge in some WebKit versions');
+  assert.match(ph, /\.ph-row \{[^}]*background: #07080b;/, 'a flat dark back panel');
+  assert.doesNotMatch(ph.slice(ph.indexOf('.ph-row {'), ph.indexOf('.ph-books {')), /gradient/, 'no gradients on the shelf back (they band on some screens)');
 });

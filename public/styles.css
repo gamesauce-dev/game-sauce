@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;   /* native controls (select, inputs, scroll bars) are drawn dark: on Mac and Linux they were white with pale text */
   --bg: #0b0c10;
   --bg-2: #101218;
   --panel: #15181f;
@@ -1716,7 +1717,7 @@ body.play-only #empty .empty-add-text { display: none; }
 
 /* Digital tiles: no blur behind the small buttons (a blur per button is what froze iPhones and iPads); the buttons are just more opaque. */
 .dg-card .card-fav, .dg-card .card-hide, .dg-card .card-badge, .dg-card .dg-hours { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(8, 9, 14, .86); }
-.dg-card { content-visibility: auto; contain-intrinsic-size: auto 17rem; }
+/* (.dg-card used content-visibility here: some WebKit versions collapsed the tiles to their top edge, so tiles are laid out normally) */
 
 /* The disc / cartridge switch on a console tile (bottom left): dim until the game is marked as owned physically. */
 
@@ -1757,3 +1758,8 @@ input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display:
 @keyframes chip-land { from { opacity: 0; transform: translateY(-38px) rotate(-7deg) scale(.78); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
 .chip-plats.land > *, .ph-chip-plats.land > * { animation: chip-land .62s cubic-bezier(.2,.9,.25,1.18) backwards; animation-delay: calc(var(--i, 0) * 55ms); }
 @media (prefers-reduced-motion: reduce) { .chip-plats.land > *, .ph-chip-plats.land > * { animation: none; } }
+
+/* The details window's previous / next buttons: the keyboard and controller focus ring is drawn above their neighbours (the count box used to cover its edge). */
+.drawer-navbtn:focus, .drawer-navbtn:focus-visible, body.gp-active .drawer-navbtn:focus { position: relative; z-index: 3; outline-offset: 2px; }
+.drawer-bar .drawer-nav { gap: 0.6rem; }
+select option { background: var(--panel); color: var(--text); }

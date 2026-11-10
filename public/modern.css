@@ -621,3 +621,6 @@ body.ui-modern .msg-btns .btn[data-mi] { min-width: 2.6rem; height: 2.6rem; }
 /* The update notice in the Modern ticker is a link: it looks like the other lines until it is hovered. */
 .mh-line a.mh-link { color: inherit; text-decoration: none; display: flex; align-items: center; width: 100%; height: 100%; }
 .mh-line a.mh-link:hover { text-decoration: underline; }
+
+/* The page is dark by default (styles.css): the light look keeps light scroll bars and native controls. */
+html[data-theme="light"]:has(body.ui-modern) { color-scheme: light; }

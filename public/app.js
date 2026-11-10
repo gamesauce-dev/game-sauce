@@ -3998,6 +3998,7 @@ const SETTINGS_MODULES = [
   { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
   { id: 'controller', label: 'Controller', mi: 'gamepad', ico: '🎮', adminOnly: false },
+  { id: 'playpc', label: 'Play on this PC', mi: 'emulators-2', ico: '🖥', adminOnly: false },
   { id: 'providers', label: 'Metadata providers', mi: 'providers-2', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   mi: 'users', ico: '👥', adminOnly: true },
   { id: 'platforms', label: 'Platforms',       mi: 'Library', ico: '🕹', adminOnly: true },
@@ -4016,7 +4017,7 @@ const SETTINGS_MODULES = [
 
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
-  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'steam', 'password', 'controller'] },
+  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'steam', 'password', 'controller', 'playpc'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
@@ -4647,6 +4648,28 @@ async function loadArtFolders() {
     ? folders.map((f) => `${f.exists ? '✓' : '✕'} ${esc(f.path)}${f.exists ? '' : ' <b>(the server cannot see this folder)</b>'}`).join('<br>')
     : 'No folders yet.';
 }
+// Play on this PC: the launcher's setup page, and "Check my PC" (the launcher reports which platforms have an emulator). Both are links that the launcher on this PC answers.
+async function launcherLink(kind) {
+  const state = $('#playpc-state');
+  if (authState.user?.can_download === false) { state.textContent = 'This account cannot play on a local emulator (downloads are turned off for it).'; return; }
+  const readAt = async () => { try { return JSON.parse((await api('/prefs')).launcher_platforms || 'null'); } catch { return null; } };
+  try {
+    const before = (await readAt())?.at || null;
+    const { token } = await api('/launcher/sync-token', { method: 'POST' });
+    state.textContent = kind === 'configure' ? 'Opening the setup page… (it needs the launcher on this PC: docs/LOCAL-LAUNCH.md)' : 'Asking the launcher on this PC…';
+    location.href = `gamesauce://${kind}?${new URLSearchParams({ server: location.origin, token })}`;
+    for (let i = 0; i < (kind === 'configure' ? 450 : 20); i++) {
+      await new Promise((ok) => setTimeout(ok, 2000));
+      if (!state.isConnected) return;
+      const lp = await readAt();
+      if (lp && lp.at !== before) { state.textContent = lp.platforms.length ? `This PC can start: ${lp.platforms.join(', ')}.` : 'No emulators are set up on this PC yet: only games that play in the browser are offered.'; return; }
+    }
+    state.textContent = kind === 'configure' ? '' : 'The launcher did not answer. Is it installed on this PC, and is this server listed in its launcher.json?';
+  } catch (err) { state.textContent = err.message || 'Could not start'; }
+}
+$('#playpc-setup')?.addEventListener('click', () => launcherLink('configure'));
+$('#playpc-check')?.addEventListener('click', () => launcherLink('sync'));
+
 $('#artfolders-save')?.addEventListener('click', async () => {
   const list = $('#artfolders-text').value.split('\n').map((l) => l.trim()).filter(Boolean);
   try { await api('/art/folders', { method: 'PUT', body: JSON.stringify({ folders: list }) }); toast('Artwork folders saved'); await loadArtFolders(); }
