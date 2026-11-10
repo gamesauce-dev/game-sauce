@@ -176,3 +176,6 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .art-table th, .art-table td { padding: 0.3rem 0.5rem; text-align: right; border-bottom: 1px solid var(--line, #262b3a); }
 .art-table thead th { color: var(--dim, #8b93a7); font-weight: 600; }
 .art-table tbody th { text-align: left; font-weight: 600; }
+
+/* A GameCube disc is a small one (8 cm) in a full-size case. */
+.ph-disc.is-mini { width: 56%; }

@@ -128,7 +128,6 @@ export function openCarousel(host) {
     const out = [];
     if (b) out.push(btn('browser', 'Play in browser', !l || pf === 'browser', 'Play it here, in the browser'));
     if (l) out.push(btn('local', 'Play on this PC', !b || pf === 'local', 'Play with the emulator set up on this PC'));
-    if (b && l) out.push(`<button type="button" class="cv-link" data-act="prefer" title="Which one Enter, A and a click on the cover use">Enter plays: ${pf === 'local' ? 'your emulator' : 'the browser'} · switch</button>`);
     return out.join('');
   };
   const render = () => {

@@ -433,7 +433,7 @@ export function clearMatch(userId, id) {
 }
 
 /** The platforms whose games are boxed discs in a case that opens on the shelf (PlayStation 2 to 5, Xbox to Series X|S): only these ask for a disc picture. */
-export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries'];
+export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu'];
 export const isDiscPlatform = (slug) => DISC_PLATFORMS.includes(slug);
 
 const platformRow = (slug) => db.prepare('SELECT slug, name, family, screenscraper_id, tgdb_id FROM platforms WHERE slug = ?').get(slug) || { slug, name: slug };

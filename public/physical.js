@@ -439,7 +439,7 @@ function pullOut(id, scroll) {
    Boxed discs (PlayStation 2 to 5, Xbox to Series X|S) have two more steps on the shelf. Click the spine: it is pulled out and shows its cover (as for every game).
    Click that cover: the whole case comes to the front. Click it again: the case opens, the manual on the left and the disc in its tray on the right.
    Clicking any other spine, or the open case, puts it back on the shelf. (There is no real manual or disc picture to show, so both are drawn.) */
-const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries']);
+const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu']);
 const isDisc = (slug) => DISC.has(slug);
 const CASE = { el: null, id: null, open: false };
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -450,7 +450,7 @@ function caseHtml(g) {
   const pic = g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : '';
   const tone = `linear-gradient(160deg,${esc(col)},#12141a)`;
   return `<div class="ph-case-slide">
-    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc${g.disc_locked ? ' is-own' : ''}" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
+    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc${g.disc_locked ? ' is-own' : ''}${g.platform === 'gamecube' ? ' is-mini' : ''}" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
       <div class="ph-case-inside" title="${g.has_manual ? 'Click to read the manual' : 'No manual yet: add one in the details window'}"><div class="ph-manual${g.has_manual ? ' has-manual' : ''}"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i><em class="ph-man-tag">${g.has_manual ? 'Read the manual ▸' : 'No manual yet'}</em></div></div>

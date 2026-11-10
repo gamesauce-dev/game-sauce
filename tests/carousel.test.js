@@ -63,7 +63,7 @@ test('carousel: the controller can choose chips (up from the covers), and both w
   for (const w of ["setZone('subs')", "setZone('fams')", "setZone('covers')", 'hlStep(']) assert.ok(js.includes(w), w);
   assert.ok(js.includes("a === 'select'") && js.includes("if (z === 'covers') close(); else setZone('covers')"), 'B steps back out of the chips before it closes the carousel');
   assert.ok(css.includes('.cv-chip.pad'), 'the highlighted chip has a ring');
-  assert.ok(js.includes('canBrowser') && js.includes('canLocalPlay') && js.includes("data-act=\"prefer\"") && js.includes("'gamesauce_cv_prefer'"), 'both buttons, and a switch for which one Enter uses');
+  assert.ok(js.includes('canBrowser') && js.includes('canLocalPlay') && js.includes("'gamesauce_cv_prefer'"), 'both buttons');
   assert.ok(js.includes("preferred() === 'local' ? playLocal(g) : openBrowser(g)"), 'a game that can be played both ways uses the preferred one');
   assert.ok(pad.includes("cvPad(root, 'browser')") && pad.includes("cvPad(root, 'local')"), 'X plays in the browser, Y on this PC');
   assert.ok(/\.cv-chip \{[^}]*rgba\(255, 255, 255, \.62\)/.test(css.replace(/\r?\n/g, ' ')) && /\.cv-chip\.on \{ background: var\(--ink\); color: #fff; \}/.test(css), 'chips look like the Play buttons: a glass pill, and the chosen one dark with light text');
