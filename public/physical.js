@@ -456,7 +456,7 @@ function caseHtml(g) {
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
       <div class="ph-case-inside" title="${g.has_manual ? 'Click to read the manual' : 'No manual yet: add one in the details window'}"><div class="ph-manual${g.has_manual ? ' has-manual' : ''}"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i><em class="ph-man-tag">${g.has_manual ? 'Read the manual ▸' : 'No manual yet'}</em></div></div>
-    </div></div>`;
+    </div>${g.back_url ? `<div class="ph-case-rear"><img src="${esc(g.back_url)}" alt="" /></div>` : ''}</div>${g.back_url ? '<button type="button" class="ph-case-turn" title="Turn the case over to see the back (B)" aria-label="Turn the case over">↻</button>' : ''}`;
 }
 
 function showCase(id) {
@@ -474,7 +474,7 @@ function showCase(id) {
   el.style.cssText = `--cw:${w}px;--ch:${h}px;left:${Math.round(cx - w / 2)}px;top:${Math.round(cy - h / 2)}px`;
   el.innerHTML = caseHtml(g);
   el.addEventListener('click', onCaseClick);
-  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); } });
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); } else if (e.key === 'b' || e.key === 'B') { e.preventDefault(); turnCase(); } });
   document.body.append(el);
   CASE.el = el; CASE.id = id; CASE.open = false;
   manualPage(el, g, w);   // the manual's first page goes on the left once it is drawn
@@ -500,13 +500,22 @@ function manualPage(el, g, caseW) {
 
 /** A click on the case: on the manual (the left side, once open) it reads the manual; anywhere else it goes on to the next step. */
 function onCaseClick(e) {
+  if (e.target.closest('.ph-case-turn')) { e.stopPropagation(); turnCase(); return; }
   if (CASE.open && e.target.closest('.ph-case-inside')) { openManual(S.byId.get(CASE.id)); return; }
   advanceCase();
+}
+
+/** Turn the closed case over to its back (a flat turn), or back to the front. Only when the game has a back picture. */
+function turnCase() {
+  const el = CASE.el; if (!el || CASE.open || !el.querySelector('.ph-case-rear')) return;
+  const on = el.classList.toggle('is-back');
+  el.setAttribute('aria-label', on ? `${S.byId.get(CASE.id)?.title || 'Game'}: the back. Turn it to the front` : `${S.byId.get(CASE.id)?.title || 'Game'}: open the case`);
 }
 
 /** Another click on the case in front: open it; on the open case: put everything back on the shelf. */
 function advanceCase() {
   if (!CASE.el) return;
+  if (CASE.el.classList.contains('is-back')) { turnCase(); return; }   // showing the back: the click turns it to the front again
   if (!CASE.open) { CASE.open = true; CASE.el.classList.add('is-open'); CASE.el.setAttribute('aria-label', 'Put the case back on the shelf'); }
   else if (narrow() && $('#drawer').classList.contains('hidden')) { const id = CASE.id; closeCase(true); openDetail(id); }   // phone: the case goes back and the details open
   else ctx.closeDrawer();   // closing the details window puts the spine back too (forgetOpen)
@@ -731,7 +740,7 @@ function bindDetail(g) {
 
 /** The small panel under the details actions: what the picture you are about to choose is for. Hidden until the picture button is pressed. */
 function artMenu(g) {
-  const kinds = [['cover', 'Cover', g.cover_locked, 'The front of the box or case'], ['spine', 'Spine', g.spine_locked, 'Tall and narrow: it stands on the shelf'], ...(isDisc(g.platform) ? [isCart(g.platform) ? ['disc', 'Cartridge', g.disc_locked, 'The cartridge: shown in its tray in the open case'] : ['disc', 'Disc', g.disc_locked, 'Roughly square: shown as a circle in the open case']] : [])];
+  const kinds = [['cover', 'Cover', g.cover_locked, 'The front of the box or case'], ['spine', 'Spine', g.spine_locked, 'Tall and narrow: it stands on the shelf'], ...(isDisc(g.platform) ? [isCart(g.platform) ? ['disc', 'Cartridge', g.disc_locked, 'The cartridge: shown in its tray in the open case'] : ['disc', 'Disc', g.disc_locked, 'Roughly square: shown as a circle in the open case'], ['back', 'Back', g.back_locked, 'The back of the case: shown when you turn the case over']] : [])];
   return `<div class="ph-art-menu hidden" id="ph-art-menu">
     <p class="hint" style="margin:0">Upload a picture of your own as the game's… (JPEG, PNG or WebP, up to 8 MB). It is kept, and automatic lookups never replace it.</p>
     <div class="ph-art-row">${kinds.map(([k, label, mine, tip]) => `<span class="ph-art-opt"><button type="button" class="btn btn-sm" data-art="${k}" title="${esc(tip)}">${label}</button>${mine ? `<button type="button" class="btn btn-sm btn-ghost" data-art-reset="${k}" title="Go back to the automatic ${k} picture">Automatic</button>` : ''}</span>`).join('')}</div>

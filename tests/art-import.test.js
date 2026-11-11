@@ -45,7 +45,7 @@ test('reading names: where a file sits says what it is; titles match on letters 
   assert.equal(c(['images', 'sony playstation 3', 'box - spine'], 'Armored Core 4-02.png').kind, 'spine'); assert.equal(c(['images', 'sony playstation 3', 'box - spine'], 'Armored Core 4-02.png').n, 2);
   assert.equal(c(['images', 'sony playstation 3', 'disc', 'japan'], 'x-01.png').kind, 'disc');
   assert.equal(c(['images', 'sony playstation 3', 'box - front - reconstructed'], 'x-01.png').weak, true);
-  assert.equal(c(['images', 'sony playstation 3', 'box - back'], 'x-01.png'), null, 'other kinds of picture are left alone');
+  assert.equal(c(['images', 'sony playstation 3', 'box - 3d'], 'x-01.png'), null, 'other kinds of picture are left alone'); assert.equal(c(['images', 'sony playstation 3', 'box - back', 'europe'], 'x-01.png').kind, 'back');
   assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-thumb.png').kind, 'cover'); assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-thumb.png').title, '24 - The Game');
   assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-image.png'), null, 'RetroBat -image and -marquee are not box art');
   assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-marquee.png'), null);
@@ -91,20 +91,20 @@ test('preview and import from a LaunchBox + RetroBat layout: matched by platform
   put('RetroBat/roms/ps2/manuals/Gran Turismo 4 (USA)-manual.pdf', PDF);
 
   const lb = (await preview(LB)).body;
-  assert.deepEqual(lb.matched, { cover: 1, spine: 2, disc: 1, manual: 0 }, 'Killzone cover, two spines, one disc');
+  assert.deepEqual(lb.matched, { cover: 1, spine: 2, disc: 1, manual: 0, back: 0 }, 'Killzone cover, two spines, one disc');
   assert.deepEqual(lb.will, lb.matched); assert.equal(lb.games, 6);
   assert.deepEqual(lb.unmatched.map((u) => u.title), ['Not On My Shelf']); assert.equal(lb.unmatched_total, 1);
   assert.deepEqual(lb.unknown_platforms, [{ name: 'weird platform', files: 1 }]);
   assert.equal(row(kz.id).cover_path, null, 'a preview saves nothing');
   const rb = (await preview(RB)).body;
-  assert.deepEqual(rb.matched, { cover: 1, spine: 0, disc: 0, manual: 1 }); assert.equal(rb.files, 2, 'only -thumb and the manual are used');
+  assert.deepEqual(rb.matched, { cover: 1, spine: 0, disc: 0, manual: 1, back: 0 }); assert.equal(rb.files, 2, 'only -thumb and the manual are used');
 
   // importing runs in the background and reports its progress
   const started = await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: LB, apply: true } });
   assert.equal(started.status, 200); assert.equal(started.body.total, 4);
   await art.artJobIdle(ids.iadmin);
   const done = (await call('/api/art/import/status')).body;
-  assert.equal(done.running, false); assert.equal(done.done, 4); assert.deepEqual(done.applied, { cover: 1, spine: 2, disc: 1, manual: 0 }); assert.equal(done.failed, 0);
+  assert.equal(done.running, false); assert.equal(done.done, 4); assert.deepEqual(done.applied, { cover: 1, spine: 2, disc: 1, manual: 0, back: 0 }); assert.equal(done.failed, 0);
   const k = row(kz.id);
   assert.equal(k.cover_locked, 1); assert.ok(fs.existsSync(k.cover_path)); assert.equal(fs.statSync(k.cover_path).size, fs.statSync(eu).size, 'a PAL game took the Europe cover, not North America\'s');
   assert.equal(row(muaa.id).spine_locked, 1); assert.equal(row(ac.id).spine_locked, 1, 'a file with no region folder matches too'); assert.equal(row(blade.id).disc_locked, 1);
@@ -114,7 +114,7 @@ test('preview and import from a LaunchBox + RetroBat layout: matched by platform
   const g = row(gt.id); assert.equal(g.cover_locked, 1); assert.ok(g.manual_path && fs.existsSync(g.manual_path) && /Gran Turismo 4/.test(g.manual_name));
   // fill gaps: a second run changes nothing, and says why
   const again = (await preview(LB)).body;
-  assert.deepEqual(again.will, { cover: 0, spine: 0, disc: 0, manual: 0 }); assert.deepEqual(again.skipped, { cover: 1, spine: 2, disc: 1, manual: 0 });
+  assert.deepEqual(again.will, { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }); assert.deepEqual(again.skipped, { cover: 1, spine: 2, disc: 1, manual: 0, back: 0 });
   // someone else's shelf is theirs: ann's preview sees none of these games
   assert.equal((await preview(LB, {}, 'ann')).body.games, 0);
   // a game that has an automatic cover keeps it unless asked, and an uploaded one is never replaced
@@ -134,7 +134,7 @@ test('Digital: covers for console games from the same folders, a cover of their 
   put(`Launchbox/images/${sw}/box - front/North America/Hades-01.png`, png(300, 420)); put(`Launchbox/images/${sw}/box - front/North America/Celeste-01.png`, png(300, 420));
   put(`Launchbox/images/${sw}/box - spine/Hades-01.png`, png(40, 400));   // not used for Digital
   const pv = (await call('/api/art/import', { method: 'POST', body: { target: 'digital', folder: LB } })).body;
-  assert.deepEqual(pv.matched, { cover: 2, spine: 0, disc: 0, manual: 0 }); assert.equal(pv.games, 2);
+  assert.deepEqual(pv.matched, { cover: 2, spine: 0, disc: 0, manual: 0, back: 0 }); assert.equal(pv.games, 2);
   const celeste = db.prepare("SELECT app_id FROM digital_games WHERE name = 'Celeste' AND user_id = ?").get(ids.iadmin).app_id;
   const own = path.join(TMP, 'own-digital.png'); fs.writeFileSync(own, png(10, 10));
   db.prepare("INSERT INTO digital_user_meta (user_id, store, app_id, json, cover_path, source, updated_at) VALUES (?, 'nintendo', ?, '{}', ?, NULL, datetime('now'))").run(ids.iadmin, celeste, own);
@@ -179,7 +179,7 @@ test('the simple layout (a media pack): platform folder, a folder per kind of pi
   put('Downloads/xbox 360/discs/Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It).png', png(300, 300));
   art.setArtFolders([...art.getArtFolders(), root]);
   const p = (await preview(root)).body;
-  assert.deepEqual(p.matched, { cover: 2, spine: 1, disc: 1, manual: 0 }, 'the brackets after the title are ignored');
+  assert.deepEqual(p.matched, { cover: 2, spine: 1, disc: 1, manual: 0, back: 0 }, 'the brackets after the title are ignored');
   const q = (await preview(root, { cut: ' - ' })).body;   // cut at " - ": "007" and "Ace Combat 6" alone: Blood Stone no longer matches, Ace Combat 6 no longer matches the longer title
   assert.equal(q.matched.cover, 0);
   assert.equal(row(g1.id).cover_path, null);
@@ -195,7 +195,7 @@ test('the pickers: the person says what a folder holds and which platform, whate
   assert.equal(bare.files, 1); assert.equal(bare.matched.spine, 0, 'no platform could be read from "stuff" or "Odd Pack"');
   assert.deepEqual(bare.unknown_platforms.map((u) => u.name), ['stuff']);
   const withPlat = (await preview(odd, { kind: 'spine', platform: 'xbox360' })).body;
-  assert.deepEqual(withPlat.matched, { cover: 0, spine: 1, disc: 0, manual: 0 }); assert.equal(withPlat.will.spine, 1);
+  assert.deepEqual(withPlat.matched, { cover: 0, spine: 1, disc: 0, manual: 0, back: 0 }); assert.equal(withPlat.will.spine, 1);
   assert.equal(row(g.id).spine_path, null, 'a preview saves nothing');
   assert.ok((await call('/api/art/platforms')).body.items.some((p) => p.slug === 'xbox360'));
   assert.equal((await call('/api/art/platforms', { as: 'ann' })).status, 200, 'anyone may read the list');
@@ -225,7 +225,7 @@ test('full wraps: cut into a cover and a spine at the fractions set for the plat
   art.setArtFolders([...art.getArtFolders(), root]);
   const p = (await preview(root)).body;
   assert.equal(p.wraps.files, 4); assert.equal(p.wraps.odd, 1); assert.equal(p.wraps.odd_list[0].title, 'Odd One (USA)');
-  assert.deepEqual(p.matched, { cover: 3, spine: 3, disc: 0, manual: 0 }, 'three wraps cut; Odd One is left alone; Has A Cover has a real cover (its wrap still gives its spine)');
+  assert.deepEqual(p.matched, { cover: 3, spine: 3, disc: 0, manual: 0, back: 3 }, 'three wraps cut; Odd One is left alone; Has A Cover has a real cover (its wrap still gives its spine)');
   assert.equal(p.wraps.platforms[0].slug, 'ps3'); assert.deepEqual(p.wraps.platforms[0].split, wc.PLATFORM_SPLIT.ps3); assert.ok(Number.isInteger(p.wraps.platforms[0].sample));
   const img = await fetch(`${base}/api/art/wrap-image?folder=${encodeURIComponent(root)}&i=${p.wraps.platforms[0].sample}`, { headers: { Authorization: 'Bearer ' + tok.admin } });
   assert.equal(img.status, 200); assert.match(img.headers.get('content-type'), /png/);
@@ -235,7 +235,7 @@ test('full wraps: cut into a cover and a spine at the fractions set for the plat
   // import with the person's own cut for PS3 (47 % to 52 % of the width): the cover is what is right of it
   const started = await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: root, apply: true, split: { ps3: { from: 0.47, to: 0.52 } } } });
   assert.equal(started.status, 200); await art.artJobIdle(ids.iadmin);
-  const done = (await call('/api/art/import/status')).body; assert.equal(done.failed, 0); assert.deepEqual(done.applied, { cover: 3, spine: 3, disc: 0, manual: 0 });
+  const done = (await call('/api/art/import/status')).body; assert.equal(done.failed, 0); assert.deepEqual(done.applied, { cover: 3, spine: 3, disc: 0, manual: 0, back: 3 });
   const r1 = row(w1.id), r3 = row(w3.id);
   assert.ok(r1.cover_path && r1.spine_path); assert.equal(r3.cover_path, null, 'the odd wrap is not cut');
   const c1 = mid(r1.cover_path), s1 = mid(r1.spine_path); assert.ok(Math.abs(c1.w - 691) <= 2, `front ${c1.w}`); assert.ok(Math.abs(s1.w - 72) <= 2, `spine ${s1.w}`); assert.ok(c1.rgb[1] > 150 && s1.rgb[2] > 150);

@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
@@ -72,6 +72,13 @@ router.post('/match', (req, res) => { res.json(startMatchJob({ retry: req.body?.
 router.get('/cover/:id', (req, res) => {
   const file = physicalCoverPath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No cover' });
+  res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.sendFile(path.resolve(file));
+});
+
+router.get('/back/:id', (req, res) => {
+  const file = physicalBackPath(me(req), req.params.id);
+  if (!file) return res.status(404).json({ error: 'No back' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
   res.sendFile(path.resolve(file));
 });

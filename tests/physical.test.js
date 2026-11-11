@@ -424,3 +424,13 @@ test('shelf, disc cases: a click on the pulled-out cover still works when the de
   assert.ok(ph.includes("const narrow = () => matchMedia('(max-width: 720px)').matches"), 'phones are told apart from desktops');
   assert.ok(ph.includes("if (S.view === 'shelf' && narrow())") && ph.includes('closeCase(true); openDetail(id);'), 'phone: the case first, the details on its last tap');
 });
+
+test('the back of the case: a Back picture slot (upload, folder import, cut from a wrap), and a flat turn of the closed case to show it', () => {
+  const ph = read('public/physical.js'), css = read('public/physical.css'), srv = read('src/lib/physical.js'), mig = read('src/migrations.js'), rt = read('src/routes/physical.js');
+  assert.match(mig, /back_path/); assert.match(mig, /schema_version', '47'/);
+  assert.ok(srv.includes("back: { path: 'back_path'") && srv.includes('export function physicalBackPath') && srv.includes('has_back: Boolean(r.back_path)'));
+  assert.ok(rt.includes("router.get('/back/:id'"));
+  assert.ok(ph.includes('class="ph-case-rear"') && ph.includes('class="ph-case-turn"') && ph.includes('function turnCase()') && ph.includes("el.classList.toggle('is-back')"));
+  assert.ok(ph.includes("['back', 'Back', g.back_locked"), 'the upload menu offers it for boxed games');
+  assert.ok(css.includes('.ph-case.is-back .ph-case-front { transform: scaleX(0)') && css.includes('.ph-case.is-back .ph-case-rear { transform: scaleX(1)') && css.includes('.ph-case.is-open .ph-case-turn { display: none; }'), 'a flat turn, and not while the case is open');
+});

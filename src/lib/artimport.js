@@ -68,6 +68,7 @@ const SIMPLE_KIND = {
   wrap: ['wrap', 'wraps', 'fullwrap', 'fullcover', 'fullcovers', 'fullbox', 'fullboxart', 'fullcoverart', 'coversfull', 'coverfull', 'boxfull', 'full'],
   cover: ['images', 'image', 'covers', 'cover', 'box', 'boxes', 'boxart', 'boxfront', 'front', 'frontcover', '2dbox', '2dboxart', 'thumbs', 'thumbnails'],
   spine: ['spines', 'spine', 'boxspine', 'boxspines', 'sides'],
+  back: ['backs', 'back', 'backcover', 'backcovers', 'boxback', 'boxbacks', 'rear'],
   disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart', 'cartridges', 'cartridge', 'carts', 'cart', 'cartfront'],
   manual: ['manuals', 'manual']
 };
@@ -75,7 +76,7 @@ const SIMPLE_LOOKUP = new Map(Object.entries(SIMPLE_KIND).flatMap(([kind, names]
 /** Not box art: the extra pictures a RetroBat or media pack puts next to the cover. */
 const NOT_COVER = /-(image|marquee|video|fanart|screenshot|titleshot|logo|wheel|map|mix|bezel|thumb)$/i;
 
-const LB_KIND = { 'box - front': 'cover', 'box - front - reconstructed': 'cover', 'box - spine': 'spine', disc: 'disc', 'cart - front': 'disc' };
+const LB_KIND = { 'box - front': 'cover', 'box - front - reconstructed': 'cover', 'box - back': 'back', 'box - spine': 'spine', disc: 'disc', 'cart - front': 'disc' };
 const REGION_GROUP = {
   eu: ['europe', 'united kingdom', 'australia', 'france', 'germany', 'spain', 'italy', 'netherlands', 'scandinavia', 'new zealand', 'russia'],
   na: ['north america', 'united states', 'canada'],
@@ -186,7 +187,7 @@ export async function scanArtFolder(folder, { fresh = false, force = null } = {}
 const hasFile = (p) => { try { return Boolean(p) && fs.existsSync(p); } catch { return false; } };
 
 function physicalGames(userId) {
-  return db.prepare('SELECT id, platform, title, region, cover_path, cover_locked, spine_path, spine_locked, disc_path, disc_locked, manual_path, manual_link FROM physical_games WHERE user_id = ?').all(userId);
+  return db.prepare('SELECT id, platform, title, region, cover_path, cover_locked, spine_path, spine_locked, disc_path, disc_locked, manual_path, manual_link, back_path, back_locked FROM physical_games WHERE user_id = ?').all(userId);
 }
 function digitalGames(userId) {
   const rows = db.prepare("SELECT g.store, g.app_id, g.name AS title, g.platform, g.country AS region, um.cover_path AS own, dd.cover_path AS shared FROM digital_games g LEFT JOIN digital_user_meta um ON um.user_id = g.user_id AND um.store = g.store AND um.app_id = g.app_id LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id WHERE g.user_id = ? AND g.store != 'steam'").all(userId);
@@ -195,7 +196,7 @@ function digitalGames(userId) {
 
 /** The best file for each (game, kind). `target`: 'physical' (cover, spine, disc, manual) or 'digital' (covers of console games). Nothing is changed. */
 export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
-  const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap']);
+  const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
   const games = target === 'digital' ? digitalGames(userId) : physicalGames(userId);
   const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
   const byKey = new Map();
@@ -204,7 +205,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
   const platCache = new Map(); const platOf = (name) => { if (!platCache.has(name)) platCache.set(name, resolvePlatform(name)); return platCache.get(name); };
   const unknownPlatforms = new Map(); const unmatched = []; let unmatchedTotal = 0;
   const best = new Map();   // `${gameKey}|${kind}` -> { game, kind, entry, rank }
-  const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0, wrap: 0 };
+  const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0, wrap: 0 };
   for (const e of scan.files) {
     if (!wanted.has(e.kind)) continue;
     const slug = e.platforms?.length ? (e.platforms.map(platOf).find(Boolean) || null) : platOf(e.platform);
@@ -213,7 +214,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     candidatesSeen[e.kind]++;
     const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
     if (!list) { unmatchedTotal++; if (unmatched.length < 25) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }
-    for (const g of list) for (const k of e.kind === 'wrap' ? ['cover', 'spine'] : [e.kind]) {   // a wrap can give both
+    for (const g of list) for (const k of e.kind === 'wrap' ? ['cover', 'spine', 'back'] : [e.kind]) {   // a wrap gives all three
       const id = target === 'digital' ? `${g.store}/${g.app_id}` : g.id;
       const key = `${id}|${k}`;
       const rank = (e.kind === 'wrap' ? 1000 : 0) + (e.weak ? 20 : 0) + regionRank(g.region, e.region || e.fileRegion) * 100 + (e.n || 1);   // a real cover or spine beats one cut from a wrap
@@ -233,7 +234,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     wrapPlatforms.push({ slug, count, ratio: Math.round(med * 100) / 100, sample: sample ? scan.files.indexOf(sample) : null, split: splitFor(slug, split) });
   }
   for (const [key, b] of [...best]) if (b.fromWrap) { if (oddEntries.has(b.entry)) best.delete(key); else b.split = splitFor(b.slug, split); }
-  const matched = { cover: 0, spine: 0, disc: 0, manual: 0 }, will = { cover: 0, spine: 0, disc: 0, manual: 0 }, items = [];
+  const matched = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, will = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, items = [];
   for (const b of best.values()) {
     matched[b.kind]++;
     const g = b.game; let gap;
@@ -259,7 +260,7 @@ const publicPlan = (p, scan, folder) => ({
 });
 
 /** What an import would do (nothing is saved). */
-const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap'].includes(kind) ? { kind, platform: String(platform || '') } : null);
+const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back'].includes(kind) ? { kind, platform: String(platform || '') } : null);
 export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
   return publicPlan(planArtImport(userId, scan, { target, replace, cut, split }), scan, folder);
@@ -268,7 +269,7 @@ export async function previewArtImport(userId, { target, folder, replace = false
 /* ───────── the import itself, in the background ───────── */
 
 const jobs = new Map();   // userId -> state
-const blank = () => ({ running: false, target: null, total: 0, done: 0, applied: { cover: 0, spine: 0, disc: 0, manual: 0 }, failed: 0, failures: [], started_at: null, finished_at: null, error: null });
+const blank = () => ({ running: false, target: null, total: 0, done: 0, applied: { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, failed: 0, failures: [], started_at: null, finished_at: null, error: null });
 export const artJobStatus = (userId) => ({ ...(jobs.get(userId) || blank()), applied: { ...(jobs.get(userId)?.applied || blank().applied) }, failures: [...(jobs.get(userId)?.failures || [])] });
 export const artJobIdle = async (userId) => { while (jobs.get(userId)?.running) await new Promise((r) => setTimeout(r, 25)); };
 

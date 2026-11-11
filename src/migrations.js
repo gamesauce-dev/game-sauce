@@ -579,3 +579,9 @@ for (const col of ['spine_locked', 'disc_locked']) {
   if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} INTEGER NOT NULL DEFAULT 0`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '46') ON CONFLICT(key) DO UPDATE SET value = '46'").run();
+
+/* ── v47: a Physical game can carry the back of its case (an upload, a folder import, or cut from a full wrap): shown when the case on the shelf is turned over. ── */
+for (const [col, type] of [['back_url', 'TEXT'], ['back_path', 'TEXT'], ['back_tried_at', 'TEXT'], ['back_locked', 'INTEGER NOT NULL DEFAULT 0']]) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '47') ON CONFLICT(key) DO UPDATE SET value = '47'").run();

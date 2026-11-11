@@ -6,7 +6,7 @@ const n = (v) => Number(v || 0).toLocaleString();
 
 /** Draw the panel into `body`. ctx: the page's { api, toast }. target: 'physical' (covers, spines, discs, manuals) or 'digital' (covers of console games). onDone runs after an import. */
 export async function renderArtImport(ctx, body, { target, onDone = () => {}, select = '' }) {
-  const kinds = target === 'digital' ? [['cover', 'Covers']] : [['cover', 'Covers'], ['spine', 'Spines'], ['disc', 'Discs'], ['manual', 'Manuals']];
+  const kinds = target === 'digital' ? [['cover', 'Covers']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals']];
   const what = target === 'digital' ? 'covers' : 'pictures and manuals';
   body.innerHTML = `
     <h2 class="detail-title">${target === 'digital' ? 'Import covers' : 'Import pictures &amp; manuals'}</h2>

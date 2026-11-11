@@ -171,6 +171,7 @@ const toGame = (r) => ({
   cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), cover_locked: Boolean(r.cover_locked), created_at: r.created_at,
   cover_ar: r.cover_ar || null, spine_ar: r.spine_ar || null,
   spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path), spine_locked: Boolean(r.spine_path && r.spine_locked),
+  back_url: r.back_path ? `/api/physical/back/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_back: Boolean(r.back_path), back_locked: Boolean(r.back_path && r.back_locked),
   disc_url: r.disc_path ? `/api/physical/disc/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_disc: Boolean(r.disc_path), disc_locked: Boolean(r.disc_path && r.disc_locked),
   // a manual: an uploaded file (it wins) or a link the person added; null when there is none
   manual: r.manual_path ? { kind: 'file', name: r.manual_name || 'Manual', type: manualType(r.manual_path), url: `/api/physical/manual/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` }
@@ -282,7 +283,7 @@ export function updatePhysical(userId, id, body = {}) {
 export function removePhysical(userId, id) {
   const mine = own(userId, id);
   deleteManualFile(mine?.manual_path);   // an uploaded manual goes with its game
-  for (const f of [mine?.cover_path, mine?.spine_path, mine?.disc_path]) dropCustomCover(f, 'physical-');   // and so do the pictures they uploaded
+  for (const f of [mine?.cover_path, mine?.spine_path, mine?.disc_path, mine?.back_path]) dropCustomCover(f, 'physical-');   // and so do the pictures they uploaded
   const r = db.prepare('DELETE FROM physical_games WHERE id = ? AND user_id = ?').run(Number(id), userId);
   if (!r.changes) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   return { removed: true };   // the cached picture is shared by URL with anyone matched to the same game, so it stays on disk
@@ -290,6 +291,11 @@ export function removePhysical(userId, id) {
 
 export function physicalSpinePath(userId, id) {
   const f = own(userId, id)?.spine_path;
+  return f && fs.existsSync(f) ? f : null;
+}
+
+export function physicalBackPath(userId, id) {
+  const f = own(userId, id)?.back_path;
   return f && fs.existsSync(f) ? f : null;
 }
 
@@ -302,7 +308,8 @@ export function physicalDiscPath(userId, id) {
 const ART = {
   cover: { path: 'cover_path', url: 'cover_url', ar: 'cover_ar', lock: 'cover_locked', what: 'cover' },
   spine: { path: 'spine_path', url: 'spine_url', ar: 'spine_ar', lock: 'spine_locked', what: 'spine' },
-  disc: { path: 'disc_path', url: 'disc_url', ar: null, lock: 'disc_locked', what: 'disc' }
+  disc: { path: 'disc_path', url: 'disc_url', ar: null, lock: 'disc_locked', what: 'disc' },
+  back: { path: 'back_path', url: 'back_url', ar: null, lock: 'back_locked', what: 'back' }   // the back of the case, shown when it is turned over
 };
 const bad = (m) => Object.assign(new Error(m), { status: 400 });
 
@@ -315,7 +322,7 @@ export function checkArt(kind, buffer, file) {
   if (!d) throw bad('That picture could not be read.');
   if (Math.max(d.w, d.h) > 10000) throw bad('That picture is too large (10,000 pixels on a side at most).');
   const ar = d.w / d.h;
-  if (kind === 'cover' && (Math.min(d.w, d.h) < 64 || ar < 0.3 || ar > 3)) throw bad('That does not look like a cover: it is too small, or too long and thin (a cover is at least 64 pixels across).');
+  if ((kind === 'cover' || kind === 'back') && (Math.min(d.w, d.h) < 64 || ar < 0.3 || ar > 3)) throw bad('That does not look like a cover: it is too small, or too long and thin (a cover is at least 64 pixels across).');
   if (kind === 'spine' && (Math.min(d.w, d.h) < 16 || Math.max(d.w, d.h) < 64 || ar > 0.6)) throw bad('A spine picture is tall and narrow: this one is too wide or too small.');
   if (kind === 'disc' && (Math.min(d.w, d.h) < 64 || ar < 0.5 || ar > 2)) throw bad('A disc or cartridge picture should be roughly square (a disc is shown as a circle), at least 64 pixels across.');
   return d;
@@ -426,8 +433,8 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia, exp
 export function clearMatch(userId, id) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  for (const f of [r.cover_path, r.spine_path, r.disc_path]) dropCustomCover(f, 'physical-');
-  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, cover_locked = 0, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, spine_locked = 0, disc_url = NULL, disc_path = NULL, disc_tried_at = NULL, disc_locked = 0, cover_ar = NULL, spine_ar = NULL,
+  for (const f of [r.cover_path, r.spine_path, r.disc_path, r.back_path]) dropCustomCover(f, 'physical-');
+  db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, cover_locked = 0, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, spine_locked = 0, disc_url = NULL, disc_path = NULL, disc_tried_at = NULL, disc_locked = 0, back_url = NULL, back_path = NULL, back_tried_at = NULL, back_locked = 0, cover_ar = NULL, spine_ar = NULL,
     meta_source = NULL, meta_synced_at = NULL, meta_tried_at = NULL, updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
   return getPhysical(userId, id);
 }
