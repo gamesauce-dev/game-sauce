@@ -317,7 +317,7 @@ export function checkArt(kind, buffer, file) {
   const ar = d.w / d.h;
   if (kind === 'cover' && (Math.min(d.w, d.h) < 64 || ar < 0.3 || ar > 3)) throw bad('That does not look like a cover: it is too small, or too long and thin (a cover is at least 64 pixels across).');
   if (kind === 'spine' && (Math.min(d.w, d.h) < 16 || Math.max(d.w, d.h) < 64 || ar > 0.6)) throw bad('A spine picture is tall and narrow: this one is too wide or too small.');
-  if (kind === 'disc' && (Math.min(d.w, d.h) < 64 || ar < 0.5 || ar > 2)) throw bad('A disc picture should be roughly square (it is shown as a circle), at least 64 pixels across.');
+  if (kind === 'disc' && (Math.min(d.w, d.h) < 64 || ar < 0.5 || ar > 2)) throw bad('A disc or cartridge picture should be roughly square (a disc is shown as a circle), at least 64 pixels across.');
   return d;
 }
 
@@ -326,7 +326,7 @@ export function setPhysicalArt(userId, id, kind, buffer) {
   if (!k) throw bad('Choose cover, spine or disc.');
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  if (kind === 'disc' && !isDiscPlatform(r.platform)) throw bad('Only disc games (PlayStation 2 to 5, Xbox to Series X|S) have a disc picture.');
+  if (kind === 'disc' && !isDiscPlatform(r.platform)) throw bad('Only boxed disc and cartridge games (PlayStation 2 to 5, Xbox, GameCube, Wii, Wii U, Switch) have a disc or cartridge picture.');
   if (!buffer?.length) throw bad('Choose an image first.');
   if (buffer.length > MAX_COVER_BYTES) throw bad('That image is over 8 MB.');
   const type = sniffImage(buffer);
@@ -432,8 +432,8 @@ export function clearMatch(userId, id) {
   return getPhysical(userId, id);
 }
 
-/** The platforms whose games are boxed discs in a case that opens on the shelf (PlayStation 2 to 5, Xbox to Series X|S): only these ask for a disc picture. */
-export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu'];
+/** The platforms whose games are boxed discs (or, Switch and Switch 2, a cartridge) in a case that opens on the shelf: only these ask for a disc / cartridge picture (it is kept as the "disc"). */
+export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2'];
 export const isDiscPlatform = (slug) => DISC_PLATFORMS.includes(slug);
 
 const platformRow = (slug) => db.prepare('SELECT slug, name, family, screenscraper_id, tgdb_id FROM platforms WHERE slug = ?').get(slug) || { slug, name: slug };

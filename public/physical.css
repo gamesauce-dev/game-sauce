@@ -177,5 +177,12 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .art-table thead th { color: var(--dim, #8b93a7); font-weight: 600; }
 .art-table tbody th { text-align: left; font-weight: 600; }
 
+/* A Switch or Switch 2 game: a small cartridge (the corner cut off) in the tray, not a disc. */
+.ph-disc.ph-cart { width: 36%; aspect-ratio: 21 / 31; border-radius: 5% / 3.5%; background: linear-gradient(180deg, #343844, #181a21); box-shadow: none; clip-path: polygon(0 0, 78% 0, 100% 7%, 100% 100%, 0 100%); }
+.ph-disc.ph-cart::before { inset: 9% 11% 36% 11%; border-radius: 4%; background: color-mix(in srgb, var(--c) 60%, #fff); }
+.ph-disc.ph-cart::after { inset: auto 20% 5% 20%; height: 11%; border-radius: 2px; background: repeating-linear-gradient(90deg, #aab3c4 0 2px, #3b4254 2px 4px); box-shadow: none; }
+.ph-disc.ph-cart span { top: 18%; color: #2a2f3d; z-index: 1; }
+.ph-disc.ph-cart.has-art { clip-path: none; background: none; }
+.ph-disc.ph-cart .ph-disc-art { border-radius: 5% / 3.5%; object-fit: contain; }
 /* A GameCube disc is a small one (8 cm) in a full-size case. */
 .ph-disc.is-mini { width: 56%; }

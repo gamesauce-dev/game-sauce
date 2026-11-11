@@ -371,7 +371,7 @@ test('the shelves do not re-pack or jump when a game is opened or put back, even
 
 test('shelf, disc cases (PS2 to PS5, Xbox to Series X|S): the pulled-out cover comes to the front, then opens (manual left, disc right); any other spine, or the open case, puts it back', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css');
-  assert.ok(ph.includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu']);"), 'exactly the disc-based platforms asked for');
+  assert.ok(ph.includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);"), 'exactly the disc-based platforms asked for');
   assert.ok(ph.includes('if (g && isDisc(g.platform) && CASE.id !== id) { showCase(id); return; }'), 'step 2: the pulled-out cover is clicked');
   assert.ok(ph.includes("el.addEventListener('click', onCaseClick)") && / {2}advanceCase\(\);\r?\n\}/.test(ph) && ph.includes("CASE.el.classList.add('is-open')"), 'step 3: the case in front is clicked and opens');
   assert.ok(/else ctx\.closeDrawer\(\);\s+\/\/ closing the details window puts the spine back too/.test(ph), 'the open case, clicked, goes back');
@@ -400,8 +400,8 @@ test('disc art: a disc game keeps its LaunchBox disc picture (cached, served onl
   // a disc picture that arrives with a match for a cartridge game (SNES) is ignored: only disc platforms keep one
   await phys.applyMatch(adminId, sn.id, { title: 'x', media: { disc: 'http://x/d.png' }, source: 'test' }, { cacheImpl });
   assert.equal(db.prepare('SELECT disc_path FROM physical_games WHERE id = ?').get(sn.id).disc_path, null);
-  assert.deepEqual(phys.DISC_PLATFORMS, ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu']);
-  assert.ok(read('public/physical.js').includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu']);"), 'the shelf and the server agree on which platforms have discs');
+  assert.deepEqual(phys.DISC_PLATFORMS, ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);
+  assert.ok(read('public/physical.js').includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);"), 'the shelf and the server agree on which platforms have discs');
   phys.clearMatch(adminId, ps.id);
   const cleared = db.prepare('SELECT disc_path, disc_url, disc_tried_at FROM physical_games WHERE id = ?').get(ps.id);
   assert.deepEqual(cleared, { disc_path: null, disc_url: null, disc_tried_at: null });

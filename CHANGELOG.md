@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Switch and Switch 2 cases on the Physical shelf:** the same pull-out case as the disc games, with a small cartridge in the tray instead of a disc. A cartridge picture can be uploaded (it is kept in the same place as a disc picture), imported from a `cart` / `cartridges` / `disc` folder (or LaunchBox's `Cart - Front`), and looked up from LaunchBox when its database has one.
+
 ## [0.4.1] - 2026-11-11
 
 ### Added

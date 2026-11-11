@@ -191,7 +191,7 @@ const REGION_RANK = { 'North America': 0, 'United States': 1, World: 2, Europe: 
 const regionRank = (r) => (r in REGION_RANK ? REGION_RANK[r] : 9);
 const COVER_TYPES = { 'Box - Front': 0, 'Box - Front - Reconstructed': 1 };
 const SPINE_TYPES = { 'Box - Spine': 0 };   // the spine of the box or case: used by the Physical shelf
-const DISC_TYPES = { Disc: 0 };   // the picture printed on the disc: shown in the open case on the Physical shelf
+const DISC_TYPES = { Disc: 0, 'Cart - Front': 1 };   // (a Switch game's cartridge is kept as its "disc")   // the picture printed on the disc: shown in the open case on the Physical shelf
 
 /**
  * Stream LaunchBox's Metadata.xml into a fresh index file, then swap it in. `xml` is a readable stream of the XML text.

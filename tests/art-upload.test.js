@@ -66,7 +66,7 @@ test('Physical: your own cover, spine or disc, each checked for what it is said 
   assert.equal((await call(`/api/physical/games/${g.id}/art/cover`, { method: 'POST', raw: new FormData() })).status, 400, 'no file at all');
   // a cartridge game has no disc
   const snes = await add('snes', 'Cart Test');
-  const noDisc = await art(snes.id, 'disc', png(300, 300)); assert.equal(noDisc.status, 400); assert.match(noDisc.body.error, /Only disc games/);
+  const noDisc = await art(snes.id, 'disc', png(300, 300)); assert.equal(noDisc.status, 400); assert.match(noDisc.body.error, /Only boxed disc and cartridge games/);
   assert.equal((await art(snes.id, 'cover', png(300, 420))).status, 200, 'but it can have a cover');
   assert.equal((await art(g.id, 'cover', png(300, 420), 'ann')).status, 404, 'not ann\'s game');
 });
@@ -130,7 +130,7 @@ test('the provider picker with a star (your default) is in Physical and Digital 
   assert.ok(id.includes('export function wireProviderPicker(el, ctx)') && id.includes("'/prefs/identify_provider'") && id.includes('Make this my default provider'));
   assert.ok(id.includes('class="provpick" id="${idp}-id-prov"') && id.includes('wireProviderPicker($(`#${idp}-id-prov`, root), ctx);'), 'replaces the plain list in the shared block');
   assert.ok(ph.includes("identifyBlock({ idp: 'ph'") && dg.includes("identifyBlock({ idp: 'dg'"), 'both pages use the shared block');
-  assert.ok(ph.includes('function artMenu(g)') && ph.includes("data-art=\"${k}\"") && ph.includes('data-art-reset=') && ph.includes("isDisc(g.platform) ? [['disc'"), 'cover, spine, and disc only for disc games');
+  assert.ok(ph.includes('function artMenu(g)') && ph.includes("data-art=\"${k}\"") && ph.includes('data-art-reset=') && ph.includes("isDisc(g.platform) ? [isCart(g.platform) ? ['disc', 'Cartridge'"), 'cover, spine, and disc only for disc games');
   assert.ok(ph.includes('`/physical/games/${id}/art/${kind}`'));
   assert.ok(dg.includes('data-d="cover"') && dg.includes('`${gameUrl(store, appId)}/cover`') && dg.includes('g.own_cover'));
   assert.ok(css.includes('.ph-disc.has-art.is-own::after') && css.includes('object-fit: cover; border-radius: 50%'), 'an uploaded cover is cropped to the disc shape with its hole and rim drawn over it');

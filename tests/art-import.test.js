@@ -86,7 +86,7 @@ test('preview and import from a LaunchBox + RetroBat layout: matched by platform
   put(`Launchbox/images/${ps3}/box - spine/Armored Core 4-01.png`, png(36, 400));
   put(`Launchbox/images/${ps3}/disc/japan/bladestorm_ nightmare-01.png`, png(300, 300));
   put('Launchbox/images/weird platform/box - front/Zork-01.png', png(300, 420));
-  put('Launchbox/images/nintendo switch/disc/Chrono Trigger-01.png', png(300, 300));   // a cartridge platform has no disc: never offered
+  put('Launchbox/images/super nintendo/disc/Chrono Trigger-01.png', png(300, 300));   // a cartridge platform with no case has no disc: never offered
   put('RetroBat/roms/ps2/images/Gran Turismo 4 (USA)-thumb.png', png(300, 420)); put('RetroBat/roms/ps2/images/Gran Turismo 4 (USA)-image.png', png(640, 480)); put('RetroBat/roms/ps2/images/Gran Turismo 4 (USA)-marquee.png', png(400, 100));
   put('RetroBat/roms/ps2/manuals/Gran Turismo 4 (USA)-manual.pdf', PDF);
 

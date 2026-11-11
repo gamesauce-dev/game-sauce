@@ -63,14 +63,14 @@ export const titleKey = (t) => squash(String(t || '').replace(/\([^)]*\)/g, ' ')
 const SIMPLE_KIND = {
   cover: ['images', 'image', 'covers', 'cover', 'box', 'boxes', 'boxart', 'boxfront', 'front', 'frontcover', '2dbox', '2dboxart', 'thumbs', 'thumbnails'],
   spine: ['spines', 'spine', 'boxspine', 'boxspines', 'sides'],
-  disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart'],
+  disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart', 'cartridges', 'cartridge', 'carts', 'cart', 'cartfront'],
   manual: ['manuals', 'manual']
 };
 const SIMPLE_LOOKUP = new Map(Object.entries(SIMPLE_KIND).flatMap(([kind, names]) => names.map((n) => [n, kind])));
 /** Not box art: the extra pictures a RetroBat or media pack puts next to the cover. */
 const NOT_COVER = /-(image|marquee|video|fanart|screenshot|titleshot|logo|wheel|map|mix|bezel|thumb)$/i;
 
-const LB_KIND = { 'box - front': 'cover', 'box - front - reconstructed': 'cover', 'box - spine': 'spine', disc: 'disc' };
+const LB_KIND = { 'box - front': 'cover', 'box - front - reconstructed': 'cover', 'box - spine': 'spine', disc: 'disc', 'cart - front': 'disc' };
 const REGION_GROUP = {
   eu: ['europe', 'united kingdom', 'australia', 'france', 'germany', 'spain', 'italy', 'netherlands', 'scandinavia', 'new zealand', 'russia'],
   na: ['north america', 'united states', 'canada'],
