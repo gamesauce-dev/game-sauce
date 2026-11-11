@@ -4,6 +4,7 @@ import { requireAdmin } from './auth.js';
 import db from '../db.js';
 import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder } from '../lib/artimport.js';
 import { cleanSplit } from '../lib/wrapcut.js';
+import { artSharing, setArtSharing } from '../lib/physical.js';
 
 const router = express.Router();
 
@@ -19,6 +20,10 @@ router.get('/folders', (req, res) => res.json({ folders: folderState(), can_edit
 
 // The platforms the importer can be told about (when the folder names do not say).
 router.get('/platforms', (req, res) => res.json({ items: db.prepare('SELECT slug, name FROM platforms ORDER BY name').all() }));
+
+// Whether pictures one account has are copied to another account's copy of the same game (see src/lib/physical.js, reuseArt).
+router.get('/sharing', (req, res) => res.json({ on: artSharing(), can_edit: req.user?.role === 'admin' }));
+router.put('/sharing', requireAdmin, (req, res) => { const on = setArtSharing(req.body?.on !== false); req.auditDetail = { share_art: on }; res.json({ on }); });
 
 router.put('/folders', requireAdmin, (req, res) => {
   try { const out = setArtFolders(req.body?.folders); req.auditDetail = { folders: out.folders.length }; res.json(out); } catch (err) { fail(res, err); }

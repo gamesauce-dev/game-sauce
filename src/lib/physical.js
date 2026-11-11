@@ -2,6 +2,7 @@
 // Each person has their own list. A game is filed under a Library platform (so the same platform chips work), and its details and cover come
 // from the same providers the Library uses: found automatically in the background, or picked by hand in the details window.
 import fs from 'node:fs';
+import path from 'node:path';
 import db from '../db.js';
 import { enrich, cacheMedia, launchbox } from './providers.js';
 import { launchboxStatus } from './launchbox.js';
@@ -347,6 +348,43 @@ export function setPhysicalArt(userId, id, kind, buffer) {
   return getPhysical(userId, r.id);
 }
 
+/* ───────── pictures shared between accounts ─────────
+   When a game has no picture of some kind, a picture another account already has for the same game (same platform, same title) is copied across, quietly.
+   Only the four pictures (cover, spine, disc, back): never a manual, notes, ratings or anything else. The copy is the person's own (a file of their own, not locked, so a lookup
+   or an import can still replace it), and changing or removing it never touches the other account's. An admin can turn it off (Settings > Artwork folders). */
+export const artSharing = () => (db.prepare("SELECT value FROM meta WHERE key = 'share_art'").get()?.value ?? '1') !== '0';
+export function setArtSharing(on) {
+  db.prepare("INSERT INTO meta (key, value) VALUES ('share_art', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(on ? '1' : '0');
+  return artSharing();
+}
+const artKey = (t) => squash(String(t || '').replace(/\([^)]*\)|\[[^\]]*\]/g, ' '));
+/** Fill the pictures a game is missing from another account's copy of the same game. Returns how many it filled. */
+export function reuseArt(userId, id) {
+  if (!artSharing()) return 0;
+  const r = own(userId, id);
+  if (!r) return 0;
+  const want = Object.entries(ART).filter(([kind, k]) => (kind === 'disc' || kind === 'back' ? isDiscPlatform(r.platform) : true) && !r[k.lock] && !(r[k.path] && fs.existsSync(r[k.path])));
+  if (!want.length) return 0;
+  const key = artKey(r.title);
+  const others = db.prepare('SELECT * FROM physical_games WHERE user_id <> ? AND platform = ? AND (cover_path IS NOT NULL OR spine_path IS NOT NULL OR disc_path IS NOT NULL OR back_path IS NOT NULL)').all(userId, r.platform)
+    .filter((o) => artKey(o.title) === key)
+    .sort((a, b) => (String(b.region || '') === String(r.region || '')) - (String(a.region || '') === String(r.region || '')));   // the same region first
+  let filled = 0;
+  for (const [kind, k] of want) {
+    const from = others.find((o) => o[k.path] && fs.existsSync(o[k.path]));
+    if (!from) continue;
+    const src = from[k.path];
+    let dest = src;
+    if (path.basename(src).startsWith('physical-')) {   // a file somebody uploaded or imported: take a copy, so one account removing theirs never breaks another's
+      try { const buf = fs.readFileSync(src), type = sniffImage(buf); if (!type) continue; dest = saveCover(buf, `physical-${Number(userId)}-${r.id}-${kind}-${Date.now()}`, type); } catch { continue; }
+    }   // (a picture a provider supplied is a shared cache file: it is safe to point at)
+    db.prepare(`UPDATE physical_games SET ${k.path} = ?, ${k.url} = NULL, ${k.ar ? `${k.ar} = ?, ` : ''}${k.lock} = 0, updated_at = datetime('now') WHERE id = ? AND user_id = ? AND ${k.lock} = 0`)
+      .run(...[dest, ...(k.ar ? [imageAspect(dest)] : []), r.id, userId]);
+    filled++;
+  }
+  return filled;
+}
+
 /** Back to the automatic picture: the uploaded one is forgotten (Look up again fetches one). */
 export function removePhysicalArt(userId, id, kind) {
   const k = ART[kind];
@@ -545,6 +583,7 @@ export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl,
       while (list.length) {
         for (const g of list) {
           try {
+            try { reuseArt(g.user_id, g.id); } catch { /* sharing must not stop the run */ }   // a picture another account has comes first: nothing to download
             if (g.matched) {
               const gotSpine = await fetchSpine(g.user_id, g.id, { cacheImpl, spineImpl });
               const gotDisc = isDiscPlatform(g.platform) ? await fetchDisc(g.user_id, g.id, { cacheImpl, discImpl }) : false;

@@ -4665,7 +4665,12 @@ async function loadArtFolders() {
   $('#artfolders-state').innerHTML = folders.length
     ? folders.map((f) => `${f.exists ? '✓' : '✕'} ${esc(f.path)}${f.exists ? '' : ' <b>(the server cannot see this folder)</b>'}`).join('<br>')
     : 'No folders yet.';
+  try { $('#art-share').checked = (await api('/art/sharing')).on; } catch { /* the box stays as it is */ }
 }
+$('#art-share')?.addEventListener('change', async (e) => {
+  try { await api('/art/sharing', { method: 'PUT', body: JSON.stringify({ on: e.target.checked }) }); toast(e.target.checked ? 'Pictures are shared between accounts' : 'Pictures are no longer shared between accounts'); }
+  catch (err) { toast(err.message, true); e.target.checked = !e.target.checked; }
+});
 // Play on this PC: the launcher's setup page, and "Check my PC" (the launcher reports which platforms have an emulator). Both are links that the launcher on this PC answers.
 async function launcherLink(kind) {
   const state = $('#playpc-state');
