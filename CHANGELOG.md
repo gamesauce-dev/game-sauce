@@ -4,10 +4,15 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-11
+
 ### Added
 - **Folder renamed or moved?** (Settings → Sources, on each source): point a source at its new folder and every game keeps its entry, details, covers and saves; only where the file lives changes. It refuses a folder that holds none of the source's games.
 
 ### Changed
+- **Clearer hover text** on the three library buttons (Physical and Digital): "Manually add a game", "Import artwork and manuals from folders" (Digital: "Import artwork from folders"), "Import games via CSV".
+- **Modern: the Carousel button** moved to the right of the top bar, next to light/dark and the look switch, and the second one in the ROM Library tools is gone.
+- **Details window:** the previous and next buttons sit the same distance from the count, and the count stays on one line.
 - **The picture importer accepts the layout most media packs use** (EmuMovies and others): a folder named after the platform, a folder inside for each kind of picture (`images`, `covers`, `box` or `front` for covers; `spines`; `discs`, `disc` or `cd`; `manuals`), and optionally a region folder. LaunchBox and RetroBat folders are still recognised as before.
 - **Say what a folder holds** (new, under "The folder names do not say what the pictures are?" in the importer): pick covers, spines, discs or manuals, and optionally the platform, and every picture in the folder is imported as that, whatever its folders are called.
 - **"Where the game's name ends in the file name"** (new box in the importer): a piece of text such as `" ("`; everything before it is the game's name. Without it, anything in brackets is ignored as before.
