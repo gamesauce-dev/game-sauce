@@ -598,7 +598,7 @@ const ICON_MAP = [
   ['#dup-more, #hw-more', 'show-more-down-arrow'], ['#bulk-selectall', 'select-2'], ['#pf-retry, #sources-retry, #browser-retry', 'recheck'],
   // Sources
   ['#scan-all', 'scan-again'], ['#add-source, #empty-add-source', 'source-add-2'], ['#create-source', 'source-add-and-scan-2'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
-  ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
+  ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="relocate"]', 'folder-move'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
   ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],
   ['[data-save-release]:not(.emu-save-alt)', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-save-release].emu-save-alt', 'arrow-up'], ['[data-vault-del]', 'delete'],

@@ -2053,7 +2053,7 @@ async function loadSourcesNow() {
       </div>
       <div class="source-path">${esc(s.path)}</div>
       ${(s.extra_paths || []).map((x) => `<div class="source-path source-extra${x.exists ? '' : ' is-gone'}" data-extra="${x.id}"><span>${esc(x.path)}${x.exists ? '' : ' <em>(not reachable)</em>'}</span><button class="btn btn-sm btn-ghost" data-act="drop-folder" title="Stop scanning this folder (its games stay in the library)" aria-label="Remove this folder">✕</button></div>`).join('')}
-      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="relocate" title="Renamed or moved this folder? Point the source at its new place: every game keeps its details, covers and saves.">Folder renamed or moved?</button> <button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
+      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="relocate" title="Folder renamed or moved? Point this source at its new place: every game keeps its details, covers and saves">Folder renamed or moved?</button> <button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
       <div class="scan-progress hidden" data-progress="${s.id}"></div>
       <div class="source-stats">
         <span><b>${s.rom_count}</b> ROMs</span>
