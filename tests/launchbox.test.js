@@ -31,6 +31,8 @@ ${img(1, 'Screenshot - Gameplay', 'World', 'shot1.jpg')}
 ${img(1, 'Box - Front', 'Europe', 'eu.jpg')}
 ${img(1, 'Box - Spine', 'Europe', 'spine-eu.jpg')}
 ${img(1, 'Box - Spine', 'North America', 'spine-na.jpg')}
+${img(1, 'Box - Back', 'Europe', 'back-eu.jpg')}
+${img(1, 'Box - Back', 'North America', 'back-na.jpg')}
 ${img(1, 'Disc', 'Europe', 'disc-eu.png')}
 ${img(1, 'Disc', 'North America', 'disc-na.png')}
 ${img(1, 'Box - Front', 'North America', 'na.jpg')}
@@ -150,4 +152,12 @@ test('the best disc picture is kept per game (the open case on the shelf), and t
   assert.equal(lb.launchboxFind(['Destroy All Humans! 2'], 'ps2').media.disc, undefined, 'a game with no disc has none');
   const st = lb.launchboxStatus();
   assert.equal(st.discs, 1); assert.equal(st.has_discs, true);
+});
+
+test('the best box back is kept per game (turning a case over on the shelf), and the status says backs were indexed', () => {
+  const g = lb.launchboxFind(['Destroy All Humans!'], 'ps2');
+  assert.equal(g.media.back, 'https://images.launchbox-app.com/back-na.jpg', 'North America beats Europe');
+  assert.equal(g.back_url, g.media.back); assert.equal(g.cover_url, 'https://images.launchbox-app.com/na.jpg', 'a back is never taken for the cover');
+  assert.equal(lb.launchboxFind(['Destroy All Humans! 2'], 'ps2').media.back, undefined, 'a game with no back has none');
+  const st = lb.launchboxStatus(); assert.equal(st.backs, 1); assert.equal(st.has_backs, true);
 });

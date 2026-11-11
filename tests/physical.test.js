@@ -435,3 +435,25 @@ test('the back of the case: a Back picture slot (upload, folder import, cut from
   assert.ok(css.includes('.ph-case.is-turning .ph-tray') && ph.includes("classList.add('is-turning')"), 'the disc tray does not show through while the case turns');
   assert.ok(css.includes('.ph-case.is-back .ph-case-front { transform: scaleX(0)') && css.includes('.ph-case.is-back .ph-case-rear { transform: scaleX(1)') && css.includes('.ph-case.is-open .ph-case-turn { display: none; }'), 'a flat turn, and not while the case is open');
 });
+
+test('back art: a boxed game keeps a looked-up back picture (cached, served only to its owner); other platforms never ask; the lookup is not stamped as tried when it found nothing and the database has no backs', async () => {
+  const mk = async (platform, title) => (await call('/api/physical/games', { method: 'POST', body: { platform, title } })).body;
+  const ps = await mk('ps3', 'Back Art Test'), sn = await mk('snes', 'Box Back Cart');
+  const png = path.join(TMP, 'back.png'); fs.writeFileSync(png, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'));
+  const kinds = []; const cacheImpl = async (url, kind) => { kinds.push(kind); return png; };
+  assert.equal(await phys.fetchBack(adminId, ps.id, { cacheImpl, backImpl: async () => 'http://x/back.jpg' }), true); assert.deepEqual(kinds, ['back']);
+  const one = (await call('/api/physical/games/' + ps.id)).body;
+  assert.equal(one.has_back, true); assert.ok(one.back_url.startsWith('/api/physical/back/' + ps.id));
+  assert.equal((await fetch(base + one.back_url, { headers: { Authorization: 'Bearer ' + adminTok } })).status, 200);
+  assert.equal((await fetch(base + '/api/physical/back/' + ps.id, { headers: { Authorization: 'Bearer ' + annTok } })).status, 404, "someone else's shelf");
+  // nothing found, and no LaunchBox database with backs: not stamped, so it is asked again after the database is updated
+  const none = await mk('ps4', 'No Back Yet');
+  assert.equal(await phys.fetchBack(adminId, none.id, { cacheImpl, backImpl: async () => null }), false);
+  assert.equal(db.prepare('SELECT back_tried_at FROM physical_games WHERE id = ?').get(none.id).back_tried_at, null);
+  // a back that arrives with a match for a cartridge game is ignored (no case to turn over)
+  await phys.applyMatch(adminId, sn.id, { title: 'Box Back Cart', media: { back: 'http://x/b.jpg' }, source: 'test' }, { cacheImpl });
+  assert.equal((await call('/api/physical/games/' + sn.id)).body.has_back, false);
+  // the screen and the lookup are wired in
+  const lbSrc = read('src/lib/physical.js'); assert.ok(lbSrc.includes('async function lookupBackDefault') && lbSrc.includes('export async function fetchBack') && lbSrc.includes('back_tried_at'));
+  assert.ok(read('public/app.js').includes('with box backs'));
+});

@@ -83,9 +83,10 @@ const toRecord = (g) => ({
   description: g.overview || null,
   cover_url: g.cover ? IMAGE_BASE + g.cover : null,
   has_cover: Boolean(g.cover),
-  media: { ...(g.cover ? { box2d: IMAGE_BASE + g.cover } : {}), ...(g.shot ? { screenshot: IMAGE_BASE + g.shot } : {}), ...(g.spine ? { spine: IMAGE_BASE + g.spine } : {}), ...(g.disc ? { disc: IMAGE_BASE + g.disc } : {}) },
+  media: { ...(g.cover ? { box2d: IMAGE_BASE + g.cover } : {}), ...(g.shot ? { screenshot: IMAGE_BASE + g.shot } : {}), ...(g.spine ? { spine: IMAGE_BASE + g.spine } : {}), ...(g.disc ? { disc: IMAGE_BASE + g.disc } : {}), ...(g.back ? { back: IMAGE_BASE + g.back } : {}) },
   spine_url: g.spine ? IMAGE_BASE + g.spine : null,
   disc_url: g.disc ? IMAGE_BASE + g.disc : null,
+  back_url: g.back ? IMAGE_BASE + g.back : null,
   game_id: String(g.id),
   source: 'launchbox'
 });
@@ -191,6 +192,7 @@ const REGION_RANK = { 'North America': 0, 'United States': 1, World: 2, Europe: 
 const regionRank = (r) => (r in REGION_RANK ? REGION_RANK[r] : 9);
 const COVER_TYPES = { 'Box - Front': 0, 'Box - Front - Reconstructed': 1 };
 const SPINE_TYPES = { 'Box - Spine': 0 };   // the spine of the box or case: used by the Physical shelf
+const BACK_TYPES = { 'Box - Back': 0 };   // the back of the box or case: shown when a case on the Physical shelf is turned over
 const DISC_TYPES = { Disc: 0, 'Cart - Front': 1 };   // (a Switch game's cartridge is kept as its "disc")   // the picture printed on the disc: shown in the open case on the Physical shelf
 
 /**
@@ -206,7 +208,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   out.pragma('synchronous = OFF');
   out.exec(`
     CREATE TABLE games (id INTEGER PRIMARY KEY, platform TEXT NOT NULL, name TEXT NOT NULL, norm TEXT, rnorm TEXT, year INTEGER,
-      overview TEXT, genres TEXT, developer TEXT, publisher TEXT, players TEXT, rating REAL, cover TEXT, shot TEXT, spine TEXT, disc TEXT);
+      overview TEXT, genres TEXT, developer TEXT, publisher TEXT, players TEXT, rating REAL, cover TEXT, shot TEXT, spine TEXT, disc TEXT, back TEXT);
     CREATE TABLE alt (game_id INTEGER NOT NULL, norm TEXT, rnorm TEXT);
     CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
   `);
@@ -219,6 +221,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   const shots = new Map();  // id -> file
   const spines = new Map(); // id -> { rank, file }
   const discs = new Map();  // id -> { rank, file }
+  const backs = new Map();  // id -> { rank, file }
   let games = 0, alts = 0, ctx = null, rec = null, field = null, buf = '';
   const parser = new Parser();
 
@@ -255,6 +258,10 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
           const rank = SPINE_TYPES[rec.Type] * 10 + regionRank(rec.Region);
           const cur = spines.get(id);
           if (!cur || rank < cur.rank) spines.set(id, { rank, file: rec.FileName });
+        } else if (rec.Type in BACK_TYPES) {
+          const rank = BACK_TYPES[rec.Type] * 10 + regionRank(rec.Region);
+          const cur = backs.get(id);
+          if (!cur || rank < cur.rank) backs.set(id, { rank, file: rec.FileName });
         } else if (rec.Type in DISC_TYPES) {
           const rank = DISC_TYPES[rec.Type] * 10 + regionRank(rec.Region);
           const cur = discs.get(id);
@@ -287,10 +294,12 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
     const setShot = out.prepare('UPDATE games SET shot = ? WHERE id = ?');
     const setSpine = out.prepare('UPDATE games SET spine = ? WHERE id = ?');
     const setDisc = out.prepare('UPDATE games SET disc = ? WHERE id = ?');
+    const setBack = out.prepare('UPDATE games SET back = ? WHERE id = ?');
     for (const [id, c] of covers) setCover.run(c.file, id);
     for (const [id, f] of shots) setShot.run(f, id);
     for (const [id, sp] of spines) setSpine.run(sp.file, id);
     for (const [id, d] of discs) setDisc.run(d.file, id);
+    for (const [id, b] of backs) setBack.run(b.file, id);
     out.exec('COMMIT');
     if (!games) throw new Error('No games were found in the download. Is it the LaunchBox Metadata file?');
     out.exec(`
@@ -306,6 +315,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
     put.run('covers', String(covers.size));
     put.run('spines', String(spines.size));
     put.run('discs', String(discs.size));
+    put.run('backs', String(backs.size));
     if (sourceModified) put.run('source_modified', sourceModified);
     out.close();
   } catch (err) {
@@ -315,7 +325,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   }
   closeIndex(); // release the old file before it is replaced
   fs.renameSync(tmp, dbFile());
-  return { games, alts, covers: covers.size, spines: spines.size, discs: discs.size };
+  return { games, alts, covers: covers.size, spines: spines.size, discs: discs.size, backs: backs.size };
 }
 
 /* ───────────────────────── the update job ───────────────────────── */
@@ -338,6 +348,8 @@ export function launchboxStatus() {
     has_spines: metaGet(c, 'spines') !== null,   // false for an index made before spine art was kept: update it to get spines
     discs: Number(metaGet(c, 'discs') || 0),
     has_discs: metaGet(c, 'discs') !== null,     // false for an index made before disc art was kept: update it to get discs
+    backs: Number(metaGet(c, 'backs') || 0),
+    has_backs: metaGet(c, 'backs') !== null,     // false for an index made before box backs were kept: update it to get them
     imported_at: metaGet(c, 'imported_at'),
     source_modified: metaGet(c, 'source_modified'),
     bytes: size

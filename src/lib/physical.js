@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import db from '../db.js';
 import { enrich, cacheMedia, launchbox } from './providers.js';
+import { launchboxStatus } from './launchbox.js';
 import { parseCsv } from './namecsv.js';
 import { decodeEntities, sortTitle } from './metadata.js';
 import { platformFor, CONSOLE_PLATFORMS, appIdFor } from './consoles.js';
@@ -412,12 +413,15 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia, exp
   const discUrl = r.disc_locked ? null : (c.media?.disc || c.disc_url || null);   // so is an uploaded disc
   let discPath = null;
   if (discUrl && isDiscPlatform(r.platform)) { try { discPath = await cacheImpl(discUrl, 'disc'); } catch { discPath = null; } }
+  const backUrl = r.back_locked ? null : (c.media?.back || c.back_url || null);   // an uploaded or imported back is kept; only boxed games have a case to turn over
+  let backPath = null;
+  if (backUrl && isDiscPlatform(r.platform)) { try { backPath = await cacheImpl(backUrl, 'back'); } catch { backPath = null; } }
   const yr = Math.round(Number(c.release_year)), pl = Math.round(Number(c.players)), rt = Number(c.rating);
   db.prepare(`UPDATE physical_games SET
       developer = COALESCE(?, developer), publisher = COALESCE(?, publisher), genre = COALESCE(?, genre), description = COALESCE(?, description),
       release_year = COALESCE(?, release_year), players = COALESCE(?, players), rating = COALESCE(?, rating),
       cover_url = COALESCE(?, cover_url), cover_path = COALESCE(?, cover_path), spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path),
-      disc_url = COALESCE(?, disc_url), disc_path = COALESCE(?, disc_path),
+      disc_url = COALESCE(?, disc_url), disc_path = COALESCE(?, disc_path), back_url = COALESCE(?, back_url), back_path = COALESCE(?, back_path),
       cover_ar = COALESCE(?, cover_ar), spine_ar = COALESCE(?, spine_ar),
       cover_locked = CASE WHEN ? IS NOT NULL THEN 0 ELSE cover_locked END,
       meta_source = ?, meta_synced_at = datetime('now'), meta_tried_at = datetime('now'),
@@ -425,7 +429,7 @@ export async function applyMatch(userId, id, cand, { cacheImpl = cacheMedia, exp
     WHERE id = ? AND user_id = ?`)
     .run(text(c.developer), text(c.publisher), text(c.genre), text(c.description)?.slice(0, 4000) || null,
       yr >= 1950 && yr <= 2100 ? yr : null, pl >= 1 && pl <= 16 ? pl : null, Number.isFinite(rt) && c.rating !== null && c.rating !== '' && rt >= 0 && rt <= 5 ? rt : null,
-      url, coverPath, spineUrl, spinePath, discUrl, discPath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, coverPath, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
+      url, coverPath, spineUrl, spinePath, discUrl, discPath, backUrl, backPath, coverPath ? imageAspect(coverPath) : null, spinePath ? imageAspect(spinePath) : null, coverPath, String(c.source || c.meta_source || 'manual').slice(0, 40), r.id, userId);
   return getPhysical(userId, id);
 }
 
@@ -459,8 +463,15 @@ async function lookupDiscDefault(r) {
   return lb?.media?.disc || null;
 }
 
+/** The back picture link for a game, from the local LaunchBox database (null when it is not downloaded, the game has no case to turn over, or it has none). */
+async function lookupBackDefault(r) {
+  if (!launchbox.enabled || !isDiscPlatform(r.platform)) return null;
+  const lb = await launchbox.lookup({ title: r.title, platform: platformRow(r.platform), hashes: {}, filename: r.title, year: r.release_year || null });
+  return lb?.media?.back || null;
+}
+
 /** Look one game up with the Library's providers and keep the answer. A game nothing is found for is stamped as tried, so it is not asked again every run. */
-export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = cacheMedia, spineImpl = lookupSpineDefault, discImpl = lookupDiscDefault } = {}) {
+export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = cacheMedia, spineImpl = lookupSpineDefault, discImpl = lookupDiscDefault, backImpl = lookupBackDefault } = {}) {
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   const meta = await enrichImpl({ title: r.title, platform: platformRow(r.platform), hashes: {}, filename: r.title, titleTrusted: true, year: r.release_year || null });
@@ -470,8 +481,10 @@ export async function matchOne(userId, id, { enrichImpl = enrich, cacheImpl = ca
   if (!spine) { try { spine = await spineImpl(r); } catch { spine = null; } }
   let disc = meta.media?.disc || null;
   if (!disc) { try { disc = await discImpl(r); } catch { disc = null; } }
-  const game = await applyMatch(userId, id, { ...meta, media: { ...(meta.media || {}), ...(spine ? { spine } : {}), ...(disc ? { disc } : {}) }, source: meta.source || 'provider' }, { cacheImpl });
-  if (launchbox.enabled || spine) db.prepare("UPDATE physical_games SET spine_tried_at = datetime('now'), disc_tried_at = datetime('now') WHERE id = ?").run(r.id);
+  let back = meta.media?.back || null;
+  if (!back) { try { back = await backImpl(r); } catch { back = null; } }
+  const game = await applyMatch(userId, id, { ...meta, media: { ...(meta.media || {}), ...(spine ? { spine } : {}), ...(disc ? { disc } : {}), ...(back ? { back } : {}) }, source: meta.source || 'provider' }, { cacheImpl });
+  if (launchbox.enabled || spine) db.prepare("UPDATE physical_games SET spine_tried_at = datetime('now'), disc_tried_at = datetime('now'), back_tried_at = CASE WHEN ? = 1 OR ? IS NOT NULL THEN datetime('now') ELSE back_tried_at END WHERE id = ?").run(lbHasBacks() ? 1 : 0, back, r.id);
   return game;
 }
 
@@ -485,6 +498,19 @@ export async function fetchSpine(userId, id, { cacheImpl = cacheMedia, spineImpl
   db.prepare("UPDATE physical_games SET spine_url = COALESCE(?, spine_url), spine_path = COALESCE(?, spine_path), spine_ar = COALESCE(?, spine_ar), spine_tried_at = datetime('now'), updated_at = CASE WHEN ? IS NULL THEN updated_at ELSE datetime('now') END WHERE id = ?").run(url, file, file ? imageAspect(file) : null, file, r.id);
   return Boolean(file);
 }
+
+/** Only the back picture, for a game that is already matched (a case that can be turned over): its details are left exactly as they are. */
+export async function fetchBack(userId, id, { cacheImpl = cacheMedia, backImpl = lookupBackDefault } = {}) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  if (r.back_locked) return false;   // the person's own back
+  let url = null; try { url = await backImpl(r); } catch { url = null; }
+  let file = null; if (url) { try { file = await cacheImpl(url, 'back'); } catch { file = null; } }
+  // Stamped as tried only when the database could have answered (it keeps backs), so a copy made before backs were kept is asked again after it is updated.
+  db.prepare("UPDATE physical_games SET back_url = COALESCE(?, back_url), back_path = COALESCE(?, back_path), back_tried_at = CASE WHEN ? = 1 OR ? IS NOT NULL THEN datetime('now') ELSE back_tried_at END, updated_at = CASE WHEN ? IS NULL THEN updated_at ELSE datetime('now') END WHERE id = ?").run(url, file, lbHasBacks() ? 1 : 0, file, file, r.id);
+  return Boolean(file);
+}
+const lbHasBacks = () => { try { return Boolean(launchboxStatus().has_backs); } catch { return false; } };
 
 /** Only the disc picture, for a game that is already matched (a disc case on the shelf): its details are left exactly as they are. */
 export async function fetchDisc(userId, id, { cacheImpl = cacheMedia, discImpl = lookupDiscDefault } = {}) {
@@ -505,9 +531,10 @@ export const matchJobStatus = () => ({ running: job.running, total: job.total, d
 const pending = (retry) => db.prepare(`SELECT id, user_id, platform, meta_source IS NOT NULL AS matched FROM physical_games
   WHERE (meta_source IS NULL${retry ? '' : ' AND meta_tried_at IS NULL'})
      OR (? = 1 AND ((spine_path IS NULL${retry ? '' : ' AND spine_tried_at IS NULL'})
-                 OR (platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND disc_path IS NULL${retry ? '' : ' AND disc_tried_at IS NULL'}))) ORDER BY id`).all(launchbox.enabled ? 1 : 0);
+                 OR (platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND disc_path IS NULL${retry ? '' : ' AND disc_tried_at IS NULL'}))
+          OR (? = 1 AND platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND back_path IS NULL AND back_locked = 0${retry ? '' : ' AND back_tried_at IS NULL'})) ORDER BY id`).all(launchbox.enabled ? 1 : 0, launchbox.enabled && lbHasBacks() ? 1 : 0);
 
-export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl, discImpl } = {}) {
+export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl, discImpl, backImpl } = {}) {
   if (job.running) { job.again = true; job.retry = job.retry || retry; return matchJobStatus(); }
   const todo = pending(retry);
   if (!todo.length) return matchJobStatus();
@@ -521,8 +548,9 @@ export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl,
             if (g.matched) {
               const gotSpine = await fetchSpine(g.user_id, g.id, { cacheImpl, spineImpl });
               const gotDisc = isDiscPlatform(g.platform) ? await fetchDisc(g.user_id, g.id, { cacheImpl, discImpl }) : false;
-              if (gotSpine || gotDisc) job.found++;
-            } else if (await matchOne(g.user_id, g.id, { enrichImpl, cacheImpl, spineImpl, discImpl })) job.found++;
+              const gotBack = isDiscPlatform(g.platform) ? await fetchBack(g.user_id, g.id, { cacheImpl, backImpl }) : false;
+              if (gotSpine || gotDisc || gotBack) job.found++;
+            } else if (await matchOne(g.user_id, g.id, { enrichImpl, cacheImpl, spineImpl, discImpl, backImpl })) job.found++;
           } catch { /* one game must not stop the run */ }
           job.done++;
         }
