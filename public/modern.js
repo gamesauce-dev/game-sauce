@@ -21,7 +21,6 @@ const NAV = [
   { view: 'digital', icon: 'digital-library', label: 'Digital Library' },
   { view: 'physical', icon: 'physical-shelf', label: 'Physical Library' },
   { view: 'collections', icon: 'collection', label: 'Collections' },
-  { view: 'carousel', icon: 'carousel', label: 'Carousel' },
   { view: 'sources', icon: 'sources', label: 'Sources', admin: true },
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
@@ -87,6 +86,7 @@ async function doBuildBar() {
       <div class="mb-library-tools" id="mb-library-tools"></div>
     </div>
     <div class="mb-right">
+      <button class="mb-btn" id="mb-carousel" data-mview="carousel" title="Carousel: browse your games as a carousel of covers" aria-label="Carousel">${ic.carousel}</button>
       <button class="mb-btn" id="mb-theme" title="" aria-label="Light or dark">${ic['dark-mode']}${ic['light-mode']}</button>
       <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}</button>
       <div class="mb-acct">
@@ -328,7 +328,6 @@ function buildLibraryTools(ic) {
     <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['no-covers-2']}</button>
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata-3']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
-    <button class="mb-btn" id="tl-carousel" title="Browse as a carousel of covers" aria-label="Browse as a carousel of covers">${ic.carousel}</button>
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue, lock: ic.lock });
   document.body.classList.add('mb-tools');
@@ -338,14 +337,13 @@ function buildLibraryTools(ic) {
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
 function toolClick(e) {
-  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more, #tl-carousel');
+  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
   if (!b) return false;
   if (b.id === 'tl-reset') { chipFamily = null; ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
   else if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
   else if (b.id === 'tl-hidden') proxy('[data-toggle="hidden"]');
   else if (b.id === 'tl-nocover') proxy('[data-toggle="nocover"]');
   else if (b.id === 'tl-select') proxy('#select-toggle');
-  else if (b.id === 'tl-carousel') q('#open-carousel')?.click();
   else if (b.id === 'tl-fetch') proxy('#bulk-enrich');
   else if (b.id === 'tl-sort') {
     const sel = q('#sort'); if (!sel) return true;
