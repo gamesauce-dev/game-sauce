@@ -111,7 +111,8 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-shelf.no-anim .ph-spine, .ph-shelf.no-anim .ph-plate { animation: none; }
 
 /* Disc cases (PlayStation 2 to 5, Xbox to Series X|S): click the pulled-out cover and the case comes to the front; click again and it opens, the manual on the left, the disc in its tray on the right. */
-.ph-spine.is-fore { background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 2px rgba(255,255,255,.2); transform: translateY(-24px); }
+/* The gap left on the shelf while the game is out: not a grey box, but an empty place (a soft shadow along the top, a faint dashed edge), standing on the shelf like the others. */
+.ph-spine.is-fore { background: transparent; transform: none; border-radius: 3px; box-shadow: inset 0 14px 22px -16px rgba(0,0,0,.4); outline: 1px dashed color-mix(in srgb, var(--muted, #8a93a6) 45%, transparent); outline-offset: -3px; }
 .ph-spine.is-fore .ph-face { opacity: 0; }
 .ph-case { position: fixed; z-index: 45; width: var(--cw); height: var(--ch); cursor: pointer; outline: none; }
 /* The shadow is a box behind the case, not a filter: a filter on the case flattens the 3D turn of the cover in some web views (Linux), so only the left side showed, back to front. */
