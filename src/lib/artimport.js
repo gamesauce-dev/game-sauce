@@ -113,12 +113,12 @@ export function classify(segs, fileName) {
   const t = segs.findIndex((s) => s in LB_KIND);
   if (t >= 1 && IMAGE_EXT.has(ext)) {
     const num = /-(\d{1,3})$/.exec(base);
-    return { layout: 'launchbox', kind: LB_KIND[segs[t]], platform: segs[t - 1], region: segs[t + 1] || '', title: base.replace(/-\d{1,3}$/, ''), n: num ? Number(num[1]) : 1, weak: segs[t] === 'box - front - reconstructed' };
+    return { layout: 'launchbox', folder: segs[t], kind: LB_KIND[segs[t]], platform: segs[t - 1], region: segs[t + 1] || '', title: base.replace(/-\d{1,3}$/, ''), n: num ? Number(num[1]) : 1, weak: segs[t] === 'box - front - reconstructed' };
   }
   const img = segs.lastIndexOf('images');
-  if (img >= 1 && IMAGE_EXT.has(ext) && /-thumb$/i.test(base)) return { layout: 'retrobat', kind: 'cover', platform: segs[img - 1], region: '', title: base.replace(/-thumb$/i, ''), n: 1, weak: false };
+  if (img >= 1 && IMAGE_EXT.has(ext) && /-thumb$/i.test(base)) return { layout: 'retrobat', folder: 'images', kind: 'cover', platform: segs[img - 1], region: '', title: base.replace(/-thumb$/i, ''), n: 1, weak: false };
   const man = segs.lastIndexOf('manuals');
-  if (man >= 1 && ext === '.pdf') return { layout: 'retrobat', kind: 'manual', platform: segs[man - 1], region: '', title: base.replace(/-manual$/i, ''), n: 1, weak: false };
+  if (man >= 1 && ext === '.pdf') return { layout: 'retrobat', folder: 'manuals', kind: 'manual', platform: segs[man - 1], region: '', title: base.replace(/-manual$/i, ''), n: 1, weak: false };
   // The simple layout: the folder under the platform's says the kind of picture; a folder under that, if any, is the region.
   for (let i = segs.length - 1; i >= 1; i--) {
     const kind = SIMPLE_LOOKUP.get(squash(segs[i]));
@@ -126,7 +126,7 @@ export function classify(segs, fileName) {
     if (kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
     if (kind !== 'manual' && NOT_COVER.test(base)) return null;
     const bracket = /\(([^)]*)\)/.exec(base);
-    return { layout: 'simple', kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
+    return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
   }
   return null;
 }
@@ -137,7 +137,7 @@ function forcedEntry(segs, fileName, force) {
   const ext = dot >= 0 ? fileName.slice(dot).toLowerCase() : '', base = dot >= 0 ? fileName.slice(0, dot) : fileName;
   if (force.kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
   const bracket = /\(([^)]*)\)/.exec(base);
-  return { layout: 'picked', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
+  return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
 }
 
 /** The title part of a file name: everything before the first `cut` (when the person gave one), with a trailing -01 left for titleKey to ignore. */
@@ -155,19 +155,20 @@ const CACHE_MS = 5 * 60 * 1000;
 
 async function walk(root, force = null) {
   const files = []; let scanned = 0;
+  const ignored = new Map(), links = [];   // folders with pictures nobody could place, and links that were not followed
   const go = async (dir, depth, segs) => {
     if (depth > MAX_DEPTH || scanned > MAX_FILES) return;
     let items;
     try { items = await fsp.readdir(dir, { withFileTypes: true }); } catch { return; }
     for (const it of items) {
       if (it.name.startsWith('.')) continue;
-      if (it.isSymbolicLink()) continue;   // never follow a link out of the folder
+      if (it.isSymbolicLink()) { if (links.length < 20) links.push(segs.slice(1).concat(it.name).join(' / ')); continue; }   // never follow a link out of the folder
       if (it.isDirectory()) await go(path.join(dir, it.name), depth + 1, [...segs, it.name.toLowerCase()]);
-      else if (it.isFile()) { scanned++; const c = force?.kind ? forcedEntry(segs, it.name, force) : classify(segs, it.name); if (c) files.push({ ...c, file: path.join(dir, it.name) }); }
+      else if (it.isFile()) { scanned++; const c = force?.kind ? forcedEntry(segs, it.name, force) : classify(segs, it.name); if (c) files.push({ ...c, file: path.join(dir, it.name) }); else { const x = path.extname(it.name).toLowerCase(); if (IMAGE_EXT.has(x) || x === '.pdf') { const k = segs.slice(-2).join(' / '); ignored.set(k, (ignored.get(k) || 0) + 1); } } }
     }
   };
   await go(root, 0, [path.basename(root).toLowerCase()]);   // the chosen folder's own name counts too (so a platform folder can be chosen on its own)
-  return { files, scanned };
+  return { files, scanned, ignored: [...ignored].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([folder, count]) => ({ folder, count })), links };
 }
 
 /** Everything useful under one of the listed folders. Remembered for a few minutes so a preview and the import that follows do not scan twice. */
@@ -179,8 +180,8 @@ export async function scanArtFolder(folder, { fresh = false, force = null } = {}
   if (!fresh && hit && Date.now() - hit.at < CACHE_MS) return hit.result;
   let ok = false; try { ok = (await fsp.stat(listed)).isDirectory(); } catch { /* missing */ }
   if (!ok) throw Object.assign(new Error('That folder is not available on the server right now.'), { status: 400 });
-  const { files, scanned } = await walk(listed, force);
-  const result = { files, scanned };
+  const { files, scanned, ignored, links } = await walk(listed, force);
+  const result = { files, scanned, ignored, links };
   scanCache.set(ckey, { at: Date.now(), result });
   return result;
 }
@@ -206,7 +207,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
   for (const g of games) { const k = `${slugOf(g)}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(g); }
 
   const platCache = new Map(); const platOf = (name) => { if (!platCache.has(name)) platCache.set(name, resolvePlatform(name)); return platCache.get(name); };
-  const unknownPlatforms = new Map(); const unmatched = []; let unmatchedTotal = 0;
+  const unknownPlatforms = new Map(); const unmatched = [], unmatchedPer = {}; let unmatchedTotal = 0;
   const best = new Map();   // `${gameKey}|${kind}` -> { game, kind, entry, rank }
   const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0, wrap: 0 };
   for (const e of scan.files) {
@@ -216,7 +217,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     if (e.kind === 'disc' && !isDiscPlatform(slug)) continue;
     candidatesSeen[e.kind]++;
     const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
-    if (!list) { unmatchedTotal++; if (unmatched.length < 25) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }
+    if (!list) { unmatchedTotal++; unmatchedPer[e.kind] = (unmatchedPer[e.kind] || 0) + 1; if (unmatchedPer[e.kind] <= 6) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }   // a few of each kind, so every kind shows
     for (const g of list) for (const k of e.kind === 'wrap' ? ['cover', 'spine', 'back'] : [e.kind]) {   // a wrap gives all three
       const id = target === 'digital' ? `${g.store}/${g.app_id}` : g.id;
       const key = `${id}|${k}`;
@@ -237,6 +238,10 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     wrapPlatforms.push({ slug, count, ratio: Math.round(med * 100) / 100, sample: sample ? scan.files.indexOf(sample) : null, split: splitFor(slug, split) });
   }
   for (const [key, b] of [...best]) if (b.fromWrap) { if (oddEntries.has(b.entry)) best.delete(key); else b.split = splitFor(b.slug, split); }
+  // What the folder holds as the importer read it: each (platform folder, kind folder) with its kind and how many files.
+  const seenMap = new Map();
+  for (const e of scan.files) { if (!wanted.has(e.kind)) continue; const k = `${e.platform || '?'}\n${e.folder || ''}\n${e.kind}`; seenMap.set(k, (seenMap.get(k) || 0) + 1); }
+  const seen = [...seenMap].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, files]) => { const [platform, folder, kind] = k.split('\n'); return { platform, folder, kind, files }; });
   const matched = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, will = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, items = [];
   for (const b of best.values()) {
     matched[b.kind]++;
@@ -251,7 +256,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     skipped: Object.fromEntries(Object.keys(matched).map((k) => [k, matched[k] - will[k]])),
     candidates: candidatesSeen, games: games.length,
     wraps: { files: perSlug.size ? [...perSlug.values()].reduce((t, m) => t + m.size, 0) : 0, odd: oddEntries.size, odd_list: [...oddEntries.values()].slice(0, 25), platforms: wrapPlatforms },
-    unmatched, unmatched_total: unmatchedTotal,
+    seen, unmatched, unmatched_total: unmatchedTotal,
     unknown_platforms: [...unknownPlatforms].slice(0, 20).map(([name, files]) => ({ name, files }))
   };
 }
@@ -259,7 +264,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
 const publicPlan = (p, scan, folder) => ({
   folder, scanned: scan.scanned, files: scan.files.length, games: p.games,
   candidates: p.candidates, matched: p.matched, will: p.will, skipped: p.skipped,
-  unmatched: p.unmatched, unmatched_total: p.unmatched_total, unknown_platforms: p.unknown_platforms, wraps: p.wraps
+  unmatched: p.unmatched, unmatched_total: p.unmatched_total, unknown_platforms: p.unknown_platforms, wraps: p.wraps, seen: p.seen, ignored: scan.ignored || [], links: scan.links || []
 });
 
 /** What an import would do (nothing is saved). */

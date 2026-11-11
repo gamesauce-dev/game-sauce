@@ -163,7 +163,7 @@ test('the screens and the settings: Artwork folders (admin), Import pictures & m
 });
 
 test('the simple layout (a media pack): platform folder, a folder per kind of picture, names cut at the text the person gives', async () => {
-  const c = art.classify; const pick = (o) => { const { fileRegion, ...rest } = o; return rest; };
+  const c = art.classify; const pick = (o) => { const { fileRegion, folder, ...rest } = o; return rest; };
   assert.deepEqual(pick(c(['downloads', 'xbox 360', 'images'], 'Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It).png')), { layout: 'simple', kind: 'cover', platform: 'xbox 360', region: '', title: 'Ace Combat 6 - Fires of Liberation (USA, Japan) (En,Fr,De,Es,It)', n: 1, weak: false });
   assert.equal(c(['xbox 360', 'spines', 'europe'], 'x (Europe).png').kind, 'spine'); assert.equal(c(['xbox 360', 'spines', 'europe'], 'x (Europe).png').region, 'europe');
   assert.equal(c(['xbox 360', 'discs'], 'x.jpg').kind, 'disc'); assert.equal(c(['xbox 360', 'Box Art'.toLowerCase()], 'x.png').kind, 'cover');
@@ -262,4 +262,19 @@ test('the artwork folders: a folder already listed that cannot be reached (a sta
   assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: ['/mnt/typo/new-bad'] } })).status, 400, 'a NEW folder that does not exist is still refused');
   const removed = await call('/api/art/folders', { method: 'PUT', body: { folders: [good] } });
   assert.equal(removed.status, 200); assert.deepEqual(removed.body.folders.map((f) => f.path), [good], 'and the stale ones can be removed');
+});
+
+test('the preview says what it saw: each folder as it was read, folders with pictures nobody could place, and a few unmatched of every kind', async () => {
+  const root = path.join(TMP, 'art', 'Saw');
+  await add('ps3', 'Seen Game');
+  put('Saw/PlayStation 3/discs/Seen Game (USA).png', png(300, 300)); put('Saw/PlayStation 3/discs/Another (USA).png', png(300, 300));
+  put('Saw/PlayStation 3/mystery/Seen Game.png', png(300, 420)); put('Saw/PlayStation 3/mystery/Other.png', png(300, 420));   // folder names that say nothing
+  put('Saw/PlayStation 3/notes.txt', Buffer.from('x'));
+  art.setArtFolders([...art.getArtFolders(), root]);
+  const p = (await preview(root)).body;
+  assert.deepEqual(p.seen, [{ platform: 'playstation 3', folder: 'discs', kind: 'disc', files: 2 }]);
+  assert.deepEqual(p.ignored, [{ folder: 'playstation 3 / mystery', count: 2 }], 'pictures in a folder that says nothing are counted, not silently lost');
+  assert.deepEqual(p.unmatched.map((u) => u.kind), ['disc'], 'an unmatched disc is listed');
+  assert.deepEqual(p.links, []);
+  assert.ok(read('public/artimport-ui.js').includes('What was found in the folder') && read('public/artimport-ui.js').includes('Linked folders are not followed') && read('public/artimport-ui.js').includes('list="art-plat-list"'), 'the screen shows it, and the platform box can be typed into');
 });

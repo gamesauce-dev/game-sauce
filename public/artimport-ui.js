@@ -14,17 +14,19 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     <div class="panel" id="art-box" style="padding:12px;display:grid;gap:10px">
       <div id="art-add"></div>
       <label class="field" id="art-folder-row"><span>Folder to import from</span><select id="art-folder" class="select"></select></label>
-      <details id="art-pick"><summary>The folder names do not say what the pictures are? Tell me instead</summary>
+      <details id="art-pick"><summary>Options: the folder names do not say what the pictures are, or the file names are unusual</summary>
         <div style="display:grid;gap:10px;margin-top:8px">
           <label class="field"><span>Everything in the folder is</span><select id="art-kind" class="select"><option value="">Work it out from the folder names</option>${kinds.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}${target === 'digital' ? '' : '<option value="wrap">Full wraps (back, spine and front in one picture)</option>'}</select></label>
-          <label class="field"><span>for the platform</span><select id="art-plat" class="select"><option value="">Work it out from the folder names</option></select></label>
+          <label class="field"><span>for the platform (type to search)</span><input id="art-plat" list="art-plat-list" placeholder="Work it out from the folder names, or type e.g. PlayStation 3" autocomplete="off" spellcheck="false" /><datalist id="art-plat-list"></datalist><small class="hint" id="art-plat-note"></small></label>
+          <label class="field"><span>Where the game's name ends in the file name (optional)</span><input id="art-cut" placeholder="for example  ' ('  : \"Ace Combat 6 (USA, Japan) (En,Fr).png\" is read as Ace Combat 6" autocomplete="off" spellcheck="false" /></label>
         </div></details>
-      <label class="field"><span>Where the game's name ends in the file name (optional)</span><input id="art-cut" placeholder="for example  ' ('  : \"Ace Combat 6 (USA, Japan) (En,Fr).png\" is read as Ace Combat 6" autocomplete="off" spellcheck="false" /></label>
       <label class="policy-row"><input type="checkbox" id="art-replace" /> <span>Replace pictures that are already there (the automatic ones only: your own are always kept)</span></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="art-preview" type="button">Preview</button><button class="btn btn-primary" id="art-apply" type="button" disabled>Import</button></div>
       <div id="art-result" style="margin:0"></div>
     </div>`;
-  const sel = $('#art-folder', body), res = $('#art-result', body), previewBtn = $('#art-preview', body), applyBtn = $('#art-apply', body), replace = $('#art-replace', body), cutBox = $('#art-cut', body), kindSel = $('#art-kind', body), platSel = $('#art-plat', body);
+  const sel = $('#art-folder', body), res = $('#art-result', body), previewBtn = $('#art-preview', body), applyBtn = $('#art-apply', body), replace = $('#art-replace', body), cutBox = $('#art-cut', body), kindSel = $('#art-kind', body), platSel = $('#art-plat', body), platNote = $('#art-plat-note', body);
+  let platList = [];
+  const platSlug = () => { const v = platSel.value.trim().toLowerCase(); if (!v) return ''; return (platList.find((p) => p.name.toLowerCase() === v || p.slug === v) || {}).slug || ''; };
   let folders = [], can_edit = false;
   try { ({ folders, can_edit } = await ctx.api('/art/folders')); } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; previewBtn.disabled = true; return; }
   const usable = folders.filter((f) => f.exists);
@@ -36,10 +38,10 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
   }
   sel.innerHTML = usable.map((f) => `<option value="${esc(f.path)}"${f.path === select ? ' selected' : ''}>${esc(f.path)}</option>`).join('');
   const edited = {};   // platform -> { from, to }: where the person put the spine on a sample wrap (kept for next time when they import)
-  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, kind: kindSel.value, platform: platSel.value, split: edited, apply }) });
+  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, kind: kindSel.value, platform: platSlug(), split: edited, apply }) });
   const dirty = () => { applyBtn.disabled = true; res.innerHTML = ''; for (const k of Object.keys(edited)) delete edited[k]; };
-  sel.onchange = dirty; replace.onchange = dirty; cutBox.oninput = dirty; kindSel.onchange = dirty; platSel.onchange = dirty;
-  ctx.api('/art/platforms').then((d) => { platSel.insertAdjacentHTML('beforeend', (d.items || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join('')); }).catch(() => { /* the folder names are enough */ });
+  sel.onchange = dirty; replace.onchange = dirty; cutBox.oninput = dirty; kindSel.onchange = dirty; platSel.oninput = () => { dirty(); const v = platSel.value.trim(); platNote.textContent = v && !platSlug() ? 'Not a platform in the list yet: keep typing, or pick one from the list.' : ''; };
+  ctx.api('/art/platforms').then((d) => { platList = d.items || []; $('#art-plat-list', body).innerHTML = platList.map((p) => `<option value="${esc(p.name)}"></option>`).join(''); }).catch(() => { /* the folder names are enough */ });
 
   const showProgress = (s) => { res.innerHTML = `<p class="hint" style="margin:0"><span class="spin" aria-hidden="true"></span>Importing… ${n(s.done)} of ${n(s.total)}</p>`; };
   const showDone = (s) => {
@@ -62,6 +64,7 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
       const p = await req(false);
       const total = kinds.reduce((t, [k]) => t + p.will[k], 0);
       res.innerHTML = `<p class="hint" style="margin:0">${n(p.files)} useful files in the folder (${n(p.scanned)} looked at); ${n(p.games)} game${p.games === 1 ? '' : 's'} on your list.</p>
+        ${seenBlock(p)}
         <table class="art-table"><thead><tr><th></th><th>Found for your games</th><th>Will import</th><th>Already there</th></tr></thead><tbody>
         ${kinds.map(([k, l]) => `<tr><th>${l}</th><td>${n(p.matched[k])}</td><td><b>${n(p.will[k])}</b></td><td>${n(p.skipped[k])}</td></tr>`).join('')}</tbody></table>
         ${p.unmatched_total ? `<details><summary>${n(p.unmatched_total)} picture${p.unmatched_total === 1 ? '' : 's'} matched none of your games</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${p.unmatched.map((u) => `<li>${esc(u.title)} <span class="note">(${esc(u.kind)}, ${esc(u.platform)})</span></li>`).join('')}${p.unmatched_total > p.unmatched.length ? `<li>…and ${n(p.unmatched_total - p.unmatched.length)} more</li>` : ''}</ul></details>` : ''}
@@ -169,4 +172,14 @@ export function mountWraps(host, p, folder, edited) {
     box.querySelector('[data-w-reset]').onclick = () => { cur.from = orig.from; cur.to = orig.to; delete edited[w.slug]; paint(); };
     img.addEventListener('load', paint); paint();
   }
+}
+
+const KIND_NAME = { cover: 'covers', spine: 'spines', back: 'backs', disc: 'discs', manual: 'manuals', wrap: 'full wraps' };
+/** What the importer found in the folder, as it read it: so "nothing matched" can be told apart from "nothing was recognised". */
+function seenBlock(p) {
+  const rows = (p.seen || []).map((s) => `<li><b>${esc(s.platform)} / ${esc(s.folder || '(top)')}</b> read as ${KIND_NAME[s.kind] || esc(s.kind)}: ${n(s.files)} file${s.files === 1 ? '' : 's'}</li>`).join('');
+  const ign = (p.ignored || []).length ? `<p class="hint" style="margin:6px 0 0"><b>Not recognised</b> (pictures in folders whose names do not say what they are; open Options and say what they are): ${p.ignored.map((x) => `${esc(x.folder)} (${n(x.count)})`).join(', ')}</p>` : '';
+  const lk = (p.links || []).length ? `<p class="hint" style="margin:6px 0 0"><b>Linked folders are not followed</b> (a link could lead outside the folder): ${p.links.map(esc).join(', ')}. Add the link's real folder instead.</p>` : '';
+  if (!rows && !ign && !lk) return '<p class="hint" style="margin:6px 0 0">Nothing in this folder could be placed as artwork.</p>';
+  return `<details open style="margin:6px 0"><summary>What was found in the folder</summary>${rows ? `<ul class="hint" style="margin:6px 0 0 1.1rem">${rows}</ul>` : ''}${ign}${lk}</details>`;
 }

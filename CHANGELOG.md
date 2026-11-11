@@ -7,6 +7,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ### Fixed
 - **Artwork folders:** a folder already on the list that cannot be reached (a drive that is off, or a path from another computer) no longer stops other folders from being added or removed. Only a newly added folder is checked.
 
+### Changed
+- **The picture importer says what it saw.** The preview lists each folder as it was read ("playstation 3 / discs: read as discs, 159 files"), the folders that hold pictures but whose names say nothing (so a folder that was not recognised is no longer silent), links that were not followed, and a few unmatched pictures of every kind (not just the first 25 of whatever came first).
+- **The importer's options are together** in one fold-out, and the platform is a box you type into (it narrows a list as you type) instead of a drop-down that only jumps by first letter.
+
 ### Added
 - **The back of the case.** A Back picture for boxed games (upload it in the details window, put it in a `back` / `backcover` / LaunchBox `Box - Back` folder, or let a full wrap give it): the pulled-out case on the shelf has a turn-over button (↻, or the B key) that swings it round to the back and again to the front. Not while the case is open. The importer counts Backs as a kind of its own, and a full wrap now gives a cover, a spine and a back.
 - **Full-wrap covers** (one picture with the back, the spine and the front, as media packs such as EmuMovies keep them): put them in a folder called `wrap` (or `fullcover`, `full box`…) under the platform, or choose "Full wraps" in the importer. Each is cut into a cover and a spine; a real cover or spine picture always wins over one cut from a wrap. Where the spine sits is set once per platform on a sample, by dragging two lines, and is remembered for you. A wrap whose shape is far from the rest of its platform is not cut but listed. JPEG and PNG (WebP wraps are listed as unsupported for now). Cutting uses two small pure-JavaScript libraries (`jpeg-js`, `pngjs`), nothing native.
