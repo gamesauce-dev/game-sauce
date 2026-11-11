@@ -200,3 +200,56 @@ test('the pickers: the person says what a folder holds and which platform, whate
   assert.ok((await call('/api/art/platforms')).body.items.some((p) => p.slug === 'xbox360'));
   assert.equal((await call('/api/art/platforms', { as: 'ann' })).status, 200, 'anyone may read the list');
 });
+
+test('full wraps: cut into a cover and a spine at the fractions set for the platform, a real cover beats one cut from a wrap, an odd-shaped wrap is listed and left alone', async () => {
+  const { PNG } = await import('pngjs'); const jpeg = (await import('jpeg-js')).default; const wc = await import('../src/lib/wrapcut.js');
+  // a wrap: red back, blue spine, green front (the spine at 47.1 % to 52.6 % of the width, as measured on PS3 packs)
+  const wrapPng = (w, h, f = 0.471, t = 0.526) => { const p = new PNG({ width: w, height: h }); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, c = x < w * f ? [220, 30, 30] : x < w * t ? [30, 30, 220] : [30, 200, 30]; p.data[i] = c[0]; p.data[i + 1] = c[1]; p.data[i + 2] = c[2]; p.data[i + 3] = 255; } return PNG.sync.write(p); };
+  const mid = (file) => { const d = jpeg.decode(fs.readFileSync(file), { useTArray: true, formatAsRGBA: true }); const i = ((d.height >> 1) * d.width + (d.width >> 1)) * 4; return { w: d.width, h: d.height, rgb: [d.data[i], d.data[i + 1], d.data[i + 2]] }; };
+
+  // the cutting itself
+  const parts = wc.splitWrap(wrapPng(1440, 800), wc.PLATFORM_SPLIT.ps3);
+  fs.writeFileSync(path.join(TMP, 'c.jpg'), parts.cover); fs.writeFileSync(path.join(TMP, 's.jpg'), parts.spine); fs.writeFileSync(path.join(TMP, 'b.jpg'), parts.back);
+  const cv = mid(path.join(TMP, 'c.jpg')), sp = mid(path.join(TMP, 's.jpg')), bk = mid(path.join(TMP, 'b.jpg'));
+  assert.equal(cv.h, 800); assert.ok(Math.abs(cv.w - 683) <= 2, `front width ${cv.w}`); assert.ok(Math.abs(sp.w - 79) <= 2, `spine width ${sp.w}`); assert.ok(Math.abs(bk.w - 678) <= 2, `back width ${bk.w}`);
+  assert.ok(cv.rgb[1] > 150 && cv.rgb[0] < 90, 'the front is the green part'); assert.ok(sp.rgb[2] > 150 && sp.rgb[0] < 90, 'the spine is the blue part'); assert.ok(bk.rgb[0] > 150, 'the back is the red part');
+  assert.throws(() => wc.splitWrap(Buffer.from('RIFF....WEBPVP8 '), { from: 0.4, to: 0.5 }), /WebP/); assert.throws(() => wc.splitWrap(Buffer.from('nope')), /not a JPEG or PNG/);
+  assert.equal(wc.cleanSplit({ from: 0.6, to: 0.5 }), null); assert.equal(wc.cleanSplit({ from: 0.1, to: 0.2 }), null); assert.deepEqual(wc.splitFor('ps3', { ps3: { from: 0.3, to: 0.4 } }), { from: 0.3, to: 0.4 }); assert.deepEqual(wc.splitFor('ps3', {}), wc.PLATFORM_SPLIT.ps3); assert.deepEqual(wc.splitFor('snes', {}), wc.DEFAULT_SPLIT);
+
+  // the importer
+  const root = path.join(TMP, 'art', 'Wraps');
+  const w1 = await add('ps3', 'Wheelman'), w2 = await add('ps3', 'WipEout HD Fury'), w3 = await add('ps3', 'Odd One'), w4 = await add('ps3', 'Has A Cover');
+  put('Wraps/PlayStation 3/wrap/Wheelman (USA).png', wrapPng(1440, 800)); put('Wraps/PlayStation 3/wrap/WipEout HD Fury (Europe).png', wrapPng(1440, 800));
+  put('Wraps/PlayStation 3/wrap/Odd One (USA).png', wrapPng(1000, 800));   // another shape: left alone
+  put('Wraps/PlayStation 3/wrap/Has A Cover (USA).png', wrapPng(1440, 800)); put('Wraps/PlayStation 3/images/Has A Cover (USA).png', png(300, 420));   // a real cover for this one
+  art.setArtFolders([...art.getArtFolders(), root]);
+  const p = (await preview(root)).body;
+  assert.equal(p.wraps.files, 4); assert.equal(p.wraps.odd, 1); assert.equal(p.wraps.odd_list[0].title, 'Odd One (USA)');
+  assert.deepEqual(p.matched, { cover: 3, spine: 3, disc: 0, manual: 0 }, 'three wraps cut; Odd One is left alone; Has A Cover has a real cover (its wrap still gives its spine)');
+  assert.equal(p.wraps.platforms[0].slug, 'ps3'); assert.deepEqual(p.wraps.platforms[0].split, wc.PLATFORM_SPLIT.ps3); assert.ok(Number.isInteger(p.wraps.platforms[0].sample));
+  const img = await fetch(`${base}/api/art/wrap-image?folder=${encodeURIComponent(root)}&i=${p.wraps.platforms[0].sample}`, { headers: { Authorization: 'Bearer ' + tok.admin } });
+  assert.equal(img.status, 200); assert.match(img.headers.get('content-type'), /png/);
+  assert.equal((await fetch(`${base}/api/art/wrap-image?folder=${encodeURIComponent(root)}&i=99999`, { headers: { Authorization: 'Bearer ' + tok.admin } })).status, 404);
+  assert.equal((await fetch(`${base}/api/art/wrap-image?folder=${encodeURIComponent(path.join(TMP, 'elsewhere'))}&i=0`, { headers: { Authorization: 'Bearer ' + tok.admin } })).status, 400, 'only a listed folder');
+
+  // import with the person's own cut for PS3 (47 % to 52 % of the width): the cover is what is right of it
+  const started = await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: root, apply: true, split: { ps3: { from: 0.47, to: 0.52 } } } });
+  assert.equal(started.status, 200); await art.artJobIdle(ids.iadmin);
+  const done = (await call('/api/art/import/status')).body; assert.equal(done.failed, 0); assert.deepEqual(done.applied, { cover: 3, spine: 3, disc: 0, manual: 0 });
+  const r1 = row(w1.id), r3 = row(w3.id);
+  assert.ok(r1.cover_path && r1.spine_path); assert.equal(r3.cover_path, null, 'the odd wrap is not cut');
+  const c1 = mid(r1.cover_path), s1 = mid(r1.spine_path); assert.ok(Math.abs(c1.w - 691) <= 2, `front ${c1.w}`); assert.ok(Math.abs(s1.w - 72) <= 2, `spine ${s1.w}`); assert.ok(c1.rgb[1] > 150 && s1.rgb[2] > 150);
+  assert.ok(row(w4.id).spine_path, 'the wrap gave the spine'); assert.equal(fs.readFileSync(row(w4.id).cover_path).length, 80, 'the real cover was used (not one cut from the wrap)');
+  // remembered for next time
+  const again = (await preview(root)).body; assert.deepEqual(again.wraps.platforms[0].split, { from: 0.47, to: 0.52 });
+  // the "everything in this folder is" picker offers it too
+  assert.equal((await preview(path.join(TMP, 'art', 'Wraps', 'PlayStation 3', 'wrap'), { kind: 'wrap', platform: 'ps3' })).status, 400, 'not a listed folder');
+});
+
+test('full wraps: the importer screen has the cut editor (two lines on a sample), the "full wraps" choice, and the odd wraps list', () => {
+  const ui = read('public/artimport-ui.js'), css = read('public/physical.css');
+  assert.ok(ui.includes('export function mountWraps') && ui.includes('/api/art/wrap-image?folder=') && ui.includes('wl-a') && ui.includes('wl-b') && ui.includes('split: edited'));
+  assert.ok(ui.includes('value="wrap">Full wraps') && ui.includes('a different shape from the rest: left alone'));
+  assert.ok(css.includes('.wrap-stage') && css.includes('.wl-shade') && css.includes('.wrap-out canvas'));
+  assert.ok(read('src/routes/art.js').includes("router.get('/wrap-image'") && read('package.json').includes('"jpeg-js"') && read('package.json').includes('"pngjs"'), 'pure-JavaScript readers, nothing native');
+});

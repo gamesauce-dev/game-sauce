@@ -7,6 +7,9 @@
 //               <platform>/disc/[region/]<title>-01.png           -> disc       (disc games only)
 //   RetroBat    <system>/images/<rom name>-thumb.png              -> cover      (-image, -marquee ... are not box art and are left alone)
 //               <system>/manuals/<rom name>-manual.pdf            -> manual     (Physical only)
+//   Full wrap   a picture with the back, the spine and the front side by side (a folder called wrap, fullcover, full box...): cut into a cover and a spine at the fractions the person
+//               sets once per platform on a sample (src/lib/wrapcut.js). A real cover or spine picture always beats one cut from a wrap, and a wrap whose shape differs from the
+//               platform's usual one is not cut but listed to check.
 //   Picked      the person says what the folder holds (covers, spines, discs or manuals) and, if they like, which platform: then every picture in it is that kind,
 //               whatever the folders are called (the platform is otherwise the nearest folder name that is one).
 //   Simple      <platform>/<kind folder>/[region/]<title ...>.png     the layout of most media packs (EmuMovies and others): the folder with the platform's name, a folder for
@@ -19,7 +22,8 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import db from '../db.js';
-import { resolvePlatform, setPhysicalArt, setManualFile, isDiscPlatform } from './physical.js';
+import { resolvePlatform, setPhysicalArt, setManualFile, isDiscPlatform, imageAspect } from './physical.js';
+import { splitWrap, splitFor } from './wrapcut.js';
 import { setConsoleCover, CONSOLE_PLATFORMS } from './consoles.js';
 import { MAX_MANUAL_BYTES } from './manuals.js';
 import { MAX_COVER_BYTES } from './coverzip.js';
@@ -61,6 +65,7 @@ export const titleKey = (t) => squash(String(t || '').replace(/\([^)]*\)/g, ' ')
 
 /** Folder names (letters and numbers only, lower case) that say what kind of picture is inside. */
 const SIMPLE_KIND = {
+  wrap: ['wrap', 'wraps', 'fullwrap', 'fullcover', 'fullcovers', 'fullbox', 'fullboxart', 'fullcoverart', 'coversfull', 'coverfull', 'boxfull', 'full'],
   cover: ['images', 'image', 'covers', 'cover', 'box', 'boxes', 'boxart', 'boxfront', 'front', 'frontcover', '2dbox', '2dboxart', 'thumbs', 'thumbnails'],
   spine: ['spines', 'spine', 'boxspine', 'boxspines', 'sides'],
   disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart', 'cartridges', 'cartridge', 'carts', 'cart', 'cartfront'],
@@ -189,8 +194,8 @@ function digitalGames(userId) {
 }
 
 /** The best file for each (game, kind). `target`: 'physical' (cover, spine, disc, manual) or 'digital' (covers of console games). Nothing is changed. */
-export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '' } = {}) {
-  const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual']);
+export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
+  const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap']);
   const games = target === 'digital' ? digitalGames(userId) : physicalGames(userId);
   const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
   const byKey = new Map();
@@ -199,7 +204,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
   const platCache = new Map(); const platOf = (name) => { if (!platCache.has(name)) platCache.set(name, resolvePlatform(name)); return platCache.get(name); };
   const unknownPlatforms = new Map(); const unmatched = []; let unmatchedTotal = 0;
   const best = new Map();   // `${gameKey}|${kind}` -> { game, kind, entry, rank }
-  const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0 };
+  const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0, wrap: 0 };
   for (const e of scan.files) {
     if (!wanted.has(e.kind)) continue;
     const slug = e.platforms?.length ? (e.platforms.map(platOf).find(Boolean) || null) : platOf(e.platform);
@@ -208,15 +213,26 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     candidatesSeen[e.kind]++;
     const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
     if (!list) { unmatchedTotal++; if (unmatched.length < 25) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }
-    for (const g of list) {
+    for (const g of list) for (const k of e.kind === 'wrap' ? ['cover', 'spine'] : [e.kind]) {   // a wrap can give both
       const id = target === 'digital' ? `${g.store}/${g.app_id}` : g.id;
-      const key = `${id}|${e.kind}`;
-      const rank = (e.weak ? 20 : 0) + regionRank(g.region, e.region || e.fileRegion) * 100 + (e.n || 1);
+      const key = `${id}|${k}`;
+      const rank = (e.kind === 'wrap' ? 1000 : 0) + (e.weak ? 20 : 0) + regionRank(g.region, e.region || e.fileRegion) * 100 + (e.n || 1);   // a real cover or spine beats one cut from a wrap
       const cur = best.get(key);
-      if (!cur || rank < cur.rank) best.set(key, { game: g, id, kind: e.kind, entry: e, rank });
+      if (!cur || rank < cur.rank) best.set(key, { game: g, id, kind: k, entry: e, rank, slug, fromWrap: e.kind === 'wrap' });
     }
   }
 
+  // Wraps: a platform's pack uses one template, so a wrap whose shape is far from the rest of its platform is left alone and listed (it needs its own look).
+  const perSlug = new Map();
+  for (const b of best.values()) if (b.fromWrap) { if (!perSlug.has(b.slug)) perSlug.set(b.slug, new Map()); if (!perSlug.get(b.slug).has(b.entry)) perSlug.get(b.slug).set(b.entry, imageAspect(b.entry.file) || 0); }
+  const median = (a) => { const s = [...a].filter(Boolean).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+  const oddEntries = new Map(), wrapPlatforms = [];
+  for (const [slug, m] of perSlug) {
+    const med = median(m.values()); let sample = null, count = 0;
+    for (const [entry, ar] of m) { if (med && ar && Math.abs(ar / med - 1) > 0.05) oddEntries.set(entry, { title: entry.title, platform: slug, ratio: Math.round(ar * 100) / 100 }); else { count++; if (!sample) sample = entry; } }
+    wrapPlatforms.push({ slug, count, ratio: Math.round(med * 100) / 100, sample: sample ? scan.files.indexOf(sample) : null, split: splitFor(slug, split) });
+  }
+  for (const [key, b] of [...best]) if (b.fromWrap) { if (oddEntries.has(b.entry)) best.delete(key); else b.split = splitFor(b.slug, split); }
   const matched = { cover: 0, spine: 0, disc: 0, manual: 0 }, will = { cover: 0, spine: 0, disc: 0, manual: 0 }, items = [];
   for (const b of best.values()) {
     matched[b.kind]++;
@@ -230,6 +246,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     items, matched, will,
     skipped: Object.fromEntries(Object.keys(matched).map((k) => [k, matched[k] - will[k]])),
     candidates: candidatesSeen, games: games.length,
+    wraps: { files: perSlug.size ? [...perSlug.values()].reduce((t, m) => t + m.size, 0) : 0, odd: oddEntries.size, odd_list: [...oddEntries.values()].slice(0, 25), platforms: wrapPlatforms },
     unmatched, unmatched_total: unmatchedTotal,
     unknown_platforms: [...unknownPlatforms].slice(0, 20).map(([name, files]) => ({ name, files }))
   };
@@ -238,14 +255,14 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
 const publicPlan = (p, scan, folder) => ({
   folder, scanned: scan.scanned, files: scan.files.length, games: p.games,
   candidates: p.candidates, matched: p.matched, will: p.will, skipped: p.skipped,
-  unmatched: p.unmatched, unmatched_total: p.unmatched_total, unknown_platforms: p.unknown_platforms
+  unmatched: p.unmatched, unmatched_total: p.unmatched_total, unknown_platforms: p.unknown_platforms, wraps: p.wraps
 });
 
 /** What an import would do (nothing is saved). */
-const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual'].includes(kind) ? { kind, platform: String(platform || '') } : null);
-export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '' }) {
+const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap'].includes(kind) ? { kind, platform: String(platform || '') } : null);
+export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
-  return publicPlan(planArtImport(userId, scan, { target, replace, cut }), scan, folder);
+  return publicPlan(planArtImport(userId, scan, { target, replace, cut, split }), scan, folder);
 }
 
 /* ───────── the import itself, in the background ───────── */
@@ -255,25 +272,31 @@ const blank = () => ({ running: false, target: null, total: 0, done: 0, applied:
 export const artJobStatus = (userId) => ({ ...(jobs.get(userId) || blank()), applied: { ...(jobs.get(userId)?.applied || blank().applied) }, failures: [...(jobs.get(userId)?.failures || [])] });
 export const artJobIdle = async (userId) => { while (jobs.get(userId)?.running) await new Promise((r) => setTimeout(r, 25)); };
 
+let lastWrap = { key: '', parts: null };   // the wrap just cut: its cover and its spine come one after the other
 async function applyOne(userId, target, b) {
   const st = await fsp.stat(b.entry.file);
   if (b.kind === 'manual') {
     if (st.size > MAX_MANUAL_BYTES) throw new Error('over 50 MB');
     setManualFile(userId, b.game.id, await fsp.readFile(b.entry.file), path.basename(b.entry.file));
   } else {
-    if (st.size > MAX_COVER_BYTES) throw new Error('over 8 MB');
-    const buf = await fsp.readFile(b.entry.file);
+    if (st.size > (b.fromWrap ? 40 * 1024 * 1024 : MAX_COVER_BYTES)) throw new Error(b.fromWrap ? 'over 40 MB' : 'over 8 MB');
+    let buf = await fsp.readFile(b.entry.file);
+    if (b.fromWrap) {
+      const key = `${b.entry.file}|${b.split.from}|${b.split.to}`;
+      if (lastWrap.key !== key) lastWrap = { key, parts: splitWrap(buf, b.split) };
+      buf = lastWrap.parts[b.kind];
+    }
     if (target === 'digital') setConsoleCover(userId, b.game.store, b.game.app_id, buf);
     else setPhysicalArt(userId, b.game.id, b.kind, buf);
   }
 }
 
 /** Start importing (returns at once; ask artJobStatus for progress). One run per person at a time. */
-export async function startArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '' }) {
+export async function startArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const cur = jobs.get(userId);
   if (cur?.running) return artJobStatus(userId);
   const scan = await scanArtFolder(folder, { force: forceOf(kind, platform) });
-  const plan = planArtImport(userId, scan, { target, replace, cut });
+  const plan = planArtImport(userId, scan, { target, replace, cut, split });
   const job = { ...blank(), running: true, target, total: plan.items.length, started_at: new Date().toISOString() };
   jobs.set(userId, job);
   (async () => {

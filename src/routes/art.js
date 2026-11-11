@@ -2,9 +2,16 @@
 import express from 'express';
 import { requireAdmin } from './auth.js';
 import db from '../db.js';
-import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus } from '../lib/artimport.js';
+import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder } from '../lib/artimport.js';
+import { cleanSplit } from '../lib/wrapcut.js';
 
 const router = express.Router();
+
+// Where the spine sits in a wrap, per platform: set once on a sample, remembered for the person.
+const PREF = 'art_wrap_split';
+const cleanMap = (m) => Object.fromEntries(Object.entries(m && typeof m === 'object' ? m : {}).slice(0, 60).map(([k, v]) => [String(k).slice(0, 40), cleanSplit(v)]).filter(([, v]) => v));
+const savedSplit = (uid) => { try { return cleanMap(JSON.parse(db.prepare('SELECT value FROM user_prefs WHERE user_id = ? AND key = ?').get(uid, PREF)?.value || '{}')); } catch { return {}; } };
+const saveSplit = (uid, m) => db.prepare('INSERT INTO user_prefs (user_id, key, value) VALUES (?, ?, ?) ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value').run(uid, PREF, JSON.stringify(m));
 const me = (req) => Number(req.user?.id ?? -1);
 const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
 
@@ -21,9 +28,22 @@ router.put('/folders', requireAdmin, (req, res) => {
 router.post('/import', async (req, res, next) => {
   const target = req.body?.target === 'digital' ? 'digital' : 'physical';
   const opts = { target, folder: String(req.body?.folder || ''), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 40), kind: String(req.body?.kind || ''), platform: String(req.body?.platform || '').slice(0, 60) };
+  const sent = cleanMap(req.body?.split), split = { ...savedSplit(me(req)), ...sent };
+  opts.split = split;
   try {
-    if (req.body?.apply === true) { req.auditDetail = { target, apply: true }; return res.json(await startArtImport(me(req), opts)); }
+    if (req.body?.apply === true) { if (Object.keys(sent).length) saveSplit(me(req), split); req.auditDetail = { target, apply: true }; return res.json(await startArtImport(me(req), opts)); }
     res.json(await previewArtImport(me(req), opts));
+  } catch (err) { if (err.status) return fail(res, err); next(err); }
+});
+
+// One picture of a scanned folder (a wrap to show on the cut screen). Only a file the scan found, in a listed folder, by its number.
+router.get('/wrap-image', async (req, res, next) => {
+  try {
+    const scan = await scanArtFolder(String(req.query.folder || ''));
+    const e = scan.files[Number(req.query.i)];
+    if (!e || e.kind !== 'wrap') return res.status(404).json({ error: 'No such picture' });
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.sendFile(e.file);
   } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 

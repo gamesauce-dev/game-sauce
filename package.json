@@ -16,7 +16,9 @@
   "dependencies": {
     "better-sqlite3": "^13.0.3",
     "express": "^4.21.2",
+    "jpeg-js": "^0.4.4",
     "multer": "^2.5.0",
+    "pngjs": "^7.0.0",
     "saxen": "^11.2.0"
   },
   "devDependencies": {

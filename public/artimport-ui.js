@@ -10,13 +10,13 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
   const what = target === 'digital' ? 'covers' : 'pictures and manuals';
   body.innerHTML = `
     <h2 class="detail-title">${target === 'digital' ? 'Import covers' : 'Import pictures &amp; manuals'}</h2>
-    <p class="hint">Bring in ${what} you already have, from a folder on the server. Put them in a folder named after the platform, with a folder inside for each kind: <b>images</b> (or covers, box, front), <b>spines</b>, <b>discs</b>${target === 'digital' ? '' : ', <b>manuals</b>'}, and a region folder inside that if you like (LaunchBox and RetroBat folders are recognised as they are). They are matched to your games by platform and title. Nothing is saved until you press <b>Import</b>, and pictures you uploaded yourself are never replaced.</p>
+    <p class="hint">Bring in ${what} you already have, from a folder on the server. Put them in a folder named after the platform, with a folder inside for each kind: <b>images</b> (or covers, box, front), <b>spines</b>, <b>discs</b>${target === 'digital' ? '' : ', <b>manuals</b>, or <b>wrap</b> for a whole case in one picture (back, spine and front: it is cut for you)'}, and a region folder inside that if you like (LaunchBox and RetroBat folders are recognised as they are). They are matched to your games by platform and title. Nothing is saved until you press <b>Import</b>, and pictures you uploaded yourself are never replaced.</p>
     <div class="panel" id="art-box" style="padding:12px;display:grid;gap:10px">
       <div id="art-add"></div>
       <label class="field" id="art-folder-row"><span>Folder to import from</span><select id="art-folder" class="select"></select></label>
       <details id="art-pick"><summary>The folder names do not say what the pictures are? Tell me instead</summary>
         <div style="display:grid;gap:10px;margin-top:8px">
-          <label class="field"><span>Everything in the folder is</span><select id="art-kind" class="select"><option value="">Work it out from the folder names</option>${kinds.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+          <label class="field"><span>Everything in the folder is</span><select id="art-kind" class="select"><option value="">Work it out from the folder names</option>${kinds.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}${target === 'digital' ? '' : '<option value="wrap">Full wraps (back, spine and front in one picture)</option>'}</select></label>
           <label class="field"><span>for the platform</span><select id="art-plat" class="select"><option value="">Work it out from the folder names</option></select></label>
         </div></details>
       <label class="field"><span>Where the game's name ends in the file name (optional)</span><input id="art-cut" placeholder="for example  ' ('  : \"Ace Combat 6 (USA, Japan) (En,Fr).png\" is read as Ace Combat 6" autocomplete="off" spellcheck="false" /></label>
@@ -35,8 +35,9 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     previewBtn.disabled = true; return;
   }
   sel.innerHTML = usable.map((f) => `<option value="${esc(f.path)}"${f.path === select ? ' selected' : ''}>${esc(f.path)}</option>`).join('');
-  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, kind: kindSel.value, platform: platSel.value, apply }) });
-  const dirty = () => { applyBtn.disabled = true; res.innerHTML = ''; };
+  const edited = {};   // platform -> { from, to }: where the person put the spine on a sample wrap (kept for next time when they import)
+  const req = (apply) => ctx.api('/art/import', { method: 'POST', body: JSON.stringify({ target, folder: sel.value, replace: replace.checked, cut: cutBox.value, kind: kindSel.value, platform: platSel.value, split: edited, apply }) });
+  const dirty = () => { applyBtn.disabled = true; res.innerHTML = ''; for (const k of Object.keys(edited)) delete edited[k]; };
   sel.onchange = dirty; replace.onchange = dirty; cutBox.oninput = dirty; kindSel.onchange = dirty; platSel.onchange = dirty;
   ctx.api('/art/platforms').then((d) => { platSel.insertAdjacentHTML('beforeend', (d.items || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join('')); }).catch(() => { /* the folder names are enough */ });
 
@@ -64,9 +65,12 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
         <table class="art-table"><thead><tr><th></th><th>Found for your games</th><th>Will import</th><th>Already there</th></tr></thead><tbody>
         ${kinds.map(([k, l]) => `<tr><th>${l}</th><td>${n(p.matched[k])}</td><td><b>${n(p.will[k])}</b></td><td>${n(p.skipped[k])}</td></tr>`).join('')}</tbody></table>
         ${p.unmatched_total ? `<details><summary>${n(p.unmatched_total)} picture${p.unmatched_total === 1 ? '' : 's'} matched none of your games</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${p.unmatched.map((u) => `<li>${esc(u.title)} <span class="note">(${esc(u.kind)}, ${esc(u.platform)})</span></li>`).join('')}${p.unmatched_total > p.unmatched.length ? `<li>…and ${n(p.unmatched_total - p.unmatched.length)} more</li>` : ''}</ul></details>` : ''}
+        ${p.wraps?.platforms?.length ? `<div id="art-wraps" class="art-wraps"></div>` : ''}
+        ${p.wraps?.odd ? `<details><summary>${n(p.wraps.odd)} wrap${p.wraps.odd === 1 ? '' : 's'} a different shape from the rest: left alone</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${p.wraps.odd_list.map((u) => `<li>${esc(u.title)} <span class="note">(${esc(u.platform)}, ${u.ratio} wide for 1 tall; the rest are ${esc(String((p.wraps.platforms.find((x) => x.slug === u.platform) || {}).ratio || ''))})</span></li>`).join('')}</ul></details>` : ''}
         ${p.unknown_platforms.length ? `<p class="hint" style="margin:6px 0 0">Folders not recognised as a platform: ${p.unknown_platforms.map((u) => `${esc(u.name)} (${n(u.files)})`).join(', ')}</p>` : ''}
         ${total ? '' : '<p class="hint" style="margin:6px 0 0">Nothing to import: every match is already filled in.</p>'}`;
       applyBtn.disabled = total === 0;
+      if (p.wraps?.platforms?.length) mountWraps($('#art-wraps', res), p, sel.value, edited);
     } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; }
     finally { previewBtn.disabled = false; sel.disabled = false; replace.disabled = false; kindSel.disabled = false; platSel.disabled = false; }
   };
@@ -121,4 +125,48 @@ function wireAddFolder(ctx, body, folders, onAdded) {
   };
   $('#art-addbtn', host).onclick = add;
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+}
+
+/** Full wraps: a sample of each platform's pictures with two lines for where the spine is (drag them; the cut is remembered). The front and the spine as they will be cut show beside it. */
+export function mountWraps(host, p, folder, edited) {
+  if (!host) return;
+  const pct = (v) => (v * 100).toFixed(1) + '%';
+  host.innerHTML = '<p class="hint" style="margin:8px 0 0"><b>Full wraps.</b> Check where the spine is on a sample: drag the two lines so the spine sits between them. Everything to the right becomes the cover. This is remembered for the platform.</p>'
+    + p.wraps.platforms.filter((w) => w.sample != null).map((w) => `
+    <div class="wrap-edit" data-slug="${esc(w.slug)}">
+      <div class="wrap-head"><b>${esc(w.slug)}</b> <span class="note">${n(w.count)} wrap${w.count === 1 ? '' : 's'} · spine <span data-w-read>${pct(w.split.from)} to ${pct(w.split.to)}</span></span> <button type="button" class="btn btn-sm btn-ghost" data-w-reset>Reset</button></div>
+      <div class="wrap-row">
+        <div class="wrap-stage"><img alt="" src="/api/art/wrap-image?folder=${encodeURIComponent(folder)}&i=${w.sample}" /><i class="wl-shade wl-back"></i><i class="wl-shade wl-front"></i><b class="wl wl-a" tabindex="0" role="slider" aria-label="Left edge of the spine"></b><b class="wl wl-b" tabindex="0" role="slider" aria-label="Right edge of the spine"></b></div>
+        <div class="wrap-out"><canvas class="wrap-spine" height="140"></canvas><canvas class="wrap-front" height="140"></canvas></div>
+      </div>
+    </div>`).join('');
+  for (const box of host.querySelectorAll('.wrap-edit')) {
+    const w = p.wraps.platforms.find((x) => x.slug === box.dataset.slug), orig = { ...w.split };
+    const stage = box.querySelector('.wrap-stage'), img = box.querySelector('img'), a = box.querySelector('.wl-a'), b = box.querySelector('.wl-b');
+    const cur = { ...w.split };
+    const paint = () => {
+      a.style.left = pct(cur.from); b.style.left = pct(cur.to);
+      box.querySelector('.wl-back').style.width = pct(cur.from); box.querySelector('.wl-front').style.left = pct(cur.to);
+      box.querySelector('[data-w-read]').textContent = pct(cur.from) + ' to ' + pct(cur.to);
+      if (img.naturalWidth) {
+        const W = img.naturalWidth, H = img.naturalHeight, put = (cv, x0, x1) => { const cw = Math.max(1, x1 - x0); cv.width = Math.max(1, Math.round(140 * cw / H)); cv.getContext('2d').drawImage(img, x0, 0, cw, H, 0, 0, cv.width, cv.height); };
+        put(box.querySelector('.wrap-spine'), Math.round(W * cur.from), Math.round(W * cur.to)); put(box.querySelector('.wrap-front'), Math.round(W * cur.to), W);
+      }
+    };
+    const set = (k, v) => {
+      if (k === 'from') cur.from = Math.max(0.15, Math.min(cur.to - 0.01, v)); else cur.to = Math.min(0.85, Math.max(cur.from + 0.01, v));
+      edited[w.slug] = { from: Math.round(cur.from * 10000) / 10000, to: Math.round(cur.to * 10000) / 10000 }; paint();
+    };
+    const drag = (el, k) => {
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault(); el.setPointerCapture(e.pointerId);
+        const move = (ev) => { const r = stage.getBoundingClientRect(); set(k, (ev.clientX - r.left) / r.width); };
+        const up = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); }; el.addEventListener('pointermove', move); el.addEventListener('pointerup', up);
+      });
+      el.addEventListener('keydown', (e) => { const d = e.key === 'ArrowLeft' ? -0.002 : e.key === 'ArrowRight' ? 0.002 : 0; if (d) { e.preventDefault(); set(k, cur[k] + (e.shiftKey ? d * 5 : d)); } });
+    };
+    drag(a, 'from'); drag(b, 'to');
+    box.querySelector('[data-w-reset]').onclick = () => { cur.from = orig.from; cur.to = orig.to; delete edited[w.slug]; paint(); };
+    img.addEventListener('load', paint); paint();
+  }
 }
