@@ -160,6 +160,18 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-manview { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: rgba(8, 9, 14, .95); }
 .ph-mv-bar { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border-bottom: 1px solid var(--line, #262b3a); }
 .ph-mv-bar b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The manual's own first page on the left of the open case (drawn into the booklet; the title and lines are only for a manual with no page to show). */
+.ph-manual.has-page { padding: 0; gap: 0; background: #fff; justify-content: center; align-items: center; overflow: hidden; }
+.ph-manual.has-page > canvas, .ph-manual.has-page > img { display: block; width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+.ph-manual.has-page > :not(canvas):not(img):not(.ph-man-tag) { display: none; }
+.ph-manual.has-page .ph-man-tag { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 1.2rem 0.5rem 0.4rem; background: linear-gradient(transparent, rgba(0,0,0,.65)); color: #fff; text-align: center; }
+/* The built-in reader (public/pdfview.js). */
+.ph-pv-host, .ph-pv-scroll { flex: 1; min-height: 0; }
+.ph-pv-scroll { overflow: auto; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; outline: none; }
+.ph-pv-page { flex: 0 0 auto; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,.5); }
+.ph-pv-page canvas { display: block; }
+.ph-pv-page.is-bad { background: #2a2d38; }
+.ph-pv-info { font-size: 0.85rem; color: var(--muted, #9aa3b5); white-space: nowrap; }
 .ph-manview iframe { flex: 1; width: 100%; border: 0; background: #fff; }
 .ph-mv-img { flex: 1; overflow: auto; display: grid; place-items: center; padding: 1rem; }
 .ph-mv-img img { max-width: 100%; max-height: 100%; object-fit: contain; }

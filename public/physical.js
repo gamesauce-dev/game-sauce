@@ -8,6 +8,7 @@ import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml
 import { platformBadge, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
 import { renderArtImport } from './artimport-ui.js';
+import { drawPage, mountViewer, pdfReady } from './pdfview.js';
 
 let ctx = null;
 const S = {
@@ -476,9 +477,25 @@ function showCase(id) {
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); } });
   document.body.append(el);
   CASE.el = el; CASE.id = id; CASE.open = false;
+  manualPage(el, g, w);   // the manual's first page goes on the left once it is drawn
   spine.classList.add('is-fore');
   if (!reducedMotion()) el.animate([{ transform: `translate(${sr.left + sr.width / 2 - cx}px, ${sr.top + sr.height / 2 - cy}px) scale(${sr.width / w}, ${sr.height / h})`, opacity: 0.6 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
   el.focus({ preventScroll: true });
+}
+
+/** The real first page of the manual (a PDF, or the first picture) in place of the drawn booklet. It is drawn in the background and appears when ready. */
+function manualPage(el, g, caseW) {
+  const m = g.manual; if (!m || m.kind === 'link') return;
+  const box = $('.ph-manual', el); if (!box) return;
+  const width = Math.max(80, Math.round(caseW * 0.84) - 2);
+  if (m.type === 'application/pdf') {
+    const c = document.createElement('canvas');
+    drawPage(m.url, 1, c, width).then(() => { if (box.isConnected) { box.prepend(c); box.classList.add('has-page'); } }).catch(() => { /* the drawn booklet stays */ });
+  } else if (/^image\//.test(m.type || '')) {
+    const img = new Image(); img.alt = '';
+    img.onload = () => { if (box.isConnected) { box.prepend(img); box.classList.add('has-page'); } };
+    img.src = m.url;
+  }
 }
 
 /** A click on the case: on the manual (the left side, once open) it reads the manual; anywhere else it goes on to the next step. */
@@ -761,10 +778,19 @@ function openManual(g) {
   el.innerHTML = `<div class="ph-mv-bar"><b>${esc(g.title)} · manual</b>
       <a class="btn btn-sm" href="${esc(save)}" download="${esc(m.name)}" title="Save a copy of this manual">Download</a>
       <button type="button" class="btn btn-sm btn-primary" data-mv-close title="Close the manual">Close</button></div>
-    ${m.type === 'application/pdf' ? `<iframe src="${esc(m.url)}" title="${esc(m.name)}"></iframe>` : `<div class="ph-mv-img"><img src="${esc(m.url)}" alt="" /></div>`}`;
+    ${m.type === 'application/pdf' ? '<div class="ph-pv-host"></div>' : `<div class="ph-mv-img"><img src="${esc(m.url)}" alt="" /></div>`}`;
   document.body.append(el);
+  let viewer = null;
+  if (m.type === 'application/pdf') {
+    // Our own reader (pdf.js), so a PDF reads the same everywhere; the window's own PDF viewer is the fallback when it cannot be loaded.
+    pdfReady().then((ok) => {
+      const host = $('.ph-pv-host', el); if (!host || !el.isConnected) return;
+      if (ok) viewer = mountViewer({ url: m.url, scroller: host, bar: $('.ph-mv-bar', el) });
+      else host.outerHTML = `<iframe src="${esc(m.url)}" title="${esc(m.name)}"></iframe>`;
+    });
+  }
   const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
-  const close = () => { el.remove(); document.removeEventListener('keydown', onKey, true); };
+  const close = () => { viewer?.destroy(); el.remove(); document.removeEventListener('keydown', onKey, true); };
   document.addEventListener('keydown', onKey, true);
   el.addEventListener('click', (e) => { if (e.target === el || e.target.closest('[data-mv-close]')) close(); });
   $('[data-mv-close]', el)?.focus();

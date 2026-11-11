@@ -133,3 +133,13 @@ test('the screens: a Manual section in the details window, the manual side of th
   assert.ok(css.includes('.ph-manview {') && css.includes('.ph-manual.has-manual'));
   for (const id of ['ph-man-open', 'ph-man-upload', 'ph-man-find', 'ph-man-remove', 'ph-man-save']) assert.ok(mj.includes(`'#${id}'`), `Modern gives ${id} an icon`);
 });
+
+test('PDF manuals: the first page on the open case and a built-in reader (pdf.js is bundled, nothing is fetched from the internet)', () => {
+  const pv = read('public/pdfview.js'), ph = read('public/physical.js'), css = read('public/physical.css');
+  for (const f of ['public/vendor/pdfjs/pdf.min.js', 'public/vendor/pdfjs/pdf.worker.min.js', 'public/vendor/pdfjs/LICENSE', 'public/vendor/pdfjs/README.txt']) assert.ok(fs.existsSync(new URL('../' + f, import.meta.url)), f);
+  assert.ok(pv.includes("const BASE = '/vendor/pdfjs/';") && !/https?:\/\//.test(pv), 'loaded from the app itself');
+  assert.ok(pv.includes('export async function drawPage') && pv.includes('export function mountViewer') && pv.includes('IntersectionObserver'), 'pages are drawn as they come into view');
+  assert.ok(ph.includes("from './pdfview.js'") && ph.includes('manualPage(el, g, w);') && ph.includes('mountViewer({ url: m.url'), 'the case and the viewer use it');
+  assert.ok(ph.includes('<iframe src=') && ph.includes('pdfReady()'), 'the window\'s own PDF viewer remains as the fallback');
+  assert.ok(css.includes('.ph-manual.has-page') && css.includes('.ph-pv-scroll') && css.includes('.ph-pv-page'));
+});

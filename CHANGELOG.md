@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Added
+- **A manual's real first page on the open case, and a built-in reader.** On the Physical shelf the left side of an open case shows the first page of the game's PDF manual (or the first picture of a manual made of pictures) instead of the drawn booklet; a click opens a reader inside the app with page scrolling, zoom, Download and Close. It works the same everywhere, including Linux, whose web view has no PDF reader of its own. Uses pdf.js (Mozilla, Apache 2.0), bundled in `public/vendor/pdfjs`, so nothing is fetched from the internet. A manual that is a web link still opens in a browser tab.
 - **Switch and Switch 2 cases on the Physical shelf:** the same pull-out case as the disc games, with a small cartridge in the tray instead of a disc. A cartridge picture can be uploaded (it is kept in the same place as a disc picture), imported from a `cart` / `cartridges` / `disc` folder (or LaunchBox's `Cart - Front`), and looked up from LaunchBox when its database has one.
 
 ## [0.4.1] - 2026-11-11
