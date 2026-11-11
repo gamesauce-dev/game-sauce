@@ -1765,3 +1765,8 @@ input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display:
 select option { background: var(--panel); color: var(--text); }
 
 .tile-mask { display: inline-block; width: 1.4em; height: 1.4em; vertical-align: -0.25em; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+
+/* Prev / count / next: the three sizes themselves (a button is a little wider than the narrow column it used to be given, which squeezed the left gap, and a long count wrapped onto two lines). */
+.drawer-nav { grid-template-columns: auto auto auto; justify-content: center; }
+.drawer-pos { white-space: nowrap; }
+.drawer-bar .drawer-nav { grid-template-columns: auto auto auto; justify-content: center; }
