@@ -4374,6 +4374,11 @@ function showSettingsModule(id) {
   saveNav();
   const panel = $(`#mod-${id}`);
   if (!panel) return;
+  if (id === 'playpc') {   // the launcher needs the ROM file: an account without downloads is told so, instead of getting a browser error
+    const off = authState.user?.can_download === false;
+    $('#playpc-download')?.classList.toggle('hidden', off);
+    $('#playpc-dl-note')?.classList.toggle('hidden', !off);
+  }
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
   if (id === 'profile') initProfilePanel();

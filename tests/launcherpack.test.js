@@ -35,5 +35,6 @@ test('the launcher as a download: a zip of the launcher folder with a READ ME FI
   assert.ok(readEntry(file, entries.find((e) => e.name.endsWith('platforms.json'))).equals(real), 'the files are the real ones');
   // the screen and the container image carry it too
   assert.ok(fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8').includes('href="/api/launcher/download"'));
+  assert.ok(fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').includes("$('#playpc-download')?.classList.toggle('hidden', off)"), 'an account without downloads is told, not sent to an error');
   assert.match(fs.readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8'), /COPY launcher \.\/launcher/);
 });
