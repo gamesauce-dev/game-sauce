@@ -19,6 +19,7 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY public ./public
 COPY src ./src
 COPY scripts ./scripts
+COPY launcher ./launcher
 
 # Writable at runtime: database, secret key, ROM storage, cached media.
 VOLUME ["/app/data", "/app/storage"]

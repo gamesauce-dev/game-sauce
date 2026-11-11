@@ -21,7 +21,7 @@ so it cannot start programs on your PC itself; the launcher is the part that can
 You need **Node.js 18 or newer** on that PC (the game-sauce server already needs it, so a PC that runs the server
 from `start.bat` has it).
 
-1. Copy the `launcher` folder from this repository to the PC (or use the whole repository).
+1. Get the `launcher` folder onto the PC: in game-sauce press **Settings, My account, Play on this PC, Download the launcher** (a zip with a READ ME FIRST), or copy the `launcher` folder from this repository (or use the whole repository).
 2. Register the `gamesauce://` link:
    - **Windows:** double-click `launcher\install-windows.bat`. No administrator rights are needed.
    - **Linux:** `sh launcher/install-linux.sh`

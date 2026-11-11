@@ -342,6 +342,9 @@
           <b>Set up emulators</b> opens a page on this PC where you choose which program plays each platform. <b>Check my PC</b> tells game-sauce which platforms are ready, so the Carousel only shows games this PC can start.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="playpc-setup" type="button">Set up emulators</button><button class="btn" id="playpc-check" type="button">Check my PC</button></div>
         <p class="hint" id="playpc-state"></p>
+        <h4 style="margin:1.2rem 0 0.3rem">Using a web browser, not the desktop app?</h4>
+        <p class="hint" style="margin-top:0">The launcher has to be on the computer you play on. Download it, unzip it somewhere it can stay, and follow <b>READ ME FIRST</b> inside (it needs Node.js 18 or newer). Then come back here and press <b>Set up emulators</b>.</p>
+        <a class="btn" id="playpc-download" href="/api/launcher/download" download="game-sauce-launcher.zip">Download the launcher</a>
       </div>
 
       <div class="panel hidden" id="mod-controller">

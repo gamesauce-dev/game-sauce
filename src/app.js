@@ -27,6 +27,8 @@ import authRouter, {
 import { audit, bootstrapAdmin, initAuthTables, purgeExpiredSessions } from './auth.js';
 import { originGuard, rateLimit } from './lib/guard.js';
 import { canDownload } from './lib/policy.js';
+import { launcherEntries } from './lib/launcherpack.js';
+import { zipChunks } from './lib/export.js';
 import { launchFileHandler, launcherSyncHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
@@ -484,6 +486,17 @@ export function createApp() {
   api.post('/launcher/sync-token', (req, res) => {
     if (!canDownload(req.user)) return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account.' });
     res.json(mintSyncToken(req.user.id));
+  });
+
+  // The launcher as a zip, for a PC that has only a browser (the desktop app already carries it). Same rule as playing locally: only people allowed to download.
+  api.get('/launcher/download', (req, res) => {
+    if (!canDownload(req.user)) return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account.' });
+    const entries = launcherEntries(`${req.protocol}://${req.get('host')}`);
+    if (!entries.length) return res.status(404).json({ error: 'The launcher is not part of this installation.' });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="game-sauce-launcher.zip"');
+    try { for (const chunk of zipChunks(entries)) res.write(chunk); } catch (err) { return res.destroy(err); }
+    res.end();
   });
 
   // Per-user preferences (whitelisted keys only). Scoped to the signed-in user.

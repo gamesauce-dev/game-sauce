@@ -83,7 +83,7 @@ export function exportCounts(opts) {
 const crcTable = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 const crc32 = (buf) => { if (typeof zlib.crc32 === 'function') return zlib.crc32(buf) >>> 0; let c = 0xffffffff; for (let i = 0; i < buf.length; i++) c = crcTable[(c ^ buf[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
 
-/** Yields zip chunks for [{ name, file }] one picture at a time. */
+/** Yields zip chunks for [{ name, file }] (or { name, data } for a buffer) one entry at a time. */
 export function* zipChunks(entries) {
   const central = [];
   let offset = 0;
@@ -92,7 +92,8 @@ export function* zipChunks(entries) {
   const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
   for (const e of entries) {
     let data;
-    try { data = fs.readFileSync(e.file); } catch { continue; }
+    if (e.data) data = e.data;   // text made on the spot (not a file)
+    else { try { data = fs.readFileSync(e.file); } catch { continue; } }
     const name = Buffer.from(e.name, 'utf8'), crc = crc32(data);
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(0x0800, 6); local.writeUInt16LE(0, 8);
