@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-12
+
 ### Fixed
 - **Artwork folders:** a folder already on the list that cannot be reached (a drive that is off, or a path from another computer) no longer stops other folders from being added or removed. Only a newly added folder is checked.
 
