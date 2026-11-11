@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **Artwork folders:** a folder already on the list that cannot be reached (a drive that is off, or a path from another computer) no longer stops other folders from being added or removed. Only a newly added folder is checked.
+
 ### Added
 - **The back of the case.** A Back picture for boxed games (upload it in the details window, put it in a `back` / `backcover` / LaunchBox `Box - Back` folder, or let a full wrap give it): the pulled-out case on the shelf has a turn-over button (↻, or the B key) that swings it round to the back and again to the front. Not while the case is open. The importer counts Backs as a kind of its own, and a full wrap now gives a cover, a spine and a back.
 - **Full-wrap covers** (one picture with the back, the spine and the front, as media packs such as EmuMovies keep them): put them in a folder called `wrap` (or `fullcover`, `full box`…) under the platform, or choose "Full wraps" in the importer. Each is cut into a cover and a spine; a real cover or spine picture always wins over one cut from a wrap. Where the spine sits is set once per platform on a sample, by dragging two lines, and is remembered for you. A wrap whose shape is far from the rest of its platform is not cut but listed. JPEG and PNG (WebP wraps are listed as unsupported for now). Cutting uses two small pure-JavaScript libraries (`jpeg-js`, `pngjs`), nothing native.

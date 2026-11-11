@@ -41,11 +41,14 @@ export const folderState = () => getArtFolders().map((p) => { let ok = false; tr
 
 /** Save the list (admin). Each must be an absolute path to a folder that exists on the server. Returns { folders } or throws a 400 naming the first bad one. */
 export function setArtFolders(list) {
-  const out = [];
+  const out = [], saved = new Set(getArtFolders());
   for (const raw of Array.isArray(list) ? list : []) {
     let p = String(raw || '').trim();
     if (p.length > 3) p = p.replace(/[\\/]+$/, '');   // D:\Art\ and D:\Art are the same; D:\ stays as it is
     if (!p) continue;
+    // A folder already on the list stays as it is, even when it cannot be reached right now (a drive that is off, a path from another computer): only a newly added one is checked.
+    // Otherwise one stale entry would stop every other folder from being added or removed.
+    if (saved.has(p)) { if (!out.includes(p)) out.push(p); continue; }
     if (!path.isAbsolute(p)) throw Object.assign(new Error(`"${p.slice(0, 80)}" is not a full path (it must start with / or a drive letter such as D:\\).`), { status: 400 });
     let ok = false; try { ok = fs.statSync(p).isDirectory(); } catch { /* missing */ }
     if (!ok) throw Object.assign(new Error(`"${p.slice(0, 80)}" is not a folder this server can see.`), { status: 400 });

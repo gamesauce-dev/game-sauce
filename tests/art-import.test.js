@@ -253,3 +253,13 @@ test('full wraps: the importer screen has the cut editor (two lines on a sample)
   assert.ok(css.includes('.wrap-stage') && css.includes('.wl-shade') && css.includes('.wrap-out canvas'));
   assert.ok(read('src/routes/art.js').includes("router.get('/wrap-image'") && read('package.json').includes('"jpeg-js"') && read('package.json').includes('"pngjs"'), 'pure-JavaScript readers, nothing native');
 });
+
+test('the artwork folders: a folder already listed that cannot be reached (a stale path) does not stop another from being added or removed', async () => {
+  const good = path.join(TMP, 'art', 'Fresh'); fs.mkdirSync(good, { recursive: true });
+  db.prepare("INSERT INTO meta (key, value) VALUES ('art_folders', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(JSON.stringify(['C:/Users/somebody/Downloads/xbox 360', '/mnt/not-here/at-all']));   // two paths this server cannot see
+  const add = await call('/api/art/folders', { method: 'PUT', body: { folders: ['C:/Users/somebody/Downloads/xbox 360', '/mnt/not-here/at-all', good] } });
+  assert.equal(add.status, 200); assert.deepEqual(add.body.folders.map((f) => f.exists), [false, false, true], 'the new one is added, the old ones stay (shown as not reachable)');
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: ['/mnt/typo/new-bad'] } })).status, 400, 'a NEW folder that does not exist is still refused');
+  const removed = await call('/api/art/folders', { method: 'PUT', body: { folders: [good] } });
+  assert.equal(removed.status, 200); assert.deepEqual(removed.body.folders.map((f) => f.path), [good], 'and the stale ones can be removed');
+});
