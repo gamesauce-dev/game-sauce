@@ -217,6 +217,7 @@
   function focusSearch() {
     const root = currentRoot();
     if (cvPad(root, 'local')) return;   // Y: play on this PC
+    if (root && root.id === 'ph-case') { root.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', bubbles: true })); return; }   // Y: turn the pulled-out case over to its back and again to the front
     if (!root || root.id !== 'app') return;
     const s = $('#search');
     if (s && visible(s)) { s.focus(); s.select?.(); }

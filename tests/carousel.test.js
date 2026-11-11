@@ -88,6 +88,7 @@ test('carousel: the platform chips keep their own height (the row minimum height
 test('controller on the shelf: A on a spine keeps the pad on the shelf (the case comes next), a disc case owns the pad, B closes, X goes into the details window', () => {
   const pad = read('public/gamepad.js');
   assert.ok(pad.includes("const pc = $('#ph-case');") && pad.includes('if (pc) return pc;'), 'a disc case in front owns the pad');
+  assert.ok(pad.includes("root.id === 'ph-case'") && pad.includes("key: 'b'"), 'Y turns the pulled-out case over');
   assert.ok(pad.includes("closest?.('.ph-shelf')) return $('#app')"), 'with the details window open, a spine on the shelf keeps the pad');
   assert.ok(pad.includes('const onShelf = Boolean(el.closest?.(\'.ph-shelf\'));') && pad.includes('if (!onShelf) setTimeout('), 'A on a spine does not jump into the details window');
   assert.ok(pad.includes('// X: into the details window') && pad.includes("key: 'Escape'"), 'X goes into the window, B closes it');
