@@ -432,5 +432,6 @@ test('the back of the case: a Back picture slot (upload, folder import, cut from
   assert.ok(rt.includes("router.get('/back/:id'"));
   assert.ok(ph.includes('class="ph-case-rear"') && ph.includes('class="ph-case-turn"') && ph.includes('function turnCase()') && ph.includes("el.classList.toggle('is-back')"));
   assert.ok(ph.includes("['back', 'Back', g.back_locked"), 'the upload menu offers it for boxed games');
+  assert.ok(css.includes('.ph-case.is-turning .ph-tray') && ph.includes("classList.add('is-turning')"), 'the disc tray does not show through while the case turns');
   assert.ok(css.includes('.ph-case.is-back .ph-case-front { transform: scaleX(0)') && css.includes('.ph-case.is-back .ph-case-rear { transform: scaleX(1)') && css.includes('.ph-case.is-open .ph-case-turn { display: none; }'), 'a flat turn, and not while the case is open');
 });

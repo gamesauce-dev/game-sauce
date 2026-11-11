@@ -509,6 +509,7 @@ function onCaseClick(e) {
 function turnCase() {
   const el = CASE.el; if (!el || CASE.open || !el.querySelector('.ph-case-rear')) return;
   const on = el.classList.toggle('is-back');
+  el.classList.add('is-turning'); setTimeout(() => el.classList.remove('is-turning'), 720);   // the disc tray is hidden while the case swings round, so only the dark case shows in the gap
   el.setAttribute('aria-label', on ? `${S.byId.get(CASE.id)?.title || 'Game'}: the back. Turn it to the front` : `${S.byId.get(CASE.id)?.title || 'Game'}: open the case`);
 }
 
