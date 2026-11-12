@@ -130,6 +130,16 @@ export const PROVIDER_FIELDS = {
       { key: 'TGDB_API_KEY', label: 'API key', secret: true, required: true }
     ]
   },
+  emumovies: {
+    label: 'EmuMovies',
+    docs: 'https://emumovies.com/forums/topic/58984-new-2023-emumovies-api-available-to-developers',
+    note: 'Game videos only, no metadata. Your EmuMovies account login (video downloads need a supporting-member account). EmuMovies has no public API: applications need a Developer Access Request with EmuMovies support, and they may give you an API key to paste in the optional field. Videos are fetched when you ask for one in a game details window and kept on this server.',
+    fields: [
+      { key: 'EMUMOVIES_USER', label: 'Account username', secret: false, required: true },
+      { key: 'EMUMOVIES_PASSWORD', label: 'Account password', secret: true, required: true },
+      { key: 'EMUMOVIES_API_KEY', label: 'API key (only if EmuMovies gave you one)', secret: true, required: false }
+    ]
+  },
   igdb: {
     label: 'IGDB (Twitch)',
     docs: 'https://api-docs.igdb.com/#getting-started',
@@ -146,17 +156,8 @@ export const PROVIDER_FIELDS = {
     fields: [
       { key: 'SGDB_API_KEY', label: 'API key', secret: true, required: true }
     ]
-  },
-  emumovies: {
-    label: 'EmuMovies',
-    docs: 'https://emumovies.com/forums/topic/58984-new-2023-emumovies-api-available-to-developers',
-    note: 'Game videos only, no metadata. Your EmuMovies account login (video downloads need a supporting-member account). EmuMovies has no public API: applications need a Developer Access Request with EmuMovies support, and they may give you an API key to paste in the optional field. Videos are fetched when you ask for one in a game details window and kept on this server.',
-    fields: [
-      { key: 'EMUMOVIES_USER', label: 'Account username', secret: false, required: true },
-      { key: 'EMUMOVIES_PASSWORD', label: 'Account password', secret: true, required: true },
-      { key: 'EMUMOVIES_API_KEY', label: 'API key (only if EmuMovies gave you one)', secret: true, required: false }
-    ]
   }
+
 };
 
 const SECRET_KEYS = new Set(
