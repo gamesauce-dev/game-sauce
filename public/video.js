@@ -18,6 +18,16 @@ async function call(path, options) {
 
 /* ───────────── details window ───────────── */
 
+/** A soft backdrop for the bars around a video: the game's cover, enlarged and blurred (or, with no cover, the colour gradient the cover box has). `from` is the box that holds the cover. */
+function backdropFrom(from) {
+  const d = document.createElement('div');
+  d.className = 'vid-back'; d.setAttribute('aria-hidden', 'true');
+  const img = from?.querySelector?.('img');
+  const src = img && img.style.display !== 'none' ? (img.currentSrc || img.getAttribute('src') || '') : '';
+  if (src) d.style.backgroundImage = `url("${src.replace(/"/g, '%22')}")`;
+  else { const g = from ? getComputedStyle(from).backgroundImage : ''; d.style.backgroundImage = g && g !== 'none' ? g : 'linear-gradient(160deg, #2a2f45, #12141a)'; }
+  return d;
+}
 const EXPAND_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>';
 const fullscreen = (el) => { try { (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el); } catch { /* not allowed here */ } };
 
@@ -33,7 +43,7 @@ function enlarge(small) {
   v.addEventListener('dblclick', () => fullscreen(v));
   const x = document.createElement('button');
   x.type = 'button'; x.className = 'vid-close'; x.title = 'Close'; x.setAttribute('aria-label', 'Close'); x.textContent = '\u2715';
-  box.append(v, x); document.body.appendChild(box);
+  box.append(backdropFrom(small.parentElement), v, x); document.body.appendChild(box);
   const onKey = (e) => { if (e.key === 'Escape' && !document.fullscreenElement) { e.stopPropagation(); close(); } };
   const close = () => { document.removeEventListener('keydown', onKey, true); try { small.currentTime = v.currentTime; } catch { /* kept */ } v.pause(); box.remove(); if (wasPlaying) small.play?.().catch(() => {}); };
   document.addEventListener('keydown', onKey, true);
@@ -49,7 +59,7 @@ function playInCover(slot, src) {
   const v = document.createElement('video');
   v.className = 'vid-cover'; v.src = src; v.autoplay = true; v.muted = true; v.loop = true; v.controls = true; v.playsInline = true; v.preload = 'auto';
   v.setAttribute('aria-label', 'Game video');
-  cover.classList.add('has-video'); cover.appendChild(v);
+  cover.classList.add('has-video'); cover.appendChild(backdropFrom(cover)); cover.appendChild(v);
   const big = document.createElement('button');
   big.type = 'button'; big.className = 'vid-expand'; big.title = 'Enlarge the video'; big.setAttribute('aria-label', 'Enlarge the video'); big.innerHTML = EXPAND_ICON;
   big.addEventListener('click', () => enlarge(v));
@@ -128,7 +138,7 @@ function startPreview(tile) {
   v.src = srcFor(tile.dataset.vid); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
   const cap = document.createElement('div');
   cap.className = 'vid-pop-cap'; cap.textContent = (tile.querySelector('.card-title')?.textContent || tile.getAttribute('aria-label') || '').trim();
-  pop.append(v, cap);
+  pop.append(backdropFrom(tile.querySelector('.card-cover')), v, cap);
   v.addEventListener('error', () => { if (hoverVideo === v) stopPreview(); });   // the file has gone: nothing is shown
   v.addEventListener('playing', () => pop.classList.add('on'));
   document.body.appendChild(pop); hoverVideo = v;
