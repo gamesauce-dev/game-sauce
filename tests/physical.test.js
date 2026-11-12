@@ -522,3 +522,23 @@ test('Xbox discs on the shelf from before get a counterpart in one go; the CSV o
   await call('/api/physical/import', { method: 'POST', body: { csv: csv2, apply: true, digital: false } });
   after = await dig(); assert.ok(!after.includes('Csv Opt Off') && after.includes('Csv Opt Yes'));
 });
+
+test('the one-time cleanup removes untouched counterparts the first build made on its own, and keeps touched ones and ones that were already in Digital', async () => {
+  const { dropUntouchedCounterparts } = await import('../src/lib/twincleanup.js');
+  const mk = async (title) => (await call('/api/physical/games', { method: 'POST', body: { platform: 'xboxone', title, region: 'PAL', digital: true } })).body;
+  const dig = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items;
+  const plain = await mk('Cleanup Plain'), liked = await mk('Cleanup Liked');
+  await call('/api/digital/games', { method: 'POST', body: { platform: 'xone', title: 'Cleanup Mine' } });
+  const mine = await mk('Cleanup Mine');
+  assert.equal(mine.digital_made, false);
+  const likedRow = (await dig()).find((g) => g.name === 'Cleanup Liked');
+  await call(`/api/digital/games/xbox/${likedRow.app_id}/mark`, { method: 'PUT', body: { field: 'favourite', value: true } });
+  assert.ok(dropUntouchedCounterparts(db) >= 1);
+  const names = (await dig()).map((g) => g.name);
+  assert.ok(!names.includes('Cleanup Plain'), 'untouched counterpart removed');
+  assert.ok(names.includes('Cleanup Liked'), 'a favourited one stays');
+  assert.ok(names.includes('Cleanup Mine'), 'a game that was already in Digital stays');
+  const p = (await call(`/api/physical/games/${plain.id}`)).body;
+  assert.equal(p.digital_linked, false);   // the disc is not switched off: it can be turned on again from its details
+  assert.equal(db.prepare('SELECT digital_off FROM physical_games WHERE id = ?').get(plain.id).digital_off, 0);
+});

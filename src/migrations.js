@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import db from './db.js';
 import { decodeEntities } from './lib/metadata.js';
+import { dropUntouchedCounterparts } from './lib/twincleanup.js';
 
 // Bump when the schema changes in a way that needs an explicit migration step.
 const SCHEMA_VERSION = 7;
@@ -603,3 +604,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS game_videos (
   PRIMARY KEY (platform, title_key)
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '50') ON CONFLICT(key) DO UPDATE SET value = '50'").run();
+
+/* ── v51: disc to digital is opt-in now. Counterparts the first build made on its own, and nobody touched, are removed once (src/lib/twincleanup.js). ── */
+if (!db.prepare("SELECT 1 FROM meta WHERE key = 'twin_cleanup_done'").get()) {   // once only: every step above rewrites schema_version on each start, so it cannot say
+  dropUntouchedCounterparts(db);
+  db.prepare("INSERT INTO meta (key, value) VALUES ('twin_cleanup_done', '1')").run();
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '51') ON CONFLICT(key) DO UPDATE SET value = '51'").run();
