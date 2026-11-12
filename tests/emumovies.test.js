@@ -429,6 +429,14 @@ test('ScreenScraper is a video source: asked first, EmuMovies fills what it lack
   assert.ok(registerVideoSource);
   const only = await ensureVideo({ title: 'Ss Error Two', platform: 'snes' }, { apiImpl: { findVideo: async () => { throw new Error('boom sspw-secret-2'); } } });
   assert.equal(only.status, 'error'); assert.ok(!only.error.includes('sspw-secret-2'));
+  // a remembered "no video" is used until Try again asks ScreenScraper afresh
+  db.prepare("INSERT OR REPLACE INTO metadata_cache (key, provider, payload, fetched_at) VALUES ('ss-video2:snes:ss cache game', 'screenscraper', '{\"url\":null,\"why\":\"remembered answer\"}', datetime('now'))").run();
+  const down = { apiImpl: { findVideo: async () => { throw new Error('EmuMovies is down'); } } };
+  const stale = await ensureVideo({ title: 'Ss Cache Game', platform: 'snes' }, down);
+  assert.equal(stale.status, 'error'); assert.match(stale.error, /ScreenScraper: remembered answer/);
+  const searchesBefore = calls.ssParams.length;
+  const fresh = await ensureVideo({ title: 'Ss Cache Game', platform: 'snes', force: true }, down);
+  assert.equal(fresh.status, 'ready'); assert.equal(fresh.source, 'screenscraper'); assert.ok(calls.ssParams.length > searchesBefore, 'it asked ScreenScraper again');
   // one source says "no video" and the other is down: both are said, in that order
   const mixed = await ensureVideo({ title: 'Ss Missing Game', platform: 'gba' }, { apiImpl: { findVideo: async () => { throw new Error('The EmuMovies address api.example.invalid does not exist'); } } });
   assert.equal(mixed.status, 'error'); assert.match(mixed.error, /^No video was found at ScreenScraper: its search on system [0-9]+ found no game titled "Ss Missing Game". The EmuMovies address/);

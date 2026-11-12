@@ -385,12 +385,12 @@ const screenscraper = {
    * The video snap ScreenScraper has for a game, by its title and Library platform: null when it has none, or { url, signUrl, throttle } (the link carries no credential;
    * signUrl adds it when the file is downloaded, and the download waits its turn like every other ScreenScraper request). Throws a safe message on a service problem.
    */
-  async videoFor({ title, platform: slug }) {
+  async videoFor({ title, platform: slug, force = false }) {
     if (!this.enabled) return null;
     const row = db.prepare('SELECT slug, screenscraper_id FROM platforms WHERE slug = ?').get(slug);
     if (!row?.screenscraper_id) return { none: 'this platform has no ScreenScraper system number yet' };
-    const key = `ss-video:${slug}:${gameTitleKey(title)}`;
-    let url = cacheGet(key)?.url;
+    const key = `ss-video2:${slug}:${gameTitleKey(title)}`;   // (an earlier build kept answers without their reason under another name: they are not used)
+    let url = force ? undefined : cacheGet(key)?.url;   // Try again asks ScreenScraper afresh
     if (url === undefined) {
       const f = await ssGameByTitle(title, row.screenscraper_id);
       if (f.error) throw new Error(f.error);
@@ -997,6 +997,6 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
 }
 
 // ScreenScraper is the first place a video is looked for (it works with the account already set up); EmuMovies fills what it lacks.
-registerVideoSource({ id: 'screenscraper', label: 'ScreenScraper', enabled: () => screenscraper.enabled, find: ({ title, platform }) => screenscraper.videoFor({ title, platform }) });
+registerVideoSource({ id: 'screenscraper', label: 'ScreenScraper', enabled: () => screenscraper.enabled, find: ({ title, platform, force }) => screenscraper.videoFor({ title, platform, force }) });
 
 export { screenscraper, thegamesdb, igdb, launchbox, steamgriddb, emumovies, PROVIDERS };

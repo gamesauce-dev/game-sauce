@@ -247,7 +247,7 @@ const registered = [];
 export function registerVideoSource(src) { if (!registered.some((x) => x.id === src.id)) registered.push(src); }
 const emuSource = (apiImpl) => ({
   id: 'emumovies', label: 'EmuMovies', enabled: () => emumovies.enabled,
-  async find({ title, platform }) {
+  async find({ title, platform }) {   // (force is not needed here: EmuMovies keeps no answers of its own)
     const hit = await apiImpl.findVideo({ system: systemNameFor(platform), title: String(title) });
     const key = cred('EMUMOVIES_API_KEY');
     return hit ? { url: hit.url, headers: key ? { 'X-Api-Key': key } : {} } : null;
@@ -278,7 +278,7 @@ export function ensureVideo({ title, platform, force = false }, { apiImpl = defa
       const errors = [], none = [];
       for (const src of sources) {
         let hit = null;
-        try { hit = await src.find({ title: String(title), platform: slug }); } catch (err) { errors.push(scrub(err.message)); continue; }
+        try { hit = await src.find({ title: String(title), platform: slug, force }); } catch (err) { errors.push(scrub(err.message)); continue; }
         if (!hit || hit.none !== undefined) { none.push(hit?.none ? `${src.label}: ${hit.none}` : src.label); continue; }   // no video there (and, when the source can say, why)
         try {
           const dest = path.join(videosDir(), slug.replace(/[^a-z0-9_-]/gi, '_'), key.replace(/ /g, '-').slice(0, 120));
