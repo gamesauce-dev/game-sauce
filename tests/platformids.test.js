@@ -87,3 +87,16 @@ test('page: Verify shows suggestions with a Use button; the slug field explains 
   assert.match(app, /async function verifyPlatformIds\(\)/); assert.match(app, /data-pid-use/); assert.match(app, /\/metadata\/platform-ids/);
   assert.match(app, /slugIn\.value = nameIn\.value\.toLowerCase\(\)/);
 });
+
+test('an entry with exactly our name beats one that only reads the same without its brackets, and the Xbox 360 default is ScreenScraper 33', async () => {
+  const { judge } = await import('../src/lib/platformids.js');
+  const { PLATFORMS } = await import('../src/lib/platforms.js');
+  const x360 = PLATFORMS.find((p) => p.slug === 'xbox360');
+  assert.equal(x360.screenscraper, 33);
+  const list = [{ id: 56, name: 'Xbox 360 (Arcade)' }, { id: 33, name: 'Xbox 360' }];
+  const wrong = judge({ name: 'Xbox 360', short_name: 'X360' }, 56, list);
+  assert.equal(wrong.status, 'suspicious'); assert.equal(wrong.suggestion.id, 33); assert.equal(wrong.confident, true);
+  assert.equal(judge({ name: 'Xbox 360', short_name: 'X360' }, 33, list).status, 'ok');
+  // a platform whose own name matches nothing exactly is judged as before
+  assert.equal(judge({ name: 'Sega Genesis', short_name: 'GEN' }, 1, [{ id: 1, name: 'Sega Genesis / Mega Drive' }]).status, 'ok');
+});

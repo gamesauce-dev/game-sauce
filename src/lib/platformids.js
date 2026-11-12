@@ -60,6 +60,10 @@ export function judge(platform, storedId, providerList) {
   if (!hit) return { status: 'unresolved', current: { id: Number(storedId), name: null }, suggestion: best, confident: Boolean(best && best.score >= CONFIDENT), candidates: cands };
   const score = Math.max(nameScore(platform.name, hit.name), nameScore(platform.short_name, hit.name) * 0.9, hit.alias ? nameScore(platform.name, hit.alias) : 0);
   const current = { id: hit.id, name: hit.name, score: Math.round(score) };
+  // A provider entry with exactly our name beats one that only reads the same once its brackets are dropped ("Xbox 360" against "Xbox 360 (Arcade)").
+  const rawName = (s) => String(s || '').toLowerCase().replace(/s+/g, ' ').trim();
+  const exact = providerList.find((p) => p.id !== hit.id && rawName(p.name) === rawName(platform.name));
+  if (exact && rawName(hit.name) !== rawName(platform.name)) return { status: 'suspicious', current, suggestion: { id: exact.id, name: exact.name, score: 100 }, confident: true, candidates: cands };
   if (score >= 45 || !best || best.id === hit.id) return { status: 'ok', current, suggestion: null, confident: false, candidates: cands };
   return { status: 'suspicious', current, suggestion: best, confident: false, candidates: cands };
 }

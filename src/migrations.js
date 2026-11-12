@@ -618,3 +618,7 @@ if (!db.prepare("SELECT 1 FROM meta WHERE key = 'ss_links_scrubbed'").get()) {
   db.prepare("INSERT INTO meta (key, value) VALUES ('ss_links_scrubbed', '1')").run();
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '53') ON CONFLICT(key) DO UPDATE SET value = '53'").run();
+
+/* ── v54: ScreenScraper's number for the Xbox 360 is 33 (the stored 56 searched another system, so no Xbox 360 game matched). Only a value still at the old built-in 56 is changed; one an admin set is left. ── */
+db.prepare("UPDATE platforms SET screenscraper_id = 33 WHERE slug = 'xbox360' AND screenscraper_id = 56").run();
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '54') ON CONFLICT(key) DO UPDATE SET value = '54'").run();
