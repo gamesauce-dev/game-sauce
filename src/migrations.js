@@ -585,3 +585,10 @@ for (const [col, type] of [['back_url', 'TEXT'], ['back_path', 'TEXT'], ['back_t
   if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '47') ON CONFLICT(key) DO UPDATE SET value = '47'").run();
+
+/* ── v48: a Physical Xbox One / Series disc can have a counterpart in Digital. digital_app_id is that Digital game; digital_made says the shelf
+   created it (so taking the disc off the shelf takes it out of Digital too; a Digital game that was already there is only marked, never removed). ── */
+for (const [col, type] of [['digital_app_id', 'TEXT'], ['digital_made', 'INTEGER NOT NULL DEFAULT 0']]) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '48') ON CONFLICT(key) DO UPDATE SET value = '48'").run();

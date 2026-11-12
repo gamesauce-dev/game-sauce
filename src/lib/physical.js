@@ -8,7 +8,7 @@ import { enrich, cacheMedia, launchbox } from './providers.js';
 import { launchboxStatus } from './launchbox.js';
 import { parseCsv } from './namecsv.js';
 import { decodeEntities, sortTitle } from './metadata.js';
-import { platformFor, CONSOLE_PLATFORMS, appIdFor } from './consoles.js';
+import { platformFor, CONSOLE_PLATFORMS, appIdFor, countryFor, removeConsoleGame, startDetailsJob } from './consoles.js';
 import { saveManual, deleteManualFile, cleanManualLink, manualType } from './manuals.js';
 import { saveCover, dropCustomCover } from './storage.js';
 import { sniffImage, MAX_COVER_BYTES } from './coverzip.js';
@@ -148,7 +148,9 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
     // A filled cell updates the game; an empty one never wipes what is there (the year only fills a blank, so a matched year is not overwritten).
     const upd = db.prepare(`UPDATE physical_games SET title = ?, sort_title = ?, notes = COALESCE(?, notes), release_year = COALESCE(release_year, ?), manual_link = COALESCE(?, manual_link), updated_at = datetime('now') WHERE id = ?`);
     const del = db.prepare('DELETE FROM physical_games WHERE id = ? AND user_id = ?');
+    const gone = removing.length ? db.prepare(`SELECT * FROM physical_games WHERE user_id = ? AND id IN (${removing.map(() => '?').join(',')})`).all(userId, ...removing.map((g) => g.id)) : [];
     db.transaction(() => {
+      for (const g of gone) dropDigital(userId, g);
       for (const g of games) {
         const had = existing.get(g.platform + '\n' + g.key);
         if (had) upd.run(g.title, sortTitle(g.title), g.notes, g.year, g.manual, had.id);
@@ -167,6 +169,44 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
 
 /* ───────── the list ───────── */
 
+/* ───────── a disc's counterpart in Digital (Xbox One and Series only) ───────── */
+
+/** Library platform → the Digital console its counterpart is filed under. */
+const DIGITAL_TWIN = { xboxone: 'xone', xboxseries: 'xsx' };
+
+/**
+ * Take a disc's counterpart out of Digital. One the shelf created is deleted; one that was already in Digital is kept (only its disc mark is switched off).
+ * Safe to call when nothing is linked or the Digital game is already gone.
+ */
+function dropDigital(userId, r) {
+  if (!r?.digital_app_id) return;
+  if (r.digital_made) { try { removeConsoleGame(userId, 'xbox', r.digital_app_id); } catch (err) { if (err.status !== 404) throw err; } }
+  else db.prepare("UPDATE digital_marks SET physical = 0 WHERE user_id = ? AND store = 'xbox' AND app_id = ?").run(userId, r.digital_app_id);
+  db.prepare('UPDATE physical_games SET digital_app_id = NULL, digital_made = 0 WHERE id = ?').run(r.id);
+}
+
+/** Give an Xbox One / Series disc on the shelf a counterpart in Digital (on: true), or take it away (on: false). The Digital copy carries the disc mark. */
+export function setDigitalCounterpart(userId, id, on) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  const twin = DIGITAL_TWIN[r.platform];
+  if (!twin) throw Object.assign(new Error('Only Xbox One and Xbox Series X|S discs can have a Digital counterpart.'), { status: 400 });
+  if (!on) { dropDigital(userId, r); return getPhysical(userId, id); }
+  const appId = `${appIdFor(r.title)}-${twin}`;
+  if (r.digital_app_id && db.prepare("SELECT 1 FROM digital_games WHERE user_id = ? AND store = 'xbox' AND app_id = ?").get(userId, r.digital_app_id)) return getPhysical(userId, id);
+  db.transaction(() => {
+    const had = db.prepare("SELECT 1 FROM digital_games WHERE user_id = ? AND store = 'xbox' AND app_id = ?").get(userId, appId);
+    if (!had) {
+      const c = countryFor(r.region || '');
+      db.prepare("INSERT INTO digital_games (user_id, store, app_id, name, country, platform) VALUES (?, 'xbox', ?, ?, ?, ?)").run(userId, appId, r.title, c ? (c.code || c.name) : null, twin);
+    }
+    db.prepare("INSERT INTO digital_marks (user_id, store, app_id, physical) VALUES (?, 'xbox', ?, 1) ON CONFLICT(user_id, store, app_id) DO UPDATE SET physical = 1").run(userId, appId);
+    db.prepare('UPDATE physical_games SET digital_app_id = ?, digital_made = ? WHERE id = ?').run(appId, had ? 0 : 1, r.id);
+  })();
+  startDetailsJob();
+  return getPhysical(userId, id);
+}
+
 const toGame = (r) => ({
   id: r.id, platform: r.platform, title: r.title, region: r.region, notes: r.notes, release_year: r.release_year, developer: r.developer, publisher: r.publisher,
   genre: r.genre, players: r.players, rating: r.rating, description: r.description, favourite: Boolean(r.favourite), matched: Boolean(r.meta_source), meta_source: r.meta_source,
@@ -178,7 +218,8 @@ const toGame = (r) => ({
   // a manual: an uploaded file (it wins) or a link the person added; null when there is none
   manual: r.manual_path ? { kind: 'file', name: r.manual_name || 'Manual', type: manualType(r.manual_path), url: `/api/physical/manual/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` }
     : r.manual_link ? { kind: 'link', url: r.manual_link } : null,
-  manual_link: r.manual_link || null, has_manual: Boolean(r.manual_path || r.manual_link)
+  manual_link: r.manual_link || null, has_manual: Boolean(r.manual_path || r.manual_link),
+  digital_possible: Boolean(DIGITAL_TWIN[r.platform]), digital_linked: Boolean(r.digital_app_id), digital_made: Boolean(r.digital_app_id && r.digital_made)
 });
 
 const bucketOf = (t) => { const c = String(t || '').replace(/^(the|a|an)\s+/i, '').trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : '#'; };
@@ -278,12 +319,19 @@ export function updatePhysical(userId, id, body = {}) {
     sets.push("updated_at = datetime('now')");
     try { db.prepare(`UPDATE physical_games SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(...vals, r.id, userId); }
     catch (err) { if (/UNIQUE/.test(err.message)) throw Object.assign(new Error('Another game on your shelf already has that title, region and platform.'), { status: 409 }); throw err; }
+    // The Digital counterpart follows its disc: moved to another console it is let go, otherwise it takes the new title, region and console.
+    if (r.digital_app_id) {
+      const now = own(userId, id), twin = DIGITAL_TWIN[now.platform];
+      if (!twin) dropDigital(userId, now);
+      else { const c = countryFor(now.region || ''); db.prepare("UPDATE digital_games SET name = ?, country = ?, platform = ? WHERE user_id = ? AND store = 'xbox' AND app_id = ?").run(now.title, c ? (c.code || c.name) : null, twin, userId, r.digital_app_id); }
+    }
   }
   return getPhysical(userId, id);
 }
 
 export function removePhysical(userId, id) {
   const mine = own(userId, id);
+  dropDigital(userId, mine);   // a Digital counterpart the shelf made goes with the disc
   deleteManualFile(mine?.manual_path);   // an uploaded manual goes with its game
   for (const f of [mine?.cover_path, mine?.spine_path, mine?.disc_path, mine?.back_path]) dropCustomCover(f, 'physical-');   // and so do the pictures they uploaded
   const r = db.prepare('DELETE FROM physical_games WHERE id = ? AND user_id = ?').run(Number(id), userId);

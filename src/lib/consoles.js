@@ -195,13 +195,14 @@ export function importConsoleCsv(userId, csvText, { apply = false, replace = fal
     const delGame = db.prepare('DELETE FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?');
     const setPhysical = db.prepare(`INSERT INTO digital_marks (user_id, store, app_id, physical) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, store, app_id) DO UPDATE SET physical = excluded.physical`);
     const delMark = db.prepare('DELETE FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?');
+    const unlinkShelf = db.prepare('UPDATE physical_games SET digital_app_id = NULL, digital_made = 0 WHERE user_id = ? AND digital_app_id = ?');
     db.transaction(() => {
       for (const g of games) {
         if (existing.has(g.store + '\n' + g.app_id)) upd.run(g.name, g.country, g.platform, userId, g.store, g.app_id);
         else ins.run(userId, g.store, g.app_id, g.name, g.country, g.platform);
       }
       for (const g of games) if (g.physical !== null) setPhysical.run(userId, g.store, g.app_id, g.physical ? 1 : 0);
-      for (const g of removing) { delGame.run(userId, g.store, g.app_id); delMark.run(userId, g.store, g.app_id); }
+      for (const g of removing) { delGame.run(userId, g.store, g.app_id); delMark.run(userId, g.store, g.app_id); unlinkShelf.run(userId, g.app_id); }
     })();
     startDetailsJob();
   }
@@ -234,6 +235,7 @@ export function removeConsoleGame(userId, store, appId) {
   const r = db.prepare('DELETE FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   db.prepare('DELETE FROM digital_marks WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
   db.prepare('DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?').run(userId, store, String(appId));
+  db.prepare('UPDATE physical_games SET digital_app_id = NULL, digital_made = 0 WHERE user_id = ? AND digital_app_id = ?').run(userId, String(appId));   // a disc on the shelf no longer has a counterpart
   if (!r.changes) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
   return { removed: true };
 }

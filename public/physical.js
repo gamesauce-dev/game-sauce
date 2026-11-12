@@ -645,6 +645,10 @@ export async function openDetail(id) {
     <div class="section-label">Details</div>
     <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
 
+    ${g.digital_possible ? `<div class="section-label">Digital</div>
+    <label class="field ph-digital"><span><input type="checkbox" id="ph-digital" ${g.digital_linked ? 'checked' : ''} /> Also in my Digital library</span></label>
+    <p class="hint">${g.digital_linked ? (g.digital_made ? 'It shows in Digital with a disc mark. Taking this disc off your shelf, or unticking this, removes it from Digital again.' : 'This was already in your Digital library; it now carries the disc mark. It stays there if you remove the disc.') : 'Adds this game to your Digital library as well, marked as owned on disc.'}</p>` : ''}
+
     ${manualBlock(g)}
 
     <div class="section-label">Edit</div>
@@ -699,8 +703,13 @@ function bindDetail(g) {
   $$('[data-art-reset]', menu).forEach((b) => b.addEventListener('click', async () => {
     try { await ctx.api(`/physical/games/${id}/art/${b.dataset.artReset}`, { method: 'DELETE' }); ctx.toast('Back to the automatic picture: use Look up again to fetch one'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
   }));
+  $('#ph-digital', body)?.addEventListener('change', async (e) => {
+    const on = e.target.checked;
+    try { await ctx.api(`/physical/games/${id}/digital`, { method: 'PUT', body: JSON.stringify({ on }) }); ctx.toast(on ? 'Added to your Digital library' : 'Taken out of your Digital library'); await refreshAll(); }
+    catch (err) { e.target.checked = !on; ctx.toast(err.message, true); }
+  });
   $('[data-d="delete"]', body).onclick = async () => {
-    const ok = await ctx.confirmDialog({ title: `Remove ${g.title}?`, body: 'It is taken off your shelf. Importing a CSV that lists it brings it back.', okLabel: 'Remove', danger: true });
+    const ok = await ctx.confirmDialog({ title: `Remove ${g.title}?`, body: 'It is taken off your shelf' + (g.digital_made ? ' and out of your Digital library' : '') + '. Importing a CSV that lists it brings it back.', okLabel: 'Remove', danger: true });
     if (!ok) return;
     try { await ctx.api(`/physical/games/${id}`, { method: 'DELETE' }); } catch (err) { ctx.toast(err.message, true); return; }
     ctx.closeDrawer(); ctx.toast('Removed from your shelf'); load(true);
