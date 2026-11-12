@@ -131,7 +131,7 @@ export function classify(segs, fileName) {
     if (kind === 'video') {
       if (!VIDEO_EXT.has(ext) && !OTHER_VIDEO_EXT.has(ext)) return null;
       // Both orders are in use: <platform>/videos/<title>.mp4 and <videos>/<platform>/<title>.mp4 (LaunchBox); the plan tries the folder above and the folder below as the platform.
-      return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: (/(([^)]*))/.exec(base) || [])[1] || '', title: base, n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
+      return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: (/(([^)]*))/.exec(base) || [])[1] || '', title: base.replace(/-video$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };   // RetroBat names them <rom name>-video.mp4
     }
     if (kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
     if (kind !== 'manual' && NOT_COVER.test(base)) return null;
@@ -148,7 +148,7 @@ function forcedEntry(segs, fileName, force) {
   if (force.kind === 'video') {
     if (!VIDEO_EXT.has(ext) && !OTHER_VIDEO_EXT.has(ext)) return null;
     const br = /(([^)]*))/.exec(base);
-    return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: 'video', platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: br ? br[1] : '', title: base, n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
+    return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: 'video', platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: br ? br[1] : '', title: base.replace(/-video$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
   }
   if (force.kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
   const bracket = /\(([^)]*)\)/.exec(base);

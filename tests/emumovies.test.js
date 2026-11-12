@@ -199,6 +199,7 @@ test('video packs: matched by platform and title from a listed folder, linked in
   const pack = path.join(TMP, 'pack');
   const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); return f; };
   const good = put('snes/videos/Pack Link Game (USA).mp4', MP4);
+  put('snes/videos/Pack Dash Suffix-video.mp4', MP4);   // RetroBat names a video <rom name>-video
   put('snes/videos/Pack Old Format.avi', Buffer.from('RIFF....AVI '));
   put('snes/videos/Pack Not Owned (USA).mp4', MP4);
   put('nes/Videos/Pack Bad Header.mp4', Buffer.from('<html>not a video at all</html>'));
@@ -206,18 +207,18 @@ test('video packs: matched by platform and title from a listed folder, linked in
   const folders = await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } });
   assert.equal(folders.status, 200);
   const mk = (platform, title) => call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'USA' } });
-  await mk('snes', 'Pack Link Game'); await mk('nes', 'Pack Bad Header'); await mk('snes', 'Pack Reverse Layout');
+  await mk('snes', 'Pack Link Game'); await mk('snes', 'Pack Dash Suffix'); await mk('nes', 'Pack Bad Header'); await mk('snes', 'Pack Reverse Layout');
 
   const prev = await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack } });
   assert.equal(prev.status, 200);
-  assert.equal(prev.body.matched.video, 3); assert.equal(prev.body.will.video, 3);
+  assert.equal(prev.body.matched.video, 4); assert.equal(prev.body.will.video, 4);
   assert.equal(prev.body.unsupported_videos, 1); assert.deepEqual(prev.body.unsupported_list, ['Pack Old Format.avi']);
   assert.equal(prev.body.unmatched_total, 1, 'a video for a game nobody has is not imported');
   assert.equal(db.prepare("SELECT COUNT(*) c FROM game_videos WHERE source = 'folder'").get().c, 0, 'a preview saves nothing');
 
   await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack, apply: true } });
   let st; for (let i = 0; i < 80; i++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
-  assert.equal(st.applied.video, 2); assert.equal(st.failed, 1); assert.match(st.failures[0].reason, /not an mp4 or webm/);
+  assert.equal(st.applied.video, 3); assert.equal(st.failed, 1); assert.match(st.failures[0].reason, /not an mp4 or webm/);
   const row = db.prepare("SELECT path, source FROM game_videos WHERE title_key = 'pack link game'").get();
   assert.equal(row.source, 'folder'); assert.equal(row.path, path.resolve(good), 'linked where it is, not copied');
   assert.ok(!fs.existsSync(path.join(process.env.GAMESAUCE_STORAGE_DIR, 'videos', 'snes', 'pack-link-game.mp4')), 'nothing was copied into storage');
@@ -229,7 +230,7 @@ test('video packs: matched by platform and title from a listed folder, linked in
   const f = await call(`/api/videos/file?kind=physical&id=${g.id}`);
   assert.equal(f.status, 200); assert.equal(f.body.length, MP4.length);
   const again = await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack } });
-  assert.equal(again.body.will.video, 1);   // only the bad-header file is still left to try assert.equal(again.body.skipped.video, 2);
+  assert.equal(again.body.will.video, 1);   // only the bad-header file is still left to try assert.equal(again.body.skipped.video, 3);
 
   // the cache limit trims only what EmuMovies sent, never a person's own pack
   await saveCreds({ EMUMOVIES_USER: 'frank', EMUMOVIES_PASSWORD: 'hunter2-secret' });
