@@ -7,6 +7,17 @@
 //    for a moment opens a small pop-out window beside it with the video playing. Tiles never download anything: only videos already kept play.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const query = (slot) => new URLSearchParams({ kind: slot.dataset.kind, id: slot.dataset.id, ...(slot.dataset.store ? { store: slot.dataset.store } : {}) }).toString();
+/* Sound is on by default in the details window. If the person turns it off (or on again) with the video's own control, that choice is remembered on this device. */
+const MUTE_KEY = 'gamesauce_video_muted';
+const wantMuted = () => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; } };
+const saveMuted = (m) => { try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); } catch { /* not kept */ } };
+/** Starts a video with the person's sound choice. A browser may refuse sound before the person has touched the page: it then plays muted (not remembered) and says so. */
+function startWithSound(v, onBlocked = () => {}) {
+  let expected = wantMuted(); v.muted = expected;
+  v.addEventListener('volumechange', () => { if (v.muted !== expected) { expected = v.muted; saveMuted(v.muted); } });   // a change we did not make is the person's
+  const go = v.play?.();
+  if (go?.catch) go.catch(() => { if (!expected) { expected = true; v.muted = true; v.play?.().catch(() => {}); onBlocked(); } });
+}
 const mb = (b) => `${Math.max(1, Math.round(b / 1048576))} MB`;
 
 async function call(path, options) {
@@ -38,7 +49,7 @@ function enlarge(small) {
   const box = document.createElement('div');
   box.className = 'vid-lightbox'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Game video');
   const v = document.createElement('video');
-  v.src = small.currentSrc || small.src; v.controls = true; v.loop = true; v.autoplay = true; v.muted = small.muted; v.playsInline = true;
+  v.src = small.currentSrc || small.src; v.controls = true; v.loop = true; v.autoplay = true; v.playsInline = true;
   v.addEventListener('loadedmetadata', () => { try { v.currentTime = small.currentTime; } catch { /* starts from the beginning */ } }, { once: true });
   v.addEventListener('dblclick', () => fullscreen(v));
   const x = document.createElement('button');
@@ -49,7 +60,7 @@ function enlarge(small) {
   document.addEventListener('keydown', onKey, true);
   x.addEventListener('click', close);
   box.addEventListener('click', (e) => { if (e.target === box) close(); });
-  v.play?.().catch(() => {});
+  startWithSound(v);
 }
 
 /** The video takes the cover's place at the top of the window; the button beside the note puts the cover back (and the video again). */
@@ -57,7 +68,7 @@ function playInCover(slot, src) {
   const cover = slot.closest('#drawer-body')?.querySelector('.detail-cover');
   if (!cover || cover.querySelector('.vid-cover')) return false;
   const v = document.createElement('video');
-  v.className = 'vid-cover'; v.src = src; v.autoplay = true; v.muted = true; v.loop = true; v.controls = true; v.playsInline = true; v.preload = 'auto';
+  v.className = 'vid-cover'; v.src = src; v.autoplay = true; v.loop = true; v.controls = true; v.playsInline = true; v.preload = 'auto';
   v.setAttribute('aria-label', 'Game video');
   cover.classList.add('has-video'); cover.appendChild(backdropFrom(cover)); cover.appendChild(v);
   const big = document.createElement('button');
@@ -65,7 +76,7 @@ function playInCover(slot, src) {
   big.addEventListener('click', () => enlarge(v));
   cover.appendChild(big);
   v.addEventListener('dblclick', () => fullscreen(v));   // double-click: the whole screen
-  v.play?.().catch(() => { /* autoplay refused: the controls are there */ });
+  startWithSound(v, () => { const n = slot.querySelector('.vid-note'); if (n && !n.querySelector('.vid-sound')) n.insertAdjacentHTML('beforeend', '<span class="vid-sound">Playing without sound: use the video\'s speaker button for sound.</span>'); });
   return true;
 }
 
@@ -75,8 +86,8 @@ function show(slot, s) {
     const src = `/api/videos/file?${query(slot)}`;
     const inCover = playInCover(slot, src);
     slot.innerHTML = inCover
-      ? `<p class="hint vid-note">Video${s.bytes ? ` (${esc(mb(s.bytes))})` : ''}, from EmuMovies. <button type="button" class="btn btn-sm vid-toggle">Show cover</button></p>`
-      : `<div class="section-label">Video</div><video class="vid-player" controls preload="metadata" playsinline src="${esc(src)}"></video>${s.bytes ? `<p class="hint">${esc(mb(s.bytes))}, from EmuMovies</p>` : ''}`;
+      ? `<p class="hint vid-note">Video${s.bytes ? ` (${esc(mb(s.bytes))})` : ''}${s.source ? `, from ${esc(s.source)}` : ''}. <button type="button" class="btn btn-sm vid-toggle">Show cover</button></p>`
+      : `<div class="section-label">Video</div><video class="vid-player" controls preload="metadata" playsinline src="${esc(src)}"></video>${s.bytes ? `<p class="hint">${esc(mb(s.bytes))}${s.source ? `, from ${esc(s.source)}` : ''}</p>` : ''}`;
     const tg = slot.querySelector('.vid-toggle');
     tg?.addEventListener('click', () => {
       const cover = slot.closest('#drawer-body')?.querySelector('.detail-cover'), v = cover?.querySelector('.vid-cover'); if (!cover || !v) return;
@@ -88,11 +99,11 @@ function show(slot, s) {
   }
   if (!s.can_fetch) { slot.innerHTML = ''; return; }   // nobody set EmuMovies up: no empty section
   slot.innerHTML = `<div class="section-label">Video</div>
-    <p class="hint">${s.missed ? 'EmuMovies had no video for this game last time it was asked.' : 'No video kept for this game yet.'}</p>
+    <p class="hint">${s.missed ? 'No video was found for this game the last time it was looked for.' : 'No video kept for this game yet.'}</p>
     <button class="btn vid-find" type="button">${s.missed ? 'Try again' : 'Find video'}</button> <span class="hint vid-msg" role="status"></span>`;
   const btn = slot.querySelector('.vid-find'), msg = slot.querySelector('.vid-msg');
   btn.addEventListener('click', async () => {
-    btn.disabled = true; msg.textContent = 'asking EmuMovies…';
+    btn.disabled = true; msg.textContent = 'looking for a video…';
     try {
       const r = await call('/api/videos/fetch?' + query(slot), { method: 'POST', body: JSON.stringify({ force: Boolean(s.missed) }) });
       show(slot, r.available ? { ...s, ...r } : { ...s, missed: true });

@@ -14,12 +14,29 @@ process.env.GAMESAUCE_ADMIN_PASSWORD = 'emu-admin-password-1';
 delete process.env.EMUMOVIES_USER; delete process.env.EMUMOVIES_PASSWORD; delete process.env.EMUMOVIES_API_KEY;
 
 const MP4 = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.alloc(2000, 1)]);
-const calls = { login: 0, search: 0, file: 0, searched: [] };
+const calls = { login: 0, search: 0, file: 0, searched: [], ss: 0, ssParams: [], ssFile: [] };
 let fake, fakeBase, server, base, adminToken, bobToken;
 
 before(async () => {
   fake = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
+    if (url.pathname === '/ss/jeuInfos.php') {
+      calls.ss++; calls.ssParams.push(Object.fromEntries(url.searchParams));
+      res.setHeader('Content-Type', 'application/json');
+      const name = url.searchParams.get('romnom');
+      if (String(name).startsWith('Ss Error')) { res.statusCode = 403; return res.end('Erreur de login : Vérifier les identifiants utilisateurs !'); }
+      if (name === 'Ss Missing Game') return res.end(JSON.stringify({ header: {}, response: {} }));
+      // the links carry the asker's credentials, as ScreenScraper's can
+      const link = (media) => `${fakeBase}/ssfiles/${media}.mp4?devid=devid-x&devpassword=devpw-secret-1&softname=game-sauce&ssid=ssuser&sspassword=sspw-secret-2&media=${media}`;
+      return res.end(JSON.stringify({ header: {}, response: { jeu: { id: '77', noms: [{ langue: 'en', text: name }], medias: [
+        { type: 'video', region: 'wor', url: link('video') }, { type: 'video-normalized', region: 'wor', url: link('video-normalized') },
+        { type: 'box-2D', region: 'us', url: `${fakeBase}/ssfiles/box.png?devid=devid-x&devpassword=devpw-secret-1&ssid=ssuser&sspassword=sspw-secret-2` } ] } } }));
+    }
+    if (url.pathname.startsWith('/ssfiles/')) {
+      calls.ssFile.push(Object.fromEntries(url.searchParams));
+      if (url.searchParams.get('sspassword') !== 'sspw-secret-2' || url.searchParams.get('devpassword') !== 'devpw-secret-1') { res.statusCode = 403; return res.end('no credentials'); }
+      res.setHeader('Content-Type', 'video/mp4'); return res.end(MP4);
+    }
     if (url.pathname === '/auth/login') {
       calls.login++;
       let body = '';
@@ -49,6 +66,8 @@ before(async () => {
   await new Promise((r) => fake.listen(0, '127.0.0.1', r));
   fakeBase = `http://127.0.0.1:${fake.address().port}`;
   process.env.EMUMOVIES_API_BASE = fakeBase;
+  process.env.SS_API_BASE = `${fakeBase}/ss`;
+  process.env.SS_MIN_INTERVAL_MS = '1';
   process.env.EMUMOVIES_MAX_VIDEO_MB = '1';
 
   const { prepareApp } = await import('../src/app.js');
@@ -62,6 +81,10 @@ before(async () => {
 });
 
 after(async () => {
+  // background lookups started by the games these tests add finish before the database closes
+  const { matchJobStatus } = await import('../src/lib/physical.js');
+  const { detailsJobStatus } = await import('../src/lib/consoles.js');
+  for (let i = 0; i < 200 && (matchJobStatus().running || detailsJobStatus().running); i++) await new Promise((r) => setTimeout(r, 50));
   await new Promise((r) => server?.close(r));
   await new Promise((r) => fake?.close(r));
   const { db } = await import('../src/db.js');
@@ -358,8 +381,61 @@ test('Import game assets does pictures, manuals and videos in one run from the s
 });
 
 
+test('ScreenScraper is a video source: asked first, EmuMovies fills what it lacks, and no credential is ever stored, shown or sent to the wrong place', async () => {
+  const { ensureVideo } = await import('../src/lib/emumovies.js');
+  const { db } = await import('../src/db.js');
+  await saveCreds({ EMUMOVIES_USER: 'frank', EMUMOVIES_PASSWORD: 'hunter2-secret', SS_DEV_ID: 'devid-x', SS_DEV_PASSWORD: 'devpw-secret-1', SS_USER: 'ssuser', SS_PASSWORD: 'sspw-secret-2' });
+
+  // ScreenScraper first: nothing is asked of EmuMovies
+  const emuSearches = calls.search;
+  const r = await ensureVideo({ title: 'Ss Video Game', platform: 'snes' });
+  assert.equal(r.status, 'ready'); assert.equal(r.source, 'screenscraper'); assert.equal(calls.search, emuSearches);
+  assert.equal(calls.ssParams.at(-1).romnom, 'Ss Video Game'); assert.equal(calls.ssParams.at(-1).ssid, 'ssuser');
+  assert.equal(calls.ssFile.at(-1).media, 'video-normalized', 'the normalised video is preferred');
+  assert.equal(calls.ssFile.at(-1).sspassword, 'sspw-secret-2', 'the download is signed when it is made');
+  assert.equal(db.prepare("SELECT source FROM game_videos WHERE title_key = 'ss video game'").get().source, 'screenscraper');
+
+  // no credential left in anything stored (the lookup's cached answer holds the links)
+  const dump = JSON.stringify(db.prepare('SELECT payload FROM metadata_cache').all());
+  assert.ok(dump.includes('video-normalized'), 'the lookup was cached');
+  assert.ok(!dump.includes('sspw-secret-2') && !dump.includes('devpw-secret-1') && !dump.includes('sspassword'), 'cleaned before it is stored');
+  // the window is told where it came from
+  const s = await call('/api/physical/games', { token: bobToken, method: 'POST', body: { platform: 'snes', title: 'Ss Video Game' } });
+  const st = await call('/api/videos/status?kind=physical&id=' + s.body.id, { token: bobToken });
+  assert.equal(st.body.available, true); assert.equal(st.body.source, 'ScreenScraper');
+
+  // nothing at ScreenScraper: EmuMovies is tried, and its key is not sent to ScreenScraper
+  const before = calls.search;
+  const m = await ensureVideo({ title: 'Ss Missing Game', platform: 'snes' });
+  assert.equal(m.status, 'ready'); assert.equal(m.source, 'emumovies'); assert.equal(calls.search, before + 1);
+  // ScreenScraper unreachable or refusing: EmuMovies still gets its turn
+  const e = await ensureVideo({ title: 'Ss Error Game', platform: 'snes' });
+  assert.equal(e.status, 'ready'); assert.equal(e.source, 'emumovies');
+  // a refusal on its own is an error, not "no video", and never echoes a credential
+  const { registerVideoSource } = await import('../src/lib/emumovies.js');
+  assert.ok(registerVideoSource);
+  const only = await ensureVideo({ title: 'Ss Error Two', platform: 'snes' }, { apiImpl: { findVideo: async () => { throw new Error('boom sspw-secret-2'); } } });
+  assert.equal(only.status, 'error'); assert.ok(!only.error.includes('sspw-secret-2'));
+});
+
+test('ScreenScraper links lose their credentials: new ones as they arrive, and the ones earlier builds stored, once', async () => {
+  const { ssClean } = await import('../src/lib/providers.js');
+  const { scrubSsText, scrubStoredSsLinks } = await import('../src/lib/ssscrub.js');
+  const { db } = await import('../src/db.js');
+  const dirty = `${process.env.SS_API_BASE}/mediaJeu.php?devid=a&devpassword=b&softname=c&ssid=d&sspassword=e&systemeid=3&jeuid=9&media=box-2D`;
+  assert.equal(ssClean(dirty), `${process.env.SS_API_BASE}/mediaJeu.php?systemeid=3&jeuid=9&media=box-2D`);
+  assert.equal(ssClean('https://example.com/a.png?ssid=keep'), 'https://example.com/a.png?ssid=keep', 'only ScreenScraper links are touched');
+  assert.equal(scrubSsText('{"url":"https://api.screenscraper.fr/x?devid=a&devpassword=b&ssid=d&sspassword=e"}'), '{"url":"https://api.screenscraper.fr/x"}');
+  assert.equal(scrubSsText('https://s.fr/m.php?systemeid=3&sspassword=e&media=x'), 'https://s.fr/m.php?systemeid=3&media=x');
+  db.prepare("INSERT OR REPLACE INTO metadata_cache (key, provider, payload, fetched_at) VALUES ('old-ss', 'screenscraper', ?, datetime('now'))").run('{"cover_url":"https://s.fr/a.php?devid=a&devpassword=b&ssid=d&sspassword=e&media=box"}');
+  db.prepare("UPDATE roms SET cover_url = 'https://s.fr/a.php?ssid=d&sspassword=e&media=box' WHERE id = (SELECT MIN(id) FROM roms)").run();
+  assert.ok(scrubStoredSsLinks(db) >= 2);
+  assert.ok(!db.prepare("SELECT payload FROM metadata_cache WHERE key = 'old-ss'").get().payload.includes('password'));
+  assert.ok(!(db.prepare('SELECT cover_url FROM roms WHERE cover_url LIKE ?').get('%sspassword%')));
+});
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
-  await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '' });
+  await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '', SS_DEV_ID: '', SS_DEV_PASSWORD: '', SS_USER: '', SS_PASSWORD: '' });
   const { db } = await import('../src/db.js');
   const plat = db.prepare('SELECT id FROM platforms LIMIT 1').get();
   const id = Number(db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1) VALUES ('No Login', 'no login', 'n.bin', 'x', ?, 1, 'sha-no-login')").run(plat.id).lastInsertRowid);

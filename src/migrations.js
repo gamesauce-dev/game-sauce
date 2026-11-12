@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import db from './db.js';
 import { decodeEntities } from './lib/metadata.js';
+import { scrubStoredSsLinks } from './lib/ssscrub.js';
 
 // Bump when the schema changes in a way that needs an explicit migration step.
 const SCHEMA_VERSION = 7;
@@ -610,3 +611,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS rom_files (
   PRIMARY KEY (rom_id, kind)
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '52') ON CONFLICT(key) DO UPDATE SET value = '52'").run();
+
+/* ── v53: ScreenScraper media links stored by earlier builds may carry the credentials of whoever asked: they are taken out, once (src/lib/ssscrub.js). ── */
+if (!db.prepare("SELECT 1 FROM meta WHERE key = 'ss_links_scrubbed'").get()) {
+  scrubStoredSsLinks(db);
+  db.prepare("INSERT INTO meta (key, value) VALUES ('ss_links_scrubbed', '1')").run();
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '53') ON CONFLICT(key) DO UPDATE SET value = '53'").run();

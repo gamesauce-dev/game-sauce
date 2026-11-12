@@ -174,7 +174,7 @@ Drives that vanish are flagged **missing**, not deleted. Reconnect and rescan; t
 
 | Provider | Needs | Best for |
 |----------|-------|----------|
-| ScreenScraper | Developer ID + password (forum approval) plus your account | Retro systems, matches by file hash or name |
+| ScreenScraper | Developer ID + password (forum approval) plus your ScreenScraper username (not your email) and password | Retro systems, matches by file hash or name; also the first place a game video is looked for |
 | TheGamesDB | Free API key | Broad coverage, quick setup |
 | IGDB | Twitch Client ID and Secret | Modern systems |
 | SteamGridDB | Free API key | Cover art when nothing else has any |

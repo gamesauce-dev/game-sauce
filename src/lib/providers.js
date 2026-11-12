@@ -25,7 +25,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
 import { sniffProviderImage } from './coverzip.js';
-import { emumovies } from './emumovies.js';
+import { emumovies, registerVideoSource } from './emumovies.js';
 
 const TIMEOUT_MS = Number(process.env.META_TIMEOUT_MS || 15000);
 const CACHE_TTL_HOURS = Number(process.env.META_CACHE_TTL_HOURS || 168);
@@ -128,7 +128,7 @@ export async function cacheMedia(url, kind = 'box2d') {
     for (let attempt = 0; attempt < 3; attempt++) {
       let res = null;
       try {
-        res = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { 'User-Agent': 'game-sauce/0.2' } });
+        res = await fetch(ssSign(url), { signal: AbortSignal.timeout(20000), headers: { 'User-Agent': 'game-sauce/0.2' } });
         if (res.ok) {
           const got = Buffer.from(await res.arrayBuffer());
           if (got.length && got.length <= MAX_MEDIA_BYTES && (type = sniffProviderImage(got))) { buf = got; break; }
@@ -183,9 +183,28 @@ function ssMedia(game, type, preferredRegions = ['us', 'eu', 'wor', 'jp']) {
   if (!media.length) return null;
   for (const region of preferredRegions) {
     const hit = media.find((m) => (m.region || '').toLowerCase() === region);
-    if (hit) return hit.url;
+    if (hit) return ssClean(hit.url);
   }
-  return media[0].url;
+  return ssClean(media[0].url);
+}
+
+const SS_API = () => (process.env.SS_API_BASE || 'https://api.screenscraper.fr/api2').replace(/\/+$/, '');
+const SS_SECRET_PARAMS = ['devid', 'devpassword', 'softname', 'ssid', 'sspassword'];
+const isSsHost = (u) => /(^|\.)screenscraper\.fr$/i.test(u.hostname) || (process.env.SS_API_BASE && u.host === new URL(process.env.SS_API_BASE).host);
+/**
+ * ScreenScraper's media links can carry the credentials of whoever asked (developer id and password, account name and password). A link like that must never be stored
+ * (the database, the cache, an API answer): this takes them out, and ssSign puts them back at the moment a file is downloaded.
+ */
+export function ssClean(url) {
+  try { const u = new URL(url); if (!isSsHost(u)) return url; for (const k of SS_SECRET_PARAMS) u.searchParams.delete(k); return u.toString(); } catch { return url; }
+}
+function ssSign(url) {
+  try {
+    const u = new URL(url); if (!isSsHost(u)) return url;
+    u.searchParams.set('devid', cred('SS_DEV_ID') || ''); u.searchParams.set('devpassword', cred('SS_DEV_PASSWORD') || ''); u.searchParams.set('softname', 'game-sauce');
+    u.searchParams.set('ssid', cred('SS_USER') || ''); u.searchParams.set('sspassword', cred('SS_PASSWORD') || '');
+    return u.toString();
+  } catch { return url; }
 }
 
 const screenscraper = {
@@ -241,7 +260,7 @@ const screenscraper = {
     }
 
     const result = await ssThrottle(() =>
-      fetchJson(`https://api.screenscraper.fr/api2/jeuInfos.php?${params}`)
+      fetchJson(`${SS_API()}/jeuInfos.php?${params}`)
     );
 
     if (result.error) {
@@ -289,6 +308,7 @@ const screenscraper = {
       wheel: ssMedia(game, 'wheel'),
       marquee: ssMedia(game, 'wheel-hd') || ssMedia(game, 'screenmarquee'),
       video: ssMedia(game, 'video'),
+      videoNormalized: ssMedia(game, 'video-normalized'),
       manual: ssMedia(game, 'manuel')
     };
 
@@ -312,6 +332,21 @@ const screenscraper = {
     return record;
   },
 
+  /**
+   * The video snap ScreenScraper has for a game, by its title and Library platform: null when it has none, or { url, signUrl, throttle } (the link carries no credential;
+   * signUrl adds it when the file is downloaded, and the download waits its turn like every other ScreenScraper request). Throws a safe message on a service problem.
+   */
+  async videoFor({ title, platform: slug }) {
+    if (!this.enabled) return null;
+    const row = db.prepare('SELECT slug, screenscraper_id FROM platforms WHERE slug = ?').get(slug);
+    if (!row?.screenscraper_id) return null;
+    const rec = await this.lookup({ title, platform: row, hashes: null });
+    if (!rec) return null;
+    if (rec.error) { if (/no match/i.test(rec.error)) return null; throw new Error(rec.error); }
+    const url = rec.media?.videoNormalized || rec.media?.video;
+    return url ? { url, signUrl: ssSign, throttle: ssThrottle } : null;
+  },
+
   /** Ask ScreenScraper how much of today's quota is left. */
   async accountInfo() {
     if (!this.enabled) return null;
@@ -323,7 +358,7 @@ const screenscraper = {
       ssid: cred('SS_USER'),
       sspassword: cred('SS_PASSWORD')
     });
-    const result = await ssThrottle(() => fetchJson(`https://api.screenscraper.fr/api2/ssuserInfos.php?${params}`));
+    const result = await ssThrottle(() => fetchJson(`${SS_API()}/ssuserInfos.php?${params}`));
     const u = result.data?.response?.ssuser;
     if (!u) return { error: result.error || 'no user info', raw: result.data };
     ssQuota = {
@@ -345,7 +380,7 @@ const screenscraper = {
       ssid: cred('SS_USER'),
       sspassword: cred('SS_PASSWORD')
     });
-    const result = await ssThrottle(() => fetchJson(`https://api.screenscraper.fr/api2/systemesListe.php?${params}`));
+    const result = await ssThrottle(() => fetchJson(`${SS_API()}/systemesListe.php?${params}`));
     const systems = result.data?.response?.systemes;
     if (!Array.isArray(systems)) return null;
     return systems.map((s) => ({
@@ -904,5 +939,8 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   const real = errors.filter((e) => !(answered && isUnavailable(e.message)));
   return real.length ? { error: real.map((e) => `${e.provider}: ${e.message}`).join('; ') } : null;
 }
+
+// ScreenScraper is the first place a video is looked for (it works with the account already set up); EmuMovies fills what it lacks.
+registerVideoSource({ id: 'screenscraper', label: 'ScreenScraper', enabled: () => screenscraper.enabled, find: ({ title, platform }) => screenscraper.videoFor({ title, platform }) });
 
 export { screenscraper, thegamesdb, igdb, launchbox, steamgriddb, emumovies, PROVIDERS };

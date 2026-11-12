@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'node:path';
 import db from '../db.js';
-import { emumovies, ensureVideo, videoFile, recentlyMissed } from '../lib/emumovies.js';
+import { videoSourcesEnabled, videoSourceLabel, ensureVideo, videoFile, recentlyMissed } from '../lib/emumovies.js';
 import { isConsoleStore, libSlug } from '../lib/consoles.js';
 import { listGames } from '../lib/steam.js';
 
@@ -37,7 +37,7 @@ router.get('/status', (req, res) => {
   const game = resolveGame(req);
   if (!game) return notFound(res);
   const have = videoFile(game);
-  res.json({ available: Boolean(have), bytes: have?.bytes || null, can_fetch: emumovies.enabled, missed: !have && recentlyMissed(game) });
+  res.json({ available: Boolean(have), bytes: have?.bytes || null, source: have ? videoSourceLabel(have.source) : null, can_fetch: videoSourcesEnabled().length > 0, missed: !have && recentlyMissed(game) });
 });
 
 // Ask EmuMovies for this game's video now (the person pressed the button). { force: true } asks again after a "none found".
@@ -46,9 +46,9 @@ router.post('/fetch', async (req, res, next) => {
     const game = resolveGame(req);
     if (!game) return notFound(res);
     const r = await ensureVideo({ ...game, force: req.body?.force === true });
-    if (r.status === 'disabled') return res.status(400).json({ error: 'EmuMovies is not set up (an admin adds the login under Settings, Metadata providers)' });
+    if (r.status === 'disabled') return res.status(400).json({ error: 'No video source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)' });
     if (r.status === 'error') return res.status(502).json({ error: r.error });
-    res.json({ available: r.status === 'ready', bytes: r.bytes || null, missed: r.status === 'none' });
+    res.json({ available: r.status === 'ready', bytes: r.bytes || null, source: r.source ? videoSourceLabel(r.source) : null, missed: r.status === 'none' });
   } catch (err) { next(err); }
 });
 

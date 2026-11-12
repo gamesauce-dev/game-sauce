@@ -123,13 +123,14 @@ function setTags(romId, tagNames) {
  * JSON we store in roms.provider_media. Caching is what keeps the library
  * looking right when the provider is unreachable later.
  */
+const NOT_PICTURES = new Set(['video', 'videoNormalized', 'manual']);
 async function applyProviderMedia(meta, sha1) {
   const media = meta.media || {};
   const out = {};
   let coverPath = null;
 
   for (const [kind, url] of Object.entries(media)) {
-    if (!url) continue;
+    if (!url || NOT_PICTURES.has(kind)) continue;   // a video or a manual is not a picture: it is fetched when asked for, never here
     const file = await cacheMedia(url, kind);
     if (file) out[kind] = { path: file, url };
   }
