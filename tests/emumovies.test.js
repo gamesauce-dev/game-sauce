@@ -429,6 +429,9 @@ test('ScreenScraper is a video source: asked first, EmuMovies fills what it lack
   assert.ok(registerVideoSource);
   const only = await ensureVideo({ title: 'Ss Error Two', platform: 'snes' }, { apiImpl: { findVideo: async () => { throw new Error('boom sspw-secret-2'); } } });
   assert.equal(only.status, 'error'); assert.ok(!only.error.includes('sspw-secret-2'));
+  // one source says "no video" and the other is down: both are said, in that order
+  const mixed = await ensureVideo({ title: 'Ss Missing Game', platform: 'gba' }, { apiImpl: { findVideo: async () => { throw new Error('The EmuMovies address api.example.invalid does not exist'); } } });
+  assert.equal(mixed.status, 'error'); assert.match(mixed.error, /^No video was found at ScreenScraper. The EmuMovies address/);
   const { screenscraper } = await import('../src/lib/providers.js');
   // the ordinary metadata lookup of a title with no hashes (Physical, Digital) goes through the same name search
   const rec = await screenscraper.lookup({ title: 'Ss Lookup Game', platform: { slug: 'snes', screenscraper_id: 4 }, hashes: {} });

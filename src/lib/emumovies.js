@@ -275,11 +275,11 @@ export function ensureVideo({ title, platform, force = false }, { apiImpl = defa
   if (inflight.has(id)) return inflight.get(id);
   const job = (async () => {
     try {
-      const errors = [];
+      const errors = [], none = [];
       for (const src of sources) {
         let hit = null;
         try { hit = await src.find({ title: String(title), platform: slug }); } catch (err) { errors.push(scrub(err.message)); continue; }
-        if (!hit) continue;
+        if (!hit) { none.push(src.label); continue; }
         try {
           const dest = path.join(videosDir(), slug.replace(/[^a-z0-9_-]/gi, '_'), key.replace(/ /g, '-').slice(0, 120));
           const got = await download(hit.signUrl ? hit.signUrl(hit.url) : hit.url, dest, fetchImpl, { headers: hit.headers, throttle: hit.throttle });
@@ -289,7 +289,8 @@ export function ensureVideo({ title, platform, force = false }, { apiImpl = defa
         } catch (err) { errors.push(scrub(err.message)); }   // a bad download from one source: the next one is tried
       }
       // A service problem (login refused, rate limit, timeout) is not "no video": it is not remembered, so the next try asks again.
-      if (errors.length) return { status: 'error', error: errors[0] };
+      // Say what each source said: "ScreenScraper has no video" is an answer, and a source that is down is a separate thing.
+      if (errors.length) return { status: 'error', error: `${none.length ? `No video was found at ${none.join(' or ')}. ` : ''}${errors.join('; ')}` };
       db.prepare("INSERT INTO game_videos (platform, title_key, tried_at) VALUES (?, ?, datetime('now')) ON CONFLICT(platform, title_key) DO UPDATE SET path = NULL, tried_at = datetime('now')").run(slug, key);
       return { status: 'none' };
     } finally { inflight.delete(id); }
