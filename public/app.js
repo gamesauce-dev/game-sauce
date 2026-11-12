@@ -1396,6 +1396,7 @@ document.addEventListener('keydown', (e) => {
 const _ic = (p, fill) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const _star = 'M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.9l6-.9z';
 const ICON = {
+  disc: _ic('<path d="M15.4 14.4A6.4 6.4 0 1 1 10.1 8.7"/><circle cx="9" cy="15" r="2.1"/><rect x="12.1" y="9.0" width="3.4" height="3.4" transform="rotate(-25 13.8 10.7)"/><rect x="16.0" y="5.7" width="2.8" height="2.8" transform="rotate(-25 17.4 7.1)"/><rect x="19.7" y="2.8" width="2.0" height="2.0" transform="rotate(-25 20.7 3.8)"/>'),
   download: _ic('<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>'),
   play: _ic('<path d="M7 4.5v15l12-7.5z"/>', true),
   desktop: _ic('<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/><path d="M10.5 8.2v4.6l3.8-2.3z"/>'),
