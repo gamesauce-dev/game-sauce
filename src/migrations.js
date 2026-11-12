@@ -592,3 +592,7 @@ for (const [col, type] of [['digital_app_id', 'TEXT'], ['digital_made', 'INTEGER
   if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '48') ON CONFLICT(key) DO UPDATE SET value = '48'").run();
+
+/* ── v49: digital_off: a person untoggled this disc's Digital counterpart, so adding or importing discs never switches it back on by itself. ── */
+if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === 'digital_off')) db.exec('ALTER TABLE physical_games ADD COLUMN digital_off INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '49') ON CONFLICT(key) DO UPDATE SET value = '49'").run();

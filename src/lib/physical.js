@@ -89,8 +89,10 @@ const HEADER = {
   region: ['region', 'country', 'countryofsourcestore', 'territory'],
   notes: ['notes', 'note', 'condition', 'comment', 'comments', 'edition'],
   year: ['year', 'releaseyear', 'released'],
-  manual: ['manual', 'manuallink', 'manualurl', 'manuals', 'manualaddress']
+  manual: ['manual', 'manuallink', 'manualurl', 'manuals', 'manualaddress'],
+  digital: ['digital', 'alsodigital', 'digitalcopy', 'todigital', 'digitalcounterpart']
 };
+const yesNo = (v) => { const t = squash(v); if (!t) return null; if (['yes', 'y', 'true', '1', 'on', 'x'].includes(t)) return true; if (['no', 'n', 'false', '0', 'off'].includes(t)) return false; return null; };
 
 const dedupeKey = (title, region) => `${appIdFor(title)}|${squash(region)}`;
 const clean = (v, n = 200) => decodeEntities(String(v ?? '').trim()).slice(0, n);
@@ -100,7 +102,7 @@ const clean = (v, n = 200) => decodeEntities(String(v ?? '').trim()).slice(0, n)
  * With apply: false nothing is saved and the answer says what would happen. With replace: true, games already on the shelf for a platform
  * that appears in the file are removed when the file no longer lists them; other platforms are left alone.
  */
-export function importPhysicalCsv(userId, csvText, { apply = false, replace = false } = {}) {
+export function importPhysicalCsv(userId, csvText, { apply = false, replace = false, digital = true } = {}) {
   const rows = parseCsv(String(csvText || ''));
   if (!rows.length) throw Object.assign(new Error('The file is empty.'), { status: 400 });
   const head = rows[0].map(squash);
@@ -126,12 +128,12 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
     if (col.manual >= 0 && String(r[col.manual] || '').trim()) {
       try { manual = cleanManualLink(r[col.manual]); } catch { badLinks++; if (problems.length < 10) problems.push({ line, reason: `The manual link for "${title.slice(0, 40)}" is not a web address (it must start with http:// or https://), so it was left out` }); }
     }
-    seen.set(key, { platform: slug, title, region: region || null, notes: col.notes >= 0 ? clean(r[col.notes], 300) || null : null, year: y >= 1950 && y <= 2100 ? y : null, manual, key: dedupeKey(title, region) });
+    seen.set(key, { platform: slug, title, region: region || null, notes: col.notes >= 0 ? clean(r[col.notes], 300) || null : null, year: y >= 1950 && y <= 2100 ? y : null, manual, digital: col.digital >= 0 ? yesNo(r[col.digital]) : null, key: dedupeKey(title, region) });
   });
 
   const games = [...seen.values()];
   const platforms = [...new Set(games.map((g) => g.platform))];
-  const existing = new Map(db.prepare('SELECT id, platform, dedupe_key, title, notes, region, manual_link FROM physical_games WHERE user_id = ?').all(userId).map((g) => [g.platform + '\n' + g.dedupe_key, g]));
+  const existing = new Map(db.prepare('SELECT id, platform, dedupe_key, title, notes, region, manual_link, digital_off FROM physical_games WHERE user_id = ?').all(userId).map((g) => [g.platform + '\n' + g.dedupe_key, g]));
   let added = 0, updated = 0, unchanged = 0;
   for (const g of games) {
     const had = existing.get(g.platform + '\n' + g.key);
@@ -142,6 +144,9 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
   const inFile = new Set(games.map((g) => g.platform + '\n' + g.key));
   const removing = replace ? [...existing.values()].filter((g) => platforms.includes(g.platform) && !inFile.has(g.platform + '\n' + g.dedupe_key)) : [];
   const byPlatform = {}; for (const g of games) byPlatform[g.platform] = (byPlatform[g.platform] || 0) + 1;
+  // Xbox One / Series discs: a row's Digital column (yes / no) decides; with none, the option does, and a disc the person switched off stays off.
+  const wantDigital = (g) => DIGITAL_TWIN[g.platform] && (g.digital === true || (g.digital === null && digital && !existing.get(g.platform + '\n' + g.key)?.digital_off));
+  const digitalOn = games.filter(wantDigital).length, digitalOff = games.filter((g) => DIGITAL_TWIN[g.platform] && g.digital === false).length;
 
   if (apply) {
     const ins = db.prepare('INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, region, notes, release_year, manual_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -158,11 +163,20 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
       }
       for (const g of removing) del.run(g.id, userId);
     })();
+    let linked = 0;
+    for (const g of games) {
+      if (!DIGITAL_TWIN[g.platform]) continue;
+      const row = db.prepare('SELECT * FROM physical_games WHERE user_id = ? AND platform = ? AND dedupe_key = ?').get(userId, g.platform, g.key);
+      if (!row) continue;
+      if (g.digital === false) { dropDigital(userId, row); db.prepare('UPDATE physical_games SET digital_off = 1 WHERE id = ?').run(row.id); }
+      else if (wantDigital(g)) { if (linkDigital(userId, row)) linked++; }
+    }
+    if (linked) startDetailsJob();
     startMatchJob();
   }
   return {
     applied: Boolean(apply), csv_rows: rows.length - 1, games: games.length, by_platform: byPlatform,
-    added, updated, unchanged, removed: removing.length, duplicates, skipped, problems, manuals: games.filter((g) => g.manual).length, bad_links: badLinks,
+    added, updated, unchanged, removed: removing.length, digital_on: digitalOn, digital_off: digitalOff, duplicates, skipped, problems, manuals: games.filter((g) => g.manual).length, bad_links: badLinks,
     sample: games.slice(0, 5).map((g) => ({ platform: g.platform, title: g.title, region: g.region }))
   };
 }
@@ -185,15 +199,12 @@ function dropDigital(userId, r) {
   db.prepare('UPDATE physical_games SET digital_app_id = NULL, digital_made = 0 WHERE id = ?').run(r.id);
 }
 
-/** Give an Xbox One / Series disc on the shelf a counterpart in Digital (on: true), or take it away (on: false). The Digital copy carries the disc mark. */
-export function setDigitalCounterpart(userId, id, on) {
-  const r = own(userId, id);
-  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+/** Create (or find) the Digital game for a disc row and tie the disc to it. Returns true when something was linked. Does not look at digital_off. */
+function linkDigital(userId, r) {
   const twin = DIGITAL_TWIN[r.platform];
-  if (!twin) throw Object.assign(new Error('Only Xbox One and Xbox Series X|S discs can have a Digital counterpart.'), { status: 400 });
-  if (!on) { dropDigital(userId, r); return getPhysical(userId, id); }
+  if (!twin) return false;
   const appId = `${appIdFor(r.title)}-${twin}`;
-  if (r.digital_app_id && db.prepare("SELECT 1 FROM digital_games WHERE user_id = ? AND store = 'xbox' AND app_id = ?").get(userId, r.digital_app_id)) return getPhysical(userId, id);
+  if (r.digital_app_id && db.prepare("SELECT 1 FROM digital_games WHERE user_id = ? AND store = 'xbox' AND app_id = ?").get(userId, r.digital_app_id)) return false;
   db.transaction(() => {
     const had = db.prepare("SELECT 1 FROM digital_games WHERE user_id = ? AND store = 'xbox' AND app_id = ?").get(userId, appId);
     if (!had) {
@@ -201,10 +212,28 @@ export function setDigitalCounterpart(userId, id, on) {
       db.prepare("INSERT INTO digital_games (user_id, store, app_id, name, country, platform) VALUES (?, 'xbox', ?, ?, ?, ?)").run(userId, appId, r.title, c ? (c.code || c.name) : null, twin);
     }
     db.prepare("INSERT INTO digital_marks (user_id, store, app_id, physical) VALUES (?, 'xbox', ?, 1) ON CONFLICT(user_id, store, app_id) DO UPDATE SET physical = 1").run(userId, appId);
-    db.prepare('UPDATE physical_games SET digital_app_id = ?, digital_made = ? WHERE id = ?').run(appId, had ? 0 : 1, r.id);
+    db.prepare('UPDATE physical_games SET digital_app_id = ?, digital_made = ?, digital_off = 0 WHERE id = ?').run(appId, had ? 0 : 1, r.id);
   })();
-  startDetailsJob();
+  return true;
+}
+
+/** Give an Xbox One / Series disc on the shelf a counterpart in Digital (on: true), or take it away (on: false, and it stays off: nothing switches it on again by itself). */
+export function setDigitalCounterpart(userId, id, on) {
+  const r = own(userId, id);
+  if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
+  if (!DIGITAL_TWIN[r.platform]) throw Object.assign(new Error('Only Xbox One and Xbox Series X|S discs can have a Digital counterpart.'), { status: 400 });
+  if (!on) { dropDigital(userId, r); db.prepare('UPDATE physical_games SET digital_off = 1 WHERE id = ?').run(r.id); return getPhysical(userId, id); }
+  if (linkDigital(userId, r)) startDetailsJob();
   return getPhysical(userId, id);
+}
+
+/** Every Xbox One / Series disc on the shelf that is not switched off gets its Digital counterpart (the "all of them" default). */
+export function linkAllDigital(userId) {
+  let added = 0;
+  for (const r of db.prepare("SELECT * FROM physical_games WHERE user_id = ? AND platform IN ('xboxone','xboxseries') AND digital_off = 0").all(userId)) if (linkDigital(userId, r)) added++;
+  if (added) startDetailsJob();
+  const off = db.prepare("SELECT COUNT(*) AS n FROM physical_games WHERE user_id = ? AND platform IN ('xboxone','xboxseries') AND digital_off = 1").get(userId).n;
+  return { added, left_off: off };
 }
 
 const toGame = (r) => ({
@@ -282,7 +311,7 @@ export function getPhysical(userId, id) {
   return { ...toGame(r), platform_name: p?.name || r.platform, platform_short: p?.short_name || r.platform, platform_badge: p?.badge || null, platform_family: p?.family || null, platform_accent: p?.accent || null };
 }
 
-export function addPhysical(userId, { platform, title, region = '', notes = '', year = null }) {
+export function addPhysical(userId, { platform, title, region = '', notes = '', year = null, digital = true }) {
   const slug = resolvePlatform(platform);
   if (!slug) throw Object.assign(new Error('Choose a platform from the list.'), { status: 400 });
   const t = clean(title);
@@ -292,6 +321,10 @@ export function addPhysical(userId, { platform, title, region = '', notes = '', 
   const y = Math.round(Number(year));
   const info = db.prepare('INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, region, notes, release_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     .run(userId, slug, t, sortTitle(t), key, clean(region, 40) || null, clean(notes, 300) || null, y >= 1950 && y <= 2100 ? y : null);
+  if (DIGITAL_TWIN[slug]) {   // an Xbox One / Series disc is also added to Digital unless said otherwise
+    if (digital === false || digital === 'false') db.prepare('UPDATE physical_games SET digital_off = 1 WHERE id = ?').run(info.lastInsertRowid);
+    else if (linkDigital(userId, own(userId, info.lastInsertRowid))) startDetailsJob();
+  }
   startMatchJob();
   return getPhysical(userId, info.lastInsertRowid);
 }

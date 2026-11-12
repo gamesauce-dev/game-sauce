@@ -236,7 +236,7 @@ function onClick(e) {
   if (e.target.closest('#ph-reset')) { reset(); load(); return; }
   if (e.target.closest('[data-ph-clear]')) { S.family = null; S.picked = []; S.letter = ''; load(); return; }
   const act = e.target.closest('[data-ph-act]');
-  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); return; }
+  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); return; }
   const fav = e.target.closest('[data-ph-fav]');
   if (fav) { e.stopPropagation(); toggleFav(Number(fav.dataset.phFav)); return; }
   const tile = e.target.closest('[data-ph-id]');
@@ -259,6 +259,14 @@ async function toggleFav(id) {
   try { await ctx.api(`/physical/games/${id}`, { method: 'PATCH', body: JSON.stringify({ favourite: !g.favourite }) }); } catch (err) { ctx.toast(err.message, true); return; }
   await load(true);
   if (S.openId === id) openDetail(id);
+}
+
+async function digitalAll(btn) {
+  btn.disabled = true;
+  try {
+    const j = await ctx.api('/physical/digital/all', { method: 'POST' });
+    ctx.toast(j.added ? `${n(j.added)} Xbox disc${j.added === 1 ? '' : 's'} added to Digital${j.left_off ? ` (${n(j.left_off)} kept out)` : ''}` : j.left_off ? `Nothing new to add (${n(j.left_off)} kept out of Digital)` : 'Every Xbox One / Series disc is already in Digital');
+  } catch (err) { ctx.toast(err.message, true); } finally { btn.disabled = false; load(true); }
 }
 
 async function lookupAgain(btn) {
@@ -835,6 +843,7 @@ function openAdd() {
         <label class="field"><span>Region (optional)</span><input name="region" placeholder="PAL, NTSC-U, JP…" value="${esc(lastAdd.region)}" /></label>
       </div>
       <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Boxed, manual, disc only…" /></label>
+      <p class="hint" style="margin:0">An Xbox One or Series disc is also added to your Digital library. Untick it in the game's details if it has no digital copy.</p>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add and another</button></div>
     </form>`;
   const form = $('#ph-add');
@@ -859,7 +868,7 @@ export function importSummary(r, platformName = (s) => s) {
   const what = r.applied
     ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
     : `${n(r.games)} games in the file (${per || 'none'}): ${n(r.added)} would be added, ${n(r.updated)} updated, ${n(r.unchanged)} ${r.unchanged === 1 ? 'is' : 'are'} already there${r.removed ? `, ${n(r.removed)} would be removed` : ''}.`;
-  const notes = [r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
+  const notes = [r.digital_on ? `${n(r.digital_on)} Xbox disc${r.digital_on === 1 ? '' : 's'} ${r.applied ? 'also in' : 'would also go to'} Digital` : '', r.digital_off ? `${n(r.digital_off)} kept out of Digital` : '', r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
   return what + (notes ? ` ${notes}.` : '')
     + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
     + (r.applied && r.match_job?.running ? `<br>Details and covers are being looked up now (${n(r.match_job.total)} games). Open <b>Physical</b> to watch them arrive.` : '');
@@ -877,9 +886,10 @@ function openImport() {
   openShell(); $('#drawer-nav')?.classList.add('hidden');
   $('#drawer-body').innerHTML = `
     <h2 class="detail-title">Import a CSV</h2>
-    <p class="hint">A CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code>, <code>Year</code> and <code>Manual</code> (a web link to the game's manual) (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b>… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
+    <p class="hint">A CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code>, <code>Year</code>, <code>Manual</code> (a web link to the game's manual) and <code>Digital</code> (yes or no, for Xbox One and Series discs: whether the game is also in your Digital library) (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b>… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
     <div class="panel" style="padding:12px;display:grid;gap:10px">
       <label class="field"><span>CSV file</span><input type="file" id="ph-imp-file" accept=".csv,text/csv" class="file-input" /></label>
+      <label class="policy-row"><input type="checkbox" id="ph-imp-digital" checked /> <span>Also add Xbox One and Xbox Series discs to my Digital library (a <code>Digital</code> column of no keeps one out)</span></label>
       <label class="policy-row"><input type="checkbox" id="ph-imp-replace" /> <span>Remove games no longer in the file (only for the platforms the file lists)</span></label>
       <div style="display:flex;gap:8px"><button class="btn" id="ph-imp-preview">Preview</button><button class="btn btn-primary" id="ph-imp-apply" disabled>Import games</button></div>
       <p class="hint" id="ph-imp-result" style="margin:0"></p>
@@ -890,12 +900,12 @@ function openImport() {
     const f = file.files?.[0]; if (!f) return ctx.toast('Choose a CSV file first', true);
     let csv; try { csv = await f.text(); } catch { return ctx.toast('The file could not be read', true); }
     try {
-      const r = await ctx.api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply: doApply, replace: $('#ph-imp-replace').checked }) });
+      const r = await ctx.api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply: doApply, replace: $('#ph-imp-replace').checked, digital: $('#ph-imp-digital').checked }) });
       out.innerHTML = importSummary(r, pname);
       apply.disabled = doApply || !(r.added || r.updated || r.removed);
       if (doApply) { ctx.toast(`${n(r.added)} games added to your shelf`); load(true); }
     } catch (err) { out.textContent = err.message; ctx.toast(err.message, true); }
   };
   $('#ph-imp-preview').onclick = () => run(false); apply.onclick = () => run(true);
-  file.onchange = () => { apply.disabled = true; out.textContent = ''; }; $('#ph-imp-replace').onchange = () => { apply.disabled = true; };
+  file.onchange = () => { apply.disabled = true; out.textContent = ''; }; $('#ph-imp-replace').onchange = $('#ph-imp-digital').onchange = () => { apply.disabled = true; };
 }

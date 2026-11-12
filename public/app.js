@@ -4293,7 +4293,7 @@ function initConsoleImport() {
   const n = (v) => Number(v || 0).toLocaleString();
   const dest = () => $('input[name="dgc-dest"]:checked')?.value === 'physical' ? 'physical' : 'digital';
   // The choice (Digital or Physical) decides where the games go and which help is shown; changing it starts over with a fresh preview.
-  const paintDest = () => { $('#dgc-physical-help').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-digital-help').style.display = dest() === 'digital' ? '' : 'none'; applyBtn.disabled = true; out.textContent = ''; };
+  const paintDest = () => { $('#dgc-digital-row').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-physical-help').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-digital-help').style.display = dest() === 'digital' ? '' : 'none'; applyBtn.disabled = true; out.textContent = ''; };
   $$('input[name="dgc-dest"]').forEach((r) => r.addEventListener('change', paintDest));
   paintDest();
   const run = async (apply) => {
@@ -4303,7 +4303,7 @@ function initConsoleImport() {
     try {
       if (dest() === 'physical') {
         // Onto the Physical shelf: any Library platform, not only the consoles Digital knows.
-        const r = await api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked }) });
+        const r = await api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked, digital: $('#dgc-digital').checked }) });
         out.innerHTML = physical.importSummary(r, (s) => (window.__platformsCache || []).find((p) => p.slug === s)?.name || s);
         applyBtn.disabled = apply || !(r.added || r.updated || r.removed);
         if (apply) toast(`${n(r.added)} games added to your Physical shelf`);
@@ -4325,7 +4325,7 @@ function initConsoleImport() {
   $('#dgc-preview').onclick = () => run(false);
   applyBtn.onclick = () => run(true);
   file.onchange = () => { applyBtn.disabled = true; out.textContent = ''; };
-  $('#dgc-replace').onchange = () => { applyBtn.disabled = true; };
+  $('#dgc-replace').onchange = $('#dgc-digital').onchange = () => { applyBtn.disabled = true; };
 }
 
 function initNamesPanel() {
