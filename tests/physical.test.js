@@ -427,7 +427,7 @@ test('shelf, disc cases: a click on the pulled-out cover still works when the de
 
 test('the back of the case: a Back picture slot (upload, folder import, cut from a wrap), and a flat turn of the closed case to show it', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css'), srv = read('src/lib/physical.js'), mig = read('src/migrations.js'), rt = read('src/routes/physical.js');
-  assert.match(mig, /back_path/); assert.match(mig, /schema_version', '4[78]'/);
+  assert.match(mig, /back_path/); assert.match(mig, /schema_version', '4[789]'/);
   assert.ok(srv.includes("back: { path: 'back_path'") && srv.includes('export function physicalBackPath') && srv.includes('has_back: Boolean(r.back_path)'));
   assert.ok(rt.includes("router.get('/back/:id'"));
   assert.ok(ph.includes('class="ph-case-rear"') && ph.includes('class="ph-case-turn"') && ph.includes('function turnCase()') && ph.includes("el.classList.toggle('is-back')"));
@@ -458,13 +458,11 @@ test('back art: a boxed game keeps a looked-up back picture (cached, served only
   assert.ok(read('public/app.js').includes('with box backs'));
 });
 
-test('an Xbox One / Series disc can have a Digital counterpart that leaves with the disc', async () => {
-  const mk = async (platform, title) => (await call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'PAL' } })).body;
+test('an Xbox One / Series disc has a Digital counterpart by default; it leaves with the disc, and an off switch sticks', async () => {
+  const mk = async (platform, title, extra = {}) => (await call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'PAL', ...extra } })).body;
   const dig = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items;
   const a = await mk('xboxone', 'Twin Test One');
-  assert.equal(a.digital_possible, true); assert.equal(a.digital_linked, false);
-  const on = await call(`/api/physical/games/${a.id}/digital`, { method: 'PUT', body: { on: true } });
-  assert.equal(on.status, 200); assert.equal(on.body.digital_linked, true); assert.equal(on.body.digital_made, true);
+  assert.equal(a.digital_possible, true); assert.equal(a.digital_linked, true); assert.equal(a.digital_made, true);
   const row = (await dig()).find((g) => g.name === 'Twin Test One');
   assert.ok(row); assert.equal(row.platform, 'xone'); assert.ok(row.physical);
   // taking the disc off the shelf takes the made counterpart out of Digital
@@ -472,23 +470,48 @@ test('an Xbox One / Series disc can have a Digital counterpart that leaves with 
   assert.ok(!(await dig()).some((g) => g.name === 'Twin Test One'));
 
   // a Digital game that was already there is only marked, and stays
-  const b = await mk('xboxseries', 'Twin Test Two');
   await call('/api/digital/games', { method: 'POST', body: { platform: 'xsx', title: 'Twin Test Two' } });
-  const on2 = await call(`/api/physical/games/${b.id}/digital`, { method: 'PUT', body: { on: true } });
-  assert.equal(on2.body.digital_linked, true); assert.equal(on2.body.digital_made, false);
+  const b = await mk('xboxseries', 'Twin Test Two');
+  assert.equal(b.digital_linked, true); assert.equal(b.digital_made, false);
   await call(`/api/physical/games/${b.id}`, { method: 'DELETE' });
   assert.ok((await dig()).some((g) => g.name === 'Twin Test Two'));
 
-  // unticking removes a made one; removing it from Digital unlinks the disc; other platforms are refused
+  // unticking removes a made one and stays off (bulk does not bring it back); removing it from Digital unlinks the disc
   const c = await mk('xboxone', 'Twin Test Three');
-  await call(`/api/physical/games/${c.id}/digital`, { method: 'PUT', body: { on: true } });
   const off = await call(`/api/physical/games/${c.id}/digital`, { method: 'PUT', body: { on: false } });
   assert.equal(off.body.digital_linked, false);
+  assert.ok(!(await dig()).some((g) => g.name === 'Twin Test Three'));
+  const bulk = await call('/api/physical/digital/all', { method: 'POST' });
+  assert.ok(bulk.body.left_off >= 1);
   assert.ok(!(await dig()).some((g) => g.name === 'Twin Test Three'));
   await call(`/api/physical/games/${c.id}/digital`, { method: 'PUT', body: { on: true } });
   const made = (await dig()).find((g) => g.name === 'Twin Test Three');
   await call(`/api/digital/games/xbox/${made.app_id}`, { method: 'DELETE' });
   assert.equal((await call(`/api/physical/games/${c.id}`)).body.digital_linked, false);
   const ps = await mk('ps4', 'Twin Test Four');
+  assert.equal(ps.digital_possible, false);
   assert.equal((await call(`/api/physical/games/${ps.id}/digital`, { method: 'PUT', body: { on: true } })).status, 400);
+});
+
+test('Xbox discs on the shelf from before get a counterpart in one go; the CSV option and Digital column decide for imports', async () => {
+  const dig = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items.map((g) => g.name);
+  const add = (title, digital) => call('/api/physical/games', { method: 'POST', body: { platform: 'xboxone', title, digital } });
+  await add('Bulk Old A', false); await add('Bulk Old B', false);
+  db.prepare("UPDATE physical_games SET digital_off = 0 WHERE title LIKE 'Bulk Old %'").run();   // as if they were on the shelf before this existed
+  assert.ok(!(await dig()).includes('Bulk Old A'));
+  const all = await call('/api/physical/digital/all', { method: 'POST' });
+  assert.ok(all.body.added >= 2);
+  const names = await dig(); assert.ok(names.includes('Bulk Old A') && names.includes('Bulk Old B'));
+
+  const csv = ['Platform,Game,Digital', 'Xbox One,Csv Yes One,', 'Xbox One,Csv No One,no', 'PS4,Csv Ps Four,yes', 'Xbox Series X|S,Csv Yes Two,yes'].join('\n');
+  const prev = await call('/api/physical/import', { method: 'POST', body: { csv, digital: true } });
+  assert.equal(prev.body.digital_on, 2); assert.equal(prev.body.digital_off, 1);
+  assert.ok(!(await dig()).includes('Csv Yes One'));   // a preview saves nothing
+  await call('/api/physical/import', { method: 'POST', body: { csv, apply: true, digital: true } });
+  let after = await dig();
+  assert.ok(after.includes('Csv Yes One') && after.includes('Csv Yes Two')); assert.ok(!after.includes('Csv No One')); assert.ok(!after.includes('Csv Ps Four'));
+  // option off: nothing is added unless a row says yes
+  const csv2 = ['Platform,Game,Digital', 'Xbox One,Csv Opt Off,', 'Xbox One,Csv Opt Yes,yes'].join('\n');
+  await call('/api/physical/import', { method: 'POST', body: { csv: csv2, apply: true, digital: false } });
+  after = await dig(); assert.ok(!after.includes('Csv Opt Off') && after.includes('Csv Opt Yes'));
 });

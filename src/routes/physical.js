@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
@@ -44,6 +44,9 @@ router.patch('/games/:id', (req, res) => {
 router.delete('/games/:id', (req, res) => {
   try { res.json(removePhysical(me(req), req.params.id)); } catch (err) { fail(res, err); }
 });
+
+// Every Xbox One / Series disc that is not switched off gets its Digital counterpart.
+router.post('/digital/all', (req, res) => { res.json(linkAllDigital(me(req))); });
 
 // An Xbox One / Series disc's counterpart in Digital: { on: true | false }. Taking the disc off the shelf removes a counterpart this created.
 router.put('/games/:id/digital', (req, res) => {
@@ -139,7 +142,7 @@ router.get('/spine/:id', (req, res) => {
 // Games from a CSV (Platform, Game, Region, Notes, Year) onto the signed-in person's own shelf. Without apply nothing is saved: the answer is the preview.
 router.post('/import', (req, res) => {
   try {
-    const r = importPhysicalCsv(me(req), req.body?.csv, { apply: req.body?.apply === true, replace: req.body?.replace === true });
+    const r = importPhysicalCsv(me(req), req.body?.csv, { apply: req.body?.apply === true, replace: req.body?.replace === true, digital: req.body?.digital !== false });
     if (r.applied) req.auditDetail = { added: r.added, updated: r.updated, removed: r.removed };
     res.json({ ...r, match_job: matchJobStatus() });
   } catch (err) { fail(res, err); }
