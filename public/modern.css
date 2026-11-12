@@ -624,3 +624,5 @@ body.ui-modern .msg-btns .btn[data-mi] { min-width: 2.6rem; height: 2.6rem; }
 
 /* The page is dark by default (styles.css): the light look keeps light scroll bars and native controls. */
 html[data-theme="light"]:has(body.ui-modern) { color-scheme: light; }
+/* The cover is a small portrait in the header; a video there gets the width a video needs (public/video.js). */
+body.ui-modern .detail-hero > .detail-cover.has-video:not(.show-art) { width: min(100%, 30rem); }
