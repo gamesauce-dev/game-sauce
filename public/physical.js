@@ -504,7 +504,7 @@ function caseHtml(g) {
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
       <div class="ph-case-inside" title="${g.has_manual ? 'Click to read the manual' : 'No manual yet: add one in the details window'}"><div class="ph-manual${g.has_manual ? ' has-manual' : ''}"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i><em class="ph-man-tag">${g.has_manual ? 'Read the manual ▸' : 'No manual yet'}</em></div></div>
-    </div>${g.back_url ? `<div class="ph-case-rear"><img src="${esc(g.back_url)}" alt="" /></div>` : ''}</div>${g.back_url ? '<button type="button" class="ph-case-turn" title="Turn the case over to see the back (B)" aria-label="Turn the case over">↻</button>' : ''}`;
+    </div>${g.back_url ? `<div class="ph-case-rear"><img src="${esc(g.back_url)}" alt="" /></div><div class="ph-case-spine" style="background:${tone}">${g.spine_url ? `<img src="${esc(g.spine_url)}" alt="" />` : `<b>${esc(g.title)}</b>`}</div>` : ''}</div>${g.back_url ? '<button type="button" class="ph-case-turn" title="Turn the case over to see the back (B)" aria-label="Turn the case over">↻</button>' : ''}`;
 }
 
 function showCase(id) {
@@ -554,10 +554,41 @@ function onCaseClick(e) {
 }
 
 /** Turn the closed case over to its back (a flat turn), or back to the front. Only when the game has a back picture. */
+/**
+ * The turn shows the spine: the case swings round on its edge. It is drawn flat (no 3D, which some Linux web views draw back to front): the three faces are slid and squeezed
+ * the way a box turned about its upright axis looks from the front. Turning to the back: the spine appears on the left of the front, the front narrows away, and the back widens
+ * out with the spine on its right (and the other way round to come back). `to` is where it ends: 'back' or 'front'.
+ */
+function spinCase(el, to) {
+  const front = el.querySelector('.ph-case-front'), rear = el.querySelector('.ph-case-rear'), sp = el.querySelector('.ph-case-spine');
+  if (!front || !rear || !sp || reducedMotion()) return;
+  const W = el.offsetWidth, H = el.offsetHeight; if (!W || !H) return;
+  const ratio = CASES[caseOf(S.byId.get(CASE.id)?.platform)]?.[1] ?? BOX_DEFAULT[1];
+  const D = Math.max(6, Math.min(W * 0.28, ratio * H));   // how thick the case is, as it looks from the side
+  const ms = parseFloat(getComputedStyle(el).getPropertyValue('--spin-ms')) || 620;
+  sp.style.width = D + 'px';
+  el.classList.add('is-spinning');
+  const set = (node, x, w, base) => { node.style.transform = `translateX(${x}px) scaleX(${Math.max(0, w) / base})`; node.style.visibility = w < 0.5 ? 'hidden' : 'visible'; };
+  const t0 = performance.now();
+  const frame = (now) => {
+    const t = Math.min(1, (now - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;   // slow, quick, slow
+    const th = (to === 'back' ? e : 1 - e) * Math.PI, c = Math.cos(th), s = Math.sin(th);
+    const total = W * Math.abs(c) + D * s, L = (W - total) / 2;
+    if (th <= Math.PI / 2) { set(sp, L, D * s, D); set(front, L + D * s, W * c, W); set(rear, 0, 0, W); }
+    else { set(rear, L, W * -c, W); set(sp, L + W * -c, D * s, D); set(front, 0, 0, W); }
+    if (t < 1) return requestAnimationFrame(frame);
+    for (const n of [front, rear, sp]) { n.style.transform = ''; n.style.visibility = ''; }   // back to what the classes say, with no transition running
+    void el.offsetWidth;
+    el.classList.remove('is-spinning');
+  };
+  frame(t0);   // the first picture is drawn at once, in the same breath as the class change, so the final state is never seen for a moment
+}
+
 function turnCase() {
   const el = CASE.el; if (!el || CASE.open || !el.querySelector('.ph-case-rear')) return;
   const on = el.classList.toggle('is-back');
-  el.classList.add('is-turning'); setTimeout(() => el.classList.remove('is-turning'), 720);   // the disc tray is hidden while the case swings round, so only the dark case shows in the gap
+  el.classList.add('is-turning'); setTimeout(() => el.classList.remove('is-turning'), 720);
+  spinCase(el, on ? 'back' : 'front');   // the disc tray is hidden while the case swings round, so only the dark case shows in the gap
   el.setAttribute('aria-label', on ? `${S.byId.get(CASE.id)?.title || 'Game'}: the back. Turn it to the front` : `${S.byId.get(CASE.id)?.title || 'Game'}: open the case`);
 }
 

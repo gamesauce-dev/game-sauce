@@ -222,3 +222,11 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-disc.ph-cart .ph-disc-art { border-radius: 5% / 3.5%; object-fit: contain; }
 /* A GameCube disc is a small one (8 cm) in a full-size case. */
 .ph-disc.is-mini { width: 56%; }
+
+/* The case turning over shows its spine (public/physical.js, spinCase): front, spine and back are slid and squeezed by script while it runs, so their own transitions stand aside. */
+.ph-case-spine { position: absolute; top: 0; left: 0; height: 100%; display: none; overflow: hidden; border-radius: 2px; transform-origin: 0 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset -6px 0 8px -4px rgba(0,0,0,.45); }
+.ph-case-spine img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ph-case-spine b { position: absolute; inset: 0; display: grid; place-items: center; writing-mode: vertical-rl; transform: rotate(180deg); font-size: .72rem; letter-spacing: .04em; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); white-space: nowrap; overflow: hidden; }
+.ph-case.is-spinning .ph-case-spine { display: block; }
+.ph-case.is-spinning .ph-case-front, .ph-case.is-spinning .ph-case-rear { transition: none !important; transform-origin: 0 50%; }
+.ph-case.is-spinning .ph-case-spine { transition: none !important; }

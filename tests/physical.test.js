@@ -615,3 +615,13 @@ test('a Digital console game can change title and console: marks and own details
   await patch('xbox', 'rename-disc-two-xone', { platform: 'xsx' });
   assert.equal((await call(`/api/physical/games/${d.id}`)).body.digital_linked, false);
 });
+
+test('the case turn shows the spine: a spine face is built with the back, and it is drawn flat (no 3D) by script', () => {
+  const js = fs.readFileSync(new URL('../public/physical.js', import.meta.url), 'utf8'), css = fs.readFileSync(new URL('../public/physical.css', import.meta.url), 'utf8');
+  assert.ok(js.includes('class="ph-case-spine"') && js.includes('function spinCase(') && js.includes("spinCase(el, on ? 'back' : 'front')"));
+  assert.ok(js.includes('const ratio = CASES[caseOf('), 'the spine is as thick as that kind of case');
+  assert.ok(css.includes('.ph-case.is-spinning .ph-case-spine'));
+  const spinCss = css.slice(css.indexOf('The case turning over shows its spine'));
+  assert.ok(!/rotateY|preserve-3d|perspective/.test(spinCss), 'flat: some Linux web views draw 3D turns back to front');
+  assert.ok(js.slice(js.indexOf('function spinCase(')).includes('reducedMotion()'), 'a person who asked for less motion gets the plain turn');
+});
