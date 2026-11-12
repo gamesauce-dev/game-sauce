@@ -523,22 +523,35 @@ test('Xbox discs on the shelf from before get a counterpart in one go; the CSV o
   after = await dig(); assert.ok(!after.includes('Csv Opt Off') && after.includes('Csv Opt Yes'));
 });
 
-test('the one-time cleanup removes untouched counterparts the first build made on its own, and keeps touched ones and ones that were already in Digital', async () => {
-  const { dropUntouchedCounterparts } = await import('../src/lib/twincleanup.js');
+test('review: only entries the shelf made and nobody touched are offered; nothing goes until confirmed, and only what is chosen', async () => {
   const mk = async (title) => (await call('/api/physical/games', { method: 'POST', body: { platform: 'xboxone', title, region: 'PAL', digital: true } })).body;
   const dig = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items;
-  const plain = await mk('Cleanup Plain'), liked = await mk('Cleanup Liked');
-  await call('/api/digital/games', { method: 'POST', body: { platform: 'xone', title: 'Cleanup Mine' } });
-  const mine = await mk('Cleanup Mine');
+  const plain = await mk('Review Plain'), other = await mk('Review Other'), liked = await mk('Review Liked');
+  await call('/api/digital/games', { method: 'POST', body: { platform: 'xone', title: 'Review Mine' } });
+  const mine = await mk('Review Mine');
   assert.equal(mine.digital_made, false);
-  const likedRow = (await dig()).find((g) => g.name === 'Cleanup Liked');
+  const likedRow = (await dig()).find((g) => g.name === 'Review Liked');
   await call(`/api/digital/games/xbox/${likedRow.app_id}/mark`, { method: 'PUT', body: { field: 'favourite', value: true } });
-  assert.ok(dropUntouchedCounterparts(db) >= 1);
+
+  const rev = (await call('/api/physical/digital/review')).body;
+  const offered = rev.remove.map((g) => g.title);
+  assert.ok(offered.includes('Review Plain') && offered.includes('Review Other'));
+  assert.ok(!offered.includes('Review Liked') && !offered.includes('Review Mine'));
+  assert.ok(rev.kept.some((g) => g.title === 'Review Liked' && /favourited/.test(g.why)));
+  assert.ok(rev.already_there >= 1);
+  // a review changes nothing
+  assert.ok((await dig()).some((g) => g.name === 'Review Plain'));
+
+  // only the chosen one goes; ids that were not offered (a liked one, one that was already in Digital) are ignored
+  const done = await call('/api/physical/digital/review', { method: 'POST', body: { ids: [plain.id, liked.id, mine.id] } });
+  assert.equal(done.body.removed, 1);
   const names = (await dig()).map((g) => g.name);
-  assert.ok(!names.includes('Cleanup Plain'), 'untouched counterpart removed');
-  assert.ok(names.includes('Cleanup Liked'), 'a favourited one stays');
-  assert.ok(names.includes('Cleanup Mine'), 'a game that was already in Digital stays');
+  assert.ok(!names.includes('Review Plain'));
+  assert.ok(names.includes('Review Other') && names.includes('Review Liked') && names.includes('Review Mine'));
   const p = (await call(`/api/physical/games/${plain.id}`)).body;
-  assert.equal(p.digital_linked, false);   // the disc is not switched off: it can be turned on again from its details
+  assert.equal(p.digital_linked, false);   // the disc stays on the shelf and can be switched on again
   assert.equal(db.prepare('SELECT digital_off FROM physical_games WHERE id = ?').get(plain.id).digital_off, 0);
+  // someone else's review never lists these
+  assert.equal((await call('/api/physical/digital/review', { token: annTok })).body.remove.length, 0);
+  void other;
 });

@@ -4,6 +4,7 @@ import multer from 'multer';
 import db from '../db.js';
 import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
+import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
 const router = express.Router();
@@ -47,6 +48,10 @@ router.delete('/games/:id', (req, res) => {
 
 // Every Xbox One / Series disc that is not switched off gets its Digital counterpart.
 router.post('/digital/all', (req, res) => { res.json(linkAllDigital(me(req))); });
+
+// Review the Digital entries that disc to digital made on its own, and drop the ones the person confirms: { ids: [disc ids] }. Nothing is taken out without this.
+router.get('/digital/review', (req, res) => { res.json(reviewCounterparts(db, me(req))); });
+router.post('/digital/review', (req, res) => { res.json({ removed: dropCounterparts(db, me(req), req.body?.ids) }); });
 
 // An Xbox One / Series disc's counterpart in Digital: { on: true | false }. Taking the disc off the shelf removes a counterpart this created.
 router.put('/games/:id/digital', (req, res) => {

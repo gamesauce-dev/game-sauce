@@ -236,7 +236,7 @@ function onClick(e) {
   if (e.target.closest('#ph-reset')) { reset(); load(); return; }
   if (e.target.closest('[data-ph-clear]')) { S.family = null; S.picked = []; S.letter = ''; load(); return; }
   const act = e.target.closest('[data-ph-act]');
-  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); return; }
+  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); else if (a === 'review') reviewDigital(); return; }
   const fav = e.target.closest('[data-ph-fav]');
   if (fav) { e.stopPropagation(); toggleFav(Number(fav.dataset.phFav)); return; }
   const tile = e.target.closest('[data-ph-id]');
@@ -259,6 +259,35 @@ async function toggleFav(id) {
   try { await ctx.api(`/physical/games/${id}`, { method: 'PATCH', body: JSON.stringify({ favourite: !g.favourite }) }); } catch (err) { ctx.toast(err.message, true); return; }
   await load(true);
   if (S.openId === id) openDetail(id);
+}
+
+/* The Digital entries disc to digital made on its own: listed, each one ticked, and nothing happens until the person confirms. A game can be both a disc and a
+   purchase, so every entry can be unticked. */
+async function reviewDigital() {
+  ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;
+  openShell(); $('#drawer-nav')?.classList.add('hidden');
+  let r;
+  try { r = await ctx.api('/physical/digital/review'); } catch (err) { ctx.toast(err.message, true); return; }
+  const row = (g, box) => `<label class="policy-row">${box ? `<input type="checkbox" data-rv="${g.id}" checked />` : ''} <span>${esc(g.title)} <span class="hint">${esc(g.platform)}${g.why ? ` · kept: ${esc(g.why)}` : ''}</span></span></label>`;
+  $('#drawer-body').innerHTML = `
+    <h2 class="detail-title">Xbox Digital entries from your discs</h2>
+    <p class="hint">These Digital entries were created by disc to digital and you have not touched them since. A game can be both a disc and a purchase, so untick any you do own digitally. Only ticked ones are taken out of Digital; the discs stay on your shelf, and you can switch disc to digital on again from a game's details.</p>
+    ${r.remove.length ? `<div class="results" id="ph-rv-list">${r.remove.map((g) => row(g, true)).join('')}</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary" id="ph-rv-go">Take out selected</button><button class="btn" id="ph-rv-none">Untick all</button></div>` : '<p class="hint">Nothing to take out.</p>'}
+    ${r.kept.length ? `<div class="section-label">Kept (you have used them)</div><div class="results">${r.kept.map((g) => row(g, false)).join('')}</div>` : ''}
+    <p class="hint">${n(r.already_there)} Digital game${r.already_there === 1 ? '' : 's'} that were in your Digital library before their disc was linked are never offered here.</p>`;
+  const boxes = () => $$('[data-rv]', $('#drawer-body')), count = () => boxes().filter((b) => b.checked).length;
+  const paint = () => { const go = $('#ph-rv-go'); if (go) { go.textContent = `Take out selected (${n(count())})`; go.disabled = !count(); } };
+  boxes().forEach((b) => b.addEventListener('change', paint)); paint();
+  $('#ph-rv-none')?.addEventListener('click', () => { boxes().forEach((b) => { b.checked = false; }); paint(); });
+  $('#ph-rv-go')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget, ids = boxes().filter((b) => b.checked).map((b) => Number(b.dataset.rv));
+    const ok = await ctx.confirmDialog({ title: `Take ${n(ids.length)} entr${ids.length === 1 ? 'y' : 'ies'} out of Digital?`, body: 'They are taken out of your Digital library. The discs stay on your shelf.', okLabel: 'Take out', danger: true });
+    if (!ok) return;
+    btn.disabled = true;
+    try { const j = await ctx.api('/physical/digital/review', { method: 'POST', body: JSON.stringify({ ids }) }); ctx.toast(`${n(j.removed)} taken out of Digital`); ctx.closeDrawer(); load(true); }
+    catch (err) { ctx.toast(err.message, true); btn.disabled = false; }
+  });
 }
 
 async function digitalAll(btn) {
