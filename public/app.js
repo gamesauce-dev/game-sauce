@@ -4113,6 +4113,12 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   }
 }
 
+/** "game-sauce 0.5.1 · database version 53" at the foot of My account, for everyone (it is what to quote when something needs reporting). */
+async function loadVersionLine() {
+  const el = $('#about-version'); if (!el) return;
+  try { const v = await api('/version'); el.textContent = `game-sauce ${v.version} · database version ${v.schema}`; } catch { el.textContent = ''; }
+}
+
 /* ── Backups module ── */
 async function loadBackups() {
   const data = await api('/backup');
@@ -4412,7 +4418,7 @@ function showSettingsModule(id) {
   }
   panel.classList.remove('hidden');
   if (id === 'controller') initPadLayoutPanel();
-  if (id === 'profile') initProfilePanel();
+  if (id === 'profile') { initProfilePanel(); loadVersionLine(); }
   if (id === 'steam') initSteamPanel();
   if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
   if (id === 'names') initNamesPanel();
@@ -4585,7 +4591,7 @@ async function loadHealth() {
     const gb = (n) => (n >= 1073741824 ? (n / 1073741824).toFixed(1) + ' GB' : Math.round(n / 1048576) + ' MB');
     const up = s.uptime_s >= 3600 ? Math.floor(s.uptime_s / 3600) + ' h ' + Math.floor((s.uptime_s % 3600) / 60) + ' min' : Math.floor(s.uptime_s / 60) + ' min';
     sum.innerHTML = [
-      ['Version', s.version], ['Up for', up], ['ROMs', s.roms], ['With covers', s.with_covers],
+      ['Version', s.version], ['Database version', s.schema], ['Up for', up], ['ROMs', s.roms], ['With covers', s.with_covers],
       ['Missing files', s.missing_files], ['Sources', s.sources], ['Users', s.users],
       ['Imported storage', gb(s.storage_bytes || 0)], ['Memory', (s.memory_mb || 0) + ' MB'], ['Node', s.node]
     ].map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(String(v ?? '–'))}</b></div>`).join('');

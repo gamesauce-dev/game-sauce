@@ -379,3 +379,17 @@ test('clearing everything puts the app back to filename-only metadata', async ()
   const { db } = await import('../src/db.js');
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM app_settings').get().n, 0);
 });
+
+test('the app and database versions: any signed-in account can read them, and they show in My account and on the Health screen', async () => {
+  const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  for (const token of [adminToken, playerToken]) {
+    const v = await call('/api/version', { token });
+    assert.equal(v.status, 200); assert.equal(v.body.version, pkg.version); assert.ok(Number.isInteger(v.body.schema) && v.body.schema >= 53);
+  }
+  assert.equal((await call('/api/version', { token: null })).status, 401);
+  const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8'), app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.ok(html.includes('id="about-version"') && app.includes("api('/version')") && app.includes("loadVersionLine()"));
+  assert.ok(app.includes("['Database version', s.schema]"));
+  const mig = fs.readFileSync(new URL('../src/migrations.js', import.meta.url), 'utf8');
+  assert.match(mig, /schema_version', '53'/);
+});

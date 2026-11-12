@@ -439,6 +439,12 @@ export function createApp() {
     res.json({ deleted: slug, reassigned: inUse > 0 ? inUse : 0 });
   });
 
+  // The app version and the database (schema) version, for My account: any signed-in person, nothing secret.
+  api.get('/version', async (req, res) => {
+    const { currentVersion } = await import('./lib/updatecheck.js');
+    res.json({ version: currentVersion(), schema: Number(db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get()?.value || 0) });
+  });
+
   api.get('/stats', (req, res) => {
     const mine = req.user ? Number(req.user.id) : null;
     res.json({
