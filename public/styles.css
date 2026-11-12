@@ -1815,6 +1815,6 @@ select option { background: var(--panel); color: var(--text); }
 .vid-back { position: absolute; inset: -1.5rem; background-size: cover; background-position: center; filter: blur(22px) saturate(1.3) brightness(.62); transform: scale(1.1); pointer-events: none; }
 .vid-lightbox .vid-back { inset: -3rem; z-index: 0; filter: blur(34px) saturate(1.3) brightness(.7); }
 
-/* Condensed grid: the tiles are narrow, so the disc to digital mark sits above the platform badge instead of beside it (a long badge such as XBOX ONE would run into it). */
-.dg-grid.compact .dg-disc, .ph-tiles.compact .dg-disc { bottom: 2.35rem; right: 0.4rem; width: 1.9rem; height: 1.9rem; }
-.dg-grid.compact .dg-disc svg, .ph-tiles.compact .dg-disc svg { width: 1.5rem; height: 1.5rem; }
+/* Condensed grid: the tiles are narrow, so the disc to digital mark is smaller (same corner) and a long platform badge such as XBOX ONE has room beside it. */
+.dg-grid.compact .dg-disc, .ph-tiles.compact .dg-disc { right: 0.35rem; bottom: 0.45rem; width: 1.75rem; height: 1.75rem; border-radius: 0.4rem; }
+.dg-grid.compact .dg-disc svg, .ph-tiles.compact .dg-disc svg { width: 1.4rem; height: 1.4rem; }
