@@ -286,7 +286,7 @@ const tileHtml = (g) => {
       <div class="card-fallback${g.has_cover ? ' has-cover' : ''}">${esc(initials(g.title))}</div>
       ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onerror="this.style.display='none';this.previousElementSibling?.classList.remove('has-cover')" />` : ''}
       <span class="card-badge ph-badge" style="background:${esc(col)}" title="${esc(p.name)}"><span class="dg-badge-txt">${esc(platformBadge(p))}</span></span>
-      ${g.digital_linked ? `<span class="dg-disc" title="Also in your Digital library" aria-label="Also in your Digital library">${ctx.ICON.disc}</span>` : ''}
+      ${g.digital_linked ? `<span class="dg-disc" title="Disc to digital" aria-label="Disc to digital">${ctx.ICON.disc}</span>` : ''}
       <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-ph-fav="${g.id}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ctx.ICON.starFill : ctx.ICON.star}</button>
     </div>
     <div class="card-title">${esc(g.title)}${g.region ? ` <span class="ph-region">${esc(g.region)}</span>` : ''}</div>
@@ -642,7 +642,7 @@ export async function openDetail(id) {
     <div class="detail-actions">
       <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-d="fav" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? I.starFill : I.star}</button>
       <button class="ibtn" data-d="auto" data-tip="Look this game up again by its title and platform" aria-label="Look up again">${I.refresh}</button>
-      ${g.digital_possible ? `<button class="ibtn${g.digital_linked ? ' is-on' : ''}" data-d="digital" aria-pressed="${Boolean(g.digital_linked)}" data-tip="${g.digital_linked ? 'Also in your Digital library: click to take it out' : 'Also add it to your Digital library'}" aria-label="Also in my Digital library">${I.disc}</button>` : ''}
+      ${g.digital_possible ? `<button class="ibtn${g.digital_linked ? ' is-on' : ''}" data-d="digital" aria-pressed="${Boolean(g.digital_linked)}" data-tip="Disc to digital" aria-label="Disc to digital">${I.disc}</button>` : ''}
       ${g.matched ? `<button class="ibtn" data-d="clear" data-tip="Clear the match: remove a wrong cover and details" aria-label="Clear match">${I.undo}</button>` : ''}
       <button class="ibtn" data-d="art" data-tip="Upload your own picture: cover, spine or disc" aria-label="Upload a picture" aria-expanded="false">${I.image}</button>
       <button class="ibtn ibtn-danger" data-d="delete" data-tip="Remove from your shelf" aria-label="Remove">${I.trash}</button>

@@ -464,7 +464,7 @@ test('an Xbox One / Series disc has a Digital counterpart by default; it leaves 
   const a = await mk('xboxone', 'Twin Test One');
   assert.equal(a.digital_possible, true); assert.equal(a.digital_linked, true); assert.equal(a.digital_made, true);
   const row = (await dig()).find((g) => g.name === 'Twin Test One');
-  assert.ok(row); assert.equal(row.platform, 'xone'); assert.ok(row.physical);
+  assert.ok(row); assert.equal(row.platform, 'xone'); assert.ok(row.physical); assert.ok(row.disc_linked, 'the tile mark is for a disc linked from Physical');
   // taking the disc off the shelf takes the made counterpart out of Digital
   await call(`/api/physical/games/${a.id}`, { method: 'DELETE' });
   assert.ok(!(await dig()).some((g) => g.name === 'Twin Test One'));
@@ -473,8 +473,11 @@ test('an Xbox One / Series disc has a Digital counterpart by default; it leaves 
   await call('/api/digital/games', { method: 'POST', body: { platform: 'xsx', title: 'Twin Test Two' } });
   const b = await mk('xboxseries', 'Twin Test Two');
   assert.equal(b.digital_linked, true); assert.equal(b.digital_made, false);
+  assert.ok((await dig()).find((g) => g.name === 'Twin Test Two').disc_linked);
   await call(`/api/physical/games/${b.id}`, { method: 'DELETE' });
-  assert.ok((await dig()).some((g) => g.name === 'Twin Test Two'));
+  // still in Digital, but no longer linked to a disc: no mark (a game only marked DISC in Digital never had one)
+  const stay = (await dig()).find((g) => g.name === 'Twin Test Two');
+  assert.ok(stay); assert.ok(!stay.disc_linked);
 
   // unticking removes a made one and stays off (bulk does not bring it back); removing it from Digital unlinks the disc
   const c = await mk('xboxone', 'Twin Test Three');

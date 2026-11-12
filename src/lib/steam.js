@@ -125,7 +125,8 @@ export function listGames(userId, { store = '', stores = [], platforms = [], q =
   const order = sort === 'hours' ? 'g.minutes DESC, g.name COLLATE NOCASE' : sort === 'recent' ? 'COALESCE(g.last_played, 0) DESC, g.name COLLATE NOCASE' : sort === 'added' ? 'g.id DESC' : 'g.name COLLATE NOCASE';
   // Console games (PlayStation, Xbox) carry the country of the store they came from, and their cover is the picture downloaded for them.
   const rows = db.prepare(`SELECT g.id AS row_id, g.store, g.app_id, g.name, g.minutes, g.last_played, g.country, g.platform, COALESCE(um.cover_path, dd.cover_path) AS cover_path, dd.json AS details_json, um.json AS user_json,
-      COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play, COALESCE(m.physical, 0) AS physical
+      COALESCE(m.favourite, 0) AS favourite, COALESCE(m.hidden, 0) AS hidden, COALESCE(m.play, 0) AS play, COALESCE(m.physical, 0) AS physical,
+      EXISTS (SELECT 1 FROM physical_games pg WHERE pg.user_id = g.user_id AND pg.digital_app_id = g.app_id AND g.store = 'xbox') AS disc_linked
     FROM digital_games g LEFT JOIN digital_marks m ON m.user_id = g.user_id AND m.store = g.store AND m.app_id = g.app_id
       LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id
       LEFT JOIN digital_user_meta um ON um.user_id = g.user_id AND um.store = g.store AND um.app_id = g.app_id
