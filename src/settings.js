@@ -118,7 +118,7 @@ export const PROVIDER_FIELDS = {
     fields: [
       { key: 'SS_DEV_ID', label: 'Developer ID (required — unless the banner above says a shared pair is active)', secret: false, required: false, shared: true },
       { key: 'SS_DEV_PASSWORD', label: 'Developer password (required — unless the banner above says a shared pair is active)', secret: true, required: false, shared: true },
-      { key: 'SS_USER', label: 'Account username', secret: false, required: true },
+      { key: 'SS_USER', label: 'Account username (your ScreenScraper username, not your email address)', secret: false, required: true },
       { key: 'SS_PASSWORD', label: 'Account password', secret: true, required: true }
     ]
   },

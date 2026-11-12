@@ -257,7 +257,7 @@ const screenscraper = {
         const isLoginError = /identifiants|login|connexion/i.test(body);
         return {
           error: isLoginError
-            ? 'ScreenScraper rejected the login (HTTP 403 — "check your login details". Your site password can be 100% correct and this still fails: the usual cause is the DEVELOPER ID/password half missing or wrong, not the site password. You need all four fields: devid + devpassword from a forum request, plus site username + password).'
+            ? 'ScreenScraper rejected the login (HTTP 403 — "check your login details". Your site password can be 100% correct and this still fails: the usual cause is the DEVELOPER ID/password half missing or wrong, not the site password. You need all four fields: devid + devpassword from a forum request, plus site username + password). The username is your ScreenScraper username (pseudo), not the email address you may log in to the website with.'
             : result.error,
           needsDeveloperCredentials: isLoginError
         };
