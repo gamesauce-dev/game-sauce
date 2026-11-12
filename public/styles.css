@@ -1678,7 +1678,7 @@ body.play-only #empty .empty-add-text { display: none; }
 .dg-playsw:hover { color: #fff; }
 /* The disc mark on a console tile (bottom left): the game is also on the Physical shelf as a disc. Not a button. */
 .dg-disc { position: absolute; left: 0.45rem; bottom: 2.5rem; width: 1.9rem; height: 1.9rem; display: grid; place-items: center; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,.28); background: rgba(8,9,14,.86); color: #e6e9f2; pointer-events: none; }
-.dg-disc svg { width: 1.3rem; height: 1.3rem; }
+.dg-disc svg { width: 1.5rem; height: 1.5rem; }
 /* Like the Library: the heart and hide icons show on hover (and the heart stays on once favourited); a hidden game, seen only with Show hidden, keeps its Unhide icon showing. */
 .dg-card.is-hidden .card-hide { opacity: 1; }
 
