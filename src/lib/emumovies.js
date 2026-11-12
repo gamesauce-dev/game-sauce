@@ -90,7 +90,7 @@ export const defaultApi = {
     if (tokenCache && tokenCache.until > Date.now()) return tokenCache.token;
     let res;
     try { res = await call('/auth/login', { method: 'POST', body: { username: cred('EMUMOVIES_USER'), password: cred('EMUMOVIES_PASSWORD') } }); }
-    catch (err) { throw new Error(err.name === 'TimeoutError' || err.name === 'AbortError' ? 'EmuMovies did not answer in time' : `Could not reach EmuMovies (${scrub(err.message)})`); }
+    catch (err) { throw new Error(err.name === 'TimeoutError' || err.name === 'AbortError' ? 'EmuMovies did not answer in time' : (err.cause?.code === 'ENOTFOUND' || err.cause?.code === 'EAI_AGAIN') ? `The EmuMovies address ${new URL(API_BASE()).host} does not exist (the real API address is not published; see Settings, Metadata providers, EmuMovies)` : `Could not reach EmuMovies (${scrub(err.cause?.code || err.message)})`); }
     if (res.status === 401 || res.status === 403) throw new Error('EmuMovies did not accept the username and password (or this account has no API access yet)');
     if (!res.ok) throw new Error(`EmuMovies answered HTTP ${res.status}`);
     const data = await res.json().catch(() => null);
