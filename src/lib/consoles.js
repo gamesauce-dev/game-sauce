@@ -229,6 +229,39 @@ export function addConsoleGame(userId, { platform, title, country = '' } = {}) {
   return { store: pf.store, app_id: appId, name, platform: pf.platform };
 }
 
+/**
+ * Change a console game's title and / or console. Its id in the store is made from both (`title-console`), so the game moves to a new id: its marks, the person's own
+ * details and cover go with it, and the shared details are looked up again under the new name. A disc on the shelf linked to it stays linked when only the
+ * title changed, and is let go when the console changed. Returns the game's new { store, app_id, name, platform }.
+ */
+export function renameConsoleGame(userId, store, appId, { name, platform } = {}) {
+  const cur = db.prepare('SELECT name, platform FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, store, String(appId));
+  if (!cur) throw Object.assign(new Error('That game is not in your list'), { status: 404 });
+  const newName = name === undefined ? cur.name : decodeEntities(String(name || '').trim()).slice(0, 200);
+  const slug = appIdFor(newName);
+  if (!slug) throw Object.assign(new Error('The title cannot be empty.'), { status: 400 });
+  let pf = { store, platform: cur.platform };
+  if (platform && platform !== cur.platform) {
+    pf = CONSOLE_PLATFORMS[platform] ? { store: CONSOLE_PLATFORMS[platform].store, platform } : platformFor(platform);
+    if (!pf) throw Object.assign(new Error('Choose a console from the list.'), { status: 400 });
+  }
+  const newId = `${slug}-${pf.platform}`;
+  const same = pf.store === store && newId === String(appId);
+  if (!same && db.prepare('SELECT 1 FROM digital_games WHERE user_id = ? AND store = ? AND app_id = ?').get(userId, pf.store, newId)) {
+    throw Object.assign(new Error('That game is already in your Digital list for this console.'), { status: 409 });
+  }
+  db.transaction(() => {
+    db.prepare('UPDATE digital_games SET store = ?, app_id = ?, name = ?, platform = ? WHERE user_id = ? AND store = ? AND app_id = ?').run(pf.store, newId, newName, pf.platform, userId, store, String(appId));
+    if (!same) {
+      for (const t of ['digital_marks', 'digital_user_meta']) db.prepare(`UPDATE ${t} SET store = ?, app_id = ? WHERE user_id = ? AND store = ? AND app_id = ?`).run(pf.store, newId, userId, store, String(appId));
+      if (pf.platform === cur.platform) db.prepare('UPDATE physical_games SET digital_app_id = ? WHERE user_id = ? AND digital_app_id = ?').run(newId, userId, String(appId));
+      else db.prepare('UPDATE physical_games SET digital_app_id = NULL, digital_made = 0 WHERE user_id = ? AND digital_app_id = ?').run(userId, String(appId));
+    }
+  })();
+  if (!same) startDetailsJob();
+  return { store: pf.store, app_id: newId, name: newName, platform: pf.platform };
+}
+
 /** Remove one console game from a person's list (its marks go too; the shared cached details stay for anyone else who owns it). */
 export function removeConsoleGame(userId, store, appId) {
   if (!isConsoleStore(store)) throw Object.assign(new Error('Only console games can be removed here.'), { status: 400 });

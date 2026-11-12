@@ -461,6 +461,10 @@ function renderConsoleDetail(g, d, store, appId, custom) {
     <div class="section-label">Edit</div>
     <form class="edit-form" id="dg-edit">
       <div class="field-row">
+        <label class="field"><span>Title</span><input name="name" required value="${esc(g.name)}" /></label>
+        <label class="field"><span>Console</span>${comboHtml({ options: consoleOptions(), selected: g.platform || '', placeholder: 'Type to find a console…', required: Boolean(g.platform) })}</label>
+      </div>
+      <div class="field-row">
         <label class="field"><span>Developer</span><input name="developers" value="${esc(list(d?.developers))}" /></label>
         <label class="field"><span>Publisher</span><input name="publishers" value="${esc(list(d?.publishers))}" /></label>
       </div>
@@ -506,11 +510,16 @@ function renderConsoleDetail(g, d, store, appId, custom) {
     catch (err) { ctx.toast(err.message, true); return; }
     ctx.toast(`${g.name} removed`); ctx.closeDrawer(); afterChange();
   });
+  wireCombo($('#dg-edit', body), 'platform', consoleOptions(), 'console');
   $('#dg-edit', body).addEventListener('submit', async (e) => {
     e.preventDefault();
     const out = Object.fromEntries(new FormData(e.target).entries());
     out.rating = out.rating === '' ? null : Number(out.rating);
-    try { await ctx.api(gameUrl(store, appId), { method: 'PATCH', body: JSON.stringify(out) }); ctx.toast('Saved'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
+    if (!out.platform) delete out.platform;   // an old game with no console of its own: left as it is unless one is chosen
+    try {
+      const r = await ctx.api(gameUrl(store, appId), { method: 'PATCH', body: JSON.stringify(out) }); ctx.toast('Saved');
+      await afterChange(); await openDigitalDetail(r.store || store, r.app_id || appId);   // a new title or console is a new id
+    } catch (err) { ctx.toast(err.message, true); }
   });
   // Identify: the Library's search, with the picked entry (cover included) put on this game, for you only.
   wireIdentify(body, { idp: 'dg', ctx, onPick: async (cand) => { await ctx.api(`${gameUrl(store, appId)}/match`, { method: 'POST', body: JSON.stringify({ candidate: cand }) }); await refreshAll(); } });

@@ -3,7 +3,7 @@ import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
-import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
+import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
@@ -88,7 +88,15 @@ router.get('/games/:store/:appId', async (req, res, next) => {
 // All of it is this person's own; a Steam game's details come from Steam's store page and are not edited here.
 const consoleOnly = (req, res) => { if (!isConsoleStore(req.params.store)) { res.status(400).json({ error: 'Only console games can be edited here. A Steam game\'s details come from Steam.' }); return false; } return true; };
 const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
-router.patch('/games/:store/:appId', (req, res) => { if (!consoleOnly(req, res)) return; try { res.json(editConsoleGame(me(req), req.params.store, req.params.appId, req.body || {})); } catch (err) { fail(res, err); } });
+router.patch('/games/:store/:appId', (req, res) => {
+  if (!consoleOnly(req, res)) return;
+  try {
+    let { store, appId } = req.params; const body = req.body || {}; let moved = null;
+    // A new title or console gives the game a new id: do that first, then the other edits go to the game under its new id.
+    if (body.name !== undefined || body.platform) { moved = renameConsoleGame(me(req), store, appId, { name: body.name, platform: body.platform }); store = moved.store; appId = moved.app_id; }
+    res.json({ ...editConsoleGame(me(req), store, appId, body), store, app_id: appId, ...(moved ? { name: moved.name, platform: moved.platform } : {}) });
+  } catch (err) { fail(res, err); }
+});
 router.post('/games/:store/:appId/match', async (req, res, next) => {
   if (!consoleOnly(req, res)) return;
   const cand = req.body?.candidate;

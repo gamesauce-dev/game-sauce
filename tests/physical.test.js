@@ -580,3 +580,38 @@ test('bulk delete: several of your own Physical and Digital games at once; never
   assert.ok(!names.includes('Bulk Dig One') && !names.includes('Bulk Dig Two'));
   assert.ok((await dig(annTok)).includes('Bulk Dig Ann'));
 });
+
+test('a Digital console game can change title and console: marks and own details follow, a clash is refused, a linked disc stays linked for a title change only', async () => {
+  const patch = (store, id, body, tok) => call(`/api/digital/games/${store}/${encodeURIComponent(id)}`, { method: 'PATCH', token: tok, body });
+  const list = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items;
+  const g = (await call('/api/digital/games', { method: 'POST', body: { platform: 'xone', title: 'Rename Me' } })).body;
+  await call(`/api/digital/games/xbox/${g.app_id}/mark`, { method: 'PUT', body: { field: 'favourite', value: true } });
+  await patch('xbox', g.app_id, { developers: 'Some Studio' });
+
+  const t = await patch('xbox', g.app_id, { name: 'Renamed Game' });
+  assert.equal(t.status, 200); assert.equal(t.body.app_id, 'renamed-game-xone'); assert.equal(t.body.name, 'Renamed Game');
+  let row = (await list()).find((x) => x.app_id === 'renamed-game-xone');
+  assert.ok(row && row.favourite, 'the favourite mark moved with it');
+  assert.ok(!(await list()).some((x) => x.app_id === g.app_id), 'nothing left under the old id');
+  assert.equal((await call(`/api/digital/games/xbox/${g.app_id}`)).status, 404);
+
+  const c = await patch('xbox', 'renamed-game-xone', { platform: 'xsx' });
+  assert.equal(c.body.platform, 'xsx'); assert.equal(c.body.app_id, 'renamed-game-xsx');
+  row = (await list()).find((x) => x.app_id === 'renamed-game-xsx');
+  assert.equal(row.platform, 'xsx');
+  assert.equal((await call('/api/digital/games/xbox/renamed-game-xsx')).body.custom?.developers?.[0] ?? (await call('/api/digital/games/xbox/renamed-game-xsx')).body.details?.developers?.[0], 'Some Studio');
+
+  await call('/api/digital/games', { method: 'POST', body: { platform: 'xsx', title: 'Rename Other' } });
+  assert.equal((await patch('xbox', 'renamed-game-xsx', { name: 'Rename Other' })).status, 409);
+  assert.equal((await patch('xbox', 'renamed-game-xsx', { name: '   ' })).status, 400);
+  assert.equal((await patch('xbox', 'renamed-game-xsx', { platform: 'nope' })).status, 400);
+  assert.equal((await patch('xbox', 'renamed-game-xsx', { name: 'Hijack' }, annTok)).status, 404);   // someone else's list
+
+  // a linked disc: a title change keeps the link, a console change lets it go
+  const d = (await call('/api/physical/games', { method: 'POST', body: { platform: 'xboxone', title: 'Rename Disc', region: 'PAL', digital: true } })).body;
+  assert.equal(d.digital_linked, true);
+  await patch('xbox', 'rename-disc-xone', { name: 'Rename Disc Two' });
+  assert.equal((await call(`/api/physical/games/${d.id}`)).body.digital_linked, true);
+  await patch('xbox', 'rename-disc-two-xone', { platform: 'xsx' });
+  assert.equal((await call(`/api/physical/games/${d.id}`)).body.digital_linked, false);
+});
