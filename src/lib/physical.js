@@ -311,7 +311,7 @@ export function getPhysical(userId, id) {
   return { ...toGame(r), platform_name: p?.name || r.platform, platform_short: p?.short_name || r.platform, platform_badge: p?.badge || null, platform_family: p?.family || null, platform_accent: p?.accent || null };
 }
 
-export function addPhysical(userId, { platform, title, region = '', notes = '', year = null, digital = true }) {
+export function addPhysical(userId, { platform, title, region = '', notes = '', year = null, digital = false }) {
   const slug = resolvePlatform(platform);
   if (!slug) throw Object.assign(new Error('Choose a platform from the list.'), { status: 400 });
   const t = clean(title);
@@ -321,10 +321,8 @@ export function addPhysical(userId, { platform, title, region = '', notes = '', 
   const y = Math.round(Number(year));
   const info = db.prepare('INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, region, notes, release_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     .run(userId, slug, t, sortTitle(t), key, clean(region, 40) || null, clean(notes, 300) || null, y >= 1950 && y <= 2100 ? y : null);
-  if (DIGITAL_TWIN[slug]) {   // an Xbox One / Series disc is also added to Digital unless said otherwise
-    if (digital === false || digital === 'false') db.prepare('UPDATE physical_games SET digital_off = 1 WHERE id = ?').run(info.lastInsertRowid);
-    else if (linkDigital(userId, own(userId, info.lastInsertRowid))) startDetailsJob();
-  }
+  // An Xbox One / Series disc is in Digital only when the person switched that on (the icon in its details, or digital: true here).
+  if (DIGITAL_TWIN[slug] && (digital === true || digital === 'true') && linkDigital(userId, own(userId, info.lastInsertRowid))) startDetailsJob();
   startMatchJob();
   return getPhysical(userId, info.lastInsertRowid);
 }

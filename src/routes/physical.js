@@ -142,7 +142,7 @@ router.get('/spine/:id', (req, res) => {
 // Games from a CSV (Platform, Game, Region, Notes, Year) onto the signed-in person's own shelf. Without apply nothing is saved: the answer is the preview.
 router.post('/import', (req, res) => {
   try {
-    const r = importPhysicalCsv(me(req), req.body?.csv, { apply: req.body?.apply === true, replace: req.body?.replace === true, digital: req.body?.digital !== false });
+    const r = importPhysicalCsv(me(req), req.body?.csv, { apply: req.body?.apply === true, replace: req.body?.replace === true, digital: req.body?.digital === true });
     if (r.applied) req.auditDetail = { added: r.added, updated: r.updated, removed: r.removed };
     res.json({ ...r, match_job: matchJobStatus() });
   } catch (err) { fail(res, err); }

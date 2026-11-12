@@ -843,7 +843,7 @@ function openAdd() {
         <label class="field"><span>Region (optional)</span><input name="region" placeholder="PAL, NTSC-U, JP…" value="${esc(lastAdd.region)}" /></label>
       </div>
       <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Boxed, manual, disc only…" /></label>
-      <p class="hint" style="margin:0">An Xbox One or Series disc is also added to your Digital library. Untick it in the game's details if it has no digital copy.</p>
+      <p class="hint" style="margin:0">An Xbox One or Series disc is only added to your Digital library if you switch on the disc to digital icon in the game's details.</p>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add and another</button></div>
     </form>`;
   const form = $('#ph-add');
@@ -889,7 +889,7 @@ function openImport() {
     <p class="hint">A CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code>, <code>Year</code>, <code>Manual</code> (a web link to the game's manual) and <code>Digital</code> (yes or no, for Xbox One and Series discs: whether the game is also in your Digital library) (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b>… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
     <div class="panel" style="padding:12px;display:grid;gap:10px">
       <label class="field"><span>CSV file</span><input type="file" id="ph-imp-file" accept=".csv,text/csv" class="file-input" /></label>
-      <label class="policy-row"><input type="checkbox" id="ph-imp-digital" checked /> <span>Also add Xbox One and Xbox Series discs to my Digital library (a <code>Digital</code> column of no keeps one out)</span></label>
+      <label class="policy-row"><input type="checkbox" id="ph-imp-digital" /> <span>Also add Xbox One and Xbox Series discs to my Digital library (a <code>Digital</code> column of no keeps one out)</span></label>
       <label class="policy-row"><input type="checkbox" id="ph-imp-replace" /> <span>Remove games no longer in the file (only for the platforms the file lists)</span></label>
       <div style="display:flex;gap:8px"><button class="btn" id="ph-imp-preview">Preview</button><button class="btn btn-primary" id="ph-imp-apply" disabled>Import games</button></div>
       <p class="hint" id="ph-imp-result" style="margin:0"></p>

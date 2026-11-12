@@ -458,9 +458,13 @@ test('back art: a boxed game keeps a looked-up back picture (cached, served only
   assert.ok(read('public/app.js').includes('with box backs'));
 });
 
-test('an Xbox One / Series disc has a Digital counterpart by default; it leaves with the disc, and an off switch sticks', async () => {
-  const mk = async (platform, title, extra = {}) => (await call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'PAL', ...extra } })).body;
+test('an Xbox One / Series disc has a Digital counterpart only when switched on; it leaves with the disc, and an off switch sticks', async () => {
+  const mk = async (platform, title, extra = {}) => (await call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'PAL', digital: true, ...extra } })).body;
   const dig = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items;
+  // nothing is added to Digital unless it is switched on
+  const plain = (await call('/api/physical/games', { method: 'POST', body: { platform: 'xboxone', title: 'Twin Default', region: 'PAL' } })).body;
+  assert.equal(plain.digital_possible, true); assert.equal(plain.digital_linked, false);
+  assert.ok(!(await dig()).some((g) => g.name === 'Twin Default'));
   const a = await mk('xboxone', 'Twin Test One');
   assert.equal(a.digital_possible, true); assert.equal(a.digital_linked, true); assert.equal(a.digital_made, true);
   const row = (await dig()).find((g) => g.name === 'Twin Test One');
