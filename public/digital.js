@@ -441,6 +441,8 @@ function renderConsoleDetail(g, d, store, appId, custom) {
     ${d?.description ? `<p class="detail-desc">${esc(d.description)}</p>` : `<p class="hint">${d ? 'No description was found for this game.' : 'No details or cover were found for this game yet. Search for it below and pick the right entry: the cover comes with it.'}</p>`}
     ${d?.screenshots?.length ? `<div class="section-label">Screenshots</div><div class="media-strip">${d.screenshots.map((u) => `<a href="${esc(u)}" target="_blank" rel="noreferrer"><img loading="lazy" src="${esc(u)}" alt="" onerror="this.parentElement.remove()" /></a>`).join('')}</div>` : ''}
 
+    <div class="vid-slot" data-kind="digital" data-store="${esc(store)}" data-id="${esc(String(appId))}"></div>
+
     ${identifyBlock({ idp: 'dg', title: g.name, platform: DG_PLATFORM[g.platform]?.lib || 'all', prefs: ctx.state.prefs })}
 
     <div class="section-label">Details</div>

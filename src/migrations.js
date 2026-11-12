@@ -596,3 +596,10 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '48') ON CON
 /* ── v49: digital_off: a person untoggled this disc's Digital counterpart, so adding or importing discs never switches it back on by itself. ── */
 if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === 'digital_off')) db.exec('ALTER TABLE physical_games ADD COLUMN digital_off INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '49') ON CONFLICT(key) DO UPDATE SET value = '49'").run();
+
+/* ── v50: videos kept for games (src/lib/emumovies.js): one per platform and title, shared by everyone who has that game. path NULL = looked for and not found (asked again after a week). ── */
+db.exec(`CREATE TABLE IF NOT EXISTS game_videos (
+  platform TEXT NOT NULL, title_key TEXT NOT NULL, path TEXT, bytes INTEGER, source TEXT, fetched_at TEXT, tried_at TEXT,
+  PRIMARY KEY (platform, title_key)
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '50') ON CONFLICT(key) DO UPDATE SET value = '50'").run();

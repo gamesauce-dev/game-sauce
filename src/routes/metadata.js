@@ -1,7 +1,8 @@
 import express from 'express';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
-import { enrich, providerStatus, screenscraper, thegamesdb, igdb, launchbox, steamgriddb } from '../lib/providers.js';
+import { enrich, providerStatus, screenscraper, thegamesdb, igdb, launchbox, steamgriddb, emumovies } from '../lib/providers.js';
+import { testConnection as testEmuMovies, forgetToken as forgetEmuMoviesToken } from '../lib/emumovies.js';
 import { buildReport } from '../lib/platformids.js';
 import { launchboxStatus, startLaunchBoxUpdate } from '../lib/launchbox.js';
 import {
@@ -110,6 +111,13 @@ router.post('/providers/test', requireAdmin, async (req, res, next) => {
       const art = await steamgriddb.coverFor('Super Mario Bros.');
       if (!art) return res.json({ ok: false, error: 'Key accepted but no grid art found for the probe title' });
       return res.json({ ok: true, detail: { sample: art } });
+    }
+
+    if (provider === 'emumovies') {
+      if (!emumovies.enabled) return res.status(400).json({ ok: false, error: 'EmuMovies username and password are required' });
+      forgetEmuMoviesToken();   // test what is saved now, not an old sign-in
+      try { await testEmuMovies(); } catch (err) { return res.json({ ok: false, error: err.message }); }
+      return res.json({ ok: true, detail: { sample: 'signed in' } });
     }
 
     res.status(400).json({ ok: false, error: 'Unknown provider' });

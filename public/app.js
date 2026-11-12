@@ -6,6 +6,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
+import './video.js';   // the video in a game's details window
 import * as carousel from './carousel.js';
 import * as messages from './messages.js';
 import './pwreveal.js';   // the eye in password boxes
@@ -1528,6 +1529,8 @@ async function openDetail(id) {
       </div>` : ''}
 
     ${rom.tags?.length ? `<div class="tags">${rom.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+
+    <div class="vid-slot" data-kind="rom" data-id="${rom.id}"></div>
 
     <div class="section-label">Details</div>
     <dl class="meta-table">

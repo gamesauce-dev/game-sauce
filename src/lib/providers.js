@@ -25,6 +25,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
 import { sniffProviderImage } from './coverzip.js';
+import { emumovies } from './emumovies.js';
 
 const TIMEOUT_MS = Number(process.env.META_TIMEOUT_MS || 15000);
 const CACHE_TTL_HOURS = Number(process.env.META_CACHE_TTL_HOURS || 168);
@@ -834,7 +835,7 @@ const steamgriddb = {
   }
 };
 
-const PROVIDERS = [screenscraper, thegamesdb, igdb, launchbox, steamgriddb];
+const PROVIDERS = [screenscraper, thegamesdb, igdb, launchbox, steamgriddb, emumovies];
 
 export function providerStatus() {
   return PROVIDERS.map((p) => ({
@@ -868,7 +869,7 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   for (const provider of order) {
     if (!provider.enabled) continue;
     // steamgriddb is art-only: it never participates in metadata matching.
-    if (provider.id === 'steamgriddb') continue;
+    if (provider.id === 'steamgriddb' || provider.id === 'emumovies') continue;
     // Title search is only safe once the title is real (from the MAME name list).
     if (ARCADE_NAME_MATCH.has(platform.slug) && !titleTrusted && provider.id !== 'screenscraper') continue;
     // Romset zips: the zip's own hashes mean nothing to title providers, and an earlier
@@ -904,4 +905,4 @@ export async function enrich({ title, platform, hashes, filename, titleTrusted =
   return real.length ? { error: real.map((e) => `${e.provider}: ${e.message}`).join('; ') } : null;
 }
 
-export { screenscraper, thegamesdb, igdb, launchbox, steamgriddb, PROVIDERS };
+export { screenscraper, thegamesdb, igdb, launchbox, steamgriddb, emumovies, PROVIDERS };

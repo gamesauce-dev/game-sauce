@@ -178,6 +178,7 @@ Drives that vanish are flagged **missing**, not deleted. Reconnect and rescan; t
 | TheGamesDB | Free API key | Broad coverage, quick setup |
 | IGDB | Twitch Client ID and Secret | Modern systems |
 | SteamGridDB | Free API key | Cover art when nothing else has any |
+| EmuMovies | Account login (supporting member) and API access from EmuMovies | Game videos, fetched when you press **Find video** in a game's details |
 
 Each card has **Save** and **Test connection**. Credentials are encrypted at rest; set
 `GAMESAUCE_SECRET_KEY` to keep the key outside the data folder. Providers are system-wide and

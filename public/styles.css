@@ -1773,3 +1773,6 @@ select option { background: var(--panel); color: var(--text); }
 .drawer-nav { grid-template-columns: auto auto auto; justify-content: center; }
 .drawer-pos { white-space: nowrap; }
 .drawer-bar .drawer-nav { grid-template-columns: auto auto auto; justify-content: center; }
+
+/* The video in a game's details window (public/video.js). */
+.vid-player { width: 100%; max-height: 22rem; background: #000; border-radius: 0.4286rem; display: block; }

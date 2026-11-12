@@ -323,7 +323,7 @@ almost always the culprit.
 GET    /api/metadata/providers        state (secrets masked)
 PUT    /api/metadata/providers        { fields: { SS_DEV_ID, SS_DEV_PASSWORD, SS_USER, SS_PASSWORD } }   empty string clears a field
 DELETE /api/metadata/providers        clear everything stored
-POST   /api/metadata/providers/test   { provider: 'screenscraper' | 'thegamesdb' | 'igdb' | 'steamgriddb' }
+POST   /api/metadata/providers/test   { provider: 'screenscraper' | 'thegamesdb' | 'igdb' | 'steamgriddb' | 'emumovies' }
 POST   /api/metadata/search           { q, platform?, provider?: 'thegamesdb' | 'igdb' }  → candidates + cover flags
 POST   /api/metadata/:id/apply        { candidate } — apply a picked row verbatim
 ```

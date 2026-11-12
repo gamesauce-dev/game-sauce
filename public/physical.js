@@ -650,6 +650,8 @@ export async function openDetail(id) {
 
     ${identifyBlock({ idp: 'ph', title: g.title, platform: g.platform, prefs: ctx.state.prefs })}
 
+    <div class="vid-slot" data-kind="physical" data-id="${g.id}"></div>
+
     <div class="section-label">Details</div>
     <dl class="meta-table">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
 

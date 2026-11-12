@@ -16,6 +16,7 @@ import digitalRouter from './routes/digital.js';
 import physicalRouter from './routes/physical.js';
 import artRouter from './routes/art.js';
 import messagesRouter from './routes/messages.js';
+import videosRouter from './routes/videos.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
 import datsRouter from './routes/dats.js';
@@ -526,6 +527,7 @@ export function createApp() {
   api.use('/physical', physicalRouter);
   api.use('/art', artRouter);   // import pictures and manuals from folders on the server
   api.use('/messages', messagesRouter);
+  api.use('/videos', videosRouter);
   api.use('/metadata', metadataRouter);
   api.use('/emulators', emulatorsRouter);
 

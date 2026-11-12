@@ -155,7 +155,7 @@ export function collectHealth() {
   // Metadata providers and encryption.
   try {
     const { enabled } = describeProviderConfig();
-    const names = { screenscraper: 'ScreenScraper', thegamesdb: 'TheGamesDB', igdb: 'IGDB', steamgriddb: 'SteamGridDB' };
+    const names = { screenscraper: 'ScreenScraper', thegamesdb: 'TheGamesDB', igdb: 'IGDB', steamgriddb: 'SteamGridDB', emumovies: 'EmuMovies' };
     const on = Object.keys(names).filter((k) => enabled[k]).map((k) => names[k]);
     checks.push({
       id: 'providers', label: 'Metadata providers', status: on.length ? 'ok' : 'warn',

@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **EmuMovies game videos (needs an EmuMovies account, and API access from them).** A new entry under Settings, Metadata providers (account username and password, plus an API key if EmuMovies gives you one, with **Test connection**). Library, Physical and Digital (Xbox, PlayStation, Nintendo) games get a **Video** section in their details window: **Find video** looks the game up by title and platform on EmuMovies, keeps the file on the server and plays it in the window. Nothing is downloaded until someone presses the button. Videos live in `storage/videos`, one per platform and title (shared by everyone who has that game, so it is fetched once), up to 200 MB each (`EMUMOVIES_MAX_VIDEO_MB`) and 20 GB in all (`EMUMOVIES_CACHE_GB`; the oldest go first). The password and key are stored encrypted and never shown or logged. **Not yet checked against the live service:** EmuMovies has no public API documentation (developers file a Developer Access Request with them), so the address and shape of its login and search calls are a best guess, kept in one place (`defaultApi` in `src/lib/emumovies.js`) to be corrected once EmuMovies hands out the real instructions.
+
 ## [0.5.0] - 2026-11-12
 
 ### Fixed
