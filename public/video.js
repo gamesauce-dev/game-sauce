@@ -4,7 +4,7 @@
 //    in it. If the game has a video it plays, muted and looping, in place of the cover at the top; if not and EmuMovies is set up, a "Find video"
 //    button asks for it. Nothing is downloaded by opening a window.
 //  * tiles: a tile of a game that already has a video carries data-vid="rom:12" / "physical:7" / "digital:xbox:halo-infinite-xone"; hovering it
-//    for a moment plays the video over its cover. Tiles never download anything: only videos already kept play.
+//    for a moment opens a small pop-out window beside it with the video playing. Tiles never download anything: only videos already kept play.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const query = (slot) => new URLSearchParams({ kind: slot.dataset.kind, id: slot.dataset.id, ...(slot.dataset.store ? { store: slot.dataset.store } : {}) }).toString();
 const mb = (b) => `${Math.max(1, Math.round(b / 1048576))} MB`;
@@ -18,6 +18,30 @@ async function call(path, options) {
 
 /* ───────────── details window ───────────── */
 
+const EXPAND_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>';
+const fullscreen = (el) => { try { (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el); } catch { /* not allowed here */ } };
+
+/** The video in a large overlay over the page (Esc, the close button or a click outside puts it back). It carries on from where the small one was. */
+function enlarge(small) {
+  if (document.querySelector('.vid-lightbox')) return;
+  const wasPlaying = !small.paused; small.pause();
+  const box = document.createElement('div');
+  box.className = 'vid-lightbox'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Game video');
+  const v = document.createElement('video');
+  v.src = small.currentSrc || small.src; v.controls = true; v.loop = true; v.autoplay = true; v.muted = small.muted; v.playsInline = true;
+  v.addEventListener('loadedmetadata', () => { try { v.currentTime = small.currentTime; } catch { /* starts from the beginning */ } }, { once: true });
+  v.addEventListener('dblclick', () => fullscreen(v));
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'vid-close'; x.title = 'Close'; x.setAttribute('aria-label', 'Close'); x.textContent = '\u2715';
+  box.append(v, x); document.body.appendChild(box);
+  const onKey = (e) => { if (e.key === 'Escape' && !document.fullscreenElement) { e.stopPropagation(); close(); } };
+  const close = () => { document.removeEventListener('keydown', onKey, true); try { small.currentTime = v.currentTime; } catch { /* kept */ } v.pause(); box.remove(); if (wasPlaying) small.play?.().catch(() => {}); };
+  document.addEventListener('keydown', onKey, true);
+  x.addEventListener('click', close);
+  box.addEventListener('click', (e) => { if (e.target === box) close(); });
+  v.play?.().catch(() => {});
+}
+
 /** The video takes the cover's place at the top of the window; the button beside the note puts the cover back (and the video again). */
 function playInCover(slot, src) {
   const cover = slot.closest('#drawer-body')?.querySelector('.detail-cover');
@@ -26,6 +50,11 @@ function playInCover(slot, src) {
   v.className = 'vid-cover'; v.src = src; v.autoplay = true; v.muted = true; v.loop = true; v.controls = true; v.playsInline = true; v.preload = 'auto';
   v.setAttribute('aria-label', 'Game video');
   cover.classList.add('has-video'); cover.appendChild(v);
+  const big = document.createElement('button');
+  big.type = 'button'; big.className = 'vid-expand'; big.title = 'Enlarge the video'; big.setAttribute('aria-label', 'Enlarge the video'); big.innerHTML = EXPAND_ICON;
+  big.addEventListener('click', () => enlarge(v));
+  cover.appendChild(big);
+  v.addEventListener('dblclick', () => fullscreen(v));   // double-click: the whole screen
   v.play?.().catch(() => { /* autoplay refused: the controls are there */ });
   return true;
 }
@@ -86,17 +115,29 @@ function srcFor(id) {
 }
 function stopPreview() {
   clearTimeout(hoverTimer); hoverTimer = 0;
-  if (hoverVideo) { hoverVideo.pause(); hoverVideo.remove(); hoverVideo = null; }
-  hoverTile = null;
+  if (hoverVideo) hoverVideo.pause();
+  document.querySelector('.vid-pop')?.remove();
+  hoverVideo = null; hoverTile = null;
 }
+/** A small window beside the tile (to its right, or its left when there is no room) with the video playing. It never takes the mouse, so moving on closes it. */
 function startPreview(tile) {
-  const cover = tile.querySelector('.card-cover');
-  if (!cover || tile.closest('.selecting, .bulk-mode')) return;   // not while picking tiles
+  if (tile.closest('.selecting, .bulk-mode')) return;   // not while picking tiles
+  const pop = document.createElement('div');
+  pop.className = 'vid-pop'; pop.setAttribute('aria-hidden', 'true');
   const v = document.createElement('video');
-  v.className = 'vid-hover'; v.src = srcFor(tile.dataset.vid); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
-  v.addEventListener('error', () => { if (hoverVideo === v) stopPreview(); });   // the file has gone: the tile just stays as it was
-  v.addEventListener('playing', () => v.classList.add('on'));
-  cover.appendChild(v); hoverVideo = v;
+  v.src = srcFor(tile.dataset.vid); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+  const cap = document.createElement('div');
+  cap.className = 'vid-pop-cap'; cap.textContent = (tile.querySelector('.card-title')?.textContent || tile.getAttribute('aria-label') || '').trim();
+  pop.append(v, cap);
+  v.addEventListener('error', () => { if (hoverVideo === v) stopPreview(); });   // the file has gone: nothing is shown
+  v.addEventListener('playing', () => pop.classList.add('on'));
+  document.body.appendChild(pop); hoverVideo = v;
+  const r = tile.getBoundingClientRect(), w = Math.min(420, Math.round(window.innerWidth * 0.4)), gap = 12;
+  const h = Math.round(w * 9 / 16) + (cap.textContent ? 30 : 0);
+  pop.style.width = w + 'px';
+  const left = r.right + gap + w <= window.innerWidth - 8 ? r.right + gap : Math.max(8, r.left - gap - w);
+  pop.style.left = left + 'px';
+  pop.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2)) + 'px';
   v.play?.().catch(() => {});
 }
 if (canHover) {
