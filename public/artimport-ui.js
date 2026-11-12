@@ -1,5 +1,5 @@
 // "Import pictures & manuals" (Physical) and "Import covers" (Digital): bring in pictures you already have, from a folder on the server that an admin has listed
-// (Settings > Artwork folders). Shown in the details window. A preview says what would happen; nothing is saved until Import is pressed, and it runs in the background.
+// (Settings > Game assets). Shown in the details window. A preview says what would happen; nothing is saved until Import is pressed, and it runs in the background.
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const n = (v) => Number(v || 0).toLocaleString();
@@ -7,21 +7,21 @@ const n = (v) => Number(v || 0).toLocaleString();
 /** Draw the panel into `body`. ctx: the page's { api, toast }. target: 'physical' (covers, spines, discs, manuals) or 'digital' (covers of console games). onDone runs after an import. */
 export async function renderArtImport(ctx, body, { target, onDone = () => {}, select = '' }) {
   const video = target === 'video';
-  const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals']];
-  const what = video ? 'videos' : target === 'digital' ? 'covers' : 'pictures and manuals';
+  const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers'], ['video', 'Videos']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals'], ['video', 'Videos']];
+  const what = video ? 'videos' : target === 'digital' ? 'covers and videos' : 'pictures, manuals and videos';
   body.innerHTML = `
-    <h2 class="detail-title">${video ? 'Import videos' : target === 'digital' ? 'Import covers' : 'Import pictures &amp; manuals'}</h2>
-    ${video ? `<p class="hint">Bring in game videos you already have (an EmuMovies or LaunchBox video pack), from a folder on the server. Put them in a folder named after the platform, with a <b>videos</b> (or snaps) folder inside, or in a <b>videos</b> folder with a folder per platform. They are matched to the games in your Library, Physical and Digital lists by platform and title, and one video is kept per game. The files <b>stay where they are</b>: nothing is copied, so no extra space is used, but a video cannot play while its folder is offline. Only <b>mp4</b> and <b>webm</b> play in a browser: convert other formats first (they are listed below and skipped). Nothing is saved until you press <b>Import</b>; a video fetched from EmuMovies is never replaced.</p>` : `<p class="hint">Bring in ${what} you already have, from a folder on the server. Put them in a folder named after the platform, with a folder inside for each kind: <b>images</b> (or covers, box, front), <b>spines</b>, <b>discs</b>${target === 'digital' ? '' : target === 'rom' ? ', <b>manuals</b>' : ', <b>manuals</b>, or <b>wrap</b> for a whole case in one picture (back, spine and front: it is cut for you)'}, and a region folder inside that if you like (LaunchBox and RetroBat folders are recognised as they are). They are matched to your games by platform and title. Nothing is saved until you press <b>Import</b>, and pictures you uploaded yourself are never replaced.</p>`}
+    <h2 class="detail-title">${video ? 'Import videos' : 'Import game assets'}</h2>
+    ${video ? `<p class="hint">Bring in game videos you already have (an EmuMovies or LaunchBox video pack), from a folder on the server. Put them in a folder named after the platform, with a <b>videos</b> (or snaps) folder inside, or in a <b>videos</b> folder with a folder per platform. They are matched to the games in your Library, Physical and Digital lists by platform and title, and one video is kept per game. The files <b>stay where they are</b>: nothing is copied, so no extra space is used, but a video cannot play while its folder is offline. Only <b>mp4</b> and <b>webm</b> play in a browser: convert other formats first (they are listed below and skipped). Nothing is saved until you press <b>Import</b>; a video fetched from EmuMovies is never replaced.</p>` : `<p class="hint">Bring in game assets (${what}) you already have, from a folder on the server. Put them in a folder named after the platform, with a folder inside for each kind: <b>images</b> (or covers, box, front), <b>spines</b>, <b>discs</b>${target === 'digital' ? '' : target === 'rom' ? ', <b>manuals</b>' : ', <b>manuals</b>, or <b>wrap</b> for a whole case in one picture (back, spine and front: it is cut for you)'}, <b>videos</b> (or snaps) for game videos, and a region folder inside that if you like (LaunchBox, RetroBat and EmuMovies folders are recognised as they are). Videos stay where they are (nothing is copied, so they use no extra space, and they cannot play while their folder is offline); only mp4 and webm play in a browser, so convert other formats first. They are matched to your games by platform and title. Nothing is saved until you press <b>Import</b>, and pictures you uploaded yourself are never replaced.</p>`}
     <div class="panel" id="art-box" style="padding:12px;display:grid;gap:10px">
       <div id="art-add"></div>
       <label class="field" id="art-folder-row"><span>Folder to import from</span><select id="art-folder" class="select"></select></label>
-      <details id="art-pick"><summary>Options: the folder names do not say what the ${video ? 'videos' : 'pictures'} are, or the file names are unusual</summary>
+      <details id="art-pick"><summary>Options: the folder names do not say what the files are, or the file names are unusual</summary>
         <div style="display:grid;gap:10px;margin-top:8px">
           <label class="field"><span>Everything in the folder is</span><select id="art-kind" class="select"><option value="">Work it out from the folder names</option>${kinds.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}${target === 'digital' || target === 'rom' || video ? '' : '<option value="wrap">Full wraps (back, spine and front in one picture)</option>'}</select></label>
           <label class="field"><span>for the platform (type to search)</span><input id="art-plat" list="art-plat-list" placeholder="Work it out from the folder names, or type e.g. PlayStation 3" autocomplete="off" spellcheck="false" /><datalist id="art-plat-list"></datalist><small class="hint" id="art-plat-note"></small></label>
           <label class="field"><span>Where the game's name ends in the file name (optional)</span><input id="art-cut" placeholder="for example  ' ('  : \"Ace Combat 6 (USA, Japan) (En,Fr).png\" is read as Ace Combat 6" autocomplete="off" spellcheck="false" /></label>
         </div></details>
-      <label class="policy-row"><input type="checkbox" id="art-replace" /> <span>${video ? 'Replace videos linked from a folder earlier (a video fetched from EmuMovies is always kept)' : 'Replace pictures that are already there (the automatic ones only: your own are always kept)'}</span></label>
+      <label class="policy-row"><input type="checkbox" id="art-replace" /> <span>${video ? 'Replace videos linked from a folder earlier (a video fetched from EmuMovies is always kept)' : 'Replace what is already there (the automatic ones only: your own uploads, and videos fetched from EmuMovies, are always kept)'}</span></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="art-preview" type="button">Preview</button><button class="btn btn-primary" id="art-apply" type="button" disabled>Import</button></div>
       <div id="art-result" style="margin:0"></div>
     </div>`;
@@ -34,7 +34,7 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
   if (can_edit) wireAddFolder(ctx, body, folders, (path) => renderArtImport(ctx, body, { target, onDone, select: path }));
   if (!usable.length) {
     $('#art-folder-row', body).classList.add('hidden');
-    res.innerHTML = `<p class="hint" style="margin:0">${folders.length ? 'None of the listed folders can be reached right now.' : 'No folder has been added yet.'} ${can_edit ? 'Add one above: type or paste its full path on the server, or press <b>Browse…</b>.' : 'An admin adds them (Settings → Artwork folders).'}</p>`;
+    res.innerHTML = `<p class="hint" style="margin:0">${folders.length ? 'None of the listed folders can be reached right now.' : 'No folder has been added yet.'} ${can_edit ? 'Add one above: type or paste its full path on the server, or press <b>Browse…</b>.' : 'An admin adds them (Settings → Game assets).'}</p>`;
     previewBtn.disabled = true; return;
   }
   sel.innerHTML = usable.map((f) => `<option value="${esc(f.path)}"${f.path === select ? ' selected' : ''}>${esc(f.path)}</option>`).join('');
@@ -67,8 +67,8 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
       res.innerHTML = `<p class="hint" style="margin:0">${n(p.files)} useful files in the folder (${n(p.scanned)} looked at); ${n(p.games)} game${p.games === 1 ? '' : 's'} on your list.</p>
         ${seenBlock(p)}
         <table class="art-table"><thead><tr><th></th><th>Found for your games</th><th>Will import</th><th>Already there</th></tr></thead><tbody>
-        ${kinds.map(([k, l]) => `<tr><th>${l}</th><td>${n(p.matched[k])}</td><td><b>${n(p.will[k])}</b></td><td>${n(p.skipped[k])}</td></tr>`).join('')}</tbody></table>
-        ${p.unmatched_total ? `<details><summary>${n(p.unmatched_total)} picture${p.unmatched_total === 1 ? '' : 's'} matched none of your games</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${p.unmatched.map((u) => `<li>${esc(u.title)} <span class="note">(${esc(u.kind)}, ${esc(u.platform)})</span></li>`).join('')}${p.unmatched_total > p.unmatched.length ? `<li>…and ${n(p.unmatched_total - p.unmatched.length)} more</li>` : ''}</ul></details>` : ''}
+        ${kinds.filter(([k]) => k !== 'video' || video || p.matched.video !== undefined).map(([k, l]) => `<tr><th>${l}</th><td>${n(p.matched[k])}</td><td><b>${n(p.will[k])}</b></td><td>${n(p.skipped[k])}</td></tr>`).join('')}</tbody></table>
+        ${p.unmatched_total ? `<details><summary>${n(p.unmatched_total)} file${p.unmatched_total === 1 ? '' : 's'} matched none of your games</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${p.unmatched.map((u) => `<li>${esc(u.title)} <span class="note">(${esc(u.kind)}, ${esc(u.platform)})</span></li>`).join('')}${p.unmatched_total > p.unmatched.length ? `<li>…and ${n(p.unmatched_total - p.unmatched.length)} more</li>` : ''}</ul></details>` : ''}
         ${p.wraps?.platforms?.length ? `<div id="art-wraps" class="art-wraps"></div>` : ''}
         ${p.wraps?.odd ? `<details><summary>${n(p.wraps.odd)} wrap${p.wraps.odd === 1 ? '' : 's'} a different shape from the rest: left alone</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${p.wraps.odd_list.map((u) => `<li>${esc(u.title)} <span class="note">(${esc(u.platform)}, ${u.ratio} wide for 1 tall; the rest are ${esc(String((p.wraps.platforms.find((x) => x.slug === u.platform) || {}).ratio || ''))})</span></li>`).join('')}</ul></details>` : ''}
         ${p.unsupported_videos ? `<details open><summary>${n(p.unsupported_videos)} video${p.unsupported_videos === 1 ? '' : 's'} in a format a browser cannot play: skipped (convert to mp4 or webm first)</summary><ul class="hint" style="margin:6px 0 0 1.1rem">${(p.unsupported_list || []).map((u) => `<li>${esc(u)}</li>`).join('')}${p.unsupported_videos > (p.unsupported_list || []).length ? '<li>…</li>' : ''}</ul></details>` : ''}
@@ -176,7 +176,7 @@ export function mountWraps(host, p, folder, edited) {
   }
 }
 
-const KIND_NAME = { cover: 'covers', spine: 'spines', back: 'backs', disc: 'discs', manual: 'manuals', wrap: 'full wraps' };
+const KIND_NAME = { cover: 'covers', spine: 'spines', back: 'backs', disc: 'discs', manual: 'manuals', video: 'videos', wrap: 'full wraps' };
 /** What the importer found in the folder, as it read it: so "nothing matched" can be told apart from "nothing was recognised". */
 function seenBlock(p) {
   const rows = (p.seen || []).map((s) => `<li><b>${esc(s.platform)} / ${esc(s.folder || '(top)')}</b> read as ${KIND_NAME[s.kind] || esc(s.kind)}: ${n(s.files)} file${s.files === 1 ? '' : 's'}</li>`).join('');

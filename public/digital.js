@@ -303,7 +303,7 @@ async function onClick(e) {
   if (e.target.closest('#dg-reset')) { reset(); loadDigital(); return; }
   if (e.target.closest('[data-dg-clear]')) { dg.family = null; dg.picked = []; dg.letter = ''; loadDigital(); return; }
   const act = e.target.closest('[data-dg-act]');
-  if (act) { if (act.dataset.dgAct === 'add') openAdd(); else if (act.dataset.dgAct === 'import') openImport(); else if (act.dataset.dgAct === 'art') openArtImport(); else if (act.dataset.dgAct === 'videos') openVideoImport(); return; }
+  if (act) { if (act.dataset.dgAct === 'add') openAdd(); else if (act.dataset.dgAct === 'import') openImport(); else if (act.dataset.dgAct === 'art') openArtImport(); return; }
   const mk = e.target.closest('[data-dg-mark]');
   if (mk) {
     e.preventDefault(); e.stopPropagation();
@@ -580,11 +580,6 @@ function openArtImport() {
   renderArtImport(ctx, $('#drawer-body'), { target: 'digital', onDone: () => loadDigital(true) });
 }
 
-/** Bring in game videos from a video pack on the server (the same panel; the videos are shared by Library, Physical and Digital). */
-function openVideoImport() {
-  openShell(true); $('#drawer-nav')?.classList.add('hidden');
-  renderArtImport(ctx, $('#drawer-body'), { target: 'video', onDone: () => loadDigital(true) });
-}
 
 function openImport() {
   openShell(true); $('#drawer-nav')?.classList.add('hidden');

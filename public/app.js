@@ -324,7 +324,7 @@ document.addEventListener('click', (e) => {
   openCarouselView();
 });
 
-/** Pictures, manuals or videos for Library games, from a folder on the server (see public/artimport-ui.js). */
+/** Game assets (pictures, manuals and videos) for Library games, from a folder on the server (see public/artimport-ui.js). */
 function openRomImport(target) {
   state.detailToken = (state.detailToken || 0) + 1;
   state.openRomId = null; state.openDigital = null; state.openPhysical = null;
@@ -336,8 +336,7 @@ function openRomImport(target) {
   renderArtImport({ api, toast }, $('#drawer-body'), { target, onDone: () => loadLibrary() });
 }
 document.addEventListener('click', (e) => {
-  if (e.target.closest('#lib-art')) openRomImport('rom');
-  else if (e.target.closest('#lib-video')) openRomImport('video');
+  if (e.target.closest('#lib-assets')) openRomImport('rom');
 });
 
 /* ─────────────────────────── sidebar ─────────────────────────── */
@@ -3929,8 +3928,7 @@ function showApp(user, { restore = false } = {}) {
   const isAdmin = user.role === 'admin';
   $$('[data-view="sources"]').forEach((b) => b.classList.toggle('hidden', !isAdmin));
   $('#bulk-enrich')?.classList.toggle('hidden', !isAdmin);
-  $('#lib-art')?.classList.toggle('hidden', !isAdmin);   // the Library is shared: an admin brings in its pictures and manuals
-  $('#lib-video')?.classList.toggle('hidden', !isAdmin);
+  $('#lib-assets')?.classList.toggle('hidden', !isAdmin);   // the Library is shared: an admin brings in its pictures, manuals and videos
   if (isAdmin) startEnrichPolling(); // picks up a metadata run that kept going across a refresh
   // Settings is for everyone (cog in the footer), but admin-only module pills
   // and tiles stay hidden for members; renderSettingsTiles filters by role.
@@ -4053,7 +4051,7 @@ const SETTINGS_MODULES = [
   { id: 'platforms', label: 'Platforms',       mi: 'Library', ico: '🕹', adminOnly: true },
   { id: 'coverage',  label: 'Stats',           mi: 'stats', ico: '📊', adminOnly: true },
   { id: 'covers',    label: 'Covers & platform ids', mi: 'covers', ico: '🖼', adminOnly: true },
-  { id: 'artfolders', label: 'Artwork folders', mi: 'folder-enable', ico: '📁', adminOnly: true },
+  { id: 'artfolders', label: 'Game assets', mi: 'folder-enable', ico: '📁', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', mi: 'database-maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    mi: 'activity-log', ico: '📜', adminOnly: true },
   { id: 'names',     label: 'CSV tools', mi: 'game-csv', ico: '🏷', adminOnly: true },
@@ -4696,7 +4694,7 @@ async function loadSettings() {
   showSettingsModule(activeSettingsModule || 'profile');
 }
 
-/* Artwork folders (admin): the folders on the server that pictures and manuals can be imported from. */
+/* Game assets (admin): the folders on the server that pictures, manuals and videos can be imported from. */
 async function loadArtFolders() {
   const { folders } = await api('/art/folders');
   $('#artfolders-text').value = folders.map((f) => f.path).join('\n');
@@ -4733,7 +4731,7 @@ $('#playpc-check')?.addEventListener('click', () => launcherLink('sync'));
 
 $('#artfolders-save')?.addEventListener('click', async () => {
   const list = $('#artfolders-text').value.split('\n').map((l) => l.trim()).filter(Boolean);
-  try { await api('/art/folders', { method: 'PUT', body: JSON.stringify({ folders: list }) }); toast('Artwork folders saved'); await loadArtFolders(); }
+  try { await api('/art/folders', { method: 'PUT', body: JSON.stringify({ folders: list }) }); toast('Game asset folders saved'); await loadArtFolders(); }
   catch (err) { toast(err.message, true); }
 });
 

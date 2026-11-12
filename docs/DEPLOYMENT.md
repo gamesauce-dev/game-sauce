@@ -157,7 +157,7 @@ You can also avoid copying files at all:
 
 - **Library ROMs** can be scanned in place from any drive (Sources), so they are never copied into `storage/`.
 - **Video packs** (an EmuMovies or LaunchBox pack) can be linked where they sit with **Import videos**: no copy is made and no storage is used. The videos cannot play while that drive is offline. Videos fetched from EmuMovies are the only ones kept in `storage/videos`; they are capped (`EMUMOVIES_MAX_VIDEO_MB`, `EMUMOVIES_CACHE_GB`), oldest removed first.
-- **Artwork folders** you import pictures from stay where they are; the pictures that are imported are small copies.
+- **Game asset folders** (Settings, Library tools, Game assets) you import pictures, manuals and videos from stay where they are; imported pictures and manuals are small copies, and videos are linked, not copied.
 
 ### 3.4a Use the prebuilt image (no building on the server)
 

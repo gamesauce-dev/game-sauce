@@ -126,3 +126,11 @@ body.gp-active .cv-pad-hint { display: flex; }
 .cv-lite .cv-card.mid .cv-face { box-shadow: 0 0 0 2px rgba(255, 255, 255, .92), 0 8px 18px rgba(30, 30, 60, .35); }
 .cv-lite .cv-card.mid .cv-face::after { animation: none; }
 .cv-lite .cv-subs.land .cv-sub { animation: none; }
+
+/* The middle game's video: a box under the covers. It opens (and the covers move up) only for a game that has one. */
+.cv-video { position: relative; flex: 0 0 auto; height: 0; opacity: 0; width: min(92vw, calc(var(--vh) * 16 / 9)); margin: 0 auto; overflow: hidden; border-radius: 12px;
+  --vh: clamp(120px, 20vh, 220px); transition: height .4s cubic-bezier(.22, .7, .2, 1), opacity .3s, margin .4s; background: rgba(15, 17, 26, .45); box-shadow: 0 14px 34px rgba(30, 30, 60, .3); }
+.cv-video.on { height: var(--vh); opacity: 1; margin: 4px auto 2px; }
+.cv-video video { display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; }
+@media (max-height: 640px) { .cv-video { display: none; } }
+@media (prefers-reduced-motion: reduce) { .cv-video { transition: none; } }

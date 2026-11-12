@@ -147,12 +147,12 @@ test('Digital: covers for console games from the same folders, a cover of their 
   assert.equal(db.prepare('SELECT cover_path FROM digital_user_meta WHERE app_id = ? AND user_id = ?').get(celeste, ids.iadmin).cover_path, own, 'Celeste kept its own cover');
 });
 
-test('the screens and the settings: Artwork folders (admin), Import pictures & manuals in Physical and Digital, with a preview first', () => {
+test('the screens and the settings: Game assets (admin), Import game assets in the ROM Library, Physical and Digital, with a preview first', () => {
   const html = read('public/index.html'), app = read('public/app.js'), ph = read('public/physical.js'), dg = read('public/digital.js');
   assert.ok(html.includes('id="mod-artfolders"') && html.includes('id="artfolders-text"') && html.includes('id="artfolders-save"'));
   assert.ok(app.includes("id: 'artfolders'") && app.includes("'/art/folders'"));
   const ui = read('public/artimport-ui.js');
-  assert.ok(ui.includes("'/art/import'") && ui.includes("'/art/import/status'") && ui.includes('Replace pictures that are already there') && ui.includes('id="art-preview"') && ui.includes('id="art-apply" type="button" disabled'), 'preview first, then Import');
+  assert.ok(ui.includes("'/art/import'") && ui.includes("'/art/import/status'") && ui.includes('Replace what is already there') && ui.includes('id="art-preview"') && ui.includes('id="art-apply" type="button" disabled'), 'preview first, then Import');
   assert.ok(ph.includes("renderArtImport(ctx, $('#drawer-body'), { target: 'physical'") && dg.includes("renderArtImport(ctx, $('#drawer-body'), { target: 'digital'"));
   assert.ok(html.includes('data-ph-act="art"') && html.includes('data-dg-act="art"'));
   // an admin can add a folder from the import screen itself: type or paste a path, or browse the server's folders
@@ -277,4 +277,15 @@ test('the preview says what it saw: each folder as it was read, folders with pic
   assert.deepEqual(p.unmatched.map((u) => u.kind), ['disc'], 'an unmatched disc is listed');
   assert.deepEqual(p.links, []);
   assert.ok(read('public/artimport-ui.js').includes('What was found in the folder') && read('public/artimport-ui.js').includes('Linked folders are not followed') && read('public/artimport-ui.js').includes('list="art-plat-list"'), 'the screen shows it, and the platform box can be typed into');
+});
+
+test('Game assets: one Import game assets button everywhere, the Settings entry is renamed with a floppy-disk save, and the wording does not say pictures only', () => {
+  const html = read('public/index.html'), app = read('public/app.js'), ui = read('public/artimport-ui.js'), modern = read('public/modern.js');
+  assert.ok(html.includes('<h3>Game assets ') && !html.includes('<h3>Artwork folders'));
+  assert.ok(app.includes("label: 'Game assets'") && app.includes("toast('Game asset folders saved')"));
+  assert.match(html, /id="artfolders-save"[^>]*><svg/, 'the save button is an icon');
+  assert.ok(html.includes('id="lib-assets"') && html.includes('data-ph-act="art"') && html.includes('data-dg-act="art"'));
+  assert.ok(!html.includes('id="lib-art"') && !html.includes('id="lib-video"') && !html.includes('data-ph-act="videos"') && !html.includes('data-dg-act="videos"'), 'no separate video buttons');
+  assert.ok(modern.includes("id=\"tl-assets\"") && modern.includes("'game-assets'") && !modern.includes("'import-media'] ") );
+  assert.ok(ui.includes("file${p.unmatched_total === 1 ? '' : 's'} matched none of your games") && !ui.includes("picture${p.unmatched_total"));
 });

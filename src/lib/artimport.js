@@ -286,7 +286,27 @@ async function applyVideo(b) {
 }
 
 /** The best file for each (game, kind). `target`: 'physical' (cover, spine, disc, manual) or 'digital' (covers of console games). Nothing is changed. */
-export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
+/**
+ * What an import would do for a list (physical, digital or rom): its pictures and manuals, and the videos in the same folder (videos belong to a game wherever it is listed,
+ * so they are planned the same way for every list). Nothing is changed.
+ */
+export function planArtImport(userId, scan, opts = {}) {
+  const base = planPictures(userId, scan, opts);
+  if (opts.target === 'video') return base;
+  const v = planVideoImport(userId, scan, { replace: opts.replace, cut: opts.cut });
+  base.items.push(...v.items);
+  // The Videos row only appears when the folder has videos (so a pictures-only folder reads exactly as before).
+  if (v.candidates.video || v.unsupported_videos || v.unmatched_total) for (const k of ['matched', 'will', 'skipped', 'candidates']) base[k] = { ...base[k], video: v[k].video };
+  base.unmatched_total += v.unmatched_total; base.unmatched = [...base.unmatched, ...v.unmatched].slice(0, 14);
+  const unk = new Map(base.unknown_platforms.map((u) => [u.name, u.files]));
+  for (const u of v.unknown_platforms) unk.set(u.name, (unk.get(u.name) || 0) + u.files);
+  base.unknown_platforms = [...unk].slice(0, 20).map(([name, files]) => ({ name, files }));
+  base.seen = [...base.seen, ...v.seen].slice(0, 16);
+  base.unsupported_videos = v.unsupported_videos; base.unsupported_list = v.unsupported_list;
+  return base;
+}
+
+function planPictures(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
   if (target === 'video') return planVideoImport(userId, scan, { replace, cut });
   const wanted = target === 'digital' ? new Set(['cover']) : target === 'rom' ? new Set(['cover', 'spine', 'disc', 'manual', 'back']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
   const games = target === 'digital' ? digitalGames(userId) : target === 'rom' ? romGames() : physicalGames(userId);
@@ -389,7 +409,7 @@ async function applyRomArt(b) {
 }
 
 async function applyOne(userId, target, b) {
-  if (target === 'video') return applyVideo(b);
+  if (b.kind === 'video') return applyVideo(b);
   if (target === 'rom') return applyRomArt(b);
   const st = await fsp.stat(b.entry.file);
   if (b.kind === 'manual') {

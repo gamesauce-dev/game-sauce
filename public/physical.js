@@ -246,7 +246,7 @@ function onClick(e) {
   if (e.target.closest('#ph-reset')) { reset(); load(); return; }
   if (e.target.closest('[data-ph-clear]')) { S.family = null; S.picked = []; S.letter = ''; load(); return; }
   const act = e.target.closest('[data-ph-act]');
-  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'videos') openVideoImport(); else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); else if (a === 'review') reviewDigital(); return; }
+  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); else if (a === 'review') reviewDigital(); return; }
   const fav = e.target.closest('[data-ph-fav]');
   if (fav) { e.stopPropagation(); toggleFav(Number(fav.dataset.phFav)); return; }
   const tile = e.target.closest('[data-ph-id]');
@@ -921,12 +921,6 @@ function openArtImport() {
   renderArtImport(ctx, $('#drawer-body'), { target: 'physical', onDone: () => load(true) });
 }
 
-/** Bring in game videos from a video pack on the server (the same panel; the videos are shared by Library, Physical and Digital). */
-function openVideoImport() {
-  ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;
-  openShell(); $('#drawer-nav')?.classList.add('hidden');
-  renderArtImport(ctx, $('#drawer-body'), { target: 'video', onDone: () => load(true) });
-}
 
 function openImport() {
   ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;

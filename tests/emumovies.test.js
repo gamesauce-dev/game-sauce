@@ -330,6 +330,34 @@ test('a video is shared between consoles of one generation (PS2, Xbox, GameCube.
 });
 
 
+test('Import game assets does pictures, manuals and videos in one run from the same folder', async () => {
+  const { db } = await import('../src/db.js');
+  const { PNG: PngLib } = (await import('pngjs')).default; const img = new PngLib({ width: 80, height: 110 }); img.data.fill(180); const PNG = PngLib.sync.write(img);   // a real picture, big enough to be a cover
+  const pack = path.join(TMP, 'combo');
+  const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); return f; };
+  put('snes/covers/Combo Game (USA).png', PNG);
+  put('snes/videos/Combo Game (USA).mp4', MP4);
+  put('snes/videos/Combo Old.avi', Buffer.from('RIFF....AVI '));
+  await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } });
+  const g = (await call('/api/physical/games', { method: 'POST', body: { platform: 'snes', title: 'Combo Game', region: 'USA' } })).body;
+
+  const prev = await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: pack } });
+  assert.equal(prev.body.matched.cover, 1); assert.equal(prev.body.matched.video, 1); assert.equal(prev.body.will.video, 1);
+  assert.equal(prev.body.unsupported_videos, 1);
+  await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: pack, apply: true } });
+  let st; for (let i = 0; i < 80; i++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(st.applied.cover, 1); assert.equal(st.applied.video, 1); assert.equal(st.failed, 0);
+  const shelf = (await call('/api/physical/games')).body.items.find((x) => x.id === g.id);
+  assert.equal(shelf.has_cover, true); assert.equal(shelf.has_video, true);
+
+  // a folder with pictures only reads exactly as it did: no Videos row
+  const plain = path.join(TMP, 'plainpics'); fs.mkdirSync(path.join(plain, 'snes', 'covers'), { recursive: true }); fs.writeFileSync(path.join(plain, 'snes', 'covers', 'Other (USA).png'), PNG);
+  await call('/api/art/folders', { method: 'PUT', body: { folders: [pack, plain] } });
+  const p2 = await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: plain } });
+  assert.equal(p2.body.matched.video, undefined);
+});
+
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '' });
   const { db } = await import('../src/db.js');

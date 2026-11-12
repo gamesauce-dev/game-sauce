@@ -148,8 +148,7 @@
           </div>
         <div class="toolbar-right">
           <button class="btn btn-sm hidden" id="open-carousel" title="Browse the library as a carousel of covers, full screen">◐ Carousel</button>
-          <button class="btn btn-sm hidden" id="lib-art" title="Import pictures and manuals for Library games from a folder on the server">Import pictures</button>
-          <button class="btn btn-sm hidden" id="lib-video" title="Import game videos from a folder of video snaps">Import videos</button>
+          <button class="btn btn-sm hidden" id="lib-assets" title="Import game assets from a folder: artwork, manuals and videos">Import game assets</button>
           <button class="btn btn-sm" id="bulk-enrich" title="Fetch metadata for ROMs that have none yet">✦ Fetch metadata</button>
           <div class="segmented" id="density" title="Grid size">
             <button data-density="comfortable" class="is-active" title="Comfortable grid">▦</button>
@@ -473,10 +472,10 @@
       </div>
 
       <div class="panel hidden" id="mod-artfolders">
-        <h3>Artwork folders <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">Folders on the server that people can bring pictures and manuals in from (Physical &rarr; <b>Import pictures</b>, Digital &rarr; <b>Import covers</b>): for example a LaunchBox <b>Images</b> folder, or a RetroBat <b>roms</b> folder. One full path per line. They are only ever read, and nothing outside this list can be. In Docker or Unraid, mount the folder into the container first (read-only is fine) and list it as the container sees it, such as <code>/art/launchbox-images</code>.</p>
+        <h3>Game assets <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Folders on the server that people can bring game assets in from: pictures, manuals <b>and videos</b> (the <b>Import game assets</b> button in the ROM Library, Physical and Digital): for example a LaunchBox <b>Images</b> folder, or a RetroBat <b>roms</b> folder. One full path per line. They are only ever read, and nothing outside this list can be. In Docker or Unraid, mount the folder into the container first (read-only is fine) and list it as the container sees it, such as <code>/art/launchbox-images</code>.</p>
         <textarea id="artfolders-text" rows="4" class="search" style="width:100%;font-family:ui-monospace,Consolas,monospace" spellcheck="false" placeholder="/art/launchbox-images&#10;/art/retrobat-roms"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary" id="artfolders-save" type="button">Save</button></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary" id="artfolders-save" type="button" title="Save the folders" aria-label="Save the folders"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h8V3M7 21v-7h10v7"/></svg></button></div>
         <p class="hint" id="artfolders-state"></p>
         <h4 style="margin:1.2rem 0 0.3rem">Share artwork between accounts</h4>
         <label class="policy-row"><input type="checkbox" id="art-share" /> <span>When an account has a game that another account already has pictures for (cover, spine, disc, back), copy those pictures across, quietly.</span></label>
@@ -777,8 +776,7 @@
         <span class="ph-bar-end">
           <button class="btn btn-sm" id="dg-sync" title="Fetch your Steam library again">✦ Refresh</button>
           <button class="btn btn-sm hidden" data-dg-act="import" title="Import games via CSV">Import CSV</button>
-          <button class="btn btn-sm" data-dg-act="videos" title="Import game videos from a folder of video snaps">Import videos</button>
-          <button class="btn btn-sm" data-dg-act="art" title="Import artwork from folders">Import covers</button>
+          <button class="btn btn-sm" data-dg-act="art" title="Import game assets from a folder: artwork, manuals and videos">Import game assets</button>
           <button class="btn btn-sm btn-primary" data-dg-act="add" title="Manually add a game">＋ Add a game</button>
         </span>
       </div>
@@ -809,8 +807,7 @@
         <button class="btn btn-sm" data-ph-act="review" title="List the Digital entries that disc to digital added on its own, and take out the ones you do not own digitally">Review Xbox Digital entries</button>
         <button class="btn btn-sm" data-ph-act="digital" title="Add every Xbox One and Xbox Series disc to your Digital library (ones you switched off stay out)">Xbox discs to Digital</button>
         <button class="btn btn-sm" data-ph-act="import" title="Import games via CSV">Import CSV</button>
-        <button class="btn btn-sm" data-ph-act="videos" title="Import game videos from a folder of video snaps">Import videos</button>
-        <button class="btn btn-sm" data-ph-act="art" title="Import artwork and manuals from folders">Import pictures</button>
+        <button class="btn btn-sm" data-ph-act="art" title="Import game assets from a folder: artwork, manuals and videos">Import game assets</button>
         <button class="btn btn-sm btn-primary" data-ph-act="add" title="Manually add a game">＋ Add a game</button>
       </div>
       <nav class="ph-chips" id="ph-chips" aria-label="Platforms"></nav>

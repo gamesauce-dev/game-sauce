@@ -58,6 +58,7 @@ export function openCarousel(host) {
     <div class="cv-subs" id="cv-subs"></div>
     <div class="cv-note hidden" id="cv-note"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
+    <div class="cv-video" id="cv-video" aria-hidden="true"></div>
     <div class="cv-info" id="cv-info" aria-live="polite"></div>
     <div class="cv-pad-hint" aria-hidden="true"><b>◂ ▸</b> games <i>·</i> <b>▲ ▼</b> chips <i>·</i> <b>A</b> play or choose <i>·</i> <b>X</b> browser <i>·</i> <b>Y</b> emulator <i>·</i> <b>B</b> back</div>`;
   document.body.appendChild(root);
@@ -140,13 +141,31 @@ export function openCarousel(host) {
     $('#cv-info').innerHTML = g ? `<div class="cv-title">${esc(g.title)}</div>
       <div class="cv-meta">${esc([g.platform_name, g.release_year, g.developer].filter(Boolean).join('  ·  '))}<span class="cv-pos">${(st.idx + 1).toLocaleString()} of ${n.toLocaleString()}</span></div>
       <div class="cv-acts">${actsHtml(g)}</div>` : '';
-    tint();
+    tint(); scheduleVideo();
   };
+  // ── the video of the middle game: a box below the covers (they move up to make room). It waits until you stop on a game, so scrolling never starts or stops one. ──
+  let vTimer = 0;
+  const showVideo = (g) => {
+    const box = $('#cv-video'); if (!box) return;
+    if (g && g.has_video && !g.steam && g.id != null) {
+      if (box.dataset.id === String(g.id)) return;
+      box.innerHTML = `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}" muted loop autoplay playsinline preload="auto"></video>`;
+      box.dataset.id = String(g.id);
+      const v = box.querySelector('video');
+      v.addEventListener('error', () => { if (box.dataset.id === String(g.id)) { box.classList.remove('on'); delete box.dataset.id; box.innerHTML = ''; } });   // the file has gone: the covers come back down
+      v.play?.().catch(() => {});
+      box.classList.add('on');
+    } else if (box.dataset.id) {
+      box.classList.remove('on'); delete box.dataset.id;
+      setTimeout(() => { if (!box.dataset.id) box.innerHTML = ''; }, 400);
+    }
+  };
+  const scheduleVideo = () => { clearTimeout(vTimer); if (root?.classList.contains('cv-lite')) return; vTimer = setTimeout(() => showVideo(gameAt(st.idx)), 450); };   // Linux draws in software: no video there
   const go = (i) => { const n = st.games.length; if (!n) return; st.idx = Math.max(0, Math.min(n - 1, i)); render(); };
 
   // ── loading ──
   const choose = async (slug) => {
-    st.plat = slug; st.games = []; st.idx = 0; st.els.clear(); $('#cv-rail').innerHTML = ''; $('#cv-info').innerHTML = '';
+    st.plat = slug; st.games = []; st.idx = 0; st.els.clear(); $('#cv-rail').innerHTML = ''; $('#cv-info').innerHTML = ''; showVideo(null);
     const tok = ++st.loading, empty = $('#cv-empty'); empty.classList.remove('hidden'); empty.textContent = 'Loading…';
     drawSubs(); setBackdrop();
     if (slug === STEAM) {   // already fetched: the Steam games that can be played from here
@@ -308,6 +327,7 @@ export function openCarousel(host) {
   });
   function close() {
     document.removeEventListener('keydown', onKey); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
+    clearTimeout(vTimer);
     root.remove(); root = null; document.body.classList.remove('cv-open');
     try { prevFocus?.focus?.(); } catch { /* the opener is gone */ }
   }
