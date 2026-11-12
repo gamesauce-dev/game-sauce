@@ -6,6 +6,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
+import { renderArtImport } from './artimport-ui.js';
 import './video.js';   // the video in a game's details window
 import * as carousel from './carousel.js';
 import * as messages from './messages.js';
@@ -321,6 +322,22 @@ function openCarouselView() {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#open-carousel, [data-open="carousel"]')) return;
   openCarouselView();
+});
+
+/** Pictures, manuals or videos for Library games, from a folder on the server (see public/artimport-ui.js). */
+function openRomImport(target) {
+  state.detailToken = (state.detailToken || 0) + 1;
+  state.openRomId = null; state.openDigital = null; state.openPhysical = null;
+  const drawer = $('#drawer');
+  drawer.classList.remove('hidden'); syncPin(); $('#scrim').classList.toggle('hidden', pinned());
+  $('#drawer-nav')?.classList.add('hidden');
+  $('#drawer-body').innerHTML = '';
+  drawer.scrollTop = 0;
+  renderArtImport({ api, toast }, $('#drawer-body'), { target, onDone: () => loadLibrary() });
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#lib-art')) openRomImport('rom');
+  else if (e.target.closest('#lib-video')) openRomImport('video');
 });
 
 /* ─────────────────────────── sidebar ─────────────────────────── */
@@ -1520,13 +1537,22 @@ async function openDetail(id) {
 
     ${rom.description ? `<p class="detail-desc">${esc(rom.description)}</p>` : ''}
 
-    ${(rom.media && Object.keys(rom.media).length) ? `
+    ${(() => {
+      // The provider's pictures, then the spine, disc and back an admin imported from a folder.
+      const art = [...Object.keys(rom.media || {}).map((k) => [k, `/api/roms/${rom.id}/media/${k}`]), ...(rom.files || []).filter((f) => f.kind !== 'manual').map((f) => [f.kind, f.url])];
+      return art.length ? `
       <div class="section-label">Artwork</div>
       <div class="media-strip">
-        ${Object.entries(rom.media).map(([kind, m]) => `
-          <a href="/api/roms/${rom.id}/media/${kind}" target="_blank" rel="noreferrer" title="${esc(kind)}">
-            <img loading="lazy" src="/api/roms/${rom.id}/media/${kind}" alt="${esc(kind)}" onerror="this.parentElement.remove()" />
+        ${art.map(([kind, url]) => `
+          <a href="${esc(url)}" target="_blank" rel="noreferrer" title="${esc(kind)}">
+            <img loading="lazy" src="${esc(url)}" alt="${esc(kind)}" onerror="this.parentElement.remove()" />
           </a>`).join('')}
+      </div>` : '';
+    })()}
+    ${(rom.files || []).find((f) => f.kind === 'manual') ? `<div class="section-label">Manual</div>
+      <div class="panel" style="padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm btn-primary" data-rom-manual title="Read the manual">Read the manual</button>
+        <a class="btn btn-sm" href="${esc(rom.files.find((f) => f.kind === 'manual').url)}?download=1" download title="Save a copy of this manual">Download</a>
       </div>` : ''}
 
     ${rom.tags?.length ? `<div class="tags">${rom.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
@@ -1822,6 +1848,7 @@ async function openDetail(id) {
     }
   };
 
+  $('[data-rom-manual]', drawer)?.addEventListener('click', () => { const m = (rom.files || []).find((f) => f.kind === 'manual'); if (m) physical.openManual({ title: rom.title, manual: { kind: 'file', url: m.url, name: m.name, type: m.type } }); });
   $('#identify-search', drawer)?.addEventListener('click', runIdentifySearch);
   identifyQ?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); runIdentifySearch(); }
@@ -3902,6 +3929,8 @@ function showApp(user, { restore = false } = {}) {
   const isAdmin = user.role === 'admin';
   $$('[data-view="sources"]').forEach((b) => b.classList.toggle('hidden', !isAdmin));
   $('#bulk-enrich')?.classList.toggle('hidden', !isAdmin);
+  $('#lib-art')?.classList.toggle('hidden', !isAdmin);   // the Library is shared: an admin brings in its pictures and manuals
+  $('#lib-video')?.classList.toggle('hidden', !isAdmin);
   if (isAdmin) startEnrichPolling(); // picks up a metadata run that kept going across a refresh
   // Settings is for everyone (cog in the footer), but admin-only module pills
   // and tiles stay hidden for members; renderSettingsTiles filters by role.

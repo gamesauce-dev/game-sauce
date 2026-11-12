@@ -3,6 +3,7 @@ import { clearDuplicateCache } from '../lib/duplicates.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
+import { dropRomFiles } from '../lib/romfiles.js';
 import { scanSource, scanAll, getScanProgress, getAllScanProgress, sourceRoots } from '../lib/scanner.js';
 import { PLATFORM_SLUGS, PLATFORMS } from '../lib/platforms.js';
 
@@ -168,6 +169,7 @@ router.delete('/:id', (req, res) => {
     // in-place source. That is the whole point of scanning in place.
     // Copies marked Keep in the duplicate finder survive: they stay as orphans instead of being removed.
     db.prepare('UPDATE roms SET source_id = NULL WHERE source_id = ? AND keep_override = 1').run(src.id);
+    for (const r of db.prepare('SELECT id FROM roms WHERE source_id = ?').all(src.id)) dropRomFiles(r.id);   // their imported pictures and manuals go with them
     db.prepare('DELETE FROM roms WHERE source_id = ?').run(src.id);
   } else {
     db.prepare('UPDATE roms SET source_id = NULL WHERE source_id = ?').run(src.id);

@@ -250,6 +250,57 @@ test('video packs: matched by platform and title from a listed folder, linked in
 });
 
 
+test('ROM Library: pictures and manuals from a folder are matched to Library games (admin only), the cover is kept, the rest are served, and they leave with the game', async () => {
+  const { db } = await import('../src/db.js');
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+  const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
+  const pack = path.join(TMP, 'romart');
+  const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); return f; };
+  put('snes/covers/Rom Art Game (USA).png', PNG);
+  put('snes/spines/Rom Art Game (USA).png', PNG);
+  put('snes/discs/Rom Art Game (USA).png', PNG);
+  put('snes/manuals/Rom Art Game (USA).pdf', PDF);
+  put('snes/covers/Nobody Has This.png', PNG);
+  put('snes/manuals/Bad Manual (USA).pdf', Buffer.from('not a pdf at all, just words'));
+  await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } });
+  const rom = (title, sha) => Number(db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1, region) VALUES (?, ?, ?, 'x', (SELECT id FROM platforms WHERE slug = 'snes'), 1, ?, 'USA')").run(title, title.toLowerCase(), `${title}.sfc`, sha).lastInsertRowid);
+  const id = rom('Rom Art Game', 'sha-rom-art'), badId = rom('Bad Manual', 'sha-bad-manual');
+
+  assert.equal((await call('/api/art/import', { token: bobToken, method: 'POST', body: { target: 'rom', folder: pack } })).status, 403, 'the shared Library is changed by an admin only');
+  const prev = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack } });
+  assert.equal(prev.status, 200);
+  assert.equal(prev.body.matched.cover, 1); assert.equal(prev.body.matched.spine, 1); assert.equal(prev.body.matched.disc, 1); assert.equal(prev.body.matched.manual, 2);
+  assert.equal(prev.body.unmatched_total, 1, 'a cover for a game nobody has is left');
+  assert.equal(db.prepare('SELECT COUNT(*) c FROM rom_files').get().c, 0, 'a preview saves nothing');
+
+  await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack, apply: true } });
+  let st; for (let i = 0; i < 80; i++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(st.applied.cover, 1); assert.equal(st.applied.spine, 1); assert.equal(st.applied.disc, 1); assert.equal(st.applied.manual, 1);
+  assert.equal(st.failed, 1); assert.match(st.failures[0].reason, /A manual must be a PDF/);
+  const row = db.prepare('SELECT cover_path, cover_locked FROM roms WHERE id = ?').get(id);
+  assert.ok(row.cover_path && fs.existsSync(row.cover_path) && row.cover_locked === 1, 'the cover is kept like an uploaded one');
+
+  const d = (await call(`/api/roms/${id}`)).body;
+  assert.deepEqual(d.files.map((f) => f.kind).sort(), ['disc', 'manual', 'spine']);
+  const man = await call(`/api/roms/${id}/file/manual`);
+  assert.equal(man.status, 200); assert.match(man.type, /application\/pdf/); assert.equal(man.body.length, PDF.length);
+  assert.equal((await call(`/api/roms/${id}/file/spine`)).status, 200);
+  assert.equal((await call(`/api/roms/${id}/file/back`)).status, 404);
+  assert.equal((await call(`/api/roms/${badId}`)).body.files.length, 0);
+
+  // a second import has nothing left to fill (apart from the manual that cannot be read)
+  const again = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack } });
+  assert.equal(again.body.will.cover + again.body.will.spine + again.body.will.disc, 0);
+
+  const dir = path.dirname(db.prepare('SELECT path FROM rom_files WHERE rom_id = ? LIMIT 1').get(id).path);
+  assert.ok(fs.existsSync(dir));
+  const del = await call(`/api/roms/${id}`, { method: 'DELETE' });
+  assert.equal(del.status, 200);
+  assert.equal(db.prepare('SELECT COUNT(*) c FROM rom_files WHERE rom_id = ?').get(id).c, 0);
+  assert.ok(!fs.existsSync(dir), 'their files went with the game');
+});
+
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '' });
   const { db } = await import('../src/db.js');

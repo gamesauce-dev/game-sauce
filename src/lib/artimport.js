@@ -26,8 +26,10 @@ import { resolvePlatform, setPhysicalArt, setManualFile, isDiscPlatform, imageAs
 import { splitWrap, splitFor } from './wrapcut.js';
 import { setConsoleCover, CONSOLE_PLATFORMS } from './consoles.js';
 import { MAX_MANUAL_BYTES } from './manuals.js';
-import { MAX_COVER_BYTES } from './coverzip.js';
+import { MAX_COVER_BYTES, sniffImage } from './coverzip.js';
 import { titleKey as videoTitleKey } from './emumovies.js';
+import { setRomFile } from './romfiles.js';
+import { saveCover } from './storage.js';
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 // Videos a browser can play. Other formats (avi, mkv, flv...) are not played, so they are only counted and the person is told to convert them first.
@@ -208,6 +210,13 @@ const hasFile = (p) => { try { return Boolean(p) && fs.existsSync(p); } catch { 
 function physicalGames(userId) {
   return db.prepare('SELECT id, platform, title, region, cover_path, cover_locked, spine_path, spine_locked, disc_path, disc_locked, manual_path, manual_link, back_path, back_locked FROM physical_games WHERE user_id = ?').all(userId);
 }
+/** The Library's games (shared by everyone): with the files already kept for each, so a gap is only filled where there is one. */
+function romGames() {
+  const rows = db.prepare('SELECT r.id, p.slug AS platform, r.title, r.region, r.cover_path, r.cover_locked FROM roms r JOIN platforms p ON p.id = r.platform_id').all();
+  const files = new Map();
+  for (const f of db.prepare('SELECT rom_id, kind, path FROM rom_files').all()) { if (!files.has(f.rom_id)) files.set(f.rom_id, {}); files.get(f.rom_id)[`${f.kind}_path`] = f.path; }
+  return rows.map((r) => ({ ...r, ...(files.get(r.id) || {}) }));
+}
 function digitalGames(userId) {
   const rows = db.prepare("SELECT g.store, g.app_id, g.name AS title, g.platform, g.country AS region, um.cover_path AS own, dd.cover_path AS shared FROM digital_games g LEFT JOIN digital_user_meta um ON um.user_id = g.user_id AND um.store = g.store AND um.app_id = g.app_id LEFT JOIN digital_details dd ON dd.store = g.store AND dd.app_id = g.app_id WHERE g.user_id = ? AND g.store != 'steam'").all(userId);
   return rows.map((r) => ({ ...r, lib: CONSOLE_PLATFORMS[r.platform]?.meta?.[0] || r.platform }));
@@ -279,8 +288,8 @@ async function applyVideo(b) {
 /** The best file for each (game, kind). `target`: 'physical' (cover, spine, disc, manual) or 'digital' (covers of console games). Nothing is changed. */
 export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
   if (target === 'video') return planVideoImport(userId, scan, { replace, cut });
-  const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
-  const games = target === 'digital' ? digitalGames(userId) : physicalGames(userId);
+  const wanted = target === 'digital' ? new Set(['cover']) : target === 'rom' ? new Set(['cover', 'spine', 'disc', 'manual', 'back']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
+  const games = target === 'digital' ? digitalGames(userId) : target === 'rom' ? romGames() : physicalGames(userId);
   const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
   const byKey = new Map();
   for (const g of games) { const k = `${slugOf(g)}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(g); }
@@ -293,7 +302,7 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
     if (!wanted.has(e.kind)) continue;
     const slug = e.platforms?.length ? (e.platforms.map(platOf).find(Boolean) || null) : platOf(e.platform);
     if (!slug) { const nm = e.platforms?.length ? (e.platforms[0] || '(no folder)') : e.platform; unknownPlatforms.set(nm, (unknownPlatforms.get(nm) || 0) + 1); continue; }
-    if (e.kind === 'disc' && !isDiscPlatform(slug)) continue;
+    if (e.kind === 'disc' && target !== 'rom' && !isDiscPlatform(slug)) continue;
     candidatesSeen[e.kind]++;
     const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
     if (!list) { unmatchedTotal++; unmatchedPer[e.kind] = (unmatchedPer[e.kind] || 0) + 1; if (unmatchedPer[e.kind] <= 6) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }   // a few of each kind, so every kind shows
@@ -325,7 +334,8 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
   for (const b of best.values()) {
     matched[b.kind]++;
     const g = b.game; let gap;
-    if (target === 'digital') gap = !hasFile(g.own) && (replace || !hasFile(g.shared));   // a cover of their own is never replaced; an automatic one only when asked
+    if (target === 'rom') gap = b.kind === 'cover' ? (!hasFile(g.cover_path) || (replace && !g.cover_locked)) : (!hasFile(g[`${b.kind}_path`]) || replace);   // a cover that was uploaded or imported is kept; a file brought in earlier is replaced only when asked
+    else if (target === 'digital') gap = !hasFile(g.own) && (replace || !hasFile(g.shared));   // a cover of their own is never replaced; an automatic one only when asked
     else if (b.kind === 'manual') gap = !g.manual_link && !hasFile(g.manual_path);       // there is no automatic manual: only gaps are filled
     else { const path_ = g[`${b.kind}_path`], locked = g[`${b.kind}_locked`]; gap = !hasFile(path_) || (replace && !locked); }
     if (gap) { will[b.kind]++; items.push(b); }
@@ -361,8 +371,26 @@ export const artJobStatus = (userId) => ({ ...(jobs.get(userId) || blank()), app
 export const artJobIdle = async (userId) => { while (jobs.get(userId)?.running) await new Promise((r) => setTimeout(r, 25)); };
 
 let lastWrap = { key: '', parts: null };   // the wrap just cut: its cover and its spine come one after the other
+/** One picture or manual for a Library game. The cover is kept like an uploaded one (it is not replaced by a later automatic lookup); the rest go in roms' own files. */
+async function applyRomArt(b) {
+  const st = await fsp.stat(b.entry.file);
+  if (b.kind === 'manual') {
+    if (st.size > MAX_MANUAL_BYTES) throw new Error('over 50 MB');
+    setRomFile(b.game.id, 'manual', await fsp.readFile(b.entry.file), path.basename(b.entry.file));
+    return;
+  }
+  if (st.size > MAX_COVER_BYTES) throw new Error('over 8 MB');
+  const buf = await fsp.readFile(b.entry.file);
+  if (b.kind !== 'cover') { setRomFile(b.game.id, b.kind, buf); return; }
+  const type = sniffImage(buf);
+  if (!type) throw new Error('not a JPEG, PNG or WebP picture');
+  const file = saveCover(buf, `custom-${b.game.id}-${Date.now()}`, type);
+  db.prepare("UPDATE roms SET cover_path = ?, cover_locked = 1, updated_at = datetime('now') WHERE id = ?").run(file, b.game.id);
+}
+
 async function applyOne(userId, target, b) {
   if (target === 'video') return applyVideo(b);
+  if (target === 'rom') return applyRomArt(b);
   const st = await fsp.stat(b.entry.file);
   if (b.kind === 'manual') {
     if (st.size > MAX_MANUAL_BYTES) throw new Error('over 50 MB');

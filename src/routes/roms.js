@@ -17,6 +17,7 @@ import os from 'node:os';
 import { clearDuplicateCache } from '../lib/duplicates.js';
 import { mintLaunchToken } from '../lib/launch.js';
 import { flagVideos } from '../lib/emumovies.js';
+import { romFiles, romFile, dropRomFiles } from '../lib/romfiles.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -155,6 +156,7 @@ function romById(id, uid = null) {
   const full = row ? withTags([row])[0] : null;
   if (full) {
     full.favourite_of = db.prepare('SELECT u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id = ? ORDER BY u.username').all(full.id).map((x) => x.username);
+    full.files = romFiles(id);   // a spine, disc, back or manual the picture importer brought in
     // Cheap playability flag for the detail drawer: BIOS-free core exists?
     const core = playableCore(full.platform, full.release_year, full.play_override);
     full.playable = core || null;
@@ -211,6 +213,7 @@ export async function applyMetadataRecord(id, meta, uid = null) {
  */
 function deleteRomRow(rom, { deleteFile = false } = {}) {
   purgeSaveFiles({ romId: rom.id });
+  dropRomFiles(rom.id);   // its imported spine, disc, back and manual
   const stmts = [
     'DELETE FROM rom_tags WHERE rom_id = ?',
     'DELETE FROM collection_roms WHERE rom_id = ?',
@@ -755,6 +758,16 @@ router.get('/:id/cover', (req, res) => {
   }
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendFile(path.resolve(rom.cover_path));
+});
+
+/** A file the picture importer brought in for this game: spine, disc, back or manual (?download=1 saves it instead of showing it). */
+router.get('/:id/file/:kind', (req, res) => {
+  const f = romFile(Number(req.params.id), String(req.params.kind));
+  if (!f) return res.status(404).json({ error: 'No file of that kind' });
+  res.setHeader('Cache-Control', 'private, max-age=3600');
+  res.type(f.type);
+  if (req.query.download === '1') return res.download(f.path, f.name);
+  res.sendFile(path.resolve(f.path));
 });
 
 /** Any cached provider media for this ROM: ?kind=screenshot|fanart|wheel|manual|video */

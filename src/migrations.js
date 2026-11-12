@@ -603,3 +603,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS game_videos (
   PRIMARY KEY (platform, title_key)
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '50') ON CONFLICT(key) DO UPDATE SET value = '50'").run();
+
+/* ── v52: extra files for a Library game beyond its cover: a spine, a disc, a back and a manual (src/lib/romfiles.js), brought in by the picture importer. ── */
+db.exec(`CREATE TABLE IF NOT EXISTS rom_files (
+  rom_id INTEGER NOT NULL REFERENCES roms(id) ON DELETE CASCADE, kind TEXT NOT NULL, path TEXT NOT NULL, name TEXT, type TEXT, bytes INTEGER,
+  PRIMARY KEY (rom_id, kind)
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '52') ON CONFLICT(key) DO UPDATE SET value = '52'").run();

@@ -833,7 +833,8 @@ function manualBlock(g) {
 }
 
 /** Read a game's manual: a link opens in a new tab (in the desktop app, in your browser); a file you uploaded opens in a viewer over the page. */
-function openManual(g) {
+/** Read a manual in the built-in reader. g: { title, manual: { kind: 'file' | 'link', url, name, type } } (the Library uses it too). */
+export function openManual(g) {
   const m = g?.manual;
   if (!m) { ctx.toast('No manual for this game yet: add a link or upload one in its details window', true); return; }
   if (m.kind === 'link') { window.open(m.url, '_blank', 'noopener,noreferrer'); return; }
