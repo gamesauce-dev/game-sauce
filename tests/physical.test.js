@@ -555,3 +555,28 @@ test('review: only entries the shelf made and nobody touched are offered; nothin
   assert.equal((await call('/api/physical/digital/review', { token: annTok })).body.remove.length, 0);
   void other;
 });
+
+test('bulk delete: several of your own Physical and Digital games at once; never anyone else\'s, and a disc takes its made counterpart with it', async () => {
+  const mk = async (title, tok) => (await call('/api/physical/games', { method: 'POST', token: tok, body: { platform: 'xboxone', title, region: 'PAL', digital: true } })).body;
+  const a = await mk('Bulk Del A'), b = await mk('Bulk Del B'), theirs = await mk('Bulk Del Theirs', annTok);
+  const dig = async (tok) => (await call('/api/digital/games?store=xbox&hidden=show', { token: tok })).body.items.map((g) => g.name);
+  assert.ok((await dig()).includes('Bulk Del A'));
+  // Ann cannot delete the admin's games with their ids; only her own count
+  const sneaky = await call('/api/physical/games/bulk-delete', { method: 'POST', token: annTok, body: { ids: [a.id, theirs.id] } });
+  assert.equal(sneaky.body.removed, 1);
+  assert.ok((await call(`/api/physical/games/${a.id}`)).body.title === 'Bulk Del A');
+  const gone = await call('/api/physical/games/bulk-delete', { method: 'POST', body: { ids: [a.id, b.id, 999999] } });
+  assert.equal(gone.body.removed, 2);
+  assert.equal((await call(`/api/physical/games/${a.id}`)).status, 404);
+  assert.ok(!(await dig()).includes('Bulk Del A') && !(await dig()).includes('Bulk Del B'), 'their made counterparts went with them');
+
+  // Digital: console games go, Steam and unknown stores are ignored, nothing of Ann's is touched
+  const d1 = (await call('/api/digital/games', { method: 'POST', body: { platform: 'xone', title: 'Bulk Dig One' } })).body;
+  const d2 = (await call('/api/digital/games', { method: 'POST', body: { platform: 'xsx', title: 'Bulk Dig Two' } })).body;
+  const dt = (await call('/api/digital/games', { method: 'POST', token: annTok, body: { platform: 'xone', title: 'Bulk Dig Ann' } })).body;
+  const r = await call('/api/digital/games/bulk-delete', { method: 'POST', body: { items: [{ store: d1.store, app_id: d1.app_id }, { store: d2.store, app_id: d2.app_id }, { store: 'steam', app_id: '10' }, { store: 'weird', app_id: 'x' }, { store: dt.store, app_id: dt.app_id }] } });
+  assert.equal(r.body.removed, 2);
+  const names = await dig();
+  assert.ok(!names.includes('Bulk Dig One') && !names.includes('Bulk Dig Two'));
+  assert.ok((await dig(annTok)).includes('Bulk Dig Ann'));
+});

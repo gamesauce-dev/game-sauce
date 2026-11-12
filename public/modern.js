@@ -573,6 +573,8 @@ const ICON_MAP = [
   ['#view-physical [data-ph-toggle="fav"]', 'favourite'], ['#view-physical [data-ph-toggle="nocover"]', 'no-covers-2'], ['#view-physical [data-ph-toggle="unmatched"]', 'issue'], ['#view-physical [data-ph-toggle="spine"]', 'covers'],
   ['#view-physical #ph-reset', 'clear-reset-2'], ['#view-physical [data-ph-act="lookup"]', 'fetch-metadata-3'], ['#view-physical [data-ph-act="import"]', 'csv-import'], ['#view-physical [data-ph-act="add"]', 'game-add'],
   ['#view-digital [data-dg-toggle="fav"]', 'favourite'], ['#view-digital [data-dg-toggle="nocover"]', 'no-covers-2'], ['#view-digital [data-dg-toggle="installed"]', 'gamepad'], ['#view-digital [data-dg-toggle="hidden"]', 'hidden'],
+  ['#view-physical [data-ph-act="digital"]', 'disc'], ['#view-physical [data-ph-act="review"]', 'preview-2'], ['#ph-rv-go', 'delete'], ['#ph-rv-none', 'clear-reset-2'],
+  ['#view-digital [data-bulk-toggle], #view-physical [data-bulk-toggle]', 'select-2'], ['.sel-bar [data-bulk="all"]', 'select-2'], ['.sel-bar [data-bulk="none"]', 'clear-reset-2'], ['.sel-bar [data-bulk="delete"]', 'delete'], ['.sel-bar [data-bulk="done"]', 'done'],
   ['#view-digital #dg-reset', 'clear-reset-2'], ['#view-digital [data-dg-act="import"]', 'csv-import'], ['#view-digital [data-dg-act="add"]', 'game-add'],
   ['#dg-id-go', 'search'], ['#dg-edit button[type="submit"]', 'save'], ['#dg-add button[type="submit"]', 'tick'], ['#dg-add-more', 'game-add'], ['#dg-imp-preview', 'preview-2'], ['#dg-imp-apply', 'csv-import'],
   ['#view-messages [data-msg-act="new"]', 'edit'], ['#msg-send', 'arrow-right'], ['#msg-share', 'game-cartridge'], ['#msg-notice-toggle', 'issue'], ['#msg-notice-send', 'tick'],

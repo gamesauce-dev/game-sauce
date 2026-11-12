@@ -1781,3 +1781,14 @@ select option { background: var(--panel); color: var(--text); }
 .dg-card .dg-disc, .dg-disc { color: #eafff6; border-color: #34d399; background: rgba(16, 150, 100, .78); box-shadow: 0 0 0.8rem rgba(52, 211, 153, .8); }
 #drawer .ibtn[data-d="digital"][aria-pressed="true"], #drawer .ibtn.dg-disc-ind { color: var(--good); border-color: var(--good); background: rgba(52, 211, 153, .14); box-shadow: 0 0 0.7rem rgba(52, 211, 153, .6); }
 .dg-disc-ind { cursor: default; }
+
+/* Select mode in the Digital and Physical lists (public/bulk.js). */
+.sel-bar { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.5rem 0.2rem; }
+.sel-bar .sel-count { font-weight: 600; margin-right: 0.4rem; }
+.bulk-mode .dg-card, .bulk-mode .ph-card { cursor: pointer; }
+.bulk-mode .dg-card.bulk-off { opacity: .45; cursor: not-allowed; }
+.dg-card.bulk-picked .card-cover, .ph-card.bulk-picked .card-cover { box-shadow: 0 0 0 0.1429rem rgba(248, 113, 113, .85); border-color: var(--bad); }
+.dg-card.bulk-picked .card-cover::after, .ph-card.bulk-picked .card-cover::after {
+  content: "✓"; position: absolute; top: 0.5rem; left: 0.5rem; z-index: 6; width: 1.7rem; height: 1.7rem; display: grid; place-items: center;
+  border-radius: 0.5rem; background: var(--bad); color: #fff; font-weight: 700;
+}

@@ -2,6 +2,7 @@
 // Nintendo and Xbox games come from a CSV or are added by hand. Laid out like the Physical Library: store chips with each console's own chips under them,
 // search, sort, filters, A-Z, a heading with how many (and, for Steam, the hours), tiles, and the details window. Each person has their own list.
 import { identifyBlock, wireIdentify, comboHtml, wireCombo } from './identify.js';
+import { attachBulk } from './bulk.js';
 import { landChips } from './chip-motion.js';
 import { renderArtImport } from './artimport-ui.js';
 import { familyLabel, platformBadge } from './platform-names.js';
@@ -65,6 +66,14 @@ export function initDigital(c) {
   const view = $('#view-digital'); if (!view || view.dataset.ready) return;
   view.dataset.ready = '1';
   view.addEventListener('click', onClick);
+  // Select mode: pick tiles, or Select all under the current filters, and delete them together (console games; Steam's come from Steam).
+  attachBulk({
+    view, grid: $('#dg-grid'), tile: '.dg-card', barAfter: $('#dg-bar'), toggleSel: '[data-bulk-toggle]', ctx, noun: 'game', where: 'your Digital library',
+    keyOf: (t) => (t.dataset.dgStoreOf === 'steam' ? null : dgKey(t.dataset.dgStoreOf, t.dataset.dgApp)),
+    allKeys: () => dgIds().filter((k) => !k.startsWith('steam:')),
+    remove: async (keys) => (await ctx.api('/digital/games/bulk-delete', { method: 'POST', body: JSON.stringify({ items: keys.map((k) => { const i = k.indexOf(':'); return { store: k.slice(0, i), app_id: k.slice(i + 1) }; }) }) })).removed,
+    reload: () => loadDigital()
+  });
   let t; $('#dg-q')?.addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { dg.q = e.target.value.trim(); dg.letter = ''; loadDigital(); }, 200); });
   $('#dg-sort')?.addEventListener('change', (e) => { dg.sort = e.target.value; dg.letter = ''; loadDigital(); });
 }

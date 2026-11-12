@@ -49,6 +49,14 @@ router.delete('/games/:id', (req, res) => {
 // Every Xbox One / Series disc that is not switched off gets its Digital counterpart.
 router.post('/digital/all', (req, res) => { res.json(linkAllDigital(me(req))); });
 
+// Delete several of this person's own games at once: { ids: [...] }. A Digital counterpart the shelf made goes with its disc.
+router.post('/games/bulk-delete', (req, res) => {
+  const ids = [...new Set((Array.isArray(req.body?.ids) ? req.body.ids : []).map(Number))].filter(Number.isInteger).slice(0, 20000);
+  let removed = 0;
+  db.transaction(() => { for (const id of ids) { try { removePhysical(me(req), id); removed++; } catch (err) { if (err.status !== 404) throw err; } } })();
+  res.json({ removed });
+});
+
 // Review the Digital entries that disc to digital made on its own, and drop the ones the person confirms: { ids: [disc ids] }. Nothing is taken out without this.
 router.get('/digital/review', (req, res) => { res.json(reviewCounterparts(db, me(req))); });
 router.post('/digital/review', (req, res) => { res.json({ removed: dropCounterparts(db, me(req), req.body?.ids) }); });

@@ -9,6 +9,7 @@ import { platformBadge, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
 import { renderArtImport } from './artimport-ui.js';
 import { drawPage, mountViewer, pdfReady } from './pdfview.js';
+import { attachBulk } from './bulk.js';
 
 let ctx = null;
 const S = {
@@ -37,6 +38,15 @@ export function initPhysical(c) {
   const view = $('#view-physical'); if (!view || view.dataset.ready) return;
   view.dataset.ready = '1';
   view.addEventListener('click', onClick);
+  // Select mode: pick tiles, or Select all under the current filters, and delete them together (a Digital counterpart the shelf made goes with its disc).
+  attachBulk({
+    view, grid: $('#ph-tiles'), tile: '.ph-card', barAfter: $('#ph-bar'), toggleSel: '[data-bulk-toggle]', ctx, noun: 'game', where: 'your shelf',
+    keyOf: (t) => Number(t.dataset.phId) || null,
+    allKeys: () => S.items.map((g) => g.id),
+    canStart: () => { if (S.view === 'shelf') { ctx.toast('Switch to the tile view to select games', true); return false; } return true; },
+    remove: async (ids) => (await ctx.api('/physical/games/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) })).removed,
+    reload: () => load(true)
+  });
   for (const t of ['load', 'error']) $('#ph-shelf')?.addEventListener(t, onSpineLoad, true);   // load and error do not bubble: caught on the way down
   let t; $('#ph-q')?.addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value.trim(); S.letter = ''; load(); }, 200); });
   $('#ph-sort')?.addEventListener('change', (e) => { S.sort = e.target.value; S.letter = ''; load(); });

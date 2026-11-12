@@ -19,6 +19,14 @@ router.get('/', (req, res) => {
   res.json({ steam: describeAccount(me(req)), stores: stores.map((s) => ({ ...s, visible: seen.stores[s.store] || 0, label: STORE_LABELS[s.store] || s.store })), platforms: seen.platforms.map((p) => ({ ...p, label: platformLabel(p.store, p.platform) })), counts: countGames(me(req)), details_job: detailsJobStatus() });
 });
 
+// Delete several of this person's own console games at once: { items: [{ store, app_id }] }. Steam games come from Steam and are not removed here.
+router.post('/games/bulk-delete', (req, res) => {
+  const items = (Array.isArray(req.body?.items) ? req.body.items : []).filter((g) => g && isConsoleStore(String(g.store)) && g.app_id != null).slice(0, 20000);
+  let removed = 0;
+  db.transaction(() => { for (const g of items) { try { removeConsoleGame(me(req), String(g.store), String(g.app_id)); removed++; } catch (err) { if (err.status !== 404) throw err; } } })();
+  res.json({ removed });
+});
+
 router.get('/games', (req, res) => {
   const store = knownStore(String(req.query.store || '')) ? String(req.query.store) : '';
   const sort = ['name', '-name', 'platform', 'added', 'year', 'hours', 'recent'].includes(String(req.query.sort || '')) ? String(req.query.sort) : 'name';
