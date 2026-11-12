@@ -4,6 +4,7 @@ import multer from 'multer';
 import db from '../db.js';
 import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
+import { flagVideos } from '../lib/emumovies.js';
 import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
@@ -25,6 +26,7 @@ router.get('/games', (req, res) => {
     platforms, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', nocover: req.query.nocover === '1',
     unmatched: req.query.unmatched === '1', spine: req.query.spine === '1', letter: String(req.query.letter || '').toUpperCase()
   });
+  flagVideos(out.items, (g) => g.title, (g) => g.platform);
   res.json({ ...out, total: out.items.length });
 });
 

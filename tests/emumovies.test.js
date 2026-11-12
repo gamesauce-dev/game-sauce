@@ -201,3 +201,33 @@ test('with no login saved, fetching says so and the window offers nothing', asyn
   assert.equal((await call(`/api/videos/status?kind=rom&id=${id}`)).body.can_fetch, false);
   assert.equal((await call(`/api/videos/fetch?kind=rom&id=${id}`, { method: 'POST', body: {} })).status, 400);
 });
+
+test('tiles know which games already have a video, and a game shares one video wherever it is listed (Library, Physical, Digital)', async () => {
+  const { db } = await import('../src/db.js');
+  await saveCreds({ EMUMOVIES_USER: 'frank', EMUMOVIES_PASSWORD: 'hunter2-secret' });
+  // Digital: an Xbox 360 console game is filed under the Library platform xbox360
+  const dg = (await call('/api/digital/games', { token: bobToken, method: 'POST', body: { platform: 'x360', title: 'Shared Clip Game' } })).body;
+  let list = (await call('/api/digital/games?store=xbox&hidden=show', { token: bobToken })).body.items;
+  assert.ok(!list.find((g) => g.name === 'Shared Clip Game').has_video, 'no video yet: no flag');
+  const f = await call(`/api/videos/fetch?kind=digital&store=${dg.store}&id=${encodeURIComponent(dg.app_id)}`, { token: bobToken, method: 'POST', body: {} });
+  assert.equal(f.body.available, true);
+  assert.ok(db.prepare("SELECT 1 FROM game_videos WHERE platform = 'xbox360' AND title_key = 'shared clip game' AND path IS NOT NULL").get(), 'kept under the Library platform slug');
+  list = (await call('/api/digital/games?store=xbox&hidden=show', { token: bobToken })).body.items;
+  assert.equal(list.find((g) => g.name === 'Shared Clip Game').has_video, true);
+  // the same game on the Physical shelf already has its video: nothing more to fetch
+  const ph = (await call('/api/physical/games', { token: bobToken, method: 'POST', body: { platform: 'xbox360', title: 'Shared Clip Game' } })).body;
+  const calls0 = calls.search;
+  assert.equal((await call(`/api/videos/status?kind=physical&id=${ph.id}`, { token: bobToken })).body.available, true);
+  assert.equal(calls.search, calls0);
+  const shelf = (await call('/api/physical/games', { token: bobToken })).body.items;
+  assert.equal(shelf.find((g) => g.id === ph.id).has_video, true);
+  // Library: a ROM of that title and platform is flagged too, and a different game is not
+  const plat = db.prepare("SELECT id FROM platforms WHERE slug = 'xbox360'").get();
+  if (plat) {
+    db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1) VALUES ('Shared Clip Game', 'shared clip game', 's.iso', 'x', ?, 1, 'sha-shared-clip')").run(plat.id);
+    db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1) VALUES ('Other Game', 'other game', 'o.iso', 'x', ?, 1, 'sha-other-game')").run(plat.id);
+    const roms = (await call('/api/roms?limit=500')).body.items;
+    assert.equal(roms.find((r) => r.title === 'Shared Clip Game').has_video, true);
+    assert.ok(!roms.find((r) => r.title === 'Other Game').has_video);
+  }
+});

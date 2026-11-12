@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import db from '../db.js';
 import { emumovies, ensureVideo, videoFile, recentlyMissed } from '../lib/emumovies.js';
-import { isConsoleStore } from '../lib/consoles.js';
+import { isConsoleStore, libSlug } from '../lib/consoles.js';
 import { listGames } from '../lib/steam.js';
 
 // Game videos for the details window. One address shape for the three places a game can live:
@@ -26,7 +26,7 @@ export function resolveGame(req) {
     const store = String(q.store || '');
     if (!isConsoleStore(store)) return null;   // Steam games have no video snaps on EmuMovies
     const g = listGames(me(req), { store, hidden: 'show' }).find((x) => x.app_id === id);
-    return g?.platform ? { title: g.name, platform: g.platform } : null;
+    return g?.platform ? { title: g.name, platform: libSlug(g.platform) } : null;   // kept under the Library platform, so a game shares one video wherever it is listed
   }
   return null;
 }

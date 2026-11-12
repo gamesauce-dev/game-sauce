@@ -268,7 +268,7 @@ export async function loadDigital(keep = false) {
   dg.ids = items.map((g) => dgKey(g.store, g.app_id));
   dg.html = items.map((g) => {
     const st = badgeOf(g), steam = g.store === 'steam';
-    return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}">
+    return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}"${g.has_video ? ` data-vid="digital:${esc(g.store)}:${esc(g.app_id)}"` : ''}>
       <div class="card-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
         <div class="card-fallback">${esc(initials(g.name))}</div>
         ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}

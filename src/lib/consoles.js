@@ -38,6 +38,8 @@ export const CONSOLE_PLATFORMS = {
   xone: { store: 'xbox', label: 'Xbox One', badge: 'XBOX ONE', meta: ['xboxone', 'xboxseries'] },
   xsx: { store: 'xbox', label: 'Xbox Series X|S', badge: 'X|S', meta: ['xboxseries', 'xboxone'] }
 };
+/** A Digital console id (xone, xsx, ds...) as the Library platform slug its videos are kept under (xboxone, xboxseries, nds...). */
+export const libSlug = (p) => CONSOLE_PLATFORMS[p]?.meta?.[0] || p || '';
 const platformOf = (store, platform) => (CONSOLE_PLATFORMS[platform]?.store === store ? CONSOLE_PLATFORMS[platform] : null);
 /** The name a game's platform is shown under (an Xbox game from before the consoles were told apart has none, so it is just Xbox). */
 export const platformLabel = (store, platform) => platformOf(store, platform)?.label || CONSOLE_STORES[store]?.label || store;

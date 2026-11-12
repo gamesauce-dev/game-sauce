@@ -1792,3 +1792,11 @@ select option { background: var(--panel); color: var(--text); }
   content: "✓"; position: absolute; top: 0.5rem; left: 0.5rem; z-index: 6; width: 1.7rem; height: 1.7rem; display: grid; place-items: center;
   border-radius: 0.5rem; background: var(--bad); color: #fff; font-weight: 700;
 }
+
+/* Videos (public/video.js): in place of the cover at the top of the details window, and as a preview over a tile's cover on hover. */
+.detail-cover.has-video:not(.show-art) { aspect-ratio: 16 / 9 !important; position: relative; overflow: hidden; }
+.detail-cover .vid-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; z-index: 3; border-radius: inherit; }
+.detail-cover.has-video.show-art .vid-cover { display: none; }
+.vid-note { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.card-cover .vid-hover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; z-index: 2; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.card-cover .vid-hover.on { opacity: 1; }

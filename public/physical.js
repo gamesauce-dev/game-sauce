@@ -320,7 +320,7 @@ async function lookupAgain(btn) {
 
 const tileHtml = (g) => {
   const col = accentOf(g.platform), p = platOf(g.platform);
-  return `<div class="card ph-card" data-ph-id="${g.id}" tabindex="0" role="button" aria-label="${esc(g.title)}, ${esc(p.name)}">
+  return `<div class="card ph-card" data-ph-id="${g.id}"${g.has_video ? ` data-vid="physical:${g.id}"` : ''} tabindex="0" role="button" aria-label="${esc(g.title)}, ${esc(p.name)}">
     <div class="card-cover" style="background:linear-gradient(160deg,${col},#12141a)">
       <div class="card-fallback${g.has_cover ? ' has-cover' : ''}">${esc(initials(g.title))}</div>
       ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onerror="this.style.display='none';this.previousElementSibling?.classList.remove('has-cover')" />` : ''}

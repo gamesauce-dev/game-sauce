@@ -16,6 +16,7 @@ import { listZip, planCovers, planCoversForCsv, applyCovers } from '../lib/cover
 import os from 'node:os';
 import { clearDuplicateCache } from '../lib/duplicates.js';
 import { mintLaunchToken } from '../lib/launch.js';
+import { flagVideos } from '../lib/emumovies.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -536,6 +537,7 @@ router.get('/', (req, res) => {
     const extra = req.user?.role === 'admin' ? { candidate_core: playableCore(r.platform, null, 1) } : {};
     return { ...r, playable: core || null, playable_core: core, ...extra };
   });
+  flagVideos(out, (r) => r.title, (r) => r.platform);
   res.json({ total, limit: lim, offset: off, items: out });
 });
 

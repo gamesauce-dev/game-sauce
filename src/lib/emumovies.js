@@ -197,6 +197,14 @@ export function recentlyMissed({ title, platform }) {
   return Boolean(row);
 }
 
+/** Marks list items that already have a kept video (item.has_video = true), so a tile can offer a preview. One query for the lot; items without one are left alone. */
+export function flagVideos(items, titleOf, platformOf) {
+  const keys = new Set(db.prepare("SELECT platform || char(10) || title_key AS k FROM game_videos WHERE path IS NOT NULL").all().map((r) => r.k));
+  if (!keys.size) return items;
+  for (const it of items) { const p = platformOf(it); if (p && keys.has(p + '\n' + titleKey(titleOf(it)))) it.has_video = true; }
+  return items;
+}
+
 const inflight = new Map();
 
 /**
