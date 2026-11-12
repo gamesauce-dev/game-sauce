@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
@@ -43,6 +43,11 @@ router.patch('/games/:id', (req, res) => {
 
 router.delete('/games/:id', (req, res) => {
   try { res.json(removePhysical(me(req), req.params.id)); } catch (err) { fail(res, err); }
+});
+
+// An Xbox One / Series disc's counterpart in Digital: { on: true | false }. Taking the disc off the shelf removes a counterpart this created.
+router.put('/games/:id/digital', (req, res) => {
+  try { res.json(setDigitalCounterpart(me(req), req.params.id, req.body?.on === true)); } catch (err) { fail(res, err); }
 });
 
 // Take a candidate picked in the identify search (the same shape POST /metadata/search returns) and put it on this game.

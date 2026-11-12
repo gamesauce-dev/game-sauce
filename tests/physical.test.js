@@ -427,7 +427,7 @@ test('shelf, disc cases: a click on the pulled-out cover still works when the de
 
 test('the back of the case: a Back picture slot (upload, folder import, cut from a wrap), and a flat turn of the closed case to show it', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css'), srv = read('src/lib/physical.js'), mig = read('src/migrations.js'), rt = read('src/routes/physical.js');
-  assert.match(mig, /back_path/); assert.match(mig, /schema_version', '47'/);
+  assert.match(mig, /back_path/); assert.match(mig, /schema_version', '4[78]'/);
   assert.ok(srv.includes("back: { path: 'back_path'") && srv.includes('export function physicalBackPath') && srv.includes('has_back: Boolean(r.back_path)'));
   assert.ok(rt.includes("router.get('/back/:id'"));
   assert.ok(ph.includes('class="ph-case-rear"') && ph.includes('class="ph-case-turn"') && ph.includes('function turnCase()') && ph.includes("el.classList.toggle('is-back')"));
@@ -456,4 +456,39 @@ test('back art: a boxed game keeps a looked-up back picture (cached, served only
   // the screen and the lookup are wired in
   const lbSrc = read('src/lib/physical.js'); assert.ok(lbSrc.includes('async function lookupBackDefault') && lbSrc.includes('export async function fetchBack') && lbSrc.includes('back_tried_at'));
   assert.ok(read('public/app.js').includes('with box backs'));
+});
+
+test('an Xbox One / Series disc can have a Digital counterpart that leaves with the disc', async () => {
+  const mk = async (platform, title) => (await call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'PAL' } })).body;
+  const dig = async () => (await call('/api/digital/games?store=xbox&hidden=show')).body.items;
+  const a = await mk('xboxone', 'Twin Test One');
+  assert.equal(a.digital_possible, true); assert.equal(a.digital_linked, false);
+  const on = await call(`/api/physical/games/${a.id}/digital`, { method: 'PUT', body: { on: true } });
+  assert.equal(on.status, 200); assert.equal(on.body.digital_linked, true); assert.equal(on.body.digital_made, true);
+  const row = (await dig()).find((g) => g.name === 'Twin Test One');
+  assert.ok(row); assert.equal(row.platform, 'xone'); assert.ok(row.physical);
+  // taking the disc off the shelf takes the made counterpart out of Digital
+  await call(`/api/physical/games/${a.id}`, { method: 'DELETE' });
+  assert.ok(!(await dig()).some((g) => g.name === 'Twin Test One'));
+
+  // a Digital game that was already there is only marked, and stays
+  const b = await mk('xboxseries', 'Twin Test Two');
+  await call('/api/digital/games', { method: 'POST', body: { platform: 'xsx', title: 'Twin Test Two' } });
+  const on2 = await call(`/api/physical/games/${b.id}/digital`, { method: 'PUT', body: { on: true } });
+  assert.equal(on2.body.digital_linked, true); assert.equal(on2.body.digital_made, false);
+  await call(`/api/physical/games/${b.id}`, { method: 'DELETE' });
+  assert.ok((await dig()).some((g) => g.name === 'Twin Test Two'));
+
+  // unticking removes a made one; removing it from Digital unlinks the disc; other platforms are refused
+  const c = await mk('xboxone', 'Twin Test Three');
+  await call(`/api/physical/games/${c.id}/digital`, { method: 'PUT', body: { on: true } });
+  const off = await call(`/api/physical/games/${c.id}/digital`, { method: 'PUT', body: { on: false } });
+  assert.equal(off.body.digital_linked, false);
+  assert.ok(!(await dig()).some((g) => g.name === 'Twin Test Three'));
+  await call(`/api/physical/games/${c.id}/digital`, { method: 'PUT', body: { on: true } });
+  const made = (await dig()).find((g) => g.name === 'Twin Test Three');
+  await call(`/api/digital/games/xbox/${made.app_id}`, { method: 'DELETE' });
+  assert.equal((await call(`/api/physical/games/${c.id}`)).body.digital_linked, false);
+  const ps = await mk('ps4', 'Twin Test Four');
+  assert.equal((await call(`/api/physical/games/${ps.id}/digital`, { method: 'PUT', body: { on: true } })).status, 400);
 });
