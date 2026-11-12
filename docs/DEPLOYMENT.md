@@ -28,7 +28,7 @@ Works on Windows 11, Linux, and macOS. One service, one SQLite file, no build st
   - `data/gamesauce.db` — the catalogue (ROM rows, users, metadata, DAT index)
   - `data/secret.key` — credential encryption key (auto-created unless
     `GAMESAUCE_SECRET_KEY` is set)
-  - `storage/` — imported ROM copies, cached covers/media, uploaded DATs
+  - `storage/` — imported ROM copies, cached covers/media, fetched videos, manuals, uploaded DATs (see 3.4b to put all or part of it on another drive)
 - **Your ROM folders are never modified.** Sources are scanned in place
   (path + hashes recorded). Only `Add ROMs` imports copies into `storage/roms`.
 
@@ -132,6 +132,32 @@ Add to `docker-compose.yml` under `volumes:`:
 Then `docker compose up -d` and in the UI: **Sources → Add folder → Browse** to
 `/roms/...`. The `:ro` suffix means the container physically cannot modify your
 files even if asked to.
+
+### 3.4b Keeping artwork, videos or ROMs on another drive
+
+game-sauce keeps two folders of its own, and each can be on any drive:
+
+| Folder (setting) | What is in it |
+|---|---|
+| `data/` (`GAMESAUCE_DATA_DIR`) | the database and `secret.key` (keep this one small, private and backed up) |
+| `storage/` (`GAMESAUCE_STORAGE_DIR`) | everything game-sauce stores itself, in subfolders: `roms` (copies made by Add ROMs), `covers` and `media` (cover art and provider pictures), `videos` (videos fetched from EmuMovies), `manuals`, `rom-files` (spines, discs, backs and manuals imported for Library games) and `saves` |
+
+There is one `storage/` setting, not one per kind of file, but you can still put a single kind on its own drive:
+
+- **Everything on another drive:** point `GAMESAUCE_STORAGE_DIR` at it (`/mnt/media/game-sauce`, `D:\game-sauce-storage`). In Docker, bind-mount that folder to `/app/storage` instead of the `gs-storage` volume.
+- **Only one kind on another drive (for example the videos):**
+  - *Docker:* add a second bind mount on top of the subfolder, e.g. `- /mnt/big-disk/gs-videos:/app/storage/videos` under `volumes:`.
+  - *Proxmox LXC:* add a mount point for the drive and mount it at `<storage>/videos` (`/var/lib/game-sauce/storage/videos` on the standard install).
+  - *Bare Node on Linux or macOS:* a symlink, `ln -s /mnt/big-disk/gs-videos storage/videos`.
+  - *Bare Node on Windows:* a junction, `mklink /J storage\videos E:\gs-videos`.
+- **Moving files that already exist:** stop game-sauce, move the folder (or its contents) to the new place, then set up the mount or link so the old path leads there, and start it again. Make sure the account game-sauce runs as can write to the new drive (on Linux, `chown` it).
+- **Backups:** the built-in backup holds the database and settings, not `storage/`. Back the drive up yourself.
+
+You can also avoid copying files at all:
+
+- **Library ROMs** can be scanned in place from any drive (Sources), so they are never copied into `storage/`.
+- **Video packs** (an EmuMovies or LaunchBox pack) can be linked where they sit with **Import videos**: no copy is made and no storage is used. The videos cannot play while that drive is offline. Videos fetched from EmuMovies are the only ones kept in `storage/videos`; they are capped (`EMUMOVIES_MAX_VIDEO_MB`, `EMUMOVIES_CACHE_GB`), oldest removed first.
+- **Artwork folders** you import pictures from stay where they are; the pictures that are imported are small copies.
 
 ### 3.4a Use the prebuilt image (no building on the server)
 
@@ -383,4 +409,4 @@ container, then reach game-sauce by the NAS's tailnet address.
 
 See README "Configuration" for the full env table (`PORT`, `HOST`,
 `GAMESAUCE_DATA_DIR`, `GAMESAUCE_STORAGE_DIR`, `GAMESAUCE_SECRET_KEY`,
-`SS_*`, `IGDB_*`, `SGDB_API_KEY`, `GAMESAUCE_MAX_DAT`, proxy flags).
+`SS_*`, `IGDB_*`, `SGDB_API_KEY`, `EMUMOVIES_*`, `GAMESAUCE_MAX_DAT`, proxy flags).

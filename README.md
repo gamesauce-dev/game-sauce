@@ -589,7 +589,10 @@ Notes:
 |---|---|
 | `HOST` / `PORT` | bind address / port (default `127.0.0.1` / `8080`) |
 | `GAMESAUCE_DATA_DIR` | where `gamesauce.db` + `secret.key` live (default `./data`) |
-| `GAMESAUCE_STORAGE_DIR` | where imported ROMs + cached media live (default `./storage`) |
+| `GAMESAUCE_STORAGE_DIR` | where imported ROMs, covers and media, fetched videos, manuals and imported Library pictures live, in subfolders (default `./storage`). Put it on another drive, or mount one subfolder such as `videos` elsewhere: see docs/DEPLOYMENT.md, "Keeping artwork, videos or ROMs on another drive" |
+| `EMUMOVIES_USER` / `EMUMOVIES_PASSWORD` / `EMUMOVIES_API_KEY` | EmuMovies login (and API key, if EmuMovies issued one) for game videos; normally entered under Settings, Metadata providers (stored encrypted) |
+| `EMUMOVIES_API_BASE` | the EmuMovies API address, if you need to override it |
+| `EMUMOVIES_MAX_VIDEO_MB` / `EMUMOVIES_CACHE_GB` | largest single video (default 200) and total size of fetched videos kept (default 20), oldest removed first; videos linked from a pack you keep are not counted or removed |
 | `GAMESAUCE_ADMIN_USER` / `GAMESAUCE_ADMIN_PASSWORD` | first-run admin (min 10 chars, letter + number) |
 | `GAMESAUCE_SECRET_KEY` | key for encrypting stored provider credentials (recommended in production) |
 | `GAMESAUCE_RESTART` | how a restore restarts the server: `exit` (let systemd/Docker restart it; the default when either is detected) or `manual` (you restart it yourself) |
