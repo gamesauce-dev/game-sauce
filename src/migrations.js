@@ -622,3 +622,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '53') ON CON
 /* ── v54: ScreenScraper's number for the Xbox 360 is 33 (the stored 56 searched another system, so no Xbox 360 game matched). Only a value still at the old built-in 56 is changed; one an admin set is left. ── */
 db.prepare("UPDATE platforms SET screenscraper_id = 33 WHERE slug = 'xbox360' AND screenscraper_id = 56").run();
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '54') ON CONFLICT(key) DO UPDATE SET value = '54'").run();
+
+/* ── v55: ScreenScraper does not list the PS5, Xbox One or Xbox Series as systems (the stored 388, 392 and 391 were guesses that are not on its list), so a lookup for them could only fail and spend the day's allowance. Cleared, only where still at those guesses. ── */
+db.prepare("UPDATE platforms SET screenscraper_id = NULL WHERE (slug = 'ps5' AND screenscraper_id = 388) OR (slug = 'xboxone' AND screenscraper_id = 392) OR (slug = 'xboxseries' AND screenscraper_id = 391)").run();
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '55') ON CONFLICT(key) DO UPDATE SET value = '55'").run();

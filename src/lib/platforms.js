@@ -39,15 +39,15 @@ export const PLATFORMS = [
   { slug: 'ps2', name: 'Sony PlayStation 2', short_name: 'PS2', family: 'Sony', manufacturer: 'Sony', generation: 6, accent: '#1a1a8c', extensions: ['chd', 'iso', 'gz', 'cso', 'bin'], screenscraper: 58, tgdb: 11 },
   { slug: 'ps3', name: 'Sony PlayStation 3', short_name: 'PS3', family: 'Sony', manufacturer: 'Sony', generation: 7, accent: '#283593', extensions: ['pkg', 'iso', 'ps3', 'sfo'], screenscraper: 59, tgdb: 12 },
   { slug: 'ps4', name: 'Sony PlayStation 4', short_name: 'PS4', family: 'Sony', manufacturer: 'Sony', generation: 8, accent: '#1565c0', extensions: ['pkg', 'iso', 'fpkg', 'pkgsrc'], screenscraper: 60, tgdb: 4919 },
-  { slug: 'ps5', name: 'Sony PlayStation 5', short_name: 'PS5', family: 'Sony', manufacturer: 'Sony', generation: 9, accent: '#0d47a1', extensions: ['pkg', 'iso', 'exfat'], screenscraper: 388, tgdb: null },
+  { slug: 'ps5', name: 'Sony PlayStation 5', short_name: 'PS5', family: 'Sony', manufacturer: 'Sony', generation: 9, accent: '#0d47a1', extensions: ['pkg', 'iso', 'exfat'], screenscraper: null, tgdb: null },
   { slug: 'psp', name: 'Sony PSP', short_name: 'PSP', family: 'Sony', manufacturer: 'Sony', generation: 7, accent: '#212121', extensions: ['cso', 'iso', 'pbp', 'chd'], screenscraper: 61, tgdb: 13 },
   { slug: 'psvita', name: 'Sony PS Vita', short_name: 'Vita', family: 'Sony', manufacturer: 'Sony', generation: 8, accent: '#263238', extensions: ['vpk', 'psvita', 'mai'], screenscraper: 62, tgdb: 4939 },
 
   /* ───────────────────────── Microsoft ───────────────────────── */
   { slug: 'xbox', name: 'Microsoft Xbox', short_name: 'XBX', family: 'Microsoft', manufacturer: 'Microsoft', generation: 6, accent: '#107c10', extensions: ['xiso', 'iso', 'xbe'], screenscraper: 55, tgdb: 14 },
   { slug: 'xbox360', name: 'Xbox 360', short_name: 'X360', family: 'Microsoft', manufacturer: 'Microsoft', generation: 7, accent: '#43a047', extensions: ['iso', 'god', 'xex', 'zar'], screenscraper: 33, tgdb: 15 },
-  { slug: 'xboxone', name: 'Xbox One', short_name: 'XB1', family: 'Microsoft', manufacturer: 'Microsoft', generation: 8, accent: '#2e7d32', extensions: ['xvc', 'msixvc'], screenscraper: 392, tgdb: null },
-  { slug: 'xboxseries', name: 'Xbox Series X|S', short_name: 'XSX', family: 'Microsoft', manufacturer: 'Microsoft', generation: 9, accent: '#1b5e20', extensions: ['xvc', 'msixvc'], screenscraper: 391, tgdb: null },
+  { slug: 'xboxone', name: 'Xbox One', short_name: 'XB1', family: 'Microsoft', manufacturer: 'Microsoft', generation: 8, accent: '#2e7d32', extensions: ['xvc', 'msixvc'], screenscraper: null, tgdb: null },
+  { slug: 'xboxseries', name: 'Xbox Series X|S', short_name: 'XSX', family: 'Microsoft', manufacturer: 'Microsoft', generation: 9, accent: '#1b5e20', extensions: ['xvc', 'msixvc'], screenscraper: null, tgdb: null },
 
   /* ───────────────────────── Sega ───────────────────────── */
   { slug: 'genesis', name: 'Sega Genesis / Mega Drive', short_name: 'GEN', family: 'Sega', manufacturer: 'Sega', generation: 4, accent: '#1a237e', extensions: ['md', 'gen', 'smd', '68k'], screenscraper: 1, tgdb: 18 },
