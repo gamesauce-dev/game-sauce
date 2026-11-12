@@ -207,6 +207,15 @@ function ssSign(url) {
   } catch { return url; }
 }
 
+const SS_ASSET_TYPES = { cover: 'box-2D', back: 'box-2D-back', spine: 'box-2D-side', disc: 'support-2D', manual: 'manuel' };
+/** Which region's picture to prefer for a game on a shelf (its own region first). */
+function ssRegionOrder(region) {
+  const r = String(region || '').toLowerCase();
+  if (/ntsc-?u|\bus\b|usa|north america|canada/.test(r)) return ['us', 'wor', 'eu', 'jp'];
+  if (/pal|europe|\beu\b|\buk\b|aus/.test(r)) return ['eu', 'wor', 'us', 'jp'];
+  if (/ntsc-?j|japan|asia|\bjp\b/.test(r)) return ['jp', 'wor', 'us', 'eu'];
+  return ['us', 'eu', 'wor', 'jp'];
+}
 const ssAuth = () => ({ softname: 'game-sauce', output: 'json', devid: cred('SS_DEV_ID'), devpassword: cred('SS_DEV_PASSWORD'), ssid: cred('SS_USER'), sspassword: cred('SS_PASSWORD') });
 
 /**
@@ -401,6 +410,43 @@ const screenscraper = {
     }
     if (!url) return { none: cacheGet(key)?.why || 'it has no video for this game' };
     return { url, signUrl: ssSign, throttle: ssThrottle };
+  },
+
+  /**
+   * Everything ScreenScraper keeps for a game that game-sauce can use: { urls: { cover, back, spine, disc, manual, video }, why } (a kind it has none of is left out; why says so
+   * when it has nothing). The links carry no credential (ssSign adds them when a file is fetched). The answer is remembered; force asks afresh. Throws a safe message on a service problem.
+   */
+  async assetsFor({ title, platform: slug, region = '', force = false }) {
+    if (!this.enabled) return null;
+    const row = db.prepare('SELECT slug, screenscraper_id FROM platforms WHERE slug = ?').get(slug);
+    if (!row?.screenscraper_id) return { urls: {}, why: 'this platform has no ScreenScraper system number yet' };
+    const order = ssRegionOrder(region), key = `ss-assets:${slug}:${gameTitleKey(title)}:${order[0]}`;
+    let rec = force ? null : cacheGet(key);
+    if (!rec) {
+      const f = await ssGameByTitle(title, row.screenscraper_id);
+      if (f.error) throw new Error(f.error);
+      const urls = {};
+      if (f.game) {
+        for (const [kind, type] of Object.entries(SS_ASSET_TYPES)) { const u = ssMedia(f.game, type, order); if (u) urls[kind] = u; }
+        const v = ssMedia(f.game, 'video-normalized', order) || ssMedia(f.game, 'video', order); if (v) urls.video = v;
+      }
+      rec = { urls, why: f.game ? (Object.keys(urls).length ? null : 'it has the game but none of these assets') : f.why };
+      cacheSet(key, 'screenscraper', rec);
+      // the video lookup shares what was just learned: one search serves both
+      cacheSet(`ss-video2:${slug}:${gameTitleKey(title)}`, 'screenscraper', { url: urls.video || null, why: urls.video ? null : (rec.why || 'it has the game but no video for it') });
+    }
+    return rec;
+  },
+
+  /** One file from ScreenScraper (a picture or a manual): signed at this moment, waits its turn, and refuses anything over maxBytes. Throws a safe message. */
+  async fetchFile(url, maxBytes) {
+    const res = await ssThrottle(() => fetch(ssSign(url), { signal: AbortSignal.timeout(60000), headers: { 'User-Agent': 'game-sauce' } }));
+    if (!res.ok) throw new Error(`ScreenScraper's file answered HTTP ${res.status}`);
+    const declared = Number(res.headers.get('content-length'));
+    if (declared && declared > maxBytes) throw new Error('the file is over the size limit');
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!buf.length || buf.length > maxBytes) throw new Error(buf.length ? 'the file is over the size limit' : 'the file was empty');
+    return buf;
   },
 
   /** Ask ScreenScraper how much of today's quota is left. */

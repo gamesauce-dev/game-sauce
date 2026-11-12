@@ -4,6 +4,7 @@ import db from '../db.js';
 import { videoSourcesEnabled, videoSourceLabel, ensureVideo, videoFile, recentlyMissed } from '../lib/emumovies.js';
 import { isConsoleStore, libSlug } from '../lib/consoles.js';
 import { listGames } from '../lib/steam.js';
+import { fetchAssets } from '../lib/assets.js';
 
 // Game videos for the details window. One address shape for the three places a game can live:
 //   ?kind=rom&id=12   ?kind=physical&id=7   ?kind=digital&store=xbox&id=<app id>
@@ -50,6 +51,17 @@ router.post('/fetch', async (req, res, next) => {
     if (r.status === 'error') return res.status(502).json({ error: r.error });
     res.json({ available: r.status === 'ready', bytes: r.bytes || null, source: r.source ? videoSourceLabel(r.source) : null, missed: r.status === 'none', why: r.why || null });
   } catch (err) { next(err); }
+});
+
+// "Find assets": look up this game's video, covers, spine, disc, back and manual and keep whatever is missing ({ force: true } asks the sources afresh). Gaps only; never in bulk.
+router.post('/assets', async (req, res, next) => {
+  try {
+    const game = resolveGame(req);
+    if (!game) return notFound(res);
+    if (!videoSourcesEnabled().length) return res.status(400).json({ error: 'No source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)' });
+    const q = { ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) };
+    res.json(await fetchAssets({ kind: String(q.kind || ''), id: String(q.id || ''), store: String(q.store || ''), userId: me(req), force: req.body?.force === true }));
+  } catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); next(err); }
 });
 
 router.get('/file', (req, res) => {

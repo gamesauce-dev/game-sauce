@@ -80,14 +80,36 @@ function playInCover(slot, src) {
   return true;
 }
 
+/* ───── Find assets: this game's video, covers, spine, disc art, back and manual, whatever is missing (one game, when asked) ───── */
+const ASSET_NAME = { video: 'video', cover: 'cover', spine: 'spine', disc: 'disc art', back: 'back', manual: 'manual' };
+const FIND_TIP = "Look for this game's video, cover, spine, disc art, back and manual, and keep whatever is missing. Nothing you added yourself is replaced.";
+const names = (list) => list.map((k) => ASSET_NAME[k] || k).join(', ');
+
+async function findAssets(slot, btn, msg) {
+  btn.disabled = true; msg.textContent = 'looking…';
+  try {
+    const r = await call('/api/videos/assets?' + query(slot), { method: 'POST', body: JSON.stringify({ force: true }) });
+    const got = r.got || [], res = r.results || {};
+    const none = Object.keys(res).filter((k) => res[k] === 'none'), failed = Object.keys(res).filter((k) => res[k] === 'failed');
+    const parts = [];
+    if (got.length) parts.push('Added: ' + names(got));
+    if (failed.length) parts.push('Could not keep: ' + names(failed) + (r.errors ? ' (' + Object.values(r.errors).join('; ') + ')' : ''));
+    if (none.length) parts.push('Not available: ' + names(none) + (r.why ? ' (' + r.why + ')' : ''));
+    const message = parts.length ? parts.join('. ') + '.' : 'Nothing is missing.';
+    if (got.length) { document.dispatchEvent(new CustomEvent('gs-assets-changed', { detail: { kind: slot.dataset.kind, id: slot.dataset.id, store: slot.dataset.store || '', message } })); return; }   // the window is drawn again with what arrived
+    msg.textContent = message; btn.disabled = false;
+  } catch (err) { btn.disabled = false; msg.textContent = err.message; }
+}
+
 function show(slot, s) {
   if (!slot.isConnected) return;
+  const finder = (label, cls = 'btn') => `<button class="${cls} vid-find" type="button" title="${esc(FIND_TIP)}">${label}</button> <span class="hint vid-msg" role="status"></span>`;
   if (s.available) {
     const src = `/api/videos/file?${query(slot)}`;
     const inCover = playInCover(slot, src);
     slot.innerHTML = inCover
-      ? `<p class="hint vid-note">Video${s.bytes ? ` (${esc(mb(s.bytes))})` : ''}${s.source ? `, from ${esc(s.source)}` : ''}. <button type="button" class="btn btn-sm vid-toggle">Show cover</button></p>`
-      : `<div class="section-label">Video</div><video class="vid-player" controls preload="metadata" playsinline src="${esc(src)}"></video>${s.bytes ? `<p class="hint">${esc(mb(s.bytes))}${s.source ? `, from ${esc(s.source)}` : ''}</p>` : ''}`;
+      ? `<p class="hint vid-note">Video${s.bytes ? ` (${esc(mb(s.bytes))})` : ''}${s.source ? `, from ${esc(s.source)}` : ''}. <button type="button" class="btn btn-sm vid-toggle">Show cover</button> ${s.can_fetch ? finder('Find missing assets', 'btn btn-sm') : ''}</p>`
+      : `<div class="section-label">Video</div><video class="vid-player" controls preload="metadata" playsinline src="${esc(src)}"></video>${s.bytes ? `<p class="hint">${esc(mb(s.bytes))}${s.source ? `, from ${esc(s.source)}` : ''}</p>` : ''}${s.can_fetch ? `<p class="hint">${finder('Find missing assets', 'btn btn-sm')}</p>` : ''}`;
     const tg = slot.querySelector('.vid-toggle');
     tg?.addEventListener('click', () => {
       const cover = slot.closest('#drawer-body')?.querySelector('.detail-cover'), v = cover?.querySelector('.vid-cover'); if (!cover || !v) return;
@@ -95,20 +117,15 @@ function show(slot, s) {
       if (art) v.pause(); else v.play?.().catch(() => {});
       tg.textContent = art ? 'Show video' : 'Show cover';
     });
+    const fb = slot.querySelector('.vid-find'); fb?.addEventListener('click', () => findAssets(slot, fb, slot.querySelector('.vid-msg')));
     return;
   }
-  if (!s.can_fetch) { slot.innerHTML = ''; return; }   // nobody set EmuMovies up: no empty section
-  slot.innerHTML = `<div class="section-label">Video</div>
+  if (!s.can_fetch) { slot.innerHTML = ''; return; }   // no source is set up: no empty section
+  slot.innerHTML = `<div class="section-label">Video and artwork</div>
     <p class="hint">${s.missed ? 'No video was found for this game the last time it was looked for.' : 'No video kept for this game yet.'}${s.why ? ` <span class="vid-why">${esc(s.why)}</span>` : ''}</p>
-    <button class="btn vid-find" type="button">${s.missed ? 'Try again' : 'Find video'}</button> <span class="hint vid-msg" role="status"></span>`;
+    ${finder('Find assets')}`;
   const btn = slot.querySelector('.vid-find'), msg = slot.querySelector('.vid-msg');
-  btn.addEventListener('click', async () => {
-    btn.disabled = true; msg.textContent = 'looking for a video…';
-    try {
-      const r = await call('/api/videos/fetch?' + query(slot), { method: 'POST', body: JSON.stringify({ force: Boolean(s.missed) }) });
-      show(slot, r.available ? { ...s, ...r } : { ...s, missed: true });
-    } catch (err) { btn.disabled = false; msg.textContent = err.message; }
-  });
+  btn.addEventListener('click', () => findAssets(slot, btn, msg));
 }
 
 async function fill(slot) {

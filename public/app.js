@@ -324,6 +324,15 @@ document.addEventListener('click', (e) => {
   openCarouselView();
 });
 
+/** "Find assets" in a details window (public/video.js) brought something in: say what, and draw the window and the list again. */
+document.addEventListener('gs-assets-changed', (e) => {
+  const d = e.detail || {};
+  if (d.message) toast(d.message);
+  if (d.kind === 'rom') { openDetail(Number(d.id)); loadLibrary(); }
+  else if (d.kind === 'physical') { physical.openDetail(Number(d.id)); physical.load(true); }
+  else if (d.kind === 'digital') { digital.openDigitalDetail(d.store, d.id); digital.loadDigital(true); }
+});
+
 /** Game assets (pictures, manuals and videos) for Library games, from a folder on the server (see public/artimport-ui.js). */
 function openRomImport(target) {
   state.detailToken = (state.detailToken || 0) + 1;

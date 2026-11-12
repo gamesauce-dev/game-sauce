@@ -16,8 +16,13 @@ delete process.env.EMUMOVIES_USER; delete process.env.EMUMOVIES_PASSWORD; delete
 const MP4 = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.alloc(2000, 1)]);
 const calls = { login: 0, search: 0, file: 0, searched: [], ss: 0, ssParams: [], ssFile: [] };
 let fake, fakeBase, server, base, adminToken, bobToken;
+let SS_FILES = {};   // name -> { type, body }, built before the stand-in starts
 
 before(async () => {
+  const { PNG: PL } = (await import('pngjs')).default;
+  const png = (w, h) => { const p = new PL({ width: w, height: h }); p.data.fill(190); return PL.sync.write(p); };
+  SS_FILES = { 'cover.png': { type: 'image/png', body: png(80, 110) }, 'back.png': { type: 'image/png', body: png(80, 110) }, 'spine.png': { type: 'image/png', body: png(24, 110) },
+    'disc.png': { type: 'image/png', body: png(100, 100) }, 'manual.pdf': { type: 'application/pdf', body: Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n') } };
   fake = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
     if (url.pathname === '/ss/jeuRecherche.php' || url.pathname === '/ss/jeuInfos.php') {
@@ -31,14 +36,17 @@ before(async () => {
       if (searching && name === 'Ss Wrong Game') return res.end(JSON.stringify({ header: {}, response: { jeux: [{ id: 'g:Another Title Entirely', noms: [{ langue: 'en', text: 'Another Title Entirely' }] }] } }));
       if (searching) return res.end(JSON.stringify({ header: {}, response: { jeux: [{ id: 'g:' + name, noms: [{ langue: 'en', text: name }] }] } }));
       // the links carry the asker's credentials, as ScreenScraper's can
-      const link = (media) => `${fakeBase}/ssfiles/${media}.mp4?devid=devid-x&devpassword=devpw-secret-1&softname=game-sauce&ssid=ssuser&sspassword=sspw-secret-2&media=${media}`;
-      return res.end(JSON.stringify({ header: {}, response: { jeu: { id: '77', noms: [{ langue: 'en', text: name }], medias: [
-        { type: 'video', region: 'wor', url: link('video') }, { type: 'video-normalized', region: 'wor', url: link('video-normalized') },
-        { type: 'box-2D', region: 'us', url: `${fakeBase}/ssfiles/box.png?devid=devid-x&devpassword=devpw-secret-1&ssid=ssuser&sspassword=sspw-secret-2` } ] } } }));
+      const creds = 'devid=devid-x&devpassword=devpw-secret-1&softname=game-sauce&ssid=ssuser&sspassword=sspw-secret-2';
+      const link = (file, extra = '') => `${fakeBase}/ssfiles/${file}?${creds}${extra}`;
+      const medias = [{ type: 'video', region: 'wor', url: link('video.mp4', '&media=video') }, { type: 'video-normalized', region: 'wor', url: link('video-normalized.mp4', '&media=video-normalized') }, { type: 'box-2D', region: 'us', url: link('cover.png') }];
+      if (name !== 'Ss Partial Game') medias.push({ type: 'box-2D-back', region: 'us', url: link('back.png') }, { type: 'box-2D-side', region: 'us', url: link('spine.png') }, { type: 'support-2D', region: 'us', url: link('disc.png') }, { type: 'manuel', region: 'us', url: link('manual.pdf') });
+      return res.end(JSON.stringify({ header: {}, response: { jeu: { id: '77', noms: [{ langue: 'en', text: name }], medias } } }));
     }
     if (url.pathname.startsWith('/ssfiles/')) {
-      calls.ssFile.push(Object.fromEntries(url.searchParams));
+      calls.ssFile.push({ _file: url.pathname.split('/').pop(), ...Object.fromEntries(url.searchParams) });
       if (url.searchParams.get('sspassword') !== 'sspw-secret-2' || url.searchParams.get('devpassword') !== 'devpw-secret-1') { res.statusCode = 403; return res.end('no credentials'); }
+      const named = SS_FILES[url.pathname.split('/').pop()];
+      if (named) { res.setHeader('Content-Type', named.type); return res.end(named.body); }
       res.setHeader('Content-Type', 'video/mp4'); return res.end(MP4);
     }
     if (url.pathname === '/auth/login') {
@@ -397,7 +405,7 @@ test('ScreenScraper is a video source: asked first, EmuMovies fills what it lack
   const searched = calls.ssParams.filter((p) => p._path.endsWith('Recherche.php')).at(-1), paged = calls.ssParams.filter((p) => p._path.endsWith('jeuInfos.php')).at(-1);
   assert.equal(searched.recherche, 'Ss Video Game', 'looked up by its title, not by a file name'); assert.ok(!('romnom' in searched) && !('romnom' in paged));
   assert.equal(paged.gameid, 'g:Ss Video Game'); assert.equal(paged.ssid, 'ssuser');
-  assert.equal(calls.ssFile.at(-1).media, 'video-normalized', 'the normalised video is preferred');
+  assert.equal(calls.ssFile.at(-1)._file, 'video-normalized.mp4', 'the normalised video is preferred');
   assert.equal(calls.ssFile.at(-1).sspassword, 'sspw-secret-2', 'the download is signed when it is made');
   assert.equal(db.prepare("SELECT source FROM game_videos WHERE title_key = 'ss video game'").get().source, 'screenscraper');
 
@@ -463,6 +471,57 @@ test('ScreenScraper links lose their credentials: new ones as they arrive, and t
   assert.ok(scrubStoredSsLinks(db) >= 2);
   assert.ok(!db.prepare("SELECT payload FROM metadata_cache WHERE key = 'old-ss'").get().payload.includes('password'));
   assert.ok(!(db.prepare('SELECT cover_url FROM roms WHERE cover_url LIKE ?').get('%sspassword%')));
+});
+
+test('Find assets: the video, cover, spine, disc art, back and manual ScreenScraper has are kept where a game is missing them (Library, Physical, Digital), gaps only', async () => {
+  const { db } = await import('../src/db.js');
+  await saveCreds({ SS_DEV_ID: 'devid-x', SS_DEV_PASSWORD: 'devpw-secret-1', SS_USER: 'ssuser', SS_PASSWORD: 'sspw-secret-2' });
+  const assets = (qs, tok, body = {}) => call('/api/videos/assets?' + qs, { token: tok, method: 'POST', body });
+  const ph = async (title, tok = bobToken) => (await call('/api/physical/games', { token: tok, method: 'POST', body: { platform: 'ps2', title, region: 'PAL' } })).body;
+
+  // Physical (a disc game: it has disc art too)
+  const g = await ph('Ss Assets Game');
+  const r = await assets('kind=physical&id=' + g.id, bobToken);
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.body.got.sort(), ['back', 'cover', 'disc', 'manual', 'spine', 'video']);
+  const shelf = (await call('/api/physical/games/' + g.id, { token: bobToken })).body;
+  assert.ok(shelf.has_cover && shelf.has_spine && shelf.has_disc && shelf.has_back && shelf.has_manual);
+  assert.equal(shelf.manual.type, 'application/pdf');
+  const signed = calls.ssFile.filter((f) => ['cover.png', 'spine.png', 'disc.png', 'back.png', 'manual.pdf'].includes(f._file));
+  assert.ok(signed.length >= 5 && signed.every((f) => f.sspassword === 'sspw-secret-2'), 'every file is signed when it is fetched');
+  assert.ok(!JSON.stringify(db.prepare('SELECT payload FROM metadata_cache').all()).includes('sspw-secret-2'), 'and no credential is stored');
+  assert.ok(!JSON.stringify(r.body).includes('secret'), 'nor shown');
+
+  // a second press has nothing to add and asks for no file
+  const filesBefore = calls.ssFile.length;
+  const again = await assets('kind=physical&id=' + g.id, bobToken);
+  assert.deepEqual(again.body.got, []); assert.ok(Object.values(again.body.results).every((x) => x === 'had'));
+  assert.equal(calls.ssFile.length, filesBefore);
+
+  // what ScreenScraper lacks is said, not invented
+  const p = await ph('Ss Partial Game');
+  const pr = (await assets('kind=physical&id=' + p.id, bobToken)).body;
+  assert.deepEqual(pr.got.sort(), ['cover', 'video']); assert.equal(pr.results.spine, 'none'); assert.equal(pr.results.manual, 'none');
+  assert.equal((await call('/api/physical/games/' + p.id, { token: bobToken })).body.has_spine, false);
+
+  // somebody else's game is not theirs to fill
+  assert.equal((await assets('kind=physical&id=' + g.id, adminToken)).status, 404);
+
+  // Library
+  const plat = db.prepare("SELECT id FROM platforms WHERE slug = 'ps2'").get();
+  const rid = Number(db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1, region) VALUES ('Ss Rom Assets', 'ss rom assets', 'ssra.iso', 'x', ?, 1, 'sha-ss-rom-assets', 'USA')").run(plat.id).lastInsertRowid);
+  const lr = (await assets('kind=rom&id=' + rid, adminToken)).body;
+  assert.deepEqual(lr.got.sort(), ['back', 'cover', 'disc', 'manual', 'spine', 'video']);
+  const row = db.prepare('SELECT cover_path, cover_locked FROM roms WHERE id = ?').get(rid);
+  assert.ok(fs.existsSync(row.cover_path)); assert.equal(row.cover_locked, 0, 'an automatic cover: a later lookup may replace it');
+  assert.deepEqual((await call('/api/roms/' + rid)).body.files.map((f) => f.kind).sort(), ['back', 'disc', 'manual', 'spine']);
+
+  // Digital: a console game gets its cover (and video)
+  const dg = (await call('/api/digital/games', { token: bobToken, method: 'POST', body: { platform: 'ps4', title: 'Ss Dig Assets' } })).body;
+  const dr = (await assets('kind=digital&store=' + dg.store + '&id=' + encodeURIComponent(dg.app_id), bobToken)).body;
+  assert.ok(dr.got.includes('cover')); assert.deepEqual(Object.keys(dr.results).sort(), ['cover', 'video']);
+  const tile = (await call('/api/digital/games?store=playstation&hidden=show', { token: bobToken })).body.items.find((x) => x.app_id === dg.app_id);
+  assert.ok(tile.cover_url);
 });
 
 test('with no login saved, fetching says so and the window offers nothing', async () => {
