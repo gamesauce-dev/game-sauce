@@ -279,7 +279,7 @@ export function ensureVideo({ title, platform, force = false }, { apiImpl = defa
       for (const src of sources) {
         let hit = null;
         try { hit = await src.find({ title: String(title), platform: slug }); } catch (err) { errors.push(scrub(err.message)); continue; }
-        if (!hit) { none.push(src.label); continue; }
+        if (!hit || hit.none !== undefined) { none.push(hit?.none ? `${src.label}: ${hit.none}` : src.label); continue; }   // no video there (and, when the source can say, why)
         try {
           const dest = path.join(videosDir(), slug.replace(/[^a-z0-9_-]/gi, '_'), key.replace(/ /g, '-').slice(0, 120));
           const got = await download(hit.signUrl ? hit.signUrl(hit.url) : hit.url, dest, fetchImpl, { headers: hit.headers, throttle: hit.throttle });
@@ -292,7 +292,7 @@ export function ensureVideo({ title, platform, force = false }, { apiImpl = defa
       // Say what each source said: "ScreenScraper has no video" is an answer, and a source that is down is a separate thing.
       if (errors.length) return { status: 'error', error: `${none.length ? `No video was found at ${none.join(' or ')}. ` : ''}${errors.join('; ')}` };
       db.prepare("INSERT INTO game_videos (platform, title_key, tried_at) VALUES (?, ?, datetime('now')) ON CONFLICT(platform, title_key) DO UPDATE SET path = NULL, tried_at = datetime('now')").run(slug, key);
-      return { status: 'none' };
+      return { status: 'none', why: none.join(' · ') };
     } finally { inflight.delete(id); }
   })();
   inflight.set(id, job);

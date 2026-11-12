@@ -99,7 +99,7 @@ function show(slot, s) {
   }
   if (!s.can_fetch) { slot.innerHTML = ''; return; }   // nobody set EmuMovies up: no empty section
   slot.innerHTML = `<div class="section-label">Video</div>
-    <p class="hint">${s.missed ? 'No video was found for this game the last time it was looked for.' : 'No video kept for this game yet.'}</p>
+    <p class="hint">${s.missed ? 'No video was found for this game the last time it was looked for.' : 'No video kept for this game yet.'}${s.why ? ` <span class="vid-why">${esc(s.why)}</span>` : ''}</p>
     <button class="btn vid-find" type="button">${s.missed ? 'Try again' : 'Find video'}</button> <span class="hint vid-msg" role="status"></span>`;
   const btn = slot.querySelector('.vid-find'), msg = slot.querySelector('.vid-msg');
   btn.addEventListener('click', async () => {

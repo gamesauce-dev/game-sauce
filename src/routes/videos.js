@@ -48,7 +48,7 @@ router.post('/fetch', async (req, res, next) => {
     const r = await ensureVideo({ ...game, force: req.body?.force === true });
     if (r.status === 'disabled') return res.status(400).json({ error: 'No video source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)' });
     if (r.status === 'error') return res.status(502).json({ error: r.error });
-    res.json({ available: r.status === 'ready', bytes: r.bytes || null, source: r.source ? videoSourceLabel(r.source) : null, missed: r.status === 'none' });
+    res.json({ available: r.status === 'ready', bytes: r.bytes || null, source: r.source ? videoSourceLabel(r.source) : null, missed: r.status === 'none', why: r.why || null });
   } catch (err) { next(err); }
 });
 

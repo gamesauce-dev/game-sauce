@@ -229,17 +229,20 @@ function ssProblem(result) {
  */
 async function ssGameByTitle(title, systemeid) {
   const want = gameTitleKey(title);
-  if (!want || !systemeid) return { game: null };
+  if (!want || !systemeid) return { game: null, why: 'this platform has no ScreenScraper system number yet' };
   const search = new URLSearchParams({ ...ssAuth(), systemeid: String(systemeid), recherche: String(title) });
   const found = await ssThrottle(() => fetchJson(`${SS_API()}/jeuRecherche.php?${search}`));
-  if (found.error) { const p = ssProblem(found); return p ? { error: p } : { game: null }; }
+  if (found.error) { const p = ssProblem(found); return p ? { error: p } : { game: null, why: `its search on system ${systemeid} found nothing for "${String(title).slice(0, 60)}"` }; }
   const hits = (found.data?.response?.jeux || []).filter((g) => g && g.id);
   const names = (g) => (g.noms || []).map((n) => gameTitleKey(n.text)).filter(Boolean);
   const hit = hits.find((g) => names(g).includes(want)) || (hits.length === 1 && names(hits[0]).some((n) => n.startsWith(want) || want.startsWith(n)) ? hits[0] : null);
-  if (!hit) return { game: null };
+  if (!hit) {
+    const seen = hits.map((g) => (g.noms || [])[0]?.text).filter(Boolean).slice(0, 4);
+    return { game: null, why: `its search on system ${systemeid} found no game titled "${String(title).slice(0, 60)}"${seen.length ? ` (it found: ${seen.join('; ')})` : ''}` };
+  }
   const info = new URLSearchParams({ ...ssAuth(), systemeid: String(systemeid), gameid: String(hit.id) });
   const got = await ssThrottle(() => fetchJson(`${SS_API()}/jeuInfos.php?${info}`));
-  if (got.error) { const p = ssProblem(got); return p ? { error: p } : { game: null }; }
+  if (got.error) { const p = ssProblem(got); return p ? { error: p } : { game: null, why: 'it has no page for that game' }; }
   if (got.data?.response?.ssuser) { const u = got.data.response.ssuser; ssQuota = { today: Number(u.requeststoday) || null, max: Number(u.maxrequestsperday) || null, threads: Number(u.maxthreads) || null }; }
   return { game: got.data?.response?.jeu || null };
 }
@@ -385,16 +388,19 @@ const screenscraper = {
   async videoFor({ title, platform: slug }) {
     if (!this.enabled) return null;
     const row = db.prepare('SELECT slug, screenscraper_id FROM platforms WHERE slug = ?').get(slug);
-    if (!row?.screenscraper_id) return null;
+    if (!row?.screenscraper_id) return { none: 'this platform has no ScreenScraper system number yet' };
     const key = `ss-video:${slug}:${gameTitleKey(title)}`;
     let url = cacheGet(key)?.url;
     if (url === undefined) {
       const f = await ssGameByTitle(title, row.screenscraper_id);
       if (f.error) throw new Error(f.error);
       url = f.game ? (ssMedia(f.game, 'video-normalized') || ssMedia(f.game, 'video')) : null;
-      cacheSet(key, 'screenscraper', { url });   // a game with no video is remembered too
+      const why = f.game ? 'it has the game but no video for it' : f.why;
+      cacheSet(key, 'screenscraper', { url, why });   // a game with no video is remembered too, with the reason
+      if (!url) return { none: why };
     }
-    return url ? { url, signUrl: ssSign, throttle: ssThrottle } : null;
+    if (!url) return { none: cacheGet(key)?.why || 'it has no video for this game' };
+    return { url, signUrl: ssSign, throttle: ssThrottle };
   },
 
   /** Ask ScreenScraper how much of today's quota is left. */
