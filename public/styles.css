@@ -1776,3 +1776,7 @@ select option { background: var(--panel); color: var(--text); }
 
 /* The video in a game's details window (public/video.js). */
 .vid-player { width: 100%; max-height: 22rem; background: #000; border-radius: 0.4286rem; display: block; }
+
+/* Disc to Digital switched on: the details icon and the tile mark light up in the accent colour. */
+.ibtn[data-d="digital"].is-on { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: 0 0 0.7rem color-mix(in srgb, var(--accent) 55%, transparent); }
+.dg-disc { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 0.6rem color-mix(in srgb, var(--accent) 55%, transparent); }
