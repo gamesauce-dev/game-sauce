@@ -27,8 +27,12 @@ import { splitWrap, splitFor } from './wrapcut.js';
 import { setConsoleCover, CONSOLE_PLATFORMS } from './consoles.js';
 import { MAX_MANUAL_BYTES } from './manuals.js';
 import { MAX_COVER_BYTES } from './coverzip.js';
+import { titleKey as videoTitleKey } from './emumovies.js';
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+// Videos a browser can play. Other formats (avi, mkv, flv...) are not played, so they are only counted and the person is told to convert them first.
+const VIDEO_EXT = new Set(['.mp4', '.m4v', '.webm']);
+const OTHER_VIDEO_EXT = new Set(['.avi', '.mkv', '.flv', '.wmv', '.mov', '.mpg', '.mpeg', '.ogv', '.3gp']);
 const MAX_DEPTH = 6, MAX_FILES = 400000;
 
 /* ───────── the folders the importer may read ───────── */
@@ -73,7 +77,8 @@ const SIMPLE_KIND = {
   spine: ['spines', 'spine', 'boxspine', 'boxspines', 'sides'],
   back: ['backs', 'back', 'backcover', 'backcovers', 'boxback', 'boxbacks', 'rear'],
   disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart', 'cartridges', 'cartridge', 'carts', 'cart', 'cartfront'],
-  manual: ['manuals', 'manual']
+  manual: ['manuals', 'manual'],
+  video: ['videos', 'video', 'videosnaps', 'videosnap', 'snaps', 'snap', 'movies', 'previews', 'preview', 'clips']
 };
 const SIMPLE_LOOKUP = new Map(Object.entries(SIMPLE_KIND).flatMap(([kind, names]) => names.map((n) => [n, kind])));
 /** Not box art: the extra pictures a RetroBat or media pack puts next to the cover. */
@@ -123,6 +128,11 @@ export function classify(segs, fileName) {
   for (let i = segs.length - 1; i >= 1; i--) {
     const kind = SIMPLE_LOOKUP.get(squash(segs[i]));
     if (!kind) continue;
+    if (kind === 'video') {
+      if (!VIDEO_EXT.has(ext) && !OTHER_VIDEO_EXT.has(ext)) return null;
+      // Both orders are in use: <platform>/videos/<title>.mp4 and <videos>/<platform>/<title>.mp4 (LaunchBox); the plan tries the folder above and the folder below as the platform.
+      return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: (/(([^)]*))/.exec(base) || [])[1] || '', title: base, n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
+    }
     if (kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
     if (kind !== 'manual' && NOT_COVER.test(base)) return null;
     const bracket = /\(([^)]*)\)/.exec(base);
@@ -135,6 +145,11 @@ export function classify(segs, fileName) {
 function forcedEntry(segs, fileName, force) {
   const dot = fileName.lastIndexOf('.');
   const ext = dot >= 0 ? fileName.slice(dot).toLowerCase() : '', base = dot >= 0 ? fileName.slice(0, dot) : fileName;
+  if (force.kind === 'video') {
+    if (!VIDEO_EXT.has(ext) && !OTHER_VIDEO_EXT.has(ext)) return null;
+    const br = /(([^)]*))/.exec(base);
+    return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: 'video', platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: br ? br[1] : '', title: base, n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
+  }
   if (force.kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
   const bracket = /\(([^)]*)\)/.exec(base);
   return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
@@ -198,8 +213,72 @@ function digitalGames(userId) {
   return rows.map((r) => ({ ...r, lib: CONSOLE_PLATFORMS[r.platform]?.meta?.[0] || r.platform }));
 }
 
+/* ───────── videos: the games from every list a person can play videos in, and the plan for them ───────── */
+
+/** Every game a video could belong to: the Library's (shared), and this person's Physical and Digital games. Keyed by Library platform and title. */
+function videoGames(userId) {
+  const out = db.prepare('SELECT r.title, r.region, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id').all();
+  for (const g of physicalGames(userId)) out.push({ title: g.title, region: g.region, platform: g.platform });
+  for (const g of digitalGames(userId)) out.push({ title: g.title, region: g.region, platform: g.lib });
+  return out;
+}
+
+/** What a video import would do. Videos are kept per platform and title (one per game, shared by every list), and are linked where they are, not copied. */
+function planVideoImport(userId, scan, { replace = false, cut = '' } = {}) {
+  const games = videoGames(userId);
+  const byKey = new Map();
+  for (const g of games) { const k = `${g.platform}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, g); }
+  const platCache = new Map(); const platOf = (name) => { if (!name) return null; if (!platCache.has(name)) platCache.set(name, resolvePlatform(name)); return platCache.get(name); };
+  const unknownPlatforms = new Map(), unmatched = []; let unmatchedTotal = 0, candidates = 0;
+  const unsupported = [], unsupportedAll = { n: 0 };
+  const best = new Map();   // `${slug}\n${video key}` -> { game, slug, key, entry, rank }
+  for (const e of scan.files) {
+    if (e.kind !== 'video') continue;
+    if (e.unsupported) { unsupportedAll.n++; if (unsupported.length < 8) unsupported.push(path.basename(e.file)); continue; }
+    const names = e.platforms?.length ? e.platforms : [e.platform, e.region];
+    const slug = names.map(platOf).find(Boolean) || null;
+    if (!slug) { const nm = names.find(Boolean) || '(no folder)'; unknownPlatforms.set(nm, (unknownPlatforms.get(nm) || 0) + 1); continue; }
+    candidates++;
+    const g = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`);
+    if (!g) { unmatchedTotal++; if (unmatched.length < 10) unmatched.push({ kind: 'video', platform: slug, title: e.title }); continue; }
+    const key = videoTitleKey(g.title), id = `${slug}\n${key}`, rank = regionRank(g.region, e.fileRegion) * 100 + (e.n || 1);
+    const cur = best.get(id);
+    if (!cur || rank < cur.rank) best.set(id, { game: g, slug, key, entry: e, rank, kind: 'video' });
+  }
+  const have = db.prepare('SELECT path, source FROM game_videos WHERE platform = ? AND title_key = ?');
+  const items = [];
+  for (const b of best.values()) {
+    const row = have.get(b.slug, b.key);
+    const there = Boolean(row?.path) && hasFile(row.path);
+    if (!there || (replace && row.source === 'folder')) items.push(b);   // a video that was fetched from EmuMovies is never replaced by a file
+  }
+  const seenMap = new Map();
+  for (const e of scan.files) { if (e.kind !== 'video') continue; const k = `${e.platform || '?'}\n${e.folder || ''}`; seenMap.set(k, (seenMap.get(k) || 0) + 1); }
+  const seen = [...seenMap].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, files]) => { const [platform, folder] = k.split('\n'); return { platform, folder, kind: 'video', files }; });
+  return {
+    items, matched: { video: best.size }, will: { video: items.length }, skipped: { video: best.size - items.length },
+    candidates: { video: candidates }, games: games.length,
+    wraps: { files: 0, odd: 0, odd_list: [], platforms: [] },
+    seen, unmatched, unmatched_total: unmatchedTotal, unknown_platforms: [...unknownPlatforms].slice(0, 20).map(([name, files]) => ({ name, files })),
+    unsupported_videos: unsupportedAll.n, unsupported_list: unsupported
+  };
+}
+
+/** A real mp4 / webm by its first bytes, then the video is linked where it is: nothing is copied, and the cache limit never deletes it. */
+async function applyVideo(b) {
+  const fh = await fsp.open(b.entry.file, 'r');
+  let head;
+  try { head = Buffer.alloc(16); const { bytesRead } = await fh.read(head, 0, 16, 0); head = head.subarray(0, bytesRead); } finally { await fh.close(); }
+  const ok = (head.length >= 12 && head.toString('latin1', 4, 8) === 'ftyp') || (head.length >= 4 && head.readUInt32BE(0) === 0x1a45dfa3);
+  if (!ok) throw new Error('not an mp4 or webm video (convert it first)');
+  const st = await fsp.stat(b.entry.file);
+  db.prepare("INSERT INTO game_videos (platform, title_key, path, bytes, source, fetched_at, tried_at) VALUES (?, ?, ?, ?, 'folder', datetime('now'), datetime('now')) ON CONFLICT(platform, title_key) DO UPDATE SET path = excluded.path, bytes = excluded.bytes, source = 'folder', fetched_at = datetime('now'), tried_at = datetime('now')")
+    .run(b.slug, b.key, path.resolve(b.entry.file), st.size);
+}
+
 /** The best file for each (game, kind). `target`: 'physical' (cover, spine, disc, manual) or 'digital' (covers of console games). Nothing is changed. */
 export function planArtImport(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
+  if (target === 'video') return planVideoImport(userId, scan, { replace, cut });
   const wanted = target === 'digital' ? new Set(['cover']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
   const games = target === 'digital' ? digitalGames(userId) : physicalGames(userId);
   const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
@@ -264,11 +343,11 @@ export function planArtImport(userId, scan, { target = 'physical', replace = fal
 const publicPlan = (p, scan, folder) => ({
   folder, scanned: scan.scanned, files: scan.files.length, games: p.games,
   candidates: p.candidates, matched: p.matched, will: p.will, skipped: p.skipped,
-  unmatched: p.unmatched, unmatched_total: p.unmatched_total, unknown_platforms: p.unknown_platforms, wraps: p.wraps, seen: p.seen, ignored: scan.ignored || [], links: scan.links || []
+  unmatched: p.unmatched, unmatched_total: p.unmatched_total, unknown_platforms: p.unknown_platforms, wraps: p.wraps, seen: p.seen, ignored: scan.ignored || [], links: scan.links || [], unsupported_videos: p.unsupported_videos || 0, unsupported_list: p.unsupported_list || []
 });
 
 /** What an import would do (nothing is saved). */
-const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back'].includes(kind) ? { kind, platform: String(platform || '') } : null);
+const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back', 'video'].includes(kind) ? { kind, platform: String(platform || '') } : null);
 export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
   return publicPlan(planArtImport(userId, scan, { target, replace, cut, split }), scan, folder);
@@ -283,6 +362,7 @@ export const artJobIdle = async (userId) => { while (jobs.get(userId)?.running) 
 
 let lastWrap = { key: '', parts: null };   // the wrap just cut: its cover and its spine come one after the other
 async function applyOne(userId, target, b) {
+  if (target === 'video') return applyVideo(b);
   const st = await fsp.stat(b.entry.file);
   if (b.kind === 'manual') {
     if (st.size > MAX_MANUAL_BYTES) throw new Error('over 50 MB');
@@ -311,7 +391,7 @@ export async function startArtImport(userId, { target, folder, replace = false, 
   (async () => {
     try {
       for (const b of plan.items) {
-        try { await applyOne(userId, target, b); job.applied[b.kind]++; }
+        try { await applyOne(userId, target, b); job.applied[b.kind] = (job.applied[b.kind] || 0) + 1; }
         catch (err) { job.failed++; if (job.failures.length < 10) job.failures.push({ title: b.game.title, kind: b.kind, reason: String(err.message || err).slice(0, 120) }); }
         job.done++;
       }

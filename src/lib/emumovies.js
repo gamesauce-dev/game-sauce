@@ -164,7 +164,8 @@ async function download(url, destBase, fetchImpl) {
 /** Oldest videos go first once the folder is over its limit (EMUMOVIES_CACHE_GB, default 20). */
 export function trimCache(keep = null) {
   const limit = CACHE_LIMIT_BYTES();
-  const rows = db.prepare('SELECT platform, title_key, path, bytes FROM game_videos WHERE path IS NOT NULL ORDER BY fetched_at DESC').all();
+  // Only videos EmuMovies sent are the cache's: ones linked from a pack the person keeps (source 'folder') are theirs, count for nothing here and are never deleted.
+  const rows = db.prepare("SELECT platform, title_key, path, bytes FROM game_videos WHERE path IS NOT NULL AND COALESCE(source, 'emumovies') = 'emumovies' ORDER BY fetched_at DESC").all();
   let total = rows.reduce((s, r) => s + (r.bytes || 0), 0);
   for (const r of rows.reverse()) {
     if (total <= limit) break;
@@ -176,8 +177,9 @@ export function trimCache(keep = null) {
 }
 
 export function videoUsage() {
-  const r = db.prepare('SELECT COUNT(path) AS videos, COALESCE(SUM(bytes), 0) AS bytes FROM game_videos').get();
-  return { videos: r.videos, bytes: r.bytes, limit_bytes: CACHE_LIMIT_BYTES() };
+  const r = db.prepare("SELECT COUNT(path) AS videos, COALESCE(SUM(bytes), 0) AS bytes FROM game_videos WHERE COALESCE(source, 'emumovies') = 'emumovies'").get();
+  const linked = db.prepare("SELECT COUNT(path) AS videos FROM game_videos WHERE source = 'folder'").get();
+  return { videos: r.videos, bytes: r.bytes, limit_bytes: CACHE_LIMIT_BYTES(), linked_videos: linked.videos };
 }
 
 /** The cached video for a game: { path, bytes } or null (a file that has gone missing is forgotten). */

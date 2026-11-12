@@ -31,7 +31,7 @@ router.put('/folders', requireAdmin, (req, res) => {
 
 // body: { target: 'physical' | 'digital', folder, replace, apply }. Without apply: what it would do. With apply: starts it in the background.
 router.post('/import', async (req, res, next) => {
-  const target = req.body?.target === 'digital' ? 'digital' : 'physical';
+  const target = ['digital', 'video'].includes(req.body?.target) ? req.body.target : 'physical';
   const opts = { target, folder: String(req.body?.folder || ''), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 40), kind: String(req.body?.kind || ''), platform: String(req.body?.platform || '').slice(0, 60) };
   const sent = cleanMap(req.body?.split), split = { ...savedSplit(me(req)), ...sent };
   opts.split = split;

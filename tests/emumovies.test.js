@@ -193,6 +193,55 @@ test('details windows: status, fetch and play for Library, Physical and Digital 
   assert.equal((await call(`/api/videos/status?kind=rom&id=${romId}`, { token: null })).status, 401);
 });
 
+test('video packs: matched by platform and title from a listed folder, linked in place (no copy), unplayable formats skipped, and never deleted by the cache limit', async () => {
+  const { db } = await import('../src/db.js');
+  const { ensureVideo } = await import('../src/lib/emumovies.js');
+  const pack = path.join(TMP, 'pack');
+  const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); return f; };
+  const good = put('snes/videos/Pack Link Game (USA).mp4', MP4);
+  put('snes/videos/Pack Old Format.avi', Buffer.from('RIFF....AVI '));
+  put('snes/videos/Pack Not Owned (USA).mp4', MP4);
+  put('nes/Videos/Pack Bad Header.mp4', Buffer.from('<html>not a video at all</html>'));
+  put('Videos/Super Nintendo/Pack Reverse Layout.webm', Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+  const folders = await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } });
+  assert.equal(folders.status, 200);
+  const mk = (platform, title) => call('/api/physical/games', { method: 'POST', body: { platform, title, region: 'USA' } });
+  await mk('snes', 'Pack Link Game'); await mk('nes', 'Pack Bad Header'); await mk('snes', 'Pack Reverse Layout');
+
+  const prev = await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack } });
+  assert.equal(prev.status, 200);
+  assert.equal(prev.body.matched.video, 3); assert.equal(prev.body.will.video, 3);
+  assert.equal(prev.body.unsupported_videos, 1); assert.deepEqual(prev.body.unsupported_list, ['Pack Old Format.avi']);
+  assert.equal(prev.body.unmatched_total, 1, 'a video for a game nobody has is not imported');
+  assert.equal(db.prepare("SELECT COUNT(*) c FROM game_videos WHERE source = 'folder'").get().c, 0, 'a preview saves nothing');
+
+  await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack, apply: true } });
+  let st; for (let i = 0; i < 80; i++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(st.applied.video, 2); assert.equal(st.failed, 1); assert.match(st.failures[0].reason, /not an mp4 or webm/);
+  const row = db.prepare("SELECT path, source FROM game_videos WHERE title_key = 'pack link game'").get();
+  assert.equal(row.source, 'folder'); assert.equal(row.path, path.resolve(good), 'linked where it is, not copied');
+  assert.ok(!fs.existsSync(path.join(process.env.GAMESAUCE_STORAGE_DIR, 'videos', 'snes', 'pack-link-game.mp4')), 'nothing was copied into storage');
+  assert.ok(db.prepare("SELECT 1 FROM game_videos WHERE title_key = 'pack reverse layout' AND platform = 'snes'").get(), 'the videos / platform layout works too');
+
+  // it plays for the game, and a second import finds nothing new
+  const g = (await call('/api/physical/games')).body.items.find((x) => x.title === 'Pack Link Game');
+  assert.equal(g.has_video, true);
+  const f = await call(`/api/videos/file?kind=physical&id=${g.id}`);
+  assert.equal(f.status, 200); assert.equal(f.body.length, MP4.length);
+  const again = await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack } });
+  assert.equal(again.body.will.video, 1);   // only the bad-header file is still left to try assert.equal(again.body.skipped.video, 2);
+
+  // the cache limit trims only what EmuMovies sent, never a person's own pack
+  await saveCreds({ EMUMOVIES_USER: 'frank', EMUMOVIES_PASSWORD: 'hunter2-secret' });
+  process.env.EMUMOVIES_CACHE_GB = String(MP4.length * 0.5 / (1024 ** 3));
+  const r = await ensureVideo({ title: 'Pack Cache Probe', platform: 'gbc' });
+  assert.equal(r.status, 'ready');
+  delete process.env.EMUMOVIES_CACHE_GB;
+  assert.ok(fs.existsSync(good), 'the pack file is still there');
+  assert.ok(db.prepare("SELECT 1 FROM game_videos WHERE title_key = 'pack link game' AND path IS NOT NULL").get(), 'and still linked');
+});
+
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '' });
   const { db } = await import('../src/db.js');
