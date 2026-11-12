@@ -15,6 +15,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import db from '../db.js';
 import { providerEnv } from '../settings.js';
+import { PLATFORMS } from './platforms.js';
 
 const envVal = (key) => { const v = process.env[key]; return v == null || String(v).trim() === '' ? undefined : String(v).trim(); };
 const cred = (key) => { const v = envVal(key) ?? providerEnv()[key]; return typeof v === 'string' && v.trim() ? v.trim() : null; };
@@ -42,6 +43,25 @@ export const systemNameFor = (platform) => {
   const row = db.prepare('SELECT name FROM platforms WHERE slug = ?').get(slug);
   return row?.name || platform?.name || slug;
 };
+
+/**
+ * A game's video is generic (a trailer or gameplay), and the same title usually comes out on several consoles of one generation (PS2, Xbox, GameCube...).
+ * So a game with no video of its own uses the one kept for the same title on another console of the same generation: nothing is copied or fetched twice.
+ * Home consoles and handhelds are told apart (a handheld game of the same name is often a different game), and arcade boards and computers never share.
+ */
+const HANDHELD = new Set(['gb', 'gbc', 'gba', 'nds', '3ds', 'psp', 'psvita', 'gamegear', 'lynx', 'virtualboy', 'pokemonmini', 'neogeopocket', 'wonderswan']);
+const NO_SHARING = new Set(['arcade', 'mame', 'fba', 'naomi', 'atomiswave', 'segamodel2', 'segamodel3', 'neogeo', 'scummvm', 'dos', 'other']);
+const groupOf = (slug) => {
+  const p = PLATFORMS.find((x) => x.slug === slug);
+  if (!p || p.generation == null || p.family === 'Arcade' || NO_SHARING.has(slug)) return null;
+  return `${p.generation}:${HANDHELD.has(slug) ? 'h' : 'c'}`;
+};
+const sibCache = new Map();
+/** The other platforms whose videos a game on this platform may use (same generation, same kind of machine). */
+export function siblingPlatforms(slug) {
+  if (!sibCache.has(slug)) { const g = groupOf(slug); sibCache.set(slug, g ? PLATFORMS.filter((p) => p.slug !== slug && groupOf(p.slug) === g).map((p) => p.slug) : []); }
+  return sibCache.get(slug);
+}
 
 /** The same game under different spellings (tags, case, punctuation) is one key. */
 export const titleKey = (title) => String(title || '').toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, ' ').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -186,10 +206,15 @@ export function videoUsage() {
 export function videoFile({ title, platform }) {
   const slug = String(platform?.slug || platform || ''), key = titleKey(title);
   if (!slug || !key) return null;
-  const row = db.prepare('SELECT path, bytes FROM game_videos WHERE platform = ? AND title_key = ? AND path IS NOT NULL').get(slug, key);
-  if (!row) return null;
-  if (!fs.existsSync(row.path)) { db.prepare('DELETE FROM game_videos WHERE platform = ? AND title_key = ?').run(slug, key); return null; }
-  return row;
+  const get = db.prepare('SELECT path, bytes FROM game_videos WHERE platform = ? AND title_key = ? AND path IS NOT NULL');
+  // Its own video first, then the one kept for the same title on a console of the same generation.
+  for (const plat of [slug, ...siblingPlatforms(slug)]) {
+    const row = get.get(plat, key);
+    if (!row) continue;
+    if (!fs.existsSync(row.path)) { db.prepare('DELETE FROM game_videos WHERE platform = ? AND title_key = ?').run(plat, key); continue; }   // a file that has gone is forgotten
+    return row;
+  }
+  return null;
 }
 
 /** True when a lookup for this game found nothing recently, so the window does not keep offering a search that will fail. */
@@ -203,7 +228,11 @@ export function recentlyMissed({ title, platform }) {
 export function flagVideos(items, titleOf, platformOf) {
   const keys = new Set(db.prepare("SELECT platform || char(10) || title_key AS k FROM game_videos WHERE path IS NOT NULL").all().map((r) => r.k));
   if (!keys.size) return items;
-  for (const it of items) { const p = platformOf(it); if (p && keys.has(p + '\n' + titleKey(titleOf(it)))) it.has_video = true; }
+  for (const it of items) {
+    const p = platformOf(it); if (!p) continue;
+    const k = titleKey(titleOf(it));
+    if (keys.has(p + '\n' + k) || siblingPlatforms(p).some((s) => keys.has(s + '\n' + k))) it.has_video = true;   // its own video, or one a console of its generation has
+  }
   return items;
 }
 

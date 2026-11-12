@@ -301,6 +301,35 @@ test('ROM Library: pictures and manuals from a folder are matched to Library gam
 });
 
 
+test('a video is shared between consoles of one generation (PS2, Xbox, GameCube...), not across generations, handhelds or arcade', async () => {
+  const { ensureVideo, videoFile, siblingPlatforms } = await import('../src/lib/emumovies.js');
+  await saveCreds({ EMUMOVIES_USER: 'frank', EMUMOVIES_PASSWORD: 'hunter2-secret' });
+  assert.ok(siblingPlatforms('ps2').includes('xbox') && siblingPlatforms('ps2').includes('gamecube'));
+  assert.ok(!siblingPlatforms('ps2').includes('ps3') && !siblingPlatforms('ps2').includes('gba'), 'not another generation, not a handheld');
+  assert.deepEqual(siblingPlatforms('mame'), []); assert.deepEqual(siblingPlatforms('arcade'), []);
+  assert.ok(siblingPlatforms('gba').includes('gba') === false && !siblingPlatforms('gba').includes('xbox'));
+
+  const first = await ensureVideo({ title: 'Cross Platform Racer', platform: 'ps2' });
+  assert.equal(first.status, 'ready');
+  const searches = calls.search, files = calls.file;
+  const onXbox = await ensureVideo({ title: 'Cross Platform Racer (Europe)', platform: 'xbox' });
+  assert.equal(onXbox.status, 'ready'); assert.equal(onXbox.path, first.path, 'the same file: nothing copied');
+  assert.equal(calls.search, searches); assert.equal(calls.file, files, 'and nothing asked of EmuMovies');
+  assert.ok(videoFile({ title: 'Cross Platform Racer', platform: 'gamecube' }));
+  assert.equal(videoFile({ title: 'Cross Platform Racer', platform: 'ps3' }), null, 'another generation has its own');
+  assert.equal(videoFile({ title: 'Cross Platform Racer', platform: 'gba' }), null, 'a handheld game of the same name is another game');
+
+  // tiles of the Xbox copy know too
+  const shelf = async (title, platform) => (await call('/api/physical/games', { token: bobToken, method: 'POST', body: { platform, title } })).body;
+  const xb = await shelf('Cross Platform Racer', 'xbox'), x360 = await shelf('Cross Platform Racer', 'xbox360');
+  const list = (await call('/api/physical/games', { token: bobToken })).body.items;
+  assert.equal(list.find((g) => g.id === xb.id).has_video, true);
+  assert.ok(!list.find((g) => g.id === x360.id).has_video);
+  assert.equal((await call(`/api/videos/status?kind=physical&id=${xb.id}`, { token: bobToken })).body.available, true);
+  assert.equal((await call(`/api/videos/file?kind=physical&id=${xb.id}`, { token: bobToken })).status, 200);
+});
+
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '' });
   const { db } = await import('../src/db.js');
