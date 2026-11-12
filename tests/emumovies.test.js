@@ -20,12 +20,16 @@ let fake, fakeBase, server, base, adminToken, bobToken;
 before(async () => {
   fake = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
-    if (url.pathname === '/ss/jeuInfos.php') {
-      calls.ss++; calls.ssParams.push(Object.fromEntries(url.searchParams));
+    if (url.pathname === '/ss/jeuRecherche.php' || url.pathname === '/ss/jeuInfos.php') {
+      calls.ss++; calls.ssParams.push({ _path: url.pathname, ...Object.fromEntries(url.searchParams) });
       res.setHeader('Content-Type', 'application/json');
-      const name = url.searchParams.get('romnom');
+      const searching = url.pathname.endsWith('Recherche.php');
+      const name = searching ? url.searchParams.get('recherche') : String(url.searchParams.get('gameid') || '').replace(/^g:/, '');
       if (String(name).startsWith('Ss Error')) { res.statusCode = 403; return res.end('Erreur de login : Vérifier les identifiants utilisateurs !'); }
-      if (name === 'Ss Missing Game') return res.end(JSON.stringify({ header: {}, response: {} }));
+      if (String(name).startsWith('Ss Notfound')) { res.statusCode = 404; return res.end('Erreur : Rom/Iso/Dossier non trouvée !'); }
+      if (name === 'Ss Missing Game') return res.end(JSON.stringify({ header: {}, response: { jeux: [] } }));
+      if (searching && name === 'Ss Wrong Game') return res.end(JSON.stringify({ header: {}, response: { jeux: [{ id: 'g:Another Title Entirely', noms: [{ langue: 'en', text: 'Another Title Entirely' }] }] } }));
+      if (searching) return res.end(JSON.stringify({ header: {}, response: { jeux: [{ id: 'g:' + name, noms: [{ langue: 'en', text: name }] }] } }));
       // the links carry the asker's credentials, as ScreenScraper's can
       const link = (media) => `${fakeBase}/ssfiles/${media}.mp4?devid=devid-x&devpassword=devpw-secret-1&softname=game-sauce&ssid=ssuser&sspassword=sspw-secret-2&media=${media}`;
       return res.end(JSON.stringify({ header: {}, response: { jeu: { id: '77', noms: [{ langue: 'en', text: name }], medias: [
@@ -390,7 +394,9 @@ test('ScreenScraper is a video source: asked first, EmuMovies fills what it lack
   const emuSearches = calls.search;
   const r = await ensureVideo({ title: 'Ss Video Game', platform: 'snes' });
   assert.equal(r.status, 'ready'); assert.equal(r.source, 'screenscraper'); assert.equal(calls.search, emuSearches);
-  assert.equal(calls.ssParams.at(-1).romnom, 'Ss Video Game'); assert.equal(calls.ssParams.at(-1).ssid, 'ssuser');
+  const searched = calls.ssParams.filter((p) => p._path.endsWith('Recherche.php')).at(-1), paged = calls.ssParams.filter((p) => p._path.endsWith('jeuInfos.php')).at(-1);
+  assert.equal(searched.recherche, 'Ss Video Game', 'looked up by its title, not by a file name'); assert.ok(!('romnom' in searched) && !('romnom' in paged));
+  assert.equal(paged.gameid, 'g:Ss Video Game'); assert.equal(paged.ssid, 'ssuser');
   assert.equal(calls.ssFile.at(-1).media, 'video-normalized', 'the normalised video is preferred');
   assert.equal(calls.ssFile.at(-1).sspassword, 'sspw-secret-2', 'the download is signed when it is made');
   assert.equal(db.prepare("SELECT source FROM game_videos WHERE title_key = 'ss video game'").get().source, 'screenscraper');
@@ -411,11 +417,25 @@ test('ScreenScraper is a video source: asked first, EmuMovies fills what it lack
   // ScreenScraper unreachable or refusing: EmuMovies still gets its turn
   const e = await ensureVideo({ title: 'Ss Error Game', platform: 'snes' });
   assert.equal(e.status, 'ready'); assert.equal(e.source, 'emumovies');
+  // ScreenScraper's French "not found" (HTTP 404) is just "no video there": EmuMovies is tried, and nothing is shown as an error
+  const nf = await ensureVideo({ title: 'Ss Notfound Game', platform: 'snes' });
+  assert.equal(nf.status, 'ready'); assert.equal(nf.source, 'emumovies');
+  // a search hit with a different title is never taken
+  const wrong = await ensureVideo({ title: 'Ss Wrong Game', platform: 'snes' });
+  assert.equal(wrong.source, 'emumovies', 'not the other game\'s video');
+  assert.ok(!calls.ssParams.some((p) => p.gameid === 'g:Another Title Entirely'), 'its page was never asked for');
   // a refusal on its own is an error, not "no video", and never echoes a credential
   const { registerVideoSource } = await import('../src/lib/emumovies.js');
   assert.ok(registerVideoSource);
   const only = await ensureVideo({ title: 'Ss Error Two', platform: 'snes' }, { apiImpl: { findVideo: async () => { throw new Error('boom sspw-secret-2'); } } });
   assert.equal(only.status, 'error'); assert.ok(!only.error.includes('sspw-secret-2'));
+  const { screenscraper } = await import('../src/lib/providers.js');
+  // the ordinary metadata lookup of a title with no hashes (Physical, Digital) goes through the same name search
+  const rec = await screenscraper.lookup({ title: 'Ss Lookup Game', platform: { slug: 'snes', screenscraper_id: 4 }, hashes: {} });
+  assert.equal(rec.source, 'screenscraper'); assert.equal(rec.title, 'Ss Lookup Game');
+  assert.ok(!calls.ssParams.some((p) => 'romnom' in p), 'a bare title is never sent as a file name');
+  assert.ok(!JSON.stringify(rec).includes('sspassword'), 'the record carries no credential');
+  await assert.rejects(screenscraper.videoFor({ title: 'Ss Error Three', platform: 'snes' }), (err) => /did not accept the login/.test(err.message) && !/Erreur|identifiants/.test(err.message), 'plain English, not the French reply');
 });
 
 test('ScreenScraper links lose their credentials: new ones as they arrive, and the ones earlier builds stored, once', async () => {

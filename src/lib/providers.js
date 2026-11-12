@@ -25,7 +25,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
 import { sniffProviderImage } from './coverzip.js';
-import { emumovies, registerVideoSource } from './emumovies.js';
+import { emumovies, registerVideoSource, titleKey as gameTitleKey } from './emumovies.js';
 
 const TIMEOUT_MS = Number(process.env.META_TIMEOUT_MS || 15000);
 const CACHE_TTL_HOURS = Number(process.env.META_CACHE_TTL_HOURS || 168);
@@ -207,6 +207,43 @@ function ssSign(url) {
   } catch { return url; }
 }
 
+const ssAuth = () => ({ softname: 'game-sauce', output: 'json', devid: cred('SS_DEV_ID'), devpassword: cred('SS_DEV_PASSWORD'), ssid: cred('SS_USER'), sspassword: cred('SS_PASSWORD') });
+
+/**
+ * What a failed ScreenScraper answer means, in plain English: null = the game is simply not there (it answers in French, "Rom/Iso/Dossier non trouvée"), otherwise a safe message.
+ * The answer's own text is never passed on (it is French, and a login error can echo what was sent).
+ */
+function ssProblem(result) {
+  const body = String(result.body || '');
+  if (/quota|limite|max/i.test(body) && result.status !== 404) { ssQuota = { exceeded: true, message: 'daily allowance used up' }; return "ScreenScraper's allowance for this account is used up for today; try again later"; }
+  if (result.status === 404 || /non trouv/i.test(body)) return null;
+  if (result.status === 403 || /identifiants|login|connexion/i.test(body)) return 'ScreenScraper did not accept the login: check the account username (not the email address) and the developer ID and password';
+  if (result.status === 429 || /trop|thread/i.test(body)) return 'ScreenScraper is busy (too many requests); try again in a moment';
+  return `ScreenScraper answered ${result.status ? 'HTTP ' + result.status : result.error || 'with an error'}`;
+}
+
+/**
+ * Find a game by its TITLE (a ROM file name is what jeuInfos' romnom wants, so a bare title does not match there): ScreenScraper's name search first, then the game's own page by id.
+ * Only a result whose title is the same title (ignoring brackets, case and punctuation) is taken, so another game is never attached. Returns { game }, { game: null } for "not there"
+ * or { error } (a safe message).
+ */
+async function ssGameByTitle(title, systemeid) {
+  const want = gameTitleKey(title);
+  if (!want || !systemeid) return { game: null };
+  const search = new URLSearchParams({ ...ssAuth(), systemeid: String(systemeid), recherche: String(title) });
+  const found = await ssThrottle(() => fetchJson(`${SS_API()}/jeuRecherche.php?${search}`));
+  if (found.error) { const p = ssProblem(found); return p ? { error: p } : { game: null }; }
+  const hits = (found.data?.response?.jeux || []).filter((g) => g && g.id);
+  const names = (g) => (g.noms || []).map((n) => gameTitleKey(n.text)).filter(Boolean);
+  const hit = hits.find((g) => names(g).includes(want)) || (hits.length === 1 && names(hits[0]).some((n) => n.startsWith(want) || want.startsWith(n)) ? hits[0] : null);
+  if (!hit) return { game: null };
+  const info = new URLSearchParams({ ...ssAuth(), systemeid: String(systemeid), gameid: String(hit.id) });
+  const got = await ssThrottle(() => fetchJson(`${SS_API()}/jeuInfos.php?${info}`));
+  if (got.error) { const p = ssProblem(got); return p ? { error: p } : { game: null }; }
+  if (got.data?.response?.ssuser) { const u = got.data.response.ssuser; ssQuota = { today: Number(u.requeststoday) || null, max: Number(u.maxrequestsperday) || null, threads: Number(u.maxthreads) || null }; }
+  return { game: got.data?.response?.jeu || null };
+}
+
 const screenscraper = {
   id: 'screenscraper',
   label: 'ScreenScraper',
@@ -239,6 +276,14 @@ const screenscraper = {
     const cached = cacheGet(key);
     if (cached) return { ...cached, cached: true };
 
+    const titleOnly = !byName && !hashes?.crc32 && !hashes?.md5 && !hashes?.sha1;
+    let game = null;
+    if (titleOnly) {   // a bare title: found by name search, not by romnom (that wants a file name)
+      const f = await ssGameByTitle(title, platform.screenscraper_id);
+      if (f.error) return { error: f.error };
+      game = f.game;
+      if (!game) return { error: 'no match for this ROM on ScreenScraper' };
+    } else {
     const params = new URLSearchParams({
       softname: 'game-sauce',
       output: 'json',
@@ -294,10 +339,11 @@ const screenscraper = {
       };
     }
 
-    const game = data?.response?.jeu;
+    game = data?.response?.jeu;
     if (!game) {
       const header = data?.header != null ? ` (api message: ${data.header})` : '';
       return { error: `no match for this ROM on ScreenScraper${header}` };
+    }
     }
 
     const media = {
@@ -340,10 +386,14 @@ const screenscraper = {
     if (!this.enabled) return null;
     const row = db.prepare('SELECT slug, screenscraper_id FROM platforms WHERE slug = ?').get(slug);
     if (!row?.screenscraper_id) return null;
-    const rec = await this.lookup({ title, platform: row, hashes: null });
-    if (!rec) return null;
-    if (rec.error) { if (/no match/i.test(rec.error)) return null; throw new Error(rec.error); }
-    const url = rec.media?.videoNormalized || rec.media?.video;
+    const key = `ss-video:${slug}:${gameTitleKey(title)}`;
+    let url = cacheGet(key)?.url;
+    if (url === undefined) {
+      const f = await ssGameByTitle(title, row.screenscraper_id);
+      if (f.error) throw new Error(f.error);
+      url = f.game ? (ssMedia(f.game, 'video-normalized') || ssMedia(f.game, 'video')) : null;
+      cacheSet(key, 'screenscraper', { url });   // a game with no video is remembered too
+    }
     return url ? { url, signUrl: ssSign, throttle: ssThrottle } : null;
   },
 
