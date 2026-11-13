@@ -410,3 +410,76 @@ test('setup page: parseConfigureUrl, programExists, and the platform list matche
   const { PLATFORMS } = await import('../src/lib/platforms.js');
   assert.deepEqual(platformList().map((p) => p.slug).sort(), PLATFORMS.map((p) => p.slug).sort(), 'launcher/platforms.json is the platform list of the app (regenerate it when platforms change)');
 });
+
+/* ───────────── a zipped game is unpacked first (Xbox 360, PS3) ───────────── */
+
+// A zip with the files stored (no compression), made here so no tool is needed to build it.
+function makeZip(files) {
+  const table = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc = (b) => { let c = 0xFFFFFFFF; for (const x of b) c = table[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const parts = [], central = []; let offset = 0;
+  for (const [name, data] of Object.entries(files)) {
+    const nm = Buffer.from(name), d = Buffer.from(data), c = crc(d);
+    const h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt32LE(c, 14); h.writeUInt32LE(d.length, 18); h.writeUInt32LE(d.length, 22); h.writeUInt16LE(nm.length, 26);
+    const e = Buffer.alloc(46); e.writeUInt32LE(0x02014b50, 0); e.writeUInt16LE(20, 4); e.writeUInt16LE(20, 6); e.writeUInt32LE(c, 16); e.writeUInt32LE(d.length, 20); e.writeUInt32LE(d.length, 24); e.writeUInt16LE(nm.length, 28); e.writeUInt32LE(offset, 42);
+    parts.push(h, nm, d); central.push(e, nm); offset += 30 + nm.length + d.length;
+  }
+  const cd = Buffer.concat(central), end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(Object.keys(files).length, 8); end.writeUInt16LE(Object.keys(files).length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...parts, cd, end]);
+}
+
+test('a zipped Xbox 360 game is unpacked, the emulator gets default.xex, and everything is deleted afterwards', async (t) => {
+  const zip = path.join(TMP, 'Halo Test.zip');
+  fs.writeFileSync(zip, makeZip({ 'Halo Test/default.xex': 'xex-bytes', 'Halo Test/Data0000': 'data', 'Halo Test/readme.txt': 'hi' }));
+  const plat = db.prepare("SELECT id FROM platforms WHERE slug = 'xbox360'").get().id;
+  const id = db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES ('Halo Test','halo test','Halo Test.zip',?,?,?,'zipsha')").run(plat, zip, fs.statSync(zip).size).lastInsertRowid;
+  const m = (await call(`/api/roms/${id}/launch`, { token: adminTok, method: 'POST' })).body;
+  assert.equal(m.ext, '.zip');
+  fs.rmSync(OUT, { force: true });
+  const cfg = writeConfig({ xbox360: { command: process.execPath, args: [FAKE, '{rom}'] } });   // no "unpack" setting: Xbox 360 unpacks by default
+  try { await launcher.launch(linkFor(m), { configFile: cfg }); } catch (e) {
+    if (/nothing on this PC can unpack/.test(e.message)) return t.skip('no program to unpack a zip on this machine');
+    throw e;
+  }
+  const saw = JSON.parse(fs.readFileSync(OUT, 'utf8'));
+  assert.equal(saw.exists, true);
+  assert.equal(saw.content, 'xex-bytes', 'the emulator was given the unpacked default.xex');
+  assert.equal(path.basename(saw.rom), 'default.xex');
+  assert.ok(saw.rom.startsWith(LTMP), 'inside the temporary area');
+  assert.deepEqual(leftovers(), [], 'the archive, the unpacked game and their folder are gone');
+});
+
+test('a zipped game for a platform that does not unpack is handed over as it is, and "unpack": false is respected for Xbox 360', async () => {
+  const zip = path.join(TMP, 'Plain Test.zip');
+  fs.writeFileSync(zip, makeZip({ 'a.bin': 'x' }));
+  const plat = db.prepare("SELECT id FROM platforms WHERE slug = 'xbox360'").get().id;
+  const id = db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES ('Plain Test','plain test','Plain Test.zip',?,?,?,'zipsha2')").run(plat, zip, fs.statSync(zip).size).lastInsertRowid;
+  const m = (await call(`/api/roms/${id}/launch`, { token: adminTok, method: 'POST' })).body;
+  fs.rmSync(OUT, { force: true });
+  await launcher.launch(linkFor(m), { configFile: writeConfig({ xbox360: { command: process.execPath, args: [FAKE, '{rom}'], unpack: false } }) });
+  const saw = JSON.parse(fs.readFileSync(OUT, 'utf8'));
+  assert.equal(path.basename(saw.rom), 'Plain Test.zip', 'the zip itself');
+  assert.deepEqual(leftovers(), []);
+});
+
+test('unpacking: files the emulator writes beside the game are rescued, but the unpacked game is not copied out as if it were a save', () => {
+  const dir = fs.mkdtempSync(path.join(LTMP, 'gamesauce-launch-'));
+  const game = path.join(dir, 'game'); fs.mkdirSync(game);
+  fs.writeFileSync(path.join(game, 'default.xex'), 'x'); fs.writeFileSync(path.join(game, 'Data0000'), 'big');
+  fs.writeFileSync(path.join(dir, 'mine.sav'), 'save');
+  const r = launcher.rescueExtras(dir, path.join(dir, 'Halo.zip'), 'Halo', game);
+  assert.equal(r.count, 1, 'only the save');
+  fs.rmSync(dir, { recursive: true, force: true }); fs.rmSync(r.dest, { recursive: true, force: true });
+});
+
+test('setup page and docs: the zip choice is saved, and a launchFile written by hand is kept', async () => {
+  const mod = await import('../launcher/configure.mjs');
+  const clean = mod.cleanSettings({ servers: [], emulators: [{ slug: 'xbox360', command: 'x', unpack: false }, { slug: 'ps3', command: 'y', unpack: true }, { slug: 'wiiu', command: 'z' }] });
+  assert.equal(clean.emulators.xbox360.unpack, false);
+  assert.equal(clean.emulators.ps3.unpack, true);
+  assert.ok(!('unpack' in clean.emulators.wiiu), 'auto is not written');
+  const ui = fs.readFileSync(new URL('../launcher/configure-ui.html', import.meta.url), 'utf8'), src = fs.readFileSync(new URL('../launcher/configure.mjs', import.meta.url), 'utf8');
+  assert.ok(ui.includes('data-f="unpack"') && ui.includes('zip: auto'), 'the page has the choice');
+  assert.ok(src.includes('e.launchFile = was'), 'a launchFile from the file survives a save');
+});

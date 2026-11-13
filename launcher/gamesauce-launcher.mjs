@@ -20,6 +20,7 @@ import { spawn } from 'node:child_process';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { pathToFileURL } from 'node:url';
+import { wantsUnpack, unpackArchive, listFiles, pickLaunchFile, UnpackError } from './unpack.mjs';
 
 export const TEMP_PREFIX = 'gamesauce-launch-';
 const STALE_MS = 24 * 60 * 60 * 1000;
@@ -128,7 +129,7 @@ export function safeFileName(title, ext) {
 /* ───────────────────────────── config ───────────────────────────── */
 
 const TEMPLATE = {
-  _help: 'servers: the game-sauce addresses this launcher may download from. emulators: one entry per platform slug (e.g. nes, snes, gba, genesis, ps1). command = full path to the emulator program; args = its arguments, where {rom} is replaced by the ROM path (added at the end if you leave it out). Set "deleteOnExit": false for an emulator that hands over to another process and returns straight away.',
+  _help: 'servers: the game-sauce addresses this launcher may download from. emulators: one entry per platform slug (e.g. nes, snes, gba, genesis, ps1). command = full path to the emulator program; args = its arguments, where {rom} is replaced by the ROM path (added at the end if you leave it out). Set "deleteOnExit": false for an emulator that hands over to another process and returns straight away. A zipped game (.zip, .7z, .rar) is unpacked first for Xbox 360 and PS3 (Xenia and RPCS3 cannot open archives); set "unpack": true for another platform, or false to hand the archive over as it is. "launchFile" (optional, for example "**/default.xex") says which unpacked file starts the game; "sevenZip" (top level) is the full path of 7z if it is not found.',
   servers: [],
   emulators: {
     snes: { command: 'C:\\Emulators\\Snes9x\\snes9x-x64.exe', args: ['{rom}'] },
@@ -153,7 +154,7 @@ export function loadConfig(file) {
   if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) throw new LaunchError(`${file} must be a JSON object.`);
   const servers = (Array.isArray(cfg.servers) ? cfg.servers : []).map(normalizeOrigin).filter(Boolean);
   const emulators = cfg.emulators && typeof cfg.emulators === 'object' ? cfg.emulators : {};
-  return { servers, emulators };
+  return { servers, emulators, sevenZip: typeof cfg.sevenZip === 'string' && cfg.sevenZip.trim() ? cfg.sevenZip.trim() : undefined };
 }
 
 /** The platforms this PC can start: every emulator in the config with a command. A command written as a full path must exist; one written as just
@@ -192,11 +193,12 @@ function removeDir(dir) {
 /** Some emulators write saves and save states next to the ROM they were given, which here is the temporary copy. Anything in
  *  the temporary folder besides the ROM itself is copied to ~/.gamesauce/rescued/<title>-<time>/ before the folder is deleted,
  *  so it is not lost. Returns { dest, count } or null when there was nothing. Throws if the copy fails. */
-export function rescueExtras(dir, romPath, title) {
+export function rescueExtras(dir, romPath, title, skipDir = null) {
   const extras = [];
   const walk = (d) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, e.name);
+      if (skipDir && p === skipDir) continue;   // the unpacked game itself is not a save
       if (e.isDirectory()) walk(p);
       else if (p !== romPath) extras.push(p);
     }
@@ -272,7 +274,7 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
 
   const dir = fs.mkdtempSync(path.join(tempParent(), TEMP_PREFIX));
   const romPath = path.join(dir, safeFileName(link.title, link.ext));
-  let child = null;
+  let child = null, unpacked = null;
   const onSignal = (sig) => {
     try { child?.kill(); } catch { /* already gone */ }
     removeDir(dir);
@@ -285,7 +287,21 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
     log(`Downloading "${link.title}" (${link.platform}) from ${link.server}`);
     await download(link.server, link.token, romPath);
 
-    const { command, args } = buildCommand(entry, romPath);
+    // A zipped game for an emulator that cannot open one: unpack it next to the download, drop the archive, and start the file that boots the game.
+    let startPath = romPath;
+    if (wantsUnpack(entry, link.platform, link.ext)) {
+      unpacked = path.join(dir, 'game');
+      log(`Unpacking "${link.title}" (this can take a while for a big game)`);
+      let how;
+      try { how = await unpackArchive(romPath, unpacked, { sevenZip: typeof cfg.sevenZip === 'string' ? cfg.sevenZip : undefined }); } catch (e) { throw new LaunchError(e instanceof UnpackError ? e.message : `Could not unpack the game: ${e.message}`); }
+      try { fs.rmSync(romPath, { force: true }); } catch { /* the copy is deleted at the end anyway */ }
+      const pick = pickLaunchFile(listFiles(unpacked), link.platform, entry);
+      if (!pick) throw new LaunchError('The game was unpacked, but there is nothing in it to start. Set "launchFile" for this platform in launcher.json (for example "**/default.xex").');
+      startPath = path.join(unpacked, pick);
+      log(`Unpacked with ${how}; starting ${pick}`);
+    }
+
+    const { command, args } = buildCommand(entry, startPath);
     log(`Starting ${command}`);
     child = spawn(command, args, {
       stdio: 'ignore',
@@ -302,7 +318,7 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
     else {
       let keep = false;
       try {
-        const r = rescueExtras(dir, romPath, link.title);
+        const r = rescueExtras(dir, romPath, link.title, unpacked);
         if (r) log(`The emulator wrote ${r.count} file(s) next to the ROM (saves?). Copied them to ${r.dest}`);
       } catch (e) {
         keep = true; // never delete something we could not copy out

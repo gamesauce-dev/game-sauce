@@ -53,6 +53,7 @@ export function cleanSettings(body) {
       entry.args = e.args;
     }
     if (e.deleteOnExit === false) entry.deleteOnExit = false;
+    if (e.unpack === true || e.unpack === false) entry.unpack = e.unpack;   // unset: Xbox 360 and PS3 unpack a zipped game, the others do not
     emulators[slug] = entry;
   }
   return { servers, emulators };
@@ -119,7 +120,7 @@ export async function startConfigServer({ configFile = configPath(), addServer =
         try { body = text ? JSON.parse(text) : {}; } catch { send(400, { error: 'Not JSON' }); return; }
       }
       const describe = (emulators) => Object.entries(emulators || {}).filter(([, e]) => e && typeof e.command === 'string')
-        .map(([slug, e]) => ({ slug, command: e.command, args: Array.isArray(e.args) ? e.args : undefined, deleteOnExit: e.deleteOnExit === false ? false : undefined, found: programExists(e.command) }));
+        .map(([slug, e]) => ({ slug, command: e.command, args: Array.isArray(e.args) ? e.args : undefined, deleteOnExit: e.deleteOnExit === false ? false : undefined, unpack: typeof e.unpack === 'boolean' ? e.unpack : undefined, found: programExists(e.command) }));
 
       if (url.pathname === '/api/config') {
         let cfg = null, warning = '';
@@ -133,6 +134,8 @@ export async function startConfigServer({ configFile = configPath(), addServer =
         let old = {}; try { old = JSON.parse(fs.readFileSync(configFile, 'utf8')); } catch { /* new or broken */ }
         if (fs.existsSync(configFile)) { try { fs.copyFileSync(configFile, `${configFile}.bak`); } catch { /* not fatal */ } }
         fs.mkdirSync(path.dirname(configFile), { recursive: true });
+        // A "launchFile" written into the file by hand is not on this page: keep it.
+        for (const [slug, e] of Object.entries(clean.emulators)) { const was = old?.emulators?.[slug]?.launchFile; if (was !== undefined) e.launchFile = was; }
         const out = { ...(old && typeof old === 'object' && !Array.isArray(old) ? old : {}), servers: clean.servers, emulators: clean.emulators };
         delete out._help;
         fs.writeFileSync(configFile, JSON.stringify(out, null, 2) + '\n');

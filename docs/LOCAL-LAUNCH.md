@@ -107,7 +107,10 @@ Things to know:
   server; the browser player does, this does not.
 - **One file per game.** The launcher downloads the one file the library has for the game, so games made of several
   files (a `.bin` plus a `.cue`, a folder) will not open properly. Use single-file formats for discs (`.chd`, `.iso`).
-- **Zipped ROMs** are passed to the emulator as they are. Use an emulator that opens zips, or store those games unzipped.
+- **Zipped games (.zip, .7z, .rar).** For **Xbox 360 and PS3** (Xenia and RPCS3 cannot open an archive) the launcher unpacks the game in its temporary folder first, deletes the archive to save room, and gives the emulator the file that starts the game: an `.iso` if there is one, otherwise `default.xex` (Xbox 360) or the game folder's `EBOOT.BIN` (PS3). Everything is deleted when the emulator closes, as always. For any other platform the archive is passed as it is (most emulators open a zip themselves); to unpack for one, choose **zip: unpack** on its line in the setup page, or write `"unpack": true` in `launcher.json`. **zip: as is** (`"unpack": false`) turns it off for Xbox 360 and PS3.
+  - **What does the unpacking.** 7-Zip when it is installed (it opens `.7z`, `.zip` and `.rar`; get it from 7-zip.org). Otherwise the system's `tar` (Windows 10 and later, macOS) or `unzip` (Linux, `.zip` only). If none can, the launcher says so. If 7-Zip is somewhere unusual, set `"sevenZip": "D:/Tools/7z.exe"` at the top level of `launcher.json`.
+  - **Room and time.** The temporary folder has to hold the whole unpacked game (tens of GB for a PS3 or Xbox 360 title), and a big game takes a while to unpack every time. Point `GAMESAUCE_LAUNCHER_TMP` at a fast drive with room if the system drive is small.
+  - **A game that does not start from the usual file.** Add `"launchFile": "**/default.xex"` (a pattern, or a list of them) to that platform in `launcher.json`; it wins over the rules above.
 - **Windows `.bat`/`.cmd` files** cannot be used as `command`; use the `.exe`.
 - **macOS apps** are folders ending in `.app`; point `command` at the program inside, for example
   `/Applications/mGBA.app/Contents/MacOS/mGBA`.
