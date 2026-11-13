@@ -1394,6 +1394,9 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .spin { display: inline-block; width: 0.9em; height: 0.9em; margin-right: 0.55em; vertical-align: -0.12em; border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, .25); border-top-color: #fff; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* "spin" on an icon button or a menu item means its icon turns; the button itself keeps its size and does not take the ring above (it used to shrink and turn with the icon, which looked like a wobble). */
+.ibtn.spin { display: inline-flex; width: 2.6rem; height: 2.6rem; margin: 0; vertical-align: baseline; border: 1px solid var(--line); border-radius: 0.8rem; animation: none; }
+.more-menu .mi.spin { display: flex; width: 100%; height: auto; margin: 0; vertical-align: baseline; border: 0; border-radius: 0.55rem; animation: none; }
 .toast .spin { border-top-color: var(--accent-2); }
 
 /* LaunchBox download / index progress. */
