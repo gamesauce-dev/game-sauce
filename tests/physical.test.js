@@ -371,7 +371,7 @@ test('the shelves do not re-pack or jump when a game is opened or put back, even
 
 test('shelf, disc cases (PS2 to PS5, Xbox to Series X|S): the pulled-out cover comes to the front, then opens (manual left, disc right); any other spine, or the open case, puts it back', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css');
-  assert.ok(ph.includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);"), 'exactly the disc-based platforms asked for');
+  assert.ok(ph.includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2', 'ps1', 'psp', 'saturn', 'dreamcast', 'segacd', 'sega32x', 'genesis', 'mastersystem', '3ds', 'nds', 'psvita', 'gb', 'gbc', 'gba', 'n64']);"), 'exactly the disc-based platforms asked for');
   assert.ok(ph.includes('if (g && isDisc(g.platform) && CASE.id !== id) { showCase(id); return; }'), 'step 2: the pulled-out cover is clicked');
   assert.ok(ph.includes("el.addEventListener('click', onCaseClick)") && / {2}advanceCase\(\);\r?\n\}/.test(ph) && ph.includes("CASE.el.classList.add('is-open')"), 'step 3: the case in front is clicked and opens');
   assert.ok(/else ctx\.closeDrawer\(\);\s+\/\/ closing the details window puts the spine back too/.test(ph), 'the open case, clicked, goes back');
@@ -400,8 +400,8 @@ test('disc art: a disc game keeps its LaunchBox disc picture (cached, served onl
   // a disc picture that arrives with a match for a cartridge game (SNES) is ignored: only disc platforms keep one
   await phys.applyMatch(adminId, sn.id, { title: 'x', media: { disc: 'http://x/d.png' }, source: 'test' }, { cacheImpl });
   assert.equal(db.prepare('SELECT disc_path FROM physical_games WHERE id = ?').get(sn.id).disc_path, null);
-  assert.deepEqual(phys.DISC_PLATFORMS, ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);
-  assert.ok(read('public/physical.js').includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);"), 'the shelf and the server agree on which platforms have discs');
+  assert.deepEqual(phys.DISC_PLATFORMS, ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2', 'ps1', 'psp', 'saturn', 'dreamcast', 'segacd', 'sega32x', 'genesis', 'mastersystem', '3ds', 'nds', 'psvita', 'gb', 'gbc', 'gba', 'n64']);
+  assert.ok(read('public/physical.js').includes("const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2', 'ps1', 'psp', 'saturn', 'dreamcast', 'segacd', 'sega32x', 'genesis', 'mastersystem', '3ds', 'nds', 'psvita', 'gb', 'gbc', 'gba', 'n64']);"), 'the shelf and the server agree on which platforms have discs');
   phys.clearMatch(adminId, ps.id);
   const cleared = db.prepare('SELECT disc_path, disc_url, disc_tried_at FROM physical_games WHERE id = ?').get(ps.id);
   assert.deepEqual(cleared, { disc_path: null, disc_url: null, disc_tried_at: null });
@@ -629,5 +629,15 @@ test('the case turn shows the spine: a spine face is built with the back, and it
 test('a pulled-out case goes away when its game is no longer on the list (another platform chosen, a filter set)', () => {
   const js = fs.readFileSync(new URL('../public/physical.js', import.meta.url), 'utf8');
   const load = js.slice(js.indexOf('export async function load('), js.indexOf('renderChips(); paintLetters(list.letters)'));
-  assert.ok(load.includes('if (CASE.el && !S.byId.has(CASE.id)) {') && load.includes('closeCase(false);') && load.includes('if (S.openId === gone) ctx.closeDrawer();'), 'load() closes the case, and the details window, of a game that dropped off the list');
+  assert.ok(load.includes('if (CASE.el && !CASE.lib && !S.byId.has(CASE.id)) {') && load.includes('closeCase(false);') && load.includes('if (S.openId === gone) ctx.closeDrawer();'), 'load() closes the case, and the details window, of a game that dropped off the list');
+});
+
+test('the open case works for more platforms, and from a Library tile with no shelf', () => {
+  for (const slug of ['dreamcast', 'n64', '3ds', 'sega32x', 'ps1', 'psp', 'nds', 'gba']) assert.ok(phys.DISC_PLATFORMS.includes(slug), slug + ' has a case that opens');
+  const ph = read('public/physical.js'), app = read('public/app.js');
+  assert.ok(ph.includes('export function popCase(g, from, opts = {})') && ph.includes('export const hasCase = isDisc;'), 'the case can be brought out from anywhere, and the Library can ask which games have one');
+  assert.ok(ph.includes("if (CASE.el && !CASE.lib && !S.byId.has(CASE.id)) {"), 'a Library case is not closed by the shelf reloading');
+  assert.ok(ph.includes('else if (CASE.lib) closeCase(true);') && ph.includes("e.key === 'Escape' && CASE.lib"), 'a Library case goes back when clicked open, or on Escape');
+  assert.ok(app.includes('physical.hasCase(rom.platform)') && app.includes('data-case="${rom.id}"') && app.includes('physical.popCase('), 'the tile has a case button that brings the case out');
+  assert.ok(app.includes("file('spine')") && app.includes("file('back')") && app.includes("file('disc')") && app.includes("file('manual')"), 'the case uses the spine, back, disc and manual kept for the Library game');
 });

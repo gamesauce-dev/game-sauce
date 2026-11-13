@@ -125,7 +125,7 @@ test('the file sniffer and the link cleaner', () => {
 test('the screens: a Manual section in the details window, the manual side of the open case reads it, files open in a viewer, links in a new tab', () => {
   const js = read('public/physical.js'), css = read('public/physical.css'), mj = read('public/modern.js');
   for (const f of ['function manualBlock(g)', 'id="ph-man-upload"', 'id="ph-man-find"', 'id="ph-man-link"', 'id="ph-man-remove"', 'id="ph-man-open"']) assert.ok(js.includes(f), f);
-  assert.ok(js.includes("if (CASE.open && e.target.closest('.ph-case-inside')) { openManual(S.byId.get(CASE.id)); return; }"), 'the manual side, once the case is open');
+  assert.ok(js.includes("if (CASE.open && e.target.closest('.ph-case-inside')) { openManual(CASE.g); return; }"), 'the manual side, once the case is open');
   assert.ok(js.includes("if (m.kind === 'link') { window.open(m.url, '_blank', 'noopener,noreferrer'); return; }"), 'a link opens in a new tab (the desktop app hands it to your browser)');
   assert.ok(js.includes('<iframe src="${esc(m.url)}"') && js.includes("e.key === 'Escape'"), 'a file opens in a viewer over the page: it needs your sign-in, which a separate browser would not have');
   assert.ok(js.includes('No manual for this game yet'), 'no manual: it says so');

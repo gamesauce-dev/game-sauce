@@ -547,6 +547,7 @@ function cardHtml(rom) {
         ${rom.keep_override === 1 ? `<span class="card-lock" title="Locked: protected from deletion" aria-label="Locked">${ICON.keepOn}</span>` : ''}
         <button type="button" class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" tabindex="-1" title="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
         <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : (authState.user?.role === 'admin' ? 'Hide (members will not see it either)' : 'Hide from your view')}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
+        ${physical.hasCase(rom.platform) ? `<button type="button" class="card-casebtn" data-case="${rom.id}" tabindex="-1" title="Show the case: open it, turn it over, read the manual" aria-label="Show the case of ${esc(rom.title)}"><span class="case-ico"></span></button>` : ''}
         ${rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : ''}
       </div>
       <div class="card-title">${esc(rom.title)}</div>
@@ -850,6 +851,22 @@ async function renderPlayedRow() {
   } catch { wrap.classList.add('hidden'); /* decorative: never break the home page */ }
 }
 
+/** The case of a Library game, brought out from its tile (public/physical.js, popCase): the cover, and the spine, disc, back and manual the importer kept for it. There is no shelf here. */
+async function openRomCase(id, card) {
+  try {
+    const rom = await api(`/roms/${id}`);
+    const file = (k) => (rom.files || []).find((f) => f.kind === k);
+    const m = file('manual');
+    let ar = 0;
+    if (rom.cover_url) ar = await new Promise((done) => { const im = new Image(); im.onload = () => done(im.naturalHeight ? im.naturalWidth / im.naturalHeight : 0); im.onerror = () => done(0); im.src = rom.cover_url; });
+    physical.popCase({
+      id: rom.id, title: rom.title, platform: rom.platform, cover_url: rom.cover_url, cover_ar: ar,
+      spine_url: file('spine')?.url || '', disc_url: file('disc')?.url || '', back_url: file('back')?.url || '',
+      has_manual: Boolean(m), manual: m ? { kind: 'file', url: m.url, name: m.name, type: m.type } : null
+    }, card.querySelector('.card-cover')?.getBoundingClientRect() || card.getBoundingClientRect(), { lib: true });
+  } catch (err) { toast(err.message, true); }
+}
+
 /** Shared tile wiring for the main grid and the recent row. */
 function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('keydown', (e) => {
@@ -879,6 +896,8 @@ function bindCards(root) {
       api(`/roms/${id}`).then(openPlayer).catch((err) => toast(err.message, true));
       return;
     }
+    const showcase = e.target.closest('[data-case]');
+    if (showcase) { e.stopPropagation(); openRomCase(Number(showcase.dataset.case), card); return; }
     const fav = e.target.closest('[data-fav]');
     if (fav) {
       e.stopPropagation();

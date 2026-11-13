@@ -78,7 +78,7 @@ export async function load(keep = false) {
   try { list = await ctx.api('/physical/games?' + params); } catch (err) { msg.textContent = err.message; return; }
   if (token !== S.token) return;
   S.items = list.items; S.byId = new Map(list.items.map((g) => [g.id, g]));
-  if (CASE.el && !S.byId.has(CASE.id)) {   // a pulled-out case whose game is no longer on the list (another platform was chosen, a filter was set) goes away with it, and so does that game's details window
+  if (CASE.el && !CASE.lib && !S.byId.has(CASE.id)) {   // a pulled-out case whose game is no longer on the list (another platform was chosen, a filter was set) goes away with it, and so does that game's details window
     const gone = CASE.id; closeCase(false);
     if (S.openId === gone) ctx.closeDrawer();
   }
@@ -364,12 +364,15 @@ function renderTiles(reset) {
 // case below stands as its own kind, at the default size. Where games in a kind of case have spine pictures, the thickness is the median shape of those pictures
 // (pooled across the platforms that share the case), so the art fits exactly and nothing is stretched.
 // PlayStation and Xbox Blu-ray cases are the same height; the PlayStation ones are a little thicker.
-const CASES = { dvd: [190, 0.074], psbd: [172, 0.081], xbbd: [172, 0.07], switch: [170, 0.062], jewel: [125, 0.08] };
+// ds: a small handheld case (3DS, DS, Vita, Game Boy); umd: the PSP case; clam: the Sega plastic clamshell; n64: the wide N64 box.
+const CASES = { dvd: [190, 0.074], psbd: [172, 0.081], xbbd: [172, 0.07], switch: [170, 0.062], jewel: [125, 0.08], ds: [135, 0.1], umd: [170, 0.075], clam: [190, 0.085], n64: [135, 0.28] };
 const PLATFORM_CASE = {
   wii: 'dvd', wiiu: 'dvd', xbox: 'dvd', xbox360: 'dvd', gamecube: 'dvd', ps2: 'dvd',
   ps3: 'psbd', ps4: 'psbd', ps5: 'psbd', xboxone: 'xbbd', xboxseries: 'xbbd',
   switch: 'switch', switch2: 'switch',
-  ps1: 'jewel', saturn: 'jewel', dreamcast: 'jewel'
+  ps1: 'jewel', saturn: 'jewel', dreamcast: 'jewel',
+  segacd: 'clam', sega32x: 'clam', genesis: 'clam', mastersystem: 'clam', n64: 'n64',
+  '3ds': 'ds', nds: 'ds', psvita: 'ds', gb: 'ds', gbc: 'ds', gba: 'ds', psp: 'umd'
 };
 const caseOf = (slug) => PLATFORM_CASE[slug] || `own:${slug}`;
 const BOX_DEFAULT = [190, 0.08], PX_PER_MM = 1.2, SPINE_ART_MIN = 8, SPINE_ART_MAX = 56, OPEN_DEFAULT_AR = 0.7, MIN_SAMPLES = 3;
@@ -493,10 +496,20 @@ function pullOut(id, scroll) {
    Boxed discs (PlayStation 2 to 5, Xbox to Series X|S) have two more steps on the shelf. Click the spine: it is pulled out and shows its cover (as for every game).
    Click that cover: the whole case comes to the front. Click it again: the case opens, the manual on the left and the disc in its tray on the right.
    Clicking any other spine, or the open case, puts it back on the shelf. (There is no real manual or disc picture to show, so both are drawn.) */
-const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2']);
+const DISC = new Set(['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2', 'ps1', 'psp', 'saturn', 'dreamcast', 'segacd', 'sega32x', 'genesis', 'mastersystem', '3ds', 'nds', 'psvita', 'gb', 'gbc', 'gba', 'n64']);
 const isDisc = (slug) => DISC.has(slug);
-const isCart = (slug) => slug === 'switch' || slug === 'switch2';   // a cartridge in the tray, not a disc
-const CASE = { el: null, id: null, open: false };
+/** True for a platform whose games have a case that comes forward and opens (the Library's tiles ask it too). */
+export const hasCase = isDisc;
+const CART = new Set(['switch', 'switch2', '3ds', 'nds', 'psvita', 'gb', 'gbc', 'gba', 'n64', 'genesis', 'mastersystem', 'sega32x']);
+const isCart = (slug) => CART.has(slug);   // a cartridge in the tray, not a disc
+/* What sits in the tray and how the case is shaped. The cartridge's own shape (a class on the tray); a small disc for GameCube and the PSP's UMD. */
+const CART_SHAPE = { n64: 'ph-n64', genesis: 'ph-md', mastersystem: 'ph-md', sega32x: 'ph-md', gb: 'ph-gb', gbc: 'ph-gb', gba: 'ph-gba', nds: 'ph-ds', '3ds': 'ph-ds' };
+const trayClass = (slug) => (isCart(slug) ? ' ph-cart' + (CART_SHAPE[slug] ? ' ' + CART_SHAPE[slug] : '') : slug === 'gamecube' || slug === 'psp' ? ' is-mini' : '');
+/* The cover's width / height when the picture's own shape is not known, and the range it may take (a jewel case is square, an N64 box is wide). */
+const SQUARE = { ar: 1, clamp: [0.8, 1.3] };
+const CASE_SPEC = { ps1: SQUARE, saturn: SQUARE, dreamcast: SQUARE, n64: { ar: 1.4, clamp: [1.1, 1.7] }, psp: { ar: 0.58, clamp: [0.5, 0.7] }, '3ds': { ar: 0.82, clamp: [0.6, 1] }, nds: { ar: 0.8, clamp: [0.6, 1] }, psvita: { ar: 0.82, clamp: [0.6, 1] }, gb: { ar: 0.9, clamp: [0.6, 1.1] }, gbc: { ar: 0.9, clamp: [0.6, 1.1] }, gba: { ar: 0.9, clamp: [0.6, 1.1] } };
+const specOf = (slug) => CASE_SPEC[slug] || { ar: 0.72, clamp: [0.55, 0.95] };
+const CASE = { el: null, id: null, open: false, g: null, lib: false, from: null, veil: null };
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const narrow = () => matchMedia('(max-width: 720px)').matches;   // the details window is as wide as the screen here
 
@@ -505,7 +518,7 @@ function caseHtml(g) {
   const pic = g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : '';
   const tone = `linear-gradient(160deg,${esc(col)},#12141a)`;
   return `<div class="ph-case-slide">
-    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc${isCart(g.platform) ? ' ph-cart' : ''}${g.disc_locked ? ' is-own' : ''}${g.platform === 'gamecube' ? ' is-mini' : ''}" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
+    <div class="ph-case-back"><div class="ph-tray"><div class="ph-disc${trayClass(g.platform)}${g.disc_locked ? ' is-own' : ''}" style="--c:${esc(col)}"><span>${esc(platformBadge(p))}</span>${g.disc_url ? `<img class="ph-disc-art" src="${esc(g.disc_url)}" alt="" onload="this.parentElement.classList.add('has-art')" onerror="this.remove()" />` : ''}</div></div></div>
     <div class="ph-case-front">
       <div class="ph-case-cover" style="background:${tone}"><b class="ph-case-fb">${esc(g.title)}</b>${pic}</div>
       <div class="ph-case-inside" title="${g.has_manual ? 'Click to read the manual' : 'No manual yet: add one in the details window'}"><div class="ph-manual${g.has_manual ? ' has-manual' : ''}"><div class="ph-man-cover" style="background:${tone}">${pic}</div><b>${esc(g.title)}</b><i></i><i></i><i></i><i></i><i></i><em class="ph-man-tag">${g.has_manual ? 'Read the manual ▸' : 'No manual yet'}</em></div></div>
@@ -513,13 +526,25 @@ function caseHtml(g) {
 }
 
 function showCase(id) {
+  const g = S.byId.get(id), spine = $(`.ph-spine[data-ph-id="${id}"]`);
+  if (!g || !spine) return;
+  popCase(g, spine.getBoundingClientRect(), { id });
+}
+
+/**
+ * Bring a game's case to the front. `from` is where it comes from (the spine on the shelf, or a tile in the Library). With { lib: true } there is no shelf: the page behind is dimmed
+ * and a click outside the case, or Escape, puts it away. g: { id, title, platform, cover_url, cover_ar, spine_url, disc_url, back_url, manual, has_manual }.
+ */
+export function popCase(g, from, opts = {}) {
   closeCase(false);
-  const g = S.byId.get(id), spine = $(`.ph-spine[data-ph-id="${id}"]`), scroll = $('#ph-scroll');
-  if (!g || !spine || !scroll) return;
-  const sr = spine.getBoundingClientRect(), r = scroll.getBoundingClientRect(), drawer = $('#drawer');
-  const covered = ctx.pinned() || drawer.classList.contains('hidden') ? 0 : drawer.getBoundingClientRect().width;   // the room the details window takes
+  const lib = Boolean(opts.lib), id = opts.id ?? `lib:${g.id}`, scroll = $('#ph-scroll'), drawer = $('#drawer');
+  if (!g || (!lib && !scroll)) return;
+  const sr = from || { left: innerWidth / 2, top: innerHeight / 2, width: 40, height: 60 };
+  const r = lib ? { left: 0, right: innerWidth, top: 0, bottom: innerHeight } : scroll.getBoundingClientRect();
+  const covered = !drawer || ctx?.pinned?.() || drawer.classList.contains('hidden') ? 0 : drawer.getBoundingClientRect().width;   // the room the details window takes
   const left = r.left, right = r.right - covered, top = Math.max(r.top, 0), bottom = Math.min(r.bottom, innerHeight);
-  const ar = Number(g.cover_ar) > 0 ? Math.min(0.95, Math.max(0.55, Number(g.cover_ar))) : 0.72;   // width / height of the cover
+  const spec = specOf(g.platform), [lo, hi] = spec.clamp;
+  const ar = Number(g.cover_ar) > 0 ? Math.min(hi, Math.max(lo, Number(g.cover_ar))) : spec.ar;   // width / height of the cover
   const h = Math.round(Math.max(200, Math.min((bottom - top) * 0.8, 480, ((right - left) * 0.9) / (2 * ar))));   // opened, the case is two covers wide
   const w = Math.round(h * ar), cx = (left + right) / 2, cy = (top + bottom) / 2;
   const el = document.createElement('div');
@@ -527,11 +552,20 @@ function showCase(id) {
   el.style.cssText = `--cw:${w}px;--ch:${h}px;left:${Math.round(cx - w / 2)}px;top:${Math.round(cy - h / 2)}px`;
   el.innerHTML = caseHtml(g);
   el.addEventListener('click', onCaseClick);
-  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); } else if (e.key === 'b' || e.key === 'B') { e.preventDefault(); turnCase(); } });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advanceCase(); }
+    else if (e.key === 'b' || e.key === 'B') { e.preventDefault(); turnCase(); }
+    else if (e.key === 'Escape' && CASE.lib) { e.preventDefault(); closeCase(true); }
+  });
+  if (lib) {
+    const veil = document.createElement('div'); veil.className = 'ph-case-veil';
+    veil.addEventListener('click', () => closeCase(true));
+    document.body.append(veil); CASE.veil = veil;
+  }
   document.body.append(el);
-  CASE.el = el; CASE.id = id; CASE.open = false;
+  CASE.el = el; CASE.id = id; CASE.open = false; CASE.g = g; CASE.lib = lib; CASE.from = lib ? sr : null;
   manualPage(el, g, w);   // the manual's first page goes on the left once it is drawn
-  spine.classList.add('is-fore');
+  if (!lib) $(`.ph-spine[data-ph-id="${id}"]`)?.classList.add('is-fore');
   if (!reducedMotion()) el.animate([{ transform: `translate(${sr.left + sr.width / 2 - cx}px, ${sr.top + sr.height / 2 - cy}px) scale(${sr.width / w}, ${sr.height / h})`, opacity: 0.6 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
   el.focus({ preventScroll: true });
 }
@@ -554,7 +588,7 @@ function manualPage(el, g, caseW) {
 /** A click on the case: on the manual (the left side, once open) it reads the manual; anywhere else it goes on to the next step. */
 function onCaseClick(e) {
   if (e.target.closest('.ph-case-turn')) { e.stopPropagation(); turnCase(); return; }
-  if (CASE.open && e.target.closest('.ph-case-inside')) { openManual(S.byId.get(CASE.id)); return; }
+  if (CASE.open && e.target.closest('.ph-case-inside')) { openManual(CASE.g); return; }
   advanceCase();
 }
 
@@ -568,7 +602,7 @@ function spinCase(el, to) {
   const front = el.querySelector('.ph-case-front'), rear = el.querySelector('.ph-case-rear'), sp = el.querySelector('.ph-case-spine');
   if (!front || !rear || !sp || reducedMotion()) return;
   const W = el.offsetWidth, H = el.offsetHeight; if (!W || !H) return;
-  const ratio = CASES[caseOf(S.byId.get(CASE.id)?.platform)]?.[1] ?? BOX_DEFAULT[1];
+  const ratio = CASES[caseOf(CASE.g?.platform)]?.[1] ?? BOX_DEFAULT[1];
   const D = Math.max(6, Math.min(W * 0.28, ratio * H));   // how thick the case is, as it looks from the side
   const ms = parseFloat(getComputedStyle(el).getPropertyValue('--spin-ms')) || 620;
   sp.style.width = D + 'px';
@@ -594,7 +628,7 @@ function turnCase() {
   const on = el.classList.toggle('is-back');
   el.classList.add('is-turning'); setTimeout(() => el.classList.remove('is-turning'), 720);
   spinCase(el, on ? 'back' : 'front');   // the disc tray is hidden while the case swings round, so only the dark case shows in the gap
-  el.setAttribute('aria-label', on ? `${S.byId.get(CASE.id)?.title || 'Game'}: the back. Turn it to the front` : `${S.byId.get(CASE.id)?.title || 'Game'}: open the case`);
+  el.setAttribute('aria-label', on ? `${CASE.g?.title || 'Game'}: the back. Turn it to the front` : `${CASE.g?.title || 'Game'}: open the case`);
 }
 
 /** Another click on the case in front: open it; on the open case: put everything back on the shelf. */
@@ -602,20 +636,22 @@ function advanceCase() {
   if (!CASE.el) return;
   if (CASE.el.classList.contains('is-back')) { turnCase(); return; }   // showing the back: the click turns it to the front again
   if (!CASE.open) { CASE.open = true; CASE.el.classList.add('is-open'); CASE.el.setAttribute('aria-label', 'Put the case back on the shelf'); }
+  else if (CASE.lib) closeCase(true);   // from the Library: the case goes back (there is no shelf, and no details window to close)
   else if (narrow() && $('#drawer').classList.contains('hidden')) { const id = CASE.id; closeCase(true); openDetail(id); }   // phone: the case goes back and the details open
   else ctx.closeDrawer();   // closing the details window puts the spine back too (forgetOpen)
 }
 
 function closeCase(animate) {
-  const el = CASE.el, id = CASE.id, wasOpen = CASE.open;
-  CASE.el = null; CASE.id = null; CASE.open = false;
+  const el = CASE.el, id = CASE.id, wasOpen = CASE.open, from = CASE.from, veil = CASE.veil;
+  CASE.el = null; CASE.id = null; CASE.open = false; CASE.g = null; CASE.lib = false; CASE.from = null; CASE.veil = null;
+  if (veil) { if (!animate || reducedMotion()) veil.remove(); else { veil.classList.add('off'); setTimeout(() => veil.remove(), 350); } }   // the dimmed page behind a Library case
   const spine = id != null ? $(`.ph-spine[data-ph-id="${id}"]`) : null;
   if (!el) { spine?.classList.remove('is-fore'); return; }
   if (!animate || reducedMotion()) { el.remove(); spine?.classList.remove('is-fore'); return; }
   // Put away: an open case swings shut first, then the case slides back to its place on the shelf (the empty slot stays until it gets there).
   const finish = () => { el.remove(); if (CASE.id === id) return; spine?.classList.remove('is-fore'); if (S.openId !== id) spine?.classList.remove('is-open'); };
   const fly = () => {
-    const sr = spine?.getBoundingClientRect(), er = el.getBoundingClientRect();
+    const sr = spine?.getBoundingClientRect() || from, er = el.getBoundingClientRect();
     const to = sr && sr.width ? `translate(${sr.left + sr.width / 2 - (er.left + er.width / 2)}px, ${sr.top + sr.height / 2 - (er.top + er.height / 2)}px) scale(${sr.width / er.width}, ${sr.height / er.height})` : 'scale(.9)';
     const a = el.animate([{ transform: 'none', opacity: 1 }, { transform: to, opacity: 0.5 }], { duration: 300, easing: 'cubic-bezier(.5,0,.8,.4)', fill: 'forwards' });
     a.onfinish = finish; a.oncancel = finish;

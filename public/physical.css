@@ -230,3 +230,18 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-case.is-spinning .ph-case-spine { display: block; }
 .ph-case.is-spinning .ph-case-front, .ph-case.is-spinning .ph-case-rear { transition: none !important; transform-origin: 0 50%; }
 .ph-case.is-spinning .ph-case-spine { transition: none !important; }
+
+/* A case brought out from the Library (no shelf): the page behind is dimmed, and a click on it puts the case away. */
+.ph-case-veil { position: fixed; inset: 0; z-index: 44; background: rgba(6, 7, 11, .62); animation: ph-veil-in .25s ease-out; }
+.ph-case-veil.off { opacity: 0; transition: opacity .3s ease-in; }
+@keyframes ph-veil-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ph-case-veil { animation: none; } }
+/* Cartridge shapes for the other consoles and handhelds (3DS and DS card, Game Boy, Game Boy Advance, Mega Drive and 32X, N64). The Switch's is the base (.ph-cart). */
+.ph-disc.ph-cart.ph-ds { width: 34%; aspect-ratio: 33 / 35; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 14%); }
+.ph-disc.ph-cart.ph-gb { width: 44%; aspect-ratio: 57 / 65; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+.ph-disc.ph-cart.ph-gba { width: 54%; aspect-ratio: 65 / 35; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 22%); }
+.ph-disc.ph-cart.ph-md { width: 62%; aspect-ratio: 14 / 10; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+.ph-disc.ph-cart.ph-n64 { width: 62%; aspect-ratio: 4 / 3; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+.ph-disc.ph-cart.ph-ds::before, .ph-disc.ph-cart.ph-gb::before, .ph-disc.ph-cart.ph-gba::before, .ph-disc.ph-cart.ph-md::before, .ph-disc.ph-cart.ph-n64::before { inset: 14% 12% 38% 12%; }
+.ph-disc.ph-cart.ph-gba::before { inset: 16% 10% 40% 10%; }
+.ph-disc.ph-cart.ph-md::after, .ph-disc.ph-cart.ph-n64::after { inset: auto 14% 6% 14%; }

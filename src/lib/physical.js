@@ -414,7 +414,7 @@ export function setPhysicalArt(userId, id, kind, buffer) {
   if (!k) throw bad('Choose cover, spine or disc.');
   const r = own(userId, id);
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
-  if (kind === 'disc' && !isDiscPlatform(r.platform)) throw bad('Only boxed disc and cartridge games (PlayStation 2 to 5, Xbox, GameCube, Wii, Wii U, Switch) have a disc or cartridge picture.');
+  if (kind === 'disc' && !isDiscPlatform(r.platform)) throw bad('Only boxed disc and cartridge games (consoles and handhelds with a case that opens) have a disc or cartridge picture.');
   if (!buffer?.length) throw bad('Choose an image first.');
   if (buffer.length > MAX_COVER_BYTES) throw bad('That image is over 8 MB.');
   const type = sniffImage(buffer);
@@ -560,8 +560,8 @@ export function clearMatch(userId, id) {
   return getPhysical(userId, id);
 }
 
-/** The platforms whose games are boxed discs (or, Switch and Switch 2, a cartridge) in a case that opens on the shelf: only these ask for a disc / cartridge picture (it is kept as the "disc"). */
-export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2'];
+/** The platforms whose games are boxed (a disc, or a cartridge) in a case that opens on the shelf: only these ask for a disc / cartridge picture (it is kept as the "disc"). */
+export const DISC_PLATFORMS = ['ps2', 'ps3', 'ps4', 'ps5', 'xbox', 'xbox360', 'xboxone', 'xboxseries', 'gamecube', 'wii', 'wiiu', 'switch', 'switch2', 'ps1', 'psp', 'saturn', 'dreamcast', 'segacd', 'sega32x', 'genesis', 'mastersystem', '3ds', 'nds', 'psvita', 'gb', 'gbc', 'gba', 'n64'];
 export const isDiscPlatform = (slug) => DISC_PLATFORMS.includes(slug);
 
 const platformRow = (slug) => db.prepare('SELECT slug, name, family, screenscraper_id, tgdb_id FROM platforms WHERE slug = ?').get(slug) || { slug, name: slug };
