@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-11-13
+
 ### Added
 - **Quick launch for Play on this PC.** Tick **quick launch** on a platform in the launcher's setup page and its games are kept on your PC after the emulator closes: the next launch of the same game needs no download and no unpacking (if the game changes on the server, the kept copy is replaced). Each platform can have its own cache folder, there is a shared one (default `~/.gamesauce/cache`), and each folder has a size limit (default 100 GB; the games played longest ago go first, never one that is open). The setup page lists what is kept, with **Empty cache** and a **Remove** for each game; saves an emulator wrote beside a kept game are copied to `~/.gamesauce/rescued` before it goes, and the launcher only deletes games folders it made itself. The Play link now carries the game's id and a fingerprint of its file for this.
 - **Xbox Live Arcade games from a console's hard drive.** A source now picks up the single-file packages kept as `<Game name>/<title id>/000D0000/<long hex name>` (the title id folder is optional, and the folders can be nested however deep). Each becomes an Xbox 360 game named after its folder, shown as "<Game name>.xbla"; the real file is the one on disk, and it is confirmed to be a package by its first bytes. Title updates, DLC and Games on Demand (`00007000`, a package plus a `.data` folder, which needs more than the one file the launcher sends) are left out. Play on this PC hands the package to the emulator with no extension, which is how Xenia recognises one. A zipped XBLA folder is understood too.
