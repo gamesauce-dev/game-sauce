@@ -419,7 +419,7 @@ body:has(#bulk-bar:not(.hidden)) .card-playbtn { display: none; }
 .ibtn-danger { color: #ff7a7a; margin-left: auto; }
 .ibtn-danger:hover { background: #3a1d22; border-color: #7a3a42; color: #ff9a9a; }
 .ibtn:disabled { opacity: .6; cursor: progress; }
-.ibtn.spin svg { animation: ibspin .8s linear infinite; }
+
 @keyframes ibspin { to { transform: rotate(360deg); } }
 .ibtn[data-tip]:hover::after, .ibtn[data-tip]:focus-visible::after {
   content: attr(data-tip); position: absolute; bottom: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%);
@@ -1254,7 +1254,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .more-menu .mi small { color: var(--dim); font-size: 0.78rem; line-height: 1.3; }
 .more-menu .mi:hover, .more-menu .mi:focus-visible { background: rgba(255, 255, 255, .07); outline: none; }
 .more-menu .mi.on svg { color: #4ade80; }
-.ibtn.spin svg, .mi.spin svg { animation: ibspin .8s linear infinite; }
+.ibtn.spin svg, .mi.spin svg { animation: ibspin .8s linear infinite; transform-origin: 50% 50%; transform-box: fill-box; will-change: transform; }   /* turns about the icon's own middle, on its own layer, so it does not jitter on a fractional pixel */
 .ibtn-more.is-on { color: var(--text); border-color: var(--accent); }
 .ibtn-more[aria-expanded="true"]::after { display: none; }
 
