@@ -625,3 +625,9 @@ test('tiles know which games already have a video, and a game shares one video w
     assert.ok(!roms.find((r) => r.title === 'Other Game').has_video);
   }
 });
+
+test('a video in the details window stops when the window is closed or its page left (it is only hidden, so it would play on with sound)', () => {
+  const js = fs.readFileSync(new URL('../public/video.js', import.meta.url), 'utf8');
+  assert.ok(js.includes("drawerEl.classList.contains('hidden')") && js.includes("drawerEl.querySelectorAll('video').forEach((v) => v.pause())"), 'paused when the window is hidden');
+  assert.ok(js.includes("v.addEventListener('timeupdate', () => { if (!v.isConnected || !v.offsetParent) v.pause(); })"), 'and when it is no longer on screen');
+});

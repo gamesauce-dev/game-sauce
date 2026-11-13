@@ -15,6 +15,7 @@ const saveMuted = (m) => { try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); 
 function startWithSound(v, onBlocked = () => {}) {
   let expected = wantMuted(); v.muted = expected;
   v.addEventListener('volumechange', () => { if (v.muted !== expected) { expected = v.muted; saveMuted(v.muted); } });   // a change we did not make is the person's
+  v.addEventListener('timeupdate', () => { if (!v.isConnected || !v.offsetParent) v.pause(); });   // a video that is no longer on screen (its window or page was left) stops, sound and all
   const go = v.play?.();
   if (go?.catch) go.catch(() => { if (!expected) { expected = true; v.muted = true; v.play?.().catch(() => {}); onBlocked(); } });
 }
@@ -139,6 +140,10 @@ const scan = (root) => (root.querySelectorAll ? root.querySelectorAll('.vid-slot
 new MutationObserver((muts) => { for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) { if (n.matches?.('.vid-slot')) fill(n); else scan(n); } })
   .observe(document.documentElement, { childList: true, subtree: true });
 scan(document);
+
+/* A video in the details window stops when the window is closed. (Closing only hides the window, and a hidden video would otherwise play on, with its sound.) */
+const drawerEl = document.getElementById('drawer');
+if (drawerEl) new MutationObserver(() => { if (drawerEl.classList.contains('hidden')) drawerEl.querySelectorAll('video').forEach((v) => v.pause()); }).observe(drawerEl, { attributes: true, attributeFilter: ['class'] });
 
 /* ───────────── tile preview on hover ───────────── */
 
