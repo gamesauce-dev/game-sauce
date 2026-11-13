@@ -157,12 +157,20 @@ function forcedEntry(segs, fileName, force) {
   return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
 }
 
-/** The title part of a file name: everything before the first `cut` (when the person gave one), with a trailing -01 left for titleKey to ignore. */
+/**
+ * The title part of a file name: everything before the first `cut` (when the person gave one), with a trailing -01 left for titleKey to ignore.
+ * `cut` may list several endings separated by | ("-image|-manual|-video", for assets split over folders that each add their own word): the file is cut where
+ * the earliest of them appears. An ending that is not in the name, or is at its very start, is ignored.
+ */
 export function cutTitle(title, cut) {
-  const t = String(title || ''), c = String(cut || '');
-  if (!c) return t;
-  const i = t.toLowerCase().indexOf(c.toLowerCase());
-  return i > 0 ? t.slice(0, i) : t;
+  const t = String(title || ''), low = t.toLowerCase();
+  let at = -1;
+  for (const c of String(cut || '').split('|')) {
+    if (!c) continue;
+    const i = low.indexOf(c.toLowerCase());
+    if (i > 0 && (at < 0 || i < at)) at = i;
+  }
+  return at > 0 ? t.slice(0, at) : t;
 }
 
 /* ───────── scanning a folder ───────── */

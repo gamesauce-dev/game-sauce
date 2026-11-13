@@ -562,6 +562,31 @@ test('arcade sets: pictures, videos and manuals named like the ROM (ggx15.png fo
   assert.equal(again.body.will.cover + again.body.will.manual + again.body.will.video, 0);
 });
 
+test('several endings at once ("Image|Manual|Video") let assets split over folders, each adding its own word, find one game', async () => {
+  const { db } = await import('../src/db.js');
+  const { cutTitle } = await import('../src/lib/artimport.js');
+  assert.equal(cutTitle('ggx15Image', 'Image|Manual|Video'), 'ggx15');
+  assert.equal(cutTitle('ggx15manual', 'Image|Manual|Video'), 'ggx15', 'not case sensitive');
+  assert.equal(cutTitle('Zork (USA) Video', ' (|Video'), 'Zork', 'the earliest ending wins');
+  assert.equal(cutTitle('Zork', 'Image||Manual'), 'Zork'); assert.equal(cutTitle('ImageZork', 'Image|Zork'), 'Image', 'an ending at the very start is ignored');
+  const { PNG: PL } = (await import('pngjs')).default; const img = new PL({ width: 80, height: 110 }); img.data.fill(120); const PNG = PL.sync.write(img);
+  const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
+  const pack = path.join(TMP, 'cutpack');
+  const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); };
+  put('neogeo/images/kof98Image.png', PNG); put('neogeo/manuals/kof98Manual.pdf', PDF); put('neogeo/videos/kof98Video.mp4', MP4);
+  await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } });
+  const id = Number(db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1) VALUES ('The King of Fighters 98', 'the king of fighters 98', 'kof98.zip', 'x', (SELECT id FROM platforms WHERE slug = 'neogeo'), 1, 'sha-kof98')").run().lastInsertRowid);
+  const none = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack } });
+  assert.equal(none.body.matched.cover + none.body.matched.manual + (none.body.matched.video || 0), 0, 'without the endings nothing matches');
+  const all = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack, cut: 'Image|Manual|Video' } });
+  assert.equal(all.body.matched.cover, 1); assert.equal(all.body.matched.manual, 1); assert.equal(all.body.matched.video, 1);
+  await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack, cut: 'Image|Manual|Video', apply: true } });
+  let st; for (let k = 0; k < 80; k++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(st.failed, 0); assert.ok(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(id).cover_path);
+  assert.deepEqual((await call('/api/roms/' + id)).body.files.map((f) => f.kind), ['manual']);
+  assert.equal((await call('/api/videos/status?kind=rom&id=' + id)).body.available, true);
+});
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '', SS_DEV_ID: '', SS_DEV_PASSWORD: '', SS_USER: '', SS_PASSWORD: '' });
   const { db } = await import('../src/db.js');
