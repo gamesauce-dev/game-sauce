@@ -79,7 +79,7 @@ function toast(msg, bad = false, { busy = false } = {}) {
   el.classList.toggle('bad', bad);
   el.classList.add('show');
   clearTimeout(toast._t);
-  if (!busy) toast._t = setTimeout(() => el.classList.remove('show'), 2600);
+  if (!busy) toast._t = setTimeout(() => el.classList.remove('show'), 7600);   // long enough to read a message that says what was added (it was 2.6 s)
 }
 
 class ApiError extends Error {

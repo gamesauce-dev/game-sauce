@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Changed
+- **Messages stay on screen longer** (about 7.6 seconds, up from 2.6), so one that lists what was added can be read.
 - **Refresh metadata and Look up again also fill what the game is missing.** For one game, the Library's **Refresh metadata**, the Physical shelf's look-up-again button and Digital's now also do what **Find assets** does afterwards: keep a video, cover, spine, disc art, back or manual the game lacks (gaps only; nothing you added is replaced). The message says what was added ("Metadata updated from ScreenScraper. Added: video, manual."). The bulk lookups (Fetch metadata, Find details) do not, so they never spend a day's ScreenScraper allowance on files.
 
 ### Fixed
