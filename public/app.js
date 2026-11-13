@@ -3815,7 +3815,7 @@ function paintLoginLook() {
   try {
     const m = localStorage.getItem('gamesauce_last_look') === 'classic' ? 'classic' : 'modern';
     document.body.classList.toggle('login-modern', m === 'modern');
-    document.documentElement.dataset.theme = m === 'modern' && localStorage.getItem('gamesauce_theme') === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = 'dark';   // the sign-in screen is always dark (the light theme comes back after signing in: modern.js, applyMode)
   } catch { /* private mode */ }
 }
 paintLoginLook();
