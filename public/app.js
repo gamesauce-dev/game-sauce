@@ -1407,6 +1407,7 @@ function updateDrawerNav(id) {
   if (tile) { tile.classList.add('nav-current'); tile.scrollIntoView({ block: 'nearest' }); }
 }
 async function stepDetail(dir) {
+  physical.putCaseAway();   // a case brought to the front or opened goes back when the details move on to another game
   if (state.openRomId == null && state.openDigital && !$('#drawer').classList.contains('hidden')) return digital.step(dir);
   if (state.openRomId == null && state.openPhysical && !$('#drawer').classList.contains('hidden')) return physical.step(dir);
   const id = state.openRomId;

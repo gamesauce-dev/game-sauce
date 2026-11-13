@@ -638,6 +638,7 @@ test('the open case works for more platforms, and from a Library tile with no sh
   assert.ok(ph.includes('export function popCase(g, from, opts = {})') && ph.includes('export const hasCase = isDisc;'), 'the case can be brought out from anywhere, and the Library can ask which games have one');
   assert.ok(ph.includes("if (CASE.el && !CASE.lib && !S.byId.has(CASE.id)) {"), 'a Library case is not closed by the shelf reloading');
   assert.ok(ph.includes('else if (CASE.lib) closeCase(true);') && ph.includes("e.key === 'Escape' && CASE.lib"), 'a Library case goes back when clicked open, or on Escape');
+  assert.ok(ph.includes('export function putCaseAway()') && app.includes('physical.putCaseAway();   // a case brought to the front'), 'the next and back arrows in the details window put the case away');
   assert.ok(app.includes('physical.hasCase(rom.platform)') && app.includes('data-case="${rom.id}"') && app.includes('physical.popCase('), 'the tile has a case button that brings the case out');
   assert.ok(app.includes("file('spine')") && app.includes("file('back')") && app.includes("file('disc')") && app.includes("file('manual')"), 'the case uses the spine, back, disc and manual kept for the Library game');
 });

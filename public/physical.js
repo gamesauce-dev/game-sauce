@@ -641,6 +641,9 @@ function advanceCase() {
   else ctx.closeDrawer();   // closing the details window puts the spine back too (forgetOpen)
 }
 
+/** Put the case that is in front (or open) back: the details window's next / back arrows use it. */
+export function putCaseAway() { if (CASE.el) closeCase(true); }
+
 function closeCase(animate) {
   const el = CASE.el, id = CASE.id, wasOpen = CASE.open, from = CASE.from, veil = CASE.veil;
   CASE.el = null; CASE.id = null; CASE.open = false; CASE.g = null; CASE.lib = false; CASE.from = null; CASE.veil = null;

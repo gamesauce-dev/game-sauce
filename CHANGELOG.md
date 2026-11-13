@@ -6,7 +6,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Added
 - **Open-case animation for more platforms.** The case that comes to the front, opens (manual on the left, disc or cartridge in its tray) and turns over to show the back now also works for PS1, PSP, Saturn, Dreamcast, Sega CD, 32X, Mega Drive/Genesis, Master System, 3DS, DS, Vita, Game Boy, Game Boy Color, Game Boy Advance and N64, each in its own shape: a square jewel case, a small handheld case with a cartridge, the wide N64 box with its cartridge. These platforms now also ask for disc or cartridge and back pictures like the others (Find assets, the importers, LaunchBox).
-- **The case from the ROM Library, with no shelf.** A game with a case shows a case button on its tile (bottom right, on hover). It brings the case out over the page: click to open, turn it over, click the manual to read it; click outside it or press Escape to put it away. It uses the cover and the spine, disc, back and manual you imported for that game. Details and the shelf are untouched.
+- **The case from the ROM Library, with no shelf.** A game with a case shows a case button on its tile (bottom right, on hover). It brings the case out over the page: click to open, turn it over, click the manual to read it; click outside it or press Escape to put it away. It uses the cover and the spine, disc, back and manual you imported for that game. The details window's next and back arrows put a case that is in front or open back, on the shelf and in the Library.
 
 ## [0.5.2] - 2026-11-13
 
