@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-11-14
+
 ### Changed
 - **Xbox Live Arcade games are their own platform.** Packages found in a source (even one set to Xbox 360) now show as **Xbox Live Arcade** (XBLA) instead of Xbox 360, so Play on this PC can use a different emulator entry for them: Xenia needs `license_mask = 1` to unlock an Arcade game from its trial, which would be wrong for disc games. In the launcher setup page, point **Xbox Live Arcade** at a second Xenia copy that has it set (a rescan moves the games you already have). Cover, details and metadata lookups still use the Xbox 360 sources.
 
