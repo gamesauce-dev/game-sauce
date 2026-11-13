@@ -50,6 +50,11 @@
   "family": "Microsoft"
  },
  {
+  "slug": "xbla",
+  "name": "Xbox Live Arcade",
+  "family": "Microsoft"
+ },
+ {
   "slug": "xboxone",
   "name": "Xbox One",
   "family": "Microsoft"

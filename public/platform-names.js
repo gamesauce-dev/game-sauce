@@ -6,7 +6,7 @@
 export const BADGE = {
   ps2: 'PS2', ps3: 'PS3', ps4: 'PS4', ps5: 'PS5',
   switch2: 'SWITCH 2', switch: 'SWITCH', wii: 'WII', wiiu: 'WII U', '3ds': '3DS', nds: 'DS',
-  xbox: 'XBOX', xbox360: 'XBOX 360', xboxone: 'XBOX ONE', xboxseries: 'X|S'
+  xbox: 'XBOX', xbox360: 'XBOX 360', xbla: 'XBLA', xboxone: 'XBOX ONE', xboxseries: 'X|S'
 };
 
 /** The brand a Library family goes by (the Library files Sony's and Microsoft's consoles under those makers). Other families keep their own name. */

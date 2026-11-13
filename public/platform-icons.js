@@ -19,7 +19,7 @@ export const DEFAULT_ICON_BY_SLUG = {
   nes: 'console', snes: 'console', n64: 'console', gamecube: 'console', wii: 'console', wiiu: 'console', switch: 'handheld', switch2: 'handheld',
   gb: 'handheld', gbc: 'handheld', gba: 'handheld', nds: 'handheld', '3ds': 'handheld', virtualboy: 'console', pokemonmini: 'handheld',
   ps1: 'disc', ps2: 'disc', ps3: 'disc', ps4: 'disc', ps5: 'disc', psp: 'handheld', psvita: 'handheld',
-  xbox: 'console', xbox360: 'console', xboxone: 'console', xboxseries: 'console',
+  xbox: 'console', xbox360: 'console', xbla: 'console', xboxone: 'console', xboxseries: 'console',
   genesis: 'console', mastersystem: 'console', gamegear: 'handheld', segacd: 'disc', sega32x: 'cartridge', saturn: 'disc', dreamcast: 'disc',
   segamodel2: 'arcade', segamodel3: 'arcade', naomi: 'arcade', atomiswave: 'arcade',
   atari2600: 'console', atari5200: 'console', atari7800: 'console', lynx: 'handheld', jaguar: 'console',

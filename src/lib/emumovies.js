@@ -35,7 +35,7 @@ const SYSTEM_NAMES = {
   gba: 'Nintendo Game Boy Advance', nds: 'Nintendo DS', '3ds': 'Nintendo 3DS', ps1: 'Sony PlayStation', ps2: 'Sony PlayStation 2',
   ps3: 'Sony PlayStation 3', ps4: 'Sony PlayStation 4', psp: 'Sony PSP', psvita: 'Sony PlayStation Vita', genesis: 'Sega Genesis',
   megadrive: 'Sega Mega Drive', mastersystem: 'Sega Master System', saturn: 'Sega Saturn', dreamcast: 'Sega Dreamcast',
-  xbox: 'Microsoft Xbox', xbox360: 'Microsoft Xbox 360', arcade: 'MAME', mame: 'MAME'
+  xbox: 'Microsoft Xbox', xbox360: 'Microsoft Xbox 360', xbla: 'Microsoft Xbox 360', arcade: 'MAME', mame: 'MAME'
 };
 export const systemNameFor = (platform) => {
   const slug = String(platform?.slug || platform || '');

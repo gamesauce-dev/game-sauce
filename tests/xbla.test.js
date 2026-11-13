@@ -52,7 +52,8 @@ test('XBLA: a scan picks up the packages under 000D0000, named after the game, a
     const c = found.find((f) => f.filename.startsWith('CASTLEVANIA'));
     assert.equal(path.basename(c.path), HEX, 'the real file is the one on disk');
     assert.equal(c.ext, 'xbla');
-    assert.equal(resolvePlatform({ filename: c.filename, relativePath: c.relativePath, sourceHint: null }).slug, 'xbox360');
+    assert.equal(resolvePlatform({ filename: c.filename, relativePath: c.relativePath, sourceHint: null }).slug, 'xbla');
+    assert.equal(resolvePlatform({ filename: c.filename, relativePath: c.relativePath, sourceHint: 'xbox360' }).slug, 'xbla', 'inside an Xbox 360 source it is still its own platform');
     // a source for another platform does not take them, and one for Xbox 360 does
     assert.equal(walkSource({ path: root, recursive: 1, platform_hint: 'ps3' }).found.some((f) => f.ext === 'xbla'), false);
     assert.equal(walkSource({ path: root, recursive: 1, platform_hint: 'xbox360' }).found.filter((f) => f.ext === 'xbla').length, 2);

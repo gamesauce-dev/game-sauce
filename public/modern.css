@@ -217,6 +217,7 @@ body.ui-modern .detail-actions { flex-wrap: wrap; row-gap: 0.6rem; }
 body.ui-modern .ibtn[data-tip]:hover::after, body.ui-modern .ibtn[data-tip]:focus-visible::after { display: none; }
 body.ui-modern .detail-actions .ibtn[data-mi]::before { width: 1.4rem; height: 1.4rem; }
 body.ui-modern .detail-actions .ibtn[data-mi] > svg { display: none; }
+body.ui-modern .detail-actions .ibtn[data-mi].spin::before { animation: ibspin .8s linear infinite; }   /* the refresh icon turns while it works (its picture is a mask, not an svg) */
 body.ui-modern .detail-actions .ibtn { color: var(--text); border-color: var(--line-2); }
 body.ui-modern .detail-actions .ibtn:hover { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); border-color: var(--accent); }
 body.ui-modern .detail-actions .ibtn-primary { color: #fff; border-color: var(--apply); background: var(--apply); }

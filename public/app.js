@@ -1735,8 +1735,10 @@ async function openDetail(id) {
 
   $('[data-act="refresh"]', drawer).addEventListener('click', async (e) => {
     const btn = e.currentTarget;
+    // Modern look: the icon on the details row is a copy of this menu item (public/modern.js, promoteDetailActions); it is the one that shows, so it spins too.
+    const promo = () => drawer.querySelector('[data-promo="refresh"]');
     btn.disabled = true;
-    btn.classList.add('spin');
+    btn.classList.add('spin'); promo()?.classList.add('spin');
     try {
       const r = await api(`/metadata/${id}/refresh`, { method: 'POST' });
       const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : '';   // the refresh also fills what the game is missing
@@ -1746,7 +1748,7 @@ async function openDetail(id) {
       toast(err.message, true);
     } finally {
       btn.disabled = false;
-      btn.classList.remove('spin');
+      btn.classList.remove('spin'); promo()?.classList.remove('spin');
     }
   });
 

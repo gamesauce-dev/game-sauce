@@ -45,7 +45,8 @@ export const PLATFORMS = [
 
   /* ───────────────────────── Microsoft ───────────────────────── */
   { slug: 'xbox', name: 'Microsoft Xbox', short_name: 'XBX', family: 'Microsoft', manufacturer: 'Microsoft', generation: 6, accent: '#107c10', extensions: ['xiso', 'iso', 'xbe'], screenscraper: 55, tgdb: 14 },
-  { slug: 'xbox360', name: 'Xbox 360', short_name: 'X360', family: 'Microsoft', manufacturer: 'Microsoft', generation: 7, accent: '#43a047', extensions: ['iso', 'god', 'xex', 'zar', 'xbla'], screenscraper: 33, tgdb: 15 },
+  { slug: 'xbox360', name: 'Xbox 360', short_name: 'X360', family: 'Microsoft', manufacturer: 'Microsoft', generation: 7, accent: '#43a047', extensions: ['iso', 'god', 'xex', 'zar'], screenscraper: 33, tgdb: 15 },
+  { slug: 'xbla', name: 'Xbox Live Arcade', short_name: 'XBLA', family: 'Microsoft', manufacturer: 'Microsoft', generation: 7, accent: '#689f38', extensions: ['xbla'], screenscraper: 33, tgdb: 15 },
   { slug: 'xboxone', name: 'Xbox One', short_name: 'XB1', family: 'Microsoft', manufacturer: 'Microsoft', generation: 8, accent: '#2e7d32', extensions: ['xvc', 'msixvc'], screenscraper: null, tgdb: null },
   { slug: 'xboxseries', name: 'Xbox Series X|S', short_name: 'XSX', family: 'Microsoft', manufacturer: 'Microsoft', generation: 9, accent: '#1b5e20', extensions: ['xvc', 'msixvc'], screenscraper: null, tgdb: null },
 
@@ -125,6 +126,7 @@ export const PLATFORM_FOLDER_ALIASES = {
   psvita: ['vita', 'psv'],
   xbox: ['xbx', 'xboxclassic', 'xboxoriginal'],
   xbox360: ['x360', 'xboxthree sixty'],
+  xbla: ['xboxlivearcade', 'xblarcade'],
   xboxone: ['xb1'],
   xboxseries: ['xsx', 'xboxseriess', 'xboxseriesx', 'xboxseriesxs'],
   switch: ['nsw', 'switch1'],

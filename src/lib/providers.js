@@ -793,7 +793,7 @@ const IGDB_PLATFORMS = {
   nes: 18, snes: 19, n64: 4, gamecube: 21, wii: 5, wiiu: 41,
   switch: 130, gb: 33, gbc: 22, gba: 24, nds: 20, '3ds': 37,
   virtualboy: 87, ps1: 7, ps2: 8, ps3: 9, ps4: 48, ps5: 167,
-  psp: 38, psvita: 39, xbox: 11, xbox360: 12, xboxone: 49,
+  psp: 38, psvita: 39, xbox: 11, xbox360: 12, xbla: 12, xboxone: 49,
   xboxseries: 169, genesis: 29, mastersystem: 64, gamegear: 67,
   saturn: 32, dreamcast: 23, atari2600: 59, lynx: 61, jaguar: 62,
   turbografx16: 86, dos: 13,

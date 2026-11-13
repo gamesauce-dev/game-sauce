@@ -33,7 +33,7 @@ export const LB_PLATFORMS = {
   pokemonmini: ['Nintendo Pokemon Mini'],
   ps1: ['Sony Playstation'], ps2: ['Sony Playstation 2'], ps3: ['Sony Playstation 3'], ps4: ['Sony Playstation 4'],
   ps5: ['Sony Playstation 5'], psp: ['Sony PSP'], psvita: ['Sony Playstation Vita'],
-  xbox: ['Microsoft Xbox'], xbox360: ['Microsoft Xbox 360'], xboxone: ['Microsoft Xbox One'],
+  xbox: ['Microsoft Xbox'], xbox360: ['Microsoft Xbox 360'], xbla: ['Microsoft Xbox 360'], xboxone: ['Microsoft Xbox One'],
   xboxseries: ['Microsoft Xbox Series X/S'],
   genesis: ['Sega Genesis'], mastersystem: ['Sega Master System'], gamegear: ['Sega Game Gear'], segacd: ['Sega CD'],
   sega32x: ['Sega 32X'], saturn: ['Sega Saturn'], dreamcast: ['Sega Dreamcast'], segamodel2: ['Sega Model 2'],

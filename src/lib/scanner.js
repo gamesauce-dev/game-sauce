@@ -23,6 +23,9 @@ const IGNORED_FILES = new Set(['.ds_store', 'thumbs.db', 'desktop.ini']);
 export function resolvePlatform({ filename, relativePath, sourceHint }) {
   const ext = (filename.split('.').pop() || '').toLowerCase();
 
+  // 0. An Xbox Live Arcade package is its own platform (its emulator needs other settings than a disc game's), even inside a source that says Xbox 360.
+  if (ext === 'xbla' && (!sourceHint || sourceHint === 'xbox360' || sourceHint === 'xbla')) return { slug: 'xbla', confidence: sourceHint ? 'hint' : 'extension' };
+
   // 1. An explicit hint on the source always wins — the user told us.
   if (sourceHint && (PLATFORM_BY_SLUG.has(sourceHint) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(sourceHint)))) {
     return { slug: sourceHint, confidence: 'hint' };
@@ -169,7 +172,7 @@ function walkOneRoot(source, root) {
       // An Xbox Live Arcade package: a file with no extension under a 000D0000 folder, named after the game's folder. It is kept as "<Game name>.xbla" in the library
       // (the real file is still the one on disk), so the title and the rest read like any other game.
       let xbla = null;
-      if (!lower.includes('.') && path.basename(dir).toLowerCase() === XBLA_CONTENT_TYPE && (!source.platform_hint || source.platform_hint === 'xbox360')) {
+      if (!lower.includes('.') && path.basename(dir).toLowerCase() === XBLA_CONTENT_TYPE && (!source.platform_hint || source.platform_hint === 'xbox360' || source.platform_hint === 'xbla')) {
         const name = xblaGameName(rel, path.basename(root));
         if (name && isStfsPackage(full)) xbla = name;
       }
