@@ -273,7 +273,8 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
   sweepStale();
 
   const dir = fs.mkdtempSync(path.join(tempParent(), TEMP_PREFIX));
-  const romPath = path.join(dir, safeFileName(link.title, link.ext));
+  // An Xbox Live Arcade package (".xbla" in the library) is handed over with no extension: Xenia takes a file without one for an STFS package.
+  const romPath = path.join(dir, safeFileName(link.title, link.ext === '.xbla' ? '' : link.ext));
   let child = null, unpacked = null;
   const onSignal = (sig) => {
     try { child?.kill(); } catch { /* already gone */ }

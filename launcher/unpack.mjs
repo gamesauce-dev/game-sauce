@@ -40,7 +40,7 @@ export function globTest(pattern) {
 /* What to start, best first, per platform. A rule is a test on the path (lower case, forward slashes) and the picks are the shallowest, then the biggest. */
 const ISO = (p) => p.endsWith('.iso');
 const RULES = {
-  xbox360: [ISO, (p) => p.endsWith('/default.xex') || p === 'default.xex', (p) => p.endsWith('.xex')],
+  xbox360: [ISO, (p) => p.endsWith('/default.xex') || p === 'default.xex', (p) => p.endsWith('.xex'), (p) => /(^|\/)000d0000\/[^/.]+$/.test(p)],   // the last: an Xbox Live Arcade package
   xbox: [ISO, (p) => p.endsWith('/default.xbe') || p === 'default.xbe', (p) => p.endsWith('.xbe')],
   ps3: [ISO, (p) => /(^|\/)ps3_game\/usrdir\/eboot\.bin$/.test(p), (p) => /(^|\/)eboot\.bin$/.test(p)],
   wiiu: [(p) => p.endsWith('.wua'), (p) => p.endsWith('.wud') || p.endsWith('.wux'), (p) => /(^|\/)code\/[^/]+\.rpx$/.test(p)],

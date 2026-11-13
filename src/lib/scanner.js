@@ -58,6 +58,28 @@ export function resolvePlatform({ filename, relativePath, sourceHint }) {
   return { slug: 'other', confidence: 'none', candidates };
 }
 
+/* Xbox Live Arcade games (and other content) from a console's hard drive are one extensionless file with a long hex name, kept like
+   <Game name>/<title id>/000D0000/<hex name>  (the title id folder is not always there). 000D0000 is the "Xbox Live Arcade" content type; title updates, DLC and
+   Games on Demand (00007000, a package plus a .data folder) live in other folders and are not picked up. The file is a game when it is an STFS package. */
+const XBLA_CONTENT_TYPE = '000d0000';
+const STFS_MAGIC = new Set(['CON ', 'LIVE', 'PIRS']);
+export function isStfsPackage(file) {
+  let fd;
+  try {
+    fd = fs.openSync(file, 'r');
+    const b = Buffer.alloc(4);
+    return fs.readSync(fd, b, 0, 4, 0) === 4 && STFS_MAGIC.has(b.toString('latin1'));
+  } catch { return false; } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch { /* closed */ } }
+}
+/** The game's name for a package at relPath (under a source folder called rootName): the folder above the title id folder, or above 000D0000 when there is none. */
+export function xblaGameName(relPath, rootName = '') {
+  const segs = String(relPath || '').split(/[\\/]/).filter(Boolean);
+  if (segs.length < 2 || segs[segs.length - 2].toLowerCase() !== XBLA_CONTENT_TYPE) return null;
+  let j = segs.length - 3;
+  if (j >= 0 && /^[0-9a-f]{8}$/i.test(segs[j])) j--;
+  return (j >= 0 ? segs[j] : rootName) || null;
+}
+
 function matchIgnore(relPath, globs) {
   if (!globs?.length) return false;
   const name = path.basename(relPath).toLowerCase();
@@ -144,10 +166,17 @@ function walkOneRoot(source, root) {
       if (lower.startsWith('._')) continue; // macOS resource forks
       if (matchIgnore(rel, ignoreGlobs)) continue;
 
-      const ext = lower.split('.').pop() || '';
-      if (!ALL_EXTENSIONS.has(ext) && !customExts.has(ext)) continue;
+      // An Xbox Live Arcade package: a file with no extension under a 000D0000 folder, named after the game's folder. It is kept as "<Game name>.xbla" in the library
+      // (the real file is still the one on disk), so the title and the rest read like any other game.
+      let xbla = null;
+      if (!lower.includes('.') && path.basename(dir).toLowerCase() === XBLA_CONTENT_TYPE && (!source.platform_hint || source.platform_hint === 'xbox360')) {
+        const name = xblaGameName(rel, path.basename(root));
+        if (name && isStfsPackage(full)) xbla = name;
+      }
+      const ext = xbla ? 'xbla' : (lower.split('.').pop() || '');
+      if (!xbla && !ALL_EXTENSIONS.has(ext) && !customExts.has(ext)) continue;
       // Strict platforms (MAME = .zip only): ignore anything else in the folder.
-      if (source.platform_hint && !extensionAllowed(source.platform_hint, entry.name)) continue;
+      if (!xbla && source.platform_hint && !extensionAllowed(source.platform_hint, entry.name)) continue;
 
       // A .cue/.gdi/.m3u next to its .bin/.iso/.chd is a descriptor, not a game.
       if (SIDECAR_EXT.has(ext)) {
@@ -168,7 +197,7 @@ function walkOneRoot(source, root) {
       found.push({
         path: full,
         relativePath: rel,
-        filename: entry.name,
+        filename: xbla ? `${xbla}.xbla` : entry.name,
         ext,
         size: stat.size,
         mtimeMs: Math.round(stat.mtimeMs)
