@@ -625,3 +625,9 @@ test('the case turn shows the spine: a spine face is built with the back, and it
   assert.ok(!/rotateY|preserve-3d|perspective/.test(spinCss), 'flat: some Linux web views draw 3D turns back to front');
   assert.ok(js.slice(js.indexOf('function spinCase(')).includes('reducedMotion()'), 'a person who asked for less motion gets the plain turn');
 });
+
+test('a pulled-out case goes away when its game is no longer on the list (another platform chosen, a filter set)', () => {
+  const js = fs.readFileSync(new URL('../public/physical.js', import.meta.url), 'utf8');
+  const load = js.slice(js.indexOf('export async function load('), js.indexOf('renderChips(); paintLetters(list.letters)'));
+  assert.ok(load.includes('if (CASE.el && !S.byId.has(CASE.id)) closeCase(false);'), 'load() closes the case of a game that dropped off the list');
+});

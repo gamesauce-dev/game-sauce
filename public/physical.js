@@ -78,6 +78,7 @@ export async function load(keep = false) {
   try { list = await ctx.api('/physical/games?' + params); } catch (err) { msg.textContent = err.message; return; }
   if (token !== S.token) return;
   S.items = list.items; S.byId = new Map(list.items.map((g) => [g.id, g]));
+  if (CASE.el && !S.byId.has(CASE.id)) closeCase(false);   // a pulled-out case whose game is no longer on the list (another platform was chosen, a filter was set) goes away with it
   renderChips(); paintLetters(list.letters); paintToolbar();
   const job = info.match_job || {};
   msg.innerHTML = job.running ? `<div class="dg-note">Looking up details and covers: ${n(job.done)} of ${n(job.total)} done. They appear as they are found.</div>` : '';
