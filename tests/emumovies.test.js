@@ -587,6 +587,26 @@ test('several endings at once ("Image|Manual|Video") let assets split over folde
   assert.equal((await call('/api/videos/status?kind=rom&id=' + id)).body.available, true);
 });
 
+test('Refresh metadata keeps a cover that was uploaded or imported (cover_locked), and replaces an automatic one', async () => {
+  const { db } = await import('../src/db.js');
+  await saveCreds({ SS_DEV_ID: 'devid-x', SS_DEV_PASSWORD: 'devpw-secret-1', SS_USER: 'ssuser', SS_PASSWORD: 'sspw-secret-2' });
+  const own = path.join(process.env.GAMESAUCE_STORAGE_DIR, 'covers', 'custom-refresh-test.png');
+  fs.mkdirSync(path.dirname(own), { recursive: true }); fs.writeFileSync(own, SS_FILES['cover.png'].body);
+  const plat = db.prepare("SELECT id FROM platforms WHERE slug = 'ps2'").get();
+  const rom = (title, sha, locked) => Number(db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1, cover_path, cover_locked) VALUES (?, ?, ?, 'x', ?, 1, ?, ?, ?)").run(title, title.toLowerCase(), title + '.iso', plat.id, sha, own, locked).lastInsertRowid);
+  const mine = rom('Ss Refresh Own', 'sha-refresh-own', 1), auto = rom('Ss Refresh Auto', 'sha-refresh-auto', 0);
+
+  const a = await call('/api/metadata/' + mine + '/refresh', { method: 'POST' });
+  assert.equal(a.body.updated, true);
+  const keep = db.prepare('SELECT cover_path, cover_locked FROM roms WHERE id = ?').get(mine);
+  assert.equal(keep.cover_path, own, 'the cover you uploaded or imported is not replaced'); assert.equal(keep.cover_locked, 1);
+
+  const b = await call('/api/metadata/' + auto + '/refresh', { method: 'POST' });
+  assert.equal(b.body.updated, true);
+  const fresh = db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(auto);
+  assert.ok(fresh.cover_path && fresh.cover_path !== own && fs.existsSync(fresh.cover_path), 'an automatic cover is replaced by the provider\'s');
+});
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '', SS_DEV_ID: '', SS_DEV_PASSWORD: '', SS_USER: '', SS_PASSWORD: '' });
   const { db } = await import('../src/db.js');

@@ -222,8 +222,8 @@ router.post('/:id/refresh', async (req, res, next) => {
     if (!result) return res.json({ updated: false, reason: 'no provider returned a match' });
     if (result.error) return res.json({ updated: false, reason: result.error });
 
-    // A refresh must also replace a stale cover, so don't reuse the old one.
-    if (result.cover_url) db.prepare('UPDATE roms SET cover_path = NULL WHERE id = ?').run(rom.id);
+    // A refresh must also replace a stale automatic cover, so don't reuse the old one. A cover you uploaded or imported (cover_locked) is never replaced.
+    if (result.cover_url) db.prepare('UPDATE roms SET cover_path = NULL WHERE id = ? AND cover_locked = 0').run(rom.id);
     const updated = await applyMetadataRecord(rom.id, result, req.user?.id);
 
     res.json({ updated: true, source: result.source, cached: Boolean(result.cached), rom: updated });
