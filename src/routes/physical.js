@@ -5,6 +5,7 @@ import db from '../db.js';
 import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { flagVideos } from '../lib/emumovies.js';
+import { fillAfterLookup } from '../lib/assets.js';
 import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 
@@ -81,7 +82,8 @@ router.post('/games/:id/match', async (req, res, next) => {
 router.post('/games/:id/auto-match', async (req, res, next) => {
   try {
     const g = await matchOne(me(req), req.params.id);
-    res.json({ matched: Boolean(g), game: g || getPhysical(me(req), req.params.id) });
+    const assets = await fillAfterLookup({ kind: 'physical', id: req.params.id, userId: me(req) });   // and whatever the game is missing (gaps only)
+    res.json({ matched: Boolean(g), game: assets?.got?.length ? getPhysical(me(req), req.params.id) : (g || getPhysical(me(req), req.params.id)), assets });
   } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 

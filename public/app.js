@@ -7,7 +7,7 @@ import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
 import { renderArtImport } from './artimport-ui.js';
-import './video.js';   // the video in a game's details window
+import { assetWords } from './video.js';   // the video in a game's details window
 import * as carousel from './carousel.js';
 import * as messages from './messages.js';
 import './pwreveal.js';   // the eye in password boxes
@@ -1719,8 +1719,9 @@ async function openDetail(id) {
     btn.classList.add('spin');
     try {
       const r = await api(`/metadata/${id}/refresh`, { method: 'POST' });
-      toast(r.updated ? `Metadata updated from ${r.source}` : `No match: ${r.reason}`, !r.updated);
-      if (r.updated) await refresh();
+      const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : '';   // the refresh also fills what the game is missing
+      toast((r.updated ? `Metadata updated from ${r.source}.` : `No match: ${r.reason}.`) + added, !r.updated && !added);
+      if (r.updated || added) await refresh();
     } catch (err) {
       toast(err.message, true);
     } finally {

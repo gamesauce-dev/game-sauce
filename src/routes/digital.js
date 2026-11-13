@@ -4,6 +4,7 @@ import multer from 'multer';
 import db from '../db.js';
 import { requireAdmin } from './auth.js';
 import { flagVideos } from '../lib/emumovies.js';
+import { fillAfterLookup } from '../lib/assets.js';
 import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, libSlug, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
@@ -118,7 +119,11 @@ router.delete('/games/:store/:appId/cover', (req, res) => { if (!consoleOnly(req
 router.delete('/games/:store/:appId/match', (req, res) => { if (!consoleOnly(req, res)) return; try { res.json(clearConsoleMatch(me(req), req.params.store, req.params.appId)); } catch (err) { fail(res, err); } });
 router.post('/games/:store/:appId/lookup', async (req, res, next) => {
   if (!consoleOnly(req, res)) return;
-  try { const d = await lookupConsoleAgain(me(req), req.params.store, req.params.appId); res.json({ found: Boolean(d) }); } catch (err) { if (err.status) return fail(res, err); next(err); }
+  try {
+    const d = await lookupConsoleAgain(me(req), req.params.store, req.params.appId);
+    const assets = await fillAfterLookup({ kind: 'digital', id: req.params.appId, store: req.params.store, userId: me(req) });   // and whatever the game is missing (gaps only)
+    res.json({ found: Boolean(d), assets });
+  } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 
 // The picture found for a console game (Steam's covers come straight from Steam's own address).

@@ -4,6 +4,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
+import { assetWords } from './video.js';
 import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
 import { platformBadge, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
@@ -761,7 +762,7 @@ function bindDetail(g) {
   $('[data-d="fav"]', body).onclick = () => toggleFav(id);
   $('[data-d="auto"]', body).onclick = async (e) => {
     const b = e.currentTarget; b.disabled = true; b.classList.add('spin');
-    try { const r = await ctx.api(`/physical/games/${id}/auto-match`, { method: 'POST' }); ctx.toast(r.matched ? `Details found (${r.game.meta_source})` : 'No match found: search for it below', !r.matched); await refreshAll(); }
+    try { const r = await ctx.api(`/physical/games/${id}/auto-match`, { method: 'POST' }); const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : ''; ctx.toast((r.matched ? `Details found (${r.game.meta_source}).` : 'No match found: search for it below.') + added, !r.matched && !added); await refreshAll(); }
     catch (err) { ctx.toast(err.message, true); b.disabled = false; b.classList.remove('spin'); }
   };
   $('[data-d="clear"]', body)?.addEventListener('click', async () => {

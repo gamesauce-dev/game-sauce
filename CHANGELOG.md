@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Refresh metadata and Look up again also fill what the game is missing.** For one game, the Library's **Refresh metadata**, the Physical shelf's look-up-again button and Digital's now also do what **Find assets** does afterwards: keep a video, cover, spine, disc art, back or manual the game lacks (gaps only; nothing you added is replaced). The message says what was added ("Metadata updated from ScreenScraper. Added: video, manual."). The bulk lookups (Fetch metadata, Find details) do not, so they never spend a day's ScreenScraper allowance on files.
+
 ### Fixed
 - **Refresh metadata replaced a cover you had uploaded or imported.** The Library's refresh cleared the cover before the new details were applied, so the protection for covers you added yourself (cover_locked) never held. A locked cover is now kept; an automatic one is still replaced.
 - **A game video kept playing (with its sound) after you left its details.** Closing the details window, or going to another library or page, only hid the window, so its video played on. It now stops as soon as the window is closed or no longer on screen.

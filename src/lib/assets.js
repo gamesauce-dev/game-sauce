@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import db from '../db.js';
 import { screenscraper } from './providers.js';
-import { ensureVideo, videoFile } from './emumovies.js';
+import { ensureVideo, videoFile, videoSourcesEnabled } from './emumovies.js';
 import { getPhysical, setPhysicalArt, setManualFile, isDiscPlatform } from './physical.js';
 import { setConsoleCover, libSlug } from './consoles.js';
 import { setRomFile, romFiles } from './romfiles.js';
@@ -55,6 +55,18 @@ function resolve({ kind, id, store, userId }) {
     };
   }
   throw fail(404, 'That game is not in your list');
+}
+
+/**
+ * After a lookup of ONE game (Refresh metadata, Look up again): fill what the game is missing too, the way Find assets does (gaps only). Best effort: a failure here never fails the
+ * lookup, and nothing is asked when no source is set up. Returns { got, results } or null. Never used by the bulk lookups (they would spend a day's allowance).
+ */
+export async function fillAfterLookup(args) {
+  try {
+    if (!videoSourcesEnabled().length) return null;
+    const r = await fetchAssets({ ...args, force: false });
+    return { got: r.got, results: r.results };
+  } catch { return null; }
 }
 
 /**

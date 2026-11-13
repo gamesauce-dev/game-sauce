@@ -10,6 +10,7 @@ import {
 } from '../settings.js';
 import { applyMetadataRecord } from './roms.js';
 import { downloadCover } from '../lib/storage.js';
+import { fillAfterLookup } from '../lib/assets.js';
 import { mameTitleTrusted } from '../lib/mamenames.js';
 
 const router = express.Router();
@@ -219,14 +220,16 @@ router.post('/:id/refresh', async (req, res, next) => {
       hashes: { crc32: rom.crc32, md5: rom.md5, sha1: rom.sha1 }
     });
 
-    if (!result) return res.json({ updated: false, reason: 'no provider returned a match' });
-    if (result.error) return res.json({ updated: false, reason: result.error });
+    // The lookup also fills what the game is missing (video, spine, disc, back, manual...): gaps only, the way Find assets does.
+    const withAssets = async (body) => ({ ...body, assets: await fillAfterLookup({ kind: 'rom', id: rom.id, userId: req.user?.id }) });
+    if (!result) return res.json(await withAssets({ updated: false, reason: 'no provider returned a match' }));
+    if (result.error) return res.json(await withAssets({ updated: false, reason: result.error }));
 
     // A refresh must also replace a stale automatic cover, so don't reuse the old one. A cover you uploaded or imported (cover_locked) is never replaced.
     if (result.cover_url) db.prepare('UPDATE roms SET cover_path = NULL WHERE id = ? AND cover_locked = 0').run(rom.id);
     const updated = await applyMetadataRecord(rom.id, result, req.user?.id);
 
-    res.json({ updated: true, source: result.source, cached: Boolean(result.cached), rom: updated });
+    res.json(await withAssets({ updated: true, source: result.source, cached: Boolean(result.cached), rom: updated }));
   } catch (err) { next(err); }
 });
 

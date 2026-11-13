@@ -598,6 +598,7 @@ test('Refresh metadata keeps a cover that was uploaded or imported (cover_locked
 
   const a = await call('/api/metadata/' + mine + '/refresh', { method: 'POST' });
   assert.equal(a.body.updated, true);
+  assert.deepEqual(a.body.assets.got.sort(), ['back', 'disc', 'manual', 'spine', 'video'], 'the refresh also filled what the game was missing (its cover was already there)');
   const keep = db.prepare('SELECT cover_path, cover_locked FROM roms WHERE id = ?').get(mine);
   assert.equal(keep.cover_path, own, 'the cover you uploaded or imported is not replaced'); assert.equal(keep.cover_locked, 1);
 
@@ -605,6 +606,14 @@ test('Refresh metadata keeps a cover that was uploaded or imported (cover_locked
   assert.equal(b.body.updated, true);
   const fresh = db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(auto);
   assert.ok(fresh.cover_path && fresh.cover_path !== own && fs.existsSync(fresh.cover_path), 'an automatic cover is replaced by the provider\'s');
+
+  // the shelf's "look up again" does the same, and a second press adds nothing
+  const g = (await call('/api/physical/games', { token: bobToken, method: 'POST', body: { platform: 'ps2', title: 'Ss Lookup Shelf', region: 'PAL' } })).body;
+  const m = await call('/api/physical/games/' + g.id + '/auto-match', { token: bobToken, method: 'POST' });
+  assert.ok(m.body.assets.got.includes('video') && m.body.assets.got.includes('spine'), 'looked up and filled');
+  assert.equal((await call('/api/physical/games/' + g.id, { token: bobToken })).body.has_spine, true);
+  const m2 = await call('/api/physical/games/' + g.id + '/auto-match', { token: bobToken, method: 'POST' });
+  assert.deepEqual(m2.body.assets.got, []);
 });
 
 test('with no login saved, fetching says so and the window offers nothing', async () => {

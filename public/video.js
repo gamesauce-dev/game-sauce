@@ -85,6 +85,8 @@ function playInCover(slot, src) {
 const ASSET_NAME = { video: 'video', cover: 'cover', spine: 'spine', disc: 'disc art', back: 'back', manual: 'manual' };
 const FIND_TIP = "Look for this game's video, cover, spine, disc art, back and manual, and keep whatever is missing. Nothing you added yourself is replaced.";
 const names = (list) => list.map((k) => ASSET_NAME[k] || k).join(', ');
+/** "video, cover": the words for what was added, for a message (used by the look-up-again buttons too). */
+export const assetWords = (got) => names(got || []);
 
 async function findAssets(slot, btn, msg) {
   btn.disabled = true; msg.textContent = 'looking…';
