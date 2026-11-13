@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **Arcade pictures, videos and manuals now import.** Arcade sets (MAME, FBNeo, CPS, Atomiswave, Neo Geo...) are named by a short ROM name, and so are their artwork files (`ggx15.png` for `ggx15.zip`), while the game's title is "Guilty Gear X ver 1.5", so nothing matched. Import game assets now also matches a file to a Library game by the ROM's file name (and by its first word when one is added after it, as in `ggx15_snap.png`), for pictures, manuals and videos, on every platform. A match by title still comes first. The Options box ("where the game's name ends") works with it as before.
+
 ## [0.5.1] - 2026-11-13
 
 ### Added

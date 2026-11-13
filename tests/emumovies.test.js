@@ -524,6 +524,44 @@ test('Find assets: the video, cover, spine, disc art, back and manual ScreenScra
   assert.ok(tile.cover_url);
 });
 
+test('arcade sets: pictures, videos and manuals named like the ROM (ggx15.png for ggx15.zip) are matched to it, whatever the game\'s title', async () => {
+  const { db } = await import('../src/db.js');
+  const { PNG: PL } = (await import('pngjs')).default; const img = new PL({ width: 80, height: 110 }); img.data.fill(150); const PNG = PL.sync.write(img);
+  const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
+  const pack = path.join(TMP, 'arcadepack');
+  const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); return f; };
+  put('atomiswave/images/ggx15.png', PNG);
+  put('atomiswave/videos/ggx15.mp4', MP4);
+  put('atomiswave/manuals/ggx15.pdf', PDF);
+  put('atomiswave/images/notinthelibrary.png', PNG);
+  put('atomiswave/images/anothr_snap.png', PNG);   // a word added after the ROM name
+  put('snes/images/odd-file-name.png', PNG);
+  await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } });
+  const rom = (platform, title, filename, sha) => Number(db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1) VALUES (?, ?, ?, 'x', (SELECT id FROM platforms WHERE slug = ?), 1, ?)").run(title, title.toLowerCase(), filename, platform, sha).lastInsertRowid);
+  const ggx = rom('atomiswave', 'Guilty Gear X ver 1.5', 'ggx15.zip', 'sha-ggx15'), odd = rom('snes', 'Totally Different Title', 'odd-file-name.sfc', 'sha-odd-file'), another = rom('atomiswave', 'Another Game', 'anothr.zip', 'sha-anothr');
+
+  const prev = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack } });
+  assert.equal(prev.status, 200);
+  assert.equal(prev.body.matched.cover, 3, 'the arcade picture, the one named like a non-arcade ROM, and one with a word added');
+  assert.equal(prev.body.matched.manual, 1); assert.equal(prev.body.matched.video, 1);
+  assert.equal(prev.body.unmatched_total, 1, 'a file that is named like nothing is left');
+
+  await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack, apply: true } });
+  let st; for (let k = 0; k < 80; k++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(st.failed, 0); assert.equal(st.applied.cover, 3); assert.equal(st.applied.manual, 1); assert.equal(st.applied.video, 1);
+  assert.ok(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(ggx).cover_path, 'the cover of ggx15');
+  assert.ok(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(odd).cover_path, 'by file name on any platform');
+  assert.ok(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(another).cover_path, 'anothr_snap.png belongs to anothr.zip');
+  assert.deepEqual((await call('/api/roms/' + ggx)).body.files.map((f) => f.kind), ['manual']);
+  // the video is kept under the game's title, so it is found wherever the game is listed
+  assert.ok(db.prepare("SELECT path FROM game_videos WHERE platform = 'atomiswave' AND title_key = 'guilty gear x ver 1 5' AND source = 'folder'").get());
+  assert.equal((await call('/api/videos/status?kind=rom&id=' + ggx)).body.available, true);
+
+  // the same run again has nothing new, and a title match still wins over a file name
+  const again = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack } });
+  assert.equal(again.body.will.cover + again.body.will.manual + again.body.will.video, 0);
+});
+
 test('with no login saved, fetching says so and the window offers nothing', async () => {
   await saveCreds({ EMUMOVIES_USER: '', EMUMOVIES_PASSWORD: '', EMUMOVIES_API_KEY: '', SS_DEV_ID: '', SS_DEV_PASSWORD: '', SS_USER: '', SS_PASSWORD: '' });
   const { db } = await import('../src/db.js');
