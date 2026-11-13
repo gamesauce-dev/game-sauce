@@ -16,6 +16,8 @@
   button.primary { background: var(--acc); border-color: var(--acc); color: #fff; font-weight: 600; } button:hover { filter: brightness(1.06); }
   .row { display: grid; grid-template-columns: 250px 1.2fr auto 1fr auto auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
   .row:first-child { border-top: 0; } .head { color: var(--dim); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+  .sub { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-left: 4px; } .sub input[type=text] { flex: 1 1 260px; width: auto; }
+  .cache-folder { border-top: 1px solid var(--line); padding: 10px 0; } .cache-folder:first-child { border-top: 0; } .cache-game { display: flex; gap: 10px; align-items: center; padding: 3px 0 3px 14px; font-size: .9rem; } .cache-game .t { flex: 1; } .dim { color: var(--dim); }
   .srv { display: flex; gap: 8px; align-items: center; margin: 6px 0; } .srv span { flex: 1; font-family: ui-monospace, monospace; }
   .st { font-size: .85rem; min-width: 7ch; } .st.ok { color: var(--ok); } .st.bad { color: var(--bad); }
   label.chk { display: flex; gap: 6px; align-items: center; font-size: .85rem; color: var(--dim); white-space: nowrap; }
@@ -39,6 +41,15 @@
     <div class="row head"><div>Platform</div><div>Emulator program</div><div></div><div>Arguments</div><div></div><div></div></div>
     <div id="emus"></div>
     <div style="margin-top:10px"><button id="addemu" type="button">+ Add a platform</button></div>
+  </div>
+  <h2>Quick launch cache</h2>
+  <p class="hint">A platform with <b>quick launch</b> ticked keeps its games here after the emulator closes, so the next launch of the same game needs no download and no unpacking. If the game changes on the server, the kept copy is replaced. The games played longest ago are removed when a folder passes its limit. Saves an emulator wrote next to a game are copied to <code>~/.gamesauce/rescued</code> before it is removed.</p>
+  <div class="card">
+    <div class="srv"><span style="flex:0 0 auto;font-family:inherit">Shared folder</span><input type="text" id="cachedir" placeholder="" spellcheck="false" autocomplete="off"><button type="button" data-browsedir="shared">Browse…</button></div>
+    <div class="srv"><span style="flex:0 0 auto;font-family:inherit">Limit per folder (GB, 0 = none)</span><input type="text" id="cachelimit" style="max-width:9rem" placeholder="" spellcheck="false" autocomplete="off"></div>
+    <p class="hint" style="margin:6px 0">Save after changing a folder or the limit; the list below shows what is kept in the saved folders.</p>
+    <div id="cachelist"><p class="hint" style="margin:0">Loading…</p></div>
+    <div style="margin-top:8px"><button type="button" id="cacherefresh">Refresh</button></div>
   </div>
 </main>
 <div class="bar"><span id="msg"></span><button id="save" class="primary" type="button">Save</button><button id="savesync" type="button" hidden>Save and tell game-sauce</button><button id="done" type="button">Close</button></div>
@@ -70,7 +81,9 @@ function drawEmus() {
       <button type="button" data-browse="${i}">Browse…</button>
       <input type="text" data-f="args" value="${esc(e.args)}" placeholder="{rom}" spellcheck="false" autocomplete="off">
       <span class="st" data-st="${i}">${e.found === true ? '<span class="ok">found</span>' : e.found === false ? '<span class="bad">not found</span>' : ''}</span>
-      <span style="display:flex;gap:8px;align-items:center"><select data-f="unpack" title="A zipped game (.zip, .7z, .rar): unpack it before starting the emulator. Auto does it for Xbox 360 and PS3, whose emulators cannot open a zip."><option value=""${e.unpack === undefined ? ' selected' : ''}>zip: auto</option><option value="1"${e.unpack === true ? ' selected' : ''}>zip: unpack</option><option value="0"${e.unpack === false ? ' selected' : ''}>zip: as is</option></select><label class="chk" title="Delete the temporary copy of the game when the emulator closes"><input type="checkbox" data-f="del" ${e.deleteOnExit === false ? '' : 'checked'}> delete copy</label><button type="button" data-rm="${i}" aria-label="Remove">✕</button></span></div>`).join('')
+      <span style="display:flex;gap:8px;align-items:center"><select data-f="unpack" title="A zipped game (.zip, .7z, .rar): unpack it before starting the emulator. Auto does it for Xbox 360 and PS3, whose emulators cannot open a zip."><option value=""${e.unpack === undefined ? ' selected' : ''}>zip: auto</option><option value="1"${e.unpack === true ? ' selected' : ''}>zip: unpack</option><option value="0"${e.unpack === false ? ' selected' : ''}>zip: as is</option></select><label class="chk" title="Delete the temporary copy of the game when the emulator closes"><input type="checkbox" data-f="del" ${e.deleteOnExit === false ? '' : 'checked'}> delete copy</label><button type="button" data-rm="${i}" aria-label="Remove">✕</button></span>
+      <div class="sub"><label class="chk" title="Keep the game on this PC after the emulator closes, so the next launch needs no download and no unpacking"><input type="checkbox" data-f="ql" ${e.quickLaunch ? 'checked' : ''}> quick launch (keep the game for next time)</label>
+        <input type="text" data-f="cachedir" value="${esc(e.cacheDir || '')}" placeholder="its own cache folder (empty: the shared one below)" spellcheck="false" autocomplete="off"><button type="button" data-browsedir="${i}">Browse…</button></div></div>`).join('')
     : '<p class="hint" style="margin:0">No emulators yet: press “Add a platform”.</p>';
 }
 async function check(i) {
@@ -79,11 +92,33 @@ async function check(i) {
   drawSt(i);
 }
 function drawSt(i) { const s = $(`[data-st="${i}"]`); if (s) s.innerHTML = emus[i].found === true ? '<span class="ok">found</span>' : emus[i].found === false ? '<span class="bad">not found</span>' : ''; }
-const readRows = () => { document.querySelectorAll('#emus .row').forEach((row) => { const e = emus[Number(row.dataset.i)]; e.slug = $('[data-f=slug]', row).value; e.command = $('[data-f=command]', row).value; e.args = $('[data-f=args]', row).value; e.deleteOnExit = $('[data-f=del]', row).checked ? undefined : false; const u = $('[data-f=unpack]', row).value; e.unpack = u === '1' ? true : u === '0' ? false : undefined; }); };
-const payload = () => { readRows(); return { servers, emulators: emus.filter((e) => e.slug || e.command.trim()).map((e) => ({ slug: e.slug, command: e.command, args: e.args.trim() === '' || e.args.trim() === '{rom}' ? undefined : splitArgs(e.args), deleteOnExit: e.deleteOnExit, unpack: e.unpack })) }; };
+const readRows = () => { document.querySelectorAll('#emus .row').forEach((row) => { const e = emus[Number(row.dataset.i)]; e.slug = $('[data-f=slug]', row).value; e.command = $('[data-f=command]', row).value; e.args = $('[data-f=args]', row).value; e.deleteOnExit = $('[data-f=del]', row).checked ? undefined : false; const u = $('[data-f=unpack]', row).value; e.unpack = u === '1' ? true : u === '0' ? false : undefined; e.quickLaunch = $('[data-f=ql]', row).checked ? true : undefined; e.cacheDir = $('[data-f=cachedir]', row).value.trim() || undefined; }); };
+const payload = () => { readRows(); return { servers, emulators: emus.filter((e) => e.slug || e.command.trim()).map((e) => ({ slug: e.slug, command: e.command, args: e.args.trim() === '' || e.args.trim() === '{rom}' ? undefined : splitArgs(e.args), deleteOnExit: e.deleteOnExit, unpack: e.unpack, quickLaunch: e.quickLaunch, cacheDir: e.cacheDir })), cacheDir: $('#cachedir').value.trim(), cacheLimitGb: $('#cachelimit').value.trim() }; };
 
+const fmt = (b) => b >= 1073741824 ? (b / 1073741824).toFixed(1) + ' GB' : b >= 1048576 ? Math.round(b / 1048576) + ' MB' : Math.max(0, Math.round(b / 1024)) + ' KB';
+const when = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(); };
+async function loadCache() {
+  const box = $('#cachelist'); if (!box) return;
+  try {
+    const { folders } = await api('/api/cache');
+    box.innerHTML = folders.map((f, i) => `<div class="cache-folder"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1"><code>${esc(f.dir)}</code> <span class="dim">for ${esc(f.used_by)}</span><br><span class="dim">${f.games.length} game${f.games.length === 1 ? '' : 's'} kept, ${fmt(f.bytes)}${f.exists ? '' : ' (the folder does not exist yet)'}</span></div>${f.games.length ? `<button type="button" data-empty="${i}" data-dir="${esc(f.dir)}">Empty cache</button>` : ''}</div>${f.games.map((g) => `<div class="cache-game"><span class="t">${esc(g.title)} <span class="dim">(${esc(g.platform)}, played ${esc(when(g.last_played))})</span></span><span class="dim">${fmt(g.bytes)}</span>${g.in_use ? '<span class="dim">in use</span>' : `<button type="button" data-empty-one="${esc(g.name)}" data-dir="${esc(f.dir)}">Remove</button>`}</div>`).join('')}</div>`).join('');
+  } catch (e) { box.innerHTML = `<p class="hint bad" style="margin:0">${esc(e.message)}</p>`; }
+}
 document.addEventListener('click', async (ev) => {
   const t = ev.target.closest('button'); if (!t) return;
+  if (t.id === 'cacherefresh') { loadCache(); return; }
+  if (t.dataset.empty !== undefined || t.dataset.emptyOne !== undefined) {
+    const one = t.dataset.emptyOne;
+    if (!confirm(one ? 'Remove this game from the quick launch cache? It downloads again next time.' : 'Empty this quick launch cache? Every game kept in it downloads again next time you play it. Saves an emulator wrote next to a game are copied to ~/.gamesauce/rescued first.')) return;
+    say('Removing…');
+    try { const r = await api('/api/cache/empty', { dir: t.dataset.dir, name: one || null }); say(`Removed ${r.removed} game${r.removed === 1 ? '' : 's'}, freed ${fmt(r.bytes)}${r.left ? `; ${r.left} could not be removed (in use?)` : ''}.`, r.left ? 'bad' : 'ok'); } catch (e) { say(e.message, 'bad'); }
+    loadCache(); return;
+  }
+  if (t.dataset.browsedir !== undefined) {
+    const which = t.dataset.browsedir; readRows(); say('Choose the folder in the window that opened…');
+    try { const r = await api('/api/pickdir', {}); if (r.path) { if (which === 'shared') $('#cachedir').value = r.path; else { emus[Number(which)].cacheDir = r.path; drawEmus(); } } say(''); } catch (e) { say(e.message, 'bad'); }
+    return;
+  }
   if (t.dataset.rmSrv !== undefined) { servers.splice(Number(t.dataset.rmSrv), 1); drawServers(); }
   else if (t.id === 'addserver') { const v = $('#newserver').value.trim(); if (v) { servers.push(v); $('#newserver').value = ''; drawServers(); } }
   else if (t.id === 'addemu') { readRows(); emus.push({ slug: '', command: '', args: '{rom}' }); drawEmus(); }
@@ -95,7 +130,7 @@ document.addEventListener('click', async (ev) => {
   else if (t.id === 'save' || t.id === 'savesync') {
     say('Saving…');
     try {
-      const r = await api('/api/save', payload()); servers = r.servers; emus = r.emulators.map((e) => ({ slug: e.slug, command: e.command, args: e.args ? joinArgs(e.args) : '{rom}', deleteOnExit: e.deleteOnExit, unpack: e.unpack, found: e.found })); drawServers(); drawEmus();
+      const r = await api('/api/save', payload()); servers = r.servers; emus = r.emulators.map((e) => ({ slug: e.slug, command: e.command, args: e.args ? joinArgs(e.args) : '{rom}', deleteOnExit: e.deleteOnExit, unpack: e.unpack, quickLaunch: e.quickLaunch, cacheDir: e.cacheDir, found: e.found })); drawServers(); drawEmus(); loadCache();
       if (t.id === 'savesync') { const s = await api('/api/sync', {}); say(`Saved. game-sauce now knows this PC can play: ${s.platforms.join(', ') || 'nothing yet'}.`, 'ok'); }
       else say(`Saved to ${r.file}.`, 'ok');
     } catch (e) { say(e.message, 'bad'); }
@@ -108,10 +143,11 @@ $('#newserver').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#
 (async () => {
   try {
     const c = await api('/api/config'); platforms = c.platforms; servers = c.servers; canSync = c.can_sync; $('#file').textContent = c.file;
-    emus = c.emulators.map((e) => ({ slug: e.slug, command: e.command, args: e.args ? joinArgs(e.args) : '{rom}', deleteOnExit: e.deleteOnExit, unpack: e.unpack, found: e.found }));
+    emus = c.emulators.map((e) => ({ slug: e.slug, command: e.command, args: e.args ? joinArgs(e.args) : '{rom}', deleteOnExit: e.deleteOnExit, unpack: e.unpack, quickLaunch: e.quickLaunch, cacheDir: e.cacheDir, found: e.found }));
+    $('#cachedir').placeholder = c.cache.default_dir; $('#cachedir').value = c.cache.dir || ''; $('#cachelimit').placeholder = String(c.cache.default_limit_gb); $('#cachelimit').value = c.cache.limit_gb ?? '';
     if (c.warning) say(c.warning, 'bad');
     if (c.add_server && !servers.includes(c.add_server)) { servers.push(c.add_server); say(`Added ${c.add_server}: press Save to keep it.`); }
-    $('#savesync').hidden = !canSync; drawServers(); drawEmus();
+    $('#savesync').hidden = !canSync; drawServers(); drawEmus(); loadCache();
   } catch (e) { say(e.message, 'bad'); }
 })();
 </script>

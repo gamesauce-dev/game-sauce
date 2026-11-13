@@ -21,6 +21,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { pathToFileURL } from 'node:url';
 import { wantsUnpack, unpackArchive, listFiles, pickLaunchFile, UnpackError } from './unpack.mjs';
+import { wantsCache, cacheDirFor, entryDirFor, findFresh, readMeta, writeMeta, removeEntry, lockEntry, unlockEntry, listTree, treeBytes, prune, limitBytes } from './cache.mjs';
 
 export const TEMP_PREFIX = 'gamesauce-launch-';
 const STALE_MS = 24 * 60 * 60 * 1000;
@@ -95,7 +96,10 @@ export function parseLaunchUrl(raw) {
   if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) throw new LaunchError('The link has no valid launch token.');
   if (!/^[a-z0-9_-]{1,40}$/.test(platform)) throw new LaunchError('The link has no valid platform.');
   if (!/^\.[a-z0-9]{1,8}$/.test(ext)) ext = '';
-  return { server, token, platform, ext, title };
+  // Optional, for quick launch: which game it is, and a fingerprint of the file (its size and date) to tell a kept copy is still the server's.
+  const rom = /^\d{1,12}$/.test(String(q.get('rom') || '')) ? String(q.get('rom')) : '';
+  const fp = /^[A-Za-z0-9._-]{1,60}$/.test(String(q.get('fp') || '')) ? String(q.get('fp')) : '';
+  return { server, token, platform, ext, title, rom, fp };
 }
 
 /** Read a gamesauce://sync link ("Check my PC"): the server address and a one-time token. */
@@ -129,7 +133,7 @@ export function safeFileName(title, ext) {
 /* ───────────────────────────── config ───────────────────────────── */
 
 const TEMPLATE = {
-  _help: 'servers: the game-sauce addresses this launcher may download from. emulators: one entry per platform slug (e.g. nes, snes, gba, genesis, ps1). command = full path to the emulator program; args = its arguments, where {rom} is replaced by the ROM path (added at the end if you leave it out). Set "deleteOnExit": false for an emulator that hands over to another process and returns straight away. A zipped game (.zip, .7z, .rar) is unpacked first for Xbox 360 and PS3 (Xenia and RPCS3 cannot open archives); set "unpack": true for another platform, or false to hand the archive over as it is. "launchFile" (optional, for example "**/default.xex") says which unpacked file starts the game; "sevenZip" (top level) is the full path of 7z if it is not found.',
+  _help: 'servers: the game-sauce addresses this launcher may download from. emulators: one entry per platform slug (e.g. nes, snes, gba, genesis, ps1). command = full path to the emulator program; args = its arguments, where {rom} is replaced by the ROM path (added at the end if you leave it out). Set "deleteOnExit": false for an emulator that hands over to another process and returns straight away. A zipped game (.zip, .7z, .rar) is unpacked first for Xbox 360 and PS3 (Xenia and RPCS3 cannot open archives); set "unpack": true for another platform, or false to hand the archive over as it is. "launchFile" (optional, for example "**/default.xex") says which unpacked file starts the game; "sevenZip" (top level) is the full path of 7z if it is not found. "quickLaunch": true keeps a game on this PC after the emulator closes (no download or unpacking next time); "cacheDir" (top level, or on a platform) is where, and "cacheLimitGb" (top level, default 100, 0 = no limit) how much to keep.',
   servers: [],
   emulators: {
     snes: { command: 'C:\\Emulators\\Snes9x\\snes9x-x64.exe', args: ['{rom}'] },
@@ -154,7 +158,12 @@ export function loadConfig(file) {
   if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) throw new LaunchError(`${file} must be a JSON object.`);
   const servers = (Array.isArray(cfg.servers) ? cfg.servers : []).map(normalizeOrigin).filter(Boolean);
   const emulators = cfg.emulators && typeof cfg.emulators === 'object' ? cfg.emulators : {};
-  return { servers, emulators, sevenZip: typeof cfg.sevenZip === 'string' && cfg.sevenZip.trim() ? cfg.sevenZip.trim() : undefined };
+  return {
+    servers, emulators,
+    sevenZip: typeof cfg.sevenZip === 'string' && cfg.sevenZip.trim() ? cfg.sevenZip.trim() : undefined,
+    cacheDir: typeof cfg.cacheDir === 'string' && cfg.cacheDir.trim() ? cfg.cacheDir.trim() : undefined,   // quick launch: the folder games are kept in (each platform may have its own)
+    cacheLimitGb: typeof cfg.cacheLimitGb === 'number' ? cfg.cacheLimitGb : undefined
+  };
 }
 
 /** The platforms this PC can start: every emulator in the config with a command. A command written as a full path must exist; one written as just
@@ -272,35 +281,61 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
 
   sweepStale();
 
-  const dir = fs.mkdtempSync(path.join(tempParent(), TEMP_PREFIX));
+  // Quick launch: this platform keeps its games in the cache folder (launcher/cache.mjs). A game kept there that is still the one the server has starts at once.
+  const cached = wantsCache(entry) && Boolean(link.rom) && Boolean(link.fp);
+  const cacheDir = cached ? cacheDirFor(entry, cfg) : null;
+  const dir = cached ? entryDirFor(cacheDir, link.platform, link.rom) : fs.mkdtempSync(path.join(tempParent(), TEMP_PREFIX));
+  let fresh = null;
+  if (cached) {
+    fresh = findFresh(dir, link.fp);
+    if (!fresh && fs.existsSync(dir)) {   // an old version of the game, or a half-made one: cleared (saves the emulator wrote there are copied out first)
+      if (readMeta(dir)) {
+        const r = removeEntry(dir, { rescueParent: rescueParent(), log });
+        if (!r.removed) throw new LaunchError(`"${link.title}" is kept in the quick launch cache and could not be refreshed (is it still open in the emulator?). Close it and try again.`);
+      } else removeDir(dir);
+    }
+    fs.mkdirSync(dir, { recursive: true });
+  }
   // An Xbox Live Arcade package (".xbla" in the library) is handed over with no extension: Xenia takes a file without one for an STFS package.
   const romPath = path.join(dir, safeFileName(link.title, link.ext === '.xbla' ? '' : link.ext));
-  let child = null, unpacked = null;
+  let child = null, unpacked = null, prepared = Boolean(fresh);
   const onSignal = (sig) => {
     try { child?.kill(); } catch { /* already gone */ }
-    removeDir(dir);
+    if (cached) { unlockEntry(dir); if (!prepared) removeDir(dir); } else removeDir(dir);
     process.exit(sig === 'SIGINT' ? 130 : 143);
   };
   process.once('SIGINT', onSignal);
   process.once('SIGTERM', onSignal);
 
   try {
-    log(`Downloading "${link.title}" (${link.platform}) from ${link.server}`);
-    await download(link.server, link.token, romPath);
+    let startPath;
+    if (fresh) {
+      startPath = path.join(dir, ...fresh.start.split('/'));
+      log(`Quick launch: "${link.title}" (${link.platform}) is already on this PC, starting it without downloading`);
+    } else {
+      log(`Downloading "${link.title}" (${link.platform}) from ${link.server}`);
+      await download(link.server, link.token, romPath);
 
-    // A zipped game for an emulator that cannot open one: unpack it next to the download, drop the archive, and start the file that boots the game.
-    let startPath = romPath;
-    if (wantsUnpack(entry, link.platform, link.ext)) {
-      unpacked = path.join(dir, 'game');
-      log(`Unpacking "${link.title}" (this can take a while for a big game)`);
-      let how;
-      try { how = await unpackArchive(romPath, unpacked, { sevenZip: typeof cfg.sevenZip === 'string' ? cfg.sevenZip : undefined }); } catch (e) { throw new LaunchError(e instanceof UnpackError ? e.message : `Could not unpack the game: ${e.message}`); }
-      try { fs.rmSync(romPath, { force: true }); } catch { /* the copy is deleted at the end anyway */ }
-      const pick = pickLaunchFile(listFiles(unpacked), link.platform, entry);
-      if (!pick) throw new LaunchError('The game was unpacked, but there is nothing in it to start. Set "launchFile" for this platform in launcher.json (for example "**/default.xex").');
-      startPath = path.join(unpacked, pick);
-      log(`Unpacked with ${how}; starting ${pick}`);
+      // A zipped game for an emulator that cannot open one: unpack it next to the download, drop the archive, and start the file that boots the game.
+      startPath = romPath;
+      if (wantsUnpack(entry, link.platform, link.ext)) {
+        unpacked = path.join(dir, 'game');
+        log(`Unpacking "${link.title}" (this can take a while for a big game)`);
+        let how;
+        try { how = await unpackArchive(romPath, unpacked, { sevenZip: typeof cfg.sevenZip === 'string' ? cfg.sevenZip : undefined }); } catch (e) { throw new LaunchError(e instanceof UnpackError ? e.message : `Could not unpack the game: ${e.message}`); }
+        try { fs.rmSync(romPath, { force: true }); } catch { /* the copy is deleted at the end anyway */ }
+        const pick = pickLaunchFile(listFiles(unpacked), link.platform, entry);
+        if (!pick) throw new LaunchError('The game was unpacked, but there is nothing in it to start. Set "launchFile" for this platform in launcher.json (for example "**/default.xex").');
+        startPath = path.join(unpacked, pick);
+        log(`Unpacked with ${how}; starting ${pick}`);
+      }
+      if (cached) {   // what is kept, and how to tell later that it is still the server's file
+        const manifest = listTree(dir);
+        writeMeta(dir, { title: link.title, platform: link.platform, rom: link.rom, fp: link.fp, start: path.relative(dir, startPath).split(path.sep).join('/'), manifest: manifest.map((f) => f.path), bytes: manifest.reduce((n, f) => n + f.size, 0), lastPlayed: new Date().toISOString() });
+        prepared = true;
+      }
     }
+    if (cached) lockEntry(dir);
 
     const { command, args } = buildCommand(entry, startPath);
     log(`Starting ${command}`);
@@ -315,7 +350,16 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
   } finally {
     process.removeListener('SIGINT', onSignal);
     process.removeListener('SIGTERM', onSignal);
-    if (entry.deleteOnExit === false) log(`Kept ${dir} ("deleteOnExit" is false for ${link.platform})`);
+    if (cached) {
+      unlockEntry(dir);
+      if (!prepared) removeDir(dir);   // a download or unpack that did not finish is not kept
+      else {
+        const m = readMeta(dir);
+        if (m) { try { writeMeta(dir, { ...m, lastPlayed: new Date().toISOString(), bytes: treeBytes(dir) }); } catch { /* the old tag stays */ } }
+        log(`Kept "${link.title}" in the quick launch cache (${dir})`);
+        try { prune(cacheDir, limitBytes(cfg), { keep: dir, rescueParent: rescueParent(), log }); } catch (e) { log(`Could not tidy the cache: ${e.message}`); }
+      }
+    } else if (entry.deleteOnExit === false) log(`Kept ${dir} ("deleteOnExit" is false for ${link.platform})`);
     else {
       let keep = false;
       try {

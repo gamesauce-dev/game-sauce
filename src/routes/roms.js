@@ -827,11 +827,12 @@ router.post('/:id/launch', (req, res) => {
   if (!canDownload(req.user)) {
     return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account. Ask the admin, or play it in the browser.' });
   }
-  const rom = db.prepare('SELECT r.id, r.title, r.filename, r.storage_path, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(req.params.id);
+  const rom = db.prepare('SELECT r.id, r.title, r.filename, r.storage_path, r.size_bytes, r.scanned_mtime, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!fs.existsSync(rom.storage_path)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
   const { token, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null);
-  res.json({ token, expires_in, platform: rom.platform, title: rom.title, ext: path.extname(rom.filename).toLowerCase() });
+  // id and fp (the file's size and date) let the launcher's quick launch tell that a copy it kept is still this file.
+  res.json({ token, expires_in, platform: rom.platform, title: rom.title, ext: path.extname(rom.filename).toLowerCase(), id: rom.id, fp: `${Number(rom.size_bytes) || 0}-${Number(rom.scanned_mtime) || 0}` });
 });
 
 /* ── play: browser streaming for BIOS-free platforms (EmulatorJS) ──

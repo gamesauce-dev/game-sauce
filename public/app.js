@@ -1646,7 +1646,7 @@ async function openDetail(id) {
     btn.disabled = true;
     try {
       const j = await api(`/roms/${rom.id}/launch`, { method: 'POST' });
-      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title });
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '' });
       toast('Opening your local emulator… this needs the game-sauce launcher installed on this PC (docs/LOCAL-LAUNCH.md).');
       location.href = `gamesauce://launch?${q}`;
     } catch (err) {

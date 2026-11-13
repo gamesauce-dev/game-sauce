@@ -126,7 +126,11 @@ test('a launch is logged as its own kind and does not count as a download', asyn
 
 test('parseLaunchUrl accepts a real link and rejects odd ones', () => {
   const ok = launcher.parseLaunchUrl('gamesauce://launch?server=http://Host:3000/&token=' + 'a'.repeat(43) + '&platform=SNES&ext=.sfc&title=Sonic');
-  assert.deepEqual(ok, { server: 'http://host:3000', token: 'a'.repeat(43), platform: 'snes', ext: '.sfc', title: 'Sonic' });
+  assert.deepEqual(ok, { server: 'http://host:3000', token: 'a'.repeat(43), platform: 'snes', ext: '.sfc', title: 'Sonic', rom: '', fp: '' });
+  const withId = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&ext=.sfc&title=Sonic&rom=42&fp=123-456');
+  assert.equal(withId.rom, '42'); assert.equal(withId.fp, '123-456');
+  const junk = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&rom=..%2F..&fp=a%20b');
+  assert.equal(junk.rom, ''); assert.equal(junk.fp, '', 'a game id or fingerprint that is not plain is dropped');
   const t = 'a'.repeat(43);
   for (const bad of [
     'https://launch?server=http://h&token=' + t + '&platform=snes',
@@ -482,4 +486,110 @@ test('setup page and docs: the zip choice is saved, and a launchFile written by 
   const ui = fs.readFileSync(new URL('../launcher/configure-ui.html', import.meta.url), 'utf8'), src = fs.readFileSync(new URL('../launcher/configure.mjs', import.meta.url), 'utf8');
   assert.ok(ui.includes('data-f="unpack"') && ui.includes('zip: auto'), 'the page has the choice');
   assert.ok(src.includes('e.launchFile = was'), 'a launchFile from the file survives a save');
+});
+
+/* ───────────── quick launch: the game is kept on this PC ───────────── */
+
+test('quick launch: the game is kept, the next launch needs no download, a changed file is fetched again (and saves are copied out), and the cache keeps to its limit', async () => {
+  const cacheDir = path.join(TMP, 'quick-cache'), rescueDir = path.join(TMP, 'quick-rescued');
+  process.env.GAMESAUCE_LAUNCHER_RESCUE = rescueDir;
+  const cfg = writeConfig({ snes: { command: process.execPath, args: [SAVER, '{rom}'], quickLaunch: true, cacheDir } });
+  const entryDir = path.join(cacheDir, 'gamesauce-cache', `snes-${romId}`);
+  try {
+    // 1. the first launch downloads and keeps it
+    const m1 = (await mint()).body;
+    assert.ok(m1.id === romId && /^\d+-\d+$/.test(m1.fp), 'the server says which game it is and a fingerprint of the file');
+    await launcher.launch(linkFor(m1, { rom: String(m1.id), fp: m1.fp }), { configFile: cfg });
+    const meta = JSON.parse(fs.readFileSync(path.join(entryDir, '.gamesauce-cache.json'), 'utf8'));
+    assert.equal(meta.title, 'Test Game'); assert.equal(meta.fp, m1.fp); assert.equal(meta.start, 'Test Game.sfc');
+    assert.deepEqual(meta.manifest, ['Test Game.sfc'], 'what the launcher brought in; the files the emulator wrote are not part of it');
+    assert.ok(fs.existsSync(path.join(entryDir, 'Test Game.sfc')) && fs.existsSync(path.join(entryDir, 'Test Game.sfc.srm')), 'kept, with the save the emulator wrote beside it');
+    assert.deepEqual(leftovers(), [], 'nothing in the temporary area');
+    assert.equal(fs.existsSync(path.join(entryDir, '.gamesauce-lock')), false, 'not locked once the emulator has closed');
+
+    // 2. the second launch does not use its token: it was not downloaded
+    const m2 = (await mint()).body;
+    fs.rmSync(OUT, { force: true });
+    await launcher.launch(linkFor(m2, { rom: String(m2.id), fp: m2.fp }), { configFile: cfg });
+    assert.equal((await call(`/api/launch/${m2.token}`)).status, 200, 'the token is still unused: nothing was downloaded');
+
+    // 3. the file changed on the server: fetched again, and the save the emulator wrote is copied out before the old copy goes
+    db.prepare('UPDATE roms SET size_bytes = size_bytes + 1 WHERE id = ?').run(romId);
+    const m3 = (await mint()).body;
+    assert.notEqual(m3.fp, m1.fp);
+    await launcher.launch(linkFor(m3, { rom: String(m3.id), fp: m3.fp }), { configFile: cfg });
+    assert.equal((await call(`/api/launch/${m3.token}`)).status, 404, 'this time the token was used');
+    assert.equal(JSON.parse(fs.readFileSync(path.join(entryDir, '.gamesauce-cache.json'), 'utf8')).fp, m3.fp);
+    const rescued = fs.readdirSync(rescueDir);
+    assert.equal(rescued.length, 1, 'the old save was copied out'); assert.ok(fs.readdirSync(path.join(rescueDir, rescued[0])).includes('Test Game.sfc.srm'));
+
+    // 4. without a link that names the game, nothing is kept (a temporary copy, as before)
+    fs.rmSync(entryDir, { recursive: true, force: true });
+    await launcher.launch(linkFor((await mint()).body), { configFile: cfg });
+    assert.equal(fs.existsSync(entryDir), false); assert.deepEqual(leftovers(), []);
+
+    // 5. a platform without quick launch still uses and deletes a temporary copy
+    const plain = writeConfig({ snes: { command: process.execPath, args: [FAKE, '{rom}'] } });
+    const m5 = (await mint()).body;
+    await launcher.launch(linkFor(m5, { rom: String(m5.id), fp: m5.fp }), { configFile: plain });
+    assert.equal(fs.existsSync(entryDir), false); assert.deepEqual(leftovers(), []);
+  } finally { delete process.env.GAMESAUCE_LAUNCHER_RESCUE; db.prepare('UPDATE roms SET size_bytes = ? WHERE id = ?').run(ROM_BYTES.length, romId); }
+});
+
+test('quick launch: the cache folder keeps to its limit, the game just played and a running one stay, and a folder that is not ours is never touched', async () => {
+  const cache = await import('../launcher/cache.mjs');
+  const dir = path.join(TMP, 'cache-prune'), resc = path.join(TMP, 'cache-prune-rescued');
+  const mk = (name, title, bytes, played, extra) => {
+    const d = path.join(dir, 'gamesauce-cache', name); fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'game.bin'), Buffer.alloc(bytes));
+    cache.writeMeta(d, { title, platform: name.split('-')[0], rom: Number(name.split('-')[1]), fp: '1-1', start: 'game.bin', manifest: ['game.bin'], bytes, lastPlayed: played });
+    if (extra) fs.writeFileSync(path.join(d, extra), 'my save');
+    return d;
+  };
+  const a = mk('ps3-1', 'Oldest', 400, '2026-01-01T00:00:00Z', 'a.sav'), b = mk('ps3-2', 'Middle', 400, '2026-02-01T00:00:00Z'), c = mk('ps3-3', 'Newest', 400, '2026-03-01T00:00:00Z');
+  const foreign = path.join(dir, 'gamesauce-cache', 'ps3-9'); fs.mkdirSync(foreign, { recursive: true }); fs.writeFileSync(path.join(foreign, 'precious.bin'), 'not ours');   // no tag
+  assert.deepEqual(cache.listEntries(dir).map((e) => e.title), ['Newest', 'Middle', 'Oldest']);
+  const gone = cache.prune(dir, 900, { keep: c, rescueParent: resc });
+  assert.deepEqual(gone, ['Oldest'], 'the oldest goes first, until it fits');
+  assert.equal(fs.existsSync(a), false); assert.ok(fs.existsSync(b) && fs.existsSync(c));
+  assert.ok(fs.readdirSync(resc).length === 1, 'its save was copied out');
+  // a game that is open stays, even over the limit
+  fs.writeFileSync(path.join(b, '.gamesauce-lock'), String(process.pid));
+  assert.deepEqual(cache.prune(dir, 100, { keep: c, rescueParent: resc }), [], 'the one in use and the one just played both stay');
+  const e1 = cache.empty(dir, { rescueParent: resc });
+  assert.equal(e1.left, 1, 'Empty cache leaves the one in use'); assert.equal(e1.removed, 1);
+  assert.ok(fs.existsSync(path.join(foreign, 'precious.bin')), 'a folder without our tag is never removed');
+  fs.rmSync(path.join(b, '.gamesauce-lock'));
+  assert.equal(cache.empty(dir, { name: 'ps3-2', rescueParent: resc }).removed, 1, 'one game can be removed on its own');
+  assert.ok(!cache.ENTRY_NAME.test('../x') && cache.ENTRY_NAME.test('ps3-2'));
+  assert.deepEqual(cache.prune(dir, 0, { rescueParent: resc }), [], 'a limit of 0 means no limit');
+});
+
+test('setup page: quick launch choices are saved, the cache is listed and emptied, and only the saved folders can be', async () => {
+  const cacheDir = path.join(TMP, 'setup-cache'), other = path.join(TMP, 'setup-elsewhere');
+  const { s, file, get, post } = await cfgUrl({ pickDir: async () => cacheDir });
+  try {
+    const save = await post('/api/save', { servers: [base], emulators: [{ slug: 'ps3', command: process.execPath, quickLaunch: true, cacheDir }], cacheDir: '', cacheLimitGb: '50' });
+    assert.equal(save.status, 200);
+    const onDisk = JSON.parse(fs.readFileSync(file, 'utf8'));
+    assert.deepEqual(onDisk.emulators.ps3, { command: process.execPath, quickLaunch: true, cacheDir });
+    assert.equal(onDisk.cacheLimitGb, 50); assert.ok(!('cacheDir' in onDisk), 'an empty shared folder is not written');
+    const bad = await post('/api/save', { servers: [base], emulators: [], cacheDir: 'relative/folder' });
+    assert.equal(bad.status, 400); assert.match((await bad.json()).error, /full path/);
+    assert.equal((await post('/api/save', { servers: [base], emulators: [], cacheLimitGb: 'lots' })).status, 400);
+
+    const cache = await import('../launcher/cache.mjs');
+    const d = path.join(cacheDir, 'gamesauce-cache', 'ps3-5'); fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, 'x.bin'), Buffer.alloc(10));
+    cache.writeMeta(d, { title: 'Kept Game', platform: 'ps3', rom: 5, fp: '1-1', start: 'x.bin', manifest: ['x.bin'], bytes: 10, lastPlayed: '2026-03-01T00:00:00Z' });
+    const list = await (await get('/api/cache')).json();
+    const f = list.folders.find((x) => x.dir === cacheDir);
+    assert.ok(f && f.games.length === 1 && f.games[0].title === 'Kept Game' && f.used_by === 'ps3');
+    assert.equal((await post('/api/cache/empty', { dir: other })).status, 400, 'a folder that is not in the saved settings is refused');
+    assert.equal((await post('/api/cache/empty', { dir: cacheDir, name: '../../x' })).status, 400, 'and so is a name that is not a kept game');
+    const done = await (await post('/api/cache/empty', { dir: cacheDir })).json();
+    assert.equal(done.removed, 1); assert.equal(fs.existsSync(d), false);
+    assert.equal((await (await post('/api/pickdir', {})).json()).path, cacheDir, 'Browse for a folder gives it back');
+    const ui = fs.readFileSync(new URL('../launcher/configure-ui.html', import.meta.url), 'utf8');
+    assert.ok(ui.includes('data-f="ql"') && ui.includes('id="cachelist"') && ui.includes('Empty cache'), 'the page has the choices');
+  } finally { s.close(); }
 });
