@@ -162,9 +162,9 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-main.two .bs-hero { top: 1.6em; height: 33%; }
 .bs-main.two .bs-heroname { font-size: 2.8em; }
 .bs-main.two .bs-herologo { max-height: 55%; }
-.bs-main.two .bs-railwrap { top: 37%; height: 10em; }
+.bs-main.two .bs-railwrap { top: calc(37% + 1.6em); height: 10em; }   /* room between the platform's counts above and this row */
 .bs-main.two .bs-ptile { height: 7em; width: 13em; padding: .6em; }
-.bs-main.two .bs-railwrap.r2 { top: calc(37% + 10.2em); height: 7.6em; }
+.bs-main.two .bs-railwrap.r2 { top: calc(37% + 11.8em); height: 7.6em; }
 .bs-main.two .bs-railwrap.r2 .bs-ptile { width: 17em; height: 5.2em; }
 .bs-railwrap { transition: opacity .25s; }
 .bs-railwrap.r2 .bs-rail { gap: 2.2em; }
