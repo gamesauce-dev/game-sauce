@@ -4,8 +4,11 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-14
+
 ### Added
-- **Unused files in storage.** Settings > Database maintenance has a new **Unused files in storage** box. **Check for unused files** lists the covers, ScreenScraper pictures, game files (spines, discs, logos, marquees, backgrounds, manuals) and videos that no game points at any more, with the space they take, and changes nothing. **Clear out** then deletes them after a confirmation. ROMs, saves, emulators and your artwork folders are never touched, anything written in the last ten minutes is left alone, and a file counts as used if the database mentions it anywhere.
+- **Big Screen: an A to Z strip down the right of the wheel.** It shows the letter you are on, dims letters with no games, and a click or touch jumps to that letter; LB and RB still step through the letters. It follows the list's sort order, so "The Godfather" is under G.
+- **Unused files in storage.** Settings > Database maintenance has a new **Unused files in storage** box. **Check for unused files** lists the covers, ScreenScraper pictures, game files (spines, discs, logos, marquees, backgrounds, manuals) and videos that no game points at any more, with the space they take, and changes nothing. **Clear out** then deletes them after a confirmation. **Re-attach** gives a game back its spine, disc, back, manual, logo, marquee, background or video file when the game exists but has lost its record of the file, and Clear out leaves those alone. ROMs, saves, emulators and your artwork folders are never touched, anything written in the last ten minutes is left alone, and a file counts as used if the database mentions it anywhere.
 
 ### Fixed
 - **Big Screen shows a clear logo before a marquee.** The wheel now takes a game's logo first, then its marquee, then the cover; pictures from your own folders come before fetched ones. Game files now record whether they came from your folder or ScreenScraper, and the picture import replaces a fetched logo, marquee or background with the one in your folder (one from your folder is kept unless you ask to replace).
