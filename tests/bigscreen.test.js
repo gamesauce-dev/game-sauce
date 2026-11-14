@@ -214,3 +214,24 @@ test('Big Screen: the video on the game page stops when a game is started (emula
   assert.ok(/const playLocal = async \(g\) => \{[\s\S]*?pauseVideo\(\);/.test(bs) && /const openBrowser = \(g\) => \{[^\n]*pauseVideo\(\)/.test(bs), 'both ways of starting a game pause it');
   assert.ok(bs.includes("window.addEventListener('blur', pauseVideo)") && bs.includes("window.addEventListener('focus', resumeVideo)") && bs.includes("window.removeEventListener('blur', pauseVideo)"), 'a window that is not in front is silent, and the listeners are removed on close');
 });
+
+test('The launcher\'s setup page lists every platform the server has (a platform added in Settings > Platforms, or one newer than the launcher), without using up its sync token; with no server it uses the shipped list', async () => {
+  const added = await call('/api/platforms', { method: 'POST', body: { slug: 'zzconsole', name: 'ZZ Console', family: 'Others' } });
+  assert.equal(added.status, 201);
+  const minted = (await call('/api/launcher/sync-token', { method: 'POST', body: {} })).body;
+  assert.ok(minted.token);
+  assert.equal((await fetch(`${base}/api/launcher/platforms?token=nonsense-nonsense-nonsense-123`)).status, 404, 'a token that is not good lists nothing');
+  const { startConfigServer, platformsWithServer, platformList } = await import('../launcher/configure.mjs');
+  const file = path.join(TMP, 'launcher-setup.json');
+  const s = await startConfigServer({ configFile: file, open: false, syncToken: { server: base, token: minted.token } });
+  try {
+    const cfg = await (await fetch(`http://127.0.0.1:${s.port}/api/config`, { headers: { 'x-key': s.key } })).json();
+    const slugs = cfg.platforms.map((p) => p.slug);
+    assert.ok(slugs.includes('zzconsole'), 'the platform added on the server is listed'); assert.ok(slugs.includes('xbla'), 'and the ones the launcher shipped with');
+    assert.equal(new Set(slugs).size, slugs.length, 'each only once');
+    const sync = await fetch(`${base}/api/launcher/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: minted.token, platforms: ['zzconsole'] }) });
+    assert.equal(sync.status, 200, 'the token was not used up by listing the platforms: it still reports the choices');
+  } finally { s.close(); }
+  assert.deepEqual((await platformsWithServer({ server: 'http://127.0.0.1:1', token: 'x'.repeat(30) }, async () => { throw new Error('down'); })).map((p) => p.slug), platformList().map((p) => p.slug), 'no server: the shipped list');
+  assert.deepEqual((await platformsWithServer(null)).map((p) => p.slug), platformList().map((p) => p.slug), 'opened without a server: the shipped list');
+});

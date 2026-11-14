@@ -30,7 +30,7 @@ import { originGuard, rateLimit } from './lib/guard.js';
 import { canDownload } from './lib/policy.js';
 import { launcherEntries } from './lib/launcherpack.js';
 import { zipChunks } from './lib/export.js';
-import { launchFileHandler, launcherSyncHandler, mintSyncToken } from './lib/launch.js';
+import { launchFileHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
 // admin catalogue below needs extensions as an array and must be auditable,
@@ -100,6 +100,7 @@ export function createApp() {
   api.get('/launch/:token', launchFileHandler);
   // The launcher reports which platforms it has an emulator for (the one-time sync token is its credential; see mintSyncToken below).
   api.post('/launcher/sync', launcherSyncHandler);
+  api.get('/launcher/platforms', launcherPlatformsHandler);
 
   // Is a newer game-sauce published? Admin only (it is the admin who updates the server). See src/lib/updatecheck.js.
   api.get('/admin/update-check', requireAuth, requireAdmin, async (req, res) => {

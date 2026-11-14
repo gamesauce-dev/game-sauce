@@ -22,6 +22,23 @@ const IDLE_MS = 20 * 60 * 1000;
 
 export const platformList = () => JSON.parse(fs.readFileSync(path.join(here, 'platforms.json'), 'utf8'));
 
+/**
+ * The platforms to choose an emulator for: the ones this launcher shipped with, plus any the server has that it does not (a platform added in Settings > Platforms, or one added in
+ * a version of game-sauce newer than this launcher). The server is asked only when the page was opened from game-sauce (it carries the server's address and a token).
+ */
+export async function platformsWithServer(syncToken, fetchImpl = fetch) {
+  const bundled = platformList();
+  if (!syncToken?.server || !syncToken?.token) return bundled;
+  try {
+    const res = await fetchImpl(`${syncToken.server}/api/launcher/platforms?token=${encodeURIComponent(syncToken.token)}`, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return bundled;
+    const extra = (await res.json())?.platforms;
+    if (!Array.isArray(extra)) return bundled;
+    const have = new Set(bundled.map((p) => p.slug));
+    return [...bundled, ...extra.filter((p) => p && /^[a-z0-9_-]{1,40}$/.test(String(p.slug)) && !have.has(p.slug)).map((p) => ({ slug: p.slug, name: String(p.name || p.slug).slice(0, 80), family: String(p.family || 'Others').slice(0, 40) }))];
+  } catch { return bundled; }   // the server cannot be reached: the shipped list is still right for everything it knew
+}
+
 /** Is this program there? A full path must exist; a bare name is looked for in the PATH. */
 export function programExists(cmd, { env = process.env, platform = process.platform } = {}) {
   const c = String(cmd || '').trim();
@@ -173,7 +190,7 @@ export async function startConfigServer({ configFile = configPath(), addServer =
       if (url.pathname === '/api/config') {
         let cfg = null, warning = '';
         try { cfg = loadConfig(configFile); } catch (e) { warning = `${e.message} Saving here will replace it (the old file is kept as a .bak copy).`; }
-        return send(200, { file: configFile, servers: cfg?.servers || [], emulators: describe(cfg?.emulators), platforms: platformList(), can_sync: Boolean(syncToken), add_server: addServer, warning, cache: { dir: cfg?.cacheDir || '', limit_gb: cfg?.cacheLimitGb ?? null, default_dir: defaultCacheDir(), default_limit_gb: DEFAULT_LIMIT_GB } });
+        return send(200, { file: configFile, servers: cfg?.servers || [], emulators: describe(cfg?.emulators), platforms: await platformsWithServer(syncToken), can_sync: Boolean(syncToken), add_server: addServer, warning, cache: { dir: cfg?.cacheDir || '', limit_gb: cfg?.cacheLimitGb ?? null, default_dir: defaultCacheDir(), default_limit_gb: DEFAULT_LIMIT_GB } });
       }
       if (url.pathname === '/api/test') return send(200, { found: programExists(body.command) });
       if (url.pathname === '/api/pickdir') { try { return send(200, { path: await pickDir() }); } catch (e) { return send(400, { error: e.message }); } }

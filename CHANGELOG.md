@@ -12,6 +12,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Mark as Broken.** A game the emulator cannot run can be marked from Big Screen (and unmarked); everybody sees the mark. It is the new `broken` field on a game.
 
 ### Fixed
+- **The launcher's setup page lists every platform the server has.** It used to list only the platforms the launcher was shipped with, so a platform added in Settings > Platforms, or one added in a newer game-sauce than the launcher (Xbox Live Arcade, for a launcher from before it), could not be given an emulator. When the page is opened from game-sauce (Set up emulators, Check my PC) it now asks the server for its platform list (with the page's one-time link, which is not used up by that) and adds the ones it does not know; opened on its own it uses the shipped list as before.
 - Big Screen: the video on a game's page no longer keeps playing (with its sound) once you start the game in an emulator or the browser player; it stops, and carries on when you are back.
 
 ## [0.5.5] - 2026-11-14

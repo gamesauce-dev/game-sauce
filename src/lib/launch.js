@@ -87,6 +87,20 @@ export function takeSyncToken(token) {
   return entry.expires > Date.now() ? entry : null;
 }
 
+/** Is this sync token still good? (It is not used up: the setup page asks for the platform list first and reports its choices with the same token afterwards.) */
+export function peekSyncToken(token) {
+  if (typeof token !== 'string' || token.length < 20 || token.length > 100) return null;
+  const entry = syncTokens.get(hashToken(token));
+  return entry && entry.expires > Date.now() ? entry : null;
+}
+
+/** GET /api/launcher/platforms?token= — public (the sync token is the credential): every platform the server knows, so the launcher's setup page lists the ones added in Settings > Platforms too. */
+export function launcherPlatformsHandler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!peekSyncToken(String(req.query?.token || ''))) return res.status(404).json({ error: 'This link has expired or was already used. Try again from game-sauce.' });
+  res.json({ platforms: db.prepare('SELECT slug, name, family FROM platforms ORDER BY family, name').all().filter((p) => SLUG.test(p.slug)) });
+}
+
 /** Keep the platforms a PC reported (valid platform names only, no more than 200). Returns the stored list. */
 export function saveLauncherPlatforms(userId, platforms) {
   const list = [...new Set((Array.isArray(platforms) ? platforms : []).map((s) => String(s || '').toLowerCase()).filter((s) => SLUG.test(s)))].slice(0, 200).sort();
