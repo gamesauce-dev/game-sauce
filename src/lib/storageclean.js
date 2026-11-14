@@ -69,7 +69,12 @@ export function scanStorage() {
       if (g.key === 'videos' && /\.part$/i.test(name)) used = false;   // a download that never finished
       if (used) continue;
       files++; bytes += st.size; unused.push({ file: f, bytes: st.size, group: g.key });
-      if (sample.length < 12) sample.push(path.relative(root, f).replace(/\\/g, '/'));
+      if (sample.length < 12) {
+        let rel = path.relative(root, f).replace(/\\/g, '/');
+        const m = g.key === 'rom-files' ? /^rom-files\/(\d+)\//.exec(rel) : null;   // the folder is the game's id: say which game it is
+        if (m) { const r = db.prepare('SELECT title FROM roms WHERE id = ?').get(Number(m[1])); rel += r ? `  (${r.title})` : '  (that game no longer exists)'; }
+        sample.push(rel);
+      }
     }
     groups.push({ key: g.key, label: g.label, files, bytes, sample });
   }
