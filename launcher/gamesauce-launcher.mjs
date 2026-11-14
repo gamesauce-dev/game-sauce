@@ -179,14 +179,14 @@ export function configuredPlatforms(cfg, exists = (p) => fs.existsSync(p)) {
   return out.sort();
 }
 
-/** The command line for a ROM: the configured command, its args with {rom} / {romdir} filled in. No shell is involved. */
+/** The command line for a ROM: the configured command, its args with {rom} (the file), {romdir} (its folder) and {romname} (the file's name without .zip or .7z or any extension: what MAME wants) filled in. No shell is involved. */
 export function buildCommand(entry, romPath) {
   if (!entry || typeof entry.command !== 'string' || !entry.command.trim()) throw new LaunchError('This platform has no "command" in the config.');
   const rawArgs = entry.args === undefined ? ['{rom}'] : entry.args;
   if (!Array.isArray(rawArgs) || rawArgs.some((a) => typeof a !== 'string')) throw new LaunchError('"args" must be a list of strings.');
-  const sub = (a) => a.replaceAll('{rom}', romPath).replaceAll('{romdir}', path.dirname(romPath));
+  const sub = (a) => a.replaceAll('{rom}', romPath).replaceAll('{romdir}', path.dirname(romPath)).replaceAll('{romname}', path.basename(romPath, path.extname(romPath)));
   const args = rawArgs.map(sub);
-  if (!rawArgs.some((a) => a.includes('{rom}'))) args.push(romPath);
+  if (!rawArgs.some((a) => a.includes('{rom}') || a.includes('{romname}'))) args.push(romPath);
   return { command: entry.command, args };
 }
 

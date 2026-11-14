@@ -607,3 +607,9 @@ test('setup page: it lists the RetroArch cores next to a RetroArch program (and 
     assert.deepEqual((await (await post('/api/cores', { command: 'retroarch' })).json()).cores, [], 'a bare name has no folder to look in');
   } finally { s.close(); }
 });
+
+test('buildCommand fills {romname} (the file name without its extension) and does not append the ROM path when it is used', () => {
+  const rom = path.join(TMP, 'x', '1941.zip');
+  assert.deepEqual(launcher.buildCommand({ command: 'mame', args: ['-rompath', 'C:\MAME\roms;{romdir}', '{romname}'] }, rom), { command: 'mame', args: ['-rompath', `C:\MAME\roms;${path.dirname(rom)}`, '1941'] });
+  assert.deepEqual(launcher.buildCommand({ command: 'mame', args: ['{romname}'] }, path.join(TMP, 'x', 'Game (World).7z')), { command: 'mame', args: ['Game (World)'] });
+});

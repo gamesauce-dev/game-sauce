@@ -36,7 +36,7 @@
   <div class="card"><div id="servers"></div><div class="srv"><input type="text" id="newserver" placeholder="http://192.168.1.50:8765" spellcheck="false" autocomplete="off"><button id="addserver" type="button">Add</button></div></div>
 
   <h2>Emulators on this PC</h2>
-  <p class="hint">One line per platform. <b>Browse…</b> finds the emulator's program. <b>Arguments</b> are what is passed to it: <code>{rom}</code> becomes the game's file. Leave it as <code>{rom}</code> if the emulator just takes the game's file.</p>
+  <p class="hint">One line per platform. <b>Browse…</b> finds the emulator's program. <b>Arguments</b> are what is passed to it: <code>{rom}</code> becomes the game's file, <code>{romdir}</code> its folder and <code>{romname}</code> its name without the extension (MAME wants that: <code>-rompath "C:\MAME\roms;{romdir}" {romname}</code>). Leave it as <code>{rom}</code> if the emulator just takes the game's file.</p>
   <div class="card">
     <div class="row head"><div>Platform</div><div>Emulator program</div><div></div><div>Arguments</div><div></div><div></div></div>
     <div id="emus"></div>
