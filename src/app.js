@@ -31,7 +31,7 @@ import { canDownload } from './lib/policy.js';
 import { launcherEntries } from './lib/launcherpack.js';
 import { zipChunks } from './lib/export.js';
 import { detectMultiDisc } from './lib/multidisc.js';
-import { scanStorage, publicScan, clearOut } from './lib/storageclean.js';
+import { scanStorage, publicScan, clearOut, reattach } from './lib/storageclean.js';
 import { launchFileHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
@@ -135,6 +135,7 @@ export function createApp() {
 
   // Unused asset files in storage (src/lib/storageclean.js): the scan changes nothing; the clear-out deletes what a fresh scan finds unused.
   api.get('/admin/storage/unused', requireAuth, requireAdmin, (req, res) => res.json(publicScan(scanStorage())));
+  api.post('/admin/storage/reattach', requireAuth, requireAdmin, (req, res) => { const done = reattach(); req.auditDetail = done; res.json(done); });
   api.post('/admin/storage/clear', requireAuth, requireAdmin, (req, res) => {
     const keys = Array.isArray(req.body?.groups) ? req.body.groups.map(String).slice(0, 10) : null;
     const done = clearOut(keys);

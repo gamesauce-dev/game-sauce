@@ -3093,17 +3093,26 @@ $('#db-clear-covers')?.addEventListener('click', async () => {
 // Unused files in storage: look first, then clear out what the look found.
 let storageScan = null;
 async function checkStorage() {
-  const box = $('#storage-report'), clr = $('#storage-clear'); if (!box) return;
-  box.textContent = 'Looking…'; clr?.classList.add('hidden');
+  const box = $('#storage-report'), clr = $('#storage-clear'), rel = $('#storage-reattach'); if (!box) return;
+  box.textContent = 'Looking…'; clr?.classList.add('hidden'); rel?.classList.add('hidden');
   try {
     storageScan = await api('/admin/storage/unused');
     const rows = storageScan.groups.filter((g) => g.files);
-    if (!rows.length && !false) { box.textContent = 'Nothing unused: every file in storage is in use.'; return; }
-    box.innerHTML = `${rows.map((g) => `<div>${esc(g.label)}: <b>${g.files.toLocaleString()}</b> file${g.files === 1 ? '' : 's'}, ${fmtBytes(g.bytes)}${g.sample?.length ? `<div style="opacity:.7;font-size:.9em;word-break:break-all">${g.sample.map(esc).join('<br>')}${g.files > g.sample.length ? `<br>…and ${g.files - g.sample.length} more` : ''}</div>` : ''}</div>`).join('')}<div style="margin-top:4px"><b>${fmtBytes(storageScan.total_bytes)}</b> can be cleared.</div>`;
-    clr?.classList.remove('hidden');
+    const rl = storageScan.relink;
+    if (!rows.length && !rl.files) { box.textContent = 'Nothing unused: every file in storage is in use.'; return; }
+    const relHtml = rl.files ? `<div><b>${rl.files.toLocaleString()}</b> file${rl.files === 1 ? '' : 's'} (${fmtBytes(rl.bytes)}) belong to a game that has lost track of ${rl.files === 1 ? 'it' : 'them'}: <b>Re-attach</b> gives ${rl.files === 1 ? 'it' : 'them'} back. Clear out leaves ${rl.files === 1 ? 'it' : 'them'} alone.<div style="opacity:.7;font-size:.9em;word-break:break-all">${rl.sample.map(esc).join('<br>')}</div></div>` : '';
+    box.innerHTML = `${relHtml}${rows.map((g) => `<div>${esc(g.label)}: <b>${g.files.toLocaleString()}</b> file${g.files === 1 ? '' : 's'}, ${fmtBytes(g.bytes)}${g.sample?.length ? `<div style="opacity:.7;font-size:.9em;word-break:break-all">${g.sample.map(esc).join('<br>')}${g.files > g.sample.length ? `<br>…and ${g.files - g.sample.length} more` : ''}</div>` : ''}</div>`).join('')}<div style="margin-top:4px"><b>${fmtBytes(storageScan.total_bytes)}</b> can be cleared.</div>`;
+    clr?.classList.toggle('hidden', !storageScan.total_files); rel?.classList.toggle('hidden', !rl.files);
   } catch (err) { box.textContent = ''; toast(err.message, true); }
 }
 $('#storage-check')?.addEventListener('click', checkStorage);
+$('#storage-reattach')?.addEventListener('click', async () => {
+  try {
+    const r = await api('/admin/storage/reattach', { method: 'POST', body: JSON.stringify({}) });
+    toast(`Gave back ${r.reattached.toLocaleString()} file${r.reattached === 1 ? '' : 's'}${r.skipped ? `; ${r.skipped} skipped` : ''}`);
+    await checkStorage();
+  } catch (err) { toast(err.message, true); }
+});
 $('#storage-clear')?.addEventListener('click', async () => {
   if (!storageScan) return;
   const ok = await confirmDialog({ title: 'Clear out unused files?', body: `${storageScan.total_files.toLocaleString()} file${storageScan.total_files === 1 ? '' : 's'} (${fmtBytes(storageScan.total_bytes)}) will be deleted from storage.

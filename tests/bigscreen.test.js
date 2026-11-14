@@ -410,3 +410,23 @@ test('Storage clean-up: files nothing points at are found and cleared; used and 
   assert.ok(!fs.existsSync(path.join(root, 'rom-files', '99999')), 'the emptied folder is tidied');
   assert.equal((await call('/api/admin/storage/unused')).body.total_files, 0);
 });
+
+test('Storage clean-up: a game that lost track of its files and video can take them back; Clear out leaves them alone', async () => {
+  const { reattach } = await import('../src/lib/storageclean.js');
+  const root = path.resolve(process.env.GAMESAUCE_STORAGE_DIR);
+  const old = (rel, size = 10) => { const f = path.join(root, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, Buffer.alloc(size, 2)); const t = new Date(Date.now() - 3600e3); fs.utimesSync(f, t, t); return f; };
+  const id = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'genesis'), 'After Burner Complete', 'after burner complete', 'abc.md', 'x', 3, 'ab00000000000000000000000000000000000001')").run().lastInsertRowid);
+  const spineNew = old(`rom-files/${id}/spine-200.png`), spineOld = old(`rom-files/${id}/spine-100.png`), video = old('videos/genesis/after-burner-complete.mp4', 40);
+  const scan = (await call('/api/admin/storage/unused')).body;
+  assert.equal(scan.relink.files, 2, 'the newest spine and the video can go back');
+  assert.ok(scan.relink.sample.some((s) => s.includes('After Burner Complete')));
+  assert.equal(scan.total_files, 1, 'the older spine is plain unused');
+  assert.equal((await call('/api/admin/storage/reattach', { method: 'POST', as: 'ann', body: {} })).status, 403);
+  const done = (await call('/api/admin/storage/reattach', { method: 'POST', body: {} })).body;
+  assert.equal(done.reattached, 2);
+  assert.equal(db.prepare('SELECT path FROM rom_files WHERE rom_id = ? AND kind = ?').get(id, 'spine').path, spineNew);
+  assert.equal(db.prepare("SELECT path FROM game_videos WHERE platform = 'genesis' AND title_key = 'after burner complete'").get().path, video);
+  await call('/api/admin/storage/clear', { method: 'POST', body: {} });
+  assert.ok(fs.existsSync(spineNew) && fs.existsSync(video), 're-attached files are kept'); assert.ok(!fs.existsSync(spineOld), 'the older spine goes');
+  assert.equal((await call('/api/admin/storage/unused')).body.relink.files, 0);
+});
