@@ -3098,8 +3098,8 @@ async function checkStorage() {
   try {
     storageScan = await api('/admin/storage/unused');
     const rows = storageScan.groups.filter((g) => g.files);
-    if (!rows.length && !storageScan.broken_records) { box.textContent = 'Nothing unused: every file in storage is in use.'; return; }
-    box.innerHTML = `${rows.map((g) => `<div>${esc(g.label)}: <b>${g.files.toLocaleString()}</b> file${g.files === 1 ? '' : 's'}, ${fmtBytes(g.bytes)}${g.sample?.length ? `<div style="opacity:.7;font-size:.9em;word-break:break-all">${g.sample.map(esc).join('<br>')}${g.files > g.sample.length ? `<br>…and ${g.files - g.sample.length} more` : ''}</div>` : ''}</div>`).join('')}${storageScan.broken_records ? `<div>${storageScan.broken_records.toLocaleString()} record${storageScan.broken_records === 1 ? '' : 's'} pointing at a file that is gone</div>` : ''}<div style="margin-top:4px"><b>${fmtBytes(storageScan.total_bytes)}</b> can be cleared.</div>`;
+    if (!rows.length && !false) { box.textContent = 'Nothing unused: every file in storage is in use.'; return; }
+    box.innerHTML = `${rows.map((g) => `<div>${esc(g.label)}: <b>${g.files.toLocaleString()}</b> file${g.files === 1 ? '' : 's'}, ${fmtBytes(g.bytes)}${g.sample?.length ? `<div style="opacity:.7;font-size:.9em;word-break:break-all">${g.sample.map(esc).join('<br>')}${g.files > g.sample.length ? `<br>…and ${g.files - g.sample.length} more` : ''}</div>` : ''}</div>`).join('')}<div style="margin-top:4px"><b>${fmtBytes(storageScan.total_bytes)}</b> can be cleared.</div>`;
     clr?.classList.remove('hidden');
   } catch (err) { box.textContent = ''; toast(err.message, true); }
 }
@@ -3111,7 +3111,7 @@ This cannot be undone. Games, ROMs, saves and your own folders are not touched.`
   if (!ok) return;
   try {
     const r = await api('/admin/storage/clear', { method: 'POST', body: JSON.stringify({}) });
-    toast(`Cleared ${r.removed.toLocaleString()} file${r.removed === 1 ? '' : 's'} (${fmtBytes(r.bytes)})${r.records ? `, ${r.records} dead record${r.records === 1 ? '' : 's'}` : ''}${r.failed ? `; ${r.failed} could not be deleted` : ''}`);
+    toast(`Cleared ${r.removed.toLocaleString()} file${r.removed === 1 ? '' : 's'} (${fmtBytes(r.bytes)})${r.failed ? `; ${r.failed} could not be deleted` : ''}`);
     await checkStorage();
   } catch (err) { toast(err.message, true); }
 });

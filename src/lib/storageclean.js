@@ -49,7 +49,7 @@ function walk(dir) {
   return out;
 }
 
-/** Look at the storage folder. Returns { groups: [{ key, label, files, bytes, sample }], total_files, total_bytes, broken_records } and, for clearOut, the files themselves. */
+/** Look at the storage folder. Returns { groups: [{ key, label, files, bytes, sample }], total_files, total_bytes } and, for clearOut, the files themselves. */
 export function scanStorage() {
   const { tails, hashes } = references();
   const root = rootDir(), now = Date.now();
@@ -73,13 +73,12 @@ export function scanStorage() {
     }
     groups.push({ key: g.key, label: g.label, files, bytes, sample });
   }
-  const broken = db.prepare('SELECT rom_id, kind, path FROM rom_files').all().filter((r) => !fs.existsSync(r.path));
-  return { groups, total_files: unused.length, total_bytes: unused.reduce((t, u) => t + u.bytes, 0), broken_records: broken.length, _unused: unused, _broken: broken };
+  return { groups, total_files: unused.length, total_bytes: unused.reduce((t, u) => t + u.bytes, 0), _unused: unused };
 }
 
-export const publicScan = ({ _unused, _broken, ...rest }) => rest;
+export const publicScan = ({ _unused, ...rest }) => rest;
 
-/** Delete what a fresh scan finds unused (and the records that point at a file that is gone). Only the chosen groups, all of them when none are named. */
+/** Delete what a fresh scan finds unused (records are never changed: the app forgets one itself when its file is missing). Only the chosen groups, all of them when none are named. */
 export function clearOut(keys = null) {
   const scan = scanStorage();
   const want = keys && keys.length ? new Set(keys) : null;
@@ -87,11 +86,6 @@ export function clearOut(keys = null) {
   for (const u of scan._unused) {
     if (want && !want.has(u.group)) continue;
     try { fs.unlinkSync(u.file); removed++; bytes += u.bytes; } catch { failed++; }
-  }
-  let records = 0;
-  if (!want || want.has('rom-files')) {
-    const del = db.prepare('DELETE FROM rom_files WHERE rom_id = ? AND kind = ?');
-    for (const r of scan._broken) records += del.run(r.rom_id, r.kind).changes;
   }
   // Tidy folders the clear-out emptied (rom-files/<id>, manuals/<user>, videos/<platform>); the top folders stay.
   const root = rootDir();
@@ -101,5 +95,5 @@ export function clearOut(keys = null) {
       if (f.isDirectory()) { try { if (!fs.readdirSync(path.join(top, f.name)).length) fs.rmdirSync(path.join(top, f.name)); } catch { /* in use */ } }
     }
   }
-  return { removed, bytes, failed, records };
+  return { removed, bytes, failed };
 }

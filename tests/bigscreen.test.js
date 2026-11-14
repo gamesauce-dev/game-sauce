@@ -399,12 +399,12 @@ test('Storage clean-up: files nothing points at are found and cleared; used and 
   assert.equal(scan.status, 200);
   assert.equal(scan.body.total_files, 3, 'the lost cover, the lost media picture and the lost game file');
   assert.equal(scan.body.total_bytes, 150);
-  assert.equal(scan.body.broken_records, 1, 'a record whose file is gone');
   assert.equal((await call('/api/admin/storage/unused', { as: 'ann' })).status, 403);
   assert.equal((await call('/api/admin/storage/clear', { method: 'POST', as: 'ann', body: {} })).status, 403);
   assert.ok(fs.existsSync(lostCover), 'the scan deletes nothing');
   const done = await call('/api/admin/storage/clear', { method: 'POST', body: {} });
-  assert.equal(done.body.removed, 3); assert.equal(done.body.records, 1);
+  assert.equal(done.body.removed, 3);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM rom_files WHERE rom_id = ?').get(id).n, 2, 'records are left as they are');
   for (const f of [lostCover, lostMedia, lostFile]) assert.ok(!fs.existsSync(f), f);
   for (const f of [usedCover, usedMedia, usedFile, fresh, rom]) assert.ok(fs.existsSync(f), f);
   assert.ok(!fs.existsSync(path.join(root, 'rom-files', '99999')), 'the emptied folder is tidied');
