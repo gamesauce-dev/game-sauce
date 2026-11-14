@@ -30,7 +30,7 @@ export const gameBackdrop = (g) => g?.backdrop_url || (g?.media?.fanart ? `/api/
 const MUTE_KEY = 'gamesauce_bs_muted';
 const muted = () => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; } };
 let audio = null;
-const TONES = { move: [[760, 0.035, 0.05]], select: [[620, 0.05, 0.07], [930, 0.07, 0.07]], back: [[560, 0.05, 0.06], [380, 0.07, 0.06]], error: [[180, 0.16, 0.08]], key: [[1000, 0.025, 0.04]] };
+const TONES = { move: [[760, 0.05, 0.3]], select: [[620, 0.07, 0.38], [930, 0.1, 0.38]], back: [[560, 0.07, 0.34], [380, 0.1, 0.34]], error: [[180, 0.2, 0.34]], key: [[1000, 0.04, 0.24]] };   // [pitch in Hz, length in s, volume 0 to 1]
 export function sfx(kind) {
   if (muted() || !TONES[kind]) return;
   try {
