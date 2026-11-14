@@ -1,5 +1,5 @@
 // Big Screen: the Library for a PC on the TV, driven by a gamepad (or the keyboard). Three screens:
-//   platforms  a row of tiles: Favourites and Collections (when you have any), then the families (Sony, Nintendo...) and the platforms of the one chosen;
+//   platforms  a row of family tiles (Sony, Nintendo...), with Favourites and Collections (when you have any) on a row of their own below it; then the platforms of the family chosen;
 //   games      the games of a platform, your favourites or one collection as a wheel, the one in the middle large;
 //   game       a menu on the left (Play, Favourite, Add to Collection, Mark as Broken, Hide), the cover, and the details.
 // On top of those: the collection chooser, a keyboard to type a name with the pad, and a question (hide from everyone?).
@@ -80,7 +80,7 @@ let root = null, off = null;
 /** Open Big Screen. host: { api, toast, platforms(), user(), openPlayer(rom), platformIcon?(p, size), kiosk?: boolean, start?: { platform } }. */
 export function openBigScreen(host) {
   if (root) return;
-  const st = { screen: 'platforms', level: 0, sub: null, fam: null, plat: null, src: null, plats: [], pi: 0, games: [], gi: 0, mi: 0, lp: null, cache: new Map(), peek: new Map(), tok: 0, bg: 0, favCount: 0, colls: [], dirty: false };
+  const st = { screen: 'platforms', level: 0, row: 0, pis: [0, 0], sub: null, fam: null, plat: null, src: null, plats: [], pi: 0, games: [], gi: 0, mi: 0, lp: null, cache: new Map(), peek: new Map(), tok: 0, bg: 0, favCount: 0, colls: [], dirty: false };
   const noLauncher = () => host.user()?.can_download === false;
   const known = () => (noLauncher() ? [] : st.lp);
   const launchable = (slug) => known() === null || known().includes(slug);
@@ -97,9 +97,10 @@ export function openBigScreen(host) {
   const gameAccent = (g) => (HEX.test(g?.platform_accent || '') ? g.platform_accent : accent(st.plats.find((p) => p.slug === g?.platform)));
   // the first row: Favourites and Collections (when there are any), then the families; then the platforms of one family, or the collections
   const families = () => { const m = new Map(); for (const p of st.plats) { const k = p.family || 'Others'; if (!m.has(k)) m.set(k, { kind: 'family', name: k, colour: famColour(p), logo_v: p.family_logo_v, plats: [], games: 0 }); const f = m.get(k); f.plats.push(p); f.games += count(p); } return [...m.values()]; };
-  const topItems = () => [...(st.favCount > 0 ? [{ kind: 'fav', name: 'Favourites', colour: '#e11d48', games: st.favCount }] : []), ...(st.colls.length ? [{ kind: 'colls', name: 'Collections', colour: '#7c3aed', n: st.colls.length }] : []), ...families()];
-  const collItems = () => st.colls.map((c) => ({ kind: 'collection', id: c.id, name: c.name, games: Number(c.count || 0), covers: c.covers || [], colour: '#7c3aed' }));
-  const railItems = () => (st.level === 0 ? topItems() : st.sub === 'colls' ? collItems() : (families().find((f) => f.name === st.fam)?.plats || []));
+  const extraItems = () => [...(st.favCount > 0 ? [{ kind: 'fav', name: 'Favourites', colour: '#e11d48', games: st.favCount }] : []), ...(st.colls.length ? [{ kind: 'colls', name: 'Collections', colour: '#7c3aed', n: st.colls.length, covers: st.colls.flatMap((c) => (c.covers || []).slice(0, 1)).slice(0, 4) }] : [])];   // the row of their own below the families
+  const collItems = () => st.colls.map((c) => ({ kind: 'collection', id: c.id, name: c.name, games: Number(c.count || 0), covers: (c.covers || []).slice(0, 4), colour: '#7c3aed' }));
+  const switchRow = (r) => { if (r === st.row || (r === 1 && !extraItems().length)) return false; st.pis[st.row] = st.pi; st.row = r; st.pi = st.pis[r] || 0; return true; };
+  const railItems = () => (st.level === 0 ? (st.row === 1 ? extraItems() : families()) : st.sub === 'colls' ? collItems() : (families().find((f) => f.name === st.fam)?.plats || []));
   const item = () => railItems()[st.pi];
   const game = () => st.games[st.gi];
 
@@ -177,53 +178,67 @@ export function openBigScreen(host) {
 
   // ── screen 1: the tiles ──
   const pico = (p, size = 56) => (host.platformIcon ? host.platformIcon(p, size) : '');
-  const tileHtml = (x, i) => {
+  const HEART = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  const STACK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="2.5" width="14" height="9" rx="2" opacity=".35"/><rect x="3.5" y="5.5" width="17" height="10" rx="2" opacity=".6"/><rect x="2" y="9" width="20" height="12.5" rx="2.5"/></svg>';
+  const mosaic = (covers) => `<span class="bs-mosaic" aria-hidden="true">${[0, 1, 2, 3].map((n) => `<i${covers?.[n] ? ` style="background-image:url('${esc(covers[n])}')"` : ''}></i>`).join('')}</span>`;
+  const tileHtml = (x, i, r = 0) => {
     const k = x.kind || 'platform';
-    let colour = x.colour, inner;
+    let colour = x.colour, inner, cls = '';
     if (k === 'family') inner = x.logo_v ? `<img src="/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}" alt="" draggable="false" />` : `<b>${esc(x.name)}</b>`;
     else if (k === 'platform') { colour = accent(x); inner = x.logo_v ? `<img src="/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}" alt="" draggable="false" />` : `<span class="bs-pico">${pico(x)}</span><b>${esc(x.name)}</b>`; }
-    else if (k === 'fav') inner = '<span class="bs-pico bs-heart">♥</span><b>Favourites</b>';
-    else if (k === 'colls') inner = '<span class="bs-pico bs-heart">▤</span><b>Collections</b>';
-    else inner = `<b>${esc(x.name)}</b>`;
-    return `<div class="bs-ptile" data-i="${i}" style="--pc:${esc(colour)}">${inner}</div>`;
+    else if (k === 'fav') { cls = ' bs-t-fav'; inner = `<span data-mos="fav">${mosaic([])}</span><span class="bs-ticon">${HEART}</span><span class="bs-ttxt"><b>Favourites</b><small>${plural(x.games, 'game')}</small></span>`; }
+    else if (k === 'colls') { cls = ' bs-t-colls'; inner = `${mosaic(x.covers)}<span class="bs-ticon">${STACK}</span><span class="bs-ttxt"><b>Collections</b><small>${plural(x.n, 'collection')}</small></span>`; }
+    else { cls = ' bs-t-coll'; inner = `${mosaic(x.covers)}<span class="bs-ticon">${STACK}</span><span class="bs-ttxt"><b>${esc(x.name)}</b><small>${plural(x.games, 'game')}</small></span>`; }
+    return `<div class="bs-ptile${cls}" data-i="${i}" data-r="${r}" style="--pc:${esc(colour)}">${inner}</div>`;
   };
   const drawPlatforms = () => {
     st.screen = 'platforms'; $('#bs-crumb').textContent = st.level === 0 ? 'Platforms' : st.sub === 'colls' ? 'Collections' : st.fam; paintHints();
-    const items = railItems();
-    if (!items.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games in the Library yet.</div>'; return; }
-    $('#bs-main').innerHTML = `<div class="bs-hero" id="bs-hero"></div><div class="bs-railwrap"><div class="bs-rail" id="bs-rail">${items.map(tileHtml).join('')}</div></div>`;
+    const items = railItems(), extras = st.level === 0 ? extraItems() : [];
+    if (!items.length && !extras.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games in the Library yet.</div>'; return; }
+    const two = extras.length > 0;
+    if (st.level === 0 && st.row === 1 && !extras.length) st.row = 0;
+    const main = st.level === 0 ? families() : items;
+    $('#bs-main').className = 'bs-main' + (two ? ' two' : '');
+    $('#bs-main').innerHTML = `<div class="bs-hero" id="bs-hero"></div><div class="bs-railwrap" id="bs-rw0"><div class="bs-rail" id="bs-rail">${main.map((x, n) => tileHtml(x, n, 0)).join('')}</div></div>${two ? `<div class="bs-railwrap r2" id="bs-rw1"><div class="bs-rail" id="bs-rail2">${extras.map((x, n) => tileHtml(x, n, 1)).join('')}</div></div>` : ''}`;
     focusPlatform(st.pi);
+    if (two) fillMosaics();
+  };
+  const fillMosaics = () => {   // the covers behind the Favourites tile come from your favourite games
+    if (st.favCount > 0) peek({ kind: 'fav' }).then((g) => { const host_ = $('[data-mos="fav"]'); if (!host_ || !g.length) return; host_.innerHTML = mosaic(g.slice(0, 4).map((x) => x.cover_url)); }).catch(() => {});
   };
   const plural = (n, w) => `${Number(n).toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
   let heroTimer = 0;
+  const placeRail = (rail, idx) => { if (!rail) return; const tile = rail.querySelector('.bs-ptile'); const w = rail.parentElement.clientWidth, tw = tile?.offsetWidth || 0, step = tw + parseFloat(getComputedStyle(rail).gap || 0); rail.style.transform = `translateX(${Math.round(w / 2 - (idx * step + tw / 2))}px)`; };
   const focusPlatform = (i) => {
     const items = railItems(); st.pi = Math.max(0, Math.min(items.length - 1, i));
     const x = items[st.pi]; if (!x) return;
-    const k = x.kind || 'platform';
-    root.querySelectorAll('.bs-ptile').forEach((t) => t.classList.toggle('on', Number(t.dataset.i) === st.pi));
-    const rail = $('#bs-rail'); if (rail) { const w = rail.parentElement.clientWidth, tile = rail.querySelector('.bs-ptile')?.offsetWidth || 0, step = tile + parseFloat(getComputedStyle(rail).gap || 0); rail.style.transform = `translateX(${Math.round(w / 2 - (st.pi * step + tile / 2))}px)`; }
+    const k = x.kind || 'platform', two = st.level === 0 && Boolean($('#bs-rw1'));
+    root.querySelectorAll('.bs-ptile').forEach((t) => t.classList.toggle('on', Number(t.dataset.i) === st.pi && Number(t.dataset.r) === (st.level === 0 ? st.row : 0)));
+    $('#bs-rw0')?.classList.toggle('dim', two && st.row === 1); $('#bs-rw1')?.classList.toggle('dim', two && st.row === 0);
+    placeRail($('#bs-rail'), st.level === 0 && st.row === 1 ? (st.pis[0] || 0) : st.pi); placeRail($('#bs-rail2'), st.row === 1 ? st.pi : (st.pis[1] || 0));
     const ac = k === 'platform' ? accent(x) : x.colour;
     const logo = k === 'family' ? (x.logo_v ? `/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}` : '') : k === 'platform' ? (x.logo_v ? `/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}` : '') : '';
     const pills = k === 'family' ? `<span class="bs-pill">${plural(x.plats.length, 'platform')}</span><span class="bs-pill dim">${plural(x.games, 'game')}</span>`
       : k === 'platform' ? `${x.manufacturer ? `<span class="bs-pill">${esc(x.manufacturer)}</span>` : ''}<span class="bs-pill dim">${plural(count(x), 'game')}</span>`
       : k === 'fav' ? `<span class="bs-pill dim">${plural(x.games, 'game')}</span>` : k === 'colls' ? `<span class="bs-pill dim">${plural(x.n, 'collection')}</span>` : `<span class="bs-pill dim">${plural(x.games, 'game')}</span>`;
-    $('#bs-hero').innerHTML = `${logo ? `<img class="bs-herologo" src="${logo}" alt="" />` : `<div class="bs-heroname">${esc(x.name)}</div>`}<div class="bs-facts">${pills}</div>`;
+    const art = k === 'fav' ? HEART : k === 'colls' || k === 'collection' ? STACK : '';
+    $('#bs-hero').innerHTML = `${art ? `<div class="bs-heroart bs-ha-${k}" style="--pc:${esc(x.colour)}"><span class="bs-heroicon">${art}</span><div class="bs-heroname">${esc(x.name)}</div></div>` : logo ? `<img class="bs-herologo" src="${logo}" alt="" />` : `<div class="bs-heroname">${esc(x.name)}</div>`}<div class="bs-facts">${pills}</div>`;
     setBackdrop(null, ac);
     clearTimeout(heroTimer);
     const s = k === 'family' ? { kind: 'platform', slug: x.plats[0].slug } : k === 'platform' ? { kind: 'platform', slug: x.slug } : k === 'fav' ? { kind: 'fav' } : k === 'collection' ? { kind: 'coll', id: x.id } : null;
-    const token = st.pi + ':' + st.level + ':' + st.sub;
+    const token = st.pi + ':' + st.level + ':' + st.sub + ':' + st.row;
     if (!s) { if (k === 'colls' && st.colls[0]?.covers?.[0]) setBackdrop(st.colls[0].covers[0], ac); return; }
-    heroTimer = setTimeout(async () => { const g = await peek(s); if (!root || st.screen !== 'platforms' || token !== st.pi + ':' + st.level + ':' + st.sub || !g.length) return; setBackdrop(g[Math.floor(Math.random() * g.length)].cover_url, ac); if (k === 'platform') loadGames(s).catch(() => {}); }, 350);   // the games load while the person looks at the platform
+    heroTimer = setTimeout(async () => { const g = await peek(s); if (!root || st.screen !== 'platforms' || token !== st.pi + ':' + st.level + ':' + st.sub + ':' + st.row || !g.length) return; setBackdrop(g[Math.floor(Math.random() * g.length)].cover_url, ac); if (k === 'platform') loadGames(s).catch(() => {}); }, 350);   // the games load while the person looks at the platform
   };
   const enterSource = (src) => { st.src = src; if (src.kind === 'platform') st.plat = src.plat; st.gi = 0; drawGames(); };
   const leaveGames = () => {   // back from the wheel: to the tile row it came from
     st.screen = 'platforms';
     const s = st.src || { kind: 'platform' };
-    if (s.kind === 'fav') { st.level = 0; st.sub = null; st.fam = null; st.pi = Math.max(0, topItems().findIndex((x) => x.kind === 'fav')); }
+    if (s.kind === 'fav') { st.level = 0; st.sub = null; st.fam = null; st.row = 1; st.pi = Math.max(0, extraItems().findIndex((x) => x.kind === 'fav')); }
     else if (s.kind === 'coll') { st.level = 1; st.sub = 'colls'; st.fam = null; st.pi = Math.max(0, collItems().findIndex((x) => x.id === s.id)); }
     else {
       const f = families().find((x) => x.name === (st.plat?.family || 'Others')) || families()[0];
-      if (f && f.plats.length > 1) { st.level = 1; st.sub = 'family'; st.fam = f.name; st.pi = Math.max(0, f.plats.findIndex((p) => p.slug === st.plat?.slug)); } else { st.level = 0; st.sub = null; st.fam = null; st.pi = Math.max(0, topItems().findIndex((x) => x.name === f?.name)); }
+      if (f && f.plats.length > 1) { st.level = 1; st.sub = 'family'; st.fam = f.name; st.pi = Math.max(0, f.plats.findIndex((p) => p.slug === st.plat?.slug)); } else { st.level = 0; st.sub = null; st.fam = null; st.row = 0; st.pi = Math.max(0, families().findIndex((x) => x.name === f?.name)); }
     }
     drawPlatforms();
   };
@@ -486,16 +501,17 @@ export function openBigScreen(host) {
     }
     if (s === 'platforms') {
       if (a === 'left') focusPlatform(st.pi - 1); else if (a === 'right') focusPlatform(st.pi + 1);
+      else if ((a === 'up' || a === 'down') && st.level === 0) { if (switchRow(a === 'down' ? 1 : 0)) focusPlatform(st.pi); }
       else if (a === 'prev-family') focusPlatform(st.pi - 5); else if (a === 'next-family') focusPlatform(st.pi + 5);
       else if (a === 'select' && item()) {
         const x = item(), k = x.kind || 'platform';
         if (k === 'fav') enterSource({ kind: 'fav', name: 'Favourites' });
-        else if (k === 'colls') { st.level = 1; st.sub = 'colls'; st.pi = 0; drawPlatforms(); }
+        else if (k === 'colls') { st.pis[1] = st.pi; st.level = 1; st.sub = 'colls'; st.pi = 0; drawPlatforms(); }
         else if (k === 'collection') enterSource({ kind: 'coll', id: x.id, name: x.name });
-        else if (k === 'family') { if (x.plats.length === 1) enterSource({ kind: 'platform', slug: x.plats[0].slug, name: x.plats[0].name, plat: x.plats[0] }); else { st.level = 1; st.sub = 'family'; st.fam = x.name; st.pi = 0; drawPlatforms(); } }
+        else if (k === 'family') { st.pis[0] = st.pi; if (x.plats.length === 1) enterSource({ kind: 'platform', slug: x.plats[0].slug, name: x.plats[0].name, plat: x.plats[0] }); else { st.level = 1; st.sub = 'family'; st.fam = x.name; st.pi = 0; drawPlatforms(); } }
         else enterSource({ kind: 'platform', slug: x.slug, name: x.name, plat: x });
       }
-      else if (a === 'back') { if (st.level === 1) { const k = topItems().findIndex((f) => (st.sub === 'colls' ? f.kind === 'colls' : f.name === st.fam)); st.level = 0; st.sub = null; st.fam = null; st.pi = Math.max(0, k); drawPlatforms(); } else if (!host.kiosk) close(); }
+      else if (a === 'back') { if (st.level === 1) { const wasColls = st.sub === 'colls', k = wasColls ? extraItems().findIndex((f) => f.kind === 'colls') : families().findIndex((f) => f.name === st.fam); st.level = 0; st.sub = null; st.fam = null; st.row = wasColls ? 1 : 0; st.pi = Math.max(0, k); drawPlatforms(); } else if (!host.kiosk) close(); }
     } else if (s === 'games') {
       if (a === 'up' || a === 'left') goGame(st.gi - (a === 'left' ? 10 : 1)); else if (a === 'down' || a === 'right') goGame(st.gi + (a === 'right' ? 10 : 1));
       else if (a === 'prev-family') jumpLetter(-1); else if (a === 'next-family') jumpLetter(1);
@@ -527,7 +543,7 @@ export function openBigScreen(host) {
   document.addEventListener('keydown', onKey);
   root.addEventListener('click', (e) => {
     if (e.target.closest('#bs-snd')) { toggleSound(); return; }
-    const t = e.target.closest('.bs-ptile'); if (t && st.screen === 'platforms') { const i = Number(t.dataset.i); if (i === st.pi) act('select'); else focusPlatform(i); return; }
+    const t = e.target.closest('.bs-ptile'); if (t && st.screen === 'platforms') { const i = Number(t.dataset.i), r = Number(t.dataset.r || 0); if (st.level === 0 && r !== st.row) { switchRow(r); focusPlatform(i); return; } if (i === st.pi) act('select'); else focusPlatform(i); return; }
     const r = e.target.closest('.bs-row'); if (r && st.screen === 'games') { const i = Number(r.dataset.i); if (i === st.gi) act('select'); else goGame(i); return; }
     const m = e.target.closest('.bs-mi[data-k]'); if (m && st.screen === 'game') { st.mi = [...m.parentElement.querySelectorAll('.bs-mi')].indexOf(m); paintMenu(); runMenu(m.dataset.k); return; }
     const c = e.target.closest('.bs-pi'); if (c && st.screen === 'pick') { st.pk.i = Number(c.dataset.ci); pickChoose(); return; }
@@ -540,12 +556,12 @@ export function openBigScreen(host) {
   const parseLp = (prefs) => { try { const j = JSON.parse(prefs?.launcher_platforms || 'null'); return j && Array.isArray(j.platforms) ? j : null; } catch { return null; } };
   st.plats = platList();
   const want = st.plats.find((p) => p.slug === host.start?.platform);
-  if (want) { st.plat = want; const f = families().find((x) => x.name === (want.family || 'Others')); if (f && f.plats.length > 1) { st.level = 1; st.sub = 'family'; st.fam = f.name; st.pi = f.plats.indexOf(want); } else st.pi = Math.max(0, topItems().findIndex((x) => x.name === (want.family || 'Others'))); }
+  if (want) { st.plat = want; const f = families().find((x) => x.name === (want.family || 'Others')); if (f && f.plats.length > 1) { st.level = 1; st.sub = 'family'; st.fam = f.name; st.pi = f.plats.indexOf(want); } else st.pi = Math.max(0, families().findIndex((x) => x.name === (want.family || 'Others'))); }
   drawPlatforms();
-  const refreshTop = () => { if (root && st.screen === 'platforms' && st.level === 0) { const cur = item()?.name; st.pi = Math.max(0, topItems().findIndex((x) => x.name === cur)); drawPlatforms(); } };
+  const refreshTop = () => { if (root && st.screen === 'platforms' && st.level === 0) { const cur = item()?.name; st.pi = Math.max(0, railItems().findIndex((x) => x.name === cur)); drawPlatforms(); } };
   host.api('/roms?favorite=1&limit=1').then((d) => { st.favCount = Number(d.total || 0); refreshTop(); }).catch(() => {});
   host.api('/collections').then((d) => { st.colls = d.items || d || []; refreshTop(); }).catch(() => {});
-  host.api('/prefs').then((p) => { const lp = parseLp(p); if (!lp && root && !noLauncher()) say('Showing every platform. Run Check my PC in the Carousel so only the ones this PC can start show here.'); if (lp && root) { st.lp = lp.platforms; st.plats = platList(); st.level = 0; st.sub = null; st.fam = null; st.pi = 0; if (st.screen === 'platforms') drawPlatforms(); } }).catch(() => {});
+  host.api('/prefs').then((p) => { const lp = parseLp(p); if (!lp && root && !noLauncher()) say('Showing every platform. Run Check my PC in the Carousel so only the ones this PC can start show here.'); if (lp && root) { st.lp = lp.platforms; st.plats = platList(); st.level = 0; st.row = 0; st.sub = null; st.fam = null; st.pi = 0; if (st.screen === 'platforms') drawPlatforms(); } }).catch(() => {});
 }
 
 export const closeBigScreen = () => off?.();

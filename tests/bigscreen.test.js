@@ -277,3 +277,11 @@ test('Settings > Platforms: the Platform art box comes before the + Add platform
   const html = read('public/index.html');
   assert.ok(html.indexOf('id="plat-art"') < html.indexOf('id="platform-add-toggle"') && html.indexOf('id="platform-add-toggle"') < html.indexOf('id="platform-add-form"'), 'art box, then the add button, then its form');
 });
+
+test('Big Screen: Favourites and Collections are a row of their own below the platforms, with art (heart, stack of cases, cover mosaic), and up / down move between the rows', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes('const extraItems = ()') && bs.includes('id="bs-rw1"') && bs.includes('const switchRow = (r)'), 'a second row');
+  assert.ok(bs.includes("(a === 'up' || a === 'down') && st.level === 0"), 'up and down move between the rows');
+  assert.ok(bs.includes('const HEART =') && bs.includes('const STACK =') && bs.includes('const mosaic = (covers)'), 'artwork for the tiles');
+  assert.ok(css.includes('.bs-t-fav {') && css.includes('.bs-t-colls') && css.includes('.bs-mosaic') && css.includes('.bs-main.two .bs-railwrap.r2'), 'and its styles');
+});
