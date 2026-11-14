@@ -142,8 +142,8 @@ export function classify(segs, fileName) {
     }
     if (kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
     if (kind !== 'manual' && NOT_COVER.test(base)) return null;
-    const bracket = /\(([^)]*)\)/.exec(base);
-    return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
+    const bracket = /\(([^)]*)\)/.exec(base), num = /-(\d{1,3})$/.exec(base);   // LaunchBox numbers its pictures: Game-01.png, Game-02.png
+    return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: bracket ? bracket[1] : '', title: base.replace(/-\d{1,3}$/, ''), n: num ? Number(num[1]) : 1, weak: false };
   }
   return null;
 }
@@ -158,8 +158,8 @@ function forcedEntry(segs, fileName, force) {
     return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: 'video', platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: br ? br[1] : '', title: base.replace(/-video$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
   }
   if (force.kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
-  const bracket = /\(([^)]*)\)/.exec(base);
-  return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base, n: 1, weak: false };
+  const bracket = /\(([^)]*)\)/.exec(base), num = /-(\d{1,3})$/.exec(base);
+  return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: bracket ? bracket[1] : '', title: base.replace(/-\d{1,3}$/, ''), n: num ? Number(num[1]) : 1, weak: false };
 }
 
 /**

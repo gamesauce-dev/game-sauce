@@ -218,3 +218,7 @@ body.bs-open #gp-legend { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .bs-favstar, .bs-brokenicon { transition: opacity .2s; transform: none; } }
 .bs-mi.broken-on { color: #ff6b6b; }
 .bs-mi.on.broken-on { color: #b91c1c; }
+.bs-az { position: absolute; right: .5em; top: 50%; transform: translateY(-50%); z-index: 12; display: flex; flex-direction: column; align-items: center; gap: .05em; padding: .5em .3em; border-radius: 1em; background: rgba(8, 12, 22, .45); backdrop-filter: blur(4px); }
+.bs-az button { all: unset; box-sizing: border-box; width: 1.5em; height: 1.35em; line-height: 1.35em; text-align: center; font-size: .78em; font-weight: 700; color: rgba(207, 213, 226, .28); border-radius: .5em; cursor: pointer; }
+.bs-az button.has { color: rgba(231, 236, 247, .78); }
+.bs-az button.on { color: #0b1020; background: var(--ac, #fff); transform: scale(1.25); }

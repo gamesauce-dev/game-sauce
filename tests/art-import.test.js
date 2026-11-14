@@ -292,3 +292,11 @@ test('Game assets: one Import game assets button everywhere, the Settings entry 
   assert.ok(modern.includes("id=\"tl-assets\"") && modern.includes("'game-assets'") && !modern.includes("'import-media'] ") );
   assert.ok(ui.includes("file${p.unmatched_total === 1 ? '' : 's'} matched none of your games") && !ui.includes("picture${p.unmatched_total"));
 });
+
+test('a numbered LaunchBox logo (Clear Logo/Game-01.png) is read as the game\'s logo, number dropped', async () => {
+  const { classify } = await import('../src/lib/artimport.js');
+  const c = classify(['nintendo gamecube', 'clear logo'], 'Auto Modellista-01.png');
+  assert.equal(c.kind, 'logo');
+  assert.equal(c.title, 'Auto Modellista');
+  assert.equal(c.n, 1);
+});

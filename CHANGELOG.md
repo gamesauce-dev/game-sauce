@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **Numbered pictures in a logo, marquee or background folder now import.** LaunchBox names them `Game-01.png`; only its box-art folders had the number dropped, so a `Clear Logo/Auto Modellista-01.png` never matched its game.
+
 ## [0.6.0] - 2026-11-14
 
 ### Added

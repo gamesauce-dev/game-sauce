@@ -259,7 +259,8 @@ export function openBigScreen(host) {
     if (tok !== st.tok || st.screen !== 'games') return;
     if (!st.games.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games here yet.</div>'; return; }
     st.gi = Math.min(st.gi, st.games.length - 1);
-    $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>';
+    st.az = new Map(); st.games.forEach((g, i) => { const l = letter(g); if (!st.az.has(l)) st.az.set(l, i); });   // the first game of each letter
+    $('#bs-main').innerHTML = `<div class="bs-wheel" id="bs-wheel"></div><nav class="bs-az" id="bs-az" aria-label="Jump to letter">${AZ.map((l) => `<button type="button" tabindex="-1" data-l="${l}" class="${st.az.has(l) ? 'has' : ''}">${l}</button>`).join('')}</nav><div class="bs-pos" id="bs-pos"></div>`;
     st.els = new Map(); placeWheel();
   };
   const rowHtml = (g) => {
@@ -277,11 +278,13 @@ export function openBigScreen(host) {
       const s = wheelStyle(i - st.gi);
       el.style.transform = `translateY(calc(-50% + ${s.y}em)) scale(${s.scale})`; el.style.opacity = s.opacity; el.style.zIndex = 10 - Math.abs(i - st.gi); el.classList.toggle('on', i === st.gi);
     }
+    const here = letter(st.games[st.gi]); for (const b of $('#bs-az')?.children || []) b.classList.toggle('on', b.dataset.l === here);
     const g = game(); $('#bs-pos').textContent = `${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}`;
     root.style.setProperty('--ac', gameAccent(g));
     clearTimeout(st.bgT); st.bgT = setTimeout(() => { const art = gameBackdrop(g); if (root && st.screen === 'games' && game() === g) setBackdrop(art || g.cover_url, gameAccent(g), Boolean(art)); }, 140);   // the picture follows when the wheel settles
   };
   const goGame = (i) => { if (!st.games.length) return; st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeWheel(); };
+  const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
   const letter = (g) => (String(g.title).replace(/^[^a-z0-9]+/i, '')[0] || '#').toUpperCase().replace(/[0-9]/, '#');
   const jumpLetter = (d) => {
     const here = letter(game()); let i = st.gi;
@@ -587,6 +590,7 @@ export function openBigScreen(host) {
   root.addEventListener('click', (e) => {
     if (e.target.closest('#bs-snd')) { toggleSound(); return; }
     const t = e.target.closest('.bs-ptile'); if (t && st.screen === 'platforms') { const i = Number(t.dataset.i), r = Number(t.dataset.r || 0); if (st.level === 0 && r !== st.row) { switchRow(r); focusPlatform(i); return; } if (i === st.pi) act('select'); else focusPlatform(i); return; }
+    const az = e.target.closest('#bs-az button[data-l]'); if (az && st.screen === 'games') { if (st.az?.has(az.dataset.l)) goGame(st.az.get(az.dataset.l)); return; }   // the A-Z rail: straight to that letter
     const r = e.target.closest('.bs-row'); if (r && st.screen === 'games') { const i = Number(r.dataset.i); if (i === st.gi) act('select'); else goGame(i); return; }
     const m = e.target.closest('.bs-mi[data-k]'); if (m && st.screen === 'game') { st.mi = [...m.parentElement.querySelectorAll('.bs-mi')].indexOf(m); paintMenu(); runMenu(m.dataset.k); return; }
     const c = e.target.closest('.bs-pi'); if (c && st.screen === 'pick') { st.pk.i = Number(c.dataset.ci); pickChoose(); return; }
