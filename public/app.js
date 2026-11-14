@@ -9,6 +9,7 @@ import * as digital from './digital.js';
 import { renderArtImport } from './artimport-ui.js';
 import { assetWords } from './video.js';   // the video in a game's details window
 import * as carousel from './carousel.js';
+import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
 import './pwreveal.js';   // the eye in password boxes
 
@@ -322,6 +323,16 @@ function openCarouselView() {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#open-carousel, [data-open="carousel"]')) return;
   openCarouselView();
+});
+
+// Big Screen: the Library for a TV, played with a gamepad (public/bigscreen.js). Opened from the Library bar and the Modern bar, or at once with #/bigscreen in the address (a kiosk browser, or the desktop app).
+async function openBigScreenView(kiosk = false) {
+  if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
+  bigscreen.openBigScreen({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#open-bigscreen')) return;
+  openBigScreenView();
 });
 
 /** "Find assets" in a details window (public/video.js) brought something in: say what, and draw the window and the list again. */
@@ -3950,8 +3961,8 @@ function showApp(user, { restore = false } = {}) {
   physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON });
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, user: () => authState.user });
-  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView });
-  api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).catch(() => {});
+  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView });
+  api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog

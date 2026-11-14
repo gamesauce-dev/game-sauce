@@ -52,7 +52,7 @@ const ROM_COLUMNS = `
   r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
   r.release_year, r.developer, r.publisher, r.genre, r.players, r.rating,
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
-  r.meta_source, r.meta_synced_at, r.play_count,
+  r.meta_source, r.meta_synced_at, r.play_count, r.broken,
   CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
   r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 WHEN r.hidden_all = 1 THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system, r.hidden_all,
@@ -1066,6 +1066,16 @@ router.post('/:id/hide-all', requireAdmin, (req, res) => {
   if (req.romSnapshot) req.romSnapshot.hidden = Boolean(next);
   db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
   res.json({ id: rom.id, hidden_all: next });
+});
+
+/* Mark a game as one the emulator cannot run (or take the mark off). Shared by everybody, like the rest of the Library; any signed-in account can set it. */
+router.post('/:id/broken', (req, res) => {
+  const rom = db.prepare('SELECT id, broken FROM roms WHERE id = ?').get(req.params.id);
+  if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  if (!req.user) return res.status(401).json({ error: 'Sign in required' });
+  const next = req.body?.broken === undefined ? (rom.broken ? 0 : 1) : (req.body.broken ? 1 : 0);
+  db.prepare("UPDATE roms SET broken = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
+  res.json({ id: rom.id, broken: next });
 });
 
 router.post('/:id/favorite', (req, res) => {

@@ -74,7 +74,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'carousel', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'messages', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'game-assets', 'grid', 'grid-condensed', 'back-to-top', 'pin'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'carousel', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'messages', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'game-assets', 'grid', 'grid-condensed', 'back-to-top', 'pin', 'big-screen'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital', 'physical'].includes(n.view)));
@@ -86,6 +86,7 @@ async function doBuildBar() {
       <div class="mb-library-tools" id="mb-library-tools"></div>
     </div>
     <div class="mb-right">
+      <button class="mb-btn" id="mb-bigscreen" data-mview="bigscreen" title="Big Screen: the Library for a TV, played with a gamepad" aria-label="Big Screen">${ic['big-screen']}</button>
       <button class="mb-btn" id="mb-carousel" data-mview="carousel" title="Carousel: browse your games as a carousel of covers" aria-label="Carousel">${ic.carousel}</button>
       <button class="mb-btn" id="mb-theme" title="" aria-label="Light or dark">${ic['dark-mode']}${ic['light-mode']}</button>
       <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}</button>
@@ -146,6 +147,7 @@ function onBarClick(e) {
     const v = nav.dataset.mview;
     // Choosing Home or Library means "start fresh": the search box, platform picks and every filter are cleared first. (Other pages keep theirs.)
     if (v === 'home' || v === 'library') { chipFamily = null; ctx.resetDigital?.(); ctx.resetPhysical?.(); ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
+    if (v === 'bigscreen') { ctx.openBigScreen?.(); return; }
     if (v === 'carousel') { ctx.openCarousel?.(); return; }   // not a page: the full-screen carousel opens over whatever is showing
     go(v); return;
   }

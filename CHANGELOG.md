@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Big Screen: the Library for a PC on the TV, played with a gamepad.** Open it with **▣ Big Screen** in the Library bar (or the TV icon in the Modern bar), or straight away with `#/bigscreen` on the address (a browser in kiosk mode, for example `chrome --kiosk http://your-server:8080/#/bigscreen`). Three screens: a row of **platform tiles** (their logos, with the platform large above and a clock in the corner), a **wheel of games** (title, cover and year, the one in the middle large), and a **game page** with the menu on the left (**Play, Favourite, Add to Collection, Mark as Broken, Hide**), the cover, and the genre, description, year, players, rating, developer and a video or screenshot. D-pad or stick to move, A to choose, B to go back, LB/RB to jump by letter or to the other game, X to play in the browser, Y to play on this PC; the keyboard works too (arrows, Enter, Esc). It lists only the platforms the emulator setup reports as ready (Set up emulators / Check my PC; before the first report it shows everything and says so).
+- **Mark as Broken.** A game the emulator cannot run can be marked from Big Screen (and unmarked); everybody sees the mark. It is the new `broken` field on a game.
+
 ## [0.5.5] - 2026-11-14
 
 ### Changed

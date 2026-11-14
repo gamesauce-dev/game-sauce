@@ -65,7 +65,7 @@
     if (player && !player.classList.contains('hidden')) return null; // a game is running: hands off
     const auth = $('#auth-screen');
     if (auth && !auth.classList.contains('hidden')) return null;
-    const cv = $('.cv');
+    const cv = $('.cv') || $('.bs');
     if (cv) return cv;                                                // the cover carousel is on top of everything: it takes the pad
     const modals = [...document.querySelectorAll('.modal-scrim:not(.hidden)')];
     if (modals.length) return modals[modals.length - 1];
@@ -137,7 +137,7 @@
   }
 
   /** The cover carousel is driven by its own listener (public/carousel.js): the pad only tells it what was pressed. */
-  const cvPad = (root, act) => { if (!root || !root.classList.contains('cv')) return false; root.dispatchEvent(new CustomEvent('cv-pad', { detail: { act } })); return true; };
+  const cvPad = (root, act) => { if (!root || !(root.classList.contains('cv') || root.classList.contains('bs'))) return false; root.dispatchEvent(new CustomEvent('cv-pad', { detail: { act } })); return true; };
 
   function move(dir) {
     const root = currentRoot();

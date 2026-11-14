@@ -39,7 +39,8 @@ const romAdditions = [
   ['last_seen_at', 'TEXT'],
   ['scanned_size', 'INTEGER'],
   ['scanned_mtime', 'INTEGER'],
-  ['provider_media', 'TEXT'] // JSON: extra media (screenshot, fanart, wheel…)
+  ['provider_media', 'TEXT'], // JSON: extra media (screenshot, fanart, wheel…)
+  ['broken', 'INTEGER NOT NULL DEFAULT 0'] // 1 = marked as one the emulator cannot run (Big Screen: Mark as broken)
 ];
 for (const [name, ddl] of romAdditions) {
   if (!romCols.has(name)) db.exec(`ALTER TABLE roms ADD COLUMN ${name} ${ddl}`);
