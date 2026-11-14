@@ -285,7 +285,7 @@ export function openBigScreen(host) {
   };
   const goGame = (i) => { if (!st.games.length) return; st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeWheel(); };
   const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
-  const letter = (g) => (String(g.title).replace(/^[^a-z0-9]+/i, '')[0] || '#').toUpperCase().replace(/[0-9]/, '#');
+  const letter = (g) => (String(g.sort_title || g.title).replace(/^[^a-z0-9]+/i, '')[0] || '#').toUpperCase().replace(/[0-9]/, '#');
   const jumpLetter = (d) => {
     const here = letter(game()); let i = st.gi;
     while (i + d >= 0 && i + d < st.games.length) { i += d; if (letter(st.games[i]) !== here) break; }
