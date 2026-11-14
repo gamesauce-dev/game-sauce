@@ -64,3 +64,15 @@ test('Big Screen is wired in: a button in the Library bar and the Modern bar, #/
   assert.ok(pad.includes("$('.cv') || $('.bs')") && pad.includes("root.classList.contains('bs')"), 'the pad reaches Big Screen');
   assert.ok(bs.includes('st.lp.includes(p.slug)'), 'only the platforms the emulator setup reports (once it has)');
 });
+
+test('Big Screen: a game shows its logo and its marquee when it has them (the pictures a ScreenScraper match keeps as "wheel" and "marquee"), and the platform choice goes family first, then platform', async () => {
+  const { gameLogo, gameMarquee } = await import('../public/bigscreen.js');
+  assert.equal(gameLogo({ id: 7, media: { wheel: { path: 'p', url: 'u' } } }), '/api/roms/7/media/wheel');
+  assert.equal(gameMarquee({ id: 7, media: { marquee: { path: 'p', url: 'u' } } }), '/api/roms/7/media/marquee');
+  assert.equal(gameLogo({ id: 7, media: { screenshot: {} } }), ''); assert.equal(gameMarquee({ id: 7 }), '', 'none when the game has none');
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes('const families = ()') && bs.includes('st.level === 0') && bs.includes('/api/platforms/families/logo'), 'family tiles, with the family logo');
+  assert.ok(bs.includes('onerror="this.closest(\'.bs-mid\').classList.remove(\'has-logo\')"'), 'a logo that cannot be loaded falls back to the cover');
+  assert.ok(bs.includes('v.muted = false') && bs.includes("v.muted = true"), 'the video plays with sound, and without it if the browser will not start it with sound');
+  assert.ok(css.includes('.bs-marquee') && css.includes('.bs-mid.has-logo .bs-cov'));
+});

@@ -1,5 +1,5 @@
 // Big Screen: the Library for a PC on the TV, driven by a gamepad (or the keyboard). Three screens:
-//   platforms  a row of platform tiles (their logos), with the focused one large above it;
+//   platforms  a row of family tiles (Sony, Nintendo...), then the platforms of the one chosen, each with its logo and the focused one large above;
 //   games      the games of a platform as a wheel, the one in the middle large;
 //   game       a menu on the left (Play, Favourite, Add to Collection, Mark as Broken, Hide), the cover, and the details.
 // The pad is read by public/gamepad.js, which sends what was pressed to this layer as a 'cv-pad' event (the same way the cover carousel is driven).
@@ -19,6 +19,10 @@ export function wheelStyle(o) {
   };
 }
 
+/** A game's own pictures for Big Screen: its logo and its marquee, when it has them (a game matched by ScreenScraper keeps both; see applyProviderMedia). */
+export const gameLogo = (g) => (g?.media?.wheel ? `/api/roms/${g.id}/media/wheel` : '');
+export const gameMarquee = (g) => (g?.media?.marquee ? `/api/roms/${g.id}/media/marquee` : '');
+
 /** The menu of the game screen. Pure, so it can be tested. */
 export function gameMenu(g) {
   return [
@@ -35,7 +39,7 @@ let root = null, off = null;
 /** Open Big Screen. host: { api, toast, platforms(), user(), openPlayer(rom), kiosk?: boolean, start?: { platform } }. */
 export function openBigScreen(host) {
   if (root) return;
-  const st = { screen: 'platforms', plats: [], pi: 0, games: [], gi: 0, mi: 0, lp: null, cache: new Map(), peek: new Map(), tok: 0, picks: [], ci: 0, bg: 0 };
+  const st = { screen: 'platforms', level: 0, fam: null, plat: null, plats: [], pi: 0, games: [], gi: 0, mi: 0, lp: null, cache: new Map(), peek: new Map(), tok: 0, picks: [], ci: 0, bg: 0 };
   const noLauncher = () => host.user()?.can_download === false;
   const known = () => (noLauncher() ? [] : st.lp);
   const launchable = (slug) => known() === null || known().includes(slug);
@@ -47,7 +51,12 @@ export function openBigScreen(host) {
     .filter((p) => (noLauncher() || st.lp === null || st.lp.includes(p.slug)) && ((p.visible_count ?? p.count) || 0) > 0)
     .sort((a, b) => String(a.family || '').localeCompare(String(b.family || '')) || (a.generation || 99) - (b.generation || 99) || String(a.name).localeCompare(b.name));
   const count = (p) => (p.visible_count ?? p.count) || 0;
-  const cur = () => st.plats[st.pi];
+  const cur = () => st.plat || st.plats[0];   // the platform whose games are shown
+  const famColour = (p) => (HEX.test(p?.family_colour || '') ? p.family_colour : '#6b7280');
+  // the family tiles, then the platforms of one family
+  const families = () => { const m = new Map(); for (const p of st.plats) { const k = p.family || 'Others'; if (!m.has(k)) m.set(k, { name: k, colour: famColour(p), logo_v: p.family_logo_v, plats: [], games: 0 }); const f = m.get(k); f.plats.push(p); f.games += count(p); } return [...m.values()]; };
+  const railItems = () => (st.level === 0 ? families() : (families().find((f) => f.name === st.fam)?.plats || []));
+  const item = () => railItems()[st.pi];
   const game = () => st.games[st.gi];
 
   root = document.createElement('div');
@@ -69,7 +78,7 @@ export function openBigScreen(host) {
   tick(); const clock = setInterval(tick, 15000);
   const hint = (b, t) => `<span><i>${b}</i>${t}</span>`;
   const paintHints = () => {
-    const h = { platforms: [hint('A', 'Select'), host.kiosk ? '' : hint('B', 'Close')], games: [hint('A', 'Open'), hint('B', 'Back'), hint('LB RB', 'Jump by letter'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')],
+    const h = { platforms: [hint('A', 'Select'), st.level === 1 ? hint('B', 'Back') : (host.kiosk ? '' : hint('B', 'Close'))], games: [hint('A', 'Open'), hint('B', 'Back'), hint('LB RB', 'Jump by letter'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')],
       game: [hint('A', 'Choose'), hint('B', 'Back'), hint('LB RB', 'Other game'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')], pick: [hint('A', 'Add'), hint('B', 'Cancel')] }[st.screen] || [];
     $('#bs-hints').innerHTML = h.join('');
   };
@@ -106,24 +115,37 @@ export function openBigScreen(host) {
     return st.peek.get(slug);
   };
 
-  // ── screen 1: platforms ──
+  // ── screen 1: families, then the platforms of one ──
+  const tileHtml = (x, i) => (st.level === 0
+    ? `<div class="bs-ptile" data-i="${i}" style="--pc:${esc(x.colour)}">${x.logo_v ? `<img src="/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}" alt="" draggable="false" />` : `<b>${esc(x.name)}</b>`}</div>`
+    : `<div class="bs-ptile" data-i="${i}" style="--pc:${esc(accent(x))}">${x.logo_v ? `<img src="/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}" alt="" draggable="false" />` : `<b>${esc(x.name)}</b>`}</div>`);
   const drawPlatforms = () => {
-    st.screen = 'platforms'; $('#bs-crumb').textContent = 'Platforms'; paintHints();
-    $('#bs-main').innerHTML = `<div class="bs-hero" id="bs-hero"></div><div class="bs-railwrap"><div class="bs-rail" id="bs-rail">${st.plats.map((p, i) => `<div class="bs-ptile" data-i="${i}" style="--pc:${esc(accent(p))}">${p.logo_v ? `<img src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="" draggable="false" />` : `<b>${esc(p.name)}</b>`}</div>`).join('')}</div></div>`;
-    if (!st.plats.length) $('#bs-main').innerHTML = '<div class="bs-empty">No games in the Library yet.</div>';
-    else focusPlatform(st.pi);
+    st.screen = 'platforms'; $('#bs-crumb').textContent = st.level === 0 ? 'Platforms' : st.fam; paintHints();
+    const items = railItems();
+    if (!items.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games in the Library yet.</div>'; return; }
+    $('#bs-main').innerHTML = `<div class="bs-hero" id="bs-hero"></div><div class="bs-railwrap"><div class="bs-rail" id="bs-rail">${items.map(tileHtml).join('')}</div></div>`;
+    focusPlatform(st.pi);
   };
   let heroTimer = 0;
   const focusPlatform = (i) => {
-    st.pi = Math.max(0, Math.min(st.plats.length - 1, i));
-    const p = cur(); if (!p) return;
+    const items = railItems(); st.pi = Math.max(0, Math.min(items.length - 1, i));
+    const x = items[st.pi]; if (!x) return;
     root.querySelectorAll('.bs-ptile').forEach((t) => t.classList.toggle('on', Number(t.dataset.i) === st.pi));
     const rail = $('#bs-rail'); if (rail) { const w = rail.parentElement.clientWidth, tile = rail.querySelector('.bs-ptile')?.offsetWidth || 0, step = tile + parseFloat(getComputedStyle(rail).gap || 0); rail.style.transform = `translateX(${Math.round(w / 2 - (st.pi * step + tile / 2))}px)`; }
-    $('#bs-hero').innerHTML = `${p.logo_v ? `<img class="bs-herologo" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="" />` : `<div class="bs-heroname">${esc(p.name)}</div>`}
-      <div class="bs-facts">${p.manufacturer ? `<span class="bs-pill">${esc(p.manufacturer)}</span>` : ''}<span class="bs-pill dim">${count(p).toLocaleString()} game${count(p) === 1 ? '' : 's'}</span></div>`;
-    setBackdrop(null, accent(p));
+    const fam = st.level === 0, first = fam ? x.plats[0] : x, ac = fam ? x.colour : accent(x);
+    const logo = fam ? (x.logo_v ? `/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}` : '') : (x.logo_v ? `/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}` : '');
+    $('#bs-hero').innerHTML = `${logo ? `<img class="bs-herologo" src="${logo}" alt="" />` : `<div class="bs-heroname">${esc(x.name)}</div>`}
+      <div class="bs-facts">${fam ? `<span class="bs-pill">${x.plats.length} platform${x.plats.length === 1 ? '' : 's'}</span><span class="bs-pill dim">${x.games.toLocaleString()} game${x.games === 1 ? '' : 's'}</span>` : `${x.manufacturer ? `<span class="bs-pill">${esc(x.manufacturer)}</span>` : ''}<span class="bs-pill dim">${count(x).toLocaleString()} game${count(x) === 1 ? '' : 's'}</span>`}</div>`;
+    setBackdrop(null, ac);
     clearTimeout(heroTimer);
-    const slug = p.slug; heroTimer = setTimeout(async () => { const g = await peek(slug); if (!root || cur()?.slug !== slug || st.screen !== 'platforms' || !g.length) return; setBackdrop(g[Math.floor(Math.random() * g.length)].cover_url, accent(p)); loadGames(slug).catch(() => {}); }, 350);   // the games load while the person looks at the platform
+    const slug = first.slug, token = st.pi + ':' + st.level; heroTimer = setTimeout(async () => { const g = await peek(slug); if (!root || st.screen !== 'platforms' || token !== st.pi + ':' + st.level || !g.length) return; setBackdrop(g[Math.floor(Math.random() * g.length)].cover_url, ac); if (!fam) loadGames(slug).catch(() => {}); }, 350);   // the games load while the person looks at the platform
+  };
+  const enterPlatform = (p) => { st.plat = p; st.gi = 0; drawGames(p.slug); };
+  const leaveGames = () => {   // back from the wheel: to the family's platforms, or to the families when it had only one
+    const f = families().find((x) => x.name === (st.plat?.family || 'Others')) || families()[0];
+    st.screen = 'platforms';
+    if (f && f.plats.length > 1) { st.level = 1; st.fam = f.name; st.pi = Math.max(0, f.plats.findIndex((p) => p.slug === st.plat?.slug)); } else { st.level = 0; st.fam = null; st.pi = Math.max(0, families().findIndex((x) => x.name === f?.name)); }
+    drawPlatforms();
   };
 
   // ── screen 2: the wheel ──
@@ -138,7 +160,10 @@ export function openBigScreen(host) {
     $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>';
     st.els = new Map(); placeWheel();
   };
-  const rowHtml = (g) => `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Broken</em>' : ''}</div><div class="bs-cov" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : `<span>${esc(g.title)}</span>`}</div><div class="bs-year">${esc(g.release_year || '')}</div>`;
+  const rowHtml = (g) => {
+    const logo = gameLogo(g);
+    return `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Broken</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : `<span>${esc(g.title)}</span>`}</div></div><div class="bs-year">${esc(g.release_year || '')}</div>`;
+  };
   const placeWheel = () => {
     const wheel = $('#bs-wheel'); if (!wheel) return;
     const n = st.games.length, reach = root.classList.contains('bs-lite') ? 3 : 4;
@@ -173,13 +198,19 @@ export function openBigScreen(host) {
       <nav class="bs-menu" id="bs-menu" aria-label="${esc(g.title)}"></nav>
       <div class="bs-box"><div class="bs-boxcover" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" />` : `<span>${esc(g.title)}</span>`}</div></div>
       <section class="bs-info">
+        ${gameMarquee(g) ? `<div class="bs-marquee"><img src="${esc(gameMarquee(g))}" alt="" onerror="this.parentElement.remove()" /></div>` : ''}
         <div class="bs-genre">${esc(g.genre || cur()?.name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}</div>
-        <h1 class="bs-name">${esc(g.title)}</h1>
+        <h1 class="bs-name${gameLogo(g) ? ' has-logo' : ''}">${gameLogo(g) ? `<img class="bs-glogo" src="${esc(gameLogo(g))}" alt="" onerror="this.closest('h1').classList.remove('has-logo')" />` : ''}<span>${esc(g.title)}</span></h1>
         <div class="bs-factline">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
         <p class="bs-desc">${esc(g.description || 'No description yet.')}</p>
-        <div class="bs-media" id="bs-media">${g.has_video ? `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}" muted loop autoplay playsinline preload="auto"></video>` : shot ? `<img src="${esc(shot)}" alt="" />` : ''}</div>
+        <div class="bs-media" id="bs-media">${g.has_video ? `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}"${shot ? ` poster="${esc(shot)}"` : ''} loop playsinline preload="auto"></video>` : shot ? `<img src="${esc(shot)}" alt="" />` : ''}</div>
       </section></div>`;
-    const v = $('#bs-media video'); if (v) { v.addEventListener('error', () => { const m = $('#bs-media'); if (m) m.innerHTML = shot ? `<img src="${esc(shot)}" alt="" />` : ''; }); v.play?.().catch(() => {}); }
+    const v = $('#bs-media video');
+    if (v) {   // the video plays as the page opens, with its sound; if the browser will not start it with sound (nothing has been pressed yet), it plays without
+      v.addEventListener('error', () => { const m = $('#bs-media'); if (m) m.innerHTML = shot ? `<img src="${esc(shot)}" alt="" />` : ''; });
+      v.muted = false; v.volume = 0.8;
+      v.play?.().catch(() => { v.muted = true; v.play?.().catch(() => {}); });
+    }
     paintMenu();
   };
   const paintMenu = () => {
@@ -209,7 +240,7 @@ export function openBigScreen(host) {
       await host.api(`/roms/${g.id}/hide`, { method: 'POST', body: JSON.stringify({ hidden: true }) });
       st.games.splice(st.gi, 1); say('Hidden. You can show it again from the Library.');
       const p = cur(); if (p) { if (p.visible_count != null) p.visible_count--; else p.count--; }   // the platform's count follows
-      if (!st.games.length) { const slug = p?.slug; st.plats = platList(); st.pi = Math.max(0, st.plats.findIndex((x) => x.slug === slug)); st.screen = 'platforms'; return drawPlatforms(); }
+      if (!st.games.length) { st.plats = platList(); return leaveGames(); }
       st.gi = Math.min(st.gi, st.games.length - 1); backToWheel();
     } catch (err) { say(err.message, true); }
   };
@@ -252,13 +283,17 @@ export function openBigScreen(host) {
     if (s === 'platforms') {
       if (a === 'left') focusPlatform(st.pi - 1); else if (a === 'right') focusPlatform(st.pi + 1);
       else if (a === 'prev-family') focusPlatform(st.pi - 5); else if (a === 'next-family') focusPlatform(st.pi + 5);
-      else if (a === 'select' && cur()) { st.gi = 0; drawGames(cur().slug); }
-      else if (a === 'back' && !host.kiosk) close();
+      else if (a === 'select' && item()) {
+        const x = item();
+        if (st.level === 0) { if (x.plats.length === 1) enterPlatform(x.plats[0]); else { st.level = 1; st.fam = x.name; st.pi = 0; drawPlatforms(); } }
+        else enterPlatform(x);
+      }
+      else if (a === 'back') { if (st.level === 1) { const k = families().findIndex((f) => f.name === st.fam); st.level = 0; st.fam = null; st.pi = Math.max(0, k); drawPlatforms(); } else if (!host.kiosk) close(); }
     } else if (s === 'games') {
       if (a === 'up' || a === 'left') goGame(st.gi - (a === 'left' ? 10 : 1)); else if (a === 'down' || a === 'right') goGame(st.gi + (a === 'right' ? 10 : 1));
       else if (a === 'prev-family') jumpLetter(-1); else if (a === 'next-family') jumpLetter(1);
       else if (a === 'select') drawGame();
-      else if (a === 'back') { st.screen = 'platforms'; drawPlatforms(); }
+      else if (a === 'back') leaveGames();
       else if (a === 'browser') openBrowser(game()); else if (a === 'local') playLocal(game());
     } else if (s === 'game') {
       if (a === 'up' || a === 'down') { st.mi = Math.max(0, Math.min(gameMenu(game()).length - 1, st.mi + (a === 'down' ? 1 : -1))); paintMenu(); }
@@ -289,10 +324,10 @@ export function openBigScreen(host) {
   // ── start: which platforms this PC can start (the launcher reports it), then the platform row ──
   const parseLp = (prefs) => { try { const j = JSON.parse(prefs?.launcher_platforms || 'null'); return j && Array.isArray(j.platforms) ? j : null; } catch { return null; } };
   st.plats = platList();
-  const want = st.plats.findIndex((p) => p.slug === host.start?.platform);
-  st.pi = want >= 0 ? want : 0;
+  const want = st.plats.find((p) => p.slug === host.start?.platform);
+  if (want) { st.plat = want; const f = families().find((x) => x.name === (want.family || 'Others')); if (f && f.plats.length > 1) { st.level = 1; st.fam = f.name; st.pi = f.plats.indexOf(want); } else st.pi = Math.max(0, families().findIndex((x) => x.name === (want.family || 'Others'))); }
   drawPlatforms();
-  host.api('/prefs').then((p) => { const lp = parseLp(p); if (!lp && root && !noLauncher()) say('Showing every platform. Run Check my PC in the Carousel so only the ones this PC can start show here.'); if (lp && root) { st.lp = lp.platforms; const slug = cur()?.slug; st.plats = platList(); st.pi = Math.max(0, st.plats.findIndex((x) => x.slug === slug)); if (st.screen === 'platforms') drawPlatforms(); } }).catch(() => {});
+  host.api('/prefs').then((p) => { const lp = parseLp(p); if (!lp && root && !noLauncher()) say('Showing every platform. Run Check my PC in the Carousel so only the ones this PC can start show here.'); if (lp && root) { st.lp = lp.platforms; st.plats = platList(); st.level = 0; st.fam = null; st.pi = 0; if (st.screen === 'platforms') drawPlatforms(); } }).catch(() => {});
 }
 
 export const closeBigScreen = () => off?.();
