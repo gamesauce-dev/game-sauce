@@ -69,7 +69,7 @@ export function scanStorage() {
       if (g.key === 'videos' && /\.part$/i.test(name)) used = false;   // a download that never finished
       if (used) continue;
       files++; bytes += st.size; unused.push({ file: f, bytes: st.size, group: g.key });
-      if (sample.length < 5) sample.push(path.relative(root, f).replace(/\\/g, '/'));
+      if (sample.length < 12) sample.push(path.relative(root, f).replace(/\\/g, '/'));
     }
     groups.push({ key: g.key, label: g.label, files, bytes, sample });
   }

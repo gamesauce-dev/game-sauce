@@ -3099,7 +3099,7 @@ async function checkStorage() {
     storageScan = await api('/admin/storage/unused');
     const rows = storageScan.groups.filter((g) => g.files);
     if (!rows.length && !storageScan.broken_records) { box.textContent = 'Nothing unused: every file in storage is in use.'; return; }
-    box.innerHTML = `${rows.map((g) => `<div>${esc(g.label)}: <b>${g.files.toLocaleString()}</b> file${g.files === 1 ? '' : 's'}, ${fmtBytes(g.bytes)}</div>`).join('')}${storageScan.broken_records ? `<div>${storageScan.broken_records.toLocaleString()} record${storageScan.broken_records === 1 ? '' : 's'} pointing at a file that is gone</div>` : ''}<div style="margin-top:4px"><b>${fmtBytes(storageScan.total_bytes)}</b> can be cleared.</div>`;
+    box.innerHTML = `${rows.map((g) => `<div>${esc(g.label)}: <b>${g.files.toLocaleString()}</b> file${g.files === 1 ? '' : 's'}, ${fmtBytes(g.bytes)}${g.sample?.length ? `<div style="opacity:.7;font-size:.9em;word-break:break-all">${g.sample.map(esc).join('<br>')}${g.files > g.sample.length ? `<br>…and ${g.files - g.sample.length} more` : ''}</div>` : ''}</div>`).join('')}${storageScan.broken_records ? `<div>${storageScan.broken_records.toLocaleString()} record${storageScan.broken_records === 1 ? '' : 's'} pointing at a file that is gone</div>` : ''}<div style="margin-top:4px"><b>${fmtBytes(storageScan.total_bytes)}</b> can be cleared.</div>`;
     clr?.classList.remove('hidden');
   } catch (err) { box.textContent = ''; toast(err.message, true); }
 }
