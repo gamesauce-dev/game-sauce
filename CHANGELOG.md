@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-11-14
+
 ### Added
 - **Launcher: `{romname}` in an emulator's arguments, for MAME.** It becomes the game's file name without its extension (`1941` for `1941.zip`), which is what MAME wants. A MAME entry that works is `-rompath "C:\MAME\roms;{romdir}" {romname}`: MAME's own roms folder (for parent sets and BIOS files) plus the folder the launcher put the game in. Before this, MAME was given the full path to the zip and refused it. The setup page's hint mentions it.
 
