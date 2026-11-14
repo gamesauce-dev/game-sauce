@@ -442,6 +442,7 @@ router.get('/', (req, res) => {
   if (region) { where.push('r.region = @region'); params.region = region; }
   params.uid = req.user ? Number(req.user.id) : -1;
   if (favorite === '1' || favorite === 'true') where.push('EXISTS (SELECT 1 FROM favorites fv2 WHERE fv2.rom_id = r.id AND fv2.user_id = @uid)');
+  if (req.query.collection) { where.push('EXISTS (SELECT 1 FROM collection_roms cr2 JOIN collections c2 ON c2.id = cr2.collection_id WHERE cr2.rom_id = r.id AND cr2.collection_id = @collection AND c2.user_id = @uid)'); params.collection = Number(req.query.collection); }   // one of your own collections (Big Screen)
   if (source) { where.push('r.source_id = @source'); params.source = Number(source); }
   if (family) { where.push('p.family = @family'); params.family = family; }
   if (req.query.dat_status) { where.push('r.dat_status = @dat_status'); params.dat_status = req.query.dat_status; }

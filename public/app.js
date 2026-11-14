@@ -328,7 +328,7 @@ document.addEventListener('click', (e) => {
 // Big Screen: the Library for a TV, played with a gamepad (public/bigscreen.js). Opened from the Library bar and the Modern bar, or at once with #/bigscreen in the address (a kiosk browser, or the desktop app).
 async function openBigScreenView(kiosk = false) {
   if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
-  bigscreen.openBigScreen({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
+  bigscreen.openBigScreen({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#open-bigscreen')) return;

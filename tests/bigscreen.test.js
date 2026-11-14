@@ -104,3 +104,33 @@ test('Big Screen: the bottom bar reminds you to hold Select + Start to close a r
   const bs = read('public/bigscreen.js');
   assert.ok(bs.includes('Hold in a game to close it') && bs.includes('bs-closehint'));
 });
+
+test('the Library list can be limited to one of your own collections (Big Screen shows a collection as a wheel of full game rows)', async () => {
+  const id = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'snes'), 'Shelf Game', 'shelf game', 'shelf.sfc', 'x', 3, '5e1f000000000000000000000000000000000001')").run().lastInsertRowid);
+  const other = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'snes'), 'Other Game', 'other game', 'other.sfc', 'x', 3, '5e1f000000000000000000000000000000000002')").run().lastInsertRowid);
+  const coll = (await call('/api/collections', { method: 'POST', body: { name: 'Big Screen shelf' } })).body;
+  await call(`/api/collections/${coll.id}/roms`, { method: 'POST', body: { rom_ids: [id] } });
+  const list = (await call(`/api/roms?collection=${coll.id}`)).body;
+  assert.deepEqual(list.items.map((r) => r.id), [id], 'only the games in that collection');
+  assert.ok(!list.items.some((r) => r.id === other));
+  assert.equal((await call(`/api/roms?collection=${coll.id}`, { as: 'ann' })).body.total, 0, 'a collection is its owner\'s: nobody else sees its games through it');
+});
+
+test('Big Screen: the on-screen keyboard moves over its keys, a game has its own background art, the sounds can be muted, the collection chooser and the admin question exist', async () => {
+  const { KEYBOARD, kbMove, gameBackdrop, sfx } = await import('../public/bigscreen.js');
+  assert.deepEqual(kbMove(0, 0, 'left'), [0, 0]); assert.deepEqual(kbMove(0, 0, 'right'), [0, 1]); assert.deepEqual(kbMove(0, 9, 'right'), [0, 9], 'stays on the row');
+  assert.deepEqual(kbMove(0, 0, 'up'), [0, 0]); assert.equal(kbMove(3, 5, 'down')[0], 4, 'down goes to the bottom row');
+  const bottom = kbMove(3, 9, 'down'); assert.equal(bottom[0], 4); assert.ok(bottom[1] <= KEYBOARD[4].length - 1, 'the column follows into the shorter row');
+  assert.ok(KEYBOARD.flat().includes('done') && KEYBOARD.flat().includes('cancel') && KEYBOARD.flat().includes('back') && KEYBOARD.flat().includes('space'));
+  assert.equal(gameBackdrop({ id: 4, media: { fanart: {}, screenshot: {} } }), '/api/roms/4/media/fanart', 'fan art first');
+  assert.equal(gameBackdrop({ id: 4, media: { screenshot: {} } }), '/api/roms/4/media/screenshot', 'then a screenshot');
+  assert.equal(gameBackdrop({ id: 4, backdrop_url: '/x.png', media: { fanart: {} } }), '/x.png', 'an imported one wins');
+  assert.equal(gameBackdrop({ id: 4 }), '', 'none: the cover is blurred instead');
+  assert.equal(typeof sfx, 'function'); sfx('move');   // no audio device here: it stays silent and does not throw
+  const bs = read('public/bigscreen.js'), pad = read('public/gamepad.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes("gamesauce_bs_muted") && bs.includes("a === 'menu'") && bs.includes("e.key === 'm'") && bs.includes('id="bs-snd"'), 'Start, M or the speaker switch the sounds');
+  assert.ok(pad.includes("edge(BTN.START)") && pad.includes("act: 'menu'"), 'the pad sends Start to Big Screen');
+  assert.ok(bs.includes('Hide from everyone') && bs.includes('isAdmin()'), 'an admin is asked before a game is hidden from everyone');
+  assert.ok(bs.includes("kind: 'fav'") && bs.includes("kind: 'colls'") && bs.includes('collection: String(s.id)') && bs.includes('New collection'), 'Favourites and Collections tiles, and a new collection from the chooser');
+  assert.ok(css.includes('.bs-bgl.on.art') && css.includes('.bs-kbgrid') || css.includes('.bs-key'), 'the styles are there');
+});

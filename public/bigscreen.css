@@ -78,8 +78,6 @@ body.bs-open { overflow: hidden; }
 .bs-mi { all: unset; box-sizing: border-box; position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: .6em; padding: .55em 1.1em .55em 1.4em; font-size: 1.05em; font-weight: 650; border-radius: 0 2em 2em 0; cursor: pointer; color: #fff; transition: color .2s; }
 .bs-mi small { opacity: .7; font-weight: 500; }
 .bs-mi.on { color: #14161d; }
-.bs-pickcard .bs-mi { z-index: auto; }
-.bs-pickcard .bs-mi.on { color: #fff; background: var(--ac); }
 .bs-box { display: grid; place-items: center; padding: 2em; }
 .bs-boxcover { height: min(72vh, 100%); aspect-ratio: 3 / 4; max-width: 100%; display: grid; place-items: center; background: linear-gradient(160deg, var(--gc), #1a1d27); overflow: hidden; box-shadow: 0 .8em 2.4em rgba(0, 0, 0, .55); }
 .bs-boxcover span { padding: 1em; text-align: center; font-size: 1.1em; }
@@ -105,11 +103,6 @@ body.bs-open { overflow: hidden; }
 .bs-media video, .bs-media img { max-width: 100%; max-height: 100%; background: #000; object-fit: contain; border-radius: .3em; box-shadow: 0 .5em 1.4em rgba(0, 0, 0, .5); }
 
 /* the collection chooser */
-.bs-pick { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(5, 6, 10, .78); }
-.bs-pickcard { width: min(32em, 80vw); max-height: 70vh; overflow: auto; padding: 1.4em 1em; border-radius: .8em; background: #1b1f2b; border: 1px solid rgba(255, 255, 255, .15); display: flex; flex-direction: column; gap: .2em; }
-.bs-pickcard h2 { margin: 0 0 .6em 1em; font-size: 1.15em; }
-.bs-pickcard .bs-mi { border-radius: .5em; }
-.bs-pickcard .bs-mi.on { background: var(--ac); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) { .bs, .bs-rail, .bs-row, .bs-bgl, .bs-ptile, .bs-toast { animation: none; transition: none; } }
 
@@ -127,3 +120,40 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-genre .bs-flag { font-size: .78em; margin-left: .6em; }
 
 .bs-hints .bs-closehint { margin-right: auto; opacity: .85; }
+
+/* the background art of a game (fan art or a screenshot) is shown sharper and brighter than a blurred cover */
+.bs-bgl.on.art { filter: blur(.25em) saturate(1.1); opacity: .8; }
+.bs-lite .bs-bgl.on.art { filter: none; }
+.bs-right { display: inline-flex; align-items: center; gap: 1.2em; }
+.bs-snd { all: unset; cursor: pointer; font-size: .85em; font-weight: 700; padding: .15em .7em; border-radius: 1em; background: rgba(255, 255, 255, .14); }
+.bs-snd.off { opacity: .55; }
+
+/* the questions on top: the collection chooser, the keyboard, a yes or no */
+.bs-ov { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(5, 6, 10, .8); }
+.bs-pickcard, .bs-kbcard, .bs-cfcard { width: min(34em, 86vw); max-height: 78vh; overflow: auto; padding: 1.4em 1.2em; border-radius: .8em; background: #1b1f2b; border: 1px solid rgba(255, 255, 255, .15); }
+.bs-pickcard h2, .bs-kbcard h2, .bs-cfcard h2 { margin: 0 0 .7em .3em; font-size: 1.15em; }
+.bs-pi { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: .8em; width: 100%; padding: .55em .9em; border-radius: .5em; font-weight: 650; cursor: pointer; }
+.bs-pi .bs-pn { flex: 1; }
+.bs-pi small { opacity: .65; font-weight: 500; }
+.bs-tick { display: inline-grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: .3em; border: 2px solid rgba(255, 255, 255, .35); font-size: .9em; line-height: 1; }
+.bs-pi.on { background: var(--ac); color: #fff; }
+.bs-pi.on .bs-tick { border-color: #fff; }
+.bs-cfcard { width: min(30em, 86vw); }
+.bs-cfcard p { margin: 0 .3em 1.2em; color: #cdd3e0; line-height: 1.45; }
+.bs-cfbtns { display: flex; gap: .8em; }
+.bs-cfb { all: unset; flex: 1; text-align: center; padding: .7em 1em; border-radius: .5em; font-weight: 700; cursor: pointer; background: rgba(255, 255, 255, .1); }
+.bs-cfb.on { background: #f2f4f8; color: #14161d; }
+.bs-kbcard { width: min(44em, 92vw); }
+.bs-kbfield { min-height: 2.4em; padding: .5em .8em; margin-bottom: .9em; border-radius: .4em; background: #0e1118; border: 1px solid rgba(255, 255, 255, .2); font-size: 1.2em; word-break: break-all; }
+.bs-caret { display: inline-block; width: .1em; height: 1.1em; margin-left: .1em; vertical-align: -.15em; background: #fff; animation: bs-blink 1s steps(2) infinite; }
+@keyframes bs-blink { 50% { opacity: 0; } }
+.bs-kbrow { display: flex; gap: .35em; margin-bottom: .35em; }
+.bs-key { all: unset; box-sizing: border-box; flex: 1; text-align: center; padding: .6em 0; border-radius: .4em; font-weight: 650; font-size: 1.05em; cursor: pointer; background: rgba(255, 255, 255, .1); }
+.bs-key.k-space { flex: 5; } .bs-key.k-cancel, .bs-key.k-done { flex: 2; } .bs-key.k-shift, .bs-key.k-back { flex: 1.4; }
+.bs-key.lit { background: rgba(255, 255, 255, .28); }
+.bs-key.on { background: #f2f4f8; color: #14161d; }
+/* the tiles: a platform with no logo gets its pictogram and its name; Favourites and Collections get a mark */
+.bs-ptile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4em; }
+.bs-pico { display: grid; place-items: center; height: 3.2em; }
+.bs-pico svg { width: 3.2em; height: 3.2em; }
+.bs-pico.bs-heart { font-size: 2.2em; line-height: 1; color: var(--pc); }

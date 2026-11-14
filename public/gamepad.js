@@ -316,6 +316,7 @@
     if (edge(F.Y)) { any = true; focusSearch(); }
     if (edge(BTN.LB)) { any = true; shoulder(-1); }
     if (edge(BTN.RB)) { any = true; shoulder(1); }
+    if (edge(BTN.START)) { any = true; const r = currentRoot(); if (r && r.classList.contains('bs')) r.dispatchEvent(new CustomEvent('cv-pad', { detail: { act: 'menu' } })); }   // Big Screen: Start switches its sounds on and off
 
     if (any && currentRoot()) showLegend(true);
     prev = { buttons: Array.from({ length: Math.max(b.length, 16) }, (_, i) => down(i)), dirs: d };
