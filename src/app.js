@@ -31,6 +31,7 @@ import { canDownload } from './lib/policy.js';
 import { launcherEntries } from './lib/launcherpack.js';
 import { zipChunks } from './lib/export.js';
 import { detectMultiDisc } from './lib/multidisc.js';
+import { scanStorage, publicScan, clearOut } from './lib/storageclean.js';
 import { launchFileHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
@@ -131,6 +132,15 @@ export function createApp() {
 
   // Requests that took over a second (what, how long, how many others were running): finds out WHY it felt slow.
   api.get('/admin/slow-requests', requireAuth, requireAdmin, (req, res) => res.json(slowLog()));
+
+  // Unused asset files in storage (src/lib/storageclean.js): the scan changes nothing; the clear-out deletes what a fresh scan finds unused.
+  api.get('/admin/storage/unused', requireAuth, requireAdmin, (req, res) => res.json(publicScan(scanStorage())));
+  api.post('/admin/storage/clear', requireAuth, requireAdmin, (req, res) => {
+    const keys = Array.isArray(req.body?.groups) ? req.body.groups.map(String).slice(0, 10) : null;
+    const done = clearOut(keys);
+    req.auditDetail = done;
+    res.json(done);
+  });
 
   // Admin health report (read-only): see src/lib/health.js.
   // Library figures for Settings > Stats (admin, read-only).

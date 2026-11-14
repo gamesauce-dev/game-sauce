@@ -381,3 +381,32 @@ test('Multi-disc sets: a badge on the tile, the reason in the details, an admin 
   assert.ok(car.includes('!g.missing && !g.multidisc'), 'the Carousel leaves them out');
   assert.ok(bs.includes('!g.missing && !g.multidisc') && bs.includes('p.multidisc_count') && bs.includes('&& !g.multidisc && (g.playable'), 'Big Screen leaves them out of its lists and counts');
 });
+
+test('Storage clean-up: files nothing points at are found and cleared; used and fresh ones, and ROMs, are kept', async () => {
+  const crypto = await import('node:crypto');
+  const root = path.resolve(process.env.GAMESAUCE_STORAGE_DIR);
+  const old = (rel, size = 10) => { const f = path.join(root, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, Buffer.alloc(size, 1)); const t = new Date(Date.now() - 3600e3); fs.utimesSync(f, t, t); return f; };
+  const url = 'https://media.example/box.png', hash = crypto.createHash('sha1').update(url).digest('hex');
+  const usedCover = old('covers/usedcover.jpg'), lostCover = old('covers/lostcover.jpg', 50);
+  const usedMedia = old(`media/box2d-${hash}.png`), lostMedia = old('media/box2d-' + 'a'.repeat(40) + '.png', 70);
+  const rom = path.join(root, 'roms', 'snes', 'ab', 'keep.sfc'); fs.mkdirSync(path.dirname(rom), { recursive: true }); fs.writeFileSync(rom, 'rom'); fs.utimesSync(rom, new Date(0), new Date(0));
+  const id = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1, cover_path, provider_media) VALUES ((SELECT id FROM platforms WHERE slug = 'snes'), 'Clean Game', 'clean game', 'clean.sfc', ?, 3, 'c1ea000000000000000000000000000000000001', ?, ?)").run(rom, usedCover, JSON.stringify({ box2d: url })).lastInsertRowid);
+  const usedFile = old(`rom-files/${id}/logo.png`), lostFile = old('rom-files/99999/logo.png', 30);
+  db.prepare('INSERT INTO rom_files (rom_id, kind, path, name, type, bytes) VALUES (?, ?, ?, ?, ?, ?)').run(id, 'logo', usedFile, 'logo.png', 'image/png', 10);
+  db.prepare('INSERT INTO rom_files (rom_id, kind, path, name, type, bytes) VALUES (?, ?, ?, ?, ?, ?)').run(id, 'marquee', path.join(root, 'rom-files', String(id), 'gone.png'), 'gone.png', 'image/png', 10);
+  const fresh = path.join(root, 'covers', 'fresh.jpg'); fs.writeFileSync(fresh, 'x');
+  const scan = await call('/api/admin/storage/unused');
+  assert.equal(scan.status, 200);
+  assert.equal(scan.body.total_files, 3, 'the lost cover, the lost media picture and the lost game file');
+  assert.equal(scan.body.total_bytes, 150);
+  assert.equal(scan.body.broken_records, 1, 'a record whose file is gone');
+  assert.equal((await call('/api/admin/storage/unused', { as: 'ann' })).status, 403);
+  assert.equal((await call('/api/admin/storage/clear', { method: 'POST', as: 'ann', body: {} })).status, 403);
+  assert.ok(fs.existsSync(lostCover), 'the scan deletes nothing');
+  const done = await call('/api/admin/storage/clear', { method: 'POST', body: {} });
+  assert.equal(done.body.removed, 3); assert.equal(done.body.records, 1);
+  for (const f of [lostCover, lostMedia, lostFile]) assert.ok(!fs.existsSync(f), f);
+  for (const f of [usedCover, usedMedia, usedFile, fresh, rom]) assert.ok(fs.existsSync(f), f);
+  assert.ok(!fs.existsSync(path.join(root, 'rom-files', '99999')), 'the emptied folder is tidied');
+  assert.equal((await call('/api/admin/storage/unused')).body.total_files, 0);
+});

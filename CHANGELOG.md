@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Unused files in storage.** Settings > Database maintenance has a new **Unused files in storage** box. **Check for unused files** lists the covers, ScreenScraper pictures, game files (spines, discs, logos, marquees, backgrounds, manuals) and videos that no game points at any more, with the space they take, and changes nothing. **Clear out** then deletes them after a confirmation, along with records whose file is gone. ROMs, saves, emulators and your artwork folders are never touched, anything written in the last ten minutes is left alone, and a file counts as used if the database mentions it anywhere.
+
 ### Fixed
 - **Numbered pictures in a logo, marquee or background folder now import.** LaunchBox names them `Game-01.png`; only its box-art folders had the number dropped, so a `Clear Logo/Auto Modellista-01.png` never matched its game.
 
