@@ -450,6 +450,17 @@
         <div class="platform-add-bar">
           <button class="btn btn-primary" id="platform-add-toggle">+ Add platform</button>
         </div>
+        <div class="panel" id="plat-art" style="padding:12px;display:grid;gap:8px;margin:10px 0">
+          <b>Platform art</b>
+          <p class="hint" style="margin:0">Logos for the platform tiles in Big Screen. <b>Fetch</b> asks ScreenScraper for the logo of every platform that has none (Settings, Metadata providers must be set up). <b>Import</b> reads a folder called <b>Platforms</b> (or Systems, Consoles) inside one of your artwork folders: one picture per platform, named for it (<code>PlayStation 2.png</code>, <code>ps2.png</code>); a picture named for a family (<code>Sony.png</code>) becomes the family's logo. Platforms that already have a logo are left alone unless you tick replace.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="btn btn-sm" id="plat-art-fetch" title="Fetch platform logos from ScreenScraper">Fetch platform art</button>
+            <select id="plat-art-folder" class="select" aria-label="Artwork folder to import platform logos from"></select>
+            <button type="button" class="btn btn-sm" id="plat-art-import" title="Import platform logos from the chosen folder">Import from folder</button>
+            <label class="policy-row" style="margin:0"><input type="checkbox" id="plat-art-replace" /> <span>replace the logos already there</span></label>
+          </div>
+          <p class="hint" id="plat-art-msg" style="margin:0" role="status"></p>
+        </div>
         <form id="platform-add-form" class="edit-form hidden" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
           <label class="field"><span>Name *</span><input name="name" required placeholder="Sega Model 2" /></label>
           <label class="field"><span>Slug * <span class="note">(the platform's short internal name: lowercase letters and digits, e.g. segacd. It cannot be changed later)</span></span><input name="slug" required placeholder="segamodel2" autocomplete="off" /></label>

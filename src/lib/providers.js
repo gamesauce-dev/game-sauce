@@ -207,7 +207,7 @@ function ssSign(url) {
   } catch { return url; }
 }
 
-const SS_ASSET_TYPES = { cover: 'box-2D', back: 'box-2D-back', spine: 'box-2D-side', disc: 'support-2D', manual: 'manuel' };
+const SS_ASSET_TYPES = { cover: 'box-2D', back: 'box-2D-back', spine: 'box-2D-side', disc: 'support-2D', manual: 'manuel', logo: 'wheel', marquee: 'screenmarquee', fanart: 'fanart' };   // logo, marquee and fanart are for Library games (Big Screen)
 /** Which region's picture to prefer for a game on a shelf (its own region first). */
 function ssRegionOrder(region) {
   const r = String(region || '').toLowerCase();
@@ -420,7 +420,7 @@ const screenscraper = {
     if (!this.enabled) return null;
     const row = db.prepare('SELECT slug, screenscraper_id FROM platforms WHERE slug = ?').get(slug);
     if (!row?.screenscraper_id) return { urls: {}, why: 'this platform has no ScreenScraper system number yet' };
-    const order = ssRegionOrder(region), key = `ss-assets:${slug}:${gameTitleKey(title)}:${order[0]}`;
+    const order = ssRegionOrder(region), key = `ss-assets2:${slug}:${gameTitleKey(title)}:${order[0]}`;
     let rec = force ? null : cacheGet(key);
     if (!rec) {
       const f = await ssGameByTitle(title, row.screenscraper_id);
@@ -491,6 +491,16 @@ const screenscraper = {
       short: s.nomcourt || null,
       extensions: s.extensions || null
     }));
+  },
+
+  /** The systems with their pictures (logos and so on), for platform art. [{ id, medias: [{ type, url, region }] }] or null. The links are cleaned of any credentials. */
+  async systemArt() {
+    if (!this.enabled) return null;
+    const params = new URLSearchParams({ softname: 'game-sauce', output: 'json', devid: cred('SS_DEV_ID'), devpassword: cred('SS_DEV_PASSWORD'), ssid: cred('SS_USER'), sspassword: cred('SS_PASSWORD') });
+    const result = await ssThrottle(() => fetchJson(`${SS_API()}/systemesListe.php?${params}`));
+    const systems = result.data?.response?.systemes;
+    if (!Array.isArray(systems)) return null;
+    return systems.map((s) => ({ id: Number(s.id), medias: (Array.isArray(s.medias) ? s.medias : []).filter((m) => m && m.type && m.url).map((m) => ({ type: String(m.type), url: ssClean(m.url), region: String(m.region || '') })) }));
   }
 };
 

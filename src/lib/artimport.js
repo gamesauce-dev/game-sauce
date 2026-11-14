@@ -80,6 +80,9 @@ const SIMPLE_KIND = {
   back: ['backs', 'back', 'backcover', 'backcovers', 'boxback', 'boxbacks', 'rear'],
   disc: ['discs', 'disc', 'cds', 'cd', 'media', 'discart', 'cdart', 'cartridges', 'cartridge', 'carts', 'cart', 'cartfront'],
   manual: ['manuals', 'manual'],
+  logo: ['logos', 'logo', 'wheels', 'wheel', 'clearlogo', 'clearlogos', 'gamelogo', 'gamelogos', 'titlelogo', 'titlelogos'],
+  marquee: ['marquees', 'marquee', 'banners', 'banner'],
+  fanart: ['fanart', 'fanarts', 'backgrounds', 'background', 'fanartbackground', 'artwork'],
   video: ['videos', 'video', 'videosnaps', 'videosnap', 'snaps', 'snap', 'movies', 'previews', 'preview', 'clips']
 };
 const SIMPLE_LOOKUP = new Map(Object.entries(SIMPLE_KIND).flatMap(([kind, names]) => names.map((n) => [n, kind])));
@@ -123,6 +126,8 @@ export function classify(segs, fileName) {
     return { layout: 'launchbox', folder: segs[t], kind: LB_KIND[segs[t]], platform: segs[t - 1], region: segs[t + 1] || '', title: base.replace(/-\d{1,3}$/, ''), n: num ? Number(num[1]) : 1, weak: segs[t] === 'box - front - reconstructed' };
   }
   const img = segs.lastIndexOf('images');
+  const extra = img >= 1 && IMAGE_EXT.has(ext) ? /-(marquee|wheel|logo|fanart)$/i.exec(base) : null;   // RetroBat: <rom name>-wheel.png is the logo, -marquee the banner, -fanart a background
+  if (extra) return { layout: 'retrobat', folder: 'images', kind: { marquee: 'marquee', wheel: 'logo', logo: 'logo', fanart: 'fanart' }[extra[1].toLowerCase()], platform: segs[img - 1], region: '', title: base.replace(/-(marquee|wheel|logo|fanart)$/i, ''), n: 1, weak: false };
   if (img >= 1 && IMAGE_EXT.has(ext) && /-thumb$/i.test(base)) return { layout: 'retrobat', folder: 'images', kind: 'cover', platform: segs[img - 1], region: '', title: base.replace(/-thumb$/i, ''), n: 1, weak: false };
   const man = segs.lastIndexOf('manuals');
   if (man >= 1 && ext === '.pdf') return { layout: 'retrobat', folder: 'manuals', kind: 'manual', platform: segs[man - 1], region: '', title: base.replace(/-manual$/i, ''), n: 1, weak: false };
@@ -326,7 +331,7 @@ export function planArtImport(userId, scan, opts = {}) {
 
 function planPictures(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
   if (target === 'video') return planVideoImport(userId, scan, { replace, cut });
-  const wanted = target === 'digital' ? new Set(['cover']) : target === 'rom' ? new Set(['cover', 'spine', 'disc', 'manual', 'back']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
+  const wanted = target === 'digital' ? new Set(['cover']) : target === 'rom' ? new Set(['cover', 'spine', 'disc', 'manual', 'back', 'logo', 'marquee', 'fanart']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
   const games = target === 'digital' ? digitalGames(userId) : target === 'rom' ? romGames() : physicalGames(userId);
   const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
   const byKey = new Map();
@@ -337,7 +342,8 @@ function planPictures(userId, scan, { target = 'physical', replace = false, cut 
   const platCache = new Map(); const platOf = (name) => { if (!platCache.has(name)) platCache.set(name, resolvePlatform(name)); return platCache.get(name); };
   const unknownPlatforms = new Map(); const unmatched = [], unmatchedPer = {}; let unmatchedTotal = 0;
   const best = new Map();   // `${gameKey}|${kind}` -> { game, kind, entry, rank }
-  const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0, wrap: 0 };
+  const extraKinds = target === 'rom' ? { logo: 0, marquee: 0, fanart: 0 } : {};   // the Library also takes a game's logo, marquee and background
+  const candidatesSeen = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0, wrap: 0, ...extraKinds };
   for (const e of scan.files) {
     if (!wanted.has(e.kind)) continue;
     const slug = e.platforms?.length ? (e.platforms.map(platOf).find(Boolean) || null) : platOf(e.platform);
@@ -370,7 +376,7 @@ function planPictures(userId, scan, { target = 'physical', replace = false, cut 
   const seenMap = new Map();
   for (const e of scan.files) { if (!wanted.has(e.kind)) continue; const k = `${e.platform || '?'}\n${e.folder || ''}\n${e.kind}`; seenMap.set(k, (seenMap.get(k) || 0) + 1); }
   const seen = [...seenMap].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, files]) => { const [platform, folder, kind] = k.split('\n'); return { platform, folder, kind, files }; });
-  const matched = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, will = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0 }, items = [];
+  const matched = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0, ...extraKinds }, will = { cover: 0, spine: 0, disc: 0, manual: 0, back: 0, ...extraKinds }, items = [];
   for (const b of best.values()) {
     matched[b.kind]++;
     const g = b.game; let gap;
@@ -397,7 +403,7 @@ const publicPlan = (p, scan, folder) => ({
 });
 
 /** What an import would do (nothing is saved). */
-const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back', 'video'].includes(kind) ? { kind, platform: String(platform || '') } : null);
+const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back', 'video', 'logo', 'marquee', 'fanart'].includes(kind) ? { kind, platform: String(platform || '') } : null);
 export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
   return publicPlan(planArtImport(userId, scan, { target, replace, cut, split }), scan, folder);

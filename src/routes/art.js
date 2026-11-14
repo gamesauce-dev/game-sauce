@@ -2,7 +2,8 @@
 import express from 'express';
 import { requireAdmin } from './auth.js';
 import db from '../db.js';
-import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder } from '../lib/artimport.js';
+import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder, getArtFolders } from '../lib/artimport.js';
+import { importPlatformLogos, fetchPlatformArt } from '../lib/platformart.js';
 import { cleanSplit } from '../lib/wrapcut.js';
 import { artSharing, setArtSharing } from '../lib/physical.js';
 
@@ -44,6 +45,18 @@ router.post('/import', async (req, res, next) => {
 });
 
 // One picture of a scanned folder (a wrap to show on the cut screen). Only a file the scan found, in a listed folder, by its number.
+/* Platform logos for Big Screen and the platform tiles: from a listed artwork folder (a folder called Platforms with one picture per platform), or from ScreenScraper's systems. Gaps only unless replace. */
+router.post('/platform-logos/import', requireAdmin, (req, res) => {
+  const folder = String(req.body?.folder || '');
+  if (!getArtFolders().includes(folder)) return res.status(400).json({ error: 'Choose one of the artwork folders listed under Settings > Artwork folders.' });
+  const r = importPlatformLogos(folder, { replace: Boolean(req.body?.replace) });
+  req.auditDetail = { folder, saved: r.saved.length, families: r.families.length, unmatched: r.unmatched.length };
+  res.json(r);
+});
+router.post('/platform-logos/fetch', requireAdmin, async (req, res, next) => {
+  try { const r = await fetchPlatformArt({ replace: Boolean(req.body?.replace) }); req.auditDetail = { got: r.got.length, none: r.none.length, failed: Object.keys(r.failed).length }; res.json(r); } catch (err) { next(err); }
+});
+
 router.get('/wrap-image', async (req, res, next) => {
   try {
     const scan = await scanArtFolder(String(req.query.folder || ''));

@@ -325,6 +325,33 @@ document.addEventListener('click', (e) => {
   openCarouselView();
 });
 
+// Settings > Platforms > Platform art: logos for the platform tiles, fetched from ScreenScraper or read from a folder called Platforms in an artwork folder.
+async function fillPlatArtFolders() {
+  const sel = $('#plat-art-folder'); if (!sel) return;
+  try { const r = await api('/art/folders'); sel.innerHTML = (r.folders || []).map((f) => `<option value="${esc(f.path)}">${esc(f.path)}</option>`).join('') || '<option value="">(no artwork folder yet: add one under Artwork folders)</option>'; } catch { /* the buttons say what went wrong */ }
+}
+document.addEventListener('click', async (e) => {
+  const fetchBtn = e.target.closest('#plat-art-fetch'), impBtn = e.target.closest('#plat-art-import');
+  if (!fetchBtn && !impBtn) return;
+  const btn = fetchBtn || impBtn, msg = $('#plat-art-msg'), replace = Boolean($('#plat-art-replace')?.checked);
+  btn.disabled = true;
+  msg.textContent = fetchBtn ? 'Fetching… ScreenScraper is asked for each platform in turn, so this can take a minute.' : 'Reading the folder…';
+  try {
+    if (fetchBtn) {
+      const r = await api('/art/platform-logos/fetch', { method: 'POST', body: JSON.stringify({ replace }) });
+      const failed = Object.keys(r.failed || {}).length;
+      msg.textContent = r.why ? r.why : `Fetched ${r.got.length} logo${r.got.length === 1 ? '' : 's'}${r.none.length ? `; ScreenScraper has none for ${r.none.length} platform${r.none.length === 1 ? '' : 's'}` : ''}${failed ? `; ${failed} could not be kept` : ''}.`;
+    } else {
+      const folder = $('#plat-art-folder')?.value;
+      if (!folder) throw new Error('Choose an artwork folder first (add one under Artwork folders).');
+      const r = await api('/art/platform-logos/import', { method: 'POST', body: JSON.stringify({ folder, replace }) });
+      msg.textContent = r.folders.length ? `Read ${r.files} picture${r.files === 1 ? '' : 's'}: ${r.saved.length} platform logo${r.saved.length === 1 ? '' : 's'} saved${r.families.length ? `, ${r.families.length} family logo${r.families.length === 1 ? '' : 's'}` : ''}${r.had.length ? `, ${r.had.length} left as they were` : ''}${r.unmatched.length ? `; no platform named like: ${r.unmatched.slice(0, 5).join(', ')}${r.unmatched.length > 5 ? '…' : ''}` : ''}.` : 'No folder called Platforms (or Systems, Consoles) was found in that folder.';
+    }
+    try { await loadPlatforms(); } catch { /* the tiles refresh next time */ }
+  } catch (err) { msg.textContent = err.message || 'That did not work.'; }
+  finally { btn.disabled = false; }
+});
+
 // Big Screen: the Library for a TV, played with a gamepad (public/bigscreen.js). Opened from the Library bar and the Modern bar, or at once with #/bigscreen in the address (a kiosk browser, or the desktop app).
 async function openBigScreenView(kiosk = false) {
   if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
@@ -4465,6 +4492,7 @@ function showSettingsModule(id) {
   if (id === 'steam') initSteamPanel();
   if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
   if (id === 'names') initNamesPanel();
+  if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }

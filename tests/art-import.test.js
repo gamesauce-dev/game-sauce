@@ -47,8 +47,11 @@ test('reading names: where a file sits says what it is; titles match on letters 
   assert.equal(c(['images', 'sony playstation 3', 'box - front - reconstructed'], 'x-01.png').weak, true);
   assert.equal(c(['images', 'sony playstation 3', 'box - 3d'], 'x-01.png'), null, 'other kinds of picture are left alone'); assert.equal(c(['images', 'sony playstation 3', 'box - back', 'europe'], 'x-01.png').kind, 'back');
   assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-thumb.png').kind, 'cover'); assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-thumb.png').title, '24 - The Game');
-  assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-image.png'), null, 'RetroBat -image and -marquee are not box art');
-  assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-marquee.png'), null);
+  assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-image.png'), null, 'RetroBat -image is not box art');
+  assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-marquee.png').kind, 'marquee', 'a -marquee is its banner (only the Library takes it, so a shelf import leaves it alone)');
+  assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-wheel.png').kind, 'logo', 'a -wheel is its logo');
+  assert.equal(c(['roms', 'ps2', 'images'], '24 - The Game-fanart.png').kind, 'fanart');
+  assert.equal(c(['roms', 'arcade', 'logos'], 'sf2.png').kind, 'logo', 'a logos folder'); assert.equal(c(['roms', 'arcade', 'marquees'], 'sf2.png').kind, 'marquee'); assert.equal(c(['roms', 'arcade', 'backgrounds'], 'sf2.png').kind, 'fanart');
   assert.deepEqual(pick(c(['roms', 'ps2', 'manuals'], 'AirBlade-manual.pdf')), { layout: 'retrobat', kind: 'manual', platform: 'ps2', region: '', title: 'AirBlade', n: 1 });
   assert.equal(c(['roms', 'ps2', 'manuals'], 'notes.txt'), null);
   const k = art.titleKey;
@@ -97,7 +100,7 @@ test('preview and import from a LaunchBox + RetroBat layout: matched by platform
   assert.deepEqual(lb.unknown_platforms, [{ name: 'weird platform', files: 1 }]);
   assert.equal(row(kz.id).cover_path, null, 'a preview saves nothing');
   const rb = (await preview(RB)).body;
-  assert.deepEqual(rb.matched, { cover: 1, spine: 0, disc: 0, manual: 1, back: 0 }); assert.equal(rb.files, 2, 'only -thumb and the manual are used');
+  assert.deepEqual(rb.matched, { cover: 1, spine: 0, disc: 0, manual: 1, back: 0 }); assert.equal(rb.files, 3, 'the -thumb, the manual and the -marquee are read (the marquee is only used for Library games); -image is not');
 
   // importing runs in the background and reports its progress
   const started = await call('/api/art/import', { method: 'POST', body: { target: 'physical', folder: LB, apply: true } });

@@ -134,3 +134,76 @@ test('Big Screen: the on-screen keyboard moves over its keys, a game has its own
   assert.ok(bs.includes("kind: 'fav'") && bs.includes("kind: 'colls'") && bs.includes('collection: String(s.id)') && bs.includes('New collection'), 'Favourites and Collections tiles, and a new collection from the chooser');
   assert.ok(css.includes('.bs-bgl.on.art') && css.includes('.bs-kbgrid') || css.includes('.bs-key'), 'the styles are there');
 });
+
+/* ───────── platform art and the Library's own logos, marquees and backgrounds ───────── */
+
+import zlib from 'node:zlib';
+import http from 'node:http';
+const crcTable = new Int32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c; });
+const crc32 = (b) => { let c = -1; for (const x of b) c = crcTable[(c ^ x) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; };
+const pngChunk = (t, d) => { const l = Buffer.alloc(4); l.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t), d]); const c = Buffer.alloc(4); c.writeUInt32BE(crc32(td)); return Buffer.concat([l, td, c]); };
+const makePng = (w = 8, h = 8, rgb = [200, 80, 30]) => { const raw = Buffer.alloc((w * 3 + 1) * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const o = y * (w * 3 + 1) + 1 + x * 3; raw[o] = rgb[0]; raw[o + 1] = rgb[1]; raw[o + 2] = rgb[2]; } const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2; return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk('IHDR', ihdr), pngChunk('IDAT', zlib.deflateSync(raw)), pngChunk('IEND', Buffer.alloc(0))]); };
+
+test('Platform art from a folder: a Platforms folder inside a listed artwork folder gives each platform (and family) its logo; gaps only unless replace; only listed folders; admins only', async () => {
+  const art = path.join(TMP, 'artfolder'); const plat = path.join(art, 'Platforms'); fs.mkdirSync(plat, { recursive: true });
+  fs.writeFileSync(path.join(plat, 'PlayStation 2.png'), makePng()); fs.writeFileSync(path.join(plat, 'ps1-logo.png'), makePng(9, 9)); fs.writeFileSync(path.join(plat, 'Sony.png'), makePng(10, 10));
+  fs.writeFileSync(path.join(plat, 'Nonsense Machine.png'), makePng()); fs.writeFileSync(path.join(plat, 'readme.txt'), 'not a picture');
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: [art] } })).status, 200);
+  assert.equal((await call('/api/art/platform-logos/import', { method: 'POST', body: { folder: path.join(TMP, 'elsewhere') } })).status, 400, 'only a listed folder');
+  assert.equal((await call('/api/art/platform-logos/import', { method: 'POST', as: 'ann', body: { folder: art } })).status, 403, 'admins only');
+  const r = (await call('/api/art/platform-logos/import', { method: 'POST', body: { folder: art } })).body;
+  assert.deepEqual([...r.saved].sort(), ['ps1', 'ps2']); assert.deepEqual(r.families, ['Sony']); assert.deepEqual(r.unmatched, ['Nonsense Machine.png']); assert.equal(r.files, 4);
+  const logo = await fetch(`${base}/api/platforms/ps2/logo`, { headers: { Authorization: 'Bearer ' + tok.admin } }); assert.equal(logo.status, 200); assert.match(logo.headers.get('content-type'), /png/);
+  assert.equal((await fetch(`${base}/api/platforms/families/logo?family=Sony`, { headers: { Authorization: 'Bearer ' + tok.admin } })).status, 200);
+  const again = (await call('/api/art/platform-logos/import', { method: 'POST', body: { folder: art } })).body;
+  assert.deepEqual(again.saved, [], 'gaps only'); assert.deepEqual([...again.had].sort(), ['ps1', 'ps2']);
+  assert.deepEqual([...(await call('/api/art/platform-logos/import', { method: 'POST', body: { folder: art, replace: true } })).body.saved].sort(), ['ps1', 'ps2'], 'replace on request');
+  assert.ok((await call('/api/platforms')).body.items.find((p) => p.slug === 'ps2').logo_v, 'the platform list says it has a logo');
+});
+
+test('Platform art from ScreenScraper: a platform with no logo gets the clean logo its system has; the others are left alone', async () => {
+  const logoPng = makePng(12, 12, [10, 120, 200]);
+  const fake = http.createServer((req, res) => {
+    const u = new URL(req.url, 'http://x');
+    if (u.pathname === '/ss/systemesListe.php') { res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ response: { systemes: [{ id: 3, noms: { nom_eu: 'NES' }, medias: [{ type: 'wheel', url: `http://127.0.0.1:${fake.address().port}/img/nes.png?devid=a&devpassword=b&ssid=c&sspassword=d`, region: 'wor' }, { type: 'photo', url: 'http://127.0.0.1:1/never.png' }] }, { id: 4, noms: { nom_eu: 'SNES' }, medias: [{ type: 'fanart', url: 'http://127.0.0.1:1/never2.png' }] }] } })); }
+    if (u.pathname.startsWith('/img/')) { res.setHeader('Content-Type', 'image/png'); return res.end(logoPng); }
+    res.statusCode = 404; res.end();
+  });
+  await new Promise((r) => fake.listen(0, '127.0.0.1', r));
+  const keep = { b: process.env.SS_API_BASE, i: process.env.SS_MIN_INTERVAL_MS, ...Object.fromEntries(['SS_DEV_ID', 'SS_DEV_PASSWORD', 'SS_USER', 'SS_PASSWORD'].map((k) => [k, process.env[k]])) };
+  process.env.SS_API_BASE = `http://127.0.0.1:${fake.address().port}/ss`; process.env.SS_MIN_INTERVAL_MS = '1';
+  Object.assign(process.env, { SS_DEV_ID: 'devid', SS_DEV_PASSWORD: 'devpw', SS_USER: 'user', SS_PASSWORD: 'pw' });
+  try {
+    db.prepare("UPDATE platforms SET screenscraper_id = 3 WHERE slug = 'nes'").run(); db.prepare("UPDATE platforms SET screenscraper_id = 4 WHERE slug = 'snes'").run();
+    db.prepare("DELETE FROM platform_logos WHERE slug IN ('nes', 'snes')").run();
+    assert.equal((await call('/api/art/platform-logos/fetch', { method: 'POST', as: 'ann', body: {} })).status, 403, 'admins only');
+    const r = (await call('/api/art/platform-logos/fetch', { method: 'POST', body: {} })).body;
+    assert.ok(r.got.includes('nes'), 'NES got its logo (the "wheel" picture)'); assert.ok(r.none.includes('snes'), 'SNES has no logo picture: it is listed, not guessed');
+    assert.ok(db.prepare("SELECT 1 FROM platform_logos WHERE slug = 'nes'").get() && !db.prepare("SELECT 1 FROM platform_logos WHERE slug = 'snes'").get());
+    const ps2Before = db.prepare("SELECT updated FROM platform_logos WHERE slug = 'ps2'").get().updated;
+    await call('/api/art/platform-logos/fetch', { method: 'POST', body: {} });
+    assert.equal(db.prepare("SELECT updated FROM platform_logos WHERE slug = 'ps2'").get().updated, ps2Before, 'a logo that is there is left alone');
+  } finally {
+    for (const [k, v] of Object.entries({ SS_API_BASE: keep.b, SS_MIN_INTERVAL_MS: keep.i, SS_DEV_ID: keep.SS_DEV_ID, SS_DEV_PASSWORD: keep.SS_DEV_PASSWORD, SS_USER: keep.SS_USER, SS_PASSWORD: keep.SS_PASSWORD })) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+    await new Promise((r) => fake.close(r));
+  }
+});
+
+test('Game logos, marquees and backgrounds: the importer reads them for Library games, they come back on the list as logo_url, marquee_url and backdrop_url, and Find assets asks for them', async () => {
+  const { classify } = await import('../src/lib/artimport.js');
+  assert.equal(classify(['arcade', 'logos'], 'sf2.png').kind, 'logo'); assert.equal(classify(['arcade', 'wheel'], 'sf2.png').kind, 'logo');
+  assert.equal(classify(['arcade', 'marquees'], 'sf2.png').kind, 'marquee'); assert.equal(classify(['arcade', 'fanart'], 'sf2.png').kind, 'fanart');
+  const { setRomFile, ROM_FILE_KINDS } = await import('../src/lib/romfiles.js');
+  assert.ok(['logo', 'marquee', 'fanart'].every((k) => ROM_FILE_KINDS.includes(k)));
+  const id = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'arcade'), 'Street Fighter II', 'street fighter ii', 'sf2.zip', 'x', 3, 'af00000000000000000000000000000000000001')").run().lastInsertRowid);
+  const before = (await call('/api/roms?q=Street+Fighter')).body.items.find((r) => r.id === id);
+  assert.ok(!before.logo_url && !before.marquee_url && !before.backdrop_url, 'none to begin with');
+  setRomFile(id, 'logo', makePng(20, 8)); setRomFile(id, 'marquee', makePng(40, 8)); setRomFile(id, 'fanart', makePng(32, 18));
+  const row = (await call('/api/roms?q=Street+Fighter')).body.items.find((r) => r.id === id);
+  assert.equal(row.logo_url, `/api/roms/${id}/file/logo`); assert.equal(row.marquee_url, `/api/roms/${id}/file/marquee`); assert.equal(row.backdrop_url, `/api/roms/${id}/file/fanart`);
+  assert.equal((await fetch(`${base}${row.logo_url}`, { headers: { Authorization: 'Bearer ' + tok.admin } })).status, 200, 'and the file is served');
+  const assets = read('src/lib/assets.js'), prov = read('src/lib/providers.js');
+  assert.ok(assets.includes("kinds: ['cover', 'spine', 'disc', 'back', 'manual', 'logo', 'marquee', 'fanart']") && prov.includes("logo: 'wheel', marquee: 'screenmarquee', fanart: 'fanart'"), 'Find assets asks ScreenScraper for the logo (wheel), the marquee and the fan art');
+  const { gameLogo, gameMarquee, gameBackdrop } = await import('../public/bigscreen.js');
+  assert.equal(gameLogo(row), row.logo_url); assert.equal(gameMarquee(row), row.marquee_url); assert.equal(gameBackdrop(row), row.backdrop_url, 'Big Screen shows an imported one first');
+});

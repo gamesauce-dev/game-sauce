@@ -7,7 +7,7 @@ const n = (v) => Number(v || 0).toLocaleString();
 /** Draw the panel into `body`. ctx: the page's { api, toast }. target: 'physical' (covers, spines, discs, manuals) or 'digital' (covers of console games). onDone runs after an import. */
 export async function renderArtImport(ctx, body, { target, onDone = () => {}, select = '' }) {
   const video = target === 'video';
-  const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers'], ['video', 'Videos']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals'], ['video', 'Videos']];
+  const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers'], ['video', 'Videos']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals'], ...(target === 'rom' ? [['logo', 'Game logos'], ['marquee', 'Marquees'], ['fanart', 'Backgrounds']] : []), ['video', 'Videos']];
   const what = video ? 'videos' : target === 'digital' ? 'covers and videos' : 'pictures, manuals and videos';
   body.innerHTML = `
     <h2 class="detail-title">${video ? 'Import videos' : 'Import game assets'}</h2>
@@ -176,7 +176,7 @@ export function mountWraps(host, p, folder, edited) {
   }
 }
 
-const KIND_NAME = { cover: 'covers', spine: 'spines', back: 'backs', disc: 'discs', manual: 'manuals', video: 'videos', wrap: 'full wraps' };
+const KIND_NAME = { cover: 'covers', spine: 'spines', back: 'backs', disc: 'discs', manual: 'manuals', video: 'videos', wrap: 'full wraps', logo: 'game logos', marquee: 'marquees', fanart: 'backgrounds' };
 /** What the importer found in the folder, as it read it: so "nothing matched" can be told apart from "nothing was recognised". */
 function seenBlock(p) {
   const rows = (p.seen || []).map((s) => `<li><b>${esc(s.platform)} / ${esc(s.folder || '(top)')}</b> read as ${KIND_NAME[s.kind] || esc(s.kind)}: ${n(s.files)} file${s.files === 1 ? '' : 's'}</li>`).join('');

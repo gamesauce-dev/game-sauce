@@ -24,8 +24,8 @@ function resolve({ kind, id, store, userId }) {
     const files = new Set(romFiles(r.id).map((f) => f.kind));
     return {
       title: r.title, platform: r.platform, region: r.region || '',
-      has: { cover: hasFile(r.cover_path), spine: files.has('spine'), disc: files.has('disc'), back: files.has('back'), manual: files.has('manual') },
-      kinds: ['cover', 'spine', 'disc', 'back', 'manual'],
+      has: { cover: hasFile(r.cover_path), spine: files.has('spine'), disc: files.has('disc'), back: files.has('back'), manual: files.has('manual'), logo: files.has('logo'), marquee: files.has('marquee'), fanart: files.has('fanart') },
+      kinds: ['cover', 'spine', 'disc', 'back', 'manual', 'logo', 'marquee', 'fanart'],
       put(k, buf, name) {
         if (k === 'cover') {
           const type = sniffImage(buf); if (!type) throw new Error('that file is not a JPEG, PNG or WebP picture');

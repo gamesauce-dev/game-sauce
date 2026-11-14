@@ -87,6 +87,12 @@ function withTags(rows) {
     if (!byRom.has(t.rom_id)) byRom.set(t.rom_id, []);
     byRom.get(t.rom_id).push(t.name);
   }
+  // A logo, marquee or background picture the importer (or a fetch) kept for a game: one link each, so the pages can show them.
+  const own = new Map();
+  for (const f of db.prepare(`SELECT rom_id, kind FROM rom_files WHERE kind IN ('logo', 'marquee', 'fanart') AND rom_id IN (${placeholders})`).all(...ids)) {
+    if (!own.has(f.rom_id)) own.set(f.rom_id, {});
+    own.get(f.rom_id)[f.kind === 'fanart' ? 'backdrop_url' : `${f.kind}_url`] = `/api/roms/${f.rom_id}/file/${f.kind}`;
+  }
   return rows.map((r) => {
     let media = null;
     if (r.provider_media) {
@@ -95,6 +101,7 @@ function withTags(rows) {
     return {
       ...r,
       tags: byRom.get(r.id) || [],
+      ...(own.get(r.id) || {}),
       media,
       // ?v= changes whenever the image file does, so a newly matched/uploaded cover shows at once
       // instead of the browser's day-long cached copy of the old one.

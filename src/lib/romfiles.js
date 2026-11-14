@@ -8,7 +8,7 @@ import { storageDir } from './storage.js';
 import { sniffImage } from './coverzip.js';
 import { sniffManual, MAX_MANUAL_BYTES, cleanFileName } from './manuals.js';
 
-export const ROM_FILE_KINDS = ['spine', 'disc', 'back', 'manual'];
+export const ROM_FILE_KINDS = ['spine', 'disc', 'back', 'manual', 'logo', 'marquee', 'fanart'];   // logo: the game's title picture (arcade games use it); marquee: the banner; fanart: a background picture
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const dirFor = (romId) => storageDir('rom-files', String(Number(romId)));
