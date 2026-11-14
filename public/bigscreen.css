@@ -204,3 +204,10 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-manimg { max-width: 100%; height: auto; }
 .bs-manframe { width: 100%; height: 100%; border: 0; background: #fff; }
 .bs-manscroll .ph-pv-page { margin: 0 auto .8em; }
+
+/* Favourite: the word turns gold when it is on, and a gold star shows above the cover */
+.bs-mi.fav-on { color: #f5c542; }
+.bs-mi.on.fav-on { color: #a16207; }
+.bs-favstar { position: absolute; top: .5em; left: 50%; z-index: 3; font-size: 2.6em; line-height: 1; color: #f5c542; text-shadow: 0 0 .45em rgba(245, 197, 66, .85), 0 .05em .2em rgba(0, 0, 0, .5); opacity: 0; transform: translateX(-50%) scale(.2) rotate(-40deg); transition: transform .45s cubic-bezier(.3, 1.7, .4, 1), opacity .25s; pointer-events: none; }
+.bs-favstar.on { opacity: 1; transform: translateX(-50%) scale(1) rotate(0); }
+@media (prefers-reduced-motion: reduce) { .bs-favstar { transition: opacity .2s; transform: translateX(-50%); } }

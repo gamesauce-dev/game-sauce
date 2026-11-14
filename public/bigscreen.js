@@ -53,7 +53,7 @@ export function sfx(kind) {
 export function gameMenu(g) {
   return [
     { k: 'play', label: 'Play' },
-    { k: 'fav', label: g?.favorite ? 'Remove Favourite' : 'Favourite' },
+    { k: 'fav', label: 'Favourite', on: Boolean(g?.favorite) },   // a toggle: the word stays, it turns gold when it is on
     { k: 'coll', label: 'Add to Collection' },
     ...(g?.manual_url ? [{ k: 'manual', label: 'Read Manual' }] : []),
     { k: 'broken', label: g?.broken ? 'Unmark as Broken' : 'Mark as Broken' },
@@ -300,7 +300,7 @@ export function openBigScreen(host) {
     $('#bs-main').innerHTML = `<div class="bs-game${g.broken ? ' is-broken' : ''}">
       <div class="bs-leftbg" aria-hidden="true">${g.cover_url ? `<i style="background-image:url('${esc(g.cover_url)}')"></i>` : ''}</div>
       <nav class="bs-menu" id="bs-menu" aria-label="${esc(g.title)}"></nav>
-      <div class="bs-box"><div class="bs-ribbon">Broken</div><div class="bs-brokennote">Marked as broken: the emulator cannot run this game</div><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
+      <div class="bs-box"><div class="bs-favstar${g.favorite ? ' on' : ''}" aria-hidden="true">★</div><div class="bs-ribbon">Broken</div><div class="bs-brokennote">Marked as broken: the emulator cannot run this game</div><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
       <section class="bs-info">
         ${gameMarquee(g) ? `<div class="bs-marquee"><img src="${esc(gameMarquee(g))}" alt="" onerror="this.parentElement.remove()" /></div>` : ''}
         <div class="bs-genre">${esc(g.genre || g.platform_name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}</div>
@@ -344,7 +344,7 @@ export function openBigScreen(host) {
   const paintMenu = () => {   // the labels and the chosen item change in place, so the bar can move
     const g = game(), menu = $('#bs-menu'), sel = $('#bs-sel'); if (!g || !menu || !sel) return;
     const items = gameMenu(g), btns = [...menu.querySelectorAll('.bs-mi')];
-    btns.forEach((b, i) => { if (b.textContent !== items[i].label) b.textContent = items[i].label; b.classList.toggle('on', i === st.mi); });
+    btns.forEach((b, i) => { if (b.textContent !== items[i].label) b.textContent = items[i].label; b.classList.toggle('on', i === st.mi); b.classList.toggle('fav-on', Boolean(items[i].on)); });
     const b = btns[st.mi]; if (!b) return;
     const moved = st.selShown && sel.style.top !== b.offsetTop + 'px';
     sel.style.top = b.offsetTop + 'px'; sel.style.height = b.offsetHeight + 'px'; sel.classList.add('shown'); st.selShown = true;
@@ -476,7 +476,7 @@ export function openBigScreen(host) {
   const toggleFav = async (g) => {
     try {
       const r = await host.api(`/roms/${g.id}/favorite`, { method: 'POST', body: JSON.stringify({}) });
-      g.favorite = r.favorite; st.favCount = Math.max(0, st.favCount + (r.favorite ? 1 : -1)); st.dirty = true; paintMenu();
+      g.favorite = r.favorite; st.favCount = Math.max(0, st.favCount + (r.favorite ? 1 : -1)); st.dirty = true; paintMenu(); $('.bs-favstar')?.classList.toggle('on', Boolean(g.favorite));
       say(g.favorite ? 'Added to your favourites.' : 'Removed from your favourites.');
       if (!g.favorite && st.src?.kind === 'fav') { st.games.splice(st.gi, 1); afterRemoval(); }   // on the Favourites wheel it leaves the list
     } catch (err) { say(err.message, true); }

@@ -52,7 +52,7 @@ test('Big Screen: the wheel puts the game in the middle at full size and fades t
   assert.equal(wheelStyle(9).opacity, 0, 'a game far away is not shown');
   assert.deepEqual(gameMenu({}).map((m) => m.k), ['play', 'fav', 'coll', 'broken', 'hide']);
   assert.deepEqual(gameMenu({}).map((m) => m.label), ['Play', 'Favourite', 'Add to Collection', 'Mark as Broken', 'Hide']);
-  assert.equal(gameMenu({ favorite: 1 })[1].label, 'Remove Favourite');
+  assert.equal(gameMenu({ favorite: 1 })[1].label, 'Favourite', 'the word stays'); assert.equal(gameMenu({ favorite: 1 })[1].on, true, 'it is on'); assert.equal(gameMenu({})[1].on, false);
   assert.equal(gameMenu({ broken: 1 })[3].label, 'Unmark as Broken');
 });
 
@@ -311,4 +311,10 @@ test('Big Screen: the wheel shows a game\'s marquee on every platform (else its 
   assert.ok(bs.includes('<section class="bs-manpane" id="bs-man" hidden>') && bs.includes("classList.add('reading')") && bs.includes("import('./pdfview.js')"), 'the manual goes in a pane on the right, drawn by the app\'s own reader');
   assert.ok(css.includes('.bs-game.reading .bs-info { display: none; }') && css.includes('.bs-manpane { grid-column: 3;'), 'in place of the details');
   assert.ok(bs.includes("manualKey('PageUp')") && bs.includes("manualKey('+')") && bs.includes('closeManual()'), 'LB/RB page, left/right zoom, B closes');
+});
+
+test('Big Screen: Favourite is a toggle: its word turns gold when on, and a gold star shows above the cover', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes('class="bs-favstar') && bs.includes("classList.toggle('fav-on'") && bs.includes("$('.bs-favstar')?.classList.toggle('on'"), 'the star and the colour follow the toggle');
+  assert.ok(css.includes('.bs-mi.fav-on { color: #f5c542; }') && css.includes('.bs-favstar.on'), 'gold');
 });
