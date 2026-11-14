@@ -70,9 +70,16 @@ body.bs-open { overflow: hidden; }
 .bs-lite .bs-leftbg i { filter: none; }
 .bs-menu, .bs-box, .bs-info { position: relative; z-index: 1; }
 .bs-menu { display: flex; flex-direction: column; gap: .15em; padding: 2.4em 0 0; }
-.bs-mi { all: unset; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; gap: .6em; padding: .55em 1.1em .55em 1.4em; font-size: 1.05em; font-weight: 650; border-radius: 0 2em 2em 0; cursor: pointer; color: #fff; }
+.bs-menu { position: relative; }
+.bs-sel { position: absolute; left: 0; width: 100%; top: 0; height: 0; opacity: 0; border-radius: 0 2em 2em 0; background: #f2f4f8; transform-origin: left center; transition: top .26s cubic-bezier(.3, .7, .2, 1), height .26s cubic-bezier(.3, .7, .2, 1); will-change: top, transform; }
+.bs-sel.shown { opacity: 1; }
+.bs-sel.moving { animation: bs-sel-squash .34s cubic-bezier(.3, .7, .2, 1); }
+@keyframes bs-sel-squash { 0% { transform: scaleX(1); } 38% { transform: scaleX(.62); } 100% { transform: scaleX(1); } }
+.bs-mi { all: unset; box-sizing: border-box; position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: .6em; padding: .55em 1.1em .55em 1.4em; font-size: 1.05em; font-weight: 650; border-radius: 0 2em 2em 0; cursor: pointer; color: #fff; transition: color .2s; }
 .bs-mi small { opacity: .7; font-weight: 500; }
-.bs-mi.on { background: #f2f4f8; color: #14161d; }
+.bs-mi.on { color: #14161d; }
+.bs-pickcard .bs-mi { z-index: auto; }
+.bs-pickcard .bs-mi.on { color: #fff; background: var(--ac); }
 .bs-box { display: grid; place-items: center; padding: 2em; }
 .bs-boxcover { height: min(72vh, 100%); aspect-ratio: 3 / 4; max-width: 100%; display: grid; place-items: center; background: linear-gradient(160deg, var(--gc), #1a1d27); overflow: hidden; box-shadow: 0 .8em 2.4em rgba(0, 0, 0, .55); }
 .bs-boxcover span { padding: 1em; text-align: center; font-size: 1.1em; }
@@ -105,3 +112,16 @@ body.bs-open { overflow: hidden; }
 .bs-pickcard .bs-mi.on { background: var(--ac); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) { .bs, .bs-rail, .bs-row, .bs-bgl, .bs-ptile, .bs-toast { animation: none; transition: none; } }
+
+/* the app's own controller legend would sit over the hints at the bottom: Big Screen has its own */
+body.bs-open #gp-legend { display: none !important; }
+
+/* a game marked as broken */
+.bs-ribbon { position: absolute; top: 1.6em; left: 1.6em; z-index: 3; display: none; padding: .25em 1.2em; border-radius: .3em; background: #c0392b; color: #fff; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 .2em .8em rgba(0, 0, 0, .5); }
+.bs-brokennote { position: absolute; left: 1.6em; right: 1.6em; bottom: 1.2em; z-index: 3; display: none; padding: .5em .9em; border-radius: .4em; background: rgba(150, 30, 20, .92); text-align: center; font-weight: 650; font-size: .85em; }
+.bs-game.is-broken .bs-ribbon, .bs-game.is-broken .bs-brokennote { display: block; }
+.bs-game.is-broken .bs-boxcover { filter: saturate(.35) brightness(.8); }
+.bs-row.is-broken .bs-cov, .bs-row.is-broken .bs-logo { filter: saturate(.35) brightness(.75); }
+.bs-row.is-broken .bs-title { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, .45); }
+
+.bs-genre .bs-flag { font-size: .78em; margin-left: .6em; }

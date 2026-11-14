@@ -171,7 +171,7 @@ export function openBigScreen(host) {
     for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
     for (let i = lo; i <= hi; i++) {
       let el = st.els.get(i);
-      if (!el) { el = document.createElement('div'); el.className = 'bs-row'; el.dataset.i = i; el.innerHTML = rowHtml(st.games[i]); st.els.set(i, el); wheel.appendChild(el); }
+      if (!el) { el = document.createElement('div'); el.className = 'bs-row' + (st.games[i].broken ? ' is-broken' : ''); el.dataset.i = i; el.innerHTML = rowHtml(st.games[i]); st.els.set(i, el); wheel.appendChild(el); }
       const s = wheelStyle(i - st.gi);
       el.style.transform = `translateY(calc(-50% + ${s.y}em)) scale(${s.scale})`; el.style.opacity = s.opacity; el.style.zIndex = 10 - Math.abs(i - st.gi); el.classList.toggle('on', i === st.gi);
     }
@@ -194,10 +194,10 @@ export function openBigScreen(host) {
     const ac = accent(cur()); setBackdrop(null, ac);
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);
-    $('#bs-main').innerHTML = `<div class="bs-game">
+    $('#bs-main').innerHTML = `<div class="bs-game${g.broken ? ' is-broken' : ''}">
       <div class="bs-leftbg" aria-hidden="true">${g.cover_url ? `<i style="background-image:url('${esc(g.cover_url)}')"></i>` : ''}</div>
       <nav class="bs-menu" id="bs-menu" aria-label="${esc(g.title)}"></nav>
-      <div class="bs-box"><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
+      <div class="bs-box"><div class="bs-ribbon">Broken</div><div class="bs-brokennote">Marked as broken: the emulator cannot run this game</div><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
       <section class="bs-info">
         ${gameMarquee(g) ? `<div class="bs-marquee"><img src="${esc(gameMarquee(g))}" alt="" onerror="this.parentElement.remove()" /></div>` : ''}
         <div class="bs-genre">${esc(g.genre || cur()?.name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}</div>
@@ -214,7 +214,7 @@ export function openBigScreen(host) {
       v.muted = false; v.volume = 0.8;
       v.play?.().catch(() => { v.muted = true; v.play?.().catch(() => {}); });
     }
-    paintMenu(); autoScroll();
+    buildMenu(); autoScroll();
   };
   // The description scrolls slowly when they are longer than the space: a pause, a slow glide to the end, a pause, and back to the top.
   let scrollTimer = 0;
@@ -232,9 +232,23 @@ export function openBigScreen(host) {
       else if (phase === 'back' && now - t0 > 700) { inner.style.transition = ''; phase = 'wait'; t0 = now; }
     }, 40);
   };
-  const paintMenu = () => {
+  const buildMenu = () => {
     const g = game(), menu = $('#bs-menu'); if (!g || !menu) return;
-    menu.innerHTML = gameMenu(g).map((m, i) => `<button type="button" class="bs-mi${i === st.mi ? ' on' : ''}" data-k="${m.k}">${esc(m.label)}</button>`).join('');
+    menu.innerHTML = '<i class="bs-sel" id="bs-sel" aria-hidden="true"></i>' + gameMenu(g).map((m) => `<button type="button" class="bs-mi" data-k="${m.k}">${esc(m.label)}</button>`).join('');
+    st.selShown = false; paintMenu();
+  };
+  const paintMenu = () => {   // the labels and the chosen item change in place, so the bar can move
+    const g = game(), menu = $('#bs-menu'), sel = $('#bs-sel'); if (!g || !menu || !sel) return;
+    const items = gameMenu(g), btns = [...menu.querySelectorAll('.bs-mi')];
+    btns.forEach((b, i) => { if (b.textContent !== items[i].label) b.textContent = items[i].label; b.classList.toggle('on', i === st.mi); });
+    const b = btns[st.mi]; if (!b) return;
+    const moved = st.selShown && sel.style.top !== b.offsetTop + 'px';
+    sel.style.top = b.offsetTop + 'px'; sel.style.height = b.offsetHeight + 'px'; sel.classList.add('shown'); st.selShown = true;
+    if (moved && !reduced()) { sel.classList.remove('moving'); void sel.offsetWidth; sel.classList.add('moving'); }   // shorter while it moves, then back to its full length
+  };
+  const paintBroken = (g) => {   // a game marked (or cleared) as broken: the ribbon, the note and the heading change in place
+    root.querySelector('.bs-game')?.classList.toggle('is-broken', Boolean(g.broken));
+    const genre = $('.bs-genre'); if (genre) genre.innerHTML = `${esc(g.genre || cur()?.name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}`;
   };
 
   // ── playing ──
@@ -249,11 +263,11 @@ export function openBigScreen(host) {
       say('Starting the emulator…'); location.href = `gamesauce://launch?${q}`;
     } catch (err) { say(err.message || 'Could not start the game', true); }
   };
-  const play = (g) => { if (!g) return; if (canLocalPlay(g)) return playLocal(g); if (canBrowser(g)) return openBrowser(g); say('This game cannot be started from this PC.', true); };
+  const play = (g) => { if (!g) return; if (g.broken) say('This game is marked as broken. Trying anyway…', true); if (canLocalPlay(g)) return playLocal(g); if (canBrowser(g)) return openBrowser(g); say('This game cannot be started from this PC.', true); };
 
   // ── the menu's actions ──
   const toggleFav = async (g) => { try { const r = await host.api(`/roms/${g.id}/favorite`, { method: 'POST', body: JSON.stringify({}) }); g.favorite = r.favorite; paintMenu(); say(g.favorite ? 'Added to your favourites.' : 'Removed from your favourites.'); } catch (err) { say(err.message, true); } };
-  const toggleBroken = async (g) => { try { const r = await host.api(`/roms/${g.id}/broken`, { method: 'POST', body: JSON.stringify({}) }); g.broken = r.broken; drawGame(); st.mi = 3; paintMenu(); say(g.broken ? 'Marked as broken.' : 'No longer marked as broken.'); } catch (err) { say(err.message, true); } };
+  const toggleBroken = async (g) => { try { const r = await host.api(`/roms/${g.id}/broken`, { method: 'POST', body: JSON.stringify({}) }); g.broken = r.broken; paintBroken(g); paintMenu(); say(g.broken ? 'Marked as broken.' : 'No longer marked as broken.'); } catch (err) { say(err.message, true); } };
   const hideGame = async (g) => {
     try {
       await host.api(`/roms/${g.id}/hide`, { method: 'POST', body: JSON.stringify({ hidden: true }) });

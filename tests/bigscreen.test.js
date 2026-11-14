@@ -91,3 +91,11 @@ test('Big Screen: the year, players and developer stay put above the scrolling d
   assert.ok(css.includes('.bs-boxcover.has-img') && css.includes('.bs-cov.has-img') && css.includes('aspect-ratio: auto'), 'a cover with a picture has no fixed frame, so no grey bars');
   assert.ok(bs.includes("a === 'prev-family' || a === 'next-family' || a === 'left' || a === 'right'"), 'LB, RB, left and right change game on the game page');
 });
+
+test('Big Screen: the app\'s controller legend is hidden over it, the menu bar slides and shrinks as it moves, and a game marked as broken is flagged on the page and the wheel', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(css.includes('body.bs-open #gp-legend { display: none !important; }'), 'no second legend over the hints');
+  assert.ok(css.includes('@keyframes bs-sel-squash') && css.includes('scaleX(.62)') && css.includes('transition: top .26s') && bs.includes("sel.classList.add('moving')"), 'the bar slides, and is shorter on the way');
+  assert.ok(css.includes('.bs-ribbon') && css.includes('.bs-brokennote') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
+  assert.ok(bs.includes('This game is marked as broken. Trying anyway'), 'playing one says so');
+});
