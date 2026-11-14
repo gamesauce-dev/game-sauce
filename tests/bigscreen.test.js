@@ -272,3 +272,8 @@ test('Fill the gaps: a run asks about the games of one platform that lack a logo
   assert.ok(html.includes('class="plat-art-box" id="plat-art"') && !html.includes('class="panel" id="plat-art"'), 'the box must not carry the panel class: Settings hides every panel except the open page, which hid it');
   assert.ok(html.includes('id="plat-fill-go"') && html.includes('id="plat-fill-limit"') && ui.includes("'/art/fill-job'"), 'the button and its progress are in Settings > Platforms');
 });
+
+test('Settings > Platforms: the Platform art box comes before the + Add platform button', () => {
+  const html = read('public/index.html');
+  assert.ok(html.indexOf('id="plat-art"') < html.indexOf('id="platform-add-toggle"') && html.indexOf('id="platform-add-toggle"') < html.indexOf('id="platform-add-form"'), 'art box, then the add button, then its form');
+});
