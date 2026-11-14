@@ -99,3 +99,8 @@ test('Big Screen: the app\'s controller legend is hidden over it, the menu bar s
   assert.ok(css.includes('.bs-ribbon') && css.includes('.bs-brokennote') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
   assert.ok(bs.includes('This game is marked as broken. Trying anyway'), 'playing one says so');
 });
+
+test('Big Screen: the bottom bar reminds you to hold Select + Start to close a running game', () => {
+  const bs = read('public/bigscreen.js');
+  assert.ok(bs.includes('Hold in a game to close it') && bs.includes('bs-closehint'));
+});

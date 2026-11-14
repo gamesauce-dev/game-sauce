@@ -80,7 +80,8 @@ export function openBigScreen(host) {
   const paintHints = () => {
     const h = { platforms: [hint('A', 'Select'), st.level === 1 ? hint('B', 'Back') : (host.kiosk ? '' : hint('B', 'Close'))], games: [hint('A', 'Open'), hint('B', 'Back'), hint('LB RB', 'Jump by letter'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')],
       game: [hint('A', 'Choose'), hint('B', 'Back'), hint('LB RB', 'Previous / next game'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')], pick: [hint('A', 'Add'), hint('B', 'Cancel')] }[st.screen] || [];
-    $('#bs-hints').innerHTML = h.join('');
+    const closeGame = s2 => `<span class="bs-closehint"><i>Select + Start</i>Hold in a game to close it</span>`;   // gamepad.js closes a running game on this
+    $('#bs-hints').innerHTML = (st.screen === 'pick' ? '' : closeGame()) + h.join('');
   };
   let toastTimer = 0;
   const say = (msg, bad = false) => { const t = $('#bs-toast'); if (!t) return; t.textContent = msg; t.classList.toggle('bad', bad); t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); };

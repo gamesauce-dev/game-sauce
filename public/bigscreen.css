@@ -125,3 +125,5 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-row.is-broken .bs-title { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, .45); }
 
 .bs-genre .bs-flag { font-size: .78em; margin-left: .6em; }
+
+.bs-hints .bs-closehint { margin-right: auto; opacity: .85; }
