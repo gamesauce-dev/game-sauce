@@ -285,3 +285,9 @@ test('Big Screen: Favourites and Collections are a row of their own below the pl
   assert.ok(bs.includes('const HEART =') && bs.includes('const STACK =') && bs.includes('const mosaic = (covers)'), 'artwork for the tiles');
   assert.ok(css.includes('.bs-t-fav {') && css.includes('.bs-t-colls') && css.includes('.bs-mosaic') && css.includes('.bs-main.two .bs-railwrap.r2'), 'and its styles');
 });
+
+test('Big Screen: a row of tiles that fits on the screen is centred as a whole, and the Favourites and Collections row has room between its tiles', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes('total > 0 && total <= w ? (w - total) / 2'), 'a row that fits is centred whole; a longer one keeps the chosen tile in the middle');
+  assert.ok(css.includes('.bs-railwrap.r2 .bs-rail { gap: 2.2em; }') && css.includes('.bs-railwrap.r2 .bs-ptile.on { transform: scale(1.06); }'), 'room between the two, and the chosen one does not grow into its neighbour');
+});

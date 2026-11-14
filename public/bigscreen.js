@@ -208,7 +208,8 @@ export function openBigScreen(host) {
   };
   const plural = (n, w) => `${Number(n).toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
   let heroTimer = 0;
-  const placeRail = (rail, idx) => { if (!rail) return; const tile = rail.querySelector('.bs-ptile'); const w = rail.parentElement.clientWidth, tw = tile?.offsetWidth || 0, step = tw + parseFloat(getComputedStyle(rail).gap || 0); rail.style.transform = `translateX(${Math.round(w / 2 - (idx * step + tw / 2))}px)`; };
+  // A row that fits on the screen is centred as a whole (Favourites and Collections, a family with few platforms); a longer row keeps the chosen tile in the middle.
+  const placeRail = (rail, idx) => { if (!rail) return; const tile = rail.querySelector('.bs-ptile'); const w = rail.parentElement.clientWidth, tw = tile?.offsetWidth || 0, step = tw + parseFloat(getComputedStyle(rail).gap || 0), total = rail.scrollWidth; rail.style.transform = `translateX(${Math.round(total > 0 && total <= w ? (w - total) / 2 : w / 2 - (idx * step + tw / 2))}px)`; };
   const focusPlatform = (i) => {
     const items = railItems(); st.pi = Math.max(0, Math.min(items.length - 1, i));
     const x = items[st.pi]; if (!x) return;

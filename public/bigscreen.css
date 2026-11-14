@@ -167,6 +167,8 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-main.two .bs-railwrap.r2 { top: calc(37% + 10.2em); height: 7.6em; }
 .bs-main.two .bs-railwrap.r2 .bs-ptile { width: 17em; height: 5.2em; }
 .bs-railwrap { transition: opacity .25s; }
+.bs-railwrap.r2 .bs-rail { gap: 2.2em; }
+.bs-railwrap.r2 .bs-ptile.on { transform: scale(1.06); }
 .bs-railwrap.dim { opacity: .55; }
 .bs-railwrap.dim .bs-ptile.on { transform: none; border-color: transparent; box-shadow: none; }
 .bs-ptile { position: relative; overflow: hidden; }
