@@ -110,9 +110,7 @@ body.bs-open { overflow: hidden; }
 body.bs-open #gp-legend { display: none !important; }
 
 /* a game marked as broken */
-.bs-ribbon { position: absolute; top: 1.6em; left: 1.6em; z-index: 3; display: none; padding: .25em 1.2em; border-radius: .3em; background: #c0392b; color: #fff; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 .2em .8em rgba(0, 0, 0, .5); }
 .bs-brokennote { position: absolute; left: 1.6em; right: 1.6em; bottom: 1.2em; z-index: 3; display: none; padding: .5em .9em; border-radius: .4em; background: rgba(150, 30, 20, .92); text-align: center; font-weight: 650; font-size: .85em; }
-.bs-game.is-broken .bs-ribbon, .bs-game.is-broken .bs-brokennote { display: block; }
 .bs-game.is-broken .bs-boxcover { filter: saturate(.35) brightness(.8); }
 .bs-row.is-broken .bs-cov, .bs-row.is-broken .bs-logo { filter: saturate(.35) brightness(.75); }
 .bs-row.is-broken .bs-title { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, .45); }
@@ -208,6 +206,15 @@ body.bs-open #gp-legend { display: none !important; }
 /* Favourite: the word turns gold when it is on, and a gold star shows above the cover */
 .bs-mi.fav-on { color: #f5c542; }
 .bs-mi.on.fav-on { color: #a16207; }
-.bs-favstar { position: absolute; top: .5em; left: 50%; z-index: 3; font-size: 2.6em; line-height: 1; color: #f5c542; text-shadow: 0 0 .45em rgba(245, 197, 66, .85), 0 .05em .2em rgba(0, 0, 0, .5); opacity: 0; transform: translateX(-50%) scale(.2) rotate(-40deg); transition: transform .45s cubic-bezier(.3, 1.7, .4, 1), opacity .25s; pointer-events: none; }
-.bs-favstar.on { opacity: 1; transform: translateX(-50%) scale(1) rotate(0); }
-@media (prefers-reduced-motion: reduce) { .bs-favstar { transition: opacity .2s; transform: translateX(-50%); } }
+
+/* the two marks above the cover: a gold star when it is a favourite, a red crossed-out controller when it is marked as broken */
+.bs-badges { position: absolute; top: .4em; left: 0; right: 0; z-index: 3; display: flex; justify-content: center; align-items: center; gap: .3em; pointer-events: none; }
+.bs-favstar, .bs-brokenicon { display: inline-grid; place-items: center; width: 0; font-size: 2.6em; line-height: 1; opacity: 0; transform: scale(.2) rotate(-40deg); transition: transform .45s cubic-bezier(.3, 1.7, .4, 1), opacity .25s, width .3s; }
+.bs-favstar { color: #f5c542; text-shadow: 0 0 .45em rgba(245, 197, 66, .85), 0 .05em .2em rgba(0, 0, 0, .5); }
+.bs-brokenicon { color: #ef4444; filter: drop-shadow(0 0 .3em rgba(239, 68, 68, .75)); }
+.bs-brokenicon svg { width: .95em; height: .95em; }
+.bs-favstar.on, .bs-game.is-broken .bs-brokenicon { width: 1.1em; opacity: 1; transform: scale(1) rotate(0); }
+@media (prefers-reduced-motion: reduce) { .bs-favstar, .bs-brokenicon { transition: opacity .2s; transform: none; } }
+.bs-mi.broken-on { color: #ff6b6b; }
+.bs-mi.on.broken-on { color: #b91c1c; }
+.bs-game.is-broken .bs-brokennote { display: block; }

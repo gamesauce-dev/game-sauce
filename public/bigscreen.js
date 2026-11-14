@@ -1,7 +1,7 @@
 // Big Screen: the Library for a PC on the TV, driven by a gamepad (or the keyboard). Three screens:
 //   platforms  a row of family tiles (Sony, Nintendo...), with Favourites and Collections (when you have any) on a row of their own below it; then the platforms of the family chosen;
 //   games      the games of a platform, your favourites or one collection as a wheel, the one in the middle large;
-//   game       a menu on the left (Play, Favourite, Add to Collection, Mark as Broken, Hide), the cover, and the details.
+//   game       a menu on the left (Play, Favourite, Add to Collection, Broken, Hide), the cover, and the details.
 // On top of those: the collection chooser, a keyboard to type a name with the pad, and a question (hide from everyone?).
 // The pad is read by public/gamepad.js, which sends what was pressed to this layer as a 'cv-pad' event (the same way the cover carousel is driven).
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -56,7 +56,7 @@ export function gameMenu(g) {
     { k: 'fav', label: 'Favourite', on: Boolean(g?.favorite) },   // a toggle: the word stays, it turns gold when it is on
     { k: 'coll', label: 'Add to Collection' },
     ...(g?.manual_url ? [{ k: 'manual', label: 'Read Manual' }] : []),
-    { k: 'broken', label: g?.broken ? 'Unmark as Broken' : 'Mark as Broken' },
+    { k: 'broken', label: 'Broken', on: Boolean(g?.broken) },   // a toggle too: the word stays, it turns red when it is on
     { k: 'hide', label: 'Hide' }
   ];
 }
@@ -300,10 +300,10 @@ export function openBigScreen(host) {
     $('#bs-main').innerHTML = `<div class="bs-game${g.broken ? ' is-broken' : ''}">
       <div class="bs-leftbg" aria-hidden="true">${g.cover_url ? `<i style="background-image:url('${esc(g.cover_url)}')"></i>` : ''}</div>
       <nav class="bs-menu" id="bs-menu" aria-label="${esc(g.title)}"></nav>
-      <div class="bs-box"><div class="bs-favstar${g.favorite ? ' on' : ''}" aria-hidden="true">★</div><div class="bs-ribbon">Broken</div><div class="bs-brokennote">Marked as broken: the emulator cannot run this game</div><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
+      <div class="bs-box"><div class="bs-badges" aria-hidden="true"><span class="bs-favstar${g.favorite ? ' on' : ''}">★</span><span class="bs-brokenicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.6 2.6 0 0 1-4.4 1.2L14 15.5h-4l-2.2 2.1a2.6 2.6 0 0 1-4.4-1.2l-.8-4A4.5 4.5 0 0 1 7 7z"/><path d="M8 10v3M6.5 11.5h3"/><path d="M3.5 3.5l17 17" stroke-width="2.6"/></svg></span></div><div class="bs-brokennote">Marked as broken: the emulator cannot run this game</div><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
       <section class="bs-info">
         ${gameMarquee(g) ? `<div class="bs-marquee"><img src="${esc(gameMarquee(g))}" alt="" onerror="this.parentElement.remove()" /></div>` : ''}
-        <div class="bs-genre">${esc(g.genre || g.platform_name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}</div>
+        <div class="bs-genre">${esc(g.genre || g.platform_name || '')}${g.broken ? ' <em class="bs-flag">Emulation has issues</em>' : ''}</div>
         <h1 class="bs-name${gameLogo(g) ? ' has-logo' : ''}">${gameLogo(g) ? `<img class="bs-glogo" src="${esc(gameLogo(g))}" alt="" onerror="this.closest('h1').classList.remove('has-logo')" />` : ''}<span>${esc(g.title)}</span></h1>
         <div class="bs-factline">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="bs-scroll" id="bs-scroll"><div class="bs-scrollin" id="bs-scrollin">
@@ -344,7 +344,7 @@ export function openBigScreen(host) {
   const paintMenu = () => {   // the labels and the chosen item change in place, so the bar can move
     const g = game(), menu = $('#bs-menu'), sel = $('#bs-sel'); if (!g || !menu || !sel) return;
     const items = gameMenu(g), btns = [...menu.querySelectorAll('.bs-mi')];
-    btns.forEach((b, i) => { if (b.textContent !== items[i].label) b.textContent = items[i].label; b.classList.toggle('on', i === st.mi); b.classList.toggle('fav-on', Boolean(items[i].on)); });
+    btns.forEach((b, i) => { if (b.textContent !== items[i].label) b.textContent = items[i].label; b.classList.toggle('on', i === st.mi); b.classList.toggle('fav-on', items[i].k === 'fav' && Boolean(items[i].on)); b.classList.toggle('broken-on', items[i].k === 'broken' && Boolean(items[i].on)); });
     const b = btns[st.mi]; if (!b) return;
     const moved = st.selShown && sel.style.top !== b.offsetTop + 'px';
     sel.style.top = b.offsetTop + 'px'; sel.style.height = b.offsetHeight + 'px'; sel.classList.add('shown'); st.selShown = true;
@@ -352,7 +352,7 @@ export function openBigScreen(host) {
   };
   const paintBroken = (g) => {   // a game marked (or cleared) as broken: the ribbon, the note and the heading change in place
     root.querySelector('.bs-game')?.classList.toggle('is-broken', Boolean(g.broken));
-    const genre = $('.bs-genre'); if (genre) genre.innerHTML = `${esc(g.genre || g.platform_name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}`;
+    const genre = $('.bs-genre'); if (genre) genre.innerHTML = `${esc(g.genre || g.platform_name || '')}${g.broken ? ' <em class="bs-flag">Emulation has issues</em>' : ''}`;
   };
 
   // The video on the game page stops while a game is starting or running (an emulator window opens over this one, or the browser player), and while this window is not the one in front;

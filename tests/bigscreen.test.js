@@ -51,9 +51,9 @@ test('Big Screen: the wheel puts the game in the middle at full size and fades t
   assert.ok(next.scale < 1 && far.scale < next.scale && far.opacity < next.opacity);
   assert.equal(wheelStyle(9).opacity, 0, 'a game far away is not shown');
   assert.deepEqual(gameMenu({}).map((m) => m.k), ['play', 'fav', 'coll', 'broken', 'hide']);
-  assert.deepEqual(gameMenu({}).map((m) => m.label), ['Play', 'Favourite', 'Add to Collection', 'Mark as Broken', 'Hide']);
+  assert.deepEqual(gameMenu({}).map((m) => m.label), ['Play', 'Favourite', 'Add to Collection', 'Broken', 'Hide']);
   assert.equal(gameMenu({ favorite: 1 })[1].label, 'Favourite', 'the word stays'); assert.equal(gameMenu({ favorite: 1 })[1].on, true, 'it is on'); assert.equal(gameMenu({})[1].on, false);
-  assert.equal(gameMenu({ broken: 1 })[3].label, 'Unmark as Broken');
+  assert.equal(gameMenu({ broken: 1 })[3].label, 'Broken', 'the word stays'); assert.equal(gameMenu({ broken: 1 })[3].on, true);
 });
 
 test('Big Screen is wired in: a button in the Library bar and the Modern bar, #/bigscreen opens it, the pad drives it, and only the platforms this PC can start are listed', () => {
@@ -96,7 +96,7 @@ test('Big Screen: the app\'s controller legend is hidden over it, the menu bar s
   const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
   assert.ok(css.includes('body.bs-open #gp-legend { display: none !important; }'), 'no second legend over the hints');
   assert.ok(css.includes('@keyframes bs-sel-squash') && css.includes('scaleX(.62)') && css.includes('transition: top .26s') && bs.includes("sel.classList.add('moving')"), 'the bar slides, and is shorter on the way');
-  assert.ok(css.includes('.bs-ribbon') && css.includes('.bs-brokennote') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
+  assert.ok(css.includes('.bs-brokenicon') && css.includes('.bs-brokennote') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
   assert.ok(bs.includes('This game is marked as broken. Trying anyway'), 'playing one says so');
 });
 
@@ -317,4 +317,16 @@ test('Big Screen: Favourite is a toggle: its word turns gold when on, and a gold
   const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
   assert.ok(bs.includes('class="bs-favstar') && bs.includes("classList.toggle('fav-on'") && bs.includes("$('.bs-favstar')?.classList.toggle('on'"), 'the star and the colour follow the toggle');
   assert.ok(css.includes('.bs-mi.fav-on { color: #f5c542; }') && css.includes('.bs-favstar.on'), 'gold');
+});
+
+test('Big Screen: Broken is a toggle: its word turns red when on, with a red crossed-out controller above the cover (beside the star)', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes('class="bs-badges"') && bs.includes('class="bs-brokenicon"') && bs.includes("b.classList.toggle('broken-on'"), 'the icon and the colour');
+  assert.ok(css.includes('.bs-mi.broken-on { color: #ff6b6b; }') && css.includes('.bs-game.is-broken .bs-brokenicon') && css.includes('.bs-game.is-broken .bs-brokennote { display: block; }'), 'red, shown when the game is marked, with its note');
+});
+
+test('Big Screen: the advisory on the right of a game marked as broken reads "Emulation has issues"', () => {
+  const bs = read('public/bigscreen.js');
+  assert.equal((bs.match(/<em class="bs-flag">Emulation has issues<\/em>/g) || []).length, 2, 'on the page and when it is toggled');
+  assert.ok(!bs.includes('the emulator cannot run it</em>'));
 });
