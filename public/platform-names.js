@@ -14,6 +14,8 @@ export const FAMILY = { sony: 'PlayStation', playstation: 'PlayStation', microso
 
 /** The text on a platform's chip or cover badge, in capitals. p: { slug, short_name?, name?, badge? } (a Library platform row). A badge text an admin set for the platform (Settings > Platforms) wins over everything. */
 export const platformBadge = (p) => String(p?.badge || BADGE[p?.slug] || p?.short_name || p?.name || p?.slug || '').toUpperCase();
+/** The text on a platform's chip: the same, but a badge text is never used (it is for the cover badges only; the chip follows the short name). */
+export const platformChip = (p) => platformBadge({ ...p, badge: '' });
 
 /** A family's name as people say it (for a tooltip), and the same in capitals (for a chip). */
 export const familyName = (f) => FAMILY[String(f || '').toLowerCase()] || String(f || '');

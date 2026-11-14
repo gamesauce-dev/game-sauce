@@ -6,7 +6,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 import { assetWords } from './video.js';
 import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
-import { platformBadge, familyName, familyLabel } from './platform-names.js';
+import { platformBadge, platformChip, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
 import { renderArtImport } from './artimport-ui.js';
 import { drawPage, mountViewer, pdfReady } from './pdfview.js';
@@ -182,7 +182,7 @@ function renderChips() {
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-ph-chip-all title="All platforms">All <small>${n(total)}</small></button>
       ${order.map((f) => `<button type="button" class="ph-chip${S.family === f ? ' open' : ''}${famState(f)}" data-ph-chip-fam="${esc(f)}" style="--chip-c:${famColourOf(f)}" aria-expanded="${S.family === f}" title="${esc(familyName(f))}: show its platforms">${esc(familyLabel(f))} <small>${n(famCount(f))}</small></button>`).join('')}
     </div>
-    ${S.family ? `<div class="ph-chip-row ph-chip-plats">${fams.get(S.family).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button type="button" class="ph-chip plat${pk.has(p.slug) && !wholeNow ? ' on' : ''}" data-ph-chip-plat="${esc(p.slug)}" style="--chip-c:${accentOf(p.slug)}" title="${esc(p.name)}: click to ${pk.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(platformBadge(p))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${S.family ? `<div class="ph-chip-row ph-chip-plats">${fams.get(S.family).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button type="button" class="ph-chip plat${pk.has(p.slug) && !wholeNow ? ' on' : ''}" data-ph-chip-plat="${esc(p.slug)}" style="--chip-c:${accentOf(p.slug)}" title="${esc(p.name)}: click to ${pk.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(platformChip(p))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
   landChips(host, S.family);
 }
 

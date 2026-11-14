@@ -55,12 +55,15 @@ test('the Physical Library carries the badge text for its tiles, chips and spine
   assert.equal(one.platform_badge, 'PS-4', 'and one game\'s details');
 });
 
-test('the badge text wins everywhere a badge or chip is drawn, in capitals, and the settings form has the field', () => {
+test('the badge text wins on every cover badge, in capitals; the chips follow the short name; and the settings form has the field', () => {
   const pn = read('public/platform-names.js'), dg = read('public/digital.js'), app = read('public/app.js'), mj = read('public/modern.js');
-  assert.ok(pn.includes("String(p?.badge || BADGE[p?.slug] || p?.short_name"), 'Physical and its chips and spines');
-  assert.ok(dg.includes('customBadge(g.platform) || st.short') && dg.includes('customBadge(p.platform) || platformBadge('), 'Digital tiles and chips');
+  assert.ok(pn.includes("String(p?.badge || BADGE[p?.slug] || p?.short_name"), 'Physical badges and spines');
+  assert.ok(pn.includes("platformChip = (p) => platformBadge({ ...p, badge: '' })"), 'a chip never uses the badge text');
+  assert.ok(read('public/physical.js').includes('<span>${esc(platformChip(p))}</span> <small>'), 'Physical chips');
+  assert.ok(dg.includes('customBadge(g.platform) || st.short') && dg.includes('<span>${esc(platformChip({'), 'Digital tiles use the badge text, its chips the short name');
   assert.ok(app.includes('rom.platform_badge ? String(rom.platform_badge).toUpperCase() : rom.platform_short'), 'the ROM Library tiles');
-  assert.ok(mj.includes('String(p.badge || p.short_name || p.name).toUpperCase()'), 'the ROM Library chips');
+  assert.ok(mj.includes('<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p)'), 'the ROM Library chips');
+  assert.ok(read('public/carousel.js').includes('${esc(String(p.short_name || p.name).toUpperCase())}<small>'), 'the Carousel chips');
   assert.ok(app.includes('data-pf="badge" maxlength="12"'), 'Settings > Platforms > Edit');
   const sv = read('src/app.js');
   assert.ok(sv.includes("'icon', 'badge'];") && (sv.match(/p\.badge AS platform_badge/g) || []).length === 2);

@@ -87,7 +87,7 @@ export function openCarousel(host) {
   const drawSubs = () => {
     const list = st.fam ? [...(fams().get(st.fam) || [])].sort((a, b) => String(a.name).localeCompare(b.name, undefined, { sensitivity: 'base' })) : [];
     const box = $('#cv-subs');
-    box.innerHTML = list.map((p, i) => `<button type="button" class="cv-chip cv-sub${st.plat === p.slug ? ' on' : ''}" data-plat="${esc(p.slug)}" style="--c:${esc(platColour(p))};--i:${Math.min(i, 20)}">${esc(String(p.badge || p.short_name || p.name).toUpperCase())}<small>${(((p.visible_count ?? p.count) || 0)).toLocaleString()}</small></button>`).join('');
+    box.innerHTML = list.map((p, i) => `<button type="button" class="cv-chip cv-sub${st.plat === p.slug ? ' on' : ''}" data-plat="${esc(p.slug)}" style="--c:${esc(platColour(p))};--i:${Math.min(i, 20)}">${esc(String(p.short_name || p.name).toUpperCase())}<small>${(((p.visible_count ?? p.count) || 0)).toLocaleString()}</small></button>`).join('');
     box.classList.remove('land'); if (list.length && !reduced()) { void box.offsetWidth; box.classList.add('land'); }
     paintHl();
   };

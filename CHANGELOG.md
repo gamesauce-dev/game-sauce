@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Chips follow the short name; the badge text is for badges only.** In Settings > Platforms, the **Short name** is now the name on the platform chips (for example GAMEBOY COLOR), and the optional **Badge text** (for example GBC) is the text on the cover badges, the spines and the discs. With no badge text, the badges use the short name as before. Before, a badge text also replaced the chip name.
+
 ### Fixed
 - A platform's **Badge text** (Settings > Platforms) now shows on the ROM Library tiles and in collections too, not only on the chips; the tiles used to show the short name instead.
 

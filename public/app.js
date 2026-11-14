@@ -3292,7 +3292,7 @@ async function loadPlatformAdmin() {
     host.innerHTML = `
       <label class="field"><span>Name</span><input data-pf="name" value="${esc(p.name)}" /></label>
       <label class="field"><span>Short name</span><input data-pf="short_name" value="${esc(p.short_name)}" /></label>
-      <label class="field"><span>Badge text <span class="note">(optional: the text on this platform's cover badges and chips, in capitals. Empty = the default, up to 12 characters)</span></span><input data-pf="badge" maxlength="12" placeholder="${esc(String(p.short_name).toUpperCase())}" value="${esc(p.badge || '')}" /></label>
+      <label class="field"><span>Badge text <span class="note">(optional: the text on this platform's cover badges, in capitals. Empty = the short name, which is also what the chips show. Up to 12 characters)</span></span><input data-pf="badge" maxlength="12" placeholder="${esc(String(p.short_name).toUpperCase())}" value="${esc(p.badge || '')}" /></label>
       <label class="field"><span>Family</span><input data-pf="family" value="${esc(p.family || '')}" list="family-list" autocomplete="off" /></label>
       <label class="field"><span>Manufacturer</span><input data-pf="manufacturer" value="${esc(p.manufacturer || '')}" /></label>
       <label class="field"><span>Extensions (comma separated)</span><input data-pf="extensions" value="${esc((p.extensions || []).join(', '))}" /></label>
