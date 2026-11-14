@@ -110,9 +110,9 @@ body.bs-open { overflow: hidden; }
 body.bs-open #gp-legend { display: none !important; }
 
 /* a game marked as broken */
-.bs-game.is-broken .bs-boxcover { filter: saturate(.35) brightness(.8); }
-.bs-row.is-broken .bs-cov, .bs-row.is-broken .bs-logo { filter: saturate(.35) brightness(.75); }
-.bs-row.is-broken .bs-title { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, .45); }
+.bs-game.is-broken .bs-boxcover { filter: saturate(.75) brightness(.92); }   /* a hint, not a block: a game with issues can often still be played */
+.bs-row.is-broken .bs-cov, .bs-row.is-broken .bs-logo { filter: saturate(.7) brightness(.9); }
+.bs-row.is-broken .bs-flag { background: #b7791f; }
 
 .bs-genre .bs-flag { font-size: .78em; margin-left: .6em; }
 

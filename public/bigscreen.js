@@ -264,7 +264,7 @@ export function openBigScreen(host) {
   };
   const rowHtml = (g) => {
     const logo = wheelArt(g);
-    return `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Broken</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
+    return `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
   const placeWheel = () => {
     const wheel = $('#bs-wheel'); if (!wheel) return;
@@ -375,7 +375,8 @@ export function openBigScreen(host) {
       say('Starting the emulator…'); location.href = `gamesauce://launch?${q}`;
     } catch (err) { say(err.message || 'Could not start the game', true); }
   };
-  const play = (g) => { if (!g) return; if (g.broken) say('This game is marked as broken. Trying anyway…', true); if (canLocalPlay(g)) return playLocal(g); if (canBrowser(g)) return openBrowser(g); say('This game cannot be started from this PC.', true); };
+  // a game with issues can often still be played: Play only says so, and starts it
+  const play = (g) => { if (!g) return; if (g.broken) say('Emulation has issues with this game, so it may not run well. Starting it anyway…'); if (canLocalPlay(g)) return playLocal(g); if (canBrowser(g)) return openBrowser(g); say('This game cannot be started from this PC.', true); };
 
   // ── the questions on top: a yes/no, the keyboard, the collection chooser ──
   const overlay = (id, html) => { $('#' + id)?.remove(); const d = document.createElement('div'); d.className = 'bs-ov'; d.id = id; d.innerHTML = html; root.appendChild(d); return d; };

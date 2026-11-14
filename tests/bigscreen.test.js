@@ -97,7 +97,8 @@ test('Big Screen: the app\'s controller legend is hidden over it, the menu bar s
   assert.ok(css.includes('body.bs-open #gp-legend { display: none !important; }'), 'no second legend over the hints');
   assert.ok(css.includes('@keyframes bs-sel-squash') && css.includes('scaleX(.62)') && css.includes('transition: top .26s') && bs.includes("sel.classList.add('moving')"), 'the bar slides, and is shorter on the way');
   assert.ok(css.includes('.bs-brokenicon') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
-  assert.ok(bs.includes('This game is marked as broken. Trying anyway'), 'playing one says so');
+  assert.ok(bs.includes('Emulation has issues with this game, so it may not run well. Starting it anyway'), 'playing one says so, and still starts it');
+  assert.ok(!read('public/bigscreen.css').includes('line-through'), 'a game with issues is not struck out: it can often still be played');
 });
 
 test('Big Screen: the bottom bar reminds you to hold Select + Start to close a running game', () => {
