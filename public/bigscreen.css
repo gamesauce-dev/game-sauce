@@ -110,7 +110,6 @@ body.bs-open { overflow: hidden; }
 body.bs-open #gp-legend { display: none !important; }
 
 /* a game marked as broken */
-.bs-brokennote { position: absolute; left: 1.6em; right: 1.6em; bottom: 1.2em; z-index: 3; display: none; padding: .5em .9em; border-radius: .4em; background: rgba(150, 30, 20, .92); text-align: center; font-weight: 650; font-size: .85em; }
 .bs-game.is-broken .bs-boxcover { filter: saturate(.35) brightness(.8); }
 .bs-row.is-broken .bs-cov, .bs-row.is-broken .bs-logo { filter: saturate(.35) brightness(.75); }
 .bs-row.is-broken .bs-title { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, .45); }
@@ -217,4 +216,3 @@ body.bs-open #gp-legend { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .bs-favstar, .bs-brokenicon { transition: opacity .2s; transform: none; } }
 .bs-mi.broken-on { color: #ff6b6b; }
 .bs-mi.on.broken-on { color: #b91c1c; }
-.bs-game.is-broken .bs-brokennote { display: block; }

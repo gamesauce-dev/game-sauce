@@ -96,7 +96,7 @@ test('Big Screen: the app\'s controller legend is hidden over it, the menu bar s
   const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
   assert.ok(css.includes('body.bs-open #gp-legend { display: none !important; }'), 'no second legend over the hints');
   assert.ok(css.includes('@keyframes bs-sel-squash') && css.includes('scaleX(.62)') && css.includes('transition: top .26s') && bs.includes("sel.classList.add('moving')"), 'the bar slides, and is shorter on the way');
-  assert.ok(css.includes('.bs-brokenicon') && css.includes('.bs-brokennote') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
+  assert.ok(css.includes('.bs-brokenicon') && css.includes('.bs-row.is-broken') && bs.includes('paintBroken(g)'), 'the broken marks');
   assert.ok(bs.includes('This game is marked as broken. Trying anyway'), 'playing one says so');
 });
 
@@ -322,7 +322,7 @@ test('Big Screen: Favourite is a toggle: its word turns gold when on, and a gold
 test('Big Screen: Broken is a toggle: its word turns red when on, with a red crossed-out controller above the cover (beside the star)', () => {
   const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
   assert.ok(bs.includes('class="bs-badges"') && bs.includes('class="bs-brokenicon"') && bs.includes("b.classList.toggle('broken-on'"), 'the icon and the colour');
-  assert.ok(css.includes('.bs-mi.broken-on { color: #ff6b6b; }') && css.includes('.bs-game.is-broken .bs-brokenicon') && css.includes('.bs-game.is-broken .bs-brokennote { display: block; }'), 'red, shown when the game is marked, with its note');
+  assert.ok(css.includes('.bs-mi.broken-on { color: #ff6b6b; }') && css.includes('.bs-game.is-broken .bs-brokenicon'), 'red, shown when the game is marked');
 });
 
 test('Big Screen: the advisory on the right of a game marked as broken reads "Emulation has issues"', () => {
