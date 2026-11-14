@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Zoom in the desktop app.** Ctrl and + / - / 0 (Cmd on a Mac), or Ctrl and the mouse wheel, zoom the window in steps from 50% to 300%; 0 goes back to 100%. The level is remembered for the next start (kept in the app's own settings file, so switching server keeps it too).
+
 ## [0.5.4] - 2026-11-14
 
 ### Changed

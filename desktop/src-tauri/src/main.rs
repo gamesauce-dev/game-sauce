@@ -35,6 +35,8 @@ struct Config {
     lan: bool, // local only: let other devices on the network connect
     #[serde(default)]
     graphics: Option<String>, // Linux: "standard" | "hardware" | "software" (how the window is drawn; applies on the next start)
+    #[serde(default)]
+    zoom: Option<f64>, // the page zoom (Ctrl and + / - / 0, or Ctrl and the mouse wheel; Cmd on a Mac), kept for the next start
 }
 
 struct AppState {
@@ -72,6 +74,9 @@ fn write_config(app: &AppHandle, c: &Config) {
     let mut c = c.clone();
     if c.graphics.is_none() {
         c.graphics = read_config(app).graphics; // switching server must not forget the graphics choice
+    }
+    if c.zoom.is_none() {
+        c.zoom = read_config(app).zoom; // nor the zoom
     }
     let c = &c;
     let p = config_path(app);
@@ -350,7 +355,7 @@ fn get_config(app: AppHandle) -> Config {
 async fn use_local(app: AppHandle, lan: bool) -> Result<Started, String> {
     let a = app.clone();
     let started = tauri::async_runtime::spawn_blocking(move || start_server(&a, lan)).await.map_err(|e| e.to_string())??;
-    write_config(&app, &Config { mode: Some("local".into()), remote_url: None, lan, graphics: None });
+    write_config(&app, &Config { mode: Some("local".into()), remote_url: None, lan, graphics: None, zoom: None });
     Ok(started)
 }
 
@@ -361,7 +366,7 @@ async fn use_remote(app: AppHandle, url: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || probe(&u)).await.map_err(|e| e.to_string())??;
     stop_server(&app.state::<AppState>());
     set_status(&app, &format!("Connected to {url}"));
-    write_config(&app, &Config { mode: Some("remote".into()), remote_url: Some(url.clone()), lan: false, graphics: None });
+    write_config(&app, &Config { mode: Some("remote".into()), remote_url: Some(url.clone()), lan: false, graphics: None, zoom: None });
     Ok(url)
 }
 
@@ -381,8 +386,50 @@ fn open_external(url: &tauri::Url) {
 /// gamesauce:// (Play on this PC, Check my PC, Set up emulators) and steam:// links are not pages. The web view on Linux would try to load them
 /// and show "URL can't be shown", so they are caught here and handed to the launcher inside the app (or to the system for steam://).
 /// Returns true when the link was taken.
+/// The zoom steps, like a browser's.
+const ZOOM_STEPS: [f64; 13] = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0];
+
+/// Zoom the window one step in or out, or back to 100% ("in" | "out" | "reset"), and remember it for the next start.
+fn zoom_window(app: &AppHandle, action: &str) {
+    let mut c = read_config(app);
+    let cur = c.zoom.unwrap_or(1.0);
+    let at = ZOOM_STEPS.iter().enumerate().min_by(|a, b| (a.1 - cur).abs().total_cmp(&(b.1 - cur).abs())).map(|(i, _)| i).unwrap_or(5);
+    let next = match action {
+        "in" => ZOOM_STEPS[(at + 1).min(ZOOM_STEPS.len() - 1)],
+        "out" => ZOOM_STEPS[at.saturating_sub(1)],
+        _ => 1.0,
+    };
+    c.zoom = Some(next);
+    write_config(app, &c);
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.set_zoom(next);
+    }
+}
+
+/// The page asks for a zoom by going to gamesauce-zoom://in (or out, reset); the keys and the wheel are caught in ZOOM_SCRIPT, since the window has no menu on Windows and Linux.
+const ZOOM_SCRIPT: &str = r#"(function () {
+  if (window.__gsZoomKeys) return; window.__gsZoomKeys = true;
+  var last = 0;
+  function send(a) { var n = Date.now(); if (n - last < 120) return; last = n; location.href = 'gamesauce-zoom://' + a; }
+  window.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    var k = e.key, a = null;
+    if (k === '+' || k === '=') a = 'in'; else if (k === '-' || k === '_') a = 'out'; else if (k === '0') a = 'reset';
+    if (!a) return;
+    e.preventDefault(); send(a);
+  }, true);
+  window.addEventListener('wheel', function (e) {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault(); send(e.deltaY < 0 ? 'in' : 'out');
+  }, { capture: true, passive: false });
+})();"#;
+
 fn handle_app_link(app: &AppHandle, url: &tauri::Url) -> bool {
     match url.scheme() {
+        "gamesauce-zoom" => {
+            zoom_window(app, url.host_str().unwrap_or("reset"));
+            true
+        }
         "gamesauce" => {
             if let Some((exe, script)) = launcher_script(app) {
                 let mut cmd = Command::new(exe);
@@ -455,8 +502,9 @@ fn main() {
                 let _ = fs::create_dir_all(&dir);
                 win = win.data_directory(dir);
             }
-            win
+            let main = win
                 .title("game-sauce")
+                .initialization_script(ZOOM_SCRIPT)
                 .on_navigation(move |url| !handle_app_link(&nav_handle, url))
                 .inner_size(1320.0, 860.0)
                 .min_inner_size(820.0, 560.0)
@@ -465,6 +513,9 @@ fn main() {
                     NewWindowResponse::Deny
                 })
                 .build()?;
+            if let Some(z) = read_config(app.handle()).zoom {
+                let _ = main.set_zoom(z);
+            }
             if let Some(ms) = std::env::var("GAMESAUCE_TEST_SWITCH_MS").ok().and_then(|v| v.parse::<u64>().ok()) {
                 let handle = app.handle().clone();
                 std::thread::spawn(move || {
