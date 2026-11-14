@@ -493,6 +493,8 @@ body:has(#bulk-bar:not(.hidden)) .card-playbtn { display: none; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1429rem; display: grid; gap: 0.8571rem; align-content: start; }
 .panel h3 { margin: 0; font-size: 0.9286rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
 .hint { font-size: 0.8571rem; color: var(--dim); line-height: 1.5; margin: 0; }
+/* A box inside a Settings page that looks like a panel but is not one: Settings hides every .panel except the page being shown, so this one must not carry that class. */
+.plat-art-box { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8571rem; display: grid; gap: 0.5714rem; margin: 0.7143rem 0; }
 
 .progress-list { display: grid; gap: 0.4286rem; margin-top: 1.1429rem; }
 .progress-item { display: flex; align-items: center; gap: 0.7143rem; font-size: 0.8929rem; color: var(--muted); }

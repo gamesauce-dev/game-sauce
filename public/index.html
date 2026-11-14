@@ -4,11 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>game-sauce — ROM library</title>
-<link rel="stylesheet" href="/styles.css?v=9" />
-<link rel="stylesheet" href="/modern.css?v=1" />
+<link rel="stylesheet" href="/styles.css?v=10" />
+<link rel="stylesheet" href="/modern.css?v=2" />
 <link rel="stylesheet" href="/physical.css?v=1" />
 <link rel="stylesheet" href="/carousel.css?v=1" />
-<link rel="stylesheet" href="/bigscreen.css?v=1" />
+<link rel="stylesheet" href="/bigscreen.css?v=2" />
 <link rel="stylesheet" href="/messages.css?v=1" />
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
 </head>
@@ -450,7 +450,7 @@
         <div class="platform-add-bar">
           <button class="btn btn-primary" id="platform-add-toggle">+ Add platform</button>
         </div>
-        <div class="panel" id="plat-art" style="padding:12px;display:grid;gap:8px;margin:10px 0">
+        <div class="plat-art-box" id="plat-art">
           <b>Platform art</b>
           <p class="hint" style="margin:0">Logos for the platform tiles in Big Screen. <b>Fetch</b> asks ScreenScraper for the logo of every platform that has none (Settings, Metadata providers must be set up). <b>Import</b> reads a folder called <b>Platforms</b> (or Systems, Consoles) inside one of your artwork folders: one picture per platform, named for it (<code>PlayStation 2.png</code>, <code>ps2.png</code>); a picture named for a family (<code>Sony.png</code>) becomes the family's logo. Platforms that already have a logo are left alone unless you tick replace.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">

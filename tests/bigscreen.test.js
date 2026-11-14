@@ -269,5 +269,6 @@ test('Fill the gaps: a run asks about the games of one platform that lack a logo
   assert.equal((await call('/api/art/fill-job', { method: 'POST', body: { platform: 'gamegear' } })).status, 400, 'ScreenScraper has to be set up');
   assert.equal((await call('/api/art/fill-job')).status, 200);
   const ui = read('public/app.js'), html = read('public/index.html');
+  assert.ok(html.includes('class="plat-art-box" id="plat-art"') && !html.includes('class="panel" id="plat-art"'), 'the box must not carry the panel class: Settings hides every panel except the open page, which hid it');
   assert.ok(html.includes('id="plat-fill-go"') && html.includes('id="plat-fill-limit"') && ui.includes("'/art/fill-job'"), 'the button and its progress are in Settings > Platforms');
 });
