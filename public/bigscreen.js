@@ -79,7 +79,7 @@ export function openBigScreen(host) {
   const hint = (b, t) => `<span><i>${b}</i>${t}</span>`;
   const paintHints = () => {
     const h = { platforms: [hint('A', 'Select'), st.level === 1 ? hint('B', 'Back') : (host.kiosk ? '' : hint('B', 'Close'))], games: [hint('A', 'Open'), hint('B', 'Back'), hint('LB RB', 'Jump by letter'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')],
-      game: [hint('A', 'Choose'), hint('B', 'Back'), hint('LB RB', 'Other game'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')], pick: [hint('A', 'Add'), hint('B', 'Cancel')] }[st.screen] || [];
+      game: [hint('A', 'Choose'), hint('B', 'Back'), hint('LB RB', 'Previous / next game'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')], pick: [hint('A', 'Add'), hint('B', 'Cancel')] }[st.screen] || [];
     $('#bs-hints').innerHTML = h.join('');
   };
   let toastTimer = 0;
@@ -162,7 +162,7 @@ export function openBigScreen(host) {
   };
   const rowHtml = (g) => {
     const logo = gameLogo(g);
-    return `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Broken</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : `<span>${esc(g.title)}</span>`}</div></div><div class="bs-year">${esc(g.release_year || '')}</div>`;
+    return `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Broken</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(g.release_year || '')}</div>`;
   };
   const placeWheel = () => {
     const wheel = $('#bs-wheel'); if (!wheel) return;
@@ -197,13 +197,13 @@ export function openBigScreen(host) {
     $('#bs-main').innerHTML = `<div class="bs-game">
       <div class="bs-leftbg" aria-hidden="true">${g.cover_url ? `<i style="background-image:url('${esc(g.cover_url)}')"></i>` : ''}</div>
       <nav class="bs-menu" id="bs-menu" aria-label="${esc(g.title)}"></nav>
-      <div class="bs-box"><div class="bs-boxcover" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" />` : `<span>${esc(g.title)}</span>`}</div></div>
+      <div class="bs-box"><div class="bs-boxcover${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div>
       <section class="bs-info">
         ${gameMarquee(g) ? `<div class="bs-marquee"><img src="${esc(gameMarquee(g))}" alt="" onerror="this.parentElement.remove()" /></div>` : ''}
         <div class="bs-genre">${esc(g.genre || cur()?.name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}</div>
         <h1 class="bs-name${gameLogo(g) ? ' has-logo' : ''}">${gameLogo(g) ? `<img class="bs-glogo" src="${esc(gameLogo(g))}" alt="" onerror="this.closest('h1').classList.remove('has-logo')" />` : ''}<span>${esc(g.title)}</span></h1>
+        <div class="bs-factline">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
         <div class="bs-scroll" id="bs-scroll"><div class="bs-scrollin" id="bs-scrollin">
-          <div class="bs-factline">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
           <p class="bs-desc">${esc(g.description || 'No description yet.')}</p>
         </div></div>
         <div class="bs-media" id="bs-media">${g.has_video ? `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}"${shot ? ` poster="${esc(shot)}"` : ''} loop playsinline preload="auto"></video>` : shot ? `<img src="${esc(shot)}" alt="" />` : ''}</div>
@@ -216,7 +216,7 @@ export function openBigScreen(host) {
     }
     paintMenu(); autoScroll();
   };
-  // The details (facts and description) scroll slowly when they are longer than the space: a pause, a slow glide to the end, a pause, and back to the top.
+  // The description scrolls slowly when they are longer than the space: a pause, a slow glide to the end, a pause, and back to the top.
   let scrollTimer = 0;
   const autoScroll = () => {
     clearInterval(scrollTimer);
@@ -318,7 +318,7 @@ export function openBigScreen(host) {
       if (a === 'up' || a === 'down') { st.mi = Math.max(0, Math.min(gameMenu(game()).length - 1, st.mi + (a === 'down' ? 1 : -1))); paintMenu(); }
       else if (a === 'select') runMenu(gameMenu(game())[st.mi].k);
       else if (a === 'back') backToWheel();
-      else if (a === 'prev-family' || a === 'next-family') { const n = st.gi + (a === 'next-family' ? 1 : -1); if (n >= 0 && n < st.games.length) { st.gi = n; drawGame(); } }
+      else if (a === 'prev-family' || a === 'next-family' || a === 'left' || a === 'right') { const n = st.gi + (a === 'next-family' || a === 'right' ? 1 : -1); if (n >= 0 && n < st.games.length) { st.gi = n; drawGame(); } else say(n < 0 ? 'This is the first game.' : 'This is the last game.'); }
       else if (a === 'browser') openBrowser(game()); else if (a === 'local') playLocal(game());
     }
   };

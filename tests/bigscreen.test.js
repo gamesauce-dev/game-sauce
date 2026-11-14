@@ -84,3 +84,10 @@ test('Big Screen: platform names and game counts are in capitals, the game page 
   assert.ok(bs.includes('now - t0 > 5000') && bs.includes('* 14'), 'the details start to scroll after about five seconds, slowly');
   assert.ok(css.includes('.bs-media:empty { display: none; }'), 'no empty box where a video would be');
 });
+
+test('Big Screen: the year, players and developer stay put above the scrolling description; covers keep their own shape; the game page moves to the other game with LB/RB or left/right', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.indexOf('class="bs-factline"') < bs.indexOf('id="bs-scroll"') && !/<div class="bs-scrollin" id="bs-scrollin">\s*<div class="bs-factline"/.test(bs), 'the facts are outside the scrolling box');
+  assert.ok(css.includes('.bs-boxcover.has-img') && css.includes('.bs-cov.has-img') && css.includes('aspect-ratio: auto'), 'a cover with a picture has no fixed frame, so no grey bars');
+  assert.ok(bs.includes("a === 'prev-family' || a === 'next-family' || a === 'left' || a === 'right'"), 'LB, RB, left and right change game on the game page');
+});
