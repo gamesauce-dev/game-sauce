@@ -195,14 +195,17 @@ export function openBigScreen(host) {
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);
     $('#bs-main').innerHTML = `<div class="bs-game">
+      <div class="bs-leftbg" aria-hidden="true">${g.cover_url ? `<i style="background-image:url('${esc(g.cover_url)}')"></i>` : ''}</div>
       <nav class="bs-menu" id="bs-menu" aria-label="${esc(g.title)}"></nav>
       <div class="bs-box"><div class="bs-boxcover" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" />` : `<span>${esc(g.title)}</span>`}</div></div>
       <section class="bs-info">
         ${gameMarquee(g) ? `<div class="bs-marquee"><img src="${esc(gameMarquee(g))}" alt="" onerror="this.parentElement.remove()" /></div>` : ''}
         <div class="bs-genre">${esc(g.genre || cur()?.name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}</div>
         <h1 class="bs-name${gameLogo(g) ? ' has-logo' : ''}">${gameLogo(g) ? `<img class="bs-glogo" src="${esc(gameLogo(g))}" alt="" onerror="this.closest('h1').classList.remove('has-logo')" />` : ''}<span>${esc(g.title)}</span></h1>
-        <div class="bs-factline">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
-        <p class="bs-desc">${esc(g.description || 'No description yet.')}</p>
+        <div class="bs-scroll" id="bs-scroll"><div class="bs-scrollin" id="bs-scrollin">
+          <div class="bs-factline">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
+          <p class="bs-desc">${esc(g.description || 'No description yet.')}</p>
+        </div></div>
         <div class="bs-media" id="bs-media">${g.has_video ? `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}"${shot ? ` poster="${esc(shot)}"` : ''} loop playsinline preload="auto"></video>` : shot ? `<img src="${esc(shot)}" alt="" />` : ''}</div>
       </section></div>`;
     const v = $('#bs-media video');
@@ -211,7 +214,23 @@ export function openBigScreen(host) {
       v.muted = false; v.volume = 0.8;
       v.play?.().catch(() => { v.muted = true; v.play?.().catch(() => {}); });
     }
-    paintMenu();
+    paintMenu(); autoScroll();
+  };
+  // The details (facts and description) scroll slowly when they are longer than the space: a pause, a slow glide to the end, a pause, and back to the top.
+  let scrollTimer = 0;
+  const autoScroll = () => {
+    clearInterval(scrollTimer);
+    const box = $('#bs-scroll'), inner = $('#bs-scrollin'); if (!box || !inner || reduced()) return;
+    const max = inner.offsetHeight - box.clientHeight; if (max < 4) return;
+    let phase = 'wait', t0 = Date.now();
+    scrollTimer = setInterval(() => {
+      if (!inner.isConnected) { clearInterval(scrollTimer); return; }
+      const now = Date.now();
+      if (phase === 'wait') { if (now - t0 > 5000) { phase = 'go'; t0 = now; } }   // it starts after about five seconds
+      else if (phase === 'go') { const y = Math.min(max, (now - t0) / 1000 * 14); inner.style.transform = `translateY(${-y}px)`; if (y >= max) { phase = 'end'; t0 = now; } }
+      else if (now - t0 > 3500) { inner.style.transition = 'transform .6s ease'; inner.style.transform = 'translateY(0)'; phase = 'back'; t0 = now; }
+      else if (phase === 'back' && now - t0 > 700) { inner.style.transition = ''; phase = 'wait'; t0 = now; }
+    }, 40);
   };
   const paintMenu = () => {
     const g = game(), menu = $('#bs-menu'); if (!g || !menu) return;
@@ -265,7 +284,7 @@ export function openBigScreen(host) {
   const backToWheel = () => { st.screen = 'games'; $('#bs-crumb').textContent = cur()?.name || 'Games'; paintHints(); $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
-    document.removeEventListener('keydown', onKey); clearInterval(clock); clearTimeout(heroTimer); clearTimeout(toastTimer);
+    document.removeEventListener('keydown', onKey); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer);
     root.remove(); root = null; document.body.classList.remove('bs-open');
     try { prevFocus?.focus?.(); } catch { /* the opener is gone */ }
   };

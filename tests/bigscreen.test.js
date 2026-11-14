@@ -76,3 +76,11 @@ test('Big Screen: a game shows its logo and its marquee when it has them (the pi
   assert.ok(bs.includes('v.muted = false') && bs.includes("v.muted = true"), 'the video plays with sound, and without it if the browser will not start it with sound');
   assert.ok(css.includes('.bs-marquee') && css.includes('.bs-mid.has-logo .bs-cov'));
 });
+
+test('Big Screen: platform names and game counts are in capitals, the game page has a blurred cover on its left, and the details scroll slowly after about five seconds', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(/\.bs-heroname \{ text-transform: uppercase/.test(css) && /\.bs-pill \{ text-transform: uppercase/.test(css), 'names and counts in capitals');
+  assert.ok(bs.includes('class="bs-leftbg"') && css.includes('.bs-leftbg i') && css.includes('filter: blur('), 'a blurred cover behind the menu');
+  assert.ok(bs.includes('now - t0 > 5000') && bs.includes('* 14'), 'the details start to scroll after about five seconds, slowly');
+  assert.ok(css.includes('.bs-media:empty { display: none; }'), 'no empty box where a video would be');
+});
