@@ -337,3 +337,46 @@ test('Big Screen: a favourite shows a gold star just left of its title on the wh
   assert.ok(bs.includes("g.favorite && st.src?.kind !== 'fav'") && bs.includes('class="bs-favmark"'), 'the star, in the title text before the first word');
   assert.ok(css.includes('.bs-favmark { display: inline-block; margin-right: .3em; color: #f5c542;'), 'gold, with a gap before the title');
 });
+
+/* ───────── multi-disc sets ───────── */
+
+test('Multi-disc sets: a file name that says Disc / Disk / CD (or an .m3u playlist) marks a game as part of a set; "Disc 1 of 1", CD32 and a title that merely says Disc do not', async () => {
+  const { detectMultiDisc, isMultiDisc } = await import('../src/lib/multidisc.js');
+  for (const n of ['Final Fantasy VII (USA) (Disc 1).cue', 'Final Fantasy VII (USA) (Disc 2 of 3).chd', 'Policenauts [CD2].iso', 'Phantasmagoria - Disc 2.iso', 'Game (Disk A).adf', 'Game (Disc 3).bin', 'Final Fantasy VII.m3u']) assert.equal(detectMultiDisc(n), true, n);
+  for (const n of ['Game (Disc 1 of 1).iso', 'Alien Breed (CD32).iso', 'Disc World (USA).iso', 'Plain Game.sfc', 'Disco Elysium.iso', 'Game (USA).chd', '']) assert.equal(detectMultiDisc(n), false, n || '(empty)');
+  assert.equal(isMultiDisc({ filename: 'Game (Disc 1).cue', multidisc_override: 0 }), false, 'an admin saying no wins');
+  assert.equal(isMultiDisc({ filename: 'Plain.iso', multidisc_override: 1 }), true, 'and saying yes');
+  assert.equal(isMultiDisc({ filename: 'Game (Disc 1).cue', multidisc_override: null }), true, 'no setting: the name decides');
+});
+
+test('Multi-disc sets: the list says which games are one, Play on this PC is refused for them (with the reason), an admin can say yes or no by hand, and the platform list counts them', async () => {
+  const real = path.join(TMP, 'disc-test.iso'); fs.writeFileSync(real, 'x');
+  const mk = (title, filename, sha) => Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'saturn'), ?, ?, ?, ?, 1, ?)").run(title, title.toLowerCase(), filename, real, sha).lastInsertRowid);
+  const set1 = mk('Set Game Disc 1', 'Set Game (Disc 1).iso', 'd150000000000000000000000000000000000001'), set2 = mk('Set Game Disc 2', 'Set Game (Disc 2).iso', 'd150000000000000000000000000000000000002'), single = mk('Single Disc Game', 'Single Disc Game.iso', 'd150000000000000000000000000000000000003');
+  const row = async (id) => (await call('/api/roms?q=Game&limit=50')).body.items.find((r) => r.id === id);
+  assert.equal((await row(set1)).multidisc, 1); assert.equal((await row(set2)).multidisc, 1); assert.equal((await row(single)).multidisc, 0);
+  assert.equal((await call(`/api/roms/${set1}`)).body.multidisc, 1, 'in the details too');
+  const refused = await call(`/api/roms/${set1}/launch`, { method: 'POST' });
+  assert.equal(refused.status, 409); assert.match(refused.body.error, /multi-disc set/); assert.equal(refused.body.multidisc, true);
+  assert.equal((await call(`/api/roms/${single}/launch`, { method: 'POST' })).status, 200, 'a single disc still starts');
+  assert.equal((await call(`/api/roms/${set1}/multidisc`, { method: 'POST', as: 'ann', body: { value: false } })).status, 403, 'admins only');
+  assert.equal((await call(`/api/roms/${set1}/multidisc`, { method: 'POST', body: { value: 'maybe' } })).status, 400);
+  const no = (await call(`/api/roms/${set1}/multidisc`, { method: 'POST', body: { value: false } })).body;
+  assert.deepEqual([no.multidisc_override, no.multidisc], [0, 0]); assert.equal((await call(`/api/roms/${set1}/launch`, { method: 'POST' })).status, 200, 'said not a set: it starts');
+  const yes = (await call(`/api/roms/${single}/multidisc`, { method: 'POST', body: { value: true } })).body; assert.deepEqual([yes.multidisc_override, yes.multidisc], [1, 1]);
+  assert.equal((await call(`/api/roms/${single}/launch`, { method: 'POST' })).status, 409, 'said a set: refused');
+  const back = (await call(`/api/roms/${single}/multidisc`, { method: 'POST', body: { value: null } })).body; assert.deepEqual([back.multidisc_override, back.multidisc], [null, 0], 'null: the name decides again');
+  const bulk = (await call('/api/roms/bulk/multidisc', { method: 'POST', body: { ids: [set1, set2], value: null } })).body; assert.equal(bulk.changed, 2);
+  assert.equal((await call('/api/roms/bulk/multidisc', { method: 'POST', as: 'ann', body: { ids: [set1], value: true } })).status, 403); assert.equal((await call('/api/roms/bulk/multidisc', { method: 'POST', body: { ids: [], value: true } })).status, 400);
+  assert.equal((await row(set1)).multidisc, 1, 'set by name again');
+  assert.ok((await call('/api/platforms')).body.items.find((p) => p.slug === 'saturn').multidisc_count >= 2, 'the platform list counts the sets');
+});
+
+test('Multi-disc sets: a badge on the tile, the reason in the details, an admin control, a bulk button, and the Carousel and Big Screen leave them out', () => {
+  const app = read('public/app.js'), html = read('public/index.html'), car = read('public/carousel.js'), bs = read('public/bigscreen.js');
+  assert.ok(app.includes('class="card-md"') && read('public/styles.css').includes('.card-md {'), 'a badge on the line under the title');
+  assert.ok(app.includes('if (rom.multidisc) { toast(') && app.includes('data-act="multidisc"') && app.includes("'/roms/bulk/multidisc'") && app.includes('class="hint md-note"'), 'the details say why, an admin can flip it');
+  assert.ok(html.includes('id="bulk-md-btn"') && app.includes("addEventListener('click', bulkMultiDiscSelected)"), 'a bulk button');
+  assert.ok(car.includes('!g.missing && !g.multidisc'), 'the Carousel leaves them out');
+  assert.ok(bs.includes('!g.missing && !g.multidisc') && bs.includes('p.multidisc_count') && bs.includes('&& !g.multidisc && (g.playable'), 'Big Screen leaves them out of its lists and counts');
+});

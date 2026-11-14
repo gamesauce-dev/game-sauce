@@ -94,9 +94,9 @@ export function openBigScreen(host) {
   // Until the launcher has reported once, nothing is known, so every platform shows (and a note says how to narrow it).
   const platList = () => (host.platforms() || [])
     .map((p) => (noLauncher() ? { ...p, visible_count: p.playable_count || 0 } : p))
-    .filter((p) => (noLauncher() || st.lp === null || st.lp.includes(p.slug)) && ((p.visible_count ?? p.count) || 0) > 0)
+    .filter((p) => (noLauncher() || st.lp === null || st.lp.includes(p.slug)) && count(p) > 0)
     .sort((a, b) => String(a.family || '').localeCompare(String(b.family || '')) || (a.generation || 99) - (b.generation || 99) || String(a.name).localeCompare(b.name));
-  const count = (p) => (p.visible_count ?? p.count) || 0;
+  const count = (p) => Math.max(0, ((p.visible_count ?? p.count) || 0) - (p.multidisc_count || 0));   // a game on several discs cannot be started from here, so it is not counted
   const famColour = (p) => (HEX.test(p?.family_colour || '') ? p.family_colour : '#6b7280');
   const gameAccent = (g) => (HEX.test(g?.platform_accent || '') ? g.platform_accent : accent(st.plats.find((p) => p.slug === g?.platform)));
   // the first row: Favourites and Collections (when there are any), then the families; then the platforms of one family, or the collections
@@ -156,7 +156,7 @@ export function openBigScreen(host) {
   // ── loading: the games of a platform, of your favourites, or of one collection ──
   const srcKey = (s) => (s.kind === 'platform' ? 'p:' + s.slug : s.kind === 'fav' ? 'fav' : 'c:' + s.id);
   const srcQuery = (s) => (s.kind === 'platform' ? { platform: s.slug } : s.kind === 'fav' ? { favorite: '1' } : { collection: String(s.id) });
-  const usable = (g) => !g.missing && (g.playable || (!noLauncher() && launchable(g.platform)));   // a game this PC can start, in the browser or with its emulator
+  const usable = (g) => !g.missing && !g.multidisc && (g.playable || (!noLauncher() && launchable(g.platform)));   // a game this PC can start, in the browser or with its emulator
   const loadGames = (s) => {
     const key = srcKey(s);
     if (st.cache.has(key)) return st.cache.get(key);
@@ -166,7 +166,7 @@ export function openBigScreen(host) {
         const q = new URLSearchParams({ ...srcQuery(s), sort: 'title', limit: String(PAGE), offset: String(all.length) });
         if (s.kind === 'platform' && (host.user()?.play_only || !launchable(s.slug))) q.set('playable', '1');   // no emulator of this platform on this PC: only the games that play in the browser
         const data = await host.api(`/roms?${q}`);
-        total = data.total; all = all.concat(s.kind === 'platform' ? data.items.filter((g) => !g.missing) : data.items.filter(usable));
+        total = data.total; all = all.concat(s.kind === 'platform' ? data.items.filter((g) => !g.missing && !g.multidisc) : data.items.filter(usable));
         if (!data.items.length) break;
       }
       return all;

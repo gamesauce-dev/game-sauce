@@ -613,6 +613,7 @@ function cardHtml(rom) {
       <div class="card-sub">
         ${rom.release_year ? `<span>${rom.release_year}</span>` : ''}
         ${rom.region ? `<span>·</span><span>${esc(rom.region)}</span>` : ''}
+        ${rom.multidisc ? '<span class="card-md" title="Part of a multi-disc set: Play on this PC cannot start it, but it can be downloaded" aria-label="Multi-disc set">DISC SET</span>' : ''}
       </div>
     </div>
   `;
@@ -1218,6 +1219,7 @@ function syncSelectUI() {
   $('#bulk-system-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $('#bulk-clearmatch-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $('#bulk-lock-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
+  $('#bulk-md-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $$('.bl-label').forEach((l) => { l.textContent = state.locked ? 'Unlock' : 'Lock'; });
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
@@ -1285,6 +1287,22 @@ async function bulkLockSelected() {
   try {
     const r = await api('/roms/bulk/lock', { method: 'POST', body: JSON.stringify({ ids, locked: !unlock }) });
     toast(unlock ? `Unlocked ${r.changed} game${r.changed === 1 ? '' : 's'}: they can be deleted now` : `Locked ${r.changed} game${r.changed === 1 ? '' : 's'}: protected from deletion`);
+    state.selected.clear();
+    await Promise.all([loadLibrary(), loadPlatforms()]);
+    syncSelectUI();
+  } catch (err) { toast(err.message, true); }
+}
+
+// Say by hand that the selected games are part of a multi-disc set (the box can say they are not). One game can go back to its file name in its details window.
+async function bulkMultiDiscSelected() {
+  const ids = [...state.selected];
+  if (!ids.length) return toast('Select some tiles first', true);
+  const r = await confirmDialog({ title: 'Multi-disc sets', body: `Mark the ${ids.length} selected game${ids.length === 1 ? '' : 's'} as part of a multi-disc set? Play on this PC will not start them and Big Screen leaves them out; they stay in the Library and can be downloaded.`, okLabel: 'Mark as multi-disc', checkLabel: 'Instead: say they are NOT multi-disc sets' });
+  if (!r?.ok) return;
+  const value = !r.checked;
+  try {
+    const done = await api('/roms/bulk/multidisc', { method: 'POST', body: JSON.stringify({ ids, value }) });
+    toast(`${done.changed} game${done.changed === 1 ? '' : 's'} ${value ? 'marked as multi-disc sets' : 'marked as NOT multi-disc sets'}`);
     state.selected.clear();
     await Promise.all([loadLibrary(), loadPlatforms()]);
     syncSelectUI();
@@ -1585,7 +1603,7 @@ async function openDetail(id) {
 
     <div class="detail-actions">
       ${authState.user?.can_download === false ? '' : `<a class="ibtn ibtn-primary" href="/api/roms/${rom.id}/download" download data-tip="Download ROM" aria-label="Download ROM">${ICON.download}</a>`}
-      ${authState.user?.can_download === false ? '' : `<button class="ibtn" data-act="launch-local" data-tip="Play with the emulator installed on this PC" aria-label="Play locally">${ICON.desktop}</button>`}
+      ${authState.user?.can_download === false ? '' : `<button class="ibtn${rom.multidisc ? ' is-off' : ''}" data-act="launch-local" ${rom.multidisc ? 'aria-disabled="true" data-tip="Part of a multi-disc set: Play on this PC cannot start it (download the files for an emulator that handles sets)"' : 'data-tip="Play with the emulator installed on this PC"'} aria-label="Play locally">${ICON.desktop}</button>`}
       ${rom.playable ? `<button class="ibtn ibtn-play" data-act="play" data-tip="Play in browser${rom.platform === 'mame' ? ' (best effort)' : ''}" aria-label="Play in browser">${ICON.play}</button>` : ''}
       <button class="ibtn${rom.favorite ? ' is-on fav' : ''}" data-act="favorite" data-tip="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
       <div class="more-wrap">
@@ -1594,6 +1612,7 @@ async function openDetail(id) {
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
           ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
+          ${authState.user?.role === 'admin' ? `<button class="mi${rom.multidisc ? ' on' : ''}" role="menuitem" data-act="multidisc">${ICON.disc || ICON.desktop}<span><b>Multi-disc set: ${rom.multidisc ? 'yes' : 'no'}</b><small>${rom.multidisc_override == null ? 'Decided from its file name. Click to say the opposite' : 'Set by hand. Click to go by its file name again'}</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? 'Show this game again' : 'Unhide for me') : 'Hide this game'}</b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? '<small>Hidden from members too</small>' : '') : (authState.user?.role === 'admin' ? '<small>Members will not see it either; you find it under Hidden</small>' : '<small>Only from your view; others still see it</small>')}</span></button>
           <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
           ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
@@ -1605,6 +1624,7 @@ async function openDetail(id) {
       <button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>
     </div>
 
+    ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.${rom.multidisc_override == null ? ' (Decided from its file name.)' : ' (Set by hand.)'}</p>` : ''}
     <div class="section-label">Identify this game</div>
     <div class="panel" style="padding:12px">
       <p class="hint" style="margin:0 0 10px">No match, wrong game, or missing art? Search and pick the right entry — cover included.</p>
@@ -1702,6 +1722,7 @@ async function openDetail(id) {
   $('[data-act="launch-local"]', drawer)?.addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     if (btn.disabled) return;
+    if (rom.multidisc) { toast('This game is part of a multi-disc set, which Play on this PC cannot start (it sends one file). Download the files and open them in an emulator that handles multi-disc sets.', true); return; }
     btn.disabled = true;
     try {
       const j = await api(`/roms/${rom.id}/launch`, { method: 'POST' });
@@ -1713,6 +1734,15 @@ async function openDetail(id) {
     } finally {
       setTimeout(() => { btn.disabled = false; }, 2000);
     }
+  });
+  $('[data-act="multidisc"]', drawer)?.addEventListener('click', async () => {
+    const value = rom.multidisc_override == null ? !rom.multidisc : null;   // say the opposite of what the name says, or go back to the name
+    try {
+      const r = await api(`/roms/${id}/multidisc`, { method: 'POST', body: JSON.stringify({ value }) });
+      toast(value === null ? `Going by the file name again: ${r.multidisc ? 'part of a multi-disc set' : 'not a multi-disc set'}` : (value ? 'Marked as part of a multi-disc set' : 'Marked as NOT part of a multi-disc set'));
+      await Promise.all([loadLibrary(), loadPlatforms()]);
+      openDetail(id);
+    } catch (err) { toast(err.message, true); }
   });
   $('[data-act="playtoggle"]', drawer)?.addEventListener('click', async () => {
     const want = !rom.playable;
@@ -3861,6 +3891,7 @@ $('#bulk-delete-btn')?.addEventListener('click', bulkDeleteSelected);
 $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
 $('#reset-filters')?.addEventListener('click', resetFilters);
 $('#bulk-lock-btn')?.addEventListener('click', bulkLockSelected);
+$('#bulk-md-btn')?.addEventListener('click', bulkMultiDiscSelected);
 $('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
 $('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));

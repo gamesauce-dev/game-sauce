@@ -30,6 +30,7 @@ import { originGuard, rateLimit } from './lib/guard.js';
 import { canDownload } from './lib/policy.js';
 import { launcherEntries } from './lib/launcherpack.js';
 import { zipChunks } from './lib/export.js';
+import { detectMultiDisc } from './lib/multidisc.js';
 import { launchFileHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
@@ -190,8 +191,17 @@ export function createApp() {
     for (const r of db.prepare('SELECT family, colour FROM family_colours').all()) m[r.family] = r.colour;
     return m;
   };
+  // How many of each platform's games are part of a multi-disc set (by their names, or as an admin set them): only the rows whose names could say so are looked at.
+  const multiDiscCounts = () => {
+    const n = {};
+    for (const r of db.prepare("SELECT p.slug, r.filename, r.multidisc_override FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND (r.multidisc_override IS NOT NULL OR lower(r.filename) LIKE '%dis%' OR lower(r.filename) LIKE '%cd%' OR lower(r.filename) LIKE '%.m3u%')").all()) {
+      const yes = r.multidisc_override === 1 || (r.multidisc_override == null && detectMultiDisc(r.filename));
+      if (yes) n[r.slug] = (n[r.slug] || 0) + 1;
+    }
+    return n;
+  };
   api.get('/platforms', (req, res) => {
-    const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap();
+    const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap(), md = multiDiscCounts();
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count,
@@ -201,7 +211,7 @@ export function createApp() {
         , COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
-      `).all().map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
+      `).all().map((p) => ({ ...p, multidisc_count: md[p.slug] || 0, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
     });
   });
 

@@ -1,3 +1,4 @@
+import { isMultiDisc, MULTIDISC_MESSAGE } from '../lib/multidisc.js';
 import express from 'express';
 import multer from 'multer';
 import fs from 'node:fs';
@@ -52,7 +53,7 @@ const ROM_COLUMNS = `
   r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
   r.release_year, r.developer, r.publisher, r.genre, r.players, r.rating,
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
-  r.meta_source, r.meta_synced_at, r.play_count, r.broken,
+  r.meta_source, r.meta_synced_at, r.play_count, r.broken, r.multidisc_override,
   CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
   r.source_id, r.source_path, r.in_place, r.missing, r.provider_media,
   r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 WHEN r.hidden_all = 1 THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system, r.hidden_all,
@@ -103,6 +104,7 @@ function withTags(rows) {
       ...r,
       tags: byRom.get(r.id) || [],
       ...(own.get(r.id) || {}),
+      multidisc: isMultiDisc(r) ? 1 : 0,   // part of a multi-disc set (by its name, or as an admin set it)
       media,
       // ?v= changes whenever the image file does, so a newly matched/uploaded cover shows at once
       // instead of the browser's day-long cached copy of the old one.
@@ -326,6 +328,19 @@ bulkRouter.post('/clear-match', requireAdmin, (req, res) => {
   if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
   req.auditDetail = { count: ids.length };
   res.json({ cleared: clearMatchFor(ids) });
+});
+
+// Say by hand that the selected games are (or are not) part of a multi-disc set; null goes back to the file name.
+bulkRouter.post('/multidisc', requireAdmin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
+  if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
+  const v = req.body?.value;
+  if (v !== true && v !== false && v !== null) return res.status(400).json({ error: 'value must be true, false or null' });
+  req.auditDetail = { count: ids.length, multidisc: v };
+  const upd = db.prepare("UPDATE roms SET multidisc_override = ?, updated_at = datetime('now') WHERE id = ?");
+  let changed = 0;
+  db.transaction(() => { for (const id of ids) changed += upd.run(v === null ? null : (v ? 1 : 0), id).changes; })();
+  res.json({ changed, value: v });
 });
 
 // Mark / unmark games as System entries (BIOS, devices, computers): kept and downloadable, but out of the main library.
@@ -836,8 +851,9 @@ router.post('/:id/launch', (req, res) => {
   if (!canDownload(req.user)) {
     return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account. Ask the admin, or play it in the browser.' });
   }
-  const rom = db.prepare('SELECT r.id, r.title, r.filename, r.storage_path, r.size_bytes, r.scanned_mtime, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(req.params.id);
+  const rom = db.prepare('SELECT r.id, r.title, r.filename, r.multidisc_override, r.storage_path, r.size_bytes, r.scanned_mtime, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  if (isMultiDisc(rom)) return res.status(409).json({ error: MULTIDISC_MESSAGE, multidisc: true });   // one file cannot start a set of discs
   if (!fs.existsSync(rom.storage_path)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
   const { token, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null);
   // id and fp (the file's size and date) let the launcher's quick launch tell that a copy it kept is still this file.
@@ -1085,6 +1101,17 @@ router.post('/:id/broken', (req, res) => {
   const next = req.body?.broken === undefined ? (rom.broken ? 0 : 1) : (req.body.broken ? 1 : 0);
   db.prepare("UPDATE roms SET broken = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
   res.json({ id: rom.id, broken: next });
+});
+
+/* Say by hand whether a game is part of a multi-disc set: true, false, or null to go by its file name again. Admin only (the Library is shared). */
+router.post('/:id/multidisc', requireAdmin, (req, res) => {
+  const rom = db.prepare('SELECT id FROM roms WHERE id = ?').get(req.params.id);
+  if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  const v = req.body?.value;
+  if (v !== true && v !== false && v !== null) return res.status(400).json({ error: 'value must be true, false or null' });
+  db.prepare("UPDATE roms SET multidisc_override = ?, updated_at = datetime('now') WHERE id = ?").run(v === null ? null : (v ? 1 : 0), rom.id);
+  const row = db.prepare('SELECT id, filename, multidisc_override FROM roms WHERE id = ?').get(rom.id);
+  res.json({ id: rom.id, multidisc_override: row.multidisc_override, multidisc: isMultiDisc(row) ? 1 : 0 });
 });
 
 router.post('/:id/favorite', (req, res) => {

@@ -40,7 +40,8 @@ const romAdditions = [
   ['scanned_size', 'INTEGER'],
   ['scanned_mtime', 'INTEGER'],
   ['provider_media', 'TEXT'], // JSON: extra media (screenshot, fanart, wheel…)
-  ['broken', 'INTEGER NOT NULL DEFAULT 0'] // 1 = marked as one the emulator cannot run (Big Screen: Mark as broken)
+  ['broken', 'INTEGER NOT NULL DEFAULT 0'], // 1 = marked as one the emulator cannot run (Big Screen: Mark as broken)
+  ['multidisc_override', 'INTEGER'] // 1 = part of a multi-disc set, 0 = not, NULL = go by the file name (src/lib/multidisc.js)
 ];
 for (const [name, ddl] of romAdditions) {
   if (!romCols.has(name)) db.exec(`ALTER TABLE roms ADD COLUMN ${name} ${ddl}`);

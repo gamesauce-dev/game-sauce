@@ -179,7 +179,7 @@ export function openCarousel(host) {
         if (host.user()?.play_only || !launchable(slug)) q.set('playable', '1');   // no emulator of this platform on this PC: only the games that play in the browser
         const data = await host.api(`/roms?${q}`);
         if (tok !== st.loading) return;
-        total = data.total; all = all.concat(data.items.filter((g) => !g.missing));   // a game whose file is not reachable cannot be started either
+        total = data.total; all = all.concat(data.items.filter((g) => !g.missing && !g.multidisc));   // a game on several discs cannot be started from here (one file is sent)   // a game whose file is not reachable cannot be started either
         if (!data.items.length) break;
         if (all.length === data.items.length) { st.games = all; empty.classList.add('hidden'); render(); }   // show the first page at once
       }

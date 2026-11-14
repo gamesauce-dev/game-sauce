@@ -609,7 +609,7 @@ const ICON_MAP = [
   // Collections
   ['#new-collection', 'add-collection'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
   // Library selection bar
-  ['#bulk-addcoll', 'add-collection'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-lock-btn', 'lock'], ['#bulk-cancel', 'done'],
+  ['#bulk-addcoll', 'add-collection'], ['#bulk-md-btn', 'disc'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-lock-btn', 'lock'], ['#bulk-cancel', 'done'],
   // Settings: account
   ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour-2'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance
