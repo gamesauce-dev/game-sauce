@@ -460,6 +460,16 @@
             <label class="policy-row" style="margin:0"><input type="checkbox" id="plat-art-replace" /> <span>replace the logos already there</span></label>
           </div>
           <p class="hint" id="plat-art-msg" style="margin:0" role="status"></p>
+          <hr style="border:0;border-top:1px solid var(--line);margin:4px 0" />
+          <b>Game art for Big Screen</b>
+          <p class="hint" style="margin:0"><b>Fill the gaps</b> goes through one platform's games and asks ScreenScraper for the logo, marquee and background of each one that has none (small pictures only: never covers, manuals or videos). It looks at up to the number you choose per run, remembers the games it has asked about (a game ScreenScraper had nothing for is not asked again for two weeks), stops by itself when ScreenScraper's allowance for the day is used up, and carries on with other games the next time you run it.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="plat-fill-platform" class="select" aria-label="Platform to fill the gaps for"></select>
+            <select id="plat-fill-limit" class="select" aria-label="How many games to look at in this run"><option value="25">25 games</option><option value="50" selected>50 games</option><option value="100">100 games</option><option value="250">250 games</option></select>
+            <button type="button" class="btn btn-sm" id="plat-fill-go" title="Fill the gaps for this platform">Fill the gaps</button>
+            <button type="button" class="btn btn-sm" id="plat-fill-stop" title="Stop this run" hidden>Stop</button>
+          </div>
+          <p class="hint" id="plat-fill-msg" style="margin:0" role="status"></p>
         </div>
         <form id="platform-add-form" class="edit-form hidden" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
           <label class="field"><span>Name *</span><input name="name" required placeholder="Sega Model 2" /></label>

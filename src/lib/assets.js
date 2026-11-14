@@ -22,9 +22,11 @@ function resolve({ kind, id, store, userId }) {
     const r = db.prepare('SELECT r.id, r.title, r.region, r.cover_path, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(id);
     if (!r) throw fail(404, 'That game is not in the Library');
     const files = new Set(romFiles(r.id).map((f) => f.kind));
+    let media = {}; try { media = JSON.parse(db.prepare('SELECT provider_media FROM roms WHERE id = ?').get(r.id)?.provider_media || '{}') || {}; } catch { media = {}; }
+    const matched = (k) => hasFile(media?.[k]?.path);   // a ScreenScraper match keeps its own logo (wheel), marquee and fan art
     return {
       title: r.title, platform: r.platform, region: r.region || '',
-      has: { cover: hasFile(r.cover_path), spine: files.has('spine'), disc: files.has('disc'), back: files.has('back'), manual: files.has('manual'), logo: files.has('logo'), marquee: files.has('marquee'), fanart: files.has('fanart') },
+      has: { cover: hasFile(r.cover_path), spine: files.has('spine'), disc: files.has('disc'), back: files.has('back'), manual: files.has('manual'), logo: files.has('logo') || matched('wheel'), marquee: files.has('marquee') || matched('marquee'), fanart: files.has('fanart') || matched('fanart') },
       kinds: ['cover', 'spine', 'disc', 'back', 'manual', 'logo', 'marquee', 'fanart'],
       put(k, buf, name) {
         if (k === 'cover') {
@@ -73,13 +75,14 @@ export async function fillAfterLookup(args) {
  * Fill what the game is missing. Returns { results: { video, cover, ... }, why? } where each result is 'had' (already there), 'got' (just added), 'none' (the sources have none)
  * or 'failed' (found, but it could not be kept), plus `errors` for the ones that failed. Throws a 404 for a game that is not theirs.
  */
-export async function fetchAssets({ kind, id, store = '', userId, force = false }) {
+export async function fetchAssets({ kind, id, store = '', userId, force = false, only = null, skipVideo = false }) {
   const g = resolve({ kind, id, store, userId });
+  if (Array.isArray(only)) g.kinds = g.kinds.filter((k) => only.includes(k));   // the bulk run asks for a few small kinds only
   const results = {}, errors = {};
   const missing = g.kinds.filter((k) => !g.has[k]);
   for (const k of g.kinds) if (g.has[k]) results[k] = 'had';
-  const haveVideo = Boolean(videoFile({ title: g.title, platform: g.platform }));
-  results.video = haveVideo ? 'had' : 'pending';
+  const haveVideo = skipVideo || Boolean(videoFile({ title: g.title, platform: g.platform }));
+  results.video = skipVideo ? 'skipped' : haveVideo ? 'had' : 'pending';
 
   let ss = null, why = null;
   if (missing.length && !screenscraper.enabled) why = 'ScreenScraper is not set up, so pictures and manuals cannot be looked for (Settings, Metadata providers)';
@@ -104,3 +107,64 @@ export async function fetchAssets({ kind, id, store = '', userId, force = false 
   }
   return { results, errors, why, got: Object.keys(results).filter((k) => results[k] === 'got') };
 }
+
+/* ───────── fill the gaps: a platform's games that have no logo, marquee or background ─────────
+ * One run asks ScreenScraper about up to `limit` games of one platform (a game's single lookup also tells where its logo, marquee and fan art are), keeps only those three small
+ * kinds, never a cover, manual or video, and remembers every game it asked about so the next run goes on with other games. It stops by itself when ScreenScraper's allowance for the
+ * day is used up, and the person can stop it. Admin only; one run at a time. */
+export const FILL_KINDS = ['logo', 'marquee', 'fanart'];
+const TRIED_DAYS = 14;
+export const fillJob = { running: false, stop: false, platform: '', limit: 0, total: 0, done: 0, got: { logo: 0, marquee: 0, fanart: 0 }, games_filled: 0, none: 0, failed: 0, message: '', finished: false };
+
+/** The games of a platform still missing a logo, marquee or background that were not asked about lately, in title order, at most `limit`. */
+export function fillCandidates(platform, limit) {
+  const rows = db.prepare(`SELECT r.id, r.provider_media FROM roms r JOIN platforms p ON p.id = r.platform_id
+    WHERE p.slug = ? AND r.missing = 0 AND r.is_system = 0 AND r.id NOT IN (SELECT rom_id FROM rom_assets_tried WHERE tried_at > datetime('now', ?))
+    ORDER BY r.sort_title`).all(platform, `-${TRIED_DAYS} days`);
+  const own = new Map();
+  for (const f of db.prepare("SELECT rom_id, kind FROM rom_files WHERE kind IN ('logo', 'marquee', 'fanart')").all()) { if (!own.has(f.rom_id)) own.set(f.rom_id, new Set()); own.get(f.rom_id).add(f.kind); }
+  const out = [];
+  for (const r of rows) {
+    let media = {}; try { media = r.provider_media ? JSON.parse(r.provider_media) : {}; } catch { media = {}; }
+    const mine = own.get(r.id) || new Set();
+    const has = { logo: mine.has('logo') || hasFile(media?.wheel?.path), marquee: mine.has('marquee') || hasFile(media?.marquee?.path), fanart: mine.has('fanart') || hasFile(media?.fanart?.path) };
+    if (FILL_KINDS.some((k) => !has[k])) out.push(r.id);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Start a run. Returns the job status. `ask` is what fetches one game (the real one by default; a test passes its own). */
+export function startFill({ platform, limit = 50, userId, ask = fetchAssets }) {
+  if (fillJob.running) return fillJob;
+  const slug = String(platform || '').toLowerCase();
+  if (!db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(slug)) throw fail(404, 'Choose a platform.');
+  if (!screenscraper.enabled) throw fail(400, 'ScreenScraper is not set up (Settings, Metadata providers), so there is nothing to fetch from.');
+  const lim = Math.max(1, Math.min(500, Math.floor(Number(limit) || 50)));
+  const ids = fillCandidates(slug, lim);
+  Object.assign(fillJob, { running: true, stop: false, platform: slug, limit: lim, total: ids.length, done: 0, got: { logo: 0, marquee: 0, fanart: 0 }, games_filled: 0, none: 0, failed: 0, message: ids.length ? 'Starting…' : 'Nothing to do: every game of this platform has them, or was asked about in the last two weeks.', finished: false });
+  if (!ids.length) { fillJob.running = false; fillJob.finished = true; return fillJob; }
+  (async () => {
+    const mark = db.prepare("INSERT INTO rom_assets_tried (rom_id, tried_at) VALUES (?, datetime('now')) ON CONFLICT(rom_id) DO UPDATE SET tried_at = excluded.tried_at");
+    try {
+      for (const id of ids) {
+        if (fillJob.stop) { fillJob.message = `Stopped after ${fillJob.done} of ${fillJob.total} games.`; break; }
+        try {
+          const r = await ask({ kind: 'rom', id, userId, only: FILL_KINDS, skipVideo: true });
+          const got = (r.got || []).filter((k) => FILL_KINDS.includes(k));
+          for (const k of got) fillJob.got[k]++;
+          if (got.length) fillJob.games_filled++; else if (Object.values(r.errors || {}).length) fillJob.failed++; else fillJob.none++;
+          if (/allowance|quota/i.test(`${r.why || ''}`)) { mark.run(id); fillJob.done++; fillJob.message = `ScreenScraper's allowance for today is used up: stopped after ${fillJob.done} games. Run it again tomorrow.`; break; }
+        } catch (err) {
+          fillJob.failed++;
+          if (/allowance|quota/i.test(String(err.message))) { fillJob.done++; fillJob.message = `ScreenScraper's allowance for today is used up: stopped after ${fillJob.done} games. Run it again tomorrow.`; break; }
+        }
+        mark.run(id); fillJob.done++;
+        fillJob.message = `Looked at ${fillJob.done} of ${fillJob.total} games…`;
+      }
+      if (!fillJob.message.startsWith('Stopped') && !/allowance/.test(fillJob.message)) fillJob.message = `Done: ${fillJob.games_filled} game${fillJob.games_filled === 1 ? '' : 's'} got something (${fillJob.got.logo} logos, ${fillJob.got.marquee} marquees, ${fillJob.got.fanart} backgrounds); ${fillJob.none} had none at ScreenScraper${fillJob.failed ? `; ${fillJob.failed} could not be fetched` : ''}.`;
+    } finally { fillJob.running = false; fillJob.finished = true; }
+  })();
+  return fillJob;
+}
+export const stopFill = () => { fillJob.stop = true; return fillJob; };

@@ -4,6 +4,7 @@ import { requireAdmin } from './auth.js';
 import db from '../db.js';
 import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder, getArtFolders } from '../lib/artimport.js';
 import { importPlatformLogos, fetchPlatformArt } from '../lib/platformart.js';
+import { fillJob, startFill, stopFill } from '../lib/assets.js';
 import { cleanSplit } from '../lib/wrapcut.js';
 import { artSharing, setArtSharing } from '../lib/physical.js';
 
@@ -56,6 +57,13 @@ router.post('/platform-logos/import', requireAdmin, (req, res) => {
 router.post('/platform-logos/fetch', requireAdmin, async (req, res, next) => {
   try { const r = await fetchPlatformArt({ replace: Boolean(req.body?.replace) }); req.auditDetail = { got: r.got.length, none: r.none.length, failed: Object.keys(r.failed).length }; res.json(r); } catch (err) { next(err); }
 });
+
+/* Fill the gaps: one platform's games that have no logo, marquee or background, asked about at ScreenScraper, up to a limit per run (admin; one run at a time). */
+router.get('/fill-job', (req, res) => res.json({ ...fillJob }));
+router.post('/fill-job', requireAdmin, (req, res, next) => {
+  try { const j = startFill({ platform: req.body?.platform, limit: req.body?.limit, userId: req.user.id }); req.auditDetail = { platform: j.platform, limit: j.limit, games: j.total }; res.json({ ...j }); } catch (err) { next(err); }
+});
+router.delete('/fill-job', requireAdmin, (req, res) => res.json({ ...stopFill() }));
 
 router.get('/wrap-image', async (req, res, next) => {
   try {

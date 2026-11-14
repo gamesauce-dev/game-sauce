@@ -235,3 +235,39 @@ test('The launcher\'s setup page lists every platform the server has (a platform
   assert.deepEqual((await platformsWithServer({ server: 'http://127.0.0.1:1', token: 'x'.repeat(30) }, async () => { throw new Error('down'); })).map((p) => p.slug), platformList().map((p) => p.slug), 'no server: the shipped list');
   assert.deepEqual((await platformsWithServer(null)).map((p) => p.slug), platformList().map((p) => p.slug), 'opened without a server: the shipped list');
 });
+
+test('Fill the gaps: a run asks about the games of one platform that lack a logo, marquee or background (up to the limit), keeps only those kinds, remembers who it asked, stops on the day\'s allowance, and is for admins', async () => {
+  const { fillCandidates, startFill, stopFill, fillJob, FILL_KINDS } = await import('../src/lib/assets.js');
+  const { setRomFile } = await import('../src/lib/romfiles.js');
+  const mk = (title, sha) => Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'gamegear'), ?, ?, ?, 'x', 3, ?)").run(title, title.toLowerCase(), `${title}.gg`, sha).lastInsertRowid);
+  const a = mk('Alpha', 'f1100000000000000000000000000000000000a1'), b = mk('Bravo', 'f1100000000000000000000000000000000000b2'), c = mk('Charlie', 'f1100000000000000000000000000000000000c3'), d = mk('Delta', 'f1100000000000000000000000000000000000d4'), e = mk('Echo', 'f1100000000000000000000000000000000000e5');
+  for (const k of FILL_KINDS) setRomFile(b, k, makePng());                          // Bravo has all three of its own
+  const pic = path.join(TMP, 'matched.png'); fs.writeFileSync(pic, makePng());
+  db.prepare('UPDATE roms SET provider_media = ? WHERE id = ?').run(JSON.stringify({ wheel: { path: pic }, marquee: { path: pic }, fanart: { path: pic } }), c);   // Charlie's match kept them
+  assert.deepEqual(fillCandidates('gamegear', 10), [a, d, e], 'only the games missing something');
+  assert.deepEqual(fillCandidates('gamegear', 2), [a, d], 'at most the limit');
+  const keep = Object.fromEntries(['SS_DEV_ID', 'SS_DEV_PASSWORD', 'SS_USER', 'SS_PASSWORD'].map((k) => [k, process.env[k]]));
+  Object.assign(process.env, { SS_DEV_ID: 'devid', SS_DEV_PASSWORD: 'devpw', SS_USER: 'user', SS_PASSWORD: 'pw' });
+  const wait = async () => { for (let i = 0; i < 200 && fillJob.running; i++) await new Promise((r) => setTimeout(r, 20)); };
+  try {
+    const asked = [];
+    startFill({ platform: 'gamegear', limit: 2, userId: 1, ask: async (x) => { asked.push(x); return x.id === a ? { got: ['logo', 'fanart'], errors: {}, results: {} } : { got: [], errors: {}, results: {} }; } });
+    await wait();
+    assert.deepEqual(asked.map((x) => x.id), [a, d]); assert.ok(asked.every((x) => x.skipVideo === true && x.only.join() === 'logo,marquee,fanart'), 'only the three small kinds, no video');
+    assert.equal(fillJob.games_filled, 1); assert.deepEqual(fillJob.got, { logo: 1, marquee: 0, fanart: 1 }); assert.equal(fillJob.none, 1); assert.match(fillJob.message, /^Done/);
+    assert.deepEqual(fillCandidates('gamegear', 10), [e], 'the two it asked about are left for two weeks');
+    startFill({ platform: 'gamegear', limit: 5, userId: 1, ask: async () => ({ got: [], errors: {}, results: {}, why: "ScreenScraper's allowance for today is used up" }) });
+    await wait();
+    assert.match(fillJob.message, /allowance for today is used up/); assert.equal(fillJob.done, 1, 'it stopped on the allowance');
+    assert.deepEqual(fillCandidates('gamegear', 10), [], 'and that game was marked too');
+    startFill({ platform: 'gamegear', limit: 5, userId: 1, ask: async () => ({ got: [], errors: {} }) });
+    await wait(); assert.match(fillJob.message, /Nothing to do/);
+    assert.equal(typeof stopFill, 'function');
+  } finally { for (const [k, v] of Object.entries(keep)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; } }
+  assert.equal((await call('/api/art/fill-job', { method: 'POST', as: 'ann', body: { platform: 'gamegear' } })).status, 403, 'admins only');
+  assert.equal((await call('/api/art/fill-job', { method: 'POST', body: { platform: 'nonesuch' } })).status, 404, 'a platform that exists');
+  assert.equal((await call('/api/art/fill-job', { method: 'POST', body: { platform: 'gamegear' } })).status, 400, 'ScreenScraper has to be set up');
+  assert.equal((await call('/api/art/fill-job')).status, 200);
+  const ui = read('public/app.js'), html = read('public/index.html');
+  assert.ok(html.includes('id="plat-fill-go"') && html.includes('id="plat-fill-limit"') && ui.includes("'/art/fill-job'"), 'the button and its progress are in Settings > Platforms');
+});

@@ -627,3 +627,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '54') ON CON
 /* ── v55: ScreenScraper does not list the PS5, Xbox One or Xbox Series as systems (the stored 388, 392 and 391 were guesses that are not on its list), so a lookup for them could only fail and spend the day's allowance. Cleared, only where still at those guesses. ── */
 db.prepare("UPDATE platforms SET screenscraper_id = NULL WHERE (slug = 'ps5' AND screenscraper_id = 388) OR (slug = 'xboxone' AND screenscraper_id = 392) OR (slug = 'xboxseries' AND screenscraper_id = 391)").run();
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '55') ON CONFLICT(key) DO UPDATE SET value = '55'").run();
+
+/* ── v56: the games the "fill the gaps" run for Big Screen art (logos, marquees, backgrounds) has already asked ScreenScraper about, so a game it had nothing for is not asked again at once (src/lib/assets.js). ── */
+db.exec(`CREATE TABLE IF NOT EXISTS rom_assets_tried (rom_id INTEGER PRIMARY KEY REFERENCES roms(id) ON DELETE CASCADE, tried_at TEXT NOT NULL)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '56') ON CONFLICT(key) DO UPDATE SET value = '56'").run();

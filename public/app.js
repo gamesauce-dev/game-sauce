@@ -328,8 +328,29 @@ document.addEventListener('click', (e) => {
 // Settings > Platforms > Platform art: logos for the platform tiles, fetched from ScreenScraper or read from a folder called Platforms in an artwork folder.
 async function fillPlatArtFolders() {
   const sel = $('#plat-art-folder'); if (!sel) return;
+  try { const p = await api('/art/platforms'); const fs = $('#plat-fill-platform'); if (fs && !fs.options.length) fs.innerHTML = (p.items || []).map((x) => `<option value="${esc(x.slug)}">${esc(x.name)}</option>`).join(''); } catch { /* the button says what went wrong */ }
+  try { paintFill(await api('/art/fill-job')); } catch { /* none running */ }
   try { const r = await api('/art/folders'); sel.innerHTML = (r.folders || []).map((f) => `<option value="${esc(f.path)}">${esc(f.path)}</option>`).join('') || '<option value="">(no artwork folder yet: add one under Artwork folders)</option>'; } catch { /* the buttons say what went wrong */ }
 }
+// Fill the gaps: a run goes through one platform's games in the background; this shows how far it is.
+let fillTimer = 0;
+function paintFill(j) {
+  const msg = $('#plat-fill-msg'), go = $('#plat-fill-go'), stop = $('#plat-fill-stop'); if (!msg) return;
+  if (go) go.disabled = Boolean(j?.running); if (stop) stop.hidden = !j?.running;
+  if (j?.message) msg.textContent = j.running ? `${j.platform}: ${j.message}` : j.message;
+  clearTimeout(fillTimer);
+  if (j?.running) fillTimer = setTimeout(async () => { try { paintFill(await api('/art/fill-job')); } catch { /* try again */ } }, 2000);
+  else if (j?.finished && j.games_filled) { loadPlatforms().catch(() => {}); }
+}
+document.addEventListener('click', async (e) => {
+  const goBtn = e.target.closest('#plat-fill-go'), stopBtn = e.target.closest('#plat-fill-stop');
+  if (!goBtn && !stopBtn) return;
+  const msg = $('#plat-fill-msg');
+  try {
+    if (goBtn) { const slug = $('#plat-fill-platform')?.value; if (!slug) throw new Error('Choose a platform first.'); paintFill(await api('/art/fill-job', { method: 'POST', body: JSON.stringify({ platform: slug, limit: Number($('#plat-fill-limit')?.value) || 50 }) })); }
+    else paintFill(await api('/art/fill-job', { method: 'DELETE' }));
+  } catch (err) { if (msg) msg.textContent = err.message || 'That did not work.'; }
+});
 document.addEventListener('click', async (e) => {
   const fetchBtn = e.target.closest('#plat-art-fetch'), impBtn = e.target.closest('#plat-art-import');
   if (!fetchBtn && !impBtn) return;

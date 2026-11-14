@@ -616,7 +616,7 @@ const ICON_MAP = [
   ['#health-refresh, #dup-refresh', 'scan-again'], ['#health-repair-covers', 'recheck'], ['#enrich-missing-covers', 'fetch'], ['#check-ss-systems', 'recheck'], ['[data-pid-use], #pid-apply-all', 'tick'],
   ['#db-health-refresh', 'database-check'], ['#db-show-orphans', 'show-orphans'], ['#db-purge-orphans', 'delete'], ['#db-clear-covers', 'clear-covers'],
   ['#audit-apply', 'filter'], ['#backup-run', 'database-backup-save'], ['#backup-save', 'save-settings-2'], ['#restore-inspect', 'database-backup-check'],
-  ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview-2'], ['#plat-art-fetch', 'fetch'], ['#plat-art-import', 'csv-import'],
+  ['[data-bk-del]', 'database-backup-delete'], ['[data-bk-restore]', 'restore'], ['#names-preview', 'preview-2'], ['#plat-art-fetch', 'fetch'], ['#plat-art-import', 'csv-import'], ['#plat-fill-go', 'fetch'], ['#plat-fill-stop', 'cancel'],
   ['#dat-upload', 'import-media'], ['#dat-rematch', 'rematch'], ['#dat-rematch-force', 'replace-text'], ['[data-act="delete-dat"]', 'delete'],
   // Settings: setup
   ['#platform-add-toggle', 'add-platform-2'], ['#new-user-form button[type="submit"]', 'add-user'], ['[data-act="test-provider"]', 'test-connection'],
