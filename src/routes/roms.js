@@ -89,9 +89,10 @@ function withTags(rows) {
   }
   // A logo, marquee or background picture the importer (or a fetch) kept for a game: one link each, so the pages can show them.
   const own = new Map();
-  for (const f of db.prepare(`SELECT rom_id, kind FROM rom_files WHERE kind IN ('logo', 'marquee', 'fanart') AND rom_id IN (${placeholders})`).all(...ids)) {
+  for (const f of db.prepare(`SELECT rom_id, kind, type FROM rom_files WHERE kind IN ('logo', 'marquee', 'fanart', 'manual') AND rom_id IN (${placeholders})`).all(...ids)) {
     if (!own.has(f.rom_id)) own.set(f.rom_id, {});
     own.get(f.rom_id)[f.kind === 'fanart' ? 'backdrop_url' : `${f.kind}_url`] = `/api/roms/${f.rom_id}/file/${f.kind}`;
+    if (f.kind === 'manual') own.get(f.rom_id).manual_type = f.type;   // application/pdf, or a picture
   }
   return rows.map((r) => {
     let media = null;

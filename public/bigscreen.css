@@ -191,3 +191,16 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-heroicon svg { width: 3.6em; height: 3.6em; color: var(--pc); filter: drop-shadow(0 0 .5em color-mix(in srgb, var(--pc) 70%, transparent)); }
 .bs-ha-fav .bs-heroicon svg { animation: bs-beat 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .bs-t-fav.on .bs-ticon svg, .bs-ha-fav .bs-heroicon svg { animation: none; } }
+
+/* the manual, read on the right of the game page in place of the details */
+.bs-manpane { grid-column: 3; position: relative; z-index: 1; display: none; flex-direction: column; min-height: 0; background: rgba(12, 14, 20, .94); }
+.bs-game.reading .bs-info { display: none; }
+.bs-game.reading .bs-manpane { display: flex; }
+.bs-manpane[hidden] { display: none !important; }
+.bs-manbar { display: flex; align-items: center; gap: .6em; padding: .7em 1.2em; background: rgba(255, 255, 255, .07); font-size: .9em; flex-wrap: wrap; }
+.bs-manbar b { margin-right: auto; }
+.bs-manbar .btn { font-size: .8em; padding: .2em .8em; }
+.bs-manscroll { flex: 1; min-height: 0; overflow: auto; padding: .8em; background: #2a2e3a; outline: none; text-align: center; }
+.bs-manimg { max-width: 100%; height: auto; }
+.bs-manframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.bs-manscroll .ph-pv-page { margin: 0 auto .8em; }

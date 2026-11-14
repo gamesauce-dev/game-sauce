@@ -23,6 +23,9 @@ export function wheelStyle(o) {
 export const gameLogo = (g) => g?.logo_url || (g?.media?.wheel ? `/api/roms/${g.id}/media/wheel` : '');
 export const gameMarquee = (g) => g?.marquee_url || (g?.media?.marquee ? `/api/roms/${g.id}/media/marquee` : '');
 
+/** What the wheel shows for a game: its marquee (the art an arcade game is known by, and a banner for any other game that has one), else its logo, else the cover. */
+export const wheelArt = (g) => gameMarquee(g) || gameLogo(g);
+
 /** The picture behind a game: its own background art (imported, or a ScreenScraper match's fan art), else a screenshot; null when it has neither (the cover is blurred instead). */
 export const gameBackdrop = (g) => g?.backdrop_url || (g?.media?.fanart ? `/api/roms/${g.id}/media/fanart` : g?.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '');
 
@@ -52,6 +55,7 @@ export function gameMenu(g) {
     { k: 'play', label: 'Play' },
     { k: 'fav', label: g?.favorite ? 'Remove Favourite' : 'Favourite' },
     { k: 'coll', label: 'Add to Collection' },
+    ...(g?.manual_url ? [{ k: 'manual', label: 'Read Manual' }] : []),
     { k: 'broken', label: g?.broken ? 'Unmark as Broken' : 'Mark as Broken' },
     { k: 'hide', label: 'Hide' }
   ];
@@ -132,10 +136,11 @@ export function openBigScreen(host) {
       game: [hint('A', 'Choose'), hint('B', 'Back'), hint('LB RB', 'Previous / next game'), hint('X', 'Play in browser'), hint('Y', 'Play on this PC')],
       pick: [hint('A', 'Add / remove'), hint('B', 'Done')],
       kbd: [hint('A', 'Type'), hint('X', 'Delete'), hint('Y', 'Space'), hint('B', 'Cancel')],
-      confirm: [hint('A', 'Choose'), hint('B', 'Cancel')]
+      confirm: [hint('A', 'Choose'), hint('B', 'Cancel')],
+      manual: [hint('A', 'Fit the width'), hint('B', 'Close'), hint('LB RB', 'Page up / down'), hint('◀ ▶', 'Zoom'), hint('▲ ▼', 'Scroll')]
     }[st.screen] || [];
     const closeGame = () => '<span class="bs-closehint"><i>Select + Start</i>Hold in a game to close it</span>';   // gamepad.js closes a running game on this
-    $('#bs-hints').innerHTML = (['pick', 'kbd', 'confirm'].includes(st.screen) ? '' : closeGame()) + h.join('');
+    $('#bs-hints').innerHTML = (['pick', 'kbd', 'confirm', 'manual'].includes(st.screen) ? '' : closeGame()) + h.join('');
   };
   let toastTimer = 0;
   const say = (msg, bad = false) => { const t = $('#bs-toast'); if (!t) return; if (bad) sfx('error'); t.textContent = msg; t.classList.toggle('bad', bad); t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); };
@@ -258,7 +263,7 @@ export function openBigScreen(host) {
     st.els = new Map(); placeWheel();
   };
   const rowHtml = (g) => {
-    const logo = gameLogo(g);
+    const logo = wheelArt(g);
     return `<div class="bs-title">${esc(g.title)}${g.broken ? ' <em class="bs-flag">Broken</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
   const placeWheel = () => {
@@ -305,7 +310,8 @@ export function openBigScreen(host) {
           <p class="bs-desc">${esc(g.description || 'No description yet.')}</p>
         </div></div>
         <div class="bs-media" id="bs-media">${g.has_video ? `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}"${shot ? ` poster="${esc(shot)}"` : ''} loop playsinline preload="auto"></video>` : shot ? `<img src="${esc(shot)}" alt="" />` : ''}</div>
-      </section></div>`;
+      </section>
+      <section class="bs-manpane" id="bs-man" hidden></section></div>`;
     const v = $('#bs-media video');
     if (v) {   // the video plays as the page opens, with its sound; if the browser will not start it with sound (nothing has been pressed yet), it plays without
       v.addEventListener('error', () => { const m = $('#bs-media'); if (m) m.innerHTML = shot ? `<img src="${esc(shot)}" alt="" />` : ''; });
@@ -435,6 +441,33 @@ export function openBigScreen(host) {
     } catch (err) { say(err.message, true); }
   };
 
+  // the manual: read on the right of the game page, where the details were (the menu and the cover stay as they are; nothing opens elsewhere). A PDF is drawn by the app's own reader (public/pdfview.js); a picture is shown as it is.
+  const openManual = async (g) => {
+    const pane = $('#bs-man');
+    if (!g.manual_url) return say('This game has no manual yet.', true);
+    if (!pane) return;
+    pauseVideo();
+    const isPdf = !/^image\//.test(g.manual_type || '');
+    st.man = { prev: st.screen, v: null, scroller: null };
+    st.screen = 'manual'; paintHints();
+    pane.innerHTML = `<div class="bs-manbar" id="bs-manbar"><b>${esc(g.title)} · manual</b></div><div class="bs-manscroll" id="bs-manscroll" tabindex="0"></div>`;
+    pane.hidden = false; $('.bs-game')?.classList.add('reading');
+    const scroller = $('#bs-manscroll'), bar = $('#bs-manbar'); st.man.scroller = scroller;
+    if (!isPdf) { scroller.innerHTML = `<img class="bs-manimg" src="${esc(g.manual_url)}" alt="" />`; return; }
+    try {
+      const { pdfReady, mountViewer } = await import('./pdfview.js');
+      if (!(await pdfReady())) { scroller.innerHTML = `<iframe class="bs-manframe" src="${esc(g.manual_url)}" title="Manual"></iframe>`; return; }
+      if (st.man && scroller.isConnected) st.man.v = mountViewer({ url: g.manual_url, scroller, bar });
+    } catch { if (scroller.isConnected) scroller.innerHTML = '<p class="bs-empty">The manual could not be shown.</p>'; }
+  };
+  const closeManual = () => {
+    const m = st.man; try { m?.v?.destroy?.(); } catch { /* gone */ }
+    const pane = $('#bs-man'); if (pane) { pane.innerHTML = ''; pane.hidden = true; }
+    $('.bs-game')?.classList.remove('reading');
+    st.screen = m?.prev || 'game'; st.man = null; paintHints(); resumeVideo();
+  };
+  const manualKey = (key) => st.man?.scroller?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));   // the reader's own keys: + - 0, Page up and down
+
   // ── the menu's actions ──
   const afterRemoval = () => {   // the game left the list on the wheel (hidden, or no longer a favourite)
     if (!st.games.length) { st.plats = platList(); return leaveGames(); }
@@ -462,7 +495,7 @@ export function openBigScreen(host) {
   };
   const runMenu = (k) => {
     const g = game(); if (!g) return;
-    if (k === 'play') play(g); else if (k === 'fav') toggleFav(g); else if (k === 'coll') openPick(g); else if (k === 'broken') toggleBroken(g); else if (k === 'hide') hideGame(g);
+    if (k === 'play') play(g); else if (k === 'fav') toggleFav(g); else if (k === 'coll') openPick(g); else if (k === 'manual') openManual(g); else if (k === 'broken') toggleBroken(g); else if (k === 'hide') hideGame(g);
   };
 
   // ── moving between screens ──
@@ -488,6 +521,14 @@ export function openBigScreen(host) {
       else if (a === 'back') endText(null);
       else if (a === 'browser') kbPress('back');   // X deletes
       else if (a === 'local') kbPress('space');    // Y adds a space
+      return;
+    }
+    if (s === 'manual') {
+      const sc = st.man?.scroller;
+      if (a === 'up' || a === 'down') sc?.scrollBy({ top: a === 'down' ? 150 : -150 });
+      else if (a === 'left') manualKey('-'); else if (a === 'right') manualKey('+');
+      else if (a === 'prev-family') manualKey('PageUp'); else if (a === 'next-family') manualKey('PageDown');
+      else if (a === 'select') manualKey('0'); else if (a === 'back') closeManual();
       return;
     }
     if (s === 'confirm') {

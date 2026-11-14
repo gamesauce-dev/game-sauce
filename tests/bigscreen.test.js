@@ -291,3 +291,24 @@ test('Big Screen: a row of tiles that fits on the screen is centred as a whole, 
   assert.ok(bs.includes('total > 0 && total <= w ? (w - total) / 2'), 'a row that fits is centred whole; a longer one keeps the chosen tile in the middle');
   assert.ok(css.includes('.bs-railwrap.r2 .bs-rail { gap: 2.2em; }') && css.includes('.bs-railwrap.r2 .bs-ptile.on { transform: scale(1.06); }'), 'room between the two, and the chosen one does not grow into its neighbour');
 });
+
+test('Big Screen: the wheel shows a game\'s marquee on every platform (else its logo, else the cover); a game with a manual gets Read Manual, read on the right of the game page', async () => {
+  const { wheelArt, gameMenu } = await import('../public/bigscreen.js');
+  assert.equal(wheelArt({ id: 3, platform: 'snes', marquee_url: '/m.png', logo_url: '/l.png' }), '/m.png', 'a marquee first, on any platform');
+  assert.equal(wheelArt({ id: 3, platform: 'arcade', logo_url: '/l.png' }), '/l.png', 'else the logo');
+  assert.equal(wheelArt({ id: 3, platform: 'ps2' }), '', 'else nothing: the cover is shown');
+  assert.equal(wheelArt({ id: 3, media: { marquee: {} } }), '/api/roms/3/media/marquee', 'a ScreenScraper match\'s marquee counts too');
+  assert.deepEqual(gameMenu({}).map((m) => m.k), ['play', 'fav', 'coll', 'broken', 'hide'], 'no manual: no menu item');
+  assert.deepEqual(gameMenu({ manual_url: '/m.pdf' }).map((m) => m.k), ['play', 'fav', 'coll', 'manual', 'broken', 'hide']);
+  assert.equal(gameMenu({ manual_url: '/m.pdf' })[3].label, 'Read Manual');
+  const { setRomFile } = await import('../src/lib/romfiles.js');
+  const id = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'snes'), 'Manual Game', 'manual game', 'manual.sfc', 'x', 3, 'ac00000000000000000000000000000000000001')").run().lastInsertRowid);
+  assert.ok(!(await call('/api/roms?q=Manual+Game')).body.items.find((r) => r.id === id).manual_url, 'none to begin with');
+  setRomFile(id, 'manual', Buffer.from('%PDF-1.4\n1 0 obj\n<< >>\nendobj\n%%EOF\n'), 'Manual.pdf');
+  const row = (await call('/api/roms?q=Manual+Game')).body.items.find((r) => r.id === id);
+  assert.equal(row.manual_url, `/api/roms/${id}/file/manual`); assert.equal(row.manual_type, 'application/pdf', 'the list says a manual is there and what it is');
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes('<section class="bs-manpane" id="bs-man" hidden>') && bs.includes("classList.add('reading')") && bs.includes("import('./pdfview.js')"), 'the manual goes in a pane on the right, drawn by the app\'s own reader');
+  assert.ok(css.includes('.bs-game.reading .bs-info { display: none; }') && css.includes('.bs-manpane { grid-column: 3;'), 'in place of the details');
+  assert.ok(bs.includes("manualKey('PageUp')") && bs.includes("manualKey('+')") && bs.includes('closeManual()'), 'LB/RB page, left/right zoom, B closes');
+});
