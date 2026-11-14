@@ -207,3 +207,10 @@ test('Game logos, marquees and backgrounds: the importer reads them for Library 
   const { gameLogo, gameMarquee, gameBackdrop } = await import('../public/bigscreen.js');
   assert.equal(gameLogo(row), row.logo_url); assert.equal(gameMarquee(row), row.marquee_url); assert.equal(gameBackdrop(row), row.backdrop_url, 'Big Screen shows an imported one first');
 });
+
+test('Big Screen: the video on the game page stops when a game is started (emulator or browser player) or the window loses focus, and carries on when it is back', () => {
+  const bs = read('public/bigscreen.js');
+  assert.ok(bs.includes('const pauseVideo = ()') && bs.includes('const resumeVideo = ()'));
+  assert.ok(/const playLocal = async \(g\) => \{[\s\S]*?pauseVideo\(\);/.test(bs) && /const openBrowser = \(g\) => \{[^\n]*pauseVideo\(\)/.test(bs), 'both ways of starting a game pause it');
+  assert.ok(bs.includes("window.addEventListener('blur', pauseVideo)") && bs.includes("window.addEventListener('focus', resumeVideo)") && bs.includes("window.removeEventListener('blur', pauseVideo)"), 'a window that is not in front is silent, and the listeners are removed on close');
+});

@@ -272,7 +272,7 @@ export function openBigScreen(host) {
   // ── screen 3: one game ──
   const drawGame = () => {
     const g = game(); if (!g) return;
-    st.screen = 'game'; st.mi = 0; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
+    st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
     const art = gameBackdrop(g); setBackdrop(art || null, gameAccent(g), Boolean(art));
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);
@@ -333,12 +333,20 @@ export function openBigScreen(host) {
     const genre = $('.bs-genre'); if (genre) genre.innerHTML = `${esc(g.genre || g.platform_name || '')}${g.broken ? ' <em class="bs-flag">Marked as broken: the emulator cannot run it</em>' : ''}`;
   };
 
+  // The video on the game page stops while a game is starting or running (an emulator window opens over this one, or the browser player), and while this window is not the one in front;
+  // it carries on when the person is back.
+  const pageVideo = () => $('#bs-media video');
+  const pauseVideo = () => { const v = pageVideo(); if (v && !v.paused) { v.pause(); st.vPaused = true; } };
+  const resumeVideo = () => { const v = pageVideo(); if (v && st.vPaused && st.screen === 'game' && !document.querySelector('#player-scrim:not(.hidden)')) { st.vPaused = false; v.play?.().catch(() => {}); } };
+  window.addEventListener('blur', pauseVideo); window.addEventListener('focus', resumeVideo);
+
   // ── playing ──
   const canBrowser = (g) => Boolean(g && g.playable && !g.missing);
   const canLocalPlay = (g) => Boolean(g && host.user()?.can_download !== false && launchable(g.platform));
-  const openBrowser = (g) => { if (!canBrowser(g)) return say('This game cannot be played in the browser.', true); host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => say(err.message, true)); };
+  const openBrowser = (g) => { if (!canBrowser(g)) return say('This game cannot be played in the browser.', true); pauseVideo(); host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => say(err.message, true)); };
   const playLocal = async (g) => {
     if (!canLocalPlay(g)) return say('No emulator is set up on this PC for this platform.', true);
+    pauseVideo();
     try {
       const j = await host.api(`/roms/${g.id}/launch`, { method: 'POST' });
       const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '' });
@@ -445,7 +453,7 @@ export function openBigScreen(host) {
   const backToWheel = () => { st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
-    document.removeEventListener('keydown', onKey); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer);
+    document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer);
     root.remove(); root = null; document.body.classList.remove('bs-open');
     try { prevFocus?.focus?.(); } catch { /* the opener is gone */ }
   };
@@ -454,6 +462,7 @@ export function openBigScreen(host) {
   // ── input: the pad (and the keyboard) become the same few actions ──
   const act = (a) => {
     const s = st.screen;
+    if (st.vPaused) resumeVideo();   // back from a game: the video carries on at the next press
     if (a === 'menu') { toggleSound(); return; }
     if (s === 'kbd') sfx('key'); else if (['up', 'down', 'left', 'right', 'prev-family', 'next-family'].includes(a)) sfx('move'); else if (a === 'select') sfx('select'); else if (a === 'back') sfx('back');
     if (s === 'kbd') {

@@ -11,6 +11,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Game logos, marquees and backgrounds for Library games** (arcade games especially). The picture importer now reads them: folders called `logos` or `wheel`, `marquees` or `banners`, `fanart` or `backgrounds` under a platform's folder, and RetroBat's `<rom name>-wheel.png`, `-marquee.png` and `-fanart.png`; **Find assets** on a game also fetches them from ScreenScraper (its logo, marquee and fan art) when the game has none. Big Screen shows an imported one first, then the ones a ScreenScraper match kept, then the cover.
 - **Mark as Broken.** A game the emulator cannot run can be marked from Big Screen (and unmarked); everybody sees the mark. It is the new `broken` field on a game.
 
+### Fixed
+- Big Screen: the video on a game's page no longer keeps playing (with its sound) once you start the game in an emulator or the browser player; it stops, and carries on when you are back.
+
 ## [0.5.5] - 2026-11-14
 
 ### Changed
