@@ -24,7 +24,8 @@ export const gameLogo = (g) => g?.logo_url || (g?.media?.wheel ? `/api/roms/${g.
 export const gameMarquee = (g) => g?.marquee_url || (g?.media?.marquee ? `/api/roms/${g.id}/media/marquee` : '');
 
 /** What the wheel shows for a game: its marquee (the art an arcade game is known by, and a banner for any other game that has one), else its logo, else the cover. */
-export const wheelArt = (g) => gameMarquee(g) || gameLogo(g);
+// A picture of your own (imported or uploaded) beats one from ScreenScraper: your marquee, your logo, then ScreenScraper's marquee, then its logo.
+export const wheelArt = (g) => g?.marquee_url || g?.logo_url || gameMarquee(g) || gameLogo(g);
 
 /** The picture behind a game: its own background art (imported, or a ScreenScraper match's fan art), else a screenshot; null when it has neither (the cover is blurred instead). */
 export const gameBackdrop = (g) => g?.backdrop_url || (g?.media?.fanart ? `/api/roms/${g.id}/media/fanart` : g?.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '');

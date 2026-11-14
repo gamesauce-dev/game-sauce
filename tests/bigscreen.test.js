@@ -298,6 +298,7 @@ test('Big Screen: the wheel shows a game\'s marquee on every platform (else its 
   assert.equal(wheelArt({ id: 3, platform: 'snes', marquee_url: '/m.png', logo_url: '/l.png' }), '/m.png', 'a marquee first, on any platform');
   assert.equal(wheelArt({ id: 3, platform: 'arcade', logo_url: '/l.png' }), '/l.png', 'else the logo');
   assert.equal(wheelArt({ id: 3, platform: 'ps2' }), '', 'else nothing: the cover is shown');
+  assert.equal(wheelArt({ id: 3, logo_url: '/l.png', media: { marquee: {}, wheel: {} } }), '/l.png', "your own logo beats ScreenScraper's marquee");
   assert.equal(wheelArt({ id: 3, media: { marquee: {} } }), '/api/roms/3/media/marquee', 'a ScreenScraper match\'s marquee counts too');
   assert.deepEqual(gameMenu({}).map((m) => m.k), ['play', 'fav', 'coll', 'broken', 'hide'], 'no manual: no menu item');
   assert.deepEqual(gameMenu({ manual_url: '/m.pdf' }).map((m) => m.k), ['play', 'fav', 'coll', 'manual', 'broken', 'hide']);
