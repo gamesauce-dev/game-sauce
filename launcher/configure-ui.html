@@ -82,7 +82,7 @@ function drawEmus() {
       <input type="text" data-f="args" value="${esc(e.args)}" placeholder="{rom}" spellcheck="false" autocomplete="off">
       <span class="st" data-st="${i}">${e.found === true ? '<span class="ok">found</span>' : e.found === false ? '<span class="bad">not found</span>' : ''}</span>
       <span style="display:flex;gap:8px;align-items:center"><select data-f="unpack" title="A zipped game (.zip, .7z, .rar): unpack it before starting the emulator. Auto does it for Xbox 360 and PS3, whose emulators cannot open a zip."><option value=""${e.unpack === undefined ? ' selected' : ''}>zip: auto</option><option value="1"${e.unpack === true ? ' selected' : ''}>zip: unpack</option><option value="0"${e.unpack === false ? ' selected' : ''}>zip: as is</option></select><label class="chk" title="Delete the temporary copy of the game when the emulator closes"><input type="checkbox" data-f="del" ${e.deleteOnExit === false ? '' : 'checked'}> delete copy</label><button type="button" data-rm="${i}" aria-label="Remove">✕</button></span>
-      <div class="sub"><label class="chk" title="Keep the game on this PC after the emulator closes, so the next launch needs no download and no unpacking"><input type="checkbox" data-f="ql" ${e.quickLaunch ? 'checked' : ''}> quick launch (keep the game for next time)</label>
+      <div class="sub">${/retroarch/i.test(String(e.command).split(/[\\/]/).pop()) ? `<span class="core" data-corebox="${i}"><button type="button" data-core="${i}" title="Pick one of the cores in this RetroArch's cores folder">RetroArch core…</button></span>` : ''}<label class="chk" title="Keep the game on this PC after the emulator closes, so the next launch needs no download and no unpacking"><input type="checkbox" data-f="ql" ${e.quickLaunch ? 'checked' : ''}> quick launch (keep the game for next time)</label>
         <input type="text" data-f="cachedir" value="${esc(e.cacheDir || '')}" placeholder="its own cache folder (empty: the shared one below)" spellcheck="false" autocomplete="off"><button type="button" data-browsedir="${i}">Browse…</button></div></div>`).join('')
     : '<p class="hint" style="margin:0">No emulators yet: press “Add a platform”.</p>';
 }
@@ -104,6 +104,20 @@ async function loadCache() {
     box.innerHTML = folders.map((f, i) => `<div class="cache-folder"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1"><code>${esc(f.dir)}</code> <span class="dim">for ${esc(f.used_by)}</span><br><span class="dim">${f.games.length} game${f.games.length === 1 ? '' : 's'} kept, ${fmt(f.bytes)}${f.exists ? '' : ' (the folder does not exist yet)'}</span></div>${f.games.length ? `<button type="button" data-empty="${i}" data-dir="${esc(f.dir)}">Empty cache</button>` : ''}</div>${f.games.map((g) => `<div class="cache-game"><span class="t">${esc(g.title)} <span class="dim">(${esc(g.platform)}, played ${esc(when(g.last_played))})</span></span><span class="dim">${fmt(g.bytes)}</span>${g.in_use ? '<span class="dim">in use</span>' : `<button type="button" data-empty-one="${esc(g.name)}" data-dir="${esc(f.dir)}">Remove</button>`}</div>`).join('')}</div>`).join('');
   } catch (e) { box.innerHTML = `<p class="hint bad" style="margin:0">${esc(e.message)}</p>`; }
 }
+// The arguments with RetroArch's core set: any -L <core> already there is replaced, and the new one goes in front of {rom}.
+const withCore = (args, core) => {
+  const p = splitArgs(args || '{rom}'), out = [];
+  for (let k = 0; k < p.length; k++) { if (p[k] === '-L' || p[k] === '--libretro') { k++; continue; } out.push(p[k]); }
+  const at = out.findIndex((a) => a.includes('{rom}'));
+  out.splice(at < 0 ? out.length : at, 0, '-L', core);
+  if (at < 0) out.push('{rom}');
+  return joinArgs(out);
+};
+document.addEventListener('change', (ev) => {
+  const sel = ev.target.closest('select[data-corepick]'); if (!sel || !sel.value) return;
+  const i = Number(sel.dataset.corepick); readRows(); emus[i].args = withCore(emus[i].args, sel.value); drawEmus();
+  say('Core set in Arguments. Press Save to keep it.', 'ok');
+});
 document.addEventListener('click', async (ev) => {
   const t = ev.target.closest('button'); if (!t) return;
   if (t.id === 'cacherefresh') { loadCache(); return; }
@@ -117,6 +131,17 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.browsedir !== undefined) {
     const which = t.dataset.browsedir; readRows(); say('Choose the folder in the window that opened…');
     try { const r = await api('/api/pickdir', {}); if (r.path) { if (which === 'shared') $('#cachedir').value = r.path; else { emus[Number(which)].cacheDir = r.path; drawEmus(); } } say(''); } catch (e) { say(e.message, 'bad'); }
+    return;
+  }
+  if (t.dataset.core !== undefined) {   // RetroArch: pick the core from this install's cores folder; the arguments get -L <core>
+    const i = Number(t.dataset.core); readRows(); const box = $(`[data-corebox="${i}"]`);
+    try {
+      const r = await api('/api/cores', { command: emus[i].command });
+      if (!r.cores.length) { say(r.dir ? `No cores found in ${r.dir}. Download one in RetroArch (Load Core > Download a Core), or type -L and the core's path into Arguments.` : 'Browse to RetroArch\'s program first (a full path to retroarch.exe).', 'bad'); return; }
+      const cur = splitArgs(emus[i].args); const k = cur.findIndex((a) => a === '-L' || a === '--libretro'); const now = k >= 0 ? cur[k + 1] : '';
+      box.innerHTML = `<select data-corepick="${i}" aria-label="RetroArch core"><option value="">Choose a core…</option>${r.cores.map((c) => `<option value="${esc(c.file)}"${c.file === now ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`;
+      say('');
+    } catch (e) { say(e.message, 'bad'); }
     return;
   }
   if (t.dataset.rmSrv !== undefined) { servers.splice(Number(t.dataset.rmSrv), 1); drawServers(); }
@@ -137,7 +162,7 @@ document.addEventListener('click', async (ev) => {
   }
   else if (t.id === 'done') { try { await api('/api/done', {}); } catch { /* closing */ } say('You can close this tab.'); window.close(); }
 });
-document.addEventListener('change', (ev) => { const row = ev.target.closest('#emus .row'); if (row && ev.target.dataset.f === 'command') { readRows(); check(Number(row.dataset.i)); } });
+document.addEventListener('change', (ev) => { const row = ev.target.closest('#emus .row'); if (row && ev.target.dataset.f === 'command') { readRows(); const i = Number(row.dataset.i); if (Boolean($('[data-corebox]', row)) !== /retroarch/i.test(String(emus[i].command).split(/[\\/]/).pop())) drawEmus(); check(i); } });   // the core button appears for a RetroArch program
 $('#newserver').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#addserver').click(); });
 
 (async () => {

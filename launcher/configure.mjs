@@ -39,6 +39,20 @@ export async function platformsWithServer(syncToken, fetchImpl = fetch) {
   } catch { return bundled; }   // the server cannot be reached: the shipped list is still right for everything it knew
 }
 
+/** The RetroArch cores next to a RetroArch program: the *_libretro files in its cores folder. Only a program called retroarch is looked at. */
+export function retroarchCores(command) {
+  const c = String(command || '').trim();
+  const out = { dir: '', cores: [] };
+  if (!c || !/retroarch/i.test(path.basename(c)) || !path.isAbsolute(c)) return out;   // only a full path to a program called retroarch
+  const dir = path.join(path.dirname(c), 'cores');
+  try {
+    out.dir = dir;
+    out.cores = fs.readdirSync(dir).filter((f) => /_libretro\.(dll|so|dylib)$/i.test(f)).sort((a, b) => a.localeCompare(b))
+      .map((f) => ({ file: path.join(dir, f), name: f.replace(/_libretro\.(dll|so|dylib)$/i, '').replace(/_/g, ' ') }));
+  } catch { /* no cores folder there */ }
+  return out;
+}
+
 /** Is this program there? A full path must exist; a bare name is looked for in the PATH. */
 export function programExists(cmd, { env = process.env, platform = process.platform } = {}) {
   const c = String(cmd || '').trim();
@@ -193,6 +207,7 @@ export async function startConfigServer({ configFile = configPath(), addServer =
         return send(200, { file: configFile, servers: cfg?.servers || [], emulators: describe(cfg?.emulators), platforms: await platformsWithServer(syncToken), can_sync: Boolean(syncToken), add_server: addServer, warning, cache: { dir: cfg?.cacheDir || '', limit_gb: cfg?.cacheLimitGb ?? null, default_dir: defaultCacheDir(), default_limit_gb: DEFAULT_LIMIT_GB } });
       }
       if (url.pathname === '/api/test') return send(200, { found: programExists(body.command) });
+      if (url.pathname === '/api/cores') return send(200, retroarchCores(body.command));   // the cores a RetroArch has, for the core picker
       if (url.pathname === '/api/pickdir') { try { return send(200, { path: await pickDir() }); } catch (e) { return send(400, { error: e.message }); } }
       if (url.pathname === '/api/cache') {   // what quick launch keeps, per folder
         let cfg = null; try { cfg = loadConfig(configFile); } catch { /* shown by /api/config */ }

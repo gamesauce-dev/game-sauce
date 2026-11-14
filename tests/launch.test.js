@@ -593,3 +593,17 @@ test('setup page: quick launch choices are saved, the cache is listed and emptie
     assert.ok(ui.includes('data-f="ql"') && ui.includes('id="cachelist"') && ui.includes('Empty cache'), 'the page has the choices');
   } finally { s.close(); }
 });
+
+test('setup page: it lists the RetroArch cores next to a RetroArch program (and nothing for other programs)', async () => {
+  const dir = path.join(TMP, 'ra-' + Math.random().toString(36).slice(2));
+  fs.mkdirSync(path.join(dir, 'cores'), { recursive: true });
+  for (const f of ['mupen64plus_next_libretro.dll', 'snes9x_libretro.dll', 'readme.txt']) fs.writeFileSync(path.join(dir, 'cores', f), 'x');
+  const { s, post } = await cfgUrl();
+  try {
+    const r = await (await post('/api/cores', { command: path.join(dir, 'retroarch.exe') })).json();
+    assert.deepEqual(r.cores.map((c) => c.name), ['mupen64plus next', 'snes9x'], 'only the cores, by name');
+    assert.ok(r.cores[0].file.endsWith('mupen64plus_next_libretro.dll'));
+    assert.deepEqual((await (await post('/api/cores', { command: path.join(dir, 'snes9x.exe') })).json()).cores, [], 'another program: nothing');
+    assert.deepEqual((await (await post('/api/cores', { command: 'retroarch' })).json()).cores, [], 'a bare name has no folder to look in');
+  } finally { s.close(); }
+});

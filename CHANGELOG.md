@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Launcher setup: a RetroArch core picker.** When an emulator's program is RetroArch, its row has a **RetroArch core…** button. It lists the cores in the cores folder next to retroarch.exe, and choosing one puts `-L <core>` into Arguments in front of `{rom}` (replacing any core already there). Nothing to type or edit by hand.
+
 ## [0.6.1] - 2026-11-14
 
 ### Added
