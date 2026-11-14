@@ -331,3 +331,9 @@ test('Big Screen: the advisory on the right of a game marked as broken reads "Em
   assert.equal((bs.match(/<em class="bs-flag">Emulation has issues<\/em>/g) || []).length, 2, 'on the page and when it is toggled');
   assert.ok(!bs.includes('the emulator cannot run it</em>'));
 });
+
+test('Big Screen: a favourite shows a gold star just left of its title on the wheel (not on the Favourites wheel)', () => {
+  const bs = read('public/bigscreen.js'), css = read('public/bigscreen.css');
+  assert.ok(bs.includes("g.favorite && st.src?.kind !== 'fav'") && bs.includes('class="bs-favmark"'), 'the star, in the title text before the first word');
+  assert.ok(css.includes('.bs-favmark { display: inline-block; margin-right: .3em; color: #f5c542;'), 'gold, with a gap before the title');
+});
