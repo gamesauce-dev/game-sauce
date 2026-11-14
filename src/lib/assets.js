@@ -33,7 +33,7 @@ function resolve({ kind, id, store, userId }) {
           const type = sniffImage(buf); if (!type) throw new Error('that file is not a JPEG, PNG or WebP picture');
           const file = saveCover(buf, `custom-${r.id}-${Date.now()}`, type);
           db.prepare("UPDATE roms SET cover_path = ?, cover_locked = 0, updated_at = datetime('now') WHERE id = ?").run(file, r.id);   // an automatic cover: a later lookup may replace it
-        } else setRomFile(r.id, k, buf, name);
+        } else setRomFile(r.id, k, buf, name, 'screenscraper');
       }
     };
   }

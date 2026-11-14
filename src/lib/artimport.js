@@ -235,7 +235,7 @@ const firstWord = (t) => squash(String(t || '').split(/[\s\-_.(\[]/)[0]);
 function romGames() {
   const rows = db.prepare('SELECT r.id, p.slug AS platform, r.title, r.region, r.cover_path, r.cover_locked, r.filename FROM roms r JOIN platforms p ON p.id = r.platform_id').all();
   const files = new Map();
-  for (const f of db.prepare('SELECT rom_id, kind, path FROM rom_files').all()) { if (!files.has(f.rom_id)) files.set(f.rom_id, {}); files.get(f.rom_id)[`${f.kind}_path`] = f.path; }
+  for (const f of db.prepare('SELECT rom_id, kind, path, source FROM rom_files').all()) { if (!files.has(f.rom_id)) files.set(f.rom_id, {}); files.get(f.rom_id)[`${f.kind}_path`] = f.path; files.get(f.rom_id)[`${f.kind}_source`] = f.source; }
   return rows.map((r) => ({ ...r, stem: romStem(r.filename), ...(files.get(r.id) || {}) }));
 }
 function digitalGames(userId) {
@@ -380,7 +380,7 @@ function planPictures(userId, scan, { target = 'physical', replace = false, cut 
   for (const b of best.values()) {
     matched[b.kind]++;
     const g = b.game; let gap;
-    if (target === 'rom') gap = b.kind === 'cover' ? (!hasFile(g.cover_path) || (replace && !g.cover_locked)) : (!hasFile(g[`${b.kind}_path`]) || replace);   // a cover that was uploaded or imported is kept; a file brought in earlier is replaced only when asked
+    if (target === 'rom') gap = b.kind === 'cover' ? (!hasFile(g.cover_path) || (replace && !g.cover_locked)) : (!hasFile(g[`${b.kind}_path`]) || replace || (['logo', 'marquee', 'fanart'].includes(b.kind) && g[`${b.kind}_source`] !== 'folder'));   // a fetched logo, marquee or background gives way to the person's own (a file from a folder is kept unless replacing)   // a cover that was uploaded or imported is kept; a file brought in earlier is replaced only when asked
     else if (target === 'digital') gap = !hasFile(g.own) && (replace || !hasFile(g.shared));   // a cover of their own is never replaced; an automatic one only when asked
     else if (b.kind === 'manual') gap = !g.manual_link && !hasFile(g.manual_path);       // there is no automatic manual: only gaps are filled
     else { const path_ = g[`${b.kind}_path`], locked = g[`${b.kind}_locked`]; gap = !hasFile(path_) || (replace && !locked); }

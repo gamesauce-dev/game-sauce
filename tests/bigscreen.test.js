@@ -295,8 +295,10 @@ test('Big Screen: a row of tiles that fits on the screen is centred as a whole, 
 
 test('Big Screen: the wheel shows a game\'s marquee on every platform (else its logo, else the cover); a game with a manual gets Read Manual, read on the right of the game page', async () => {
   const { wheelArt, gameMenu } = await import('../public/bigscreen.js');
-  assert.equal(wheelArt({ id: 3, platform: 'snes', marquee_url: '/m.png', logo_url: '/l.png' }), '/m.png', 'a marquee first, on any platform');
-  assert.equal(wheelArt({ id: 3, platform: 'arcade', logo_url: '/l.png' }), '/l.png', 'else the logo');
+  assert.equal(wheelArt({ id: 3, platform: 'snes', marquee_url: '/m.png', logo_url: '/l.png' }), '/l.png', 'a logo first, on any platform');
+  assert.equal(wheelArt({ id: 3, platform: 'arcade', marquee_url: '/m.png' }), '/m.png', 'else the marquee');
+  assert.equal(wheelArt({ id: 3, marquee_url: '/m.png', logo_url: '/l.png', art_from: { logo: 'screenscraper', marquee: 'folder' } }), '/m.png', 'your own marquee beats a fetched logo');
+  assert.equal(wheelArt({ id: 3, marquee_url: '/m.png', logo_url: '/l.png', art_from: { logo: 'folder', marquee: 'screenscraper' } }), '/l.png', 'and your own logo beats a fetched marquee');
   assert.equal(wheelArt({ id: 3, platform: 'ps2' }), '', 'else nothing: the cover is shown');
   assert.equal(wheelArt({ id: 3, logo_url: '/l.png', media: { marquee: {}, wheel: {} } }), '/l.png', "your own logo beats ScreenScraper's marquee");
   assert.equal(wheelArt({ id: 3, media: { marquee: {} } }), '/api/roms/3/media/marquee', 'a ScreenScraper match\'s marquee counts too');
@@ -429,4 +431,21 @@ test('Storage clean-up: a game that lost track of its files and video can take t
   await call('/api/admin/storage/clear', { method: 'POST', body: {} });
   assert.ok(fs.existsSync(spineNew) && fs.existsSync(video), 're-attached files are kept'); assert.ok(!fs.existsSync(spineOld), 'the older spine goes');
   assert.equal((await call('/api/admin/storage/unused')).body.relink.files, 0);
+});
+
+test('Art import: a logo fetched from ScreenScraper gives way to the one in your folder; one from your folder is kept', async () => {
+  const { setRomFile } = await import('../src/lib/romfiles.js');
+  const { previewArtImport } = await import('../src/lib/artimport.js');
+  const dir = path.join(path.resolve(process.env.GAMESAUCE_STORAGE_DIR), '..', 'logoart'); const png = Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(80)]);
+  fs.mkdirSync(path.join(dir, 'gamecube', 'clearlogo'), { recursive: true }); fs.writeFileSync(path.join(dir, 'gamecube', 'clearlogo', 'Auto Modellista-01.png'), png);
+  const mk = (title, file, sha) => Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'gamecube'), ?, ?, ?, 'x', 3, ?)").run(title, title.toLowerCase(), file, sha).lastInsertRowid);
+  const id = mk('Auto Modellista', 'Auto Modellista.rvz', 'a0a0000000000000000000000000000000000001');
+  const real = Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.from('0000000d49484452', 'hex'), Buffer.alloc(40)]);
+  try { setRomFile(id, 'logo', real, '', 'screenscraper'); } catch { /* a picture the sniffer rejects: write the row by hand */ db.prepare("INSERT OR REPLACE INTO rom_files (rom_id, kind, path, name, type, bytes, source) VALUES (?, 'logo', ?, 'logo.png', 'image/png', 1, 'screenscraper')").run(id, path.join(dir, 'gamecube', 'clearlogo', 'Auto Modellista-01.png')); }
+  assert.equal(db.prepare("SELECT source FROM rom_files WHERE rom_id = ? AND kind = 'logo'").get(id).source, 'screenscraper');
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: [dir] } })).status, 200);
+  const plan = await previewArtImport(1, { target: 'rom', folder: dir });
+  assert.equal(plan.will.logo, 1, 'a fetched logo is replaced');
+  db.prepare("UPDATE rom_files SET source = 'folder' WHERE rom_id = ? AND kind = 'logo'").run(id);
+  assert.equal((await previewArtImport(1, { target: 'rom', folder: dir })).will.logo, 0, 'your own is kept');
 });

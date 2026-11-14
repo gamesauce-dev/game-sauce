@@ -632,3 +632,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '55') ON CON
 /* ── v56: the games the "fill the gaps" run for Big Screen art (logos, marquees, backgrounds) has already asked ScreenScraper about, so a game it had nothing for is not asked again at once (src/lib/assets.js). ── */
 db.exec(`CREATE TABLE IF NOT EXISTS rom_assets_tried (rom_id INTEGER PRIMARY KEY REFERENCES roms(id) ON DELETE CASCADE, tried_at TEXT NOT NULL)`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '56') ON CONFLICT(key) DO UPDATE SET value = '56'").run();
+
+/* ── v57: where a game's file came from: 'folder' (brought in from the person's own artwork folder) or 'screenscraper' (fetched). NULL = before this was recorded. The import replaces a fetched picture with the person's own, and Big Screen shows the person's own first. ── */
+if (!db.prepare('PRAGMA table_info(rom_files)').all().some((c) => c.name === 'source')) db.exec('ALTER TABLE rom_files ADD COLUMN source TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '57') ON CONFLICT(key) DO UPDATE SET value = '57'").run();

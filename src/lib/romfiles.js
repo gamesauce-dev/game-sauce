@@ -14,7 +14,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const dirFor = (romId) => storageDir('rom-files', String(Number(romId)));
 
 /** Keep one file for a game, replacing the one of that kind it had. Throws a 400 for anything that is not a JPEG, PNG or WebP picture (a PDF or picture for a manual). */
-export function setRomFile(romId, kind, buffer, originalName = '') {
+export function setRomFile(romId, kind, buffer, originalName = '', source = 'folder') {
   if (!ROM_FILE_KINDS.includes(kind)) throw Object.assign(new Error('Unknown kind of file.'), { status: 400 });
   let ext, type, name;
   if (kind === 'manual') {
@@ -31,8 +31,8 @@ export function setRomFile(romId, kind, buffer, originalName = '') {
   const file = path.join(dirFor(romId), `${kind}-${Date.now()}.${ext}`);
   fs.writeFileSync(file, buffer);
   const old = db.prepare('SELECT path FROM rom_files WHERE rom_id = ? AND kind = ?').get(romId, kind);
-  db.prepare('INSERT INTO rom_files (rom_id, kind, path, name, type, bytes) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(rom_id, kind) DO UPDATE SET path = excluded.path, name = excluded.name, type = excluded.type, bytes = excluded.bytes')
-    .run(romId, kind, file, name, type, buffer.length);
+  db.prepare('INSERT INTO rom_files (rom_id, kind, path, name, type, bytes, source) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(rom_id, kind) DO UPDATE SET path = excluded.path, name = excluded.name, type = excluded.type, source = excluded.source, bytes = excluded.bytes')
+    .run(romId, kind, file, name, type, buffer.length, source);
   if (old?.path && old.path !== file) try { fs.unlinkSync(old.path); } catch { /* already gone */ }
   return { kind, name, type };
 }
