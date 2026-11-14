@@ -45,7 +45,7 @@ router.get('/:id', (req, res) => {
 
   const items = db.prepare(`
     SELECT r.id, r.title, r.sort_title, r.release_year, r.region, r.cover_path, r.play_override, r.missing,
-           p.slug AS platform, p.short_name AS platform_short, p.accent AS platform_accent
+           p.slug AS platform, p.short_name AS platform_short, p.badge AS platform_badge, p.accent AS platform_accent
     FROM collection_roms cr
     JOIN roms r ON r.id = cr.rom_id
     JOIN platforms p ON p.id = r.platform_id

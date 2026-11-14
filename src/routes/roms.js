@@ -58,7 +58,7 @@ const ROM_COLUMNS = `
   r.dat_status, r.dat_title, CASE WHEN EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) THEN 1 WHEN r.hidden_all = 1 THEN 1 ELSE 0 END AS hidden, r.keep_override, r.is_system, r.hidden_all,
   r.created_at, r.updated_at,
   s.name AS source_name, s.path AS source_root,
-  p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short,
+  p.slug AS platform, p.name AS platform_name, p.short_name AS platform_short, p.badge AS platform_badge,
   p.accent AS platform_accent, p.manufacturer AS platform_manufacturer, p.icon AS platform_icon
 `;
 

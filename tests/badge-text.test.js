@@ -65,3 +65,15 @@ test('the badge text wins everywhere a badge or chip is drawn, in capitals, and 
   const sv = read('src/app.js');
   assert.ok(sv.includes("'icon', 'badge'];") && (sv.match(/p\.badge AS platform_badge/g) || []).length === 2);
 });
+
+test('the ROM Library list and a collection carry the badge text, so the tiles show it instead of the short name', async () => {
+  const id = Number(db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'ps4'), 'Badge Game', 'badge game', 'badge.pkg', 'x', 3, 'ba0000000000000000000000000000000000dge1')").run().lastInsertRowid);
+  const list = (await call('/api/roms?q=Badge+Game')).body;
+  const row = list.items.find((r) => r.id === id) || assert.fail('not listed: ' + JSON.stringify(list).slice(0, 200));
+  assert.equal(row.platform_badge, 'PS-4', 'the library list');
+  assert.equal(row.platform_short, 'PS4');
+  const coll = (await call('/api/collections', { method: 'POST', body: { name: 'Badge shelf' } })).body;
+  await call(`/api/collections/${coll.id}/roms`, { method: 'POST', body: { rom_ids: [id] } });
+  const inside = (await call(`/api/collections/${coll.id}`)).body;
+  assert.equal((inside.roms || inside.items).find((r) => r.id === id).platform_badge, 'PS-4', 'a collection');
+});
