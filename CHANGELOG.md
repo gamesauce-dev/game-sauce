@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-11-15
+
 ### Added
 - **A star for favourites.** In the Modern look the favourite button on a game tile is now a star (an outline, filled gold when the game is a favourite) instead of the face icon. The **Carousel** shows a gold star on a favourite's cover and by its title, and the middle game has a **Favourite** button to mark or unmark it from there.
 
