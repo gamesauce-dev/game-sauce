@@ -1,0 +1,7 @@
+{
+  // Cloudflare: publishes the site/ folder as the gamesauce.app website (a static site; nothing is built).
+  // The game-sauce app itself is not deployed here.
+  "name": "game-sauce",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./site" }
+}
