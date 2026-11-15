@@ -20,6 +20,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 img { max-width: 100%; height: auto; display: block; }
+video { max-width: 100%; height: auto; display: block; }
+.shot video { width: 100%; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 24px 60px rgba(0, 0, 0, .5); background: #000; }
 a { color: var(--accent-2); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
@@ -90,7 +92,8 @@ h2 { margin: 0 0 10px; font-size: clamp(1.6rem, 3.4vw, 2.3rem); letter-spacing: 
 .shots figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
 
 /* big screen */
-#bigscreen .shot { max-width: 980px; margin-inline: auto; }
+#bigscreen .shot, #carousel .shot { max-width: 980px; margin-inline: auto; }
+#carousel .shot + .shot { margin-top: 34px; }
 #bigscreen figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
 .ticks { list-style: none; margin: 34px auto; padding: 0; max-width: 720px; display: grid; gap: 12px; }
 .ticks li { position: relative; padding-left: 30px; color: var(--dim); }
