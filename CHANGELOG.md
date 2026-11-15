@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-11-15
+
 ### Changed
 - **The update notice names the right command on a Proxmox LXC.** A game-sauce installed with the one-command Proxmox script is now recognised as such (new installs say so in their settings; older ones are recognised by the update command the script writes), and the notice says to run `game-sauce-update`, inside the container or with `pct exec <id> -- game-sauce-update`, instead of "the release page says how".
 
