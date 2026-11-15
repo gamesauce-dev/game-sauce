@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-11-15
+
 ### Changed
 - **The favourite icon is a star everywhere in the Modern look.** The face icon is gone from the toolbar's favourites filter, the favourite button in a game's details window, and the favourites filters on the Physical and Digital pages. It is an outline star, filled when switched on.
 
