@@ -4,6 +4,8 @@
 [![Docker image](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**Website:** [gamesauce.app](https://gamesauce.app) · **Support the project:** [Buy me a coffee](https://buymeacoffee.com/gamesauce)
+
 A self-hosted ROM manager for **your own collection**: scan folders in place, catalogue your
 library, enrich it with metadata and artwork, play many older games in the browser, and download
 ROMs back out. Built for a household: you run it, and you give accounts to the people you trust.
