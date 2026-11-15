@@ -40,7 +40,7 @@ function translate(html, code) {
   };
   // blocks (their inner HTML is the key), the outermost first so a link inside a paragraph travels with it
   let out = html.replace(/<(p|li|h1|h2|h3|figcaption|summary|a|title)\b([^>]*)>([\s\S]*?)<\/\1>/g, (all, tag, attrs, inner) => {
-    if (/class="(brand|wordmark|foot-brand)"/.test(attrs) || /^\s*<(img|span)/.test(inner) || /data-lang=/.test(attrs) || /langmenu/.test(inner)) return all;
+    if (/class="(brand|wordmark|foot-brand)"/.test(attrs) || /^\s*<(img|span)/.test(inner) || /data-lang=/.test(attrs) || /data-lang=|langmenu/.test(inner)) return all;
     if (!/[A-Za-z]{3}/.test(inner.replace(/<[^>]*>/g, ''))) return all;
     const t = get(inner); if (t === null) { need(inner); return all; }
     return `<${tag}${attrs}>${t}</${tag}>`;

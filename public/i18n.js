@@ -10,7 +10,8 @@
 export const LANGS = [
   { code: 'en', name: 'English', flag: 'gb', html: 'en' },
   { code: 'fr', name: 'Français', flag: 'fr', html: 'fr' },
-  { code: 'zh', name: '简体中文', flag: 'cn', html: 'zh-Hans' }
+  { code: 'zh', name: '简体中文', flag: 'cn', html: 'zh-Hans' },
+  { code: 'es', name: 'Español', flag: 'es', html: 'es' }
 ];
 const KEY = 'gamesauce_lang';          // 'auto' (or nothing) follows the browser
 const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
