@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>game-sauce：持っているゲームのためのセルフホスト型ライブラリ</title>
+<meta name="description" content="game-sauce は、自分のコレクションのための無料のセルフホスト型 ROM マネージャーです：フォルダーをスキャンし、カバーを取得し、ブラウザーや PC でプレイし、ビッグスクリーンでソファから閲覧できます。">
+<link rel="canonical" href="https://gamesauce.app/ja/">
+<!--hreflang-->
+<link rel="alternate" hreflang="en" href="https://gamesauce.app/">
+<link rel="alternate" hreflang="fr" href="https://gamesauce.app/fr/">
+<link rel="alternate" hreflang="zh-Hans" href="https://gamesauce.app/zh/">
+<link rel="alternate" hreflang="es" href="https://gamesauce.app/es/">
+<link rel="alternate" hreflang="pt-BR" href="https://gamesauce.app/pt/">
+<link rel="alternate" hreflang="de" href="https://gamesauce.app/de/">
+<link rel="alternate" hreflang="ja" href="https://gamesauce.app/ja/">
+<link rel="alternate" hreflang="x-default" href="https://gamesauce.app/">
+<!--/hreflang-->
+<link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="game-sauce：持っているゲームのためのセルフホスト型ライブラリ">
+<meta property="og:description" content="フォルダーをスキャンし、カバーを取得し、ブラウザーや PC でプレイし、ビッグスクリーンでソファから閲覧できます。無料でオープンソースです。">
+<meta property="og:url" content="https://gamesauce.app/ja/">
+<meta property="og:image" content="https://gamesauce.app/img/social-preview.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="game-sauce ホーム"><img src="../img/logo.svg" alt="" width="36" height="36"><span>game<span class="saucy">-sauce</span></span></a>
+    <nav aria-label="セクション">
+      <a href="#features">機能</a>
+      <a href="#video">動画</a>
+      <a href="#bigscreen">ビッグスクリーン</a>
+      <a href="#carousel">カルーセル</a>
+      <a href="#shelf">棚</a>
+      <a href="#screens">スクリーンショット</a>
+      <a href="#start">はじめる</a>
+      <a href="#faq">よくある質問</a>
+      <a href="https://buymeacoffee.com/gamesauce" rel="noopener">応援する</a>
+      <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <!--langmenu--><details class="langmenu"><summary aria-label="言語"><img src="/flags/jp.svg" alt="" width="24" height="16"><span>日本語</span></summary><ul><li><a href="/" hreflang="en" lang="en" data-lang="en"><img src="/flags/gb.svg" alt="" width="24" height="16"><span>English</span></a></li><li><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr"><img src="/flags/fr.svg" alt="" width="24" height="16"><span>Français</span></a></li><li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh"><img src="/flags/cn.svg" alt="" width="24" height="16"><span>中文</span></a></li><li><a href="/es/" hreflang="es" lang="es" data-lang="es"><img src="/flags/es.svg" alt="" width="24" height="16"><span>Español</span></a></li><li><a href="/pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt"><img src="/flags/br.svg" alt="" width="24" height="16"><span>Português</span></a></li><li><a href="/de/" hreflang="de" lang="de" data-lang="de"><img src="/flags/de.svg" alt="" width="24" height="16"><span>Deutsch</span></a></li><li><a href="/ja/" hreflang="ja" lang="ja" data-lang="ja" aria-current="true"><img src="/flags/jp.svg" alt="" width="24" height="16"><span>日本語</span></a></li></ul></details><!--/langmenu-->
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <p class="wordmark" aria-hidden="true">game<span class="saucy">-sauce</span></p>
+    <p class="eyebrow">無料 &middot; オープンソース &middot; セルフホスト</p>
+    <h1>あなたのゲームコレクションを、<br>自分のサーバーに。</h1>
+    <p class="lead">game-sauce は、持っているゲームをカタログ化し、カバーを取得し、多くをブラウザーでプレイし、残りは PC のエミュレーターで起動し、ゲームパッドで操作するビッグスクリーンでライブラリ全体をテレビに映し出します。</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">ダウンロード</a>
+      <a class="btn" href="#start">使い方</a>
+      <a class="btn" href="https://github.com/gamesauce-dev/game-sauce" rel="noopener">&#9733; GitHub でスターを付ける</a>
+    </div>
+    <p class="small">Windows &middot; macOS（Apple シリコン）&middot; Linux &middot; Docker、Unraid、Proxmox &middot; Raspberry Pi</p>
+    <figure class="shot hero-shot">
+      <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="game-sauce のライブラリ：プラットフォームのフィルターと A〜Z バーが付いた、ゲームカバーのグリッド">
+    </figure>
+    <p class="small note">スクリーンショットは、内蔵のデモデータと生成されたカバーを使っています。</p>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <div class="wrap">
+    <h2>すでにあるコレクションのためのすべて</h2>
+    <p class="sub">家族全員のライブラリを、自分で管理するマシンにひとまとめに。</p>
+    <div class="grid">
+      <article class="card">
+        <h3>フォルダーをその場でスキャン</h3>
+        <p>すでにあるフォルダーを指定するだけ。ファイルはその場でカタログ化され、移動、名前変更、削除は一切されません。壊れたファイルが1つあっても、スキャンが止まることはありません。</p>
+      </article>
+      <article class="card">
+        <h3>カバーと詳細を自動で取得</h3>
+        <p>ScreenScraper、TheGamesDB、IGDB、SteamGridDB から、自分のアカウントでカバー、説明、発売年などを取得できます。フォルダーから画像を取り込んだり、自分で画像をアップロードしたりもできます。</p>
+      </article>
+      <article class="card">
+        <h3>ブラウザーでプレイ</h3>
+        <p>多くの古いコンソールは、ウェブページからそのまま動きます。ステートセーブとゲーム内セーブは、人ごとにあなたのサーバーに保存されます。「続きをプレイ」の行が、どこまで遊んだかを覚えています。</p>
+      </article>
+      <article class="card">
+        <h3>PC でプレイ</h3>
+        <p>ワンクリックで、自分のコンピューターにインストールした RetroArch、MAME、Dolphin などのエミュレーターでゲームを起動できます。ゲームはすぐ再起動できるよう保持でき、設定ページで各エミュレーターを設定できます。</p>
+      </article>
+      <article class="card">
+        <h3>テレビ向けのビッグスクリーン</h3>
+        <p>ソファで使う、ゲームパッド操作のフル画面表示：ロゴやマーキーが付いたゲームのホイール、お気に入りとコレクション、A〜Z のバー、画面上のマニュアル、ミュートできるサウンド。</p>
+      </article>
+      <article class="card">
+        <h3>コレクションと人</h3>
+        <p>お気に入り、非公開のコレクション、非表示のゲームに加え、信頼できる人のアカウント（ダウンロードや管理のないプレイ専用アカウントを含む）を作れます。ユーザー同士で非公開のメッセージを送れ、管理者は全員にお知らせを掲示できます。</p>
+      </article>
+      <article class="card">
+        <h3>いつもすっきり</h3>
+        <p>No-Intro と Redump の DAT でダンプを検証し、重複バージョンを見つけて残すべき最良のコピーを提案し、未使用の画像ファイルを整理します。ゲーム自体は削除しません。</p>
+      </article>
+      <article class="card">
+        <h3>棚も Steam も</h3>
+        <p>Steam ライブラリをプレイ時間付きで取り込み、PlayStation、Nintendo、Xbox のゲームもリストから取り込めます。実際に持っているディスクやカートリッジも、ROM と並べて記録できます。</p>
+      </article>
+      <article class="card">
+        <h3>自分で運用</h3>
+        <p>アカウントもサブスクリプションもクラウドも不要。ライブラリとそのデータは自分のハードウェアに残り、アプリからバックアップと復元ができるデータベースに入っています。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="video" class="section alt">
+  <div class="wrap">
+    <h2>動くところを見る</h2>
+    <p class="sub">内蔵のデモライブラリからの短いクリップが2つ。</p>
+    <div class="clips">
+      <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="ビッグスクリーン：ゲームのホイールをスクロールし、文字でジャンプして、ゲームを開き、戻る"><source src="../video/bigscreen.mp4" type="video/mp4"></video><figcaption>テレビでビッグスクリーン</figcaption></figure>
+      <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="ライブラリ：ゲームを検索して詳細を開く"><source src="../video/library.mp4" type="video/mp4"></video><figcaption>ライブラリを検索してゲームを開く</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="bigscreen" class="section">
+  <div class="wrap">
+    <h2>ビッグスクリーン：ライブラリをテレビに</h2>
+    <p class="sub">ゲームパッドとソファのために作られたフル画面表示。ライブラリからワンクリックで開き、ブラウザーかデスクトップアプリをテレビでフル画面にします。</p>
+    <figure class="shot"><img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="ビッグスクリーン：選択したゲームが中央にあるゲームのホイール、右に A〜Z のバー、下にコントローラーのヒント"><figcaption>ホイール：スティックでスクロール、バンパーで文字ジャンプ</figcaption></figure>
+    <ul class="ticks">
+      <li>すべてゲームパッドで操作でき、ボタンのヒントが画面に表示されます。</li>
+      <li>あるものはロゴとマーキー、ないものはカバー、そしてゲーム自身の画像をぼかした背景。</li>
+      <li>お気に入りとコレクションは専用の行に。新しいコレクションに名前を付けるための画面キーボードもあります。</li>
+      <li>ゲームのマニュアルを画面で読めます。エミュレーションに問題があるとされたゲームも確認できます。</li>
+      <li>同じ画面から、ブラウザーでプレイしたり、この PC でゲームを起動したりできます。</li>
+    </ul>
+    <figure class="shot"><img src="../img/bigscreen-game.webp" loading="lazy" width="1920" height="1080" alt="ビッグスクリーンでのゲームのページ：左にプレイ、お気に入り、コレクションに追加、故障、非表示、中央にカバー、右に詳細"><figcaption>ゲームのページ：プレイ、お気に入り、コレクションに追加</figcaption></figure>
+  </div>
+</section>
+
+<section id="carousel" class="section alt">
+  <div class="wrap">
+    <h2>カルーセル：ゲームを選んでプレイ</h2>
+    <p class="sub">なだらかな弧を描くカバーのフル画面の棚。ファミリーとプラットフォームを選び、矢印キー、マウスホイール、スワイプ、ゲームパッドでスクロールして、プレイを押します。</p>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="カルーセル：カバーをスクロールし、文字でタイトルにジャンプして、お気に入りにスターを付ける"><source src="../video/carousel.mp4" type="video/mp4"></video><figcaption>カルーセルをスクロールし、文字でジャンプして、お気に入りにスターを付ける</figcaption></figure>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="カルーセルで Game Boy のゲームを選び、「ブラウザーでプレイ」を押すと、ページ内でゲームが動く"><source src="../video/play.mp4" type="video/mp4"></video><figcaption><b>ブラウザーでプレイ</b>を押すと、ページ内でゲームが動きます。このゲームは、Damian Yerrick さんによる無料のホームブリュー <a href="https://github.com/pinobatch/libbet">Libbet and the Magic Floor</a>（zlib ライセンス）です。</figcaption></figure>
+    <ul class="ticks">
+      <li>ウェブページで動くゲームには<b>ブラウザーでプレイ</b>、設定済みのエミュレーターを起動するには<b>この PC でプレイ</b>を使います。</li>
+      <li>お気に入りには、カバーとタイトルの横に金色のスターが付きます。真ん中のゲームも、その場でスターを付けたり外したりできます。</li>
+      <li>文字を押すと、その文字で始まる最初のタイトルにジャンプします。</li>
+      <li>ゲームに動画があれば、そのゲームで止まったときにカバーの下で再生されます。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="shelf" class="section">
+  <div class="wrap">
+    <h2>あなたの棚：持っているディスクとカートリッジ</h2>
+    <p class="sub">本物の棚にある箱入りのゲームを、手動またはリストからカタログ化し、デジタルコレクションと並べて管理します。棚は人ごとに別々です。</p>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="物理の棚：背表紙の棚に切り替え、1本引き出し、ケースを手前に出し、裏返し、開いてマニュアルとディスクを見て、マニュアルを読む"><source src="../video/shelf.mp4" type="video/mp4"></video><figcaption>タイルから背表紙の棚へ。ケースを引き出して、裏返し、開いて、マニュアルを読みます</figcaption></figure>
+    <ul class="ticks">
+      <li>ゲームをタイルで見るか、本物のケースのように立つ背表紙の棚で見られます。</li>
+      <li>背表紙をクリックして引き出し、もう一度クリックでケースを手前に、さらにクリックで開きます：片側にマニュアル、もう片側にディスクかカートリッジが現れます。</li>
+      <li>ケースを裏返して裏面を見たり、マニュアルを画面で読んだりできます。</li>
+      <li>自分の画像やマニュアルを追加したり、メタデータプロバイダーからカバー、背表紙、裏面、ディスクを取得したりできます。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="screens" class="section alt">
+  <div class="wrap">
+    <h2>見てみる</h2>
+    <p class="sub">クラシックとモダンの見た目、ライトとダーク。同じライブラリを、好みの表示で。</p>
+    <div class="shots">
+      <figure class="shot"><img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="ライブラリの横に固定されたゲームの詳細。ステートセーブとメタデータの照合付き"><figcaption>ライブラリの横にゲームの詳細</figcaption></figure>
+      <figure class="shot"><img src="../img/library-light.webp" loading="lazy" width="1500" height="900" alt="ライトテーマのライブラリ"><figcaption>ライトテーマ</figcaption></figure>
+      <figure class="shot"><img src="../img/collections.webp" loading="lazy" width="2400" height="528" alt="コレクションのページ：ゲームのカバーとゲーム数が付いた2つのコレクション"><figcaption>コレクション</figcaption></figure>
+      <figure class="shot"><img src="../img/library-classic.webp" loading="lazy" width="1920" height="1080" alt="クラシック表示：サイドバー、数付きのプラットフォームファミリーのチップ、お気に入りに金色のスターが付いたカバーのグリッド"><figcaption>クラシック表示</figcaption></figure>
+      <figure class="shot"><img src="../img/login.webp" loading="lazy" width="2560" height="1440" alt="サインイン画面：ネオンのグリッドの上の game-sauce のロゴと、ユーザー名とパスワードの入力欄"><figcaption>サインイン画面</figcaption></figure>
+      <figure class="shot"><img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="PlayStation 2 のケースが開いた物理の棚。説明書とディスクが見える"><figcaption>棚で開いたケース</figcaption></figure>
+      <figure class="shot"><img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="カルーセル：扇状のカバーと、その下の「ブラウザーでプレイ」「この PC でプレイ」"><figcaption>カルーセル</figcaption></figure>
+      <figure class="shot"><img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="ランチャーの設定ページ：プラットフォームごとの行に、エミュレーターのプログラムと引数、RetroArch のコアのボタン"><figcaption>PC でエミュレーターを設定、RetroArch のコア選択付き</figcaption></figure>
+      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="デジタルライブラリ：プレイ時間付きの Steam ゲームのグリッドと、Steam、PlayStation、Nintendo、Xbox のタブ"><figcaption>デジタルライブラリ：Steam のゲームと、持っているコンソールゲーム</figcaption></figure>
+      <figure class="shot"><img src="../img/emulators.webp" loading="lazy" width="1500" height="900" alt="プラットフォームごとにカードがあるエミュレーターのページ"><figcaption>エミュレーター</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="start" class="section">
+  <div class="wrap">
+    <h2>はじめる</h2>
+    <p class="sub">自分に合う方を選んでください。どちらも数分で終わります。</p>
+    <div class="grid two">
+      <article class="card">
+        <h3>自分のコンピューターで</h3>
+        <p>Windows、macOS、Linux 用のデスクトップアプリかポータブル版をダウンロードします。ほかにインストールするものはありません：サーバーも Docker も不要で、編集する設定もありません。</p>
+        <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">最新リリースをダウンロード</a>
+      </article>
+      <article class="card">
+        <h3>ホームサーバーで</h3>
+        <p>Docker、Unraid、Proxmox のコンテナで動かし、家中のどのデバイスからでも使えます。手順は導入ガイドにあります。</p>
+        <a class="btn" href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/DEPLOYMENT.md">導入ガイドを読む</a>
+      </article>
+    </div>
+    <p class="small">初めて起動したとき、あなたのために作られたアカウントが一度だけ表示されます。控えておき、設定でパスワードを変更してください。インターネットに公開する場合は、VPN か、HTTPS 付きのリバースプロキシの内側に置いてください。</p>
+  </div>
+</section>
+
+<section id="faq" class="section alt">
+  <div class="wrap narrow">
+    <h2>よくある質問</h2>
+    <details>
+      <summary>ゲームは付いてきますか？</summary>
+      <p>いいえ。game-sauce は、持っているゲームを管理するためのものです。ゲームや BIOS ファイルは含まれず、提供もされず、ゲームをダウンロードすることもありません：自分のコレクションを持ち込みます。プレイについては、ブラウザーでのプレイはオープンソースのエミュレーター EmulatorJS で動き、プレイを押したときにブラウザーが読み込みます。PC でのプレイでは、「エミュレーター」ページがエミュレーターと入手先を案内し、ランチャーは自分でインストールしたものを起動します。</p>
+    </details>
+    <details>
+      <summary>本当に無料ですか？</summary>
+      <p>はい。MIT ライセンスのオープンソースです。作成するアカウントも、サブスクリプションも、トラッキングもありません。一部のメタデータプロバイダーでは、サービスを使うために自分の無料アカウントの登録が必要です。</p>
+    </details>
+    <details>
+      <summary>ブラウザーでプレイできるゲームは？</summary>
+      <p>BIOS が不要な多くの古いコンソールは、ウェブページから動きます。新しいシステムや、ブラウザーにできる範囲を超えるものは、代わりにランチャー経由で PC のエミュレーターで起動します。</p>
+    </details>
+    <details>
+      <summary>ファイルを移動したり変更したりしますか？</summary>
+      <p>指定したフォルダーでは、しません。ファイルはその場で読み取られ、中のファイルを移動、名前変更、削除することは決してありません。整理ツールが触れるのは、画像と、game-sauce 自身が保存したファイルだけです。</p>
+    </details>
+    <details>
+      <summary>家族みんなで使えますか？</summary>
+      <p>はい。信頼できる人のアカウントを作ってください。コレクションは作成した人だけのもので、プレイ専用アカウントには、ブラウザーでプレイできるゲームだけが表示されます。</p>
+    </details>
+    <details>
+      <summary>ヘルプや不具合の報告はどこで？</summary>
+      <p><a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a> で issue かディスカッションを開くか、<a href="mailto:hello@gamesauce.app">hello@gamesauce.app</a> にメールしてください。設定の「システムの状態」ページで、秘密情報を含まない、コピー＆ペースト用のレポートを作れます。</p>
+    </details>
+  </div>
+</section>
+
+<section id="support" class="section support">
+  <div class="wrap narrow">
+    <h2>game-sauce を気に入っていただけましたか？</h2>
+    <p class="sub">game-sauce は無料のオープンソースです。役に立ったら、コーヒーをおごっていただけると嬉しいです。新機能、Windows・Mac・Linux でのテスト、質問への対応に、より多くの時間を割けるようになります。</p>
+    <p class="cta"><a class="btn btn-gold" href="https://buymeacoffee.com/gamesauce" rel="noopener">&#9733; コーヒーをおごる</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="foot-brand">game<span class="saucy">-sauce</span></p>
+    <div class="links">
+      <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/releases">リリース</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/CHANGELOG.md">変更履歴</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/USER-GUIDE.md">ユーザーガイド</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/LICENSE">MIT ライセンス</a>
+      <a href="mailto:hello@gamesauce.app">hello@gamesauce.app</a>
+      <a href="https://buymeacoffee.com/gamesauce" rel="noopener">プロジェクトを応援する</a>
+    </div>
+    <p class="small">game-sauce は独立したプロジェクトです。いかなるゲーム機メーカーやゲームパブリッシャーとも提携しておらず、承認も受けていません。すべてのゲーム機、ゲーム、企業の名称とロゴは、それぞれの所有者に帰属します。合法的に所有しているゲームを管理するために作られています。</p>
+  </div>
+</footer>
+
+<script>
+// Remember a language choice, and on the first visit to the English page follow the browser (to a language the site has) once.
+(function () {
+  var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
+  var AVAIL = /*langs*/["fr","zh","es","pt","de","ja"]/*/langs*/;
+  try { saved = localStorage.getItem(K); } catch (e) {}
+  document.querySelectorAll('.langmenu a').forEach(function (a) {
+    a.addEventListener('click', function () { try { localStorage.setItem(K, a.dataset.lang); } catch (e) {} });
+  });
+  document.addEventListener('click', function (ev) { var d = document.querySelector('.langmenu[open]'); if (d && !d.contains(ev.target)) d.removeAttribute('open'); });
+  if (here === 'en' && !saved && location.pathname === '/' && !location.hash) {
+    var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
+    for (var i = 0; i < l.length; i++) { if (AVAIL.indexOf(l[i]) >= 0) { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
+  }
+})();
+(function () {
+  var vids = document.querySelectorAll('video');
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm || !('IntersectionObserver' in window)) { vids.forEach(function (v) { v.setAttribute('controls', ''); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { var p = e.target.play(); if (p && p.catch) p.catch(function () {}); } else e.target.pause();
+    });
+  }, { threshold: 0.2 });
+  vids.forEach(function (v) { io.observe(v); });
+})();
+</script>
+<!-- Buy Me a Coffee: the floating button. It loads a script from buymeacoffee.com. Delete this line to remove it. -->
+<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="gamesauce" data-description="Buy me a coffee で応援してください！" data-message="応援ありがとうございます。楽しいゲームライフを！" data-color="#7c5cff" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+</body>
+</html>

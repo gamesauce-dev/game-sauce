@@ -13,7 +13,8 @@ export const LANGS = [
   { code: 'zh', name: '中文', flag: 'cn', html: 'zh-Hans' },
   { code: 'es', name: 'Español', flag: 'es', html: 'es' },
   { code: 'pt', name: 'Português', flag: 'br', html: 'pt-BR' },   // Brazilian Portuguese
-  { code: 'de', name: 'Deutsch', flag: 'de', html: 'de' }
+  { code: 'de', name: 'Deutsch', flag: 'de', html: 'de' },
+  { code: 'ja', name: '日本語', flag: 'jp', html: 'ja' }
 ];
 const KEY = 'gamesauce_lang';          // 'auto' (or nothing) follows the browser
 const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
