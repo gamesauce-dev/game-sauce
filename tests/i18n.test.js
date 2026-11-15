@@ -44,11 +44,16 @@ test('i18n: every language has a file, valid JSON, and the Settings picker and t
     for (const [k, v] of Object.entries(j)) { assert.equal(typeof k, 'string'); assert.equal(typeof v, 'string', `${l.code}: "${k}" must map to a string`); }
   }
   const server = read('src/app.js');
-  for (const l of LANGS) assert.ok(server.includes(`'${l.code}'`), l.code);
+  assert.ok(server.includes("import { LANGS } from '../public/i18n.js'") && server.includes('...LANGS.map'), 'the server takes the accepted languages from the one list');
+  for (const l of LANGS) {
+    assert.ok(l.flag && fs.existsSync(new URL(`../public/flags/${l.flag}.svg`, import.meta.url)), `${l.code}: a flag picture`);
+    assert.ok(fs.existsSync(new URL(`../site/flags/${l.flag}.svg`, import.meta.url)), `${l.code}: a flag picture for the website`);
+    if (l.code !== 'en') assert.ok(fs.existsSync(new URL(`../site/${l.code}/index.html`, import.meta.url)), `${l.code}: a website page`);
+  }
 });
 
 test('i18n: a pattern in a language file uses only the {names} its English key has', () => {
-  for (const code of ['fr', 'zh']) {
+  for (const { code } of LANGS.filter((l) => l.code !== 'en')) {
     const j = JSON.parse(read(`public/lang/${code}.json`));
     for (const [en, tr] of Object.entries(j)) {
       const a = new Set([...en.matchAll(/\{([a-z0-9_]+)\}/gi)].map((m) => m[1])), b = [...tr.matchAll(/\{([a-z0-9_]+)\}/gi)].map((m) => m[1]);

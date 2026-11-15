@@ -3986,10 +3986,12 @@ function initProfilePanel() {
   $('#profile-remove').disabled = !u.avatar_v;
   $('#profile-upload').onclick = () => $('#profile-file').click();
   // Language: follows the browser unless a choice was made. The choice is kept on this device and with the account.
-  const langSel = $('#lang-select');
-  if (langSel) {
-    langSel.innerHTML = [['auto', 'Automatic (the browser\'s language)'], ...LANGS.map((l) => [l.code, l.name])].map(([v, n]) => `<option value="${v}"${v === chosenLanguage() ? ' selected' : ''}>${esc(n)}</option>`).join('');
-    langSel.onchange = () => { const v = langSel.value; api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: v }) }).catch(() => {}).finally(() => setLanguage(v)); };
+  const langBox = $('#lang-picker');
+  if (langBox) {
+    const now = chosenLanguage();
+    langBox.innerHTML = `<button type="button" class="lang-opt" data-lang="auto" aria-pressed="${now === 'auto'}"><span class="lang-globe" aria-hidden="true">🌐</span><span>Automatic (the browser's language)</span></button>`
+      + LANGS.map((l) => `<button type="button" class="lang-opt" data-lang="${l.code}" aria-pressed="${now === l.code}"><img src="/flags/${l.flag}.svg" alt="" width="24" height="16"><span class="notranslate">${esc(l.name)}</span></button>`).join('');
+    langBox.onclick = (ev) => { const b = ev.target.closest('.lang-opt'); if (!b) return; const v = b.dataset.lang; api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: v }) }).catch(() => {}).finally(() => setLanguage(v)); };
   }
   $('#profile-file').onchange = async (e) => {
     const file = e.target.files?.[0]; e.target.value = '';

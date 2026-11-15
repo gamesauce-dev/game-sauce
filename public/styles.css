@@ -1837,3 +1837,10 @@ select option { background: var(--panel); color: var(--text); }
 .card-casebtn:hover { background: rgba(8, 9, 14, .95); border-color: #fff; color: #fff; }
 @media (hover: none) { .card-casebtn { opacity: 1; } }
 body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
+
+/* Language picker (Settings > My account): a flag and the language's own name on each button */
+.lang-picker { display: flex; flex-wrap: wrap; gap: 8px; max-width: 720px; }
+.lang-opt { display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line, #2a2d36); background: var(--bg-2, #1b1d24); color: inherit; font: inherit; cursor: pointer; }
+.lang-opt:hover { border-color: var(--accent); }
+.lang-opt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.lang-opt img { border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,.15); object-fit: cover; }

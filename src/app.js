@@ -1,3 +1,4 @@
+import { LANGS } from '../public/i18n.js';   // the one list of languages (the Settings picker reads it too)
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
@@ -529,7 +530,7 @@ export function createApp() {
   });
 
   // Per-user preferences (whitelisted keys only). Scoped to the signed-in user.
-  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'], ui_mode: ['classic', 'modern'], lang: ['auto', 'en', 'fr', 'zh'] };
+  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'], ui_mode: ['classic', 'modern'], lang: ['auto', ...LANGS.map((l) => l.code)] };
   api.get('/prefs', (req, res) => {
     const out = {};
     for (const r of db.prepare('SELECT key, value FROM user_prefs WHERE user_id = ?').all(req.user.id)) out[r.key] = r.value;

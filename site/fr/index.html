@@ -6,10 +6,12 @@
 <title>game-sauce : une bibliothèque auto-hébergée pour les jeux que vous possédez</title>
 <meta name="description" content="game-sauce est un gestionnaire de ROM gratuit et auto-hébergé pour votre propre collection : analysez vos dossiers, récupérez les jaquettes, jouez dans le navigateur ou sur votre PC, et parcourez depuis le canapé avec le Grand écran.">
 <link rel="canonical" href="https://gamesauce.app/fr/">
+<!--hreflang-->
 <link rel="alternate" hreflang="en" href="https://gamesauce.app/">
 <link rel="alternate" hreflang="fr" href="https://gamesauce.app/fr/">
 <link rel="alternate" hreflang="zh-Hans" href="https://gamesauce.app/zh/">
 <link rel="alternate" hreflang="x-default" href="https://gamesauce.app/">
+<!--/hreflang-->
 <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:title" content="game-sauce : une bibliothèque auto-hébergée pour les jeux que vous possédez">
@@ -36,7 +38,7 @@
       <a href="#faq">FAQ</a>
       <a href="https://buymeacoffee.com/gamesauce" rel="noopener">Soutenir</a>
       <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
-      <span class="langs" aria-label="Langue"><a href="/" hreflang="en" lang="en" data-lang="en">EN</a><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr">FR</a><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh">中文</a></span>
+      <!--langmenu--><details class="langmenu"><summary aria-label="Langue"><img src="/flags/fr.svg" alt="" width="24" height="16"><span>Français</span></summary><ul><li><a href="/" hreflang="en" lang="en" data-lang="en"><img src="/flags/gb.svg" alt="" width="24" height="16"><span>English</span></a></li><li><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr" aria-current="true"><img src="/flags/fr.svg" alt="" width="24" height="16"><span>Français</span></a></li><li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh"><img src="/flags/cn.svg" alt="" width="24" height="16"><span>简体中文</span></a></li></ul></details><!--/langmenu-->
     </nav>
   </div>
 </header>
@@ -259,17 +261,18 @@
 </footer>
 
 <script>
-// Remember a language choice, and on the first visit to the English page follow the browser (French or Chinese) once.
+// Remember a language choice, and on the first visit to the English page follow the browser (to a language the site has) once.
 (function () {
   var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
+  var AVAIL = /*langs*/["fr","zh"]/*/langs*/;
   try { saved = localStorage.getItem(K); } catch (e) {}
-  document.querySelectorAll('.langs a').forEach(function (a) {
-    if (a.dataset.lang === (here === 'zh' ? 'zh' : here)) a.setAttribute('aria-current', 'true');
+  document.querySelectorAll('.langmenu a').forEach(function (a) {
     a.addEventListener('click', function () { try { localStorage.setItem(K, a.dataset.lang); } catch (e) {} });
   });
+  document.addEventListener('click', function (ev) { var d = document.querySelector('.langmenu[open]'); if (d && !d.contains(ev.target)) d.removeAttribute('open'); });
   if (here === 'en' && !saved && location.pathname === '/' && !location.hash) {
     var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
-    for (var i = 0; i < l.length; i++) { if (l[i] === 'fr' || l[i] === 'zh') { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
+    for (var i = 0; i < l.length; i++) { if (AVAIL.indexOf(l[i]) >= 0) { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
   }
 })();
 (function () {

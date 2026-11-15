@@ -5,10 +5,12 @@
 //   - Text inside an element marked translate="no" (or class notranslate), a script, a style or a text box is left alone.
 // The language is the one the person chose in Settings (kept on this device and, once signed in, with the account), else the one the browser asks for.
 
+// The languages we have, in the order they are listed. `flag` is the picture in public/flags (a flag is only a picture beside the name: the name is what counts), `html` the lang attribute.
+// Adding a language: a line here, public/lang/<code>.json, a flag, and `node scripts/build-site-langs.mjs` for the website. The server and the tests read this list.
 export const LANGS = [
-  { code: 'en', name: 'English' },
-  { code: 'fr', name: 'Français' },
-  { code: 'zh', name: '简体中文' }
+  { code: 'en', name: 'English', flag: 'gb', html: 'en' },
+  { code: 'fr', name: 'Français', flag: 'fr', html: 'fr' },
+  { code: 'zh', name: '简体中文', flag: 'cn', html: 'zh-Hans' }
 ];
 const KEY = 'gamesauce_lang';          // 'auto' (or nothing) follows the browser
 const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
