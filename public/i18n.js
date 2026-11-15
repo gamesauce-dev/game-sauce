@@ -10,7 +10,7 @@
 export const LANGS = [
   { code: 'en', name: 'English', flag: 'gb', html: 'en' },
   { code: 'fr', name: 'Français', flag: 'fr', html: 'fr' },
-  { code: 'zh', name: '简体中文', flag: 'cn', html: 'zh-Hans' },
+  { code: 'zh', name: '中文', flag: 'cn', html: 'zh-Hans' },
   { code: 'es', name: 'Español', flag: 'es', html: 'es' },
   { code: 'pt', name: 'Português', flag: 'br', html: 'pt-BR' }   // Brazilian Portuguese
 ];
