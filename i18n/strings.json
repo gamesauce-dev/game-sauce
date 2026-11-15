@@ -1,0 +1,5129 @@
+{
+ "-sauce": {
+  "files": 3
+ },
+ "— hashed on upload (CRC32 + MD5 + SHA1), duplicates rejected": {
+  "files": 1
+ },
+ "— it does not link or watch the original location. Pick files (or a folder of files) in the dropzone below; each file is hashed, deduplicated and stored under": {
+  "files": 1
+ },
+ "— or add some ROMs": {
+  "files": 1
+ },
+ "— pick a platform —": {
+  "files": 1
+ },
+ "— pick one —": {
+  "files": 2
+ },
+ "— that protects against someone reading a copy of the database, not against someone with access to the whole data folder. Set": {
+  "files": 1
+ },
+ ", and": {
+  "files": 1
+ },
+ ", and optionally": {
+  "files": 3
+ },
+ ", which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then": {
+  "files": 1
+ },
+ "; pick a platform here to use only that platform's pictures (a picture with no folder is then taken to be for it); leave it on Any and each picture's folder says which platform it is for. Only JPEG, PNG and WebP are accepted. Preview shows what would change before anything is saved. Pictures you bring in are kept as your own covers, so a later \"Fetch metadata\" will not replace them.": {
+  "files": 1
+ },
+ "? Use": {
+  "files": 1
+ },
+ "? Xbox-style pads put A at the bottom; Nintendo-style pads (Switch, many 8BitDo) put A on the right.": {
+  "files": 1
+ },
+ "… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.": {
+  "files": 1
+ },
+ "\"{a}\" is not a folder this server can see.": {
+  "files": 1
+ },
+ "\"{a}\" is not a full path (it must start with / or a drive letter such as D:\\).": {
+  "files": 1
+ },
+ "“Have” = DAT entries matched by a ROM in your library.": {
+  "files": 1
+ },
+ "“Missing” = in the DAT but matched by nothing in your library.": {
+  "files": 1
+ },
+ "({ '&': '&amp;', '": {
+  "files": 10
+ },
+ "(a link could lead outside the folder): {a}. Add the link's real folder instead.": {
+  "files": 1
+ },
+ "(a web link to the game's manual) and": {
+  "files": 1
+ },
+ "(any domain name will do, e.g.": {
+  "files": 2
+ },
+ "(as of your last fetch)": {
+  "files": 1
+ },
+ "(click to stop)": {
+  "files": 1
+ },
+ "(console games you own as downloads)": {
+  "files": 1
+ },
+ "(CSV columns": {
+  "files": 1
+ },
+ "(extra covers)": {
+  "files": 1
+ },
+ "(for example": {
+  "files": 1
+ },
+ "(games on your shelf: discs and cartridges with no ROM)": {
+  "files": 1
+ },
+ "(hover: hover)": {
+  "files": 1
+ },
+ "(max-width: 720px)": {
+  "files": 1
+ },
+ "(no artwork folder yet: add one under Artwork folders)": {
+  "files": 1
+ },
+ "(optional: the text on this platform's cover badges, in capitals. Empty = the short name, which is also what the chips show. Up to 12 characters)": {
+  "files": 1
+ },
+ "(optional: your own picture, shown beside the platform name in the Library. JPEG, PNG, WebP or SVG, up to 512 KB. The system supplies none.)": {
+  "files": 1
+ },
+ "(or": {
+  "files": 1
+ },
+ "(or Systems, Consoles) inside one of your artwork folders: one picture per platform, named for it (": {
+  "files": 1
+ },
+ "(over {a}, since the server last started)": {
+  "files": 1
+ },
+ "(prefers-reduced-motion: reduce)": {
+  "files": 5
+ },
+ "(the": {
+  "files": 1
+ },
+ "(the first row names the columns, in any order). The platform can be": {
+  "files": 1
+ },
+ "(the first row names the columns, in any order). The platform can be any name from the Library's platform list:": {
+  "files": 1
+ },
+ "(the first row names the columns; the country is optional). The platform can be written": {
+  "files": 1
+ },
+ "(the platform's short internal name: lowercase letters and digits, e.g. segacd. It cannot be changed later)": {
+  "files": 1
+ },
+ "(yes or no, for Xbox One and Series discs: whether the game is also in your Digital library) (the first row names the columns, in any order). The platform can be any name from the Library's platform list:": {
+  "files": 1
+ },
+ "(you have": {
+  "files": 1
+ },
+ "(your ROM folders are never touched). It contains password hashes and the key that protects your provider credentials, so store it as carefully as the server itself.": {
+  "files": 1
+ },
+ ") becomes the family's logo. Platforms that already have a logo are left alone unless you tick replace.": {
+  "files": 1
+ },
+ ") or its two letters (": {
+  "files": 1
+ },
+ ") to complete the restore.": {
+  "files": 1
+ },
+ "); a picture named for a family (": {
+  "files": 1
+ },
+ "). Off: the usual rules apply.": {
+  "files": 1
+ },
+ "). The games go into": {
+  "files": 1
+ },
+ "[data-logo-pick], [data-famlogo-pick]": {
+  "files": 1
+ },
+ "[data-logo-remove], [data-famlogo-remove]": {
+  "files": 1
+ },
+ "[data-mod=\"db\"], [data-group], #settings-tiles": {
+  "files": 1
+ },
+ "[data-pact=\"delete\"], [data-bk-del], [data-save-del], [data-act=\"delete-user\"]": {
+  "files": 1
+ },
+ "[data-pact=\"edit\"], [data-fam-rename]": {
+  "files": 1
+ },
+ "[data-pid-use], #pid-apply-all": {
+  "files": 1
+ },
+ "[data-platform=\"{a}\"] .plat-logo": {
+  "files": 1
+ },
+ "{a} · manual": {
+  "files": 2
+ },
+ "{a} ({b} plays)": {
+  "files": 1
+ },
+ "{a} (all platforms)": {
+  "files": 2
+ },
+ "{a} {b}{c} deleted": {
+  "files": 1
+ },
+ "{a} added, {b} duplicate(s)": {
+  "files": 1
+ },
+ "{a} can always download": {
+  "files": 1
+ },
+ "{a} can never download": {
+  "files": 1
+ },
+ "{a} colour saved": {
+  "files": 1
+ },
+ "{a} console games added to Digital": {
+  "files": 1
+ },
+ "{a} console games added to your Digital Library": {
+  "files": 1
+ },
+ "{a} cover{b} saved": {
+  "files": 1
+ },
+ "{a} Delete anyway and move them to Other?": {
+  "files": 1
+ },
+ "{a} Delete it anyway?": {
+  "files": 1
+ },
+ "{a} Delete them anyway?": {
+  "files": 1
+ },
+ "{a} entries imported ({b})": {
+  "files": 1
+ },
+ "{a} file{b} ({c}) will be deleted from storage. This cannot be undone. Games, ROMs, saves and your own folders are not touched.": {
+  "files": 1
+ },
+ "{a} follows the default": {
+  "files": 1
+ },
+ "{a} game{b} back in the library": {
+  "files": 1
+ },
+ "{a} game{b} marked as having no cover. Run Fetch missing covers to download them again.": {
+  "files": 1
+ },
+ "{a} game{b} marked as System": {
+  "files": 1
+ },
+ "{a} game{b} with more than one version ({c} extra cop{d})": {
+  "files": 1
+ },
+ "{a} game{b}, {c} with a cover.": {
+  "files": 1
+ },
+ "{a} games added to your Physical shelf": {
+  "files": 1
+ },
+ "{a} games added to your shelf": {
+  "files": 1
+ },
+ "{a} games in the file ({b}): {c} would be added, {d} updated, {e} {f} already there{g}.": {
+  "files": 3
+ },
+ "{a} h played": {
+  "files": 1
+ },
+ "{a} has the full screen": {
+  "files": 1
+ },
+ "{a} in DAT · {b} have · {c} missing.": {
+  "files": 1
+ },
+ "{a} is not inside the zip": {
+  "files": 1
+ },
+ "{a} is now a member": {
+  "files": 1
+ },
+ "{a} is now an admin": {
+  "files": 1
+ },
+ "{a} is now your default provider": {
+  "files": 2
+ },
+ "{a} is out of range": {
+  "files": 1
+ },
+ "{a} is too large for a tar entry": {
+  "files": 1
+ },
+ "{a} kept out of Digital": {
+  "files": 1
+ },
+ "{a} latest entries": {
+  "files": 1
+ },
+ "{a} marked as owned on disc or cartridge": {
+  "files": 2
+ },
+ "{a} marked digital only": {
+  "files": 2
+ },
+ "{a} MB": {
+  "files": 1
+ },
+ "{a} must be a number or empty": {
+  "files": 1
+ },
+ "{a} now sees the play-only screen (from their next page load)": {
+  "files": 1
+ },
+ "{a} of these are favourites of {b}.": {
+  "files": 1
+ },
+ "{a} orphaned ROM{b} (no valid source)": {
+  "files": 1
+ },
+ "{a} picture updated": {
+  "files": 1
+ },
+ "{a} picture{b} in the zip: {c} match a game, {d} would be saved{e}{f}{g}{h}.": {
+  "files": 1
+ },
+ "{a} platforms": {
+  "files": 3
+ },
+ "{a} removed": {
+  "files": 1
+ },
+ "{a} repeated row{b} counted once": {
+  "files": 3
+ },
+ "{a} row{b} skipped": {
+  "files": 3
+ },
+ "{a} selected": {
+  "files": 2
+ },
+ "{a} Settings (the gear next to your name) has everything this tour covered, and you can run the tour again from": {
+  "files": 1
+ },
+ "{a} Steam games fetched": {
+  "files": 2
+ },
+ "{a} taken out of Digital": {
+  "files": 1
+ },
+ "{a} unmatched ROM{b} (no provider hit yet)": {
+  "files": 1
+ },
+ "{a} useful files in the folder ({b} looked at); {c} game{d} on your list.": {
+  "files": 1
+ },
+ "{a} UTC": {
+  "files": 1
+ },
+ "{a} will be able to manage the library, sources, providers, backups and every other person. Only do this for someone you trust with the whole server.": {
+  "files": 1
+ },
+ "{a} will look in {b} from now on. Its games keep their details, covers and saves; nothing on disk is touched.": {
+  "files": 1
+ },
+ "{a} will lose access to Settings, Sources and the admin tools, and keep the normal library.": {
+  "files": 1
+ },
+ "{a} Xbox disc{b} {c} Digital": {
+  "files": 1
+ },
+ "{a}: manual": {
+  "files": 1
+ },
+ "{a}: open the case": {
+  "files": 1
+ },
+ "{a}: the back. Turn it to the front": {
+  "files": 1
+ },
+ "{a}. The server may be busy with something else; give it a moment.": {
+  "files": 1
+ },
+ "{a}'s colour saved": {
+  "files": 1
+ },
+ "{b} · added": {
+  "files": 1
+ },
+ "{b} h played": {
+  "files": 1
+ },
+ "{c} · last seen {d} UTC": {
+  "files": 1
+ },
+ "{c} Digital game{d} that were in your Digital library before their disc was linked are never offered here.": {
+  "files": 1
+ },
+ "{c} ROMs": {
+  "files": 1
+ },
+ "{c} wrap{d} · spine": {
+  "files": 1
+ },
+ "{d} added": {
+  "files": 1
+ },
+ "{e} unchanged": {
+  "files": 1
+ },
+ "← Back": {
+  "files": 1
+ },
+ "↑ Up": {
+  "files": 3
+ },
+ "↓ Download a backup now": {
+  "files": 1
+ },
+ "↯ or download directly": {
+  "files": 1
+ },
+ "↺ Reset": {
+  "files": 1
+ },
+ "↻ Check again": {
+  "files": 1
+ },
+ "↻ Check latest releases": {
+  "files": 2
+ },
+ "↻ Checking…": {
+  "files": 1
+ },
+ "↻ Scan": {
+  "files": 1
+ },
+ "↻ Scan again": {
+  "files": 1
+ },
+ "↻ Scan all": {
+  "files": 2
+ },
+ "↻ Scanning…": {
+  "files": 1
+ },
+ "＋ Add a game": {
+  "files": 1
+ },
+ "＋ Add another folder": {
+  "files": 1
+ },
+ "+ Add platform": {
+  "files": 1
+ },
+ "＋ Add to collection": {
+  "files": 1
+ },
+ "＋ New": {
+  "files": 1
+ },
+ "＋ New collection…": {
+  "files": 2
+ },
+ "= yes, or": {
+  "files": 1
+ },
+ "▢ No cover": {
+  "files": 3
+ },
+ "▣ Big Screen": {
+  "files": 1
+ },
+ "▯ With spine art": {
+  "files": 1
+ },
+ "▶ Installed": {
+  "files": 1
+ },
+ "○ Needs match": {
+  "files": 2
+ },
+ "◌ Hidden": {
+  "files": 1
+ },
+ "◌ Show hidden": {
+  "files": 1
+ },
+ "◐ Carousel": {
+  "files": 1
+ },
+ "★ Favourites": {
+  "files": 3
+ },
+ "☐ Select": {
+  "files": 2
+ },
+ "☑ Selecting": {
+  "files": 1
+ },
+ "♪ Off": {
+  "files": 1
+ },
+ "♪ On": {
+  "files": 1
+ },
+ "⚙ System": {
+  "files": 1
+ },
+ "⛁ No source": {
+  "files": 1
+ },
+ "✓ {a} games found. They are on the Digital page.": {
+  "files": 1
+ },
+ "✓ Added {a}. Scanning in the background: you can carry on.": {
+  "files": 1
+ },
+ "✓ Password changed.": {
+  "files": 1
+ },
+ "✓ Saved.": {
+  "files": 1
+ },
+ "✓ Saved. You can test them later in Settings.": {
+  "files": 1
+ },
+ "✕ All platforms": {
+  "files": 3
+ },
+ "✕ Close": {
+  "files": 1
+ },
+ "✕ Done": {
+  "files": 2
+ },
+ "✦ Fetch metadata": {
+  "files": 2
+ },
+ "✦ Find details": {
+  "files": 1
+ },
+ "✦ Refresh": {
+  "files": 1
+ },
+ "⟲ Clear match": {
+  "files": 1
+ },
+ "⤓ Download": {
+  "files": 1
+ },
+ "⧉ Copy report": {
+  "files": 1
+ },
+ "💿 Multi-disc": {
+  "files": 1
+ },
+ "🔒 Locked": {
+  "files": 1
+ },
+ "🗑 Delete selected": {
+  "files": 2
+ },
+ "0 selected": {
+  "files": 2
+ },
+ "100 games": {
+  "files": 1
+ },
+ "25 games": {
+  "files": 1
+ },
+ "250 games": {
+  "files": 1
+ },
+ "32 letters and numbers": {
+  "files": 2
+ },
+ "3DS": {
+  "files": 2
+ },
+ "50 games": {
+  "files": 1
+ },
+ "A — sleepy pad face": {
+  "files": 1
+ },
+ "A backup is already running": {
+  "files": 1
+ },
+ "A backup is one": {
+  "files": 1
+ },
+ "A collection with that name already exists": {
+  "files": 1
+ },
+ "A CSV with the columns": {
+  "files": 2
+ },
+ "A free game database that lives on this server: no key, no limit, and lookups are instant. It matches by exact name, so it fills in games the other providers cannot find. It is tried after IGDB. Download it once (about 110 MB), then update it whenever you like.": {
+  "files": 1
+ },
+ "A free game database that lives on this server. It needs no key, matches by exact name and is very quick. It is the best first step for finding your games, and it takes about a minute. It carries on in the background if you move to the next step.": {
+  "files": 1
+ },
+ "A logo for the {k} family, shown in the Library when several of its platforms are picked (optional; the system supplies none)": {
+  "files": 1
+ },
+ "A manual must be a PDF or a picture (PNG, JPEG or WebP).": {
+  "files": 2
+ },
+ "A metadata run is already in progress": {
+  "files": 2
+ },
+ "A No-Intro or Redump": {
+  "files": 1
+ },
+ "A safety backup of the current data is saved first, and the data being replaced is kept. The server will restart and everyone will need to sign in again.": {
+  "files": 1
+ },
+ "a scan of their folder reconnects them": {
+  "files": 1
+ },
+ "A scan of this source is already running": {
+  "files": 1
+ },
+ "A short walk through the first things to set up: your password and picture (and, for an admin, game sources and the database).": {
+  "files": 1
+ },
+ "a WebP wrap cannot be cut yet: save it as JPEG or PNG": {
+  "files": 1
+ },
+ "Aa": {
+  "files": 1
+ },
+ "about ↗": {
+  "files": 1
+ },
+ "Accent colour": {
+  "files": 2
+ },
+ "Account": {
+  "files": 1
+ },
+ "Active sessions": {
+  "files": 2
+ },
+ "Activity": {
+  "files": 1
+ },
+ "Activity log": {
+  "files": 2
+ },
+ "Add": {
+  "files": 1
+ },
+ "Add / remove": {
+  "files": 1
+ },
+ "Add a folder": {
+  "files": 1
+ },
+ "Add a folder on the server": {
+  "files": 1
+ },
+ "Add a game": {
+  "files": 2
+ },
+ "Add a game to your Digital Library": {
+  "files": 1
+ },
+ "Add a game to your shelf": {
+  "files": 1
+ },
+ "Add a picture": {
+  "files": 1
+ },
+ "Add and another": {
+  "files": 2
+ },
+ "Add and scan": {
+  "files": 2
+ },
+ "Add another folder to “{a}”": {
+  "files": 1
+ },
+ "Add every Xbox One and Xbox Series disc to your Digital library (ones you switched off stay out)": {
+  "files": 1
+ },
+ "Add folder": {
+  "files": 2
+ },
+ "Add platform": {
+  "files": 1
+ },
+ "Add ROMs": {
+  "files": 2
+ },
+ "Add the folder where your ROMs live. Nothing is copied — they stay exactly where they are.": {
+  "files": 1
+ },
+ "Add the games to the chosen list": {
+  "files": 1
+ },
+ "Add this game and keep the form open": {
+  "files": 2
+ },
+ "Add to a collection": {
+  "files": 1
+ },
+ "Add to collection": {
+  "files": 1
+ },
+ "Add to Collection": {
+  "files": 1
+ },
+ "Add to Digital Library": {
+  "files": 1
+ },
+ "Add to favourites": {
+  "files": 1
+ },
+ "Add to shelf": {
+  "files": 1
+ },
+ "Add user": {
+  "files": 1
+ },
+ "Add your first folder of games": {
+  "files": 1
+ },
+ "Add your Steam key and Steam ID first (My account → Steam).": {
+  "files": 1
+ },
+ "Added “{a}”": {
+  "files": 2
+ },
+ "Added {a} — scanning…": {
+  "files": 1
+ },
+ "Added to “{a}”": {
+  "files": 1
+ },
+ "Added to {a}.": {
+  "files": 1
+ },
+ "Added to the new collection “{a}”.": {
+  "files": 1
+ },
+ "Added to your Digital library": {
+  "files": 1
+ },
+ "Added to your favourites.": {
+  "files": 1
+ },
+ "Added: {a}.": {
+  "files": 3
+ },
+ "Added. It is live in the sidebar now.": {
+  "files": 1
+ },
+ "Adding folder…": {
+  "files": 1
+ },
+ "Admin": {
+  "files": 2
+ },
+ "Admin only": {
+  "files": 1
+ },
+ "admin writes": {
+  "files": 1
+ },
+ "Admins manage the library, sources, providers and people. Members use the library. You cannot change your own role.": {
+  "files": 1
+ },
+ "Admins only: see the screen a play-only person gets. Only this tab; it ends when the tab is closed.": {
+  "files": 1
+ },
+ "All": {
+  "files": 4
+ },
+ "All platforms": {
+  "files": 4
+ },
+ "ALL PLATFORMS": {
+  "files": 1
+ },
+ "All stores": {
+  "files": 1
+ },
+ "All users": {
+  "files": 2
+ },
+ "All your games": {
+  "files": 1
+ },
+ "Already in that collection": {
+  "files": 1
+ },
+ "Already there": {
+  "files": 1
+ },
+ "Also add Xbox One and Xbox Series discs to my Digital library (a": {
+  "files": 1
+ },
+ "Also delete imported copies?": {
+  "files": 1
+ },
+ "Also delete the imported copies from storage": {
+  "files": 1
+ },
+ "Also replace covers games already have": {
+  "files": 1
+ },
+ "Also replace titles you edited by hand": {
+  "files": 1
+ },
+ "An admin always has the full screen": {
+  "files": 1
+ },
+ "An update is already running": {
+  "files": 1
+ },
+ "An Xbox One or Series disc is only added to your Digital library if you switch on the disc to digital icon in the game's details.": {
+  "files": 1
+ },
+ "and is not in backups — keep it somewhere safe.": {
+  "files": 1
+ },
+ "and out of your Digital library": {
+  "files": 1
+ },
+ "and so on, not only consoles. The games go onto": {
+  "files": 1
+ },
+ "and so on),": {
+  "files": 1
+ },
+ "and videos": {
+  "files": 1
+ },
+ "Another game on your shelf already has that title, region and platform.": {
+  "files": 1
+ },
+ "Any platform": {
+  "files": 2
+ },
+ "Any: from the folder names in the zip": {
+  "files": 1
+ },
+ "API key": {
+  "files": 1
+ },
+ "API key is required": {
+  "files": 1
+ },
+ "Applied.": {
+  "files": 1
+ },
+ "Apply covers": {
+  "files": 1
+ },
+ "Apply names": {
+  "files": 1
+ },
+ "Applying… downloading cover…": {
+  "files": 2
+ },
+ "Arcade browser play is back to the standard rules": {
+  "files": 1
+ },
+ "Arcade browser play: verified games only": {
+  "files": 1
+ },
+ "Arcade cabinet": {
+  "files": 1
+ },
+ "Arcade games (MAME, FinalBurn Neo, Neo Geo, CPS, Cave) often fall into the RetroArch menu instead of starting. With this on, none is offered for browser play until it has been switched on for that game, which the play-check tool does for every game it saw running (": {
+  "files": 1
+ },
+ "Arcade games are now offered for browser play only once verified": {
+  "files": 1
+ },
+ "Are you sure?": {
+  "files": 1
+ },
+ "Artwork folder to import platform logos from": {
+  "files": 1
+ },
+ "As an admin your Hide takes this game away from every member as well. It stays in the Library under Hidden, where you can show it again.": {
+  "files": 1
+ },
+ "Asking the launcher on this PC…": {
+  "files": 1
+ },
+ "Asking the launcher on this PC… (it needs to be set up: docs/LOCAL-LAUNCH.md)": {
+  "files": 1
+ },
+ "asks ScreenScraper for the logo of every platform that has none (Settings, Metadata providers must be set up).": {
+  "files": 1
+ },
+ "At least 10 characters, with a letter and a number.": {
+  "files": 1
+ },
+ "At least 10 characters, with a letter and a number. Changing it signs out every other device.": {
+  "files": 1
+ },
+ "at the top holds": {
+  "files": 1
+ },
+ "AU": {
+  "files": 1
+ },
+ "Australia": {
+  "files": 1
+ },
+ "Australia or AU": {
+  "files": 1
+ },
+ "Automatic": {
+  "files": 1
+ },
+ "Automatic (the browser's language)": {
+  "files": 1
+ },
+ "B — neon night face": {
+  "files": 1
+ },
+ "Back": {
+  "files": 1
+ },
+ "Back in your library": {
+  "files": 1
+ },
+ "Back on the shared dev credentials": {
+  "files": 1
+ },
+ "Back to automatic covers. Use Refresh metadata to fetch one.": {
+  "files": 1
+ },
+ "Back to library": {
+  "files": 1
+ },
+ "Back to the automatic cover": {
+  "files": 1
+ },
+ "Back to the automatic picture: use Look up again to fetch one": {
+  "files": 1
+ },
+ "Back to the default colour": {
+  "files": 1
+ },
+ "Back to the default colour for this family": {
+  "files": 1
+ },
+ "Back to the library": {
+  "files": 1
+ },
+ "Back to the top": {
+  "files": 2
+ },
+ "Backing up…": {
+  "files": 1
+ },
+ "Backup not found": {
+  "files": 1
+ },
+ "Backup not found in the server folder": {
+  "files": 1
+ },
+ "Backup settings saved": {
+  "files": 1
+ },
+ "Backups": {
+  "files": 2
+ },
+ "Backups on the server": {
+  "files": 1
+ },
+ "Bad app id": {
+  "files": 1
+ },
+ "Bad dump": {
+  "files": 1
+ },
+ "Bad screenshot": {
+  "files": 1
+ },
+ "Badge text": {
+  "files": 1
+ },
+ "Best effort:": {
+  "files": 1
+ },
+ "beta installer, tested": {
+  "files": 1
+ },
+ "Big Screen": {
+  "files": 2
+ },
+ "Big Screen: the Library for a TV, played with a gamepad": {
+  "files": 2
+ },
+ "BIOS and devices": {
+  "files": 1
+ },
+ "BIOS, device and computer entries: kept and downloadable, but out of the main library": {
+  "files": 1
+ },
+ "Blocked: this request came from a different address than the one this server is using. If you reach game-sauce through a reverse proxy, set GAMESAUCE_TRUST_PROXY=1 or list the address in GAMESAUCE_ALLOWED_ORIGINS.": {
+  "files": 1
+ },
+ "Blocked: this request came from another website.": {
+  "files": 1
+ },
+ "Boxed, manual, disc only…": {
+  "files": 1
+ },
+ "Broken": {
+  "files": 1
+ },
+ "browse a folder": {
+  "files": 1
+ },
+ "browse files": {
+  "files": 1
+ },
+ "Browse the library as a carousel of covers, full screen": {
+  "files": 1
+ },
+ "Browse your games as a carousel of covers": {
+  "files": 1
+ },
+ "Browse…": {
+  "files": 3
+ },
+ "btn btn-ghost": {
+  "files": 1
+ },
+ "btn btn-sm emu-dl": {
+  "files": 1
+ },
+ "button in the ROM Library, Physical and Digital): for example a LaunchBox": {
+  "files": 1
+ },
+ "button:not([disabled]):not([tabindex=\"-1\"]), a[href]:not([tabindex=\"-1\"]), input:not([type=\"hidden\"]):not([disabled]):not([tabindex=\"-1\"]), select:not([disabled]):not([tabindex=\"-1\"]), textarea:not([disabled]):not([tabindex=\"-1\"]), [tabindex]:not([tabindex=\"-1\"])": {
+  "files": 1
+ },
+ "C — sauce-drop face": {
+  "files": 1
+ },
+ "can be cleared.": {
+  "files": 1
+ },
+ "can find their covers. If the file also has the columns Export writes (developer, publisher, genre, region, revision, year, players, rating, description, tags), those are imported too: a filled cell replaces what the game has, an empty cell leaves it alone. Add the zip from Export covers as well and the": {
+  "files": 1
+ },
+ "Cancel": {
+  "files": 4
+ },
+ "Cancel the reply": {
+  "files": 1
+ },
+ "candidate object is required": {
+  "files": 3
+ },
+ "Cannot delete the last admin": {
+  "files": 1
+ },
+ "Cannot disable the last admin": {
+  "files": 1
+ },
+ "Cannot reach the server.": {
+  "files": 1
+ },
+ "Canonical title": {
+  "files": 1
+ },
+ "Carousel": {
+  "files": 2
+ },
+ "Carousel: browse your games as a carousel of covers": {
+  "files": 1
+ },
+ "CART": {
+  "files": 1
+ },
+ "Cartridge": {
+  "files": 1
+ },
+ "Catalogue rows are always removed. Imported copies in storage/roms are removed too. Files in your own folders are NEVER touched.": {
+  "files": 1
+ },
+ "catalogue rows go too": {
+  "files": 1
+ },
+ "Catalogue the games you own on disc or cartridge: add one by hand, or bring a whole list in from a CSV. Covers and details are looked up for you, and you can match any game by hand.": {
+  "files": 1
+ },
+ "Change password": {
+  "files": 2
+ },
+ "Chat is not available for this account. Notices from the admin appear above.": {
+  "files": 1
+ },
+ "Chat is not available for this account. Notices from the admin still reach you here.": {
+  "files": 1
+ },
+ "Check": {
+  "files": 1
+ },
+ "Check for unused files": {
+  "files": 1
+ },
+ "Check my PC": {
+  "files": 2
+ },
+ "Check the latest release of every emulator now": {
+  "files": 1
+ },
+ "Check this backup": {
+  "files": 1
+ },
+ "Check this backup and restore it": {
+  "files": 1
+ },
+ "Check where the spine is on a sample: drag the two lines so the spine sits between them. Everything to the right becomes the cover. This is remembered for the platform.": {
+  "files": 1
+ },
+ "Checking against the providers…": {
+  "files": 1
+ },
+ "Choose a .dat file first": {
+  "files": 1
+ },
+ "Choose a {a} from the list": {
+  "files": 1
+ },
+ "Choose a backup file first": {
+  "files": 1
+ },
+ "Choose a backup file to upload": {
+  "files": 1
+ },
+ "Choose a console from the list.": {
+  "files": 1
+ },
+ "Choose a CSV file": {
+  "files": 1
+ },
+ "Choose a CSV file first": {
+  "files": 3
+ },
+ "choose a CSV with the columns": {
+  "files": 1
+ },
+ "Choose a file first": {
+  "files": 1
+ },
+ "Choose a file first.": {
+  "files": 1
+ },
+ "Choose a folder": {
+  "files": 1
+ },
+ "Choose a logo picture": {
+  "files": 1
+ },
+ "Choose a picture": {
+  "files": 1
+ },
+ "Choose a picture first": {
+  "files": 1
+ },
+ "Choose a platform first.": {
+  "files": 1
+ },
+ "Choose a platform from the list.": {
+  "files": 1
+ },
+ "Choose a zip file": {
+  "files": 1
+ },
+ "Choose a zip file first": {
+  "files": 1
+ },
+ "Choose a zip of pictures named after your games, such as the one Export covers makes. A picture": {
+  "files": 1
+ },
+ "Choose an artwork folder first (add one under Artwork folders).": {
+  "files": 1
+ },
+ "Choose an image first.": {
+  "files": 1
+ },
+ "Choose logo": {
+  "files": 1
+ },
+ "Choose off, 6, 12, 24 or 168 hours": {
+  "files": 1
+ },
+ "Choose one of the artwork folders the admin has listed.": {
+  "files": 1
+ },
+ "Choose the emulators this PC uses (opens a small setup page on this PC)": {
+  "files": 1
+ },
+ "Choose your own password": {
+  "files": 1
+ },
+ "Classic look (click for Modern)": {
+  "files": 1
+ },
+ "Clear": {
+  "files": 1
+ },
+ "Clear covers": {
+  "files": 1
+ },
+ "Clear covers on {a} {b} ROM{c}?": {
+  "files": 1
+ },
+ "Clear covers…": {
+  "files": 1
+ },
+ "Clear match": {
+  "files": 1
+ },
+ "Clear out": {
+  "files": 1
+ },
+ "Clear out unused files?": {
+  "files": 1
+ },
+ "Clear out…": {
+  "files": 1
+ },
+ "Clear search": {
+  "files": 1
+ },
+ "Clear the match on {a} games?": {
+  "files": 1
+ },
+ "Clear the search, the platform choice and every filter": {
+  "files": 1
+ },
+ "Clear the search, the platform choice and every filter: back to the whole library": {
+  "files": 1
+ },
+ "Clear this game's match?": {
+  "files": 1
+ },
+ "Client ID": {
+  "files": 1
+ },
+ "Client secret": {
+  "files": 1
+ },
+ "Close": {
+  "files": 2
+ },
+ "Close (Esc)": {
+  "files": 1
+ },
+ "Close the manual": {
+  "files": 1
+ },
+ "Co-op nights": {
+  "files": 1
+ },
+ "Collection created": {
+  "files": 1
+ },
+ "Collection deleted": {
+  "files": 1
+ },
+ "Collection not found": {
+  "files": 1
+ },
+ "Collections": {
+  "files": 3
+ },
+ "Collections for “{a}”": {
+  "files": 1
+ },
+ "color-mix(in srgb, {a} {b}%, #000)": {
+  "files": 1
+ },
+ "color-mix(in srgb, {a} {b}%, #fff)": {
+  "files": 1
+ },
+ "Colour": {
+  "files": 2
+ },
+ "Colour of {l} in the chat": {
+  "files": 1
+ },
+ "Colour of the {f} family": {
+  "files": 1
+ },
+ "column of no keeps one out)": {
+  "files": 1
+ },
+ "column of yes or no overrides it per game)": {
+  "files": 1
+ },
+ "column says which picture is each game's cover, so one Preview and one Apply bring in the details and the pictures together. Preview shows what would change before anything is saved. Files are never touched.": {
+  "files": 1
+ },
+ "Comfortable grid": {
+  "files": 2
+ },
+ "Computer": {
+  "files": 1
+ },
+ "Condensed grid": {
+  "files": 2
+ },
+ "Confirm": {
+  "files": 1
+ },
+ "Connect Steam and the games you own appear here with your hours played. PlayStation, Nintendo and Xbox games are added by hand{a}. Only you can see your list.": {
+  "files": 1
+ },
+ "Console": {
+  "files": 1
+ },
+ "Console games have no play button": {
+  "files": 1
+ },
+ "console. Your files stay exactly where they are.": {
+  "files": 1
+ },
+ "Continue playing": {
+  "files": 2
+ },
+ "Controller": {
+  "files": 3
+ },
+ "Controller button layout": {
+  "files": 1
+ },
+ "Controller layout saved": {
+  "files": 1
+ },
+ "Controller:": {
+  "files": 1
+ },
+ "Conversation deleted": {
+  "files": 1
+ },
+ "copies the file into the library": {
+  "files": 1
+ },
+ "Copy": {
+  "files": 1
+ },
+ "Copy a plain-text report with no passwords, keys or folder paths, handy for bug reports": {
+  "files": 1
+ },
+ "Corrupt backup (bad entry size)": {
+  "files": 1
+ },
+ "could not ask GitHub": {
+  "files": 1
+ },
+ "Could not change the favourite": {
+  "files": 1
+ },
+ "Could not keep:": {
+  "files": 1
+ },
+ "Could not load the games": {
+  "files": 1
+ },
+ "Could not load your folders": {
+  "files": 1
+ },
+ "Could not open the setup page": {
+  "files": 1
+ },
+ "Could not read that folder ({a}).": {
+  "files": 1
+ },
+ "Could not read that image": {
+  "files": 1
+ },
+ "Could not run the health check:": {
+  "files": 1
+ },
+ "Could not start": {
+  "files": 1
+ },
+ "Could not start a local launch": {
+  "files": 2
+ },
+ "Could not start the check": {
+  "files": 1
+ },
+ "Could not start the game": {
+  "files": 1
+ },
+ "Could not use that image": {
+  "files": 1
+ },
+ "Country": {
+  "files": 2
+ },
+ "Counts refreshed": {
+  "files": 1
+ },
+ "Cover carousel": {
+  "files": 1
+ },
+ "Cover pictures (zip, optional)": {
+  "files": 1
+ },
+ "Cover updated": {
+  "files": 2
+ },
+ "Covers & platform ids": {
+  "files": 1
+ },
+ "Covers &amp; platform ids": {
+  "files": 1
+ },
+ "covers and videos": {
+  "files": 1
+ },
+ "Covers, ScreenScraper pictures, game files, manuals and videos that no game points at any more (left by deleted games, replaced pictures or redone imports).": {
+  "files": 1
+ },
+ "Create": {
+  "files": 1
+ },
+ "Credentials saved": {
+  "files": 1
+ },
+ "CSV file": {
+  "files": 3
+ },
+ "CSV tools": {
+  "files": 2
+ },
+ "Current — sunny gamepad + drip": {
+  "files": 1
+ },
+ "current logo": {
+  "files": 1
+ },
+ "Current password": {
+  "files": 2
+ },
+ "Current password is incorrect": {
+  "files": 1
+ },
+ "D:\\ROMs\\PlayStation 4": {
+  "files": 1
+ },
+ "Daily": {
+  "files": 1
+ },
+ "daily allowance used up": {
+  "files": 1
+ },
+ "Dark (click for light)": {
+  "files": 1
+ },
+ "Dark tile, neon pad outline, glowing eyes, mint grin. Most \"gamer\", least colourful at small sizes.": {
+  "files": 1
+ },
+ "DAT check": {
+  "files": 1
+ },
+ "DAT files": {
+  "files": 1
+ },
+ "DAT files (offline verification)": {
+  "files": 1
+ },
+ "DAT files must be .dat or .xml": {
+  "files": 1
+ },
+ "DAT not found": {
+  "files": 2
+ },
+ "DAT removed": {
+  "files": 1
+ },
+ "data/secret.key": {
+  "files": 1
+ },
+ "Database maintenance": {
+  "files": 2
+ },
+ "Database snapshot changed while it was being read": {
+  "files": 1
+ },
+ "Database version": {
+  "files": 1
+ },
+ "Deeper black": {
+  "files": 1
+ },
+ "Default provider cleared": {
+  "files": 2
+ },
+ "Defaults to the folder name": {
+  "files": 1
+ },
+ "Delete": {
+  "files": 3
+ },
+ "Delete “{a}”?": {
+  "files": 1
+ },
+ "Delete {a} {b}{c}?": {
+  "files": 1
+ },
+ "Delete {a} ROMs?": {
+  "files": 1
+ },
+ "Delete 1 ROM?": {
+  "files": 1
+ },
+ "Delete anyway": {
+  "files": 1
+ },
+ "Delete collection": {
+  "files": 1
+ },
+ "Delete collection “{a}”?": {
+  "files": 1
+ },
+ "Delete conversation": {
+  "files": 1
+ },
+ "Delete for me": {
+  "files": 1
+ },
+ "Delete orphans…": {
+  "files": 1
+ },
+ "Delete platform “{a}”?": {
+  "files": 1
+ },
+ "Delete selected": {
+  "files": 1
+ },
+ "Delete this backup?": {
+  "files": 1
+ },
+ "Delete this conversation": {
+  "files": 1
+ },
+ "Delete this conversation (for you only: {c} keeps their copy)": {
+  "files": 1
+ },
+ "Delete this message?": {
+  "files": 1
+ },
+ "Delete this save?": {
+  "files": 1
+ },
+ "Delete this user?": {
+  "files": 1
+ },
+ "Delete your conversation with {a}?": {
+  "files": 1
+ },
+ "Deleted; {a} ROM(s) moved to Other": {
+  "files": 1
+ },
+ "Deletes the vault entry and its stored file. Your ROMs are untouched.": {
+  "files": 1
+ },
+ "Dense grid": {
+  "files": 1
+ },
+ "Description": {
+  "files": 3
+ },
+ "Description (optional)": {
+  "files": 1
+ },
+ "Details": {
+  "files": 3
+ },
+ "Details and covers are being looked up now ({a} games). Open": {
+  "files": 2
+ },
+ "Details found ({a}).": {
+  "files": 1
+ },
+ "Details found.": {
+  "files": 1
+ },
+ "Details from": {
+  "files": 2
+ },
+ "Detect from extension": {
+  "files": 2
+ },
+ "Detect platform from the DAT name": {
+  "files": 2
+ },
+ "Developer": {
+  "files": 3
+ },
+ "Digital": {
+  "files": 3
+ },
+ "Digital Library": {
+  "files": 3
+ },
+ "Digital list beside your Steam games, with a chip each for PlayStation, Nintendo and Xbox. Details and covers are then looked up in the background with the metadata providers set up under Metadata providers, the same way as for the Library. Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.": {
+  "files": 1
+ },
+ "Digital:": {
+  "files": 1
+ },
+ "Disc": {
+  "files": 1
+ },
+ "DISC": {
+  "files": 1
+ },
+ "disc art": {
+  "files": 1
+ },
+ "Dismiss for me": {
+  "files": 1
+ },
+ "Display name": {
+  "files": 1
+ },
+ "Do not share it": {
+  "files": 1
+ },
+ "docker compose restart": {
+  "files": 1
+ },
+ "does the starting (it is built into the desktop app).": {
+  "files": 1
+ },
+ "Dolphin for Windows": {
+  "files": 1
+ },
+ "Done": {
+  "files": 1
+ },
+ "Done.": {
+  "files": 1
+ },
+ "Download": {
+  "files": 2
+ },
+ "Download database (about 110 MB)": {
+  "files": 1
+ },
+ "Download failed ({a})": {
+  "files": 1
+ },
+ "download must be 'allow', 'deny' or 'default'": {
+  "files": 1
+ },
+ "Download page ↗": {
+  "files": 1
+ },
+ "Download the cover pictures as a zip": {
+  "files": 1
+ },
+ "Download the game data as a CSV": {
+  "files": 1
+ },
+ "Download the LaunchBox database": {
+  "files": 1
+ },
+ "Download the launcher": {
+  "files": 1
+ },
+ "Downloading the LaunchBox database…": {
+  "files": 1
+ },
+ "Downloading… {a} of {b} MB": {
+  "files": 1
+ },
+ "Downloads are turned off for member accounts. Ask the admin, or play it in the browser.": {
+  "files": 1
+ },
+ "Drop ROM files or a folder here": {
+  "files": 1
+ },
+ "DS": {
+  "files": 2
+ },
+ "Duplicate finder": {
+  "files": 2
+ },
+ "duplicate of “{b}”": {
+  "files": 1
+ },
+ "Edit": {
+  "files": 3
+ },
+ "Empty save data": {
+  "files": 1
+ },
+ "Empty search query": {
+  "files": 1
+ },
+ "Emulation has issues with this game, so it may not run well. Starting it anyway…": {
+  "files": 1
+ },
+ "Emulator file too large (cap 1 GB)": {
+  "files": 1
+ },
+ "emulator installers: upload one manually, or save the official GitHub release with one click and the server downloads it into": {
+  "files": 1
+ },
+ "Emulators": {
+  "files": 2
+ },
+ "EmuMovies accepted the login but sent no token": {
+  "files": 1
+ },
+ "EmuMovies did not accept the username and password (or this account has no API access yet)": {
+  "files": 1
+ },
+ "EmuMovies login expired": {
+  "files": 1
+ },
+ "EmuMovies rate limit reached (HTTP 429), try again later": {
+  "files": 1
+ },
+ "EmuMovies supplies videos only — no title search": {
+  "files": 1
+ },
+ "EmuMovies username and password are required": {
+  "files": 1
+ },
+ "Enlarge the video": {
+  "files": 1
+ },
+ "Enter a folder path": {
+  "files": 1
+ },
+ "Every 12 hours": {
+  "files": 1
+ },
+ "Every 6 hours": {
+  "files": 1
+ },
+ "Every console game already has its details": {
+  "files": 1
+ },
+ "Every game already has its details": {
+  "files": 1
+ },
+ "Every message in it is deleted for you only. The other person keeps their copy, and a new message from them starts a fresh conversation.": {
+  "files": 1
+ },
+ "Every ROM has a metadata match — the filter appears when something needs matching": {
+  "files": 1
+ },
+ "Every Xbox One / Series disc is already in Digital": {
+  "files": 1
+ },
+ "Everything in the folder is": {
+  "files": 1
+ },
+ "Everything looks healthy": {
+  "files": 1
+ },
+ "Everything this DAT lists, flagged by whether you hold it.": {
+  "files": 1
+ },
+ "Export covers (zip)": {
+  "files": 1
+ },
+ "Export games (CSV)": {
+  "files": 1
+ },
+ "Export your game data": {
+  "files": 1
+ },
+ "Extensions (comma separated)": {
+  "files": 2
+ },
+ "Family": {
+  "files": 2
+ },
+ "Family logo removed": {
+  "files": 1
+ },
+ "Family logo saved": {
+  "files": 1
+ },
+ "Favorites only": {
+  "files": 1
+ },
+ "Favourite": {
+  "files": 5
+ },
+ "favourite of": {
+  "files": 1
+ },
+ "Favourites": {
+  "files": 1
+ },
+ "favourites of": {
+  "files": 1
+ },
+ "Favourites only": {
+  "files": 1
+ },
+ "Favourites: only your favourites ({b})": {
+  "files": 2
+ },
+ "Fetch": {
+  "files": 1
+ },
+ "Fetch metadata": {
+  "files": 2
+ },
+ "Fetch metadata for ROMs that have none yet": {
+  "files": 1
+ },
+ "Fetch metadata for which games?": {
+  "files": 1
+ },
+ "Fetch metadata from configured providers": {
+  "files": 1
+ },
+ "Fetch missing covers": {
+  "files": 1
+ },
+ "Fetch my games": {
+  "files": 1
+ },
+ "Fetch pictures for games that were matched but have none, and check each platform's ScreenScraper and TheGamesDB numbers against the providers' own lists. Verify also finds platforms with no number and suggests the likely one by name; nothing changes until you accept it.": {
+  "files": 1
+ },
+ "Fetch platform art": {
+  "files": 1
+ },
+ "Fetch platform logos from ScreenScraper": {
+  "files": 1
+ },
+ "Fetch your Steam library again": {
+  "files": 2
+ },
+ "Fetch your Steam library again, and look up details for console games that have none": {
+  "files": 1
+ },
+ "Fetched {a} logo{b}{c}{d}.": {
+  "files": 1
+ },
+ "Fetching metadata": {
+  "files": 1
+ },
+ "Fetching your games…": {
+  "files": 1
+ },
+ "Fetching… ScreenScraper is asked for each platform in turn, so this can take a minute.": {
+  "files": 1
+ },
+ "File is not reachable — its drive may be offline": {
+  "files": 2
+ },
+ "File missing from storage": {
+  "files": 1
+ },
+ "File-name column": {
+  "files": 1
+ },
+ "file{b} ({c}) belong to a game that has lost track of {d}:": {
+  "files": 1
+ },
+ "filename only": {
+  "files": 1
+ },
+ "Fill the gaps": {
+  "files": 1
+ },
+ "Fill the gaps for this platform": {
+  "files": 1
+ },
+ "filled in and not yes). System entries are": {
+  "files": 1
+ },
+ "Filter": {
+  "files": 1
+ },
+ "Filter action… e.g. roms, login, delete": {
+  "files": 1
+ },
+ "Filter by user": {
+  "files": 1
+ },
+ "Filter stored installers": {
+  "files": 1
+ },
+ "Filter this DAT…": {
+  "files": 1
+ },
+ "filter, and skipped by Fetch metadata.": {
+  "files": 1
+ },
+ "Find out which emulators are set up on this PC, so only games it can start are shown": {
+  "files": 1
+ },
+ "Find your 17-digit Steam ID (steamid.io shows it), or paste your": {
+  "files": 1
+ },
+ "Finding files…": {
+  "files": 1
+ },
+ "Fit the width": {
+  "files": 1
+ },
+ "Fold or unfold": {
+  "files": 1
+ },
+ "Fold or unfold this group": {
+  "files": 1
+ },
+ "Folder added": {
+  "files": 1
+ },
+ "Folder added. Scanning {a}…": {
+  "files": 1
+ },
+ "Folder not found": {
+  "files": 1
+ },
+ "folder not reachable": {
+  "files": 1
+ },
+ "Folder on the server": {
+  "files": 1
+ },
+ "Folder path on this server": {
+  "files": 1
+ },
+ "Folder removed from this source": {
+  "files": 1
+ },
+ "Folder renamed or moved?": {
+  "files": 1
+ },
+ "Folder renamed or moved? Point this source at its new place: every game keeps its details, covers and saves": {
+  "files": 1
+ },
+ "Folder to import from": {
+  "files": 1
+ },
+ "folder, or a RetroBat": {
+  "files": 1
+ },
+ "folder. One full path per line. They are only ever read, and nothing outside this list can be. In Docker or Unraid, mount the folder into the container first (read-only is fine) and list it as the container sees it, such as": {
+  "files": 1
+ },
+ "folders game-sauce watches in place": {
+  "files": 1
+ },
+ "Folders on the server that people can bring game assets in from: pictures, manuals": {
+  "files": 1
+ },
+ "For 3 days": {
+  "files": 1
+ },
+ "For 4 weeks": {
+  "files": 1
+ },
+ "For a day": {
+  "files": 1
+ },
+ "For a logo drawn in black that vanishes on the dark theme: show it on a light plate when the theme is dark": {
+  "files": 1
+ },
+ "For a week": {
+  "files": 1
+ },
+ "for example ' (' :": {
+  "files": 1
+ },
+ "For example: The server restarts at 10pm tonight.": {
+  "files": 1
+ },
+ "for games you also own as a physical copy (a disc or a cartridge) in your own collection, which switches the disc or cartridge icon on that game's tile (leave it empty to keep the icon as it is, or write": {
+  "files": 1
+ },
+ "For PlayStation, Nintendo and Xbox games you own as downloads. Steam games come from Steam (set that up under Settings → My account → Steam), so they are not added by hand. Details and a cover are looked up afterwards, and you can match the game by hand if they are wrong.": {
+  "files": 1
+ },
+ "for safekeeping. Latest-release checks hit the GitHub API live (10-minute cache); nightly-only projects report that instead of a version number.": {
+  "files": 1
+ },
+ "for the platform (type to search)": {
+  "files": 1
+ },
+ "Forgets your own dev ID/password and falls back to the shared default. Your site login is untouched.": {
+  "files": 1
+ },
+ "Found for your games": {
+  "files": 1
+ },
+ "From date": {
+  "files": 1
+ },
+ "From the CSV's platform column": {
+  "files": 1
+ },
+ "full wraps": {
+  "files": 1
+ },
+ "Full wraps.": {
+  "files": 1
+ },
+ "Game": {
+  "files": 3
+ },
+ "Game art for Big Screen": {
+  "files": 1
+ },
+ "Game asset folders saved": {
+  "files": 1
+ },
+ "Game assets": {
+  "files": 2
+ },
+ "Game Boy": {
+  "files": 2
+ },
+ "Game details": {
+  "files": 2
+ },
+ "game logos": {
+  "files": 1
+ },
+ "Game logos": {
+  "files": 1
+ },
+ "Game not found": {
+  "files": 1
+ },
+ "Game video": {
+  "files": 1
+ },
+ "Game-name column": {
+  "files": 1
+ },
+ "game-sauce — ROM library": {
+  "files": 1
+ },
+ "game-sauce logo": {
+  "files": 1
+ },
+ "game-sauce logo options": {
+  "files": 1
+ },
+ "game-sauce looks games up in several places.": {
+  "files": 1
+ },
+ "game-sauce, Home": {
+  "files": 1
+ },
+ "gamepad; fullscreen; autoplay": {
+  "files": 1
+ },
+ "games across": {
+  "files": 1
+ },
+ "Games that are no longer attached to any source folder (for example a locked game whose source was removed). Scanning a source that covers their folder reconnects them.": {
+  "files": 1
+ },
+ "Games you have hidden from your own view (other people still see them)": {
+  "files": 1
+ },
+ "Games you have locked (Keep): protected from deletion. Select them and unlock to be able to delete them.": {
+  "files": 1
+ },
+ "Games: use the arrow keys, the mouse wheel or swipe; Enter plays": {
+  "files": 1
+ },
+ "Generate": {
+  "files": 1
+ },
+ "Generated. Copy it before you set it.": {
+  "files": 1
+ },
+ "Generation": {
+  "files": 1
+ },
+ "generation must be a number": {
+  "files": 1
+ },
+ "Genre": {
+  "files": 3
+ },
+ "Genres": {
+  "files": 2
+ },
+ "get a key ↗": {
+  "files": 1
+ },
+ "Get a Web API key at": {
+  "files": 2
+ },
+ "get credentials ↗": {
+  "files": 1
+ },
+ "get keys ↗": {
+  "files": 1
+ },
+ "Give games back files they have lost track of": {
+  "files": 1
+ },
+ "gives {e} back. Clear out leaves {f} alone.": {
+  "files": 1
+ },
+ "goes to the SNES game whose file is": {
+  "files": 1
+ },
+ "Green outline = suggested copy &nbsp;·&nbsp; 👁 button = hide that copy (members will not see it either) &nbsp;·&nbsp; ⚖ = a tie, check both": {
+  "files": 1
+ },
+ "Grid size": {
+  "files": 1
+ },
+ "Group ROMs into sets like “Co-op nights”.": {
+  "files": 1
+ },
+ "Handheld": {
+  "files": 1
+ },
+ "Have": {
+  "files": 1
+ },
+ "Have / want": {
+  "files": 1
+ },
+ "Have/want": {
+  "files": 1
+ },
+ "Head to Emulators to see which builds": {
+  "files": 1
+ },
+ "Health": {
+  "files": 2
+ },
+ "Health report copied": {
+  "files": 1
+ },
+ "health-overall bad": {
+  "files": 1
+ },
+ "Hidden": {
+  "files": 1
+ },
+ "Hidden (members will not see it either)": {
+  "files": 1
+ },
+ "hidden for everyone": {
+  "files": 1
+ },
+ "Hidden from your view (others still see it)": {
+  "files": 1
+ },
+ "Hidden only": {
+  "files": 1
+ },
+ "Hidden. You can show it again from the Library.": {
+  "files": 1
+ },
+ "Hide": {
+  "files": 2
+ },
+ "Hide “{a}” from everyone?": {
+  "files": 1
+ },
+ "Hide {a} extra cop{b}?": {
+  "files": 1
+ },
+ "Hide every copy except the suggested one (members will not see them either)": {
+  "files": 1
+ },
+ "Hide from everyone": {
+  "files": 1
+ },
+ "Hide password": {
+  "files": 1
+ },
+ "Hide selected": {
+  "files": 1
+ },
+ "Hide the others": {
+  "files": 2
+ },
+ "Hide the others in this list": {
+  "files": 1
+ },
+ "Hide the selected games (for an admin: members will not see them either; nothing is deleted)": {
+  "files": 1
+ },
+ "Hide them": {
+  "files": 1
+ },
+ "Hold": {
+  "files": 1
+ },
+ "Hold in a game to close it": {
+  "files": 1
+ },
+ "Home": {
+  "files": 1
+ },
+ "Home console": {
+  "files": 1
+ },
+ "Hours played": {
+  "files": 1
+ },
+ "Hours played are as of the last time you pressed Refresh{a}. Press it again to update them.": {
+  "files": 1
+ },
+ "Housekeeping": {
+  "files": 1
+ },
+ "How adding ROMs works here": {
+  "files": 1
+ },
+ "How long it stays": {
+  "files": 1
+ },
+ "How many games to look at in this run": {
+  "files": 1
+ },
+ "How this works": {
+  "files": 1
+ },
+ "Icon": {
+  "files": 1
+ },
+ "Identify this game": {
+  "files": 2
+ },
+ "If you use Steam, your own library can appear on the": {
+  "files": 1
+ },
+ "IGDB": {
+  "files": 1
+ },
+ "IGDB accepted the credentials but returned no match for the probe title": {
+  "files": 1
+ },
+ "IGDB Client ID + Client secret are required": {
+  "files": 1
+ },
+ "IGDB Client ID/secret rejected by Twitch (check both values)": {
+  "files": 1
+ },
+ "IGDB Client ID/secret required": {
+  "files": 1
+ },
+ "Images": {
+  "files": 1
+ },
+ "Import": {
+  "files": 2
+ },
+ "Import a CSV": {
+  "files": 2
+ },
+ "Import a DAT": {
+  "files": 1
+ },
+ "import and store a copy": {
+  "files": 1
+ },
+ "Import cover pictures": {
+  "files": 1
+ },
+ "Import CSV": {
+  "files": 1
+ },
+ "Import failed": {
+  "files": 1
+ },
+ "Import from folder": {
+  "files": 1
+ },
+ "Import game assets": {
+  "files": 1
+ },
+ "Import game assets from a folder: artwork, manuals and videos": {
+  "files": 1
+ },
+ "Import games": {
+  "files": 3
+ },
+ "Import games from a CSV: into Digital or onto your Physical shelf": {
+  "files": 1
+ },
+ "Import games via CSV": {
+  "files": 1
+ },
+ "Import platform logos from the chosen folder": {
+  "files": 1
+ },
+ "imported {i} UTC": {
+  "files": 1
+ },
+ "Imported copies / seed rows": {
+  "files": 1
+ },
+ "Imported ROMs, covers and media are not included": {
+  "files": 1
+ },
+ "Imported storage": {
+  "files": 1
+ },
+ "Imported.": {
+  "files": 3
+ },
+ "in a game: hold": {
+  "files": 1
+ },
+ "in place": {
+  "files": 1
+ },
+ "In Steam: Profile → Edit profile → Privacy settings → set": {
+  "files": 1
+ },
+ "In the backup": {
+  "files": 1
+ },
+ "in the main library (only an admin can mark or unmark them), kept and downloadable, found under the": {
+  "files": 1
+ },
+ "In-browser play is not available for this platform — use a vault emulator instead": {
+  "files": 2
+ },
+ "Include games hidden from everyone": {
+  "files": 1
+ },
+ "Including hidden and System games": {
+  "files": 1
+ },
+ "Including hidden games": {
+  "files": 1
+ },
+ "inside (it needs Node.js 18 or newer). Then come back here and press": {
+  "files": 1
+ },
+ "inside game-sauce.": {
+  "files": 1
+ },
+ "Installed: only the Steam games you switched the play button on for, installed on this PC ({b})": {
+  "files": 1
+ },
+ "Installer file *": {
+  "files": 1
+ },
+ "instead — those stay exactly where they are and only get re-scanned.": {
+  "files": 1
+ },
+ "Instead: say they are NOT multi-disc sets": {
+  "files": 1
+ },
+ "Invalid value": {
+  "files": 1
+ },
+ "is free and the best starting point; the others add coverage.": {
+  "files": 1
+ },
+ "It disappears for everyone.": {
+  "files": 1
+ },
+ "It is deleted for you only. The other person keeps their copy.": {
+  "files": 1
+ },
+ "It is taken off your shelf": {
+  "files": 1
+ },
+ "It is taken out of your Digital list. Importing your CSV again brings it back.": {
+  "files": 1
+ },
+ "It is wiped for both of you, and \"Message recalled\" is left in its place.": {
+  "files": 1
+ },
+ "Its games stay in the library and nothing on disk is touched. They show as missing after the next scan unless you add the folder back.": {
+  "files": 1
+ },
+ "JPEG, PNG or WebP, up to 8 MB": {
+  "files": 1
+ },
+ "Jump by letter": {
+  "files": 1
+ },
+ "Jump to a letter": {
+  "files": 2
+ },
+ "Jump to letter": {
+  "files": 1
+ },
+ "Just a label for the Sources list and filter chips (e.g. “PS4 drive”, “NAS ROMs”) — it never renames your folder and doesn’t affect scanning.": {
+  "files": 1
+ },
+ "Keep me signed in on this computer": {
+  "files": 1
+ },
+ "Keep must be between 1 and 365": {
+  "files": 1
+ },
+ "Keep the newest": {
+  "files": 1
+ },
+ "Keep this window open beside the games": {
+  "files": 2
+ },
+ "Key accepted but no grid art found for the probe title": {
+  "files": 1
+ },
+ "Language": {
+  "files": 1
+ },
+ "Last played": {
+  "files": 1
+ },
+ "Last scheduled/server backup: {a}.": {
+  "files": 1
+ },
+ "Latest releases checked": {
+  "files": 1
+ },
+ "LB RB": {
+  "files": 1
+ },
+ "LB/RB": {
+  "files": 1
+ },
+ "Leave any you do not have blank. ScreenScraper needs a developer account and is set up later in Settings.": {
+  "files": 1
+ },
+ "Leave selection mode": {
+  "files": 2
+ },
+ "Left edge of the spine": {
+  "files": 1
+ },
+ "Let members download ROM files": {
+  "files": 1
+ },
+ "Library": {
+  "files": 1
+ },
+ "Library ROMs (visible)": {
+  "files": 1
+ },
+ "Library tools": {
+  "files": 1
+ },
+ "Light (click for dark)": {
+  "files": 1
+ },
+ "Light backing in dark mode": {
+  "files": 1
+ },
+ "Light backing off": {
+  "files": 1
+ },
+ "Light backing on in dark mode": {
+  "files": 1
+ },
+ "Light or dark": {
+  "files": 1
+ },
+ "linear-gradient(160deg, {a}66, #12141a)": {
+  "files": 1
+ },
+ "linear-gradient(160deg, #2a2f45, #12141a)": {
+  "files": 1
+ },
+ "Link removed": {
+  "files": 1
+ },
+ "Link saved": {
+  "files": 1
+ },
+ "Link to a manual": {
+  "files": 1
+ },
+ "Linked folders are not followed": {
+  "files": 1
+ },
+ "List the Digital entries that disc to digital added on its own, and take out the ones you do not own digitally": {
+  "files": 1
+ },
+ "lists every known-good dump with its size, CRC32, MD5 and SHA1. Importing one lets game-sauce verify each ROM locally — no API calls — and replace a guessed filename with the canonical title, region and revision.": {
+  "files": 1
+ },
+ "Loading emulator…": {
+  "files": 1
+ },
+ "Loading your folders…": {
+  "files": 1
+ },
+ "Loading…": {
+  "files": 2
+ },
+ "Lock": {
+  "files": 1
+ },
+ "Lock / Unlock the selected games (a locked game cannot be deleted)": {
+  "files": 1
+ },
+ "Locked {a} game{b}: protected from deletion": {
+  "files": 1
+ },
+ "Locked games": {
+  "files": 2
+ },
+ "Locked: protected from deletion": {
+  "files": 1
+ },
+ "Logo": {
+  "files": 1
+ },
+ "Logo removed": {
+  "files": 1
+ },
+ "Logo saved": {
+  "files": 1
+ },
+ "Logos for the platform tiles in Big Screen.": {
+  "files": 1
+ },
+ "Look for one online": {
+  "files": 1
+ },
+ "Look for this game's video, cover, spine, disc art, back and manual, and keep whatever is missing. Nothing you added yourself is replaced.": {
+  "files": 1
+ },
+ "Look the game up again": {
+  "files": 1
+ },
+ "Look this game up again by its title and platform": {
+  "files": 2
+ },
+ "Look up again": {
+  "files": 2
+ },
+ "Look up details and covers again for games that have none": {
+  "files": 1
+ },
+ "Look up details and covers for console games that have none": {
+  "files": 1
+ },
+ "Looking through the folder…": {
+  "files": 1
+ },
+ "Looking up {a} console games": {
+  "files": 1
+ },
+ "Looking up {a} games": {
+  "files": 1
+ },
+ "Looking up details and covers for console games: {a} of {b} done. They appear as they are found.": {
+  "files": 1
+ },
+ "Looking up details and covers: {a} of {b} done. They appear as they are found.": {
+  "files": 1
+ },
+ "Looking…": {
+  "files": 1
+ },
+ "Main": {
+  "files": 1
+ },
+ "Maintenance": {
+  "files": 1
+ },
+ "Make {a} a member?": {
+  "files": 1
+ },
+ "Make {a} an admin?": {
+  "files": 1
+ },
+ "Make admin": {
+  "files": 1
+ },
+ "Make dark mode a deeper black (suits OLED screens). Has no effect in light mode.": {
+  "files": 1
+ },
+ "Make member": {
+  "files": 1
+ },
+ "MAME name list: {a} names loaded, {b} of your {c} MAME ROMs titled": {
+  "files": 1
+ },
+ "Manual": {
+  "files": 2
+ },
+ "Manual removed": {
+  "files": 1
+ },
+ "Manual saved": {
+  "files": 1
+ },
+ "Manually add a game": {
+  "files": 1
+ },
+ "Manufacturer": {
+  "files": 1
+ },
+ "Many romsets (FinalBurn Neo, MAME…) are named like": {
+  "files": 1
+ },
+ "Mark as multi-disc": {
+  "files": 1
+ },
+ "Mark as System": {
+  "files": 2
+ },
+ "Mark BIOS, device and non-arcade entries as System": {
+  "files": 1
+ },
+ "Mark the {a} selected game{b} as part of a multi-disc set? Play on this PC will not start them and Big Screen leaves them out; they stay in the Library and can be downloaded.": {
+  "files": 1
+ },
+ "Marked as broken.": {
+  "files": 1
+ },
+ "Marked as NOT part of a multi-disc set": {
+  "files": 1
+ },
+ "Marked as part of a multi-disc set": {
+  "files": 1
+ },
+ "Match cleared": {
+  "files": 1
+ },
+ "Matched as “{a}”": {
+  "files": 2
+ },
+ "Matched by": {
+  "files": 1
+ },
+ "Matched by a provider or DAT": {
+  "files": 1
+ },
+ "Media": {
+  "files": 2
+ },
+ "Mega Drive": {
+  "files": 2
+ },
+ "Member": {
+  "files": 1
+ },
+ "Members can no longer download ROM files": {
+  "files": 1
+ },
+ "Members can now download ROM files": {
+  "files": 1
+ },
+ "members_can_download / arcade_verified_only must be true or false": {
+  "files": 1
+ },
+ "Messages": {
+  "files": 2
+ },
+ "Metadata": {
+  "files": 1
+ },
+ "Metadata providers": {
+  "files": 2
+ },
+ "Metadata updated from {a}.": {
+  "files": 1
+ },
+ "Missing": {
+  "files": 1
+ },
+ "Missing files": {
+  "files": 1
+ },
+ "Missing files (drive offline)": {
+  "files": 1
+ },
+ "mode must be 'full' or 'play'": {
+  "files": 1
+ },
+ "Modern look (click for Classic)": {
+  "files": 1
+ },
+ "Monitored folders, not copies": {
+  "files": 1
+ },
+ "More actions": {
+  "files": 1
+ },
+ "Most downloaded game — open it": {
+  "files": 1
+ },
+ "Most played": {
+  "files": 1
+ },
+ "Move the selected games to System (or back to the library)": {
+  "files": 1
+ },
+ "Move to Other": {
+  "files": 1
+ },
+ "Multi-disc sets": {
+  "files": 1
+ },
+ "Multipart body needs a \"file\" field": {
+  "files": 1
+ },
+ "My account": {
+  "files": 2
+ },
+ "my favourites": {
+  "files": 1
+ },
+ "My saves (browser play)": {
+  "files": 1
+ },
+ "Name": {
+  "files": 1
+ },
+ "Name (optional)": {
+  "files": 1
+ },
+ "Name *": {
+  "files": 1
+ },
+ "Name from the file only": {
+  "files": 1
+ },
+ "name is required": {
+  "files": 1
+ },
+ "Name the new collection": {
+  "files": 1
+ },
+ "Navigation sounds (Start or M)": {
+  "files": 1
+ },
+ "Needs a match": {
+  "files": 1
+ },
+ "Needs at least 10 characters, with a letter and a number.": {
+  "files": 1
+ },
+ "Needs match": {
+  "files": 1
+ },
+ "Needs match: games no provider has matched, the worklist for matching by hand ({h})": {
+  "files": 1
+ },
+ "Never (manual only)": {
+  "files": 1
+ },
+ "Never enriched": {
+  "files": 1
+ },
+ "New collection": {
+  "files": 1
+ },
+ "New name for the {b} family": {
+  "files": 1
+ },
+ "New password": {
+  "files": 2
+ },
+ "Next →": {
+  "files": 1
+ },
+ "Next game": {
+  "files": 1
+ },
+ "Next game (→)": {
+  "files": 1
+ },
+ "next to the database": {
+  "files": 1
+ },
+ "Nintendo": {
+  "files": 1
+ },
+ "Nintendo 3DS": {
+  "files": 1
+ },
+ "Nintendo DS": {
+  "files": 1
+ },
+ "Nintendo layout (A on the right)": {
+  "files": 1
+ },
+ "Nintendo Switch": {
+  "files": 1
+ },
+ "Nintendo Switch 2": {
+  "files": 1
+ },
+ "Nintendo Wii": {
+  "files": 1
+ },
+ "Nintendo Wii U": {
+  "files": 1
+ },
+ "No {a} covers to clear": {
+  "files": 1
+ },
+ "No active sessions": {
+  "files": 1
+ },
+ "no answer from GitHub": {
+  "files": 1
+ },
+ "No back": {
+  "files": 1
+ },
+ "No backups in the server folder yet.": {
+  "files": 1
+ },
+ "No collections yet": {
+  "files": 1
+ },
+ "No collections yet — create one with the button below.": {
+  "files": 1
+ },
+ "No controller detected yet (press a button on it).": {
+  "files": 1
+ },
+ "No conversations yet. Press New to write to someone.": {
+  "files": 1
+ },
+ "No cover": {
+  "files": 4
+ },
+ "No cover: console games with no cover picture yet ({b})": {
+  "files": 1
+ },
+ "No cover: games with no cover picture yet ({e})": {
+  "files": 1
+ },
+ "No covers to export for that choice": {
+  "files": 1
+ },
+ "No DAT files imported yet.": {
+  "files": 1
+ },
+ "No disc": {
+  "files": 1
+ },
+ "No duplicates found. Every game appears once.": {
+  "files": 1
+ },
+ "No emulator is set up on this PC for this platform.": {
+  "files": 1
+ },
+ "No emulators are set up on this PC yet: only games that play in the browser are offered.": {
+  "files": 1
+ },
+ "No emulators are set up on this PC yet: only games that play in the browser are shown": {
+  "files": 1
+ },
+ "No entries match.": {
+  "files": 1
+ },
+ "No file of that kind": {
+  "files": 1
+ },
+ "No files uploaded": {
+  "files": 1
+ },
+ "No folder called Platforms (or Systems, Consoles) was found in that folder.": {
+  "files": 1
+ },
+ "No folders yet": {
+  "files": 1
+ },
+ "No folders yet.": {
+  "files": 1
+ },
+ "No game of yours matches that.": {
+  "files": 1
+ },
+ "No games here yet.": {
+  "files": 2
+ },
+ "No games in the Library yet.": {
+  "files": 2
+ },
+ "No games match": {
+  "files": 2
+ },
+ "No games were found in the download. Is it the LaunchBox Metadata file?": {
+  "files": 1
+ },
+ "No GitHub repo tracked for this pick": {
+  "files": 1
+ },
+ "No ids supplied": {
+  "files": 1
+ },
+ "No image uploaded": {
+  "files": 1
+ },
+ "no logo": {
+  "files": 1
+ },
+ "No logo yet: add one under Edit": {
+  "files": 1
+ },
+ "No longer marked as broken.": {
+  "files": 1
+ },
+ "No manual": {
+  "files": 1
+ },
+ "No manual for this game yet: add a link or upload one in its details window": {
+  "files": 1
+ },
+ "No manual yet. Add a web link to one, or upload your own PDF. On the shelf, open the game's case and click the manual to read it.": {
+  "files": 1
+ },
+ "no match for this ROM on ScreenScraper": {
+  "files": 1
+ },
+ "No match found: search for it below.": {
+  "files": 2
+ },
+ "No match, wrong game, or missing art? Search and pick the right entry — cover included.": {
+  "files": 2
+ },
+ "No match: {a}.": {
+  "files": 1
+ },
+ "No matching asset in the latest release": {
+  "files": 1
+ },
+ "No media of that kind": {
+  "files": 1
+ },
+ "No messages yet. Say hello.": {
+  "files": 1
+ },
+ "no number": {
+  "files": 1
+ },
+ "No orphaned ROMs — nothing to purge": {
+  "files": 1
+ },
+ "No orphaned ROMs right now — the filter appears when there is something to show": {
+  "files": 1
+ },
+ "No picture uploaded": {
+  "files": 1
+ },
+ "No platforms in the catalogue.": {
+  "files": 1
+ },
+ "no plays yet": {
+  "files": 1
+ },
+ "no provider matched": {
+  "files": 1
+ },
+ "No recommendation for that platform yet": {
+  "files": 1
+ },
+ "No recommendations yet.": {
+  "files": 1
+ },
+ "no response": {
+  "files": 1
+ },
+ "No ROMs match": {
+  "files": 1
+ },
+ "No ROMs yet.": {
+  "files": 1
+ },
+ "No server backup has run yet.": {
+  "files": 1
+ },
+ "No shared developer credentials on this server — all four fields are required. Leaving the Developer fields blank": {
+  "files": 1
+ },
+ "No source": {
+  "files": 1
+ },
+ "No source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)": {
+  "files": 1
+ },
+ "No spine": {
+  "files": 1
+ },
+ "No Steam games have their Play button on yet.": {
+  "files": 1
+ },
+ "No subfolders — use this folder as-is.": {
+  "files": 1
+ },
+ "No subfolders here: use this folder as it is.": {
+  "files": 2
+ },
+ "No such family": {
+  "files": 1
+ },
+ "No such picture": {
+  "files": 1
+ },
+ "No such vault entry": {
+  "files": 1
+ },
+ "No vault entries match “{a}”.": {
+  "files": 1
+ },
+ "No video for this game": {
+  "files": 1
+ },
+ "No video source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)": {
+  "files": 1
+ },
+ "none found (the shelf draws one)": {
+  "files": 1
+ },
+ "None of this source's {a} games were found in {b}. Choose the folder that holds the same files.": {
+  "files": 1
+ },
+ "None so far. If something feels slow, it will be listed here with what it was.": {
+  "files": 1
+ },
+ "none yet": {
+  "files": 1
+ },
+ "Not a backup file": {
+  "files": 1
+ },
+ "not a JPEG, PNG or WebP picture": {
+  "files": 1
+ },
+ "Not a platform in the list yet: keep typing, or pick one from the list.": {
+  "files": 1
+ },
+ "not an mp4 or webm video (convert it first)": {
+  "files": 1
+ },
+ "Not available:": {
+  "files": 1
+ },
+ "Not connected.": {
+  "files": 1
+ },
+ "Not in any source": {
+  "files": 1
+ },
+ "Not in DAT": {
+  "files": 1
+ },
+ "not matched yet": {
+  "files": 1
+ },
+ "not played yet": {
+  "files": 1
+ },
+ "Not recognised": {
+  "files": 1
+ },
+ "Notes": {
+  "files": 2
+ },
+ "Notes (condition, edition, where it is kept)": {
+  "files": 1
+ },
+ "Notes (optional)": {
+  "files": 1
+ },
+ "Nothing in this folder could be placed as artwork.": {
+  "files": 1
+ },
+ "Nothing is missing.": {
+  "files": 1
+ },
+ "Nothing missing — you hold every entry in this DAT.": {
+  "files": 1
+ },
+ "Nothing new to add ({a} kept out of Digital)": {
+  "files": 1
+ },
+ "Nothing played yet": {
+  "files": 1
+ },
+ "Nothing recorded yet": {
+  "files": 1
+ },
+ "Nothing to add": {
+  "files": 1
+ },
+ "Nothing to save — type a value first": {
+  "files": 1
+ },
+ "Nothing to save: fill in at least one, or press Next to skip.": {
+  "files": 1
+ },
+ "Nothing unused: every file in storage is in use.": {
+  "files": 1
+ },
+ "Nothing uploadable in that selection": {
+  "files": 1
+ },
+ "nothing yet": {
+  "files": 1
+ },
+ "Notice": {
+  "files": 1
+ },
+ "Notice sent to everyone": {
+  "files": 1
+ },
+ "Notice to everyone": {
+  "files": 1
+ },
+ "number is a different console": {
+  "files": 1
+ },
+ "number not on the provider's list": {
+  "files": 1
+ },
+ "O:\\Launchbox\\images or /art/launchbox-images": {
+  "files": 1
+ },
+ "Official site ↗": {
+  "files": 1
+ },
+ "Oldest added": {
+  "files": 1
+ },
+ "on part": {
+  "files": 3
+ },
+ "On the server now": {
+  "files": 1
+ },
+ "on whole": {
+  "files": 3
+ },
+ "One recommended emulator per popular platform, with links to the official site and download page — game-sauce never bundles binaries. The": {
+  "files": 1
+ },
+ "Only an admin can import pictures and manuals for the Library.": {
+  "files": 1
+ },
+ "Only console games can be edited here. A Steam game's details come from Steam.": {
+  "files": 1
+ },
+ "Only console games can be removed here.": {
+  "files": 1
+ },
+ "Only console games have a disc or cartridge switch": {
+  "files": 1
+ },
+ "only looks. ROMs, saves, emulators and your own artwork folders are never touched, and anything written in the last ten minutes is left alone.": {
+  "files": 1
+ },
+ "Only pictures: never manuals, notes, ratings or anything else. Each account gets a copy of its own, so changing or removing it never touches anyone else's, and a lookup or an import can still replace it. It applies to pictures a game is missing, when games are added or looked up.": {
+  "files": 1
+ },
+ "Only the suggested copy of each game stays visible; members will not see the others either. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.": {
+  "files": 1
+ },
+ "only when you want to": {
+  "files": 1
+ },
+ "Only Xbox One and Xbox Series X|S discs can have a Digital counterpart.": {
+  "files": 1
+ },
+ "Open": {
+  "files": 1
+ },
+ "Open menu": {
+  "files": 1
+ },
+ "Open the Steam store page": {
+  "files": 1
+ },
+ "Opening Steam…": {
+  "files": 1
+ },
+ "Opening the setup page… (it needs the launcher installed on this PC: docs/LOCAL-LAUNCH.md)": {
+  "files": 1
+ },
+ "Opening the setup page… (it needs the launcher on this PC: docs/LOCAL-LAUNCH.md)": {
+  "files": 1
+ },
+ "Opening your local emulator… this needs the game-sauce launcher installed on this PC (docs/LOCAL-LAUNCH.md).": {
+  "files": 1
+ },
+ "Opening your local emulator… this needs the game-sauce launcher installed on this PC.": {
+  "files": 1
+ },
+ "opens a page on this PC where you choose which program plays each platform.": {
+  "files": 1
+ },
+ "option A": {
+  "files": 1
+ },
+ "option B": {
+  "files": 1
+ },
+ "option C": {
+  "files": 1
+ },
+ "Options": {
+  "files": 1
+ },
+ "Options: the folder names do not say what the files are, or the file names are unusual": {
+  "files": 1
+ },
+ "Orphaned (no valid source)": {
+  "files": 1
+ },
+ "OS": {
+  "files": 1
+ },
+ "Other / chip": {
+  "files": 1
+ },
+ "Other devices signed out": {
+  "files": 1
+ },
+ "over 50 MB": {
+  "files": 1
+ },
+ "over 8 MB": {
+  "files": 1
+ },
+ "Overwrite": {
+  "files": 1
+ },
+ "Overwrite hand-edited titles?": {
+  "files": 1
+ },
+ "Page up / down": {
+  "files": 1
+ },
+ "page with your hours played. Only you see it, and nothing changes on Steam. You can skip this and do it later in Settings &rarr; My account &rarr; Steam.": {
+  "files": 1
+ },
+ "page, where they show as tiles or as spines on a shelf. Details and covers are looked up in the background with the Library's metadata providers, and any game can be matched by hand. Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.": {
+  "files": 1
+ },
+ "PAL, NTSC-U, JP…": {
+  "files": 1
+ },
+ "Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.": {
+  "files": 1
+ },
+ "Password": {
+  "files": 1
+ },
+ "Password changed": {
+  "files": 1
+ },
+ "Password updated — other devices signed out": {
+  "files": 1
+ },
+ "Paste your Steam Web API key (32 letters and numbers).": {
+  "files": 1
+ },
+ "Path": {
+  "files": 1
+ },
+ "path is required": {
+  "files": 1
+ },
+ "Path must be a folder": {
+  "files": 1
+ },
+ "Path selected": {
+  "files": 1
+ },
+ "Physical": {
+  "files": 2
+ },
+ "Physical Library": {
+  "files": 3
+ },
+ "Physical only: also add Xbox One and Xbox Series discs to my Digital library (a": {
+  "files": 1
+ },
+ "Physical:": {
+  "files": 1
+ },
+ "Pick a collection for {a}:": {
+  "files": 1
+ },
+ "Pick a collection for these {a} games:": {
+  "files": 1
+ },
+ "Pick a platform (this CSV has no \"platform\" column to say which games each row is for)": {
+  "files": 1
+ },
+ "Pick a platform for these ROMs first": {
+  "files": 1
+ },
+ "Pick an exact asset from the list first": {
+  "files": 1
+ },
+ "Pick the platform for this folder": {
+  "files": 1
+ },
+ "Pick the platform for this installer": {
+  "files": 1
+ },
+ "Picked from the folder name ({a}). Change it if that's wrong.": {
+  "files": 1
+ },
+ "picks by the controller's name. This is remembered on this browser only.": {
+  "files": 1
+ },
+ "Pictures are no longer shared between accounts": {
+  "files": 1
+ },
+ "Pictures are shared between accounts": {
+  "files": 1
+ },
+ "pictures, manuals and videos": {
+  "files": 1
+ },
+ "Pin the details window": {
+  "files": 1
+ },
+ "Plain text only, no links. Private to you two.": {
+  "files": 1
+ },
+ "Platform": {
+  "files": 4
+ },
+ "Platform *": {
+  "files": 1
+ },
+ "Platform art": {
+  "files": 1
+ },
+ "Platform deleted": {
+  "files": 1
+ },
+ "Platform is required: pick the platform this folder holds (no auto-detect)": {
+  "files": 1
+ },
+ "Platform is required: pick the platform this installer is for": {
+  "files": 1
+ },
+ "Platform still has {a} ROM(s); pass ?reassign=other to move them to Other first": {
+  "files": 1
+ },
+ "Platform still has ROMs": {
+  "files": 1
+ },
+ "Platform to fill the gaps for": {
+  "files": 1
+ },
+ "Platform to search": {
+  "files": 1
+ },
+ "Platform updated": {
+  "files": 1
+ },
+ "Platform whose cover art to remove": {
+  "files": 1
+ },
+ "Platforms": {
+  "files": 2
+ },
+ "Play": {
+  "files": 3
+ },
+ "Play {a} in browser": {
+  "files": 1
+ },
+ "Play games with the emulators installed on this computer. A small": {
+  "files": 1
+ },
+ "Play in browser": {
+  "files": 2
+ },
+ "Play in browser disabled for this game": {
+  "files": 1
+ },
+ "Play in browser enabled for this game": {
+  "files": 1
+ },
+ "Play in Steam": {
+  "files": 1
+ },
+ "Play it here, in the browser": {
+  "files": 1
+ },
+ "Play on this PC": {
+  "files": 4
+ },
+ "play or choose": {
+  "files": 1
+ },
+ "Play with the emulator set up on this PC": {
+  "files": 1
+ },
+ "Players": {
+  "files": 2
+ },
+ "Playing locally needs the ROM file, and downloads are turned off for this account.": {
+  "files": 1
+ },
+ "Playing locally needs the ROM file, and downloads are turned off for this account. Ask the admin, or play it in the browser.": {
+  "files": 1
+ },
+ "Playing without sound: use the video's speaker button for sound.": {
+  "files": 1
+ },
+ "PlayStation 2": {
+  "files": 1
+ },
+ "PlayStation 2.png": {
+  "files": 1
+ },
+ "PlayStation 3": {
+  "files": 1
+ },
+ "PlayStation 4": {
+  "files": 2
+ },
+ "PlayStation 5": {
+  "files": 1
+ },
+ "Point game-sauce at a folder of games for": {
+  "files": 1
+ },
+ "Point the folder at a network share or a mounted disk so backups survive the machine itself.": {
+  "files": 1
+ },
+ "Point this source at the new folder?": {
+  "files": 1
+ },
+ "Press Ctrl+C to copy.": {
+  "files": 1
+ },
+ "prev/next": {
+  "files": 1
+ },
+ "Preview": {
+  "files": 4
+ },
+ "Preview play-only": {
+  "files": 1
+ },
+ "Previewing play-only: click to exit": {
+  "files": 1
+ },
+ "Previous / next game": {
+  "files": 1
+ },
+ "Previous game": {
+  "files": 1
+ },
+ "Previous game (←)": {
+  "files": 1
+ },
+ "Profile picture": {
+  "files": 2
+ },
+ "Profile picture removed": {
+  "files": 1
+ },
+ "Profile picture updated": {
+  "files": 1
+ },
+ "protected from deletion; unlock to delete": {
+  "files": 1
+ },
+ "Public": {
+  "files": 2
+ },
+ "Publisher": {
+  "files": 3
+ },
+ "Purge": {
+  "files": 1
+ },
+ "Purge {a} orphaned ROM{b}?": {
+  "files": 1
+ },
+ "Put the case back on the shelf": {
+  "files": 1
+ },
+ "Rating (0–5)": {
+  "files": 3
+ },
+ "Rating ↓": {
+  "files": 1
+ },
+ "Re-attach": {
+  "files": 2
+ },
+ "Re-check": {
+  "files": 1
+ },
+ "Re-match and overwrite titles": {
+  "files": 1
+ },
+ "Re-match library against DATs": {
+  "files": 1
+ },
+ "Read {a} picture{b}: {c} platform logo{d} saved{e}{f}{g}.": {
+  "files": 1
+ },
+ "Read Manual": {
+  "files": 1
+ },
+ "READ ME FIRST": {
+  "files": 1
+ },
+ "Reading the database (a few minutes)…": {
+  "files": 1
+ },
+ "Reading the database… {a}%": {
+  "files": 1
+ },
+ "Reading the folder…": {
+  "files": 1
+ },
+ "Reading the zip…": {
+  "files": 1
+ },
+ "reads a folder called": {
+  "files": 1
+ },
+ "Ready to finish": {
+  "files": 1
+ },
+ "Ready: {a} games indexed.": {
+  "files": 1
+ },
+ "Ready: {a} games indexed. Nothing more to do here.": {
+  "files": 1
+ },
+ "Recall": {
+  "files": 1
+ },
+ "Recall this message?": {
+  "files": 1
+ },
+ "Recently added": {
+  "files": 3
+ },
+ "Recently played": {
+  "files": 1
+ },
+ "Refresh metadata": {
+  "files": 1
+ },
+ "Region": {
+  "files": 3
+ },
+ "Region (optional)": {
+  "files": 1
+ },
+ "Release has no downloadable assets": {
+  "files": 1
+ },
+ "Released": {
+  "files": 1
+ },
+ "Remove": {
+  "files": 4
+ },
+ "Remove “{a}”?": {
+  "files": 1
+ },
+ "Remove {a}?": {
+  "files": 2
+ },
+ "Remove from favourites": {
+  "files": 1
+ },
+ "Remove from your Digital list": {
+  "files": 1
+ },
+ "Remove from your shelf": {
+  "files": 1
+ },
+ "Remove games no longer in the file (only for the platforms the file lists)": {
+  "files": 3
+ },
+ "Remove logo": {
+  "files": 1
+ },
+ "Remove source + ROMs": {
+  "files": 1
+ },
+ "Remove source, keep ROMs": {
+  "files": 1
+ },
+ "Remove Steam?": {
+  "files": 1
+ },
+ "Remove the family logo": {
+  "files": 1
+ },
+ "Remove the metadata match from the selected games (wrong cover, wrong details) so they can be matched again": {
+  "files": 1
+ },
+ "Remove this DAT?": {
+  "files": 1
+ },
+ "Remove this installer?": {
+  "files": 1
+ },
+ "Remove this manual?": {
+  "files": 1
+ },
+ "Remove this platform's logo": {
+  "files": 1
+ },
+ "Removed from “{a}”": {
+  "files": 1
+ },
+ "Removed from {a}.": {
+  "files": 1
+ },
+ "Removed from collection": {
+  "files": 1
+ },
+ "Removed from vault": {
+  "files": 1
+ },
+ "Removed from your favourites.": {
+  "files": 1
+ },
+ "Removed from your shelf": {
+  "files": 1
+ },
+ "Removes cover art only — titles and files stay": {
+  "files": 1
+ },
+ "Removes the catalogue entries. Imported copies in storage/roms go too. Files in your own scanned folders are never touched.": {
+  "files": 1
+ },
+ "Removes the catalogue entry and its imported copy in storage/roms.": {
+  "files": 1
+ },
+ "Removes the catalogue entry only. Its file stays on disk — this ROM came from a scanned folder.": {
+  "files": 1
+ },
+ "Removes the cover and details a metadata provider gave them (including a wrong match) and goes back to the plain name. A cover you uploaded yourself is kept. Your files are not touched. You can then Fetch metadata or Identify again.": {
+  "files": 1
+ },
+ "Removes the cover art only. Titles, other metadata and the ROM files are not touched.": {
+  "files": 1
+ },
+ "Rename": {
+  "files": 1
+ },
+ "Rename this family for all {s} of its platforms (use an existing family's name to merge them)": {
+  "files": 1
+ },
+ "Replace the current data with this backup?": {
+  "files": 1
+ },
+ "replace the logos already there": {
+  "files": 1
+ },
+ "Replaces titles you edited by hand with the DAT canonical titles.": {
+  "files": 1
+ },
+ "Reply": {
+  "files": 1
+ },
+ "Replying to": {
+  "files": 1
+ },
+ "Request failed ({a})": {
+  "files": 1
+ },
+ "Required: every ROM in this folder is filed under this platform. Point one source per console — no guessing, no mixed folders.": {
+  "files": 1
+ },
+ "Reset": {
+  "files": 1
+ },
+ "Reset colour": {
+  "files": 1
+ },
+ "Reset password": {
+  "files": 1
+ },
+ "Reset search and filters": {
+  "files": 1
+ },
+ "Reset: clear the search, platforms and filters": {
+  "files": 1
+ },
+ "Restart game-sauce now": {
+  "files": 1
+ },
+ "Restore": {
+  "files": 1
+ },
+ "Restore from a backup": {
+  "files": 1
+ },
+ "Restore this backup": {
+  "files": 1
+ },
+ "Restore…": {
+  "files": 1
+ },
+ "Restoring…": {
+  "files": 1
+ },
+ "Retro font": {
+  "files": 1
+ },
+ "Review Xbox Digital entries": {
+  "files": 1
+ },
+ "Right edge of the spine": {
+  "files": 1
+ },
+ "Role": {
+  "files": 2
+ },
+ "role must be 'admin' or 'user'": {
+  "files": 1
+ },
+ "ROM deleted": {
+  "files": 1
+ },
+ "ROM Library": {
+  "files": 3
+ },
+ "ROM not found": {
+  "files": 3
+ },
+ "ROMs can outlive their folder: removing a source with “keep ROMs”, or deleting a source whose ROMs were already imported, leaves": {
+  "files": 1
+ },
+ "ROMs keep their titles but lose its verification.": {
+  "files": 1
+ },
+ "ROMs on it move to Other unless you purge them first.": {
+  "files": 1
+ },
+ "ROMs stay in the library.": {
+  "files": 1
+ },
+ "Roughly square: shown as a circle in the open case": {
+  "files": 1
+ },
+ "rows stay as orphans": {
+  "files": 1
+ },
+ "rows with no valid source. They still appear in the library and in the platform list. Missing files (drive offline) are different — those still have a source and will re-appear on rescan.": {
+  "files": 1
+ },
+ "Run": {
+  "files": 1
+ },
+ "Run the welcome tour again": {
+  "files": 1
+ },
+ "Running on shared developer credentials + your login. Paste your own dev pair any time for your own faster quota.": {
+  "files": 1
+ },
+ "Runs on": {
+  "files": 1
+ },
+ "Safety backup saved as": {
+  "files": 1
+ },
+ "Same sidebar size you asked for (54px) plus the login-screen context. The controller-as-face idea is in all three — only the mood changes. Tell me which one and I'll make it": {
+  "files": 1
+ },
+ "Same sunset gradient, but the pad is the face: D-pad + buttons as eyes, big grin with a gold drip smile.": {
+  "files": 1
+ },
+ "Save": {
+  "files": 4
+ },
+ "Save a copy of this manual": {
+  "files": 1
+ },
+ "Save and fetch my games": {
+  "files": 1
+ },
+ "Save changes": {
+  "files": 1
+ },
+ "Save link": {
+  "files": 1
+ },
+ "Save not found": {
+  "files": 2
+ },
+ "Save one to the server folder now": {
+  "files": 1
+ },
+ "Save settings": {
+  "files": 1
+ },
+ "Save states and in-game saves are stored on your server, under your account only. For the full experience (shaders, netplay) grab the vault emulator.": {
+  "files": 1
+ },
+ "Save the folders": {
+  "files": 1
+ },
+ "Save the pictures": {
+  "files": 1
+ },
+ "Save this link": {
+  "files": 1
+ },
+ "Save to vault": {
+  "files": 1
+ },
+ "Save too large": {
+  "files": 1
+ },
+ "Saved": {
+  "files": 3
+ },
+ "Saved (leave empty to keep it)": {
+  "files": 1
+ },
+ "Saved {a} {b} to the vault": {
+  "files": 1
+ },
+ "Saved {a} to the vault": {
+  "files": 1
+ },
+ "Saved to vault.": {
+  "files": 1
+ },
+ "Saved, {a} field(s) refused": {
+  "files": 1
+ },
+ "Saved; {a} field(s) refused.": {
+  "files": 1
+ },
+ "Saving the pictures…": {
+  "files": 1
+ },
+ "Saving… this takes a few seconds": {
+  "files": 1
+ },
+ "Say the selected games are part of a multi-disc set (Play on this PC cannot start those)": {
+  "files": 1
+ },
+ "Scan subfolders recursively": {
+  "files": 1
+ },
+ "Scheduled backups": {
+  "files": 1
+ },
+ "ScreenScraper configured. Quota is reported after the first request.": {
+  "files": 1
+ },
+ "ScreenScraper has no system id for \"{a}\"": {
+  "files": 1
+ },
+ "ScreenScraper id": {
+  "files": 2
+ },
+ "ScreenScraper is not configured or did not respond": {
+  "files": 1
+ },
+ "ScreenScraper is not configured yet — covers fall back to filename initials until credentials are set.": {
+  "files": 1
+ },
+ "ScreenScraper quota used today: {a} / {b}.": {
+  "files": 1
+ },
+ "screenscraper_id must be a number": {
+  "files": 1
+ },
+ "screenscraper.fr account username + password below and Save. (A shared dev pair has a slower shared quota; your own pair later gets your own faster quota.)": {
+  "files": 1
+ },
+ "scripts/check-play.mjs --candidates --apply": {
+  "files": 1
+ },
+ "Search": {
+  "files": 3
+ },
+ "Search a game to share…": {
+  "files": 1
+ },
+ "Search one platform, or all": {
+  "files": 1
+ },
+ "Search text is required": {
+  "files": 1
+ },
+ "Search the library": {
+  "files": 1
+ },
+ "Search the web for this game's manual (opens a search page)": {
+  "files": 1
+ },
+ "Search titles, developers, genres and platforms": {
+  "files": 1
+ },
+ "Search titles, developers, genres, platforms…": {
+  "files": 1
+ },
+ "Search vault… name, version, OS": {
+  "files": 1
+ },
+ "Search your games": {
+  "files": 2
+ },
+ "Searching {a}…": {
+  "files": 2
+ },
+ "Searching…": {
+  "files": 1
+ },
+ "secret.key is corrupt": {
+  "files": 1
+ },
+ "Security & activity": {
+  "files": 1
+ },
+ "Sega": {
+  "files": 1
+ },
+ "Sega Model 2": {
+  "files": 1
+ },
+ "sel-bar hidden": {
+  "files": 1
+ },
+ "Select + Start": {
+  "files": 3
+ },
+ "Select all": {
+  "files": 1
+ },
+ "Select all ({a})": {
+  "files": 1
+ },
+ "Select all {a} shown": {
+  "files": 1
+ },
+ "Select every game the filters show": {
+  "files": 1
+ },
+ "Select every ROM matching the current filters, including ones not scrolled into view yet": {
+  "files": 1
+ },
+ "Select for bulk delete": {
+  "files": 1
+ },
+ "Select some tiles first": {
+  "files": 1
+ },
+ "Select tiles to delete several at once": {
+  "files": 1
+ },
+ "Select+Start": {
+  "files": 1
+ },
+ "self-hosted library": {
+  "files": 1
+ },
+ "Send": {
+  "files": 2
+ },
+ "Send a notice that everyone sees, such as scheduled maintenance": {
+  "files": 1
+ },
+ "Send multipart/form-data with a \"file\" field": {
+  "files": 1
+ },
+ "Send the notice to everyone": {
+  "files": 1
+ },
+ "Set a new password for {a}. They are signed out everywhere and any sign-in lockout is cleared. Tell them the new password; they can change it under Settings → Change password.": {
+  "files": 1
+ },
+ "Set a new password for this user": {
+  "files": 1
+ },
+ "Set all four ScreenScraper fields first: SS_DEV_ID, SS_DEV_PASSWORD, SS_USER, SS_PASSWORD": {
+  "files": 1
+ },
+ "Set password": {
+  "files": 1
+ },
+ "set to": {
+  "files": 1
+ },
+ "Set up emulators": {
+  "files": 2
+ },
+ "Set up Steam": {
+  "files": 1
+ },
+ "Settings": {
+  "files": 2
+ },
+ "Share a game": {
+  "files": 1
+ },
+ "Share a game: only its title and platform are sent": {
+  "files": 1
+ },
+ "Share artwork between accounts": {
+  "files": 1
+ },
+ "Shared developer credentials are active — now just add": {
+  "files": 1
+ },
+ "Sharing": {
+  "files": 1
+ },
+ "shelf on the": {
+  "files": 1
+ },
+ "Shelf view": {
+  "files": 1
+ },
+ "Shelf: the games' spines on a shelf": {
+  "files": 1
+ },
+ "Short name": {
+  "files": 2
+ },
+ "Show cover": {
+  "files": 1
+ },
+ "Show every platform again": {
+  "files": 2
+ },
+ "Show every store again": {
+  "files": 1
+ },
+ "Show favourites only": {
+  "files": 1
+ },
+ "Show hidden: also show the games you hid ({b})": {
+  "files": 1
+ },
+ "Show more": {
+  "files": 1
+ },
+ "Show my favourites": {
+  "files": 1
+ },
+ "Show only games that have no cover picture yet": {
+  "files": 1
+ },
+ "Show only ROMs no provider has ever matched — the manual-identify worklist": {
+  "files": 1
+ },
+ "Show or hide this row": {
+  "files": 2
+ },
+ "Show orphans": {
+  "files": 1
+ },
+ "Show password": {
+  "files": 1
+ },
+ "Show these games in the Library": {
+  "files": 1
+ },
+ "Show video": {
+  "files": 1
+ },
+ "Show what would change": {
+  "files": 1
+ },
+ "Show your Steam games (optional)": {
+  "files": 1
+ },
+ "Showing every game. Press Check my PC so game-sauce can hide the ones this PC cannot start.": {
+  "files": 1
+ },
+ "Showing every platform. Run Check my PC in the Carousel so only the ones this PC can start show here.": {
+  "files": 1
+ },
+ "Shown next to your name in the menu and on the user list. A square-ish JPEG, PNG or WebP works best; it is shrunk to 256 px before it is saved.": {
+  "files": 1
+ },
+ "Shown next to your name. A JPEG, PNG or WebP up to 1 MB; it is shrunk before saving.": {
+  "files": 1
+ },
+ "Sign in": {
+  "files": 2
+ },
+ "Sign in failed": {
+  "files": 1
+ },
+ "Sign in required": {
+  "files": 3
+ },
+ "Sign out": {
+  "files": 3
+ },
+ "Sign out other devices": {
+  "files": 1
+ },
+ "Sign out?": {
+  "files": 1
+ },
+ "Signing in…": {
+  "files": 1
+ },
+ "Size ↓": {
+  "files": 1
+ },
+ "Skip tour": {
+  "files": 1
+ },
+ "Slow requests": {
+  "files": 1
+ },
+ "Slug *": {
+  "files": 1
+ },
+ "slug is required (lowercase letters/digits)": {
+  "files": 1
+ },
+ "SNES": {
+  "files": 2
+ },
+ "snes/Super Mario World (USA).png": {
+  "files": 1
+ },
+ "Some are favourites": {
+  "files": 1
+ },
+ "Someone loves this game": {
+  "files": 1
+ },
+ "Something needs attention": {
+  "files": 1
+ },
+ "Sony.png": {
+  "files": 1
+ },
+ "Sort": {
+  "files": 1
+ },
+ "Sounds off.": {
+  "files": 1
+ },
+ "Sounds on.": {
+  "files": 1
+ },
+ "Source and its ROMs removed from the library": {
+  "files": 1
+ },
+ "Source disabled": {
+  "files": 1
+ },
+ "Source enabled": {
+  "files": 1
+ },
+ "Source folder is not reachable": {
+  "files": 1
+ },
+ "Source not found": {
+  "files": 2
+ },
+ "Source removed, ROMs kept": {
+  "files": 1
+ },
+ "Sources": {
+  "files": 2
+ },
+ "Sources are": {
+  "files": 1
+ },
+ "Spine art": {
+  "files": 1
+ },
+ "staged database failed its integrity check": {
+  "files": 1
+ },
+ "staged files missing": {
+  "files": 1
+ },
+ "Start →": {
+  "files": 1
+ },
+ "Starting the emulator…": {
+  "files": 1
+ },
+ "Stats": {
+  "files": 2
+ },
+ "Steam": {
+  "files": 3
+ },
+ "Steam app ID": {
+  "files": 1
+ },
+ "Steam asked us to slow down. Try again in a minute.": {
+  "files": 1
+ },
+ "Steam details saved": {
+  "files": 1
+ },
+ "Steam ID or profile link": {
+  "files": 2
+ },
+ "Steam removed": {
+  "files": 1
+ },
+ "steamcommunity.com/dev/apikey": {
+  "files": 2
+ },
+ "steamcommunity.com/profiles/…": {
+  "files": 1
+ },
+ "SteamGridDB": {
+  "files": 1
+ },
+ "SteamGridDB is art-only — no title search": {
+  "files": 1
+ },
+ "still has": {
+  "files": 1
+ },
+ "Stop": {
+  "files": 2
+ },
+ "Stop scanning it": {
+  "files": 1
+ },
+ "Stop scanning this folder?": {
+  "files": 1
+ },
+ "Stop this run": {
+  "files": 1
+ },
+ "Stop watching this folder. Your files on disk are never deleted. What should happen to its ROMs in the library?": {
+  "files": 1
+ },
+ "storage/emulators": {
+  "files": 1
+ },
+ "Store country": {
+  "files": 1
+ },
+ "Store country (optional)": {
+  "files": 1
+ },
+ "Store price": {
+  "files": 1
+ },
+ "Stores and consoles": {
+  "files": 1
+ },
+ "Substring match on the raw action": {
+  "files": 1
+ },
+ "Super Mario World (USA).sfc": {
+  "files": 1
+ },
+ "Switch": {
+  "files": 2
+ },
+ "Switch 2": {
+  "files": 2
+ },
+ "SWITCH 2": {
+  "files": 2
+ },
+ "Switch look": {
+  "files": 1
+ },
+ "Switch to the tile view to select games": {
+  "files": 1
+ },
+ "System entries": {
+  "files": 1
+ },
+ "System health": {
+  "files": 1
+ },
+ "System items": {
+  "files": 1
+ },
+ "System setup": {
+  "files": 1
+ },
+ "systemctl restart game-sauce": {
+  "files": 1
+ },
+ "Tags (comma separated)": {
+  "files": 1
+ },
+ "Take {a} entr{b} out of Digital?": {
+  "files": 1
+ },
+ "Take out": {
+  "files": 1
+ },
+ "Take out selected ({a})": {
+  "files": 1
+ },
+ "Taken out of your Digital library": {
+  "files": 1
+ },
+ "Tall and narrow: it stands on the shelf": {
+  "files": 1
+ },
+ "tells game-sauce which platforms are ready, so the Carousel only shows games this PC can start.": {
+  "files": 1
+ },
+ "Ten folders at most.": {
+  "files": 1
+ },
+ "tgdb_id must be a number": {
+  "files": 1
+ },
+ "That CSV is over 20 MB": {
+  "files": 1
+ },
+ "That did not work.": {
+  "files": 1
+ },
+ "That does not look like a Steam Web API key: it is 32 letters and numbers.": {
+  "files": 1
+ },
+ "That family has no logo yet": {
+  "files": 1
+ },
+ "That file could not be read": {
+  "files": 1
+ },
+ "That file is not a JPEG, PNG or WebP image": {
+  "files": 3
+ },
+ "That file is not a JPEG, PNG or WebP image.": {
+  "files": 1
+ },
+ "that file is not a JPEG, PNG or WebP picture": {
+  "files": 1
+ },
+ "That file is not a JPEG, PNG, WebP or SVG picture": {
+  "files": 1
+ },
+ "That file is not a zip": {
+  "files": 1
+ },
+ "That file is over 50 MB.": {
+  "files": 2
+ },
+ "That folder already belongs to the source \"{a}\"": {
+  "files": 1
+ },
+ "That folder had no files to upload": {
+  "files": 1
+ },
+ "That folder is already a source": {
+  "files": 1
+ },
+ "That folder is already part of this source": {
+  "files": 1
+ },
+ "That folder is not available on the server right now.": {
+  "files": 1
+ },
+ "That game is already in your Digital list for this console.": {
+  "files": 1
+ },
+ "That game is already on your shelf for this platform (add a region or note to keep a second copy).": {
+  "files": 1
+ },
+ "That game is not in your list": {
+  "files": 4
+ },
+ "That game is not on your shelf": {
+  "files": 1
+ },
+ "That image is over 8 MB": {
+  "files": 3
+ },
+ "That image is over 8 MB.": {
+  "files": 2
+ },
+ "That is already this source's folder": {
+  "files": 1
+ },
+ "that is not a JPEG or PNG picture": {
+  "files": 1
+ },
+ "That is not a web address: a manual link must start with http:// or https://": {
+  "files": 1
+ },
+ "that picture is too large to cut": {
+  "files": 1
+ },
+ "That platform has no logo yet": {
+  "files": 1
+ },
+ "That slug already exists": {
+  "files": 1
+ },
+ "That SVG loads another file (an href that is not inside the drawing). Use a plain drawing, or a PNG.": {
+  "files": 1
+ },
+ "That username is taken": {
+  "files": 1
+ },
+ "That web address is too long (600 characters at most).": {
+  "files": 1
+ },
+ "The back of the case: shown when you turn the case over": {
+  "files": 1
+ },
+ "The backup file is incomplete (it ends part-way through)": {
+  "files": 1
+ },
+ "The backup file is incomplete (no end marker)": {
+  "files": 1
+ },
+ "The backup folder must be an absolute path": {
+  "files": 1
+ },
+ "The built-in catalogue covers the common systems; arcade oddities (Model 2/3, NAOMI, Atomiswave…) ship seeded too. Add your own here — name, slug, file extensions, and the ScreenScraper / TheGamesDB ids if you know them (leave blank when unsure; matching and scanning still work, enrichment just skips that provider). Changes apply immediately — no rebuild, no restart.": {
+  "files": 1
+ },
+ "The cartridge: shown in its tray in the open case": {
+  "files": 1
+ },
+ "The colour of the {e} chip (the platform chips keep their own colours)": {
+  "files": 1
+ },
+ "The colour tints this person in the chat: their picture, their row in the list and the messages you receive from them. It is chosen here (and can be changed on their row above); green is kept for your own messages.": {
+  "files": 1
+ },
+ "The CSV has no data rows": {
+  "files": 1
+ },
+ "The default for everyone who has no personal setting below. Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.": {
+  "files": 1
+ },
+ "The drop is the head: sunset gradient drop, white D-pad + button eyes, smile. Reads best as a tiny favicon.": {
+  "files": 1
+ },
+ "The encryption key comes from": {
+  "files": 1
+ },
+ "The fallback platform cannot be deleted": {
+  "files": 1
+ },
+ "The file could not be read": {
+  "files": 3
+ },
+ "The file is empty.": {
+  "files": 2
+ },
+ "the file is over the size limit": {
+  "files": 1
+ },
+ "The file is parsed as a stream and only the catalogue is kept — the DAT itself is not stored. Re-importing a newer version adds only the entries it is missing.": {
+  "files": 1
+ },
+ "The file you uploaded is deleted from the server.": {
+  "files": 1
+ },
+ "The first row must name the columns: Platform, Game (Region, Notes, Year and Manual are optional).": {
+  "files": 1
+ },
+ "The first row must name the columns: Platform, Game, Country (the country is optional).": {
+  "files": 1
+ },
+ "The front of the box or case": {
+  "files": 1
+ },
+ "The key is currently kept in": {
+  "files": 1
+ },
+ "The language of the menus and messages. Automatic follows your browser. Your choice is kept with your account.": {
+  "files": 1
+ },
+ "The LaunchBox database has not been downloaded yet (Settings → Metadata providers).": {
+  "files": 1
+ },
+ "The launcher did not answer. Is it installed on this PC, and is this server listed in its launcher.json?": {
+  "files": 2
+ },
+ "The launcher has to be on the computer you play on. Download it, unzip it somewhere it can stay, and follow": {
+  "files": 1
+ },
+ "The launcher is not part of this installation.": {
+  "files": 1
+ },
+ "The link is taken off the game.": {
+  "files": 1
+ },
+ "The manual could not be shown.": {
+  "files": 1
+ },
+ "The new name cannot be empty": {
+  "files": 1
+ },
+ "The notice": {
+  "files": 1
+ },
+ "The rating must be between 0 and 5": {
+  "files": 1
+ },
+ "The saved key could not be read. Save it again.": {
+  "files": 1
+ },
+ "The Steam ID should be the 17-digit number (starting 7656119…) or your steamcommunity.com/profiles/… link.": {
+  "files": 1
+ },
+ "The Steam store answered with an error ({a}).": {
+  "files": 1
+ },
+ "The Steam store could not be reached. Try again in a moment.": {
+  "files": 1
+ },
+ "The Steam store sent something unreadable.": {
+  "files": 1
+ },
+ "The title cannot be empty.": {
+  "files": 2
+ },
+ "The video is larger than the {a} MB limit": {
+  "files": 1
+ },
+ "The video source sent an address that is not a web link": {
+  "files": 1
+ },
+ "The whole library": {
+  "files": 1
+ },
+ "The zip file is damaged": {
+  "files": 1
+ },
+ "TheGamesDB": {
+  "files": 1
+ },
+ "TheGamesDB API key is required": {
+  "files": 1
+ },
+ "TheGamesDB id": {
+  "files": 2
+ },
+ "TheGamesDB rejected the key or returned nothing": {
+  "files": 1
+ },
+ "TheGamesDB sent no platform list": {
+  "files": 1
+ },
+ "Their sessions end immediately.": {
+  "files": 1
+ },
+ "There is nobody else to write to yet.": {
+  "files": 1
+ },
+ "There must always be at least one admin": {
+  "files": 1
+ },
+ "These are the server-wide credentials used for enrichment. Save and test them here; environment variables still win over anything stored.": {
+  "files": 1
+ },
+ "These Digital entries were created by disc to digital and you have not touched them since. A game can be both a disc and a purchase, so untick any you do own digitally. Only ticked ones are taken out of Digital; the discs stay on your shelf, and you can switch disc to digital on again from a game's details.": {
+  "files": 1
+ },
+ "They are taken out of {a}. This cannot be undone.": {
+  "files": 1
+ },
+ "They are taken out of your Digital library. The discs stay on your shelf.": {
+  "files": 1
+ },
+ "This account cannot play on a local emulator": {
+  "files": 1
+ },
+ "This account cannot play on a local emulator (downloads are turned off for it).": {
+  "files": 1
+ },
+ "This account cannot play on a local emulator, because downloads of game files are turned off for it. An admin can change that under Settings, User accounts.": {
+  "files": 1
+ },
+ "This account is set up for playing games only": {
+  "files": 1
+ },
+ "This cannot be undone.": {
+  "files": 1
+ },
+ "This does not look like a zip file": {
+  "files": 1
+ },
+ "This export is too large for one zip: pick fewer platforms": {
+  "files": 1
+ },
+ "This file is not a valid game-sauce backup (bad archive header)": {
+  "files": 1
+ },
+ "This game cannot be played in the browser.": {
+  "files": 1
+ },
+ "This game cannot be started from this PC.": {
+  "files": 1
+ },
+ "This game has no manual yet.": {
+  "files": 1
+ },
+ "This game is locked. Unlock it first (⋯ More → Locked) if you want to delete it.": {
+  "files": 1
+ },
+ "This game is locked. Unlock it first if you want to delete it.": {
+  "files": 1
+ },
+ "This game is part of a multi-disc set, which Play on this PC cannot start (it sends one file). Download the files and open them in an emulator that handles multi-disc sets.": {
+  "files": 1
+ },
+ "This is a favourite of {a}.": {
+  "files": 1
+ },
+ "This is the first game.": {
+  "files": 1
+ },
+ "This is the last game.": {
+  "files": 1
+ },
+ "This launch link has expired or was already used. Click Play locally again.": {
+  "files": 1
+ },
+ "This link has expired or was already used. Try again from game-sauce.": {
+  "files": 1
+ },
+ "This PC can start:": {
+  "files": 1
+ },
+ "This PC can start: {a}.": {
+  "files": 1
+ },
+ "This PC:": {
+  "files": 1
+ },
+ "This person's colour in the chat: their picture, their row in the list and the messages you receive from them. Green is kept for your own messages.": {
+  "files": 1
+ },
+ "This person's colour in the chat: their picture, their row in the list and the messages you receive from them. It saves when you close the picker. Green is kept for your own messages.": {
+  "files": 1
+ },
+ "This platform has no in-browser core": {
+  "files": 1
+ },
+ "This removes your Steam key, your games list, and your favourites, hidden games and play-button choices from game-sauce. Nothing changes on Steam.": {
+  "files": 1
+ },
+ "This source's games are hidden from the library": {
+  "files": 1
+ },
+ "This source's games are showing again": {
+  "files": 1
+ },
+ "This zip holds {a} files; the limit is {b} at a time": {
+  "files": 1
+ },
+ "This zip is damaged": {
+  "files": 1
+ },
+ "This zip is over 4 GB (zip64): split it into smaller zips": {
+  "files": 1
+ },
+ "Tick the box to remove imported files from storage/roms as well. Unticked = catalogue rows only, every file stays on disk.": {
+  "files": 1
+ },
+ "Title": {
+  "files": 3
+ },
+ "Title A–Z": {
+  "files": 2
+ },
+ "Title to search…": {
+  "files": 2
+ },
+ "Title Z–A": {
+  "files": 2
+ },
+ "to close the game": {
+  "files": 1
+ },
+ "To date": {
+  "files": 1
+ },
+ "to switch it off); the country as a name (": {
+  "files": 1
+ },
+ "Too many failed attempts. Try again in {a} minute(s).": {
+  "files": 1
+ },
+ "transform .6s ease": {
+  "files": 1
+ },
+ "translate(-50%, 0) translateX({a}px) translateY({b}px) rotate({c}deg) scale({d})": {
+  "files": 1
+ },
+ "translate({a}px, {b}px) scale({c}, {d})": {
+  "files": 1
+ },
+ "translateX({a}px) scaleX({b})": {
+  "files": 1
+ },
+ "translateY(calc(-50% + {a}em)) scale({b})": {
+  "files": 1
+ },
+ "Try again": {
+  "files": 1
+ },
+ "Try clearing the search or a filter.": {
+  "files": 2
+ },
+ "Try clearing the search or filters": {
+  "files": 1
+ },
+ "Try the Modern look (preview)": {
+  "files": 1
+ },
+ "tucks the rest away. Nothing is deleted and no file on disk is touched, and hidden games can be brought back from the Hidden filter.": {
+  "files": 1
+ },
+ "Type a folder path, or press Browse": {
+  "files": 1
+ },
+ "Type a message.": {
+  "files": 1
+ },
+ "Type a name first.": {
+  "files": 1
+ },
+ "Type a title to search for": {
+  "files": 2
+ },
+ "Type at least two letters of a game's name.": {
+  "files": 1
+ },
+ "Type RESTORE (capitals) to confirm": {
+  "files": 1
+ },
+ "Type RESTORE to confirm": {
+  "files": 2
+ },
+ "Type the game's title.": {
+  "files": 2
+ },
+ "Type the notice.": {
+  "files": 1
+ },
+ "Type the title as it is on the box. Details and a cover are looked up for you afterwards, and you can match it by hand if they are wrong.": {
+  "files": 1
+ },
+ "Type to find…": {
+  "files": 1
+ },
+ "Unchecked": {
+  "files": 1
+ },
+ "Unknown API route": {
+  "files": 2
+ },
+ "Unknown kind of file.": {
+  "files": 1
+ },
+ "Unknown mark": {
+  "files": 1
+ },
+ "Unknown platform": {
+  "files": 3
+ },
+ "Unknown preference": {
+  "files": 1
+ },
+ "Unknown provider": {
+  "files": 1
+ },
+ "Unknown store": {
+  "files": 1
+ },
+ "Unlocked {a} game{b}: they can be deleted now": {
+  "files": 1
+ },
+ "Unpin: the window closes when you click away": {
+  "files": 1
+ },
+ "Unsupported zip compression ({a})": {
+  "files": 1
+ },
+ "Untick all": {
+  "files": 1
+ },
+ "Unused files in storage": {
+  "files": 1
+ },
+ "Up for": {
+  "files": 1
+ },
+ "Update password": {
+  "files": 1
+ },
+ "Upload a backup file to check what is inside it first. Nothing changes until you confirm. Before anything is replaced, a safety backup of the current data is saved in the folder above, and the data being replaced is kept (not deleted) so a restore can be undone. The server restarts and everyone signs in again afterwards.": {
+  "files": 1
+ },
+ "Upload a cover": {
+  "files": 1
+ },
+ "Upload a DAT file or provide a path": {
+  "files": 1
+ },
+ "Upload a file": {
+  "files": 1
+ },
+ "Upload a PDF or pictures of the pages. It is kept privately with your shelf": {
+  "files": 1
+ },
+ "Upload a picture": {
+  "files": 2
+ },
+ "Upload a picture of your own as the game's… (JPEG, PNG or WebP, up to 8 MB). It is kept, and automatic lookups never replace it.": {
+  "files": 1
+ },
+ "Upload cover": {
+  "files": 1
+ },
+ "Upload failed": {
+  "files": 1
+ },
+ "Upload to vault": {
+  "files": 1
+ },
+ "Upload your own cover (JPEG, PNG or WebP, up to 8 MB)": {
+  "files": 1
+ },
+ "Upload your own picture: cover, spine or disc": {
+  "files": 1
+ },
+ "Use a monospace (typewriter-style) font everywhere in Modern": {
+  "files": 1
+ },
+ "Use Change password for your own account": {
+  "files": 1
+ },
+ "Use shared": {
+  "files": 1
+ },
+ "Use shared dev credentials?": {
+  "files": 1
+ },
+ "use strict": {
+  "files": 1
+ },
+ "Use this folder": {
+  "files": 3
+ },
+ "User": {
+  "files": 1
+ },
+ "User accounts": {
+  "files": 2
+ },
+ "User added": {
+  "files": 1
+ },
+ "User not found": {
+  "files": 2
+ },
+ "Username": {
+  "files": 1
+ },
+ "Username must be 3–32 characters: letters, digits, dot, dash, underscore": {
+  "files": 1
+ },
+ "Using a web browser, not the desktop app?": {
+  "files": 1
+ },
+ "Using the": {
+  "files": 1
+ },
+ "value must be true, false or null": {
+  "files": 1
+ },
+ "Variant": {
+  "files": 1
+ },
+ "Vault": {
+  "files": 1
+ },
+ "Vault is empty — upload an installer or save an official release above.": {
+  "files": 1
+ },
+ "Verified": {
+  "files": 1
+ },
+ "Verify platform ids": {
+  "files": 1
+ },
+ "Version": {
+  "files": 1
+ },
+ "Video": {
+  "files": 1
+ },
+ "Video and artwork": {
+  "files": 1
+ },
+ "Video{a}{b}.": {
+  "files": 1
+ },
+ "watch your existing folders without moving anything": {
+  "files": 1
+ },
+ "Web API key": {
+  "files": 2
+ },
+ "Weekly": {
+  "files": 1
+ },
+ "Welcome to game-sauce": {
+  "files": 1
+ },
+ "Welcome tour": {
+  "files": 2
+ },
+ "What is this set for?": {
+  "files": 1
+ },
+ "What was found in the folder": {
+  "files": 1
+ },
+ "When an account has a game that another account already has pictures for (cover, spine, disc, back), copy those pictures across, quietly.": {
+  "files": 1
+ },
+ "Where game details come from": {
+  "files": 1
+ },
+ "Where is “{a}” now?": {
+  "files": 1
+ },
+ "Where the game's name ends in the file name (optional; several endings can be separated with": {
+  "files": 1
+ },
+ "Where the games go": {
+  "files": 1
+ },
+ "Which button is": {
+  "files": 1
+ },
+ "Which catalogue to search — click ☆ to make one your default": {
+  "files": 2
+ },
+ "Which family?": {
+  "files": 1
+ },
+ "White pad on the sunset gradient, gold sauce drip. Friendly, colourful.": {
+  "files": 1
+ },
+ "Wii": {
+  "files": 2
+ },
+ "Wii U": {
+  "files": 2
+ },
+ "WII U": {
+  "files": 2
+ },
+ "Will import": {
+  "files": 1
+ },
+ "Windows x64": {
+  "files": 1
+ },
+ "with a consistent copy of the database, the encryption key and every player's save states.": {
+  "files": 1
+ },
+ "With a cover": {
+  "files": 1
+ },
+ "With covers": {
+  "files": 1
+ },
+ "With no provider credentials set, the library falls back to parsing the filename: title, region, revision and year are still extracted.": {
+  "files": 1
+ },
+ "With spine art: games that have a real spine picture for the shelf ({k})": {
+  "files": 1
+ },
+ "Withdraw": {
+  "files": 1
+ },
+ "Withdraw this notice?": {
+  "files": 1
+ },
+ "work here. Get a free dev pair via “get credentials ↗” (forum request), or ask whoever runs this server to set": {
+  "files": 1
+ },
+ "Work it out from the folder names": {
+  "files": 1
+ },
+ "Work it out from the folder names, or type e.g. PlayStation 3": {
+  "files": 1
+ },
+ "Working, with things to look at": {
+  "files": 1
+ },
+ "works — {a}/{b} requests used today": {
+  "files": 1
+ },
+ "Write a message": {
+  "files": 1
+ },
+ "Write a message…": {
+  "files": 1
+ },
+ "Write a new message": {
+  "files": 1
+ },
+ "Write to…": {
+  "files": 1
+ },
+ "Xbox": {
+  "files": 2
+ },
+ "Xbox 360": {
+  "files": 2
+ },
+ "XBOX 360": {
+  "files": 2
+ },
+ "Xbox Digital entries from your discs": {
+  "files": 1
+ },
+ "Xbox discs to Digital": {
+  "files": 1
+ },
+ "Xbox layout (A at the bottom)": {
+  "files": 1
+ },
+ "Xbox One": {
+  "files": 2
+ },
+ "XBOX ONE": {
+  "files": 2
+ },
+ "Xbox Series X|S": {
+  "files": 2
+ },
+ "Year": {
+  "files": 4
+ },
+ "Year ↑": {
+  "files": 1
+ },
+ "Year ↓": {
+  "files": 1
+ },
+ "You are all set": {
+  "files": 1
+ },
+ "You can skip any step and find everything later in Settings (the gear next to your name).": {
+  "files": 1
+ },
+ "You cannot change your own role (ask another admin)": {
+  "files": 1
+ },
+ "You cannot delete your own account": {
+  "files": 1
+ },
+ "You have {a} platforms selected ({b}). A metadata run covers one platform or the whole library.": {
+  "files": 1
+ },
+ "You have {a} unread messages and notices": {
+  "files": 1
+ },
+ "You will need to sign in again to manage the library.": {
+  "files": 1
+ },
+ "Your 17-digit Steam ID (steamid.io shows it), or paste your": {
+  "files": 1
+ },
+ "Your browser would not copy automatically: the report is selected below, press Ctrl+C": {
+  "files": 1
+ },
+ "Your changes are yours alone: nobody else's list changes.": {
+  "files": 1
+ },
+ "your Digital library": {
+  "files": 1
+ },
+ "Your Digital Library is empty": {
+  "files": 1
+ },
+ "Your match and edits are cleared": {
+  "files": 1
+ },
+ "your own": {
+  "files": 2
+ },
+ "Your own Steam library, shown on the Digital page. Only you see it. game-sauce reads the list of games you own and your hours played; it never launches, downloads or changes anything on Steam.": {
+  "files": 1
+ },
+ "your shelf": {
+  "files": 1
+ },
+ "Your shelf": {
+  "files": 1
+ },
+ "Your shelf is empty": {
+  "files": 1
+ },
+ "Your stored installers. Anyone signed in can download; only admins can add or remove. Saving a newer release keeps the old one — delete the stale row when you're happy with the new build.": {
+  "files": 1
+ },
+ "Zip of covers": {
+  "files": 1
+ },
+ "zip, 7z, chd": {
+  "files": 1
+ },
+ "Zip64 archives are not supported": {
+  "files": 1
+ }
+}

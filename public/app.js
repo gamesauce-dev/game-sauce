@@ -12,6 +12,9 @@ import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
 import './pwreveal.js';   // the eye in password boxes
+import { initI18n, LANGS, chosenLanguage, setLanguage } from './i18n.js';   // the language of the page (public/lang/*.json)
+
+await initI18n();   // before anything is drawn, so the first screen is already in the person's language
 
 const state = {
   view: 'library',
@@ -3982,6 +3985,12 @@ function initProfilePanel() {
   paintAvatar(prev, u.id, u.display_name || u.username, u.avatar_v);
   $('#profile-remove').disabled = !u.avatar_v;
   $('#profile-upload').onclick = () => $('#profile-file').click();
+  // Language: follows the browser unless a choice was made. The choice is kept on this device and with the account.
+  const langSel = $('#lang-select');
+  if (langSel) {
+    langSel.innerHTML = [['auto', 'Automatic (the browser\'s language)'], ...LANGS.map((l) => [l.code, l.name])].map(([v, n]) => `<option value="${v}"${v === chosenLanguage() ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    langSel.onchange = () => { const v = langSel.value; api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: v }) }).catch(() => {}).finally(() => setLanguage(v)); };
+  }
   $('#profile-file').onchange = async (e) => {
     const file = e.target.files?.[0]; e.target.value = '';
     if (!file) return;
@@ -4076,7 +4085,7 @@ function showApp(user, { restore = false } = {}) {
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, user: () => authState.user });
   modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView });
-  api('/prefs').then((p) => { state.prefs = p || {}; try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
+  api('/prefs').then((p) => { state.prefs = p || {}; syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog
@@ -5653,3 +5662,12 @@ async function wireSourceCard() {
     showLogin('Cannot reach the server.');
   }
 })();
+
+// The language kept with the account wins on a new device; a choice made before signing in is kept with the account. (Once per tab: it reloads only when the two differ.)
+function syncLanguage(p) {
+  try {
+    const here = chosenLanguage(), kept = p?.lang;
+    if (kept && kept !== here && !sessionStorage.getItem('gamesauce_lang_synced')) { sessionStorage.setItem('gamesauce_lang_synced', '1'); setLanguage(kept); }
+    else if (!kept && here !== 'auto') api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: here }) }).catch(() => {});
+  } catch { /* storage blocked */ }
+}
