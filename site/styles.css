@@ -58,6 +58,10 @@ a:hover { text-decoration: underline; }
 .btn-primary { background: linear-gradient(135deg, var(--accent), #5b3df0); border-color: transparent; color: #fff; }
 .btn-primary:hover { background: linear-gradient(135deg, #8d70ff, #6a4df5); border-color: transparent; }
 .btn-ghost { padding: 7px 14px; }
+.btn-gold { background: linear-gradient(135deg, #ffd23f, #f5b800); border-color: transparent; color: #2b2100; }
+.btn-gold:hover { background: linear-gradient(135deg, #ffdd62, #ffc61a); border-color: transparent; }
+.support { text-align: center; border-top: 1px solid var(--line); }
+.support .cta { margin: 0; }
 :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
 
 /* hero */
