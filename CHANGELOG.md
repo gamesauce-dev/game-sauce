@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Portuguese (Brazil).** The app and the website can now be read in Brazilian Portuguese (Português), with the Brazilian flag beside the name in the language picker. The website has a Portuguese page at gamesauce.app/pt/.
+
 ## [0.8.0] - 2026-11-15
 
 ### Added
