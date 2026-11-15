@@ -92,9 +92,9 @@ h2 { margin: 0 0 10px; font-size: clamp(1.6rem, 3.4vw, 2.3rem); letter-spacing: 
 .shots figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
 
 /* big screen */
-#bigscreen .shot, #carousel .shot { max-width: 980px; margin-inline: auto; }
+#bigscreen .shot, #carousel .shot, #shelf .shot { max-width: 980px; margin-inline: auto; }
 #carousel .shot + .shot { margin-top: 34px; }
-#bigscreen figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
+#bigscreen figcaption, #carousel figcaption, #shelf figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
 .ticks { list-style: none; margin: 34px auto; padding: 0; max-width: 720px; display: grid; gap: 12px; }
 .ticks li { position: relative; padding-left: 30px; color: var(--dim); }
 .ticks li::before { content: ''; position: absolute; left: 4px; top: .55em; width: 10px; height: 10px; border-radius: 3px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
