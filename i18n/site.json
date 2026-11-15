@@ -1134,5 +1134,21 @@
   "pt": "O painel Mensagens: um aviso do administrador acima da lista de conversas e uma conversa privada entre duas pessoas, cada uma com a sua cor",
   "de": "Das Nachrichten-Panel: ein Hinweis des Administrators über der Unterhaltungsliste und eine private Unterhaltung zwischen zwei Personen, jede in ihrer Farbe",
   "ja": "「メッセージ」パネル：会話リストの上に管理者からのお知らせ、その下に、それぞれの色で表示された二人の非公開の会話"
+ },
+ "Scan with WeChat to support game-sauce": {
+  "fr": "Scannez avec WeChat pour soutenir game-sauce",
+  "zh": "用微信扫一扫，支持 game-sauce",
+  "es": "Escanea con WeChat para apoyar game-sauce",
+  "pt": "Escaneie com o WeChat para apoiar o game-sauce",
+  "de": "Mit WeChat scannen, um game-sauce zu unterstützen",
+  "ja": "WeChat でスキャンして game-sauce を応援"
+ },
+ "WeChat Pay QR code": {
+  "fr": "Code QR WeChat Pay",
+  "zh": "微信支付二维码",
+  "es": "Código QR de WeChat Pay",
+  "pt": "Código QR do WeChat Pay",
+  "de": "WeChat-Pay-QR-Code",
+  "ja": "WeChat Pay の QR コード"
  }
 }

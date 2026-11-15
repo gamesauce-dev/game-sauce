@@ -152,3 +152,13 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
 .langmenu summary { white-space: nowrap; }
 /* Japanese and Chinese have no spaces between words: break lines at sensible places instead of leaving one character on a line. */
 html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: auto-phrase; }
+
+/* WeChat Pay: a quiet second way to say thanks, opened from a small line under the coffee button */
+.pay { margin: 18px auto 0; max-width: 340px; }
+.pay summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-2); color: var(--dim); font-size: .92rem; }
+.pay summary::-webkit-details-marker { display: none; }
+.pay summary::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #07c160; }
+.pay summary:hover, .pay[open] summary { color: var(--text); background: var(--bg-3); }
+.pay figure { margin: 14px 0 0; }
+.pay img { width: 100%; height: auto; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+.pay figcaption { margin-top: 10px; font-size: .9rem; color: var(--dim); }
