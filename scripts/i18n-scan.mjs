@@ -8,11 +8,11 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
 const out = {};
-const add = (text, file) => {
+const add = (text, file, markup = false) => {
   let s = String(text).replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim();
   if (!s || s.length < 2 || s.length > 400) return;
   if (!/[A-Za-z]{2}/.test(s.replace(/\{[a-z]+\}/g, ''))) return;                    // needs real words, not only numbers and placeholders
-  if (/^[a-z][a-z0-9_.-]*$/.test(s) || /^[A-Za-z]+(?:[A-Z][a-z0-9]+)+$/.test(s)) return;   // an identifier, a class name or camelCase
+  if ((!markup && /^[a-z][a-z0-9_.-]*$/.test(s)) || (markup && /^[a-z][a-z0-9_.-]*$/.test(s) && /[_.-]|d/.test(s)) || /^[A-Za-z]+(?:[A-Z][a-z0-9]+)+$/.test(s)) return;   // an identifier, a class name or camelCase
   if (/^(https?:|\/|#|\.|data:|rgba?\(|var\(|[a-z-]+:\s)/.test(s) || /[{};]\s*$/.test(s) || /=>|function\s*\(|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bCREATE TABLE\b/.test(s)) return;
   if (/^[A-Z0-9_]+$/.test(s) && s.length > 4) return;                                // a CONSTANT
   if (/^<|>$/.test(s) || /[<>]/.test(s)) return;
@@ -44,7 +44,7 @@ function literals(src, cb) {
           while (j < n && depth) { if (src[j] === '{') depth++; else if (src[j] === '}') depth--; else if (src[j] === '`') { const e = src.indexOf('`', j + 1); j = e < 0 ? n : e; } j++; }
           const inner = src.slice(start, j - 1);
           text += `{${names[k++ % 26]}}`;                                       // a value goes here (the inner expression is ignored)
-          void inner;
+          literals(inner, cb);                                                   // text inside a nested template or string, e.g. ${x ? `<span>version ${v}</span>` : ''}
         } else text += src[j++];
       }
       cb('tpl', text, prevCtx(i)); i = j + 1; continue;
@@ -55,7 +55,7 @@ function literals(src, cb) {
 
 /** The text of an HTML string (a page or a template literal): text between tags, and text in hover and label attributes. */
 function html(text, file) {
-  for (const m of text.matchAll(/>([^<>]+)</g)) add(m[1], file);
+  for (const m of text.matchAll(/>([^<>]+)</g)) add(m[1], file, true);
   for (const m of text.matchAll(/\s(?:title|placeholder|aria-label|alt|data-tip)="([^"]+)"/g)) add(m[1], file);
 }
 

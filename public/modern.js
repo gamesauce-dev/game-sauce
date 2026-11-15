@@ -257,7 +257,7 @@ async function refreshTicker(force = false) {
 async function fillTicker(stats) {
   const lib = stats.library || {};
   // The game-sauce name with its shimmer, as one of the rolling lines.
-  const brand = '<span class="brand-name mh-brand" data-text="game-sauce">game<span class="saucy">-sauce</span></span>';
+  const brand = '<span class="brand-name mh-brand notranslate" data-text="game-sauce">game<span class="saucy">-sauce</span></span>';
   const lines = [];   // the name always goes first, whatever else is added in front of the facts below
   const top = stats.topDownloaded;
   const cache = window.__platformsCache || [];

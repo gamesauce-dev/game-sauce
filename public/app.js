@@ -2788,12 +2788,12 @@ async function loadDats() {
       ${order.map((k) => {
         const n = counts[k] || 0;
         if (!n) return '';
-        return `<i style="width:${(n / total) * 100}%;background:${DAT_STATUS_META[k].color}" title="${DAT_STATUS_META[k].label}: ${n}"></i>`;
+        return `<i style="width:${(n / total) * 100}%;background:${DAT_STATUS_META[k].color}" title="${t(DAT_STATUS_META[k].label)}: ${n}"></i>`;
       }).join('')}
     </div>
     <div class="coverage-legend">
       ${order.filter((k) => counts[k]).map((k) =>
-        `<span><b style="background:${DAT_STATUS_META[k].color}"></b>${DAT_STATUS_META[k].label} ${counts[k]}</span>`).join('')}
+        `<span><b style="background:${DAT_STATUS_META[k].color}"></b>${t(DAT_STATUS_META[k].label)} ${counts[k]}</span>`).join('')}
       <span style="margin-left:auto">${total} ROMs</span>
     </div>
   ` : '<div class="side-empty">No ROMs yet.</div>';
