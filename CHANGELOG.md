@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-15
+
 ### Added
 - **Spanish.** The app and the website can now be read in Spanish (Español), alongside English, French and Chinese. The website has a Spanish page at gamesauce.app/es/.
 - **A flag beside each language.** The language picker in **Settings, My account** is now a row of buttons, each with a flag and the language's own name, and the website has a language menu in its top bar. A flag is only a picture beside the name.
