@@ -4,7 +4,11 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **The update notice names the right command on a Proxmox LXC.** A game-sauce installed with the one-command Proxmox script is now recognised as such (new installs say so in their settings; older ones are recognised by the update command the script writes), and the notice says to run `game-sauce-update`, inside the container or with `pct exec <id> -- game-sauce-update`, instead of "the release page says how".
+
 ### Added
+- **How to update by itself.** The deployment guide has a new section (3.5b) on automatic updates: Watchtower for Docker, the Auto Update Applications plugin for Unraid, and a weekly cron line for the Proxmox container.
 - **A security policy and a guide to the languages.** `SECURITY.md` says how to report a vulnerability privately and what is and is not in scope. The user guide has a **Language** section (how to choose one, what is and is not translated), and CONTRIBUTING.md has a **Translations** section for anyone who wants to fix wording or add a language.
 - **A licence audit.** `docs/THIRD-PARTY.md` lists the licence of every package the server and the desktop app ship with (all permissive; no GPL code is shipped), and what is loaded rather than shipped. `node scripts/third-party.mjs` rewrites it before a release.
 

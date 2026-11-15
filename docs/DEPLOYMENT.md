@@ -220,6 +220,33 @@ docker compose up -d --build
 
 Data survives in the named volumes `gs-data` / `gs-storage`.
 
+### 3.5b Updating by itself (optional)
+
+game-sauce **tells** you when a newer release is out (the admins get a notice in Messages and in the top bar, once per version) but it does not install updates on its own: a program that downloads and runs new code by itself is more risk than most households want. If you would like it to happen without you, the tool that runs game-sauce can do it:
+
+- **Docker with the prebuilt image** (`image: ghcr.io/gamesauce-dev/game-sauce:latest`, see 3.4a). Use a tool that pulls new images and restarts the container, such as [Watchtower](https://containrrr.dev/watchtower/). Added to the same `docker-compose.yml`, limited to game-sauce and checking once a day:
+
+  ```yaml
+    watchtower:
+      image: containrrr/watchtower
+      restart: unless-stopped
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      command: --cleanup --interval 86400 game-sauce
+  ```
+
+  Such a tool is given control of Docker, so read its page first (check that it is still maintained and which fork you want). If you would rather decide when to update, pin a version (`:v0.11.0`) instead of `latest`.
+- **Unraid:** install the **Auto Update Applications** plugin from Community Applications and switch auto update on for the game-sauce container. Or press **apply update** yourself when the notice appears.
+- **Proxmox LXC (one-command install):** the container already has `game-sauce-update`. To run it weekly, put this line in `/etc/cron.d/game-sauce-update` inside the container (it runs Sundays at 04:30; the service restarts, so choose a quiet hour):
+
+  ```
+  30 4 * * 0 root /usr/local/bin/game-sauce-update >> /var/log/game-sauce-update.log 2>&1
+  ```
+- **Bare Node from a git checkout:** the same idea: a scheduled `git pull --ff-only`, `npm ci --omit=dev` and a restart of the service.
+- **The desktop app and the portable download** are updated by hand for now: download the new installer (or archive) from the release page. Your library is kept.
+
+Before you let anything update by itself, turn on a **scheduled backup** (Settings, Backups), and skim the release notes now and then: a new version can change how something works, and an update you did not choose is easy to miss.
+
 ### 3.6 Stop / wipe
 
 ```bash

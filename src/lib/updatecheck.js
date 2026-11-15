@@ -27,13 +27,17 @@ export function isNewer(latest, current) {
 
 export const updateCheckEnabled = () => !/^(0|false|off|no)$/i.test(String(process.env.GAMESAUCE_UPDATE_CHECK ?? '1').trim());
 
-/** How this copy was installed (set by the thing that starts it): 'docker', 'desktop' (the desktop app), 'download' (the portable download) or '' (anything else). */
+/** How this copy was installed (set by the thing that starts it): 'docker', 'desktop' (the desktop app), 'download' (the portable download), 'lxc' (the Proxmox one-command install) or '' (anything else).
+ *  An LXC made by an older installer does not say so in its environment, but it has the update command the installer writes, so that is recognised too. */
 export const installKind = () => {
   const k = String(process.env.GAMESAUCE_INSTALL || '').toLowerCase();
-  if (['docker', 'desktop', 'download'].includes(k)) return k;
+  if (['docker', 'desktop', 'download', 'lxc'].includes(k)) return k;
+  if (k === '' && process.platform === 'linux' && fs.existsSync(LXC_UPDATE_COMMAND)) return 'lxc';
   return '';
 };
+const LXC_UPDATE_COMMAND = '/usr/local/bin/game-sauce-update';
 const HOW = {
+  lxc: 'Update with "game-sauce-update" inside the container, or from the Proxmox node: pct exec <container id> -- game-sauce-update. Your library is kept.',
   docker: 'Update by pulling the new image: "docker compose pull" then "docker compose up -d", or "apply update" on Unraid. Your library is kept.',
   desktop: 'Download the new installer from the release page and run it. Your library is kept.',
   download: 'Download the new version from the release page and unpack it (beside or over this one), then start that. Your library is kept outside the folder.',

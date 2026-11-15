@@ -38,9 +38,9 @@ test('the notice says how to update for how this copy was installed, and only ev
   const { installKind, howToUpdate } = await import('../src/lib/updatecheck.js');
   const was = process.env.GAMESAUCE_INSTALL;
   try {
-    for (const [k, re] of [['docker', /pulling the new image/], ['desktop', /new installer/], ['download', /unpack/], ['', /release page/], ['nonsense', /release page/]]) {
+    for (const [k, re] of [['docker', /pulling the new image/], ['desktop', /new installer/], ['download', /unpack/], ['lxc', /game-sauce-update/], ['', /release page/], ['nonsense', /release page/]]) {
       process.env.GAMESAUCE_INSTALL = k;
-      assert.equal(installKind(), ['docker', 'desktop', 'download'].includes(k) ? k : ''); assert.match(howToUpdate(), re, k);
+      assert.equal(installKind(), ['docker', 'desktop', 'download', 'lxc'].includes(k) ? k : ''); assert.match(howToUpdate(), re, k);
     }
     process.env.GAMESAUCE_INSTALL = 'docker';
     const ask = (url) => async () => ({ payload: { tag: 'v999.0.0', url } });
