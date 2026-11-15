@@ -1,0 +1,6 @@
+{
+  // Cloudflare: publishes this folder as the gamesauce.app website (a static site; nothing is built).
+  "name": "game-sauce",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "." }
+}
