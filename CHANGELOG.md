@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-15
+
 ### Added
 - **French and Simplified Chinese.** The app and the website can now be read in French or Chinese. The app follows your browser's language, and each person can choose another under **Settings, Profile, Language** (kept with the account). The menus, hover text, messages and Settings are translated; anything not translated yet stays in English. The website has French and Chinese pages (gamesauce.app/fr/ and /zh/) and a language switcher. For people who maintain the translations: the app's strings are in `public/lang/fr.json` and `zh.json` (English text on the left), `node scripts/i18n-scan.mjs --missing fr` lists what is not covered, and `node scripts/build-site-langs.mjs` rebuilds the website pages from `i18n/site.json`.
 
