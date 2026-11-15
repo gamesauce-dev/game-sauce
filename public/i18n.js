@@ -33,7 +33,12 @@ export function makeTranslator(strings = {}, lang = '') {
     } else words.set(key, tr);
   }
   patterns.sort((a, b) => b.re.source.length - a.re.source.length);   // the longest (most specific) pattern first
-  const fix = lang === 'fr' ? (x) => x.replace(/\bjeus\b/g, 'jeux') : (x) => x;   // the code adds an "s" to make a plural: jeu + s is jeux in French
+  // The code adds an "s" to make a plural (game + s), which is not how every language does it: jeu + s is jeux in French; Spiel + s is Spiele in German.
+  const plurals = {
+    fr: [[/\bjeus\b/g, 'jeux']],
+    de: [[/\bSpiels\b/g, 'Spiele'], [/\bDateis\b/g, 'Dateien'], [/\bBilds\b/g, 'Bilder'], [/\bZeiles\b/g, 'Zeilen'], [/\bKopies\b/g, 'Kopien']]
+  }[lang];
+  const fix = plurals ? (x) => plurals.reduce((s, [re, to]) => s.replace(re, to), x) : (x) => x;
   return {
     size: words.size + patterns.length,
     lookup(text) {
