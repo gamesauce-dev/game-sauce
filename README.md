@@ -769,8 +769,9 @@ fetched by your own server or browser, under its owner's terms, for your own use
   artwork through their APIs, with the keys you bring and under their terms.
 - **[No-Intro](https://no-intro.org/)**, **[Redump](http://redump.org/)** and similar groups publish the
   DAT files used to verify dumps; you supply those yourself.
-- Open-source libraries (Express, better-sqlite3, saxen, multer and others) are listed in
-  `package.json` under their own licences, mostly MIT.
+- Open-source libraries (Express, better-sqlite3, saxen, multer and others) are under their own licences, mostly
+  MIT. [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md) lists every package the server and the desktop app ship with,
+  and what is loaded rather than shipped (EmulatorJS).
 
 Game names, box art, logos and screenshots belong to their owners. The demo screenshots in this README use
 invented games with original artwork. game-sauce does not supply games, BIOS files or keys.
