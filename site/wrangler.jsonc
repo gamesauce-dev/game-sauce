@@ -2,5 +2,8 @@
   // Cloudflare: publishes this folder as the gamesauce.app website (a static site; nothing is built).
   "name": "game-sauce",
   "compatibility_date": "2026-11-01",
+  // Only the custom domain serves the site: no *.workers.dev address and no preview URLs.
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": { "directory": "." }
 }

@@ -3,5 +3,8 @@
   // The game-sauce app itself is not deployed here.
   "name": "game-sauce",
   "compatibility_date": "2026-11-01",
+  // Only the custom domain serves the site: no *.workers.dev address and no preview URLs.
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": { "directory": "./site" }
 }
