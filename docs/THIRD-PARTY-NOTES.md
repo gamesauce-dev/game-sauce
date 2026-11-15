@@ -1,6 +1,6 @@
 ## Notes (checked by hand)
 
-**Result of the audit (November 2026):** everything game-sauce ships is under permissive licences (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode and similar). **No GPL or AGPL code is shipped**, so nothing conflicts with game-sauce being MIT. One open item (the icon pictures) is listed at the end.
+**Result of the audit (November 2026):** everything game-sauce ships is under permissive licences (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode and similar). **No GPL or AGPL code is shipped**, so nothing conflicts with game-sauce being MIT. The icon pictures are credited under "The icons" at the end.
 
 - **Mozilla Public Licence 2.0 (five Rust crates in the desktop app):** `cssparser`, `cssparser-macros`, `dtoa-short`, `option-ext` and `selectors`. MPL-2.0 asks that changes to *those files* be shared. game-sauce uses them unmodified, their source is public (linked in the table), and they are not a problem for the rest of the app staying MIT.
 - **Dual-licensed crates:** a few crates offer a choice (for example `r-efi` is "MIT or Apache-2.0 or LGPL-2.1-or-later"). We take the MIT or Apache terms, so the LGPL option does not apply.
@@ -13,4 +13,7 @@
 - **The website** (gamesauce.app) loads one third-party script, the Buy Me a Coffee widget, from buymeacoffee.com, and is hosted on Cloudflare. It sets no cookies of its own and has no analytics.
 - **Keeping notices:** MIT and Apache-2.0 ask that the copyright and licence notices travel with copies of the software. The Docker image and the server in the desktop app keep each npm package's licence file inside `node_modules`. The Rust crates in the desktop installers are not listed inside the installers themselves: this page is the attribution for them. A copy of this page could be included in the installers.
 
-**Open item: the icons.** The 151 small pictures in `public/modern/icons` (the Modern look's icons) have no licence or source recorded in the repository. Many icon libraries are free to use but ask for credit or a notice. Their source needs to be written down here (library, author, licence), and any that require credit need to be credited. Until then they are the one part of this audit that cannot be signed off from the files alone.
+**The icons.** The 151 small pictures in `public/modern/icons` (the Modern look's icons) come from two places:
+
+- **114 are from IconOven** ([iconoven.com/icons](https://iconoven.com/icons), by Appic Marketing, MIT licence; on Iconify it is listed as "no attribution required, commercial use allowed"). 112 are exactly as published and 2 (`add-collection.svg`, `game-add.svg`) combine IconOven shapes with new ones; some others were adjusted by hand. They are credited here and in `public/modern/icons/README.md` all the same.
+- **37 were drawn or adapted for this project, or are of a source that was not recorded.** None of them matches a shape in IconOven or in the common Iconify sets that were compared (Lucide, Tabler, Material Design Icons, Phosphor, Remix, Bootstrap, BoxIcons, Carbon, Iconamoon, Solar, Font Awesome 6, Simple Icons, SVG Spinners). They are listed in the icons folder's README. `steam.svg` and `steam-badge.svg` show the Steam logo, a trademark of Valve, used only to mark Steam games. If you know where any of the 37 came from and it needs credit, add it there.
