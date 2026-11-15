@@ -29,11 +29,12 @@ a:hover { text-decoration: underline; }
 
 /* header */
 .top { position: sticky; top: 0; z-index: 10; background: rgba(11, 12, 16, .86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top .wrap { width: min(1280px, 100% - 32px); }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
 .brand { white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text); }
 .brand:hover { text-decoration: none; }
 .top nav { display: flex; align-items: center; gap: 4px; }
-.top nav a { padding: 8px 12px; border-radius: 8px; color: var(--dim); font-size: .95rem; }
+.top nav a { padding: 8px 10px; white-space: nowrap; border-radius: 8px; color: var(--dim); font-size: .95rem; }
 .top nav a:hover { color: var(--text); text-decoration: none; background: var(--bg-3); }
 .top nav .btn { margin-left: 6px; color: var(--text); }
 
@@ -133,7 +134,10 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .saucy { animation: none; } }
 
-@media (max-width: 1100px) { .top nav > a:not(.btn) { display: none; } }
+/* The section links hide when they no longer fit; other languages' words are longer, so they need more room. */
+@media (max-width: 1160px) { .top nav > a:not(.btn) { display: none; } }
+@media (max-width: 1240px) { html:lang(de) .top nav > a:not(.btn), html:lang(es) .top nav > a:not(.btn), html:lang(pt) .top nav > a:not(.btn) { display: none; } }
+@media (max-width: 1300px) { html:lang(fr) .top nav > a:not(.btn) { display: none; } }
 .langmenu { position: relative; margin-left: 8px; }
 .langmenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; color: var(--text); font-size: .9rem; border: 1px solid var(--line); background: var(--bg-2); }
 .langmenu summary::-webkit-details-marker { display: none; }
@@ -145,3 +149,4 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
 .top nav .langmenu a[aria-current] { background: var(--bg-3); font-weight: 600; }
 .langmenu img { border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,.18); object-fit: cover; flex: none; }
 @media (max-width: 420px) { .top nav .btn { display: none; } }
+.langmenu summary { white-space: nowrap; }
