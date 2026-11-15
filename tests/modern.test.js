@@ -330,7 +330,8 @@ test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover
   const css = read('public/modern.css'), js = read('public/modern.js');
   assert.match(css, /\.mb-avatar \{ background-size: cover;/);
   assert.match(css, /\.mb-avatar\.has-pic \{ color: transparent; font-size: 0; \}/);
-  assert.match(css, /\.card-fav::before[^}]*favourite\.svg/);
+  assert.match(css, /\.card-fav::before[^}]*star\.svg/);   // a star on the tile, not the face icon
+  assert.match(css, /\.card-fav\.on::before[^}]*star-fill\.svg/);
   assert.match(css, /data-act="clearmatch"\]::before[^}]*clear-reset\.svg/);
   assert.ok(js.includes("['label.btn:has(#cover-input)', 'upload-cover']"));
   assert.ok(js.includes("{ view: 'collections', icon: 'collection'"));

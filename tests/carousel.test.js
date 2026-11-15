@@ -99,3 +99,14 @@ test('the Settings has a Play on this PC card (for anyone who can use the launch
   assert.ok(html.includes('id="mod-playpc"') && html.includes('id="playpc-setup"') && html.includes('id="playpc-check"'));
   assert.ok(app.includes("{ id: 'playpc', label: 'Play on this PC'") && app.includes("launcherLink('configure')") && app.includes("launcherLink('sync')") && app.includes('can_download === false'));
 });
+
+test('Carousel: a favourite shows a star on its cover and by its title, and the middle game has a button to mark or unmark it', () => {
+  const js = fs.readFileSync(new URL('../public/carousel.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  const css = fs.readFileSync(new URL('../public/carousel.css', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  assert.match(js, /class="cv-star"[^>]*\$\{g\.favorite \? '' : ' hidden'\}/);
+  assert.match(js, /class="cv-favmark"/);
+  assert.match(js, /data-act="fav"/);
+  assert.match(js, /\/roms\/\$\{g\.id\}\/favorite/);
+  assert.match(js, /a === 'fav'\) return toggleFav/);
+  assert.match(css, /\.cv-star \{/);
+});

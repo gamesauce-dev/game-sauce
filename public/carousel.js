@@ -106,7 +106,7 @@ export function openCarousel(host) {
   const makeCard = (g, i) => {
     const el = document.createElement('div'); el.className = 'cv-card'; el.dataset.i = i; el.setAttribute('role', 'button'); el.setAttribute('aria-label', g.title);
     const accent = HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88';
-    el.innerHTML = `<div class="cv-face" style="background:linear-gradient(160deg,${accent},#1a1d27)"><span class="cv-fb">${esc(g.title)}</span>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : ''}</div>`;
+    el.innerHTML = `<div class="cv-face" style="background:linear-gradient(160deg,${accent},#1a1d27)"><span class="cv-fb">${esc(g.title)}</span>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" />` : ''}<span class="cv-star" aria-label="Favourite"${g.favorite ? '' : ' hidden'}>★</span></div>`;
     const img = el.querySelector('img');
     if (img) { img.onerror = () => { if (g.cover_fallback_url && !img.dataset.fb) { img.dataset.fb = '1'; img.src = g.cover_fallback_url; } else img.remove(); }; img.onload = () => { img.parentElement.classList.add('has'); if (i === st.idx) tint(); else colourOf(g, img); }; }
     return el;
@@ -127,6 +127,7 @@ export function openCarousel(host) {
     const b = canBrowser(g), l = canLocalPlay(g), pf = preferred();
     const btn = (act, label, main, tip) => `<button type="button" class="cv-btn${main ? ' primary' : ''}" data-act="${act}" title="${tip}">${label}</button>`;
     const out = [];
+    if (g.id != null && !g.steam) out.push(`<button type="button" class="cv-btn cv-favbtn${g.favorite ? ' on' : ''}" data-act="fav" aria-pressed="${g.favorite ? 'true' : 'false'}" title="${g.favorite ? 'Remove from your favourites' : 'Add to your favourites'}">${g.favorite ? '★ Favourite' : '☆ Favourite'}</button>`);
     if (b) out.push(btn('browser', 'Play in browser', !l || pf === 'browser', 'Play it here, in the browser'));
     if (l) out.push(btn('local', 'Play on this PC', !b || pf === 'local', 'Play with the emulator set up on this PC'));
     return out.join('');
@@ -138,7 +139,7 @@ export function openCarousel(host) {
     for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
     for (let i = lo; i <= hi; i++) { if (!st.els.has(i)) { const el = makeCard(gameAt(i), i); st.els.set(i, el); rail.appendChild(el); } place(st.els.get(i), i - st.idx); }
     const g = gameAt(st.idx);
-    $('#cv-info').innerHTML = g ? `<div class="cv-title">${esc(g.title)}</div>
+    $('#cv-info').innerHTML = g ? `<div class="cv-title">${g.favorite ? '<span class="cv-favmark" aria-label="Favourite">★</span> ' : ''}${esc(g.title)}</div>
       <div class="cv-meta">${esc([g.platform_name, g.release_year, g.developer].filter(Boolean).join('  ·  '))}<span class="cv-pos">${(st.idx + 1).toLocaleString()} of ${n.toLocaleString()}</span></div>
       <div class="cv-acts">${actsHtml(g)}</div>` : '';
     tint(); scheduleVideo();
@@ -190,6 +191,17 @@ export function openCarousel(host) {
     st.fam = f; drawFams(); drawSubs(); setBackdrop();
     const list = fams().get(f) || [];
     if (list.length) choose([...list].sort((a, b) => ((b.visible_count ?? b.count) || 0) - ((a.visible_count ?? a.count) || 0))[0].slug);
+  };
+
+  // ── favourites: the star on the cover, by the title, and the button that marks or unmarks the middle game ──
+  const toggleFav = async (g) => {
+    if (!g || g.steam || g.id == null) return;
+    try {
+      const r = await host.api(`/roms/${g.id}/favorite`, { method: 'POST' });
+      g.favorite = r.favorite ? 1 : 0;
+      const i = st.games.indexOf(g); const el = st.els.get(i); if (el) el.querySelector('.cv-star').hidden = !g.favorite;
+      render();
+    } catch (err) { host.toast(err.message || 'Could not change the favourite', true); }
   };
 
   // ── playing ──
@@ -278,6 +290,7 @@ export function openCarousel(host) {
     const act = e.target.closest('[data-act]');
     if (act) {
       const g = gameAt(st.idx), a = act.dataset.act;
+      if (a === 'fav') return toggleFav(g);
       if (a === 'prefer') { try { localStorage.setItem(prefKey, preferred() === 'local' ? 'browser' : 'local'); } catch { /* not kept */ } return render(); }
       return a === 'local' ? playLocal(g) : openBrowser(g);
     }
