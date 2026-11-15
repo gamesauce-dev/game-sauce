@@ -1062,5 +1062,77 @@
   "pt": "Favoritos, coleções privadas e jogos ocultos, além de contas para as pessoas em quem você confia, incluindo contas só de jogar, sem downloads nem administração. As pessoas podem trocar mensagens privadas, e o administrador pode publicar um aviso para todos.",
   "de": "Favoriten, private Sammlungen und ausgeblendete Spiele, dazu Konten für die Leute, denen du vertraust, auch Nur-Spielen-Konten ohne Downloads oder Administration. Personen können sich private Nachrichten schicken, und der Administrator kann einen Hinweis für alle veröffentlichen.",
   "ja": "お気に入り、非公開のコレクション、非表示のゲームに加え、信頼できる人のアカウント（ダウンロードや管理のないプレイ専用アカウントを含む）を作れます。ユーザー同士で非公開のメッセージを送れ、管理者は全員にお知らせを掲示できます。"
+ },
+ "Chat: keep in touch with the household": {
+  "fr": "Discussion : restez en contact avec toute la maison",
+  "zh": "聊天：与家人保持联系",
+  "es": "Chat: mantente en contacto con toda la casa",
+  "pt": "Chat: fique em contato com a casa toda",
+  "de": "Chat: bleib mit dem Haushalt in Kontakt",
+  "ja": "チャット：家族と連絡を取り合う"
+ },
+ "Private messages between the people on your server, and notices from the admin. Nothing leaves your own machine.": {
+  "fr": "Des messages privés entre les personnes de votre serveur, et des avis de l'administrateur. Rien ne quitte votre propre machine.",
+  "zh": "服务器上的用户之间可以互发私信，管理员也可以发布通知。一切都不会离开你自己的机器。",
+  "es": "Mensajes privados entre las personas de tu servidor y avisos del administrador. Nada sale de tu propia máquina.",
+  "pt": "Mensagens privadas entre as pessoas do seu servidor e avisos do administrador. Nada sai da sua própria máquina.",
+  "de": "Private Nachrichten zwischen den Personen auf deinem Server und Hinweise des Administrators. Nichts verlässt deine eigene Maschine.",
+  "ja": "サーバー上のユーザー同士の非公開メッセージと、管理者からのお知らせ。何も自分のマシンの外には出ません。"
+ },
+ "A private conversation, with a notice from the admin above the list": {
+  "fr": "Une conversation privée, avec un avis de l'administrateur au-dessus de la liste",
+  "zh": "一段私密对话，列表上方是管理员的通知",
+  "es": "Una conversación privada, con un aviso del administrador sobre la lista",
+  "pt": "Uma conversa privada, com um aviso do administrador acima da lista",
+  "de": "Eine private Unterhaltung, mit einem Hinweis des Administrators über der Liste",
+  "ja": "非公開の会話。リストの上に管理者からのお知らせ"
+ },
+ "One-to-one conversations that only you and the other person can read.": {
+  "fr": "Des conversations en tête-à-tête que seuls vous et l'autre personne pouvez lire.",
+  "zh": "一对一的对话，只有你和对方可以阅读。",
+  "es": "Conversaciones uno a uno que solo tú y la otra persona podéis leer.",
+  "pt": "Conversas individuais que só você e a outra pessoa podem ler.",
+  "de": "Eins-zu-eins-Unterhaltungen, die nur du und die andere Person lesen können.",
+  "ja": "あなたと相手だけが読める、1対1の会話。"
+ },
+ "Each person has their own colour in the chat.": {
+  "fr": "Chaque personne a sa propre couleur dans la discussion.",
+  "zh": "每个人在聊天中都有自己的颜色。",
+  "es": "Cada persona tiene su propio color en el chat.",
+  "pt": "Cada pessoa tem a sua própria cor no chat.",
+  "de": "Jede Person hat im Chat ihre eigene Farbe.",
+  "ja": "チャットでは、一人ひとりに専用の色が付きます。"
+ },
+ "Changed your mind? Recall a message for both of you within a few minutes.": {
+  "fr": "Vous avez changé d'avis ? Rappelez un message pour vous deux dans les premières minutes.",
+  "zh": "改变主意了？几分钟内可以为双方撤回一条消息。",
+  "es": "¿Has cambiado de opinión? Retira un mensaje para los dos en los primeros minutos.",
+  "pt": "Mudou de ideia? Recolha uma mensagem para os dois nos primeiros minutos.",
+  "de": "Anders überlegt? Rufe eine Nachricht innerhalb weniger Minuten für euch beide zurück.",
+  "ja": "気が変わりましたか？数分以内なら、メッセージを二人とも取り消せます。"
+ },
+ "The admin can post a notice that everyone sees, such as scheduled maintenance. It reaches play-only accounts too.": {
+  "fr": "L'administrateur peut publier un avis que tout le monde voit, comme une maintenance planifiée. Il atteint aussi les comptes « jeu uniquement ».",
+  "zh": "管理员可以发布所有人都能看到的通知，例如计划中的维护。仅游玩账户同样会收到。",
+  "es": "El administrador puede publicar un aviso que ven todos, como un mantenimiento programado. Llega también a las cuentas de solo jugar.",
+  "pt": "O administrador pode publicar um aviso que todos veem, como uma manutenção programada. Ele chega também às contas só de jogar.",
+  "de": "Der Administrator kann einen Hinweis veröffentlichen, den alle sehen, etwa eine geplante Wartung. Er erreicht auch Nur-Spielen-Konten.",
+  "ja": "管理者は、メンテナンスの予定など、全員に見えるお知らせを掲示できます。プレイ専用アカウントにも届きます。"
+ },
+ "Plain text only, no links, and it all stays on your own server.": {
+  "fr": "Du texte brut uniquement, sans liens, et tout reste sur votre propre serveur.",
+  "zh": "仅限纯文本，不含链接，一切都保存在你自己的服务器上。",
+  "es": "Solo texto, sin enlaces, y todo se queda en tu propio servidor.",
+  "pt": "Só texto simples, sem links, e tudo fica no seu próprio servidor.",
+  "de": "Nur Text, keine Links, und alles bleibt auf deinem eigenen Server.",
+  "ja": "プレーンテキストのみでリンクは使えず、すべて自分のサーバーに残ります。"
+ },
+ "The Messages panel: a notice from the admin above the list of conversations, and a private conversation between two people with their colours": {
+  "fr": "Le panneau Messages : un avis de l'administrateur au-dessus de la liste des conversations, et une conversation privée entre deux personnes, chacune avec sa couleur",
+  "zh": "“消息”面板：对话列表上方是管理员的通知，下方是两个人之间的私密对话，各有自己的颜色",
+  "es": "El panel Mensajes: un aviso del administrador sobre la lista de conversaciones y una conversación privada entre dos personas, cada una con su color",
+  "pt": "O painel Mensagens: um aviso do administrador acima da lista de conversas e uma conversa privada entre duas pessoas, cada uma com a sua cor",
+  "de": "Das Nachrichten-Panel: ein Hinweis des Administrators über der Unterhaltungsliste und eine private Unterhaltung zwischen zwei Personen, jede in ihrer Farbe",
+  "ja": "「メッセージ」パネル：会話リストの上に管理者からのお知らせ、その下に、それぞれの色で表示された二人の非公開の会話"
  }
 }
