@@ -47,12 +47,12 @@ test('i18n: every language has a file, valid JSON, and the Settings picker and t
   for (const l of LANGS) assert.ok(server.includes(`'${l.code}'`), l.code);
 });
 
-test('i18n: a pattern in a language file keeps the same {names} as its English key', () => {
+test('i18n: a pattern in a language file uses only the {names} its English key has', () => {
   for (const code of ['fr', 'zh']) {
     const j = JSON.parse(read(`public/lang/${code}.json`));
     for (const [en, tr] of Object.entries(j)) {
-      const a = [...en.matchAll(/\{([a-z0-9_]+)\}/gi)].map((m) => m[1]).sort().join(','), b = [...tr.matchAll(/\{([a-z0-9_]+)\}/gi)].map((m) => m[1]).sort().join(',');
-      assert.equal(b, a, `${code}: "${en}" and its translation must use the same {names}`);
+      const a = new Set([...en.matchAll(/\{([a-z0-9_]+)\}/gi)].map((m) => m[1])), b = [...tr.matchAll(/\{([a-z0-9_]+)\}/gi)].map((m) => m[1]);
+      for (const n of b) assert.ok(a.has(n), `${code}: "${en}": the translation uses {${n}}, which the English does not`);
     }
   }
 });

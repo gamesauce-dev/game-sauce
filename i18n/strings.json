@@ -53,9 +53,6 @@
  "“Missing” = in the DAT but matched by nothing in your library.": {
   "files": 1
  },
- "({ '&': '&amp;', '": {
-  "files": 10
- },
  "(a link could lead outside the folder): {a}. Add the link's real folder instead.": {
   "files": 1
  },
@@ -86,12 +83,6 @@
  "(games on your shelf: discs and cartridges with no ROM)": {
   "files": 1
  },
- "(hover: hover)": {
-  "files": 1
- },
- "(max-width: 720px)": {
-  "files": 1
- },
  "(no artwork folder yet: add one under Artwork folders)": {
   "files": 1
  },
@@ -109,9 +100,6 @@
  },
  "(over {a}, since the server last started)": {
   "files": 1
- },
- "(prefers-reduced-motion: reduce)": {
-  "files": 5
  },
  "(the": {
   "files": 1
@@ -153,27 +141,6 @@
   "files": 1
  },
  "). The games go into": {
-  "files": 1
- },
- "[data-logo-pick], [data-famlogo-pick]": {
-  "files": 1
- },
- "[data-logo-remove], [data-famlogo-remove]": {
-  "files": 1
- },
- "[data-mod=\"db\"], [data-group], #settings-tiles": {
-  "files": 1
- },
- "[data-pact=\"delete\"], [data-bk-del], [data-save-del], [data-act=\"delete-user\"]": {
-  "files": 1
- },
- "[data-pact=\"edit\"], [data-fam-rename]": {
-  "files": 1
- },
- "[data-pid-use], #pid-apply-all": {
-  "files": 1
- },
- "[data-platform=\"{a}\"] .plat-logo": {
   "files": 1
  },
  "{a} · manual": {
@@ -563,9 +530,6 @@
  "32 letters and numbers": {
   "files": 2
  },
- "3DS": {
-  "files": 2
- },
  "50 games": {
   "files": 1
  },
@@ -615,9 +579,6 @@
   "files": 1
  },
  "a WebP wrap cannot be cut yet: save it as JPEG or PNG": {
-  "files": 1
- },
- "Aa": {
   "files": 1
  },
  "about ↗": {
@@ -896,9 +857,6 @@
  "at the top holds": {
   "files": 1
  },
- "AU": {
-  "files": 1
- },
  "Australia": {
   "files": 1
  },
@@ -1068,9 +1026,6 @@
   "files": 2
  },
  "Carousel: browse your games as a carousel of covers": {
-  "files": 1
- },
- "CART": {
   "files": 1
  },
  "Cartridge": {
@@ -1610,9 +1565,6 @@
  "Disc": {
   "files": 1
  },
- "DISC": {
-  "files": 1
- },
  "disc art": {
   "files": 1
  },
@@ -1678,9 +1630,6 @@
  },
  "Drop ROM files or a folder here": {
   "files": 1
- },
- "DS": {
-  "files": 2
  },
  "Duplicate finder": {
   "files": 2
@@ -2235,9 +2184,6 @@
   "files": 2
  },
  "If you use Steam, your own library can appear on the": {
-  "files": 1
- },
- "IGDB": {
   "files": 1
  },
  "IGDB accepted the credentials but returned no match for the probe title": {
@@ -3215,9 +3161,6 @@
  "Orphaned (no valid source)": {
   "files": 1
  },
- "OS": {
-  "files": 1
- },
  "Other / chip": {
   "files": 1
  },
@@ -4126,9 +4069,6 @@
  },
  "slug is required (lowercase letters/digits)": {
   "files": 1
- },
- "SNES": {
-  "files": 2
  },
  "snes/Super Mario World (USA).png": {
   "files": 1

@@ -17,7 +17,7 @@ const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 const hasLetters = (s) => /[A-Za-zÀ-ɏ]/.test(s);
 
 /** A translator for one language file: { lookup(text) } returns the translation, or null when there is none. Pure, so it can be tested. */
-export function makeTranslator(strings = {}) {
+export function makeTranslator(strings = {}, lang = '') {
   const words = new Map(), patterns = [];
   for (const [en, tr] of Object.entries(strings)) {
     if (typeof tr !== 'string' || !tr) continue;
@@ -29,16 +29,17 @@ export function makeTranslator(strings = {}) {
     } else words.set(key, tr);
   }
   patterns.sort((a, b) => b.re.source.length - a.re.source.length);   // the longest (most specific) pattern first
+  const fix = lang === 'fr' ? (x) => x.replace(/\bjeus\b/g, 'jeux') : (x) => x;   // the code adds an "s" to make a plural: jeu + s is jeux in French
   return {
     size: words.size + patterns.length,
     lookup(text) {
       const n = norm(text);
       if (!n) return null;
       const w = words.get(n);
-      if (w !== undefined) return w;
+      if (w !== undefined) return fix(w);
       for (const p of patterns) {
         const m = p.re.exec(n);
-        if (m) return p.tr.replace(/\{([a-z0-9_]+)\}/gi, (all, name) => { const i = p.names.indexOf(name); return i >= 0 ? m[i + 1] : all; });
+        if (m) return fix(p.tr.replace(/\{([a-z0-9_]+)\}/gi, (all, name) => { const i = p.names.indexOf(name); return i >= 0 ? m[i + 1] : all; }));
       }
       return null;
     }
@@ -115,7 +116,7 @@ export async function initI18n() {
   else {
     try {
       const res = await fetch(`/lang/${active}.json`, { cache: 'no-cache' });
-      tr = makeTranslator(res.ok ? await res.json() : {});
+      tr = makeTranslator(res.ok ? await res.json() : {}, active);
     } catch { tr = makeTranslator({}); }
   }
   walk(document.documentElement);

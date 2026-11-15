@@ -16,6 +16,9 @@ const add = (text, file) => {
   if (/^(https?:|\/|#|\.|data:|rgba?\(|var\(|[a-z-]+:\s)/.test(s) || /[{};]\s*$/.test(s) || /=>|function\s*\(|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bCREATE TABLE\b/.test(s)) return;
   if (/^[A-Z0-9_]+$/.test(s) && s.length > 4) return;                                // a CONSTANT
   if (/^<|>$/.test(s) || /[<>]/.test(s)) return;
+  if (/^\[|^\(\{|^\((hover|max-width|prefers)|data-|\.plat-logo|#settings|^Aa$|^[A-Z0-9]{2,4}$/.test(s)) return;   // selectors, media queries, short acronyms
+  if (/^[\W_]*$/.test(s)) return;                                                      // only symbols
+  if (/^[W_]*$/.test(s)) return;
   (out[s] ||= { files: new Set() }).files.add(file);
 };
 
