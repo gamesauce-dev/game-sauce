@@ -2,666 +2,799 @@
  "game-sauce: a self-hosted library for the games you own": {
   "fr": "game-sauce : une bibliothèque auto-hébergée pour les jeux que vous possédez",
   "zh": "game-sauce：为你自己的游戏打造的自托管游戏库",
-  "es": "game-sauce: una biblioteca autoalojada para los juegos que tienes"
+  "es": "game-sauce: una biblioteca autoalojada para los juegos que tienes",
+  "pt": "game-sauce: uma biblioteca auto-hospedada para os jogos que você tem"
  },
  "Features": {
   "fr": "Fonctionnalités",
   "zh": "功能",
-  "es": "Funciones"
+  "es": "Funciones",
+  "pt": "Recursos"
  },
  "Video": {
   "fr": "Vidéo",
   "zh": "视频",
-  "es": "Vídeo"
+  "es": "Vídeo",
+  "pt": "Vídeo"
  },
  "Big Screen": {
   "fr": "Grand écran",
   "zh": "大屏幕",
-  "es": "Pantalla grande"
+  "es": "Pantalla grande",
+  "pt": "Tela grande"
  },
  "Carousel": {
   "fr": "Carrousel",
   "zh": "封面轮播",
-  "es": "Carrusel"
+  "es": "Carrusel",
+  "pt": "Carrossel"
  },
  "Shelf": {
   "fr": "Étagère",
   "zh": "游戏架",
-  "es": "Estantería"
+  "es": "Estantería",
+  "pt": "Estante"
  },
  "Screenshots": {
   "fr": "Captures d'écran",
   "zh": "截图",
-  "es": "Capturas"
+  "es": "Capturas",
+  "pt": "Capturas de tela"
  },
  "Get started": {
   "fr": "Pour commencer",
   "zh": "开始使用",
-  "es": "Empezar"
+  "es": "Empezar",
+  "pt": "Começar"
  },
  "FAQ": {
   "fr": "FAQ",
   "zh": "常见问题",
-  "es": "Preguntas"
+  "es": "Preguntas",
+  "pt": "Perguntas"
  },
  "Support": {
   "fr": "Soutenir",
   "zh": "支持",
-  "es": "Apoyar"
+  "es": "Apoyar",
+  "pt": "Apoie"
  },
  "Free &middot; open source &middot; self-hosted": {
   "fr": "Gratuit &middot; open source &middot; auto-hébergé",
   "zh": "免费 &middot; 开源 &middot; 自托管",
-  "es": "Gratis &middot; código abierto &middot; autoalojado"
+  "es": "Gratis &middot; código abierto &middot; autoalojado",
+  "pt": "Grátis &middot; código aberto &middot; auto-hospedado"
  },
  "Your game collection,<br>on your own server.": {
   "fr": "Votre collection de jeux,<br>sur votre propre serveur.",
   "zh": "你的游戏收藏，<br>放在你自己的服务器上。",
-  "es": "Tu colección de juegos,<br>en tu propio servidor."
+  "es": "Tu colección de juegos,<br>en tu propio servidor.",
+  "pt": "Sua coleção de jogos,<br>no seu próprio servidor."
  },
  "game-sauce catalogues the games you own, fetches the artwork, plays many of them in your browser, starts the rest in the emulators on your PC, and puts the whole library on the TV with a gamepad-driven Big Screen.": {
   "fr": "game-sauce répertorie les jeux que vous possédez, récupère les jaquettes, fait tourner beaucoup d'entre eux dans votre navigateur, lance les autres dans les émulateurs de votre PC, et affiche toute la bibliothèque sur la télé avec un Grand écran piloté à la manette.",
   "zh": "game-sauce 会为你拥有的游戏建立目录、获取封面，让许多游戏直接在浏览器中运行，其余的则用你电脑上的模拟器启动，还能通过用手柄操作的大屏幕模式把整个游戏库搬到电视上。",
-  "es": "game-sauce cataloga los juegos que tienes, obtiene las carátulas, ejecuta muchos de ellos en tu navegador, inicia el resto en los emuladores de tu PC y lleva toda la biblioteca a la tele con una Pantalla grande que se maneja con mando."
+  "es": "game-sauce cataloga los juegos que tienes, obtiene las carátulas, ejecuta muchos de ellos en tu navegador, inicia el resto en los emuladores de tu PC y lleva toda la biblioteca a la tele con una Pantalla grande que se maneja con mando.",
+  "pt": "O game-sauce cataloga os jogos que você tem, busca as capas, roda muitos deles no seu navegador, inicia o resto nos emuladores do seu PC e leva a biblioteca inteira para a TV com uma Tela grande controlada por gamepad."
  },
  "Download": {
   "fr": "Télécharger",
   "zh": "下载",
-  "es": "Descargar"
+  "es": "Descargar",
+  "pt": "Baixar"
  },
  "How to run it": {
   "fr": "Comment l'installer",
   "zh": "如何运行",
-  "es": "Cómo instalarlo"
+  "es": "Cómo instalarlo",
+  "pt": "Como instalar"
  },
  "&#9733; Star on GitHub": {
   "fr": "&#9733; Une étoile sur GitHub",
   "zh": "&#9733; 在 GitHub 上点个星",
-  "es": "&#9733; Una estrella en GitHub"
+  "es": "&#9733; Una estrella en GitHub",
+  "pt": "&#9733; Dê uma estrela no GitHub"
  },
  "Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid and Proxmox &middot; Raspberry Pi": {
   "fr": "Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid et Proxmox &middot; Raspberry Pi",
   "zh": "Windows &middot; macOS（Apple 芯片）&middot; Linux &middot; Docker、Unraid 和 Proxmox &middot; 树莓派",
-  "es": "Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid y Proxmox &middot; Raspberry Pi"
+  "es": "Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid y Proxmox &middot; Raspberry Pi",
+  "pt": "Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid e Proxmox &middot; Raspberry Pi"
  },
  "Screenshots use built-in demo data with generated covers.": {
   "fr": "Les captures d'écran utilisent les données de démonstration intégrées, avec des jaquettes générées.",
   "zh": "截图使用内置的演示数据和生成的封面。",
-  "es": "Las capturas usan datos de demostración incluidos, con carátulas generadas."
+  "es": "Las capturas usan datos de demostración incluidos, con carátulas generadas.",
+  "pt": "As capturas de tela usam dados de demonstração embutidos, com capas geradas."
  },
  "Everything for a collection you already have": {
   "fr": "Tout pour une collection que vous avez déjà",
   "zh": "为你现有的收藏准备的一切",
-  "es": "Todo para una colección que ya tienes"
+  "es": "Todo para una colección que ya tienes",
+  "pt": "Tudo para uma coleção que você já tem"
  },
  "One place for the whole household's library, running on a machine you control.": {
   "fr": "Un seul endroit pour la bibliothèque de toute la maison, sur une machine que vous contrôlez.",
   "zh": "全家的游戏库集中在一处，运行在你自己掌控的机器上。",
-  "es": "Un solo lugar para la biblioteca de toda la casa, en una máquina que controlas tú."
+  "es": "Un solo lugar para la biblioteca de toda la casa, en una máquina que controlas tú.",
+  "pt": "Um só lugar para a biblioteca da casa inteira, rodando em uma máquina que você controla."
  },
  "Scans your folders in place": {
   "fr": "Analyse vos dossiers sur place",
   "zh": "就地扫描你的文件夹",
-  "es": "Analiza tus carpetas donde están"
+  "es": "Analiza tus carpetas donde están",
+  "pt": "Analisa suas pastas no lugar"
  },
  "Point it at the folders you already have. Files are catalogued where they are and never moved, renamed or deleted, and one bad file never stops a scan.": {
   "fr": "Indiquez-lui les dossiers que vous avez déjà. Les fichiers sont répertoriés là où ils sont et ne sont jamais déplacés, renommés ni supprimés, et un fichier défectueux n'interrompt jamais une analyse.",
   "zh": "只需指向你已有的文件夹。文件就在原位置建立目录，绝不会被移动、重命名或删除，单个有问题的文件也不会中断扫描。",
-  "es": "Indícale las carpetas que ya tienes. Los archivos se catalogan donde están y nunca se mueven, renombran ni eliminan, y un archivo defectuoso nunca detiene un análisis."
+  "es": "Indícale las carpetas que ya tienes. Los archivos se catalogan donde están y nunca se mueven, renombran ni eliminan, y un archivo defectuoso nunca detiene un análisis.",
+  "pt": "Aponte para as pastas que você já tem. Os arquivos são catalogados onde estão e nunca são movidos, renomeados nem excluídos, e um arquivo ruim nunca interrompe uma análise."
  },
  "Artwork and details, found for you": {
   "fr": "Jaquettes et détails, trouvés pour vous",
   "zh": "封面和详情，自动为你找到",
-  "es": "Carátulas y detalles, encontrados por ti"
+  "es": "Carátulas y detalles, encontrados por ti",
+  "pt": "Capas e detalhes, encontrados para você"
  },
  "Covers, descriptions, years and more from ScreenScraper, TheGamesDB, IGDB and SteamGridDB using your own accounts, or import artwork from folders and upload your own.": {
   "fr": "Jaquettes, descriptions, années et plus encore depuis ScreenScraper, TheGamesDB, IGDB et SteamGridDB avec vos propres comptes, ou importez des illustrations depuis des dossiers et envoyez les vôtres.",
   "zh": "使用你自己的账户，从 ScreenScraper、TheGamesDB、IGDB 和 SteamGridDB 获取封面、简介、年份等信息，也可以从文件夹导入图片或上传你自己的。",
-  "es": "Carátulas, descripciones, años y más desde ScreenScraper, TheGamesDB, IGDB y SteamGridDB con tus propias cuentas, o importa imágenes desde carpetas y sube las tuyas."
+  "es": "Carátulas, descripciones, años y más desde ScreenScraper, TheGamesDB, IGDB y SteamGridDB con tus propias cuentas, o importa imágenes desde carpetas y sube las tuyas.",
+  "pt": "Capas, descrições, anos e mais do ScreenScraper, TheGamesDB, IGDB e SteamGridDB usando suas próprias contas, ou importe imagens de pastas e envie as suas."
  },
  "Play in the browser": {
   "fr": "Jouer dans le navigateur",
   "zh": "在浏览器中游玩",
-  "es": "Juega en el navegador"
+  "es": "Juega en el navegador",
+  "pt": "Jogue no navegador"
  },
  "Many older consoles run straight from a web page, with save states and in-game saves kept per person on your server. A Continue playing row remembers where you were.": {
   "fr": "De nombreuses consoles anciennes tournent directement depuis une page web, avec les états sauvegardés et les sauvegardes de jeu conservés par personne sur votre serveur. Une ligne Continuer à jouer se souvient d'où vous en étiez.",
   "zh": "许多较老的主机可以直接在网页中运行，即时存档和游戏内存档按人保存在你的服务器上。“继续游玩”一栏会记住你玩到了哪里。",
-  "es": "Muchas consolas antiguas funcionan directamente desde una página web, con estados guardados y partidas del juego conservados por persona en tu servidor. Una fila de «Seguir jugando» recuerda dónde lo dejaste."
+  "es": "Muchas consolas antiguas funcionan directamente desde una página web, con estados guardados y partidas del juego conservados por persona en tu servidor. Una fila de «Seguir jugando» recuerda dónde lo dejaste.",
+  "pt": "Muitos consoles antigos rodam direto de uma página da web, com save states e saves do jogo guardados por pessoa no seu servidor. Uma linha \"Continuar jogando\" lembra onde você parou."
  },
  "Play on your PC": {
   "fr": "Jouer sur votre PC",
   "zh": "在你的电脑上游玩",
-  "es": "Juega en tu PC"
+  "es": "Juega en tu PC",
+  "pt": "Jogue no seu PC"
  },
  "One click starts a game in the emulator installed on your own computer, such as RetroArch, MAME or Dolphin. Games can be kept for quick relaunch, and a setup page configures each emulator.": {
   "fr": "Un clic lance un jeu dans l'émulateur installé sur votre propre ordinateur, comme RetroArch, MAME ou Dolphin. Les jeux peuvent être gardés pour un relancement rapide, et une page de configuration règle chaque émulateur.",
   "zh": "只需一次点击，就能在你自己电脑上安装的模拟器（如 RetroArch、MAME 或 Dolphin）中启动游戏。游戏可以保留以便快速重新启动，还有一个设置页面来配置每个模拟器。",
-  "es": "Un clic inicia un juego en el emulador instalado en tu propio ordenador, como RetroArch, MAME o Dolphin. Los juegos se pueden conservar para relanzarlos rápido, y una página de configuración ajusta cada emulador."
+  "es": "Un clic inicia un juego en el emulador instalado en tu propio ordenador, como RetroArch, MAME o Dolphin. Los juegos se pueden conservar para relanzarlos rápido, y una página de configuración ajusta cada emulador.",
+  "pt": "Um clique inicia um jogo no emulador instalado no seu próprio computador, como RetroArch, MAME ou Dolphin. Os jogos podem ser mantidos para reabrir rápido, e uma página de configuração ajusta cada emulador."
  },
  "Big Screen for the TV": {
   "fr": "Le Grand écran pour la télé",
   "zh": "电视上的大屏幕",
-  "es": "Pantalla grande para la tele"
+  "es": "Pantalla grande para la tele",
+  "pt": "Tela grande para a TV"
  },
  "A full-screen, gamepad-driven view for the sofa: a wheel of games with logos and marquees, favourites and collections, an A to Z strip, manuals on screen, and sounds you can mute.": {
   "fr": "Une vue plein écran pilotée à la manette pour le canapé : une roue de jeux avec logos et bannières, favoris et collections, une barre de A à Z, des manuels à l'écran et des sons que vous pouvez couper.",
   "zh": "为沙发准备的全屏手柄操作视图：带有徽标和横幅的游戏转盘、收藏和合集、A 到 Z 字母条、屏幕上的说明书，还有可以静音的声音。",
-  "es": "Una vista a pantalla completa, manejada con mando, para el sofá: una rueda de juegos con logotipos y rótulos, favoritos y colecciones, una barra de la A a la Z, manuales en pantalla y sonidos que puedes silenciar."
+  "es": "Una vista a pantalla completa, manejada con mando, para el sofá: una rueda de juegos con logotipos y rótulos, favoritos y colecciones, una barra de la A a la Z, manuales en pantalla y sonidos que puedes silenciar.",
+  "pt": "Uma visão em tela cheia, controlada por gamepad, para o sofá: uma roda de jogos com logotipos e letreiros, favoritos e coleções, uma barra de A a Z, manuais na tela e sons que você pode silenciar."
  },
  "Collections and people": {
   "fr": "Collections et personnes",
   "zh": "合集和用户",
-  "es": "Colecciones y personas"
+  "es": "Colecciones y personas",
+  "pt": "Coleções e pessoas"
  },
  "Keep it tidy": {
   "fr": "Gardez tout bien rangé",
   "zh": "保持整洁",
-  "es": "Mantenlo ordenado"
+  "es": "Mantenlo ordenado",
+  "pt": "Mantenha tudo em ordem"
  },
  "Verify dumps against No-Intro and Redump DATs, find duplicate versions and suggest the best copy to keep, and clear out unused artwork files, without deleting your games.": {
   "fr": "Vérifiez vos dumps avec les DAT No-Intro et Redump, trouvez les versions en double et proposez la meilleure copie à garder, et nettoyez les fichiers d'illustrations inutilisés, sans supprimer vos jeux.",
   "zh": "对照 No-Intro 和 Redump DAT 校验转储，找出重复版本并推荐最值得保留的副本，清理未使用的图片文件，而不会删除你的游戏。",
-  "es": "Verifica volcados con los DAT de No-Intro y Redump, encuentra versiones duplicadas y sugiere la mejor copia que conservar, y limpia los archivos de imágenes sin usar, sin eliminar tus juegos."
+  "es": "Verifica volcados con los DAT de No-Intro y Redump, encuentra versiones duplicadas y sugiere la mejor copia que conservar, y limpia los archivos de imágenes sin usar, sin eliminar tus juegos.",
+  "pt": "Verifique dumps com os DATs do No-Intro e do Redump, encontre versões duplicadas e sugira a melhor cópia para manter, e limpe os arquivos de imagens sem uso, sem excluir seus jogos."
  },
  "Your shelf and your Steam too": {
   "fr": "Votre étagère et votre Steam aussi",
   "zh": "还有你的游戏架和 Steam",
-  "es": "Tu estantería y tu Steam también"
+  "es": "Tu estantería y tu Steam también",
+  "pt": "Sua estante e seu Steam também"
  },
  "Bring in your Steam library with the hours you have played, and your PlayStation, Nintendo and Xbox games from a list. Track the discs and cartridges you physically own too, all next to your ROMs.": {
   "fr": "Importez votre bibliothèque Steam avec les heures jouées, et vos jeux PlayStation, Nintendo et Xbox depuis une liste. Suivez aussi les disques et cartouches que vous possédez physiquement, le tout à côté de vos ROM.",
   "zh": "导入你的 Steam 游戏库及游玩时长，并通过列表导入你的 PlayStation、任天堂和 Xbox 游戏。你实际拥有的光盘和卡带也可以记录，全都与你的 ROM 放在一起。",
-  "es": "Trae tu biblioteca de Steam con las horas que has jugado, y tus juegos de PlayStation, Nintendo y Xbox desde una lista. Registra también los discos y cartuchos que tienes físicamente, todo junto a tus ROM."
+  "es": "Trae tu biblioteca de Steam con las horas que has jugado, y tus juegos de PlayStation, Nintendo y Xbox desde una lista. Registra también los discos y cartuchos que tienes físicamente, todo junto a tus ROM.",
+  "pt": "Traga sua biblioteca do Steam com as horas que você jogou, e seus jogos de PlayStation, Nintendo e Xbox de uma lista. Registre também os discos e cartuchos que você tem fisicamente, tudo ao lado das suas ROMs."
  },
  "Yours to run": {
   "fr": "À vous de l'héberger",
   "zh": "由你自己运行",
-  "es": "Tuyo para ejecutarlo"
+  "es": "Tuyo para ejecutarlo",
+  "pt": "Seu para rodar"
  },
  "No account, no subscription and no cloud. Your library and its data stay on your hardware, in a database you can back up and restore from the app.": {
   "fr": "Pas de compte, pas d'abonnement, pas de cloud. Votre bibliothèque et ses données restent sur votre matériel, dans une base de données que vous pouvez sauvegarder et restaurer depuis l'application.",
   "zh": "无需账号，无需订阅，没有云端。你的游戏库和数据都留在你自己的硬件上，数据库可以在应用中备份和恢复。",
-  "es": "Sin cuenta, sin suscripción y sin nube. Tu biblioteca y sus datos se quedan en tu hardware, en una base de datos de la que puedes hacer copias y restaurarla desde la aplicación."
+  "es": "Sin cuenta, sin suscripción y sin nube. Tu biblioteca y sus datos se quedan en tu hardware, en una base de datos de la que puedes hacer copias y restaurarla desde la aplicación.",
+  "pt": "Sem conta, sem assinatura e sem nuvem. Sua biblioteca e os dados dela ficam no seu hardware, em um banco de dados que você pode fazer backup e restaurar pelo aplicativo."
  },
  "See it move": {
   "fr": "Voyez-le en action",
   "zh": "看看它的实际效果",
-  "es": "Míralo en movimiento"
+  "es": "Míralo en movimiento",
+  "pt": "Veja em movimento"
  },
  "Two short clips from the built-in demo library.": {
   "fr": "Deux courts extraits de la bibliothèque de démonstration intégrée.",
   "zh": "来自内置演示游戏库的两段短片。",
-  "es": "Dos clips cortos de la biblioteca de demostración incluida."
+  "es": "Dos clips cortos de la biblioteca de demostración incluida.",
+  "pt": "Dois clipes curtos da biblioteca de demonstração embutida."
  },
  "Big Screen on the TV": {
   "fr": "Le Grand écran sur la télé",
   "zh": "电视上的大屏幕",
-  "es": "Pantalla grande en la tele"
+  "es": "Pantalla grande en la tele",
+  "pt": "Tela grande na TV"
  },
  "Searching the Library and opening a game": {
   "fr": "Rechercher dans la bibliothèque et ouvrir un jeu",
   "zh": "在游戏库中搜索并打开游戏",
-  "es": "Buscar en la Biblioteca y abrir un juego"
+  "es": "Buscar en la Biblioteca y abrir un juego",
+  "pt": "Pesquisando na Biblioteca e abrindo um jogo"
  },
  "Big Screen: your library on the TV": {
   "fr": "Grand écran : votre bibliothèque sur la télé",
   "zh": "大屏幕：把你的游戏库搬到电视上",
-  "es": "Pantalla grande: tu biblioteca en la tele"
+  "es": "Pantalla grande: tu biblioteca en la tele",
+  "pt": "Tela grande: sua biblioteca na TV"
  },
  "A full-screen view built for a gamepad and a sofa. Open it from the Library with one click, and put the browser or the desktop app full screen on the TV.": {
   "fr": "Une vue plein écran conçue pour une manette et un canapé. Ouvrez-la depuis la bibliothèque d'un clic, et passez le navigateur ou l'application de bureau en plein écran sur la télé.",
   "zh": "专为手柄和沙发设计的全屏视图。在游戏库中一键打开，再让浏览器或桌面应用在电视上全屏显示。",
-  "es": "Una vista a pantalla completa pensada para un mando y un sofá. Ábrela desde la Biblioteca con un clic, y pon el navegador o la aplicación de escritorio a pantalla completa en la tele."
+  "es": "Una vista a pantalla completa pensada para un mando y un sofá. Ábrela desde la Biblioteca con un clic, y pon el navegador o la aplicación de escritorio a pantalla completa en la tele.",
+  "pt": "Uma visão em tela cheia feita para um gamepad e um sofá. Abra-a pela Biblioteca com um clique e coloque o navegador ou o aplicativo de desktop em tela cheia na TV."
  },
  "The wheel: scroll with the stick, jump by letter with the bumpers": {
   "fr": "La roue : faites défiler avec le stick, sautez par lettre avec les gâchettes",
   "zh": "转盘：用摇杆滚动，用肩键按字母跳转",
-  "es": "La rueda: desplázate con el stick, salta por letra con los gatillos"
+  "es": "La rueda: desplázate con el stick, salta por letra con los gatillos",
+  "pt": "A roda: role com o analógico, pule por letra com os gatilhos"
  },
  "Runs entirely from a gamepad, with the button hints on screen.": {
   "fr": "Se pilote entièrement à la manette, avec les indications des boutons à l'écran.",
   "zh": "完全用手柄操作，屏幕上有按键提示。",
-  "es": "Se maneja por completo con mando, con las indicaciones de los botones en pantalla."
+  "es": "Se maneja por completo con mando, con las indicaciones de los botones en pantalla.",
+  "pt": "Funciona inteiramente com um gamepad, com as dicas dos botões na tela."
  },
  "Logos and marquees where you have them, covers where you don't, and a blurred backdrop from the game's own art.": {
   "fr": "Des logos et bannières quand vous en avez, des jaquettes sinon, et un arrière-plan flou tiré de l'illustration du jeu.",
   "zh": "有徽标和横幅时就显示它们，没有时显示封面，背景则是用游戏自身图片制作的模糊效果。",
-  "es": "Logotipos y rótulos donde los tengas, carátulas donde no, y un fondo difuminado con la propia imagen del juego."
+  "es": "Logotipos y rótulos donde los tengas, carátulas donde no, y un fondo difuminado con la propia imagen del juego.",
+  "pt": "Logotipos e letreiros onde você os tem, capas onde não tem, e um fundo desfocado com a própria imagem do jogo."
  },
  "Favourites and your collections on their own row, plus an on-screen keyboard for naming new ones.": {
   "fr": "Les favoris et vos collections sur leur propre ligne, plus un clavier à l'écran pour nommer les nouvelles.",
   "zh": "收藏和你的合集各占一行，还有用于给新合集命名的屏幕键盘。",
-  "es": "Los favoritos y tus colecciones en su propia fila, además de un teclado en pantalla para poner nombre a las nuevas."
+  "es": "Los favoritos y tus colecciones en su propia fila, además de un teclado en pantalla para poner nombre a las nuevas.",
+  "pt": "Favoritos e suas coleções em uma linha própria, além de um teclado na tela para dar nome às novas."
  },
  "Read a game's manual on screen, and see which games are flagged as having emulation issues.": {
   "fr": "Lisez le manuel d'un jeu à l'écran, et voyez quels jeux sont signalés comme ayant des problèmes d'émulation.",
   "zh": "在屏幕上阅读游戏说明书，并查看哪些游戏被标记为存在模拟问题。",
-  "es": "Lee el manual de un juego en pantalla y mira qué juegos están marcados con problemas de emulación."
+  "es": "Lee el manual de un juego en pantalla y mira qué juegos están marcados con problemas de emulación.",
+  "pt": "Leia o manual de um jogo na tela e veja quais jogos estão marcados com problemas de emulação."
  },
  "Play in the browser or start the game on this PC from the same screen.": {
   "fr": "Jouez dans le navigateur ou lancez le jeu sur ce PC depuis le même écran.",
   "zh": "在同一个界面里就可以在浏览器中游玩，或在这台电脑上启动游戏。",
-  "es": "Juega en el navegador o inicia el juego en este PC desde la misma pantalla."
+  "es": "Juega en el navegador o inicia el juego en este PC desde la misma pantalla.",
+  "pt": "Jogue no navegador ou inicie o jogo neste PC na mesma tela."
  },
  "A game's page: play it, favourite it, add it to a collection": {
   "fr": "La page d'un jeu : jouez, ajoutez-le aux favoris, ajoutez-le à une collection",
   "zh": "游戏页面：开始游戏、加入收藏、加入合集",
-  "es": "La página de un juego: jugarlo, marcarlo como favorito, añadirlo a una colección"
+  "es": "La página de un juego: jugarlo, marcarlo como favorito, añadirlo a una colección",
+  "pt": "A página de um jogo: jogar, favoritar, adicionar a uma coleção"
  },
  "The Carousel: pick a game and play": {
   "fr": "Le Carrousel : choisissez un jeu et jouez",
   "zh": "封面轮播：挑一个游戏就开玩",
-  "es": "El Carrusel: elige un juego y juega"
+  "es": "El Carrusel: elige un juego y juega",
+  "pt": "O Carrossel: escolha um jogo e jogue"
  },
  "A full-screen shelf of covers on a gentle arc. Choose a family and a platform, scroll with the arrow keys, the mouse wheel, a swipe or a gamepad, and press play.": {
   "fr": "Une étagère de jaquettes plein écran sur un arc doux. Choisissez une famille et une plateforme, faites défiler avec les flèches, la molette, un balayage ou une manette, et appuyez sur jouer.",
   "zh": "全屏的封面架，排成柔和的弧形。选择一个系列和平台，用方向键、鼠标滚轮、滑动或手柄滚动，然后按下开始游戏。",
-  "es": "Una estantería de carátulas a pantalla completa en un arco suave. Elige una familia y una plataforma, desplázate con las flechas, la rueda del ratón, un deslizamiento o un mando, y pulsa jugar."
+  "es": "Una estantería de carátulas a pantalla completa en un arco suave. Elige una familia y una plataforma, desplázate con las flechas, la rueda del ratón, un deslizamiento o un mando, y pulsa jugar.",
+  "pt": "Uma estante de capas em tela cheia em um arco suave. Escolha uma família e uma plataforma, role com as setas, a roda do mouse, um deslize ou um gamepad, e pressione jogar."
  },
  "Scrolling the Carousel, jumping by letter and starring a favourite": {
   "fr": "Faire défiler le Carrousel, sauter par lettre et mettre un favori en étoile",
   "zh": "滚动封面轮播、按字母跳转并给收藏加星",
-  "es": "Desplazarse por el Carrusel, saltar por letra y marcar un favorito con estrella"
+  "es": "Desplazarse por el Carrusel, saltar por letra y marcar un favorito con estrella",
+  "pt": "Rolando o Carrossel, pulando por letra e marcando um favorito com estrela"
  },
  "Press <b>Play in browser</b> and the game runs in the page. The game is <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, a free homebrew by Damian Yerrick (zlib licence).": {
   "fr": "Appuyez sur <b>Jouer dans le navigateur</b> et le jeu se lance dans la page. Le jeu est <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, un homebrew gratuit de Damian Yerrick (licence zlib).",
   "zh": "点击<b>在浏览器中游玩</b>，游戏就会在页面中运行。这个游戏是 <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>，由 Damian Yerrick 制作的免费自制游戏（zlib 许可）。",
-  "es": "Pulsa <b>Jugar en el navegador</b> y el juego se ejecuta en la página. El juego es <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, un homebrew gratuito de Damian Yerrick (licencia zlib)."
+  "es": "Pulsa <b>Jugar en el navegador</b> y el juego se ejecuta en la página. El juego es <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, un homebrew gratuito de Damian Yerrick (licencia zlib).",
+  "pt": "Pressione <b>Jogar no navegador</b> e o jogo roda na página. O jogo é <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, um homebrew gratuito de Damian Yerrick (licença zlib)."
  },
  "<b>Play in browser</b> for games that can run in a web page, or <b>Play on this PC</b> to start the emulator you have set up.": {
   "fr": "<b>Jouer dans le navigateur</b> pour les jeux qui peuvent tourner dans une page web, ou <b>Jouer sur ce PC</b> pour lancer l'émulateur que vous avez configuré.",
   "zh": "对可以在网页中运行的游戏使用<b>在浏览器中游玩</b>，或用<b>在此电脑上游玩</b>来启动你已设置好的模拟器。",
-  "es": "<b>Jugar en el navegador</b> para juegos que pueden ejecutarse en una página web, o <b>Jugar en este PC</b> para iniciar el emulador que hayas configurado."
+  "es": "<b>Jugar en el navegador</b> para juegos que pueden ejecutarse en una página web, o <b>Jugar en este PC</b> para iniciar el emulador que hayas configurado.",
+  "pt": "<b>Jogar no navegador</b> para jogos que podem rodar em uma página da web, ou <b>Jogar neste PC</b> para iniciar o emulador que você configurou."
  },
  "A gold star marks your favourites on the cover and by the title, and you can star or unstar the game in the middle without leaving.": {
   "fr": "Une étoile dorée marque vos favoris sur la jaquette et près du titre, et vous pouvez mettre ou retirer l'étoile du jeu central sans quitter la vue.",
   "zh": "金色星标会显示在封面和标题旁，标记你的收藏，你还可以不离开当前画面就为中间的游戏加星或取消加星。",
-  "es": "Una estrella dorada marca tus favoritos en la carátula y junto al título, y puedes marcar o desmarcar con estrella el juego del medio sin salir."
+  "es": "Una estrella dorada marca tus favoritos en la carátula y junto al título, y puedes marcar o desmarcar con estrella el juego del medio sin salir.",
+  "pt": "Uma estrela dourada marca seus favoritos na capa e ao lado do título, e você pode marcar ou desmarcar com estrela o jogo do meio sem sair."
  },
  "Press a letter to jump to the first title that starts with it.": {
   "fr": "Appuyez sur une lettre pour sauter au premier titre qui commence par elle.",
   "zh": "按下一个字母，即可跳到以该字母开头的第一个游戏。",
-  "es": "Pulsa una letra para saltar al primer título que empieza por ella."
+  "es": "Pulsa una letra para saltar al primer título que empieza por ella.",
+  "pt": "Pressione uma letra para pular para o primeiro título que começa com ela."
  },
  "If a game has a video, it plays under the covers when you stop on it.": {
   "fr": "Si un jeu a une vidéo, elle se lance sous les jaquettes quand vous vous arrêtez dessus.",
   "zh": "如果游戏有视频，停在它上面时，视频会在封面下方播放。",
-  "es": "Si un juego tiene vídeo, se reproduce bajo las carátulas cuando te detienes en él."
+  "es": "Si un juego tiene vídeo, se reproduce bajo las carátulas cuando te detienes en él.",
+  "pt": "Se um jogo tem vídeo, ele toca sob as capas quando você para nele."
  },
  "Your shelf: discs and cartridges you own": {
   "fr": "Votre étagère : les disques et cartouches que vous possédez",
   "zh": "你的游戏架：你拥有的光盘和卡带",
-  "es": "Tu estantería: discos y cartuchos que tienes"
+  "es": "Tu estantería: discos y cartuchos que tienes",
+  "pt": "Sua estante: discos e cartuchos que você tem"
  },
  "Catalogue the boxed games on your real shelf, by hand or from a list, next to your digital collection. Each person has their own shelf.": {
   "fr": "Répertoriez les jeux en boîte de votre vraie étagère, à la main ou depuis une liste, à côté de votre collection numérique. Chaque personne a sa propre étagère.",
   "zh": "把你真实游戏架上的盒装游戏记录下来，可以手动添加或从列表导入，与你的数字收藏放在一起。每个人都有自己的游戏架。",
-  "es": "Cataloga los juegos en caja de tu estantería real, a mano o desde una lista, junto a tu colección digital. Cada persona tiene su propia estantería."
+  "es": "Cataloga los juegos en caja de tu estantería real, a mano o desde una lista, junto a tu colección digital. Cada persona tiene su propia estantería.",
+  "pt": "Catalogue os jogos em caixa da sua estante de verdade, manualmente ou de uma lista, ao lado da sua coleção digital. Cada pessoa tem a sua própria estante."
  },
  "From tiles to a shelf of spines, then pull a case out, turn it over, open it and read the manual": {
   "fr": "Des tuiles à une étagère de tranches, puis sortez un boîtier, retournez-le, ouvrez-le et lisez le manuel",
   "zh": "从方块视图切换到书脊游戏架，再抽出盒子、翻转、打开并阅读说明书",
-  "es": "De baldosas a una estantería de lomos, luego saca una caja, dale la vuelta, ábrela y lee el manual"
+  "es": "De baldosas a una estantería de lomos, luego saca una caja, dale la vuelta, ábrela y lee el manual",
+  "pt": "De ladrilhos a uma estante de lombadas, depois puxe uma caixa, vire-a, abra e leia o manual"
  },
  "Look at your games as tiles, or as a shelf of spines that stand the way the real cases do.": {
   "fr": "Regardez vos jeux en tuiles, ou en étagère de tranches qui se tiennent comme les vrais boîtiers.",
   "zh": "以方块形式查看游戏，或以书脊游戏架的形式查看，书脊的摆放方式就像真实的盒子。",
-  "es": "Mira tus juegos como baldosas, o como una estantería de lomos que se colocan igual que las cajas de verdad."
+  "es": "Mira tus juegos como baldosas, o como una estantería de lomos que se colocan igual que las cajas de verdad.",
+  "pt": "Veja seus jogos como ladrilhos, ou como uma estante de lombadas que ficam em pé como as caixas de verdade."
  },
  "Click a spine to pull it out, click again to bring the case forward, and again to open it: the manual on one side and the disc or cartridge on the other.": {
   "fr": "Cliquez sur une tranche pour la sortir, cliquez encore pour avancer le boîtier, et encore pour l'ouvrir : le manuel d'un côté et le disque ou la cartouche de l'autre.",
   "zh": "点击书脊把它抽出来，再点击让盒子转到前面，再点击即可打开：一边是说明书，另一边是光盘或卡带。",
-  "es": "Haz clic en un lomo para sacarlo, haz clic otra vez para traer la caja al frente, y otra vez para abrirla: el manual a un lado y el disco o cartucho al otro."
+  "es": "Haz clic en un lomo para sacarlo, haz clic otra vez para traer la caja al frente, y otra vez para abrirla: el manual a un lado y el disco o cartucho al otro.",
+  "pt": "Clique em uma lombada para puxá-la, clique de novo para trazer a caixa para a frente, e de novo para abri-la: o manual de um lado e o disco ou cartucho do outro."
  },
  "Turn the case over to see its back, and read the manual on screen.": {
   "fr": "Retournez le boîtier pour voir son dos, et lisez le manuel à l'écran.",
   "zh": "翻转盒子查看背面，并在屏幕上阅读说明书。",
-  "es": "Dale la vuelta a la caja para ver su reverso, y lee el manual en pantalla."
+  "es": "Dale la vuelta a la caja para ver su reverso, y lee el manual en pantalla.",
+  "pt": "Vire a caixa para ver o verso e leia o manual na tela."
  },
  "Add your own pictures and manuals, or fetch covers, spines, backs and discs from your metadata providers.": {
   "fr": "Ajoutez vos propres images et manuels, ou récupérez jaquettes, tranches, dos et disques auprès de vos fournisseurs de métadonnées.",
   "zh": "添加你自己的图片和说明书，或从你的元数据数据源获取封面、书脊、背面和光盘图片。",
-  "es": "Añade tus propias imágenes y manuales, o consigue carátulas, lomos, reversos y discos de tus proveedores de metadatos."
+  "es": "Añade tus propias imágenes y manuales, o consigue carátulas, lomos, reversos y discos de tus proveedores de metadatos.",
+  "pt": "Adicione suas próprias imagens e manuais, ou busque capas, lombadas, versos e discos dos seus provedores de metadados."
  },
  "See it": {
   "fr": "Voyez-le",
   "zh": "看看它的样子",
-  "es": "Míralo"
+  "es": "Míralo",
+  "pt": "Veja como é"
  },
  "Classic and Modern looks, light and dark. Same library, your choice.": {
   "fr": "Looks Classique et Moderne, clair et sombre. La même bibliothèque, à votre goût.",
   "zh": "经典和现代两种外观，浅色和深色两种主题。同一个游戏库，由你选择。",
-  "es": "Aspectos Clásico y Moderno, claro y oscuro. La misma biblioteca, a tu gusto."
+  "es": "Aspectos Clásico y Moderno, claro y oscuro. La misma biblioteca, a tu gusto.",
+  "pt": "Visuais Clássico e Moderno, claro e escuro. A mesma biblioteca, à sua escolha."
  },
  "Game details beside the library": {
   "fr": "Les détails du jeu à côté de la bibliothèque",
   "zh": "游戏库旁边的游戏详情",
-  "es": "Detalles del juego junto a la biblioteca"
+  "es": "Detalles del juego junto a la biblioteca",
+  "pt": "Detalhes do jogo ao lado da biblioteca"
  },
  "The light theme": {
   "fr": "Le thème clair",
   "zh": "浅色主题",
-  "es": "El tema claro"
+  "es": "El tema claro",
+  "pt": "O tema claro"
  },
  "Collections": {
   "fr": "Collections",
   "zh": "合集",
-  "es": "Colecciones"
+  "es": "Colecciones",
+  "pt": "Coleções"
  },
  "The classic look": {
   "fr": "Le look classique",
   "zh": "经典外观",
-  "es": "El aspecto clásico"
+  "es": "El aspecto clásico",
+  "pt": "O visual clássico"
  },
  "The sign-in screen": {
   "fr": "L'écran de connexion",
   "zh": "登录界面",
-  "es": "La pantalla de inicio de sesión"
+  "es": "La pantalla de inicio de sesión",
+  "pt": "A tela de login"
  },
  "A case opened on the shelf": {
   "fr": "Un boîtier ouvert sur l'étagère",
   "zh": "游戏架上打开的盒子",
-  "es": "Una caja abierta en la estantería"
+  "es": "Una caja abierta en la estantería",
+  "pt": "Uma caixa aberta na estante"
  },
  "The Carousel": {
   "fr": "Le Carrousel",
   "zh": "封面轮播",
-  "es": "El Carrusel"
+  "es": "El Carrusel",
+  "pt": "O Carrossel"
  },
  "Setting up emulators on your PC, with a RetroArch core picker": {
   "fr": "Configurer les émulateurs sur votre PC, avec un sélecteur de cœur RetroArch",
   "zh": "在你的电脑上设置模拟器，带有 RetroArch 核心选择器",
-  "es": "Configurar emuladores en tu PC, con un selector de núcleos de RetroArch"
+  "es": "Configurar emuladores en tu PC, con un selector de núcleos de RetroArch",
+  "pt": "Configurando emuladores no seu PC, com um seletor de core do RetroArch"
  },
  "The Digital library: your Steam games and the console games you own": {
   "fr": "La bibliothèque numérique : vos jeux Steam et les jeux de console que vous possédez",
   "zh": "数字游戏库：你的 Steam 游戏和你拥有的主机游戏",
-  "es": "La biblioteca digital: tus juegos de Steam y los juegos de consola que tienes"
+  "es": "La biblioteca digital: tus juegos de Steam y los juegos de consola que tienes",
+  "pt": "A biblioteca Digital: seus jogos do Steam e os jogos de console que você tem"
  },
  "Emulators": {
   "fr": "Émulateurs",
   "zh": "模拟器",
-  "es": "Emuladores"
+  "es": "Emuladores",
+  "pt": "Emuladores"
  },
  "Pick the one that suits you. Each takes a few minutes.": {
   "fr": "Choisissez ce qui vous convient. Chacun prend quelques minutes.",
   "zh": "选择适合你的方式。每种都只需几分钟。",
-  "es": "Elige el que más te convenga. Cada uno lleva unos minutos."
+  "es": "Elige el que más te convenga. Cada uno lleva unos minutos.",
+  "pt": "Escolha o que combina com você. Cada um leva alguns minutos."
  },
  "On your own computer": {
   "fr": "Sur votre propre ordinateur",
   "zh": "在你自己的电脑上",
-  "es": "En tu propio ordenador"
+  "es": "En tu propio ordenador",
+  "pt": "No seu próprio computador"
  },
  "Download the desktop app or the portable version for Windows, macOS or Linux. Nothing else to install: no server, no Docker, no settings to edit.": {
   "fr": "Téléchargez l'application de bureau ou la version portable pour Windows, macOS ou Linux. Rien d'autre à installer : pas de serveur, pas de Docker, aucun réglage à modifier.",
   "zh": "下载适用于 Windows、macOS 或 Linux 的桌面应用或便携版。无需安装其他任何东西：不需要服务器，不需要 Docker，也不用修改任何设置。",
-  "es": "Descarga la aplicación de escritorio o la versión portátil para Windows, macOS o Linux. Nada más que instalar: sin servidor, sin Docker, sin ajustes que editar."
+  "es": "Descarga la aplicación de escritorio o la versión portátil para Windows, macOS o Linux. Nada más que instalar: sin servidor, sin Docker, sin ajustes que editar.",
+  "pt": "Baixe o aplicativo de desktop ou a versão portátil para Windows, macOS ou Linux. Nada mais para instalar: sem servidor, sem Docker, sem configurações para editar."
  },
  "Download the latest release": {
   "fr": "Télécharger la dernière version",
   "zh": "下载最新版本",
-  "es": "Descargar la última versión"
+  "es": "Descargar la última versión",
+  "pt": "Baixar a versão mais recente"
  },
  "On a home server": {
   "fr": "Sur un serveur domestique",
   "zh": "在家庭服务器上",
-  "es": "En un servidor doméstico"
+  "es": "En un servidor doméstico",
+  "pt": "Em um servidor doméstico"
  },
  "Run it with Docker, on Unraid or in a Proxmox container, and use it from every device in the house. The deployment guide has the steps.": {
   "fr": "Lancez-le avec Docker, sur Unraid ou dans un conteneur Proxmox, et utilisez-le depuis tous les appareils de la maison. Le guide de déploiement donne les étapes.",
   "zh": "用 Docker、在 Unraid 上或在 Proxmox 容器中运行，然后在家里的每台设备上使用。部署指南里有具体步骤。",
-  "es": "Ejecútalo con Docker, en Unraid o en un contenedor de Proxmox, y úsalo desde todos los dispositivos de casa. La guía de despliegue tiene los pasos."
+  "es": "Ejecútalo con Docker, en Unraid o en un contenedor de Proxmox, y úsalo desde todos los dispositivos de casa. La guía de despliegue tiene los pasos.",
+  "pt": "Rode com Docker, no Unraid ou em um contêiner do Proxmox, e use em todos os dispositivos da casa. O guia de implantação tem os passos."
  },
  "Read the deployment guide": {
   "fr": "Lire le guide de déploiement",
   "zh": "阅读部署指南",
-  "es": "Leer la guía de despliegue"
+  "es": "Leer la guía de despliegue",
+  "pt": "Ler o guia de implantação"
  },
  "The first time it starts, the account that was made for you is shown once. Write it down and change the password in Settings. If you expose it to the internet, put it behind a VPN or a reverse proxy with HTTPS.": {
   "fr": "Au premier démarrage, le compte qui a été créé pour vous s'affiche une seule fois. Notez-le et changez le mot de passe dans les Réglages. Si vous l'exposez à Internet, placez-le derrière un VPN ou un proxy inverse avec HTTPS.",
   "zh": "首次启动时，会显示一次为你创建的账户。请记下来，并在设置中修改密码。如果要将它暴露到互联网，请把它放在 VPN 或带 HTTPS 的反向代理后面。",
-  "es": "La primera vez que arranca, se muestra una sola vez la cuenta que se creó para ti. Anótala y cambia la contraseña en Ajustes. Si lo expones a internet, ponlo detrás de una VPN o de un proxy inverso con HTTPS."
+  "es": "La primera vez que arranca, se muestra una sola vez la cuenta que se creó para ti. Anótala y cambia la contraseña en Ajustes. Si lo expones a internet, ponlo detrás de una VPN o de un proxy inverso con HTTPS.",
+  "pt": "Na primeira vez que ele inicia, a conta que foi criada para você é mostrada uma única vez. Anote-a e mude a senha em Configurações. Se você expuser à internet, coloque atrás de uma VPN ou de um proxy reverso com HTTPS."
  },
  "Questions": {
   "fr": "Questions",
   "zh": "常见问题",
-  "es": "Preguntas"
+  "es": "Preguntas",
+  "pt": "Perguntas"
  },
  "Does it come with games?": {
   "fr": "Est-il fourni avec des jeux ?",
   "zh": "它附带游戏吗？",
-  "es": "¿Viene con juegos?"
+  "es": "¿Viene con juegos?",
+  "pt": "Vem com jogos?"
  },
  "No. game-sauce is for managing games you own. It doesn't include or supply games or BIOS files, and it doesn't download games for you: you bring your own collection. For playing, browser play runs on EmulatorJS, an open-source emulator that your browser loads when you press Play. For play on your PC, the Emulators page recommends emulators and links to where to get them, and the launcher starts the ones you install yourself.": {
   "fr": "Non. game-sauce sert à gérer les jeux que vous possédez. Il n'inclut ni ne fournit de jeux ni de fichiers BIOS, et ne télécharge pas de jeux pour vous : vous apportez votre propre collection. Pour jouer, le jeu dans le navigateur repose sur EmulatorJS, un émulateur open source que votre navigateur charge quand vous appuyez sur Jouer. Pour jouer sur votre PC, la page Émulateurs recommande des émulateurs et indique où les obtenir, et le lanceur démarre ceux que vous installez vous-même.",
   "zh": "不附带。game-sauce 是用来管理你自己拥有的游戏的。它不包含也不提供游戏或 BIOS 文件，也不会替你下载游戏：你需要自带收藏。游玩方面，浏览器游玩由开源模拟器 EmulatorJS 提供，点击“开始游戏”时浏览器会加载它。在电脑上游玩时，“模拟器”页面会推荐模拟器并提供获取链接，启动器则会启动你自己安装的模拟器。",
-  "es": "No. game-sauce sirve para gestionar los juegos que ya tienes. No incluye ni suministra juegos ni archivos BIOS, y no descarga juegos por ti: tú traes tu propia colección. Para jugar, el juego en el navegador funciona con EmulatorJS, un emulador de código abierto que tu navegador carga al pulsar Jugar. Para jugar en tu PC, la página Emuladores recomienda emuladores y enlaza dónde conseguirlos, y el lanzador inicia los que instalas tú mismo."
+  "es": "No. game-sauce sirve para gestionar los juegos que ya tienes. No incluye ni suministra juegos ni archivos BIOS, y no descarga juegos por ti: tú traes tu propia colección. Para jugar, el juego en el navegador funciona con EmulatorJS, un emulador de código abierto que tu navegador carga al pulsar Jugar. Para jugar en tu PC, la página Emuladores recomienda emuladores y enlaza dónde conseguirlos, y el lanzador inicia los que instalas tú mismo.",
+  "pt": "Não. O game-sauce serve para gerenciar jogos que você tem. Ele não inclui nem fornece jogos ou arquivos de BIOS, e não baixa jogos para você: você traz a sua própria coleção. Para jogar, o jogo no navegador roda com o EmulatorJS, um emulador de código aberto que o seu navegador carrega quando você pressiona Jogar. Para jogar no seu PC, a página Emuladores recomenda emuladores e linka onde obtê-los, e o iniciador abre os que você mesmo instala."
  },
  "Is it really free?": {
   "fr": "Est-il vraiment gratuit ?",
   "zh": "它真的免费吗？",
-  "es": "¿De verdad es gratis?"
+  "es": "¿De verdad es gratis?",
+  "pt": "É mesmo grátis?"
  },
  "Yes. It's open source under the MIT licence. There is no account to create, no subscription and no tracking. Some metadata providers ask you to sign up for your own free account to use their service.": {
   "fr": "Oui. Il est open source sous licence MIT. Il n'y a aucun compte à créer, aucun abonnement et aucun suivi. Certains fournisseurs de métadonnées vous demandent de créer votre propre compte gratuit pour utiliser leur service.",
   "zh": "是的。它以 MIT 许可开源。无需创建账号，没有订阅，也没有任何追踪。有些元数据数据源要求你注册自己的免费账户才能使用其服务。",
-  "es": "Sí. Es de código abierto bajo la licencia MIT. No hay que crear cuenta, ni suscripción, ni seguimiento. Algunos proveedores de metadatos te piden registrarte con tu propia cuenta gratuita para usar su servicio."
+  "es": "Sí. Es de código abierto bajo la licencia MIT. No hay que crear cuenta, ni suscripción, ni seguimiento. Algunos proveedores de metadatos te piden registrarte con tu propia cuenta gratuita para usar su servicio.",
+  "pt": "Sim. É de código aberto sob a licença MIT. Não há conta para criar, nem assinatura, nem rastreamento. Alguns provedores de metadados pedem que você crie a sua própria conta gratuita para usar o serviço deles."
  },
  "Which games can I play in the browser?": {
   "fr": "Quels jeux puis-je jouer dans le navigateur ?",
   "zh": "哪些游戏可以在浏览器中游玩？",
-  "es": "¿Qué juegos puedo jugar en el navegador?"
+  "es": "¿Qué juegos puedo jugar en el navegador?",
+  "pt": "Quais jogos posso jogar no navegador?"
  },
  "Many older consoles that need no BIOS work from a web page. Newer systems, and anything that needs more than a browser can offer, start in an emulator on your PC through the launcher instead.": {
   "fr": "De nombreuses consoles anciennes qui n'ont pas besoin de BIOS fonctionnent depuis une page web. Les systèmes plus récents, et tout ce qui demande plus que ce qu'un navigateur peut offrir, démarrent plutôt dans un émulateur sur votre PC via le lanceur.",
   "zh": "许多不需要 BIOS 的老主机可以直接在网页中运行。较新的系统，以及任何超出浏览器能力的游戏，则会通过启动器在你电脑上的模拟器中运行。",
-  "es": "Muchas consolas antiguas que no necesitan BIOS funcionan desde una página web. Los sistemas más nuevos, y todo lo que necesita más de lo que un navegador puede ofrecer, se inician en cambio en un emulador de tu PC mediante el lanzador."
+  "es": "Muchas consolas antiguas que no necesitan BIOS funcionan desde una página web. Los sistemas más nuevos, y todo lo que necesita más de lo que un navegador puede ofrecer, se inician en cambio en un emulador de tu PC mediante el lanzador.",
+  "pt": "Muitos consoles antigos que não precisam de BIOS funcionam a partir de uma página da web. Sistemas mais novos, e tudo que exige mais do que um navegador pode oferecer, iniciam em vez disso em um emulador no seu PC pelo iniciador."
  },
  "Will it move or change my files?": {
   "fr": "Déplacera-t-il ou modifiera-t-il mes fichiers ?",
   "zh": "它会移动或更改我的文件吗？",
-  "es": "¿Moverá o cambiará mis archivos?"
+  "es": "¿Moverá o cambiará mis archivos?",
+  "pt": "Ele vai mover ou alterar meus arquivos?"
  },
  "Not in the folders you point it at. It reads them where they are and never moves, renames or deletes the files in them. The clean-up tools only touch artwork and files that game-sauce stored itself.": {
   "fr": "Pas dans les dossiers que vous lui indiquez. Il les lit là où ils sont et ne déplace, ne renomme ni ne supprime jamais les fichiers qui s'y trouvent. Les outils de nettoyage ne touchent que les illustrations et les fichiers que game-sauce a stockés lui-même.",
   "zh": "在你指定的文件夹里不会。它直接读取原位置的文件，绝不会移动、重命名或删除其中的文件。清理工具只会处理图片以及 game-sauce 自己存储的文件。",
-  "es": "No en las carpetas que le indiques. Los lee donde están y nunca mueve, renombra ni elimina los archivos que contienen. Las herramientas de limpieza solo tocan imágenes y archivos que game-sauce guardó él mismo."
+  "es": "No en las carpetas que le indiques. Los lee donde están y nunca mueve, renombra ni elimina los archivos que contienen. Las herramientas de limpieza solo tocan imágenes y archivos que game-sauce guardó él mismo.",
+  "pt": "Não nas pastas que você apontar. Ele lê os arquivos onde estão e nunca move, renomeia nem exclui os arquivos delas. As ferramentas de limpeza só tocam em imagens e em arquivos que o próprio game-sauce guardou."
  },
  "Can the whole family use it?": {
   "fr": "Toute la famille peut-elle l'utiliser ?",
   "zh": "全家人都可以使用吗？",
-  "es": "¿Puede usarlo toda la familia?"
+  "es": "¿Puede usarlo toda la familia?",
+  "pt": "A família toda pode usar?"
  },
  "Yes. Make accounts for the people you trust. Collections are private to whoever made them, and play-only accounts see just the games that can be played in the browser.": {
   "fr": "Oui. Créez des comptes pour les personnes de confiance. Les collections sont privées pour celui qui les a créées, et les comptes « jeu uniquement » ne voient que les jeux jouables dans le navigateur.",
   "zh": "可以。为你信任的人创建账户即可。合集仅对创建者本人可见，仅游玩账户只能看到可在浏览器中游玩的游戏。",
-  "es": "Sí. Crea cuentas para las personas de confianza. Las colecciones son privadas de quien las creó, y las cuentas de solo jugar ven únicamente los juegos que se pueden jugar en el navegador."
+  "es": "Sí. Crea cuentas para las personas de confianza. Las colecciones son privadas de quien las creó, y las cuentas de solo jugar ven únicamente los juegos que se pueden jugar en el navegador.",
+  "pt": "Sim. Crie contas para as pessoas em quem você confia. As coleções são privadas de quem as criou, e as contas só de jogar veem apenas os jogos que podem ser jogados no navegador."
  },
  "Where do I get help or report a problem?": {
   "fr": "Où trouver de l'aide ou signaler un problème ?",
   "zh": "在哪里可以获得帮助或报告问题？",
-  "es": "¿Dónde consigo ayuda o informo de un problema?"
+  "es": "¿Dónde consigo ayuda o informo de un problema?",
+  "pt": "Onde consigo ajuda ou relato um problema?"
  },
  "Open an issue or a discussion on <a href=\"https://github.com/gamesauce-dev/game-sauce\">GitHub</a>, or email <a href=\"mailto:hello@gamesauce.app\">hello@gamesauce.app</a>. The System health page in Settings makes a copy-and-paste report with no secrets in it.": {
   "fr": "Ouvrez un ticket ou une discussion sur <a href=\"https://github.com/gamesauce-dev/game-sauce\">GitHub</a>, ou écrivez à <a href=\"mailto:hello@gamesauce.app\">hello@gamesauce.app</a>. La page Santé du système dans les Réglages produit un rapport à copier-coller, sans aucun secret.",
   "zh": "请在 <a href=\"https://github.com/gamesauce-dev/game-sauce\">GitHub</a> 上提交 issue 或发起讨论，或发邮件到 <a href=\"mailto:hello@gamesauce.app\">hello@gamesauce.app</a>。设置中的“系统健康状况”页面可以生成一份可复制粘贴的报告，其中不含任何机密信息。",
-  "es": "Abre una incidencia o una discusión en <a href=\"https://github.com/gamesauce-dev/game-sauce\">GitHub</a>, o escribe a <a href=\"mailto:hello@gamesauce.app\">hello@gamesauce.app</a>. La página Estado del sistema en Ajustes genera un informe para copiar y pegar sin ningún secreto."
+  "es": "Abre una incidencia o una discusión en <a href=\"https://github.com/gamesauce-dev/game-sauce\">GitHub</a>, o escribe a <a href=\"mailto:hello@gamesauce.app\">hello@gamesauce.app</a>. La página Estado del sistema en Ajustes genera un informe para copiar y pegar sin ningún secreto.",
+  "pt": "Abra uma issue ou uma discussão no <a href=\"https://github.com/gamesauce-dev/game-sauce\">GitHub</a>, ou escreva para <a href=\"mailto:hello@gamesauce.app\">hello@gamesauce.app</a>. A página Saúde do sistema em Configurações gera um relatório para copiar e colar, sem nenhum segredo."
  },
  "Enjoying game-sauce?": {
   "fr": "Vous aimez game-sauce ?",
   "zh": "喜欢 game-sauce 吗？",
-  "es": "¿Te gusta game-sauce?"
+  "es": "¿Te gusta game-sauce?",
+  "pt": "Gostando do game-sauce?"
  },
  "game-sauce is free and open source. If it's useful to you, you can buy me a coffee. It helps me spend more time on new features, testing on Windows, Mac and Linux, and answering questions.": {
   "fr": "game-sauce est gratuit et open source. Si vous le trouvez utile, vous pouvez m'offrir un café. Cela m'aide à consacrer plus de temps aux nouvelles fonctionnalités, aux tests sur Windows, Mac et Linux, et aux réponses à vos questions.",
   "zh": "game-sauce 是免费开源的。如果它对你有用，可以请我喝杯咖啡。这能让我有更多时间开发新功能、在 Windows、Mac 和 Linux 上测试，并回答大家的问题。",
-  "es": "game-sauce es gratuito y de código abierto. Si te resulta útil, puedes invitarme a un café. Me ayuda a dedicar más tiempo a nuevas funciones, a probar en Windows, Mac y Linux, y a responder preguntas."
+  "es": "game-sauce es gratuito y de código abierto. Si te resulta útil, puedes invitarme a un café. Me ayuda a dedicar más tiempo a nuevas funciones, a probar en Windows, Mac y Linux, y a responder preguntas.",
+  "pt": "O game-sauce é gratuito e de código aberto. Se for útil para você, pode me pagar um café. Isso me ajuda a dedicar mais tempo a novos recursos, a testes no Windows, Mac e Linux e a responder perguntas."
  },
  "<a class=\"btn btn-gold\" href=\"https://buymeacoffee.com/gamesauce\" rel=\"noopener\">&#9733; Buy me a coffee</a>": {
   "fr": "<a class=\"btn btn-gold\" href=\"https://buymeacoffee.com/gamesauce\" rel=\"noopener\">&#9733; Offrez-moi un café</a>",
   "zh": "<a class=\"btn btn-gold\" href=\"https://buymeacoffee.com/gamesauce\" rel=\"noopener\">&#9733; 请我喝杯咖啡</a>",
-  "es": "<a class=\"btn btn-gold\" href=\"https://buymeacoffee.com/gamesauce\" rel=\"noopener\">&#9733; Invítame a un café</a>"
+  "es": "<a class=\"btn btn-gold\" href=\"https://buymeacoffee.com/gamesauce\" rel=\"noopener\">&#9733; Invítame a un café</a>",
+  "pt": "<a class=\"btn btn-gold\" href=\"https://buymeacoffee.com/gamesauce\" rel=\"noopener\">&#9733; Me pague um café</a>"
  },
  "Releases": {
   "fr": "Versions",
   "zh": "版本发布",
-  "es": "Versiones"
+  "es": "Versiones",
+  "pt": "Versões"
  },
  "Changelog": {
   "fr": "Journal des modifications",
   "zh": "更新日志",
-  "es": "Registro de cambios"
+  "es": "Registro de cambios",
+  "pt": "Histórico de mudanças"
  },
  "User guide": {
   "fr": "Guide d'utilisation",
   "zh": "用户指南",
-  "es": "Guía de usuario"
+  "es": "Guía de usuario",
+  "pt": "Guia do usuário"
  },
  "MIT licence": {
   "fr": "Licence MIT",
   "zh": "MIT 许可",
-  "es": "Licencia MIT"
+  "es": "Licencia MIT",
+  "pt": "Licença MIT"
  },
  "Support the project": {
   "fr": "Soutenir le projet",
   "zh": "支持本项目",
-  "es": "Apoya el proyecto"
+  "es": "Apoya el proyecto",
+  "pt": "Apoie o projeto"
  },
  "game-sauce is an independent project. It is not affiliated with or endorsed by any console maker or game publisher; all console, game and company names and logos belong to their owners. It is built for managing games you legally own.": {
   "fr": "game-sauce est un projet indépendant. Il n'est ni affilié à un fabricant de consoles ou un éditeur de jeux, ni approuvé par eux ; tous les noms et logos de consoles, de jeux et d'entreprises appartiennent à leurs propriétaires. Il est conçu pour gérer des jeux que vous possédez légalement.",
   "zh": "game-sauce 是一个独立项目。它与任何主机厂商或游戏发行商均无关联，也未获其认可；所有主机、游戏和公司的名称及徽标均属其各自所有者。它旨在管理你合法拥有的游戏。",
-  "es": "game-sauce es un proyecto independiente. No está afiliado ni respaldado por ningún fabricante de consolas ni editor de juegos; todos los nombres y logotipos de consolas, juegos y empresas pertenecen a sus propietarios. Está pensado para gestionar juegos que posees legalmente."
+  "es": "game-sauce es un proyecto independiente. No está afiliado ni respaldado por ningún fabricante de consolas ni editor de juegos; todos los nombres y logotipos de consolas, juegos y empresas pertenecen a sus propietarios. Está pensado para gestionar juegos que posees legalmente.",
+  "pt": "O game-sauce é um projeto independente. Não é afiliado nem endossado por nenhum fabricante de consoles ou publicadora de jogos; todos os nomes e logotipos de consoles, jogos e empresas pertencem aos seus donos. Foi feito para gerenciar jogos que você possui legalmente."
  },
  "game-sauce home": {
   "fr": "Accueil game-sauce",
   "zh": "game-sauce 首页",
-  "es": "Inicio de game-sauce"
+  "es": "Inicio de game-sauce",
+  "pt": "Início do game-sauce"
  },
  "Sections": {
   "fr": "Sections",
   "zh": "章节",
-  "es": "Secciones"
+  "es": "Secciones",
+  "pt": "Seções"
  },
  "The game-sauce library: a grid of game covers with platform filters and an A to Z bar": {
   "fr": "La bibliothèque game-sauce : une grille de jaquettes avec des filtres de plateforme et une barre de A à Z",
   "zh": "game-sauce 游戏库：一个封面网格，带有平台筛选和 A 到 Z 字母条",
-  "es": "La biblioteca de game-sauce: una cuadrícula de carátulas con filtros de plataforma y una barra de la A a la Z"
+  "es": "La biblioteca de game-sauce: una cuadrícula de carátulas con filtros de plataforma y una barra de la A a la Z",
+  "pt": "A biblioteca do game-sauce: uma grade de capas de jogos com filtros de plataforma e uma barra de A a Z"
  },
  "Big Screen: scrolling the wheel of games, jumping by letter, opening a game and going back": {
   "fr": "Grand écran : défilement de la roue de jeux, saut par lettre, ouverture d'un jeu et retour",
   "zh": "大屏幕：滚动游戏转盘、按字母跳转、打开游戏并返回",
-  "es": "Pantalla grande: desplazar la rueda de juegos, saltar por letra, abrir un juego y volver"
+  "es": "Pantalla grande: desplazar la rueda de juegos, saltar por letra, abrir un juego y volver",
+  "pt": "Tela grande: rolando a roda de jogos, pulando por letra, abrindo um jogo e voltando"
  },
  "The Library: searching for a game and opening its details": {
   "fr": "La bibliothèque : recherche d'un jeu et ouverture de ses détails",
   "zh": "游戏库：搜索一个游戏并打开它的详情",
-  "es": "La Biblioteca: buscar un juego y abrir sus detalles"
+  "es": "La Biblioteca: buscar un juego y abrir sus detalles",
+  "pt": "A Biblioteca: pesquisando um jogo e abrindo seus detalhes"
  },
  "Big Screen: a wheel of games with the selected game in the middle, an A to Z strip on the right and controller hints along the bottom": {
   "fr": "Grand écran : une roue de jeux avec le jeu sélectionné au milieu, une barre de A à Z à droite et les indications de la manette en bas",
   "zh": "大屏幕：游戏转盘，所选游戏在中间，右侧是 A 到 Z 字母条，底部是手柄提示",
-  "es": "Pantalla grande: una rueda de juegos con el juego seleccionado en el centro, una barra de la A a la Z a la derecha y las indicaciones del mando abajo"
+  "es": "Pantalla grande: una rueda de juegos con el juego seleccionado en el centro, una barra de la A a la Z a la derecha y las indicaciones del mando abajo",
+  "pt": "Tela grande: uma roda de jogos com o jogo selecionado no meio, uma barra de A a Z à direita e dicas do controle embaixo"
  },
  "A game's page in Big Screen: Play, Favourite, Add to Collection, Broken and Hide on the left, the cover in the middle and the details on the right": {
   "fr": "La page d'un jeu dans le Grand écran : Jouer, Favori, Ajouter à une collection, Cassé et Masquer à gauche, la jaquette au milieu et les détails à droite",
   "zh": "大屏幕中的游戏页面：左侧是开始游戏、收藏、加入合集、已损坏和隐藏，中间是封面，右侧是详情",
-  "es": "La página de un juego en Pantalla grande: Jugar, Favorito, Añadir a una colección, Roto y Ocultar a la izquierda, la carátula en el centro y los detalles a la derecha"
+  "es": "La página de un juego en Pantalla grande: Jugar, Favorito, Añadir a una colección, Roto y Ocultar a la izquierda, la carátula en el centro y los detalles a la derecha",
+  "pt": "A página de um jogo na Tela grande: Jogar, Favorito, Adicionar à Coleção, Quebrado e Ocultar à esquerda, a capa no meio e os detalhes à direita"
  },
  "The Carousel: scrolling through covers, jumping to a title by letter, and starring a favourite": {
   "fr": "Le Carrousel : défilement des jaquettes, saut vers un titre par lettre, et mise en étoile d'un favori",
   "zh": "封面轮播：滚动封面、按字母跳转到某个游戏，并给收藏加星",
-  "es": "El Carrusel: desplazarse por las carátulas, saltar a un título por letra y marcar un favorito con estrella"
+  "es": "El Carrusel: desplazarse por las carátulas, saltar a un título por letra y marcar un favorito con estrella",
+  "pt": "O Carrossel: rolando pelas capas, pulando para um título por letra e marcando um favorito com estrela"
  },
  "Choosing a Game Boy game in the Carousel, pressing Play in browser, and the game running in the page": {
   "fr": "Choix d'un jeu Game Boy dans le Carrousel, appui sur Jouer dans le navigateur, et le jeu qui tourne dans la page",
   "zh": "在封面轮播中选择一个 Game Boy 游戏，点击“在浏览器中游玩”，游戏随即在页面中运行",
-  "es": "Elegir un juego de Game Boy en el Carrusel, pulsar Jugar en el navegador, y el juego ejecutándose en la página"
+  "es": "Elegir un juego de Game Boy en el Carrusel, pulsar Jugar en el navegador, y el juego ejecutándose en la página",
+  "pt": "Escolhendo um jogo de Game Boy no Carrossel, pressionando Jogar no navegador, e o jogo rodando na página"
  },
  "The Physical shelf: switching to the shelf of spines, pulling one out, bringing the case forward, turning it over, opening it to the manual and disc, and reading the manual": {
   "fr": "L'étagère physique : passage à l'étagère de tranches, sortie d'une tranche, boîtier amené vers l'avant, retourné, ouvert sur le manuel et le disque, et lecture du manuel",
   "zh": "实体游戏架：切换到书脊游戏架，抽出一个，把盒子转到前面、翻转、打开查看说明书和光盘，并阅读说明书",
-  "es": "La estantería física: cambiar a la estantería de lomos, sacar uno, traer la caja al frente, darle la vuelta, abrirla para ver el manual y el disco, y leer el manual"
+  "es": "La estantería física: cambiar a la estantería de lomos, sacar uno, traer la caja al frente, darle la vuelta, abrirla para ver el manual y el disco, y leer el manual",
+  "pt": "A estante Física: mudando para a estante de lombadas, puxando uma, trazendo a caixa para a frente, virando, abrindo para ver o manual e o disco, e lendo o manual"
  },
  "A game's details pinned beside the library, with save states and metadata matching": {
   "fr": "Les détails d'un jeu épinglés à côté de la bibliothèque, avec les états sauvegardés et l'association des métadonnées",
   "zh": "固定在游戏库旁边的游戏详情，包含即时存档和元数据匹配",
-  "es": "Los detalles de un juego fijados junto a la biblioteca, con estados guardados y emparejamiento de metadatos"
+  "es": "Los detalles de un juego fijados junto a la biblioteca, con estados guardados y emparejamiento de metadatos",
+  "pt": "Os detalhes de um jogo fixados ao lado da biblioteca, com save states e associação de metadados"
  },
  "The library in the light theme": {
   "fr": "La bibliothèque avec le thème clair",
   "zh": "浅色主题下的游戏库",
-  "es": "La biblioteca en el tema claro"
+  "es": "La biblioteca en el tema claro",
+  "pt": "A biblioteca no tema claro"
  },
  "The Collections page: two collections with their game covers and game counts": {
   "fr": "La page Collections : deux collections avec les jaquettes de leurs jeux et leur nombre de jeux",
   "zh": "“合集”页面：两个合集，显示各自的游戏封面和游戏数量",
-  "es": "La página Colecciones: dos colecciones con las carátulas de sus juegos y el número de juegos"
+  "es": "La página Colecciones: dos colecciones con las carátulas de sus juegos y el número de juegos",
+  "pt": "A página Coleções: duas coleções com as capas dos jogos e a contagem de jogos"
  },
  "The classic look: a sidebar, platform family chips with counts, and a grid of covers with gold stars on the favourites": {
   "fr": "Le look classique : une barre latérale, des pastilles de famille de plateformes avec leurs totaux, et une grille de jaquettes avec des étoiles dorées sur les favoris",
   "zh": "经典外观：侧边栏、带数量的平台系列标签，以及封面网格，收藏的游戏上有金色星标",
-  "es": "El aspecto clásico: una barra lateral, etiquetas de familia de plataformas con recuentos, y una cuadrícula de carátulas con estrellas doradas en los favoritos"
+  "es": "El aspecto clásico: una barra lateral, etiquetas de familia de plataformas con recuentos, y una cuadrícula de carátulas con estrellas doradas en los favoritos",
+  "pt": "O visual clássico: uma barra lateral, etiquetas de família de plataformas com contagens e uma grade de capas com estrelas douradas nos favoritos"
  },
  "The sign-in screen: the game-sauce logo over a neon grid, with username and password boxes": {
   "fr": "L'écran de connexion : le logo game-sauce sur une grille néon, avec des champs nom d'utilisateur et mot de passe",
   "zh": "登录界面：霓虹网格上的 game-sauce 徽标，下方是用户名和密码输入框",
-  "es": "La pantalla de inicio de sesión: el logotipo de game-sauce sobre una cuadrícula de neón, con cuadros de usuario y contraseña"
+  "es": "La pantalla de inicio de sesión: el logotipo de game-sauce sobre una cuadrícula de neón, con cuadros de usuario y contraseña",
+  "pt": "A tela de login: o logotipo do game-sauce sobre uma grade de neon, com caixas de usuário e senha"
  },
  "The Physical shelf with a PlayStation 2 case open, showing its instruction booklet and disc": {
   "fr": "L'étagère physique avec un boîtier PlayStation 2 ouvert, montrant son livret et son disque",
   "zh": "实体游戏架上打开的 PlayStation 2 盒子，里面是说明书和光盘",
-  "es": "La estantería física con una caja de PlayStation 2 abierta, mostrando su manual y su disco"
+  "es": "La estantería física con una caja de PlayStation 2 abierta, mostrando su manual y su disco",
+  "pt": "A estante Física com uma caixa de PlayStation 2 aberta, mostrando o manual e o disco"
  },
  "The Carousel: a fan of covers with Play in browser and Play on this PC below": {
   "fr": "Le Carrousel : un éventail de jaquettes avec Jouer dans le navigateur et Jouer sur ce PC en dessous",
   "zh": "封面轮播：扇形排开的封面，下方是“在浏览器中游玩”和“在此电脑上游玩”",
-  "es": "El Carrusel: un abanico de carátulas con Jugar en el navegador y Jugar en este PC debajo"
+  "es": "El Carrusel: un abanico de carátulas con Jugar en el navegador y Jugar en este PC debajo",
+  "pt": "O Carrossel: um leque de capas com Jogar no navegador e Jogar neste PC embaixo"
  },
  "The launcher setup page: a row for each platform with its emulator program and arguments, and a RetroArch core button": {
   "fr": "La page de configuration du lanceur : une ligne par plateforme avec son programme d'émulateur et ses arguments, et un bouton de cœur RetroArch",
   "zh": "启动器设置页面：每个平台一行，显示其模拟器程序和参数，另有 RetroArch 核心按钮",
-  "es": "La página de configuración del lanzador: una fila por plataforma con su programa emulador y argumentos, y un botón de núcleo de RetroArch"
+  "es": "La página de configuración del lanzador: una fila por plataforma con su programa emulador y argumentos, y un botón de núcleo de RetroArch",
+  "pt": "A página de configuração do iniciador: uma linha por plataforma com o programa emulador e os argumentos, e um botão de core do RetroArch"
  },
  "The Digital library: a grid of Steam games with hours played, and tabs for Steam, PlayStation, Nintendo and Xbox": {
   "fr": "La bibliothèque numérique : une grille de jeux Steam avec les heures jouées, et des onglets Steam, PlayStation, Nintendo et Xbox",
   "zh": "数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页",
-  "es": "La biblioteca digital: una cuadrícula de juegos de Steam con horas jugadas, y pestañas de Steam, PlayStation, Nintendo y Xbox"
+  "es": "La biblioteca digital: una cuadrícula de juegos de Steam con horas jugadas, y pestañas de Steam, PlayStation, Nintendo y Xbox",
+  "pt": "A biblioteca Digital: uma grade de jogos do Steam com horas jogadas, e abas de Steam, PlayStation, Nintendo e Xbox"
  },
  "The emulators page, with a card for each platform": {
   "fr": "La page Émulateurs, avec une carte par plateforme",
   "zh": "“模拟器”页面，每个平台一张卡片",
-  "es": "La página de emuladores, con una tarjeta por plataforma"
+  "es": "La página de emuladores, con una tarjeta por plataforma",
+  "pt": "A página de emuladores, com um cartão para cada plataforma"
  },
  "game-sauce is a free, self-hosted ROM manager for your own collection: scan your folders, fetch artwork, play in the browser or on your PC, and browse from the sofa with Big Screen.": {
   "fr": "game-sauce est un gestionnaire de ROM gratuit et auto-hébergé pour votre propre collection : analysez vos dossiers, récupérez les jaquettes, jouez dans le navigateur ou sur votre PC, et parcourez depuis le canapé avec le Grand écran.",
   "zh": "game-sauce 是一款免费、自托管的 ROM 管理器，用于管理你自己的收藏：扫描你的文件夹、获取封面、在浏览器或电脑上游玩，还能通过大屏幕模式在沙发上浏览。",
-  "es": "game-sauce es un gestor de ROM gratuito y autoalojado para tu propia colección: analiza tus carpetas, obtén carátulas, juega en el navegador o en tu PC, y explora desde el sofá con Pantalla grande."
+  "es": "game-sauce es un gestor de ROM gratuito y autoalojado para tu propia colección: analiza tus carpetas, obtén carátulas, juega en el navegador o en tu PC, y explora desde el sofá con Pantalla grande.",
+  "pt": "O game-sauce é um gerenciador de ROMs gratuito e auto-hospedado para a sua própria coleção: analise suas pastas, busque capas, jogue no navegador ou no PC e navegue do sofá com a Tela grande."
  },
  "Scan your folders, fetch artwork, play in the browser or on your PC, and browse from the sofa with Big Screen. Free and open source.": {
   "fr": "Analysez vos dossiers, récupérez les jaquettes, jouez dans le navigateur ou sur votre PC, et parcourez depuis le canapé avec le Grand écran. Gratuit et open source.",
   "zh": "扫描你的文件夹、获取封面、在浏览器或电脑上游玩，并通过大屏幕模式在沙发上浏览。免费且开源。",
-  "es": "Analiza tus carpetas, obtén carátulas, juega en el navegador o en tu PC, y explora desde el sofá con Pantalla grande. Gratis y de código abierto."
+  "es": "Analiza tus carpetas, obtén carátulas, juega en el navegador o en tu PC, y explora desde el sofá con Pantalla grande. Gratis y de código abierto.",
+  "pt": "Analise suas pastas, busque capas, jogue no navegador ou no PC e navegue do sofá com a Tela grande. Grátis e de código aberto."
  },
  "Language": {
   "fr": "Langue",
   "zh": "语言",
-  "es": "Idioma"
+  "es": "Idioma",
+  "pt": "Idioma"
  },
  "Support me on Buy me a coffee!": {
   "fr": "Soutenez-moi sur Buy me a coffee !",
   "zh": "在 Buy me a coffee 上支持我！",
-  "es": "¡Apóyame en Buy me a coffee!"
+  "es": "¡Apóyame en Buy me a coffee!",
+  "pt": "Me apoie no Buy me a coffee!"
  },
  "Thank you for your support. Happy gaming!": {
   "fr": "Merci de votre soutien. Bon jeu !",
   "zh": "感谢你的支持。游戏愉快！",
-  "es": "Gracias por tu apoyo. ¡Feliz juego!"
+  "es": "Gracias por tu apoyo. ¡Feliz juego!",
+  "pt": "Obrigado pelo seu apoio. Bons jogos!"
  },
  "Favourites, private collections and hidden games, plus accounts for the people you trust, including play-only accounts with no downloads or admin. People can send each other private messages, and the admin can post a notice for everyone.": {
   "fr": "Favoris, collections privées et jeux masqués, ainsi que des comptes pour les personnes de confiance, y compris des comptes « jeu uniquement » sans téléchargement ni administration. Les personnes peuvent s'envoyer des messages privés, et l'administrateur peut publier un avis pour tout le monde.",
   "zh": "收藏、私人合集和隐藏的游戏，以及为你信任的人准备的账户，包括没有下载和管理权限的仅游玩账户。用户之间可以互发私信，管理员也可以向所有人发布通知。",
-  "es": "Favoritos, colecciones privadas y juegos ocultos, además de cuentas para las personas de confianza, incluidas cuentas de solo jugar sin descargas ni administración. Las personas pueden enviarse mensajes privados, y el administrador puede publicar un aviso para todos."
+  "es": "Favoritos, colecciones privadas y juegos ocultos, además de cuentas para las personas de confianza, incluidas cuentas de solo jugar sin descargas ni administración. Las personas pueden enviarse mensajes privados, y el administrador puede publicar un aviso para todos.",
+  "pt": "Favoritos, coleções privadas e jogos ocultos, além de contas para as pessoas em quem você confia, incluindo contas só de jogar, sem downloads nem administração. As pessoas podem trocar mensagens privadas, e o administrador pode publicar um aviso para todos."
  }
 }
