@@ -12,7 +12,7 @@ import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
 import './pwreveal.js';   // the eye in password boxes
-import { initI18n, LANGS, chosenLanguage, setLanguage } from './i18n.js';   // the language of the page (public/lang/*.json)
+import { initI18n, LANGS, chosenLanguage, setLanguage, t } from './i18n.js';   // the language of the page (public/lang/*.json)
 
 await initI18n();   // before anything is drawn, so the first screen is already in the person's language
 
@@ -4258,7 +4258,7 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
   if (!groups.length) return;
   const cur = settingsGroupOf(activeId) || groups[0];
   wrap.innerHTML = groups.map((g) => `
-      <button class="tile group${g.id === cur.id ? ' is-active' : ''}"${g.mi ? ` data-mi="${g.mi}"` : ''} data-group="${g.id}" aria-label="${esc(g.label)}" title="${esc(g.label)}: ${esc(settingsGroupMods(g).map((m) => m.label).join(', '))}">
+      <button class="tile group${g.id === cur.id ? ' is-active' : ''}"${g.mi ? ` data-mi="${g.mi}"` : ''} data-group="${g.id}" aria-label="${esc(g.label)}" title="${esc(t(g.label))}: ${esc(settingsGroupMods(g).map((m) => t(m.label)).join(', '))}">
         <span class="tile-ico">${tileIco(g)}</span>
         <span class="tile-label">${esc(g.label)}</span>
       </button>`).join('');
