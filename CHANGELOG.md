@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-15
+
 ### Added
 - **Japanese.** The app and the website can now be read in Japanese (日本語), with the Japanese flag beside the name in the language picker. The website has a Japanese page at gamesauce.app/ja/. The language picker now shows the Chinese option as 中文.
 - Japanese and Chinese text on the website breaks lines at phrases instead of leaving a single character on a line.
