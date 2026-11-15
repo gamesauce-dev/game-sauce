@@ -3,6 +3,7 @@
 [![Tests](https://github.com/gamesauce-dev/game-sauce/actions/workflows/test.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/test.yml)
 [![Docker image](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/gamesauce-dev/game-sauce?color=7c5cff)](https://github.com/gamesauce-dev/game-sauce/stargazers)
 
 **Website:** [gamesauce.app](https://gamesauce.app) · **Support the project:** [Buy me a coffee](https://buymeacoffee.com/gamesauce)
 
