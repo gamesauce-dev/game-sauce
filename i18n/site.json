@@ -123,10 +123,6 @@
   "Collections et personnes",
   "合集和用户"
  ],
- "Favourites, private collections and hidden games, plus accounts for the people you trust, including play-only accounts with no downloads or admin.": [
-  "Favoris, collections privées et jeux masqués, ainsi que des comptes pour les personnes de confiance, y compris des comptes « jeu uniquement » sans téléchargement ni administration.",
-  "收藏、私人合集和隐藏的游戏，以及为你信任的人准备的账户，包括没有下载和管理权限的仅游玩账户。"
- ],
  "Keep it tidy": [
   "Gardez tout bien rangé",
   "保持整洁"
@@ -530,5 +526,9 @@
  "Thank you for your support. Happy gaming!": [
   "Merci de votre soutien. Bon jeu !",
   "感谢你的支持。游戏愉快！"
+ ],
+ "Favourites, private collections and hidden games, plus accounts for the people you trust, including play-only accounts with no downloads or admin. People can send each other private messages, and the admin can post a notice for everyone.": [
+  "Favoris, collections privées et jeux masqués, ainsi que des comptes pour les personnes de confiance, y compris des comptes « jeu uniquement » sans téléchargement ni administration. Les personnes peuvent s'envoyer des messages privés, et l'administrateur peut publier un avis pour tout le monde.",
+  "收藏、私人合集和隐藏的游戏，以及为你信任的人准备的账户，包括没有下载和管理权限的仅游玩账户。用户之间可以互发私信，管理员也可以向所有人发布通知。"
  ]
 }

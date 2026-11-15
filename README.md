@@ -52,7 +52,7 @@ The first time it starts, the account that was made for you is shown once: write
   platform chip row, an A-Z bar, a details window you can pin beside the games, light and dark modes, and an optional
   retro font. It is a personal setting; new accounts start in Modern. Both run on the same data.
 - **Collections, favourites, hidden games, users and roles, an activity log.** Collections are private to whoever
-  made them. **Play-only accounts** see just the games that can be played in the browser, with no downloads or admin.
+  made them. **Play-only accounts** see just the games that can be played in the browser, with no downloads or admin. People can send each other **private messages**, and an admin can post a **notice** that everyone sees.
 - **Export and import your game data:** a CSV of every game's details, a zip of the covers, and an import that
   brings both back in one preview and one apply (the CSV's `cover_file` column names each picture).
 - **Locked games** (kept safe from deletion) can be found with a filter and unlocked in bulk; a **Reset** button
