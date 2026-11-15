@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **More of the French and Chinese translation.** The hover text of the Settings group buttons, the DAT status legend, and about 340 pieces of text that the first translation missed (words and sentences the app builds from several parts) are now translated. The brand name game-sauce is never translated.
+
 ## [0.7.0] - 2026-11-15
 
 ### Added
