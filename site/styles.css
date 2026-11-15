@@ -126,9 +126,15 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
   .grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .top nav a:not(.btn) { display: none; }
+  .top nav > a:not(.btn) { display: none; }
   .hero { padding: 48px 0 40px; }
   .section { padding: 52px 0; }
   .grid, .grid.two, .shots, .clips { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .saucy { animation: none; } }
+
+@media (max-width: 1100px) { .top nav > a:not(.btn) { display: none; } }
+.langs { display: inline-flex; margin-left: 8px; gap: 2px; }
+.top nav .langs a { display: inline-block; padding: 6px 8px; font-size: .85rem; }
+.top nav .langs a[aria-current] { color: var(--text); background: var(--bg-3); }
+@media (max-width: 860px) { .top nav .langs a { display: inline-block; } }

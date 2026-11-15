@@ -6,6 +6,10 @@
 <title>game-sauce: a self-hosted library for the games you own</title>
 <meta name="description" content="game-sauce is a free, self-hosted ROM manager for your own collection: scan your folders, fetch artwork, play in the browser or on your PC, and browse from the sofa with Big Screen.">
 <link rel="canonical" href="https://gamesauce.app/">
+<link rel="alternate" hreflang="en" href="https://gamesauce.app/">
+<link rel="alternate" hreflang="fr" href="https://gamesauce.app/fr/">
+<link rel="alternate" hreflang="zh-Hans" href="https://gamesauce.app/zh/">
+<link rel="alternate" hreflang="x-default" href="https://gamesauce.app/">
 <link rel="icon" href="img/logo.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:title" content="game-sauce: a self-hosted library for the games you own">
@@ -32,6 +36,7 @@
       <a href="#faq">FAQ</a>
       <a href="https://buymeacoffee.com/gamesauce" rel="noopener">Support</a>
       <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <span class="langs" aria-label="Language"><a href="/" hreflang="en" lang="en" data-lang="en">EN</a><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr">FR</a><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh">中文</a></span>
     </nav>
   </div>
 </header>
@@ -254,6 +259,19 @@
 </footer>
 
 <script>
+// Remember a language choice, and on the first visit to the English page follow the browser (French or Chinese) once.
+(function () {
+  var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
+  try { saved = localStorage.getItem(K); } catch (e) {}
+  document.querySelectorAll('.langs a').forEach(function (a) {
+    if (a.dataset.lang === (here === 'zh' ? 'zh' : here)) a.setAttribute('aria-current', 'true');
+    a.addEventListener('click', function () { try { localStorage.setItem(K, a.dataset.lang); } catch (e) {} });
+  });
+  if (here === 'en' && !saved && location.pathname === '/' && !location.hash) {
+    var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
+    for (var i = 0; i < l.length; i++) { if (l[i] === 'fr' || l[i] === 'zh') { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
+  }
+})();
 (function () {
   var vids = document.querySelectorAll('video');
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

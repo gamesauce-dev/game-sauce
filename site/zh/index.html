@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>game-sauce：为你自己的游戏打造的自托管游戏库</title>
+<meta name="description" content="game-sauce 是一款免费、自托管的 ROM 管理器，用于管理你自己的收藏：扫描你的文件夹、获取封面、在浏览器或电脑上游玩，还能通过大屏幕模式在沙发上浏览。">
+<link rel="canonical" href="https://gamesauce.app/zh/">
+<link rel="alternate" hreflang="en" href="https://gamesauce.app/">
+<link rel="alternate" hreflang="fr" href="https://gamesauce.app/fr/">
+<link rel="alternate" hreflang="zh-Hans" href="https://gamesauce.app/zh/">
+<link rel="alternate" hreflang="x-default" href="https://gamesauce.app/">
+<link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="game-sauce：为你自己的游戏打造的自托管游戏库">
+<meta property="og:description" content="扫描你的文件夹、获取封面、在浏览器或电脑上游玩，并通过大屏幕模式在沙发上浏览。免费且开源。">
+<meta property="og:url" content="https://gamesauce.app/zh/">
+<meta property="og:image" content="https://gamesauce.app/img/social-preview.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="game-sauce 首页"><img src="../img/logo.svg" alt="" width="36" height="36"><span>game<span class="saucy">-sauce</span></span></a>
+    <nav aria-label="章节">
+      <a href="#features">功能</a>
+      <a href="#video">视频</a>
+      <a href="#bigscreen">大屏幕</a>
+      <a href="#carousel">封面轮播</a>
+      <a href="#shelf">游戏架</a>
+      <a href="#screens">截图</a>
+      <a href="#start">开始使用</a>
+      <a href="#faq">常见问题</a>
+      <a href="https://buymeacoffee.com/gamesauce" rel="noopener">支持</a>
+      <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <span class="langs" aria-label="语言"><a href="/" hreflang="en" lang="en" data-lang="en">EN</a><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr">FR</a><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh">中文</a></span>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <p class="wordmark" aria-hidden="true">game<span class="saucy">-sauce</span></p>
+    <p class="eyebrow">免费 &middot; 开源 &middot; 自托管</p>
+    <h1>你的游戏收藏，<br>放在你自己的服务器上。</h1>
+    <p class="lead">game-sauce 会为你拥有的游戏建立目录、获取封面，让许多游戏直接在浏览器中运行，其余的则用你电脑上的模拟器启动，还能通过用手柄操作的大屏幕模式把整个游戏库搬到电视上。</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">下载</a>
+      <a class="btn" href="#start">如何运行</a>
+      <a class="btn" href="https://github.com/gamesauce-dev/game-sauce" rel="noopener">&#9733; 在 GitHub 上点个星</a>
+    </div>
+    <p class="small">Windows &middot; macOS（Apple 芯片）&middot; Linux &middot; Docker、Unraid 和 Proxmox &middot; 树莓派</p>
+    <figure class="shot hero-shot">
+      <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="game-sauce 游戏库：一个封面网格，带有平台筛选和 A 到 Z 字母条">
+    </figure>
+    <p class="small note">截图使用内置的演示数据和生成的封面。</p>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <div class="wrap">
+    <h2>为你现有的收藏准备的一切</h2>
+    <p class="sub">全家的游戏库集中在一处，运行在你自己掌控的机器上。</p>
+    <div class="grid">
+      <article class="card">
+        <h3>就地扫描你的文件夹</h3>
+        <p>只需指向你已有的文件夹。文件就在原位置建立目录，绝不会被移动、重命名或删除，单个有问题的文件也不会中断扫描。</p>
+      </article>
+      <article class="card">
+        <h3>封面和详情，自动为你找到</h3>
+        <p>使用你自己的账户，从 ScreenScraper、TheGamesDB、IGDB 和 SteamGridDB 获取封面、简介、年份等信息，也可以从文件夹导入图片或上传你自己的。</p>
+      </article>
+      <article class="card">
+        <h3>在浏览器中游玩</h3>
+        <p>许多较老的主机可以直接在网页中运行，即时存档和游戏内存档按人保存在你的服务器上。“继续游玩”一栏会记住你玩到了哪里。</p>
+      </article>
+      <article class="card">
+        <h3>在你的电脑上游玩</h3>
+        <p>只需一次点击，就能在你自己电脑上安装的模拟器（如 RetroArch、MAME 或 Dolphin）中启动游戏。游戏可以保留以便快速重新启动，还有一个设置页面来配置每个模拟器。</p>
+      </article>
+      <article class="card">
+        <h3>电视上的大屏幕</h3>
+        <p>为沙发准备的全屏手柄操作视图：带有徽标和横幅的游戏转盘、收藏和合集、A 到 Z 字母条、屏幕上的说明书，还有可以静音的声音。</p>
+      </article>
+      <article class="card">
+        <h3>合集和用户</h3>
+        <p>收藏、私人合集和隐藏的游戏，以及为你信任的人准备的账户，包括没有下载和管理权限的仅游玩账户。</p>
+      </article>
+      <article class="card">
+        <h3>保持整洁</h3>
+        <p>对照 No-Intro 和 Redump DAT 校验转储，找出重复版本并推荐最值得保留的副本，清理未使用的图片文件，而不会删除你的游戏。</p>
+      </article>
+      <article class="card">
+        <h3>还有你的游戏架和 Steam</h3>
+        <p>导入你的 Steam 游戏库及游玩时长，并通过列表导入你的 PlayStation、任天堂和 Xbox 游戏。你实际拥有的光盘和卡带也可以记录，全都与你的 ROM 放在一起。</p>
+      </article>
+      <article class="card">
+        <h3>由你自己运行</h3>
+        <p>无需账号，无需订阅，没有云端。你的游戏库和数据都留在你自己的硬件上，数据库可以在应用中备份和恢复。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="video" class="section alt">
+  <div class="wrap">
+    <h2>看看它的实际效果</h2>
+    <p class="sub">来自内置演示游戏库的两段短片。</p>
+    <div class="clips">
+      <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="大屏幕：滚动游戏转盘、按字母跳转、打开游戏并返回"><source src="../video/bigscreen.mp4" type="video/mp4"></video><figcaption>电视上的大屏幕</figcaption></figure>
+      <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="游戏库：搜索一个游戏并打开它的详情"><source src="../video/library.mp4" type="video/mp4"></video><figcaption>在游戏库中搜索并打开游戏</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="bigscreen" class="section">
+  <div class="wrap">
+    <h2>大屏幕：把你的游戏库搬到电视上</h2>
+    <p class="sub">专为手柄和沙发设计的全屏视图。在游戏库中一键打开，再让浏览器或桌面应用在电视上全屏显示。</p>
+    <figure class="shot"><img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="大屏幕：游戏转盘，所选游戏在中间，右侧是 A 到 Z 字母条，底部是手柄提示"><figcaption>转盘：用摇杆滚动，用肩键按字母跳转</figcaption></figure>
+    <ul class="ticks">
+      <li>完全用手柄操作，屏幕上有按键提示。</li>
+      <li>有徽标和横幅时就显示它们，没有时显示封面，背景则是用游戏自身图片制作的模糊效果。</li>
+      <li>收藏和你的合集各占一行，还有用于给新合集命名的屏幕键盘。</li>
+      <li>在屏幕上阅读游戏说明书，并查看哪些游戏被标记为存在模拟问题。</li>
+      <li>在同一个界面里就可以在浏览器中游玩，或在这台电脑上启动游戏。</li>
+    </ul>
+    <figure class="shot"><img src="../img/bigscreen-game.webp" loading="lazy" width="1920" height="1080" alt="大屏幕中的游戏页面：左侧是开始游戏、收藏、加入合集、已损坏和隐藏，中间是封面，右侧是详情"><figcaption>游戏页面：开始游戏、加入收藏、加入合集</figcaption></figure>
+  </div>
+</section>
+
+<section id="carousel" class="section alt">
+  <div class="wrap">
+    <h2>封面轮播：挑一个游戏就开玩</h2>
+    <p class="sub">全屏的封面架，排成柔和的弧形。选择一个系列和平台，用方向键、鼠标滚轮、滑动或手柄滚动，然后按下开始游戏。</p>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="封面轮播：滚动封面、按字母跳转到某个游戏，并给收藏加星"><source src="../video/carousel.mp4" type="video/mp4"></video><figcaption>滚动封面轮播、按字母跳转并给收藏加星</figcaption></figure>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="在封面轮播中选择一个 Game Boy 游戏，点击“在浏览器中游玩”，游戏随即在页面中运行"><source src="../video/play.mp4" type="video/mp4"></video><figcaption>点击<b>在浏览器中游玩</b>，游戏就会在页面中运行。这个游戏是 <a href="https://github.com/pinobatch/libbet">Libbet and the Magic Floor</a>，由 Damian Yerrick 制作的免费自制游戏（zlib 许可）。</figcaption></figure>
+    <ul class="ticks">
+      <li>对可以在网页中运行的游戏使用<b>在浏览器中游玩</b>，或用<b>在此电脑上游玩</b>来启动你已设置好的模拟器。</li>
+      <li>金色星标会显示在封面和标题旁，标记你的收藏，你还可以不离开当前画面就为中间的游戏加星或取消加星。</li>
+      <li>按下一个字母，即可跳到以该字母开头的第一个游戏。</li>
+      <li>如果游戏有视频，停在它上面时，视频会在封面下方播放。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="shelf" class="section">
+  <div class="wrap">
+    <h2>你的游戏架：你拥有的光盘和卡带</h2>
+    <p class="sub">把你真实游戏架上的盒装游戏记录下来，可以手动添加或从列表导入，与你的数字收藏放在一起。每个人都有自己的游戏架。</p>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="实体游戏架：切换到书脊游戏架，抽出一个，把盒子转到前面、翻转、打开查看说明书和光盘，并阅读说明书"><source src="../video/shelf.mp4" type="video/mp4"></video><figcaption>从方块视图切换到书脊游戏架，再抽出盒子、翻转、打开并阅读说明书</figcaption></figure>
+    <ul class="ticks">
+      <li>以方块形式查看游戏，或以书脊游戏架的形式查看，书脊的摆放方式就像真实的盒子。</li>
+      <li>点击书脊把它抽出来，再点击让盒子转到前面，再点击即可打开：一边是说明书，另一边是光盘或卡带。</li>
+      <li>翻转盒子查看背面，并在屏幕上阅读说明书。</li>
+      <li>添加你自己的图片和说明书，或从你的元数据数据源获取封面、书脊、背面和光盘图片。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="screens" class="section alt">
+  <div class="wrap">
+    <h2>看看它的样子</h2>
+    <p class="sub">经典和现代两种外观，浅色和深色两种主题。同一个游戏库，由你选择。</p>
+    <div class="shots">
+      <figure class="shot"><img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="固定在游戏库旁边的游戏详情，包含即时存档和元数据匹配"><figcaption>游戏库旁边的游戏详情</figcaption></figure>
+      <figure class="shot"><img src="../img/library-light.webp" loading="lazy" width="1500" height="900" alt="浅色主题下的游戏库"><figcaption>浅色主题</figcaption></figure>
+      <figure class="shot"><img src="../img/collections.webp" loading="lazy" width="2400" height="528" alt="“合集”页面：两个合集，显示各自的游戏封面和游戏数量"><figcaption>合集</figcaption></figure>
+      <figure class="shot"><img src="../img/library-classic.webp" loading="lazy" width="1920" height="1080" alt="经典外观：侧边栏、带数量的平台系列标签，以及封面网格，收藏的游戏上有金色星标"><figcaption>经典外观</figcaption></figure>
+      <figure class="shot"><img src="../img/login.webp" loading="lazy" width="2560" height="1440" alt="登录界面：霓虹网格上的 game-sauce 徽标，下方是用户名和密码输入框"><figcaption>登录界面</figcaption></figure>
+      <figure class="shot"><img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="实体游戏架上打开的 PlayStation 2 盒子，里面是说明书和光盘"><figcaption>游戏架上打开的盒子</figcaption></figure>
+      <figure class="shot"><img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="封面轮播：扇形排开的封面，下方是“在浏览器中游玩”和“在此电脑上游玩”"><figcaption>封面轮播</figcaption></figure>
+      <figure class="shot"><img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="启动器设置页面：每个平台一行，显示其模拟器程序和参数，另有 RetroArch 核心按钮"><figcaption>在你的电脑上设置模拟器，带有 RetroArch 核心选择器</figcaption></figure>
+      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页"><figcaption>数字游戏库：你的 Steam 游戏和你拥有的主机游戏</figcaption></figure>
+      <figure class="shot"><img src="../img/emulators.webp" loading="lazy" width="1500" height="900" alt="“模拟器”页面，每个平台一张卡片"><figcaption>模拟器</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="start" class="section">
+  <div class="wrap">
+    <h2>开始使用</h2>
+    <p class="sub">选择适合你的方式。每种都只需几分钟。</p>
+    <div class="grid two">
+      <article class="card">
+        <h3>在你自己的电脑上</h3>
+        <p>下载适用于 Windows、macOS 或 Linux 的桌面应用或便携版。无需安装其他任何东西：不需要服务器，不需要 Docker，也不用修改任何设置。</p>
+        <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">下载最新版本</a>
+      </article>
+      <article class="card">
+        <h3>在家庭服务器上</h3>
+        <p>用 Docker、在 Unraid 上或在 Proxmox 容器中运行，然后在家里的每台设备上使用。部署指南里有具体步骤。</p>
+        <a class="btn" href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/DEPLOYMENT.md">阅读部署指南</a>
+      </article>
+    </div>
+    <p class="small">首次启动时，会显示一次为你创建的账户。请记下来，并在设置中修改密码。如果要将它暴露到互联网，请把它放在 VPN 或带 HTTPS 的反向代理后面。</p>
+  </div>
+</section>
+
+<section id="faq" class="section alt">
+  <div class="wrap narrow">
+    <h2>常见问题</h2>
+    <details>
+      <summary>它附带游戏吗？</summary>
+      <p>不附带。game-sauce 是用来管理你自己拥有的游戏的。它不包含也不提供游戏或 BIOS 文件，也不会替你下载游戏：你需要自带收藏。游玩方面，浏览器游玩由开源模拟器 EmulatorJS 提供，点击“开始游戏”时浏览器会加载它。在电脑上游玩时，“模拟器”页面会推荐模拟器并提供获取链接，启动器则会启动你自己安装的模拟器。</p>
+    </details>
+    <details>
+      <summary>它真的免费吗？</summary>
+      <p>是的。它以 MIT 许可开源。无需创建账号，没有订阅，也没有任何追踪。有些元数据数据源要求你注册自己的免费账户才能使用其服务。</p>
+    </details>
+    <details>
+      <summary>哪些游戏可以在浏览器中游玩？</summary>
+      <p>许多不需要 BIOS 的老主机可以直接在网页中运行。较新的系统，以及任何超出浏览器能力的游戏，则会通过启动器在你电脑上的模拟器中运行。</p>
+    </details>
+    <details>
+      <summary>它会移动或更改我的文件吗？</summary>
+      <p>在你指定的文件夹里不会。它直接读取原位置的文件，绝不会移动、重命名或删除其中的文件。清理工具只会处理图片以及 game-sauce 自己存储的文件。</p>
+    </details>
+    <details>
+      <summary>全家人都可以使用吗？</summary>
+      <p>可以。为你信任的人创建账户即可。合集仅对创建者本人可见，仅游玩账户只能看到可在浏览器中游玩的游戏。</p>
+    </details>
+    <details>
+      <summary>在哪里可以获得帮助或报告问题？</summary>
+      <p>请在 <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a> 上提交 issue 或发起讨论，或发邮件到 <a href="mailto:hello@gamesauce.app">hello@gamesauce.app</a>。设置中的“系统健康状况”页面可以生成一份可复制粘贴的报告，其中不含任何机密信息。</p>
+    </details>
+  </div>
+</section>
+
+<section id="support" class="section support">
+  <div class="wrap narrow">
+    <h2>喜欢 game-sauce 吗？</h2>
+    <p class="sub">game-sauce 是免费开源的。如果它对你有用，可以请我喝杯咖啡。这能让我有更多时间开发新功能、在 Windows、Mac 和 Linux 上测试，并回答大家的问题。</p>
+    <p class="cta"><a class="btn btn-gold" href="https://buymeacoffee.com/gamesauce" rel="noopener">&#9733; 请我喝杯咖啡</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="foot-brand">game<span class="saucy">-sauce</span></p>
+    <div class="links">
+      <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/releases">版本发布</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/CHANGELOG.md">更新日志</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/USER-GUIDE.md">用户指南</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/LICENSE">MIT 许可</a>
+      <a href="mailto:hello@gamesauce.app">hello@gamesauce.app</a>
+      <a href="https://buymeacoffee.com/gamesauce" rel="noopener">支持本项目</a>
+    </div>
+    <p class="small">game-sauce 是一个独立项目。它与任何主机厂商或游戏发行商均无关联，也未获其认可；所有主机、游戏和公司的名称及徽标均属其各自所有者。它旨在管理你合法拥有的游戏。</p>
+  </div>
+</footer>
+
+<script>
+// Remember a language choice, and on the first visit to the English page follow the browser (French or Chinese) once.
+(function () {
+  var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
+  try { saved = localStorage.getItem(K); } catch (e) {}
+  document.querySelectorAll('.langs a').forEach(function (a) {
+    if (a.dataset.lang === (here === 'zh' ? 'zh' : here)) a.setAttribute('aria-current', 'true');
+    a.addEventListener('click', function () { try { localStorage.setItem(K, a.dataset.lang); } catch (e) {} });
+  });
+  if (here === 'en' && !saved && location.pathname === '/' && !location.hash) {
+    var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
+    for (var i = 0; i < l.length; i++) { if (l[i] === 'fr' || l[i] === 'zh') { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
+  }
+})();
+(function () {
+  var vids = document.querySelectorAll('video');
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm || !('IntersectionObserver' in window)) { vids.forEach(function (v) { v.setAttribute('controls', ''); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { var p = e.target.play(); if (p && p.catch) p.catch(function () {}); } else e.target.pause();
+    });
+  }, { threshold: 0.2 });
+  vids.forEach(function (v) { io.observe(v); });
+})();
+</script>
+</body>
+</html>
