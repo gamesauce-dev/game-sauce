@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>game-sauce: a self-hosted library for the games you own</title>
+<meta name="description" content="game-sauce is a free, self-hosted ROM manager for your own collection: scan your folders, fetch artwork, play in the browser or on your PC, and browse from the sofa with Big Screen.">
+<link rel="canonical" href="https://gamesauce.app/">
+<link rel="icon" href="img/logo.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="game-sauce: a self-hosted library for the games you own">
+<meta property="og:description" content="Scan your folders, fetch artwork, play in the browser or on your PC, and browse from the sofa with Big Screen. Free and open source.">
+<meta property="og:url" content="https://gamesauce.app/">
+<meta property="og:image" content="https://gamesauce.app/img/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="game-sauce home"><img src="img/logo.svg" alt="" width="36" height="36"><span>game-sauce</span></a>
+    <nav aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#screens">Screenshots</a>
+      <a href="#start">Get started</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Free &middot; open source &middot; self-hosted</p>
+    <h1>Your game collection,<br>on your own server.</h1>
+    <p class="lead">game-sauce catalogues the games you own, fetches the artwork, plays many of them in your browser, starts the rest in the emulators on your PC, and puts the whole library on the TV with a gamepad-driven Big Screen.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">Download</a>
+      <a class="btn" href="#start">How to run it</a>
+    </div>
+    <p class="small">Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid and Proxmox &middot; Raspberry Pi</p>
+    <figure class="shot hero-shot">
+      <img src="img/library.png" width="1500" height="900" alt="The game-sauce library: a grid of game covers with platform filters and an A to Z bar">
+    </figure>
+    <p class="small note">Screenshots use built-in demo data with generated covers.</p>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <div class="wrap">
+    <h2>Everything for a collection you already have</h2>
+    <p class="sub">One place for the whole household's library, running on a machine you control.</p>
+    <div class="grid">
+      <article class="card">
+        <h3>Scans your folders in place</h3>
+        <p>Point it at the folders you already have. Files are catalogued where they are and never moved, renamed or deleted, and one bad file never stops a scan.</p>
+      </article>
+      <article class="card">
+        <h3>Artwork and details, found for you</h3>
+        <p>Covers, descriptions, years and more from ScreenScraper, TheGamesDB, IGDB and SteamGridDB using your own accounts, or import artwork from folders and upload your own.</p>
+      </article>
+      <article class="card">
+        <h3>Play in the browser</h3>
+        <p>Many older consoles run straight from a web page, with save states and in-game saves kept per person on your server. A Continue playing row remembers where you were.</p>
+      </article>
+      <article class="card">
+        <h3>Play on your PC</h3>
+        <p>One click starts a game in the emulator installed on your own computer, such as RetroArch, MAME or Dolphin. Games can be kept for quick relaunch, and a setup page configures each emulator.</p>
+      </article>
+      <article class="card">
+        <h3>Big Screen for the TV</h3>
+        <p>A full-screen, gamepad-driven view for the sofa: a wheel of games with logos and marquees, favourites and collections, an A to Z strip, manuals on screen, and sounds you can mute.</p>
+      </article>
+      <article class="card">
+        <h3>Collections and people</h3>
+        <p>Favourites, private collections and hidden games, plus accounts for the people you trust, including play-only accounts with no downloads or admin.</p>
+      </article>
+      <article class="card">
+        <h3>Keep it tidy</h3>
+        <p>Verify dumps against No-Intro and Redump DATs, find duplicate versions and suggest the best copy to keep, and clear out unused artwork files, without deleting your games.</p>
+      </article>
+      <article class="card">
+        <h3>Your shelf too</h3>
+        <p>Track the discs and cartridges you physically own alongside the digital collection, with their own covers, spines, discs and manuals.</p>
+      </article>
+      <article class="card">
+        <h3>Yours to run</h3>
+        <p>No account, no subscription and no cloud. Your library and its data stay on your hardware, in a database you can back up and restore from the app.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="screens" class="section alt">
+  <div class="wrap">
+    <h2>See it</h2>
+    <p class="sub">Classic and Modern looks, light and dark. Same library, your choice.</p>
+    <div class="shots">
+      <figure class="shot"><img src="img/detail.png" loading="lazy" width="1500" height="900" alt="A game's details pinned beside the library, with save states and metadata matching"><figcaption>Game details beside the library</figcaption></figure>
+      <figure class="shot"><img src="img/library-light.png" loading="lazy" width="1500" height="900" alt="The library in the light theme"><figcaption>The light theme</figcaption></figure>
+      <figure class="shot"><img src="img/collections.png" loading="lazy" width="1500" height="900" alt="A collection of favourite games"><figcaption>Collections</figcaption></figure>
+      <figure class="shot"><img src="img/emulators.png" loading="lazy" width="1500" height="900" alt="The emulators page, with a card for each platform"><figcaption>Emulators</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="start" class="section">
+  <div class="wrap">
+    <h2>Get started</h2>
+    <p class="sub">Pick the one that suits you. Each takes a few minutes.</p>
+    <div class="grid two">
+      <article class="card">
+        <h3>On your own computer</h3>
+        <p>Download the desktop app or the portable version for Windows, macOS or Linux. Nothing else to install: no server, no Docker, no settings to edit.</p>
+        <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">Download the latest release</a>
+      </article>
+      <article class="card">
+        <h3>On a home server</h3>
+        <p>Run it with Docker, on Unraid or in a Proxmox container, and use it from every device in the house. The deployment guide has the steps.</p>
+        <a class="btn" href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/DEPLOYMENT.md">Read the deployment guide</a>
+      </article>
+    </div>
+    <p class="small">The first time it starts, the account that was made for you is shown once. Write it down and change the password in Settings. If you expose it to the internet, put it behind a VPN or a reverse proxy with HTTPS.</p>
+  </div>
+</section>
+
+<section id="faq" class="section alt">
+  <div class="wrap narrow">
+    <h2>Questions</h2>
+    <details>
+      <summary>Does it come with games?</summary>
+      <p>No. game-sauce is for managing games you own. It doesn't include, supply or link to games, BIOS files or emulators. You bring your own collection and your own emulators.</p>
+    </details>
+    <details>
+      <summary>Is it really free?</summary>
+      <p>Yes. It's open source under the MIT licence. There is no account to create and nothing is sent to us. Some metadata providers ask you to sign up for your own free account to use their service.</p>
+    </details>
+    <details>
+      <summary>Which games can I play in the browser?</summary>
+      <p>Many older consoles that need no BIOS work from a web page. Newer systems, and anything that needs more than a browser can offer, start in an emulator on your PC through the launcher instead.</p>
+    </details>
+    <details>
+      <summary>Will it move or change my files?</summary>
+      <p>No. It reads your folders where they are. It never moves, renames or deletes your game files, and the clean-up tools only touch the artwork and files game-sauce itself stored.</p>
+    </details>
+    <details>
+      <summary>Can the whole family use it?</summary>
+      <p>Yes. Make accounts for the people you trust. Collections are private to whoever made them, and play-only accounts see just the games that can be played in the browser.</p>
+    </details>
+    <details>
+      <summary>Where do I get help or report a problem?</summary>
+      <p>Open an issue or a discussion on <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>. The System health page in Settings makes a copy-and-paste report with no secrets in it.</p>
+    </details>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/releases">Releases</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/USER-GUIDE.md">User guide</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/LICENSE">MIT licence</a>
+    </div>
+    <p class="small">game-sauce is an independent project. It is not affiliated with or endorsed by any console maker or game publisher; all console, game and company names and logos belong to their owners. It is built for managing games you legally own.</p>
+  </div>
+</footer>
+
+</body>
+</html>
