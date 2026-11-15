@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-15
+
 ### Added
 - **German.** The app and the website can now be read in German (Deutsch), with the German flag beside the name in the language picker. The website has a German page at gamesauce.app/de/.
 
