@@ -4,6 +4,13 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **German.** The app and the website can now be read in German (Deutsch), with the German flag beside the name in the language picker. The website has a German page at gamesauce.app/de/.
+
+### Fixed
+- **Singular counts were left in English in every translation.** Text such as "1 game" or "Delete 1 ROM?" did not match its translation (only the plural did), so it stayed in English. It now matches.
+- Plurals come out right in German (Spiele, Dateien) as they already did in French, and long words in the Settings group buttons (such as Bibliothekswerkzeuge) wrap instead of being cut off.
+
 ## [0.9.0] - 2026-11-15
 
 ### Added
