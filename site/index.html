@@ -20,9 +20,10 @@
 
 <header class="top">
   <div class="wrap bar">
-    <a class="brand" href="#top" aria-label="game-sauce home"><img src="img/logo.svg" alt="" width="36" height="36"><span>game-sauce</span></a>
+    <a class="brand" href="#top" aria-label="game-sauce home"><img src="img/logo.svg" alt="" width="36" height="36"><span>game<span class="saucy">-sauce</span></span></a>
     <nav aria-label="Sections">
       <a href="#features">Features</a>
+      <a href="#video">Video</a>
       <a href="#bigscreen">Big Screen</a>
       <a href="#screens">Screenshots</a>
       <a href="#start">Get started</a>
@@ -36,6 +37,7 @@
 
 <section class="hero">
   <div class="wrap">
+    <p class="wordmark" aria-hidden="true">game<span class="saucy">-sauce</span></p>
     <p class="eyebrow">Free &middot; open source &middot; self-hosted</p>
     <h1>Your game collection,<br>on your own server.</h1>
     <p class="lead">game-sauce catalogues the games you own, fetches the artwork, plays many of them in your browser, starts the rest in the emulators on your PC, and puts the whole library on the TV with a gamepad-driven Big Screen.</p>
@@ -96,7 +98,18 @@
   </div>
 </section>
 
-<section id="bigscreen" class="section alt">
+<section id="video" class="section alt">
+  <div class="wrap">
+    <h2>See it move</h2>
+    <p class="sub">Two short clips from the built-in demo library.</p>
+    <div class="clips">
+      <figure class="shot"><video muted loop playsinline autoplay preload="metadata" poster="img/poster-bigscreen.webp" width="1280" height="720" aria-label="Big Screen: scrolling the wheel of games, jumping by letter, opening a game and going back"><source src="video/bigscreen.mp4" type="video/mp4"></video><figcaption>Big Screen on the TV</figcaption></figure>
+      <figure class="shot"><video muted loop playsinline autoplay preload="metadata" poster="img/poster-library.webp" width="1280" height="720" aria-label="The Library: searching for a game and opening its details"><source src="video/library.mp4" type="video/mp4"></video><figcaption>Searching the Library and opening a game</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="bigscreen" class="section">
   <div class="wrap">
     <h2>Big Screen: your library on the TV</h2>
     <p class="sub">A full-screen view built for a gamepad and a sofa. Open it from the Library with one click, and put the browser or the desktop app full screen on the TV.</p>
@@ -112,7 +125,7 @@
   </div>
 </section>
 
-<section id="screens" class="section">
+<section id="screens" class="section alt">
   <div class="wrap">
     <h2>See it</h2>
     <p class="sub">Classic and Modern looks, light and dark. Same library, your choice.</p>
@@ -120,12 +133,16 @@
       <figure class="shot"><img src="img/detail.png" loading="lazy" width="1500" height="900" alt="A game's details pinned beside the library, with save states and metadata matching"><figcaption>Game details beside the library</figcaption></figure>
       <figure class="shot"><img src="img/library-light.png" loading="lazy" width="1500" height="900" alt="The library in the light theme"><figcaption>The light theme</figcaption></figure>
       <figure class="shot"><img src="img/collections.png" loading="lazy" width="1500" height="900" alt="A collection of favourite games"><figcaption>Collections</figcaption></figure>
+      <figure class="shot"><img src="img/library-classic.webp" loading="lazy" width="1920" height="1080" alt="The classic look: a sidebar, a Recently added row and a grid of covers"><figcaption>The classic look</figcaption></figure>
+      <figure class="shot"><img src="img/carousel.webp" loading="lazy" width="1920" height="1080" alt="The Carousel: a fan of covers with Play in browser and Play on this PC below"><figcaption>The Carousel</figcaption></figure>
+      <figure class="shot"><img src="img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="The launcher setup page: a row for each platform with its emulator program and arguments, and a RetroArch core button"><figcaption>Setting up emulators on your PC, with a RetroArch core picker</figcaption></figure>
+      <figure class="shot"><img src="img/health.png" loading="lazy" width="1500" height="900" alt="The System health page"><figcaption>System health</figcaption></figure>
       <figure class="shot"><img src="img/emulators.png" loading="lazy" width="1500" height="900" alt="The emulators page, with a card for each platform"><figcaption>Emulators</figcaption></figure>
     </div>
   </div>
 </section>
 
-<section id="start" class="section alt">
+<section id="start" class="section">
   <div class="wrap">
     <h2>Get started</h2>
     <p class="sub">Pick the one that suits you. Each takes a few minutes.</p>
@@ -145,7 +162,7 @@
   </div>
 </section>
 
-<section id="faq" class="section">
+<section id="faq" class="section alt">
   <div class="wrap narrow">
     <h2>Questions</h2>
     <details>
@@ -179,6 +196,7 @@
 
 <footer class="foot">
   <div class="wrap">
+    <p class="foot-brand">game<span class="saucy">-sauce</span></p>
     <div class="links">
       <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
       <a href="https://github.com/gamesauce-dev/game-sauce/releases">Releases</a>
@@ -190,5 +208,8 @@
   </div>
 </footer>
 
+<script>
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('video').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.setAttribute('controls', ''); });
+</script>
 </body>
 </html>

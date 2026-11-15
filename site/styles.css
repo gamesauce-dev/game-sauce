@@ -35,6 +35,17 @@ a:hover { text-decoration: underline; }
 .top nav a:hover { color: var(--text); text-decoration: none; background: var(--bg-3); }
 .top nav .btn { margin-left: 6px; color: var(--text); }
 
+/* the name: "-sauce" in the app's flowing colours */
+.saucy {
+  background: linear-gradient(90deg, #ff8a2b, #ff2d6f 25%, #b44dff 50%, #ff2d6f 75%, #ff8a2b) 0 0 / 200% 100% repeat-x;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: saturate(1.35) drop-shadow(0 0 .4rem rgba(255, 61, 140, .5));
+  animation: sauceFlow 5s linear infinite;
+}
+@keyframes sauceFlow { from { background-position: 0 0; } to { background-position: 200% 0; } }
+.wordmark { margin: 0 0 6px; font-weight: 800; font-size: clamp(1.3rem, 3vw, 1.8rem); letter-spacing: -.01em; }
+.foot-brand { margin: 0 0 14px; font-weight: 800; font-size: 1.3rem; }
+
 /* buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -85,6 +96,11 @@ h2 { margin: 0 0 10px; font-size: clamp(1.6rem, 3.4vw, 2.3rem); letter-spacing: 
 .ticks li { position: relative; padding-left: 30px; color: var(--dim); }
 .ticks li::before { content: ''; position: absolute; left: 4px; top: .55em; width: 10px; height: 10px; border-radius: 3px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
 
+/* video */
+.clips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+.clips video { width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 24px 60px rgba(0, 0, 0, .5); background: #000; }
+.clips figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
+
 /* faq */
 details { border: 1px solid var(--line); border-radius: 12px; background: var(--bg-3); margin-bottom: 10px; }
 summary { cursor: pointer; padding: 16px 18px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
@@ -106,6 +122,6 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
   .top nav a:not(.btn) { display: none; }
   .hero { padding: 48px 0 40px; }
   .section { padding: 52px 0; }
-  .grid, .grid.two, .shots { grid-template-columns: 1fr; }
+  .grid, .grid.two, .shots, .clips { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .saucy { animation: none; } }
