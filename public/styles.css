@@ -1844,3 +1844,6 @@ body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
 .lang-opt:hover { border-color: var(--accent); }
 .lang-opt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .lang-opt img { border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,.15); object-fit: cover; }
+
+/* Long words (German: "Bibliothekswerkzeuge") break rather than get cut off in a tile. */
+.settings-anchor .tile.group .tile-label { overflow-wrap: anywhere; hyphens: auto; }

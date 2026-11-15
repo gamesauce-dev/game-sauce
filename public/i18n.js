@@ -12,7 +12,8 @@ export const LANGS = [
   { code: 'fr', name: 'Français', flag: 'fr', html: 'fr' },
   { code: 'zh', name: '中文', flag: 'cn', html: 'zh-Hans' },
   { code: 'es', name: 'Español', flag: 'es', html: 'es' },
-  { code: 'pt', name: 'Português', flag: 'br', html: 'pt-BR' }   // Brazilian Portuguese
+  { code: 'pt', name: 'Português', flag: 'br', html: 'pt-BR' },   // Brazilian Portuguese
+  { code: 'de', name: 'Deutsch', flag: 'de', html: 'de' }
 ];
 const KEY = 'gamesauce_lang';          // 'auto' (or nothing) follows the browser
 const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
@@ -28,7 +29,9 @@ export function makeTranslator(strings = {}, lang = '') {
     const key = norm(en);
     if (/\{[a-z0-9_]+\}/i.test(key)) {
       const names = [];
-      const src = key.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{([a-z0-9_]+)\}/gi, (_, n) => { names.push(n); return '(.+?)'; });
+      // A {name} straight after a letter is a plural ending the code adds ("game{b}": "" for one, "s" for several), so it may be empty; any other {name} stands for something.
+      const esc = key.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+      const src = esc.replace(/\{([a-z0-9_]+)\}/gi, (all, n, at) => { names.push(n); return /[A-Za-z]/.test(esc[at - 1] || '') ? '(.*?)' : '(.+?)'; });
       patterns.push({ re: new RegExp('^' + src + '$'), names, tr });
     } else words.set(key, tr);
   }
