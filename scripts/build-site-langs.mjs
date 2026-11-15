@@ -27,6 +27,7 @@ function translate(html, idx) {
   // attributes people read: alt, aria-label and the description / social text
   out = out.replace(/\b(alt|aria-label)="([^"]*)"/g, (all, a, v) => { if (!/[A-Za-z]{3}/.test(v)) return all; const t = get(unesc(v)); if (t === null) { need(unesc(v)); return all; } return `${a}="${esc(t)}"`; });
   out = out.replace(/(<meta (?:name="description"|property="og:title"|property="og:description") content=")([^"]*)(")/g, (all, a, v, c) => { const t = get(unesc(v)); if (t === null) { need(unesc(v)); return all; } return a + esc(t) + c; });
+  out = out.replace(/(data-description|data-message)="([^"]*)"/g, (all, a, v) => { const t = get(unesc(v)); if (t === null) { need(unesc(v)); return all; } return `${a}="${esc(t)}"`; });
   return out;
 }
 

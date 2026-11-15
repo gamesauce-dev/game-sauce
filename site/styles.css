@@ -138,3 +138,4 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
 .top nav .langs a { display: inline-block; padding: 6px 8px; font-size: .85rem; }
 .top nav .langs a[aria-current] { color: var(--text); background: var(--bg-3); }
 @media (max-width: 860px) { .top nav .langs a { display: inline-block; } }
+@media (max-width: 420px) { .top nav .btn { display: none; } }
