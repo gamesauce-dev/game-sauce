@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **A security policy and a guide to the languages.** `SECURITY.md` says how to report a vulnerability privately and what is and is not in scope. The user guide has a **Language** section (how to choose one, what is and is not translated), and CONTRIBUTING.md has a **Translations** section for anyone who wants to fix wording or add a language.
+
 ## [0.11.0] - 2026-11-15
 
 ### Added

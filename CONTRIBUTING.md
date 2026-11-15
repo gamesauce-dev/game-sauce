@@ -60,8 +60,29 @@ temporary folder, so look at an existing file such as `tests/downloadpolicy.test
 ## Security-sensitive areas
 
 Changes to sign-in, sessions, backups and restore, the request guard (`src/lib/guard.js`) or anything
-that touches files on disk get extra scrutiny and need tests. To report a vulnerability, please open a
-GitHub security advisory (Security tab) rather than a public issue.
+that touches files on disk get extra scrutiny and need tests. To report a vulnerability, please follow
+[SECURITY.md](SECURITY.md) (a private report, not a public issue).
+
+## Translations
+
+The app and the website are available in English, French, Chinese, Spanish, Brazilian Portuguese, German
+and Japanese. The text in the code is English; each language is one file that maps the English text to its
+translation, and a small watcher swaps the text of the page as it appears. Fixing wording is the easiest way
+to help, and needs no programming.
+
+- **Fix a translation:** edit `public/lang/<code>.json` (`fr`, `zh`, `es`, `pt`, `de`, `ja`). The English text
+  is on the left (do not change it) and the translation on the right. Keep any `{a}`, `{b}` marks: they stand
+  for a number or a name. A `{b}` straight after a word is an "s" the code adds for a plural; you may drop it
+  if your language does not need it. Run the tests (`node scripts/run-tests.mjs`): one checks that you did not
+  invent a mark.
+- **See what is missing:** `node scripts/i18n-scan.mjs --missing fr` lists the English text that has no
+  translation yet. Anything missing stays in English.
+- **The website** is built from `site/index.html` (English) and `i18n/site.json`. After changing either, run
+  `node scripts/build-site-langs.mjs` and commit the pages it writes in `site/<code>/`.
+- **Add a language:** one line in `public/i18n.js` (the code, its own name, a flag picture in `public/flags`),
+  its file in `public/lang/`, and a page for the website. Please open an issue first, so we can agree it is
+  something you will be able to look after.
+- A translation is best read by a native speaker. Say in the pull request whether you are one.
 
 ## Pull requests
 

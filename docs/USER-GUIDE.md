@@ -11,7 +11,7 @@ setup lives in [DEPLOYMENT.md](DEPLOYMENT.md).
 [Sources](#6-sources-watch-folders-in-place) · [Add ROMs](#7-add-roms-import-copies) ·
 [Metadata](#8-metadata-and-covers) · [MAME](#9-mame) · [DAT files](#10-dat-verification-offline) ·
 [Collections](#11-collections-favourites-hidden) · [Emulators](#12-emulators) ·
-[Settings](#13-settings) · [Backups and restore](#14-backups-and-restore-admin) ·
+[Settings](#13-settings) · [Language](#language) · [Backups and restore](#14-backups-and-restore-admin) ·
 [Signing in](#15-signing-in-and-security) · [Controller](#16-using-a-controller) · [Tips](#17-tips-and-limits)
 
 ---
@@ -255,7 +255,7 @@ download from the vault. game-sauce never bundles emulator binaries.
 
 ## 13. Settings
 
-Click **⚙** under the logo. Members see **Profile picture** (upload your own photo, shown next to your name), **Change password**, **Active sessions** and **Controller**. Admins also get (among others) **CSV tools**, which renames a platform's games from a file-name-to-game-name table before you fetch metadata:
+Click **⚙** under the logo. Members see **Profile picture** (upload your own photo, shown next to your name) with the **Language** choice, **Change password**, **Active sessions** and **Controller**. Admins also get (among others) **CSV tools**, which renames a platform's games from a file-name-to-game-name table before you fetch metadata:
 
 | Tile | What it does |
 |------|--------------|
@@ -271,6 +271,18 @@ Click **⚙** under the logo. Members see **Profile picture** (upload your own p
 | Health | Is everything OK? Disk space, database, source folders, last backup, metadata providers. **Copy report** gives a plain-text summary with no passwords, keys or folder paths, handy for bug reports |
 
 Only one tile's panel is open at a time.
+
+---
+
+## Language
+
+game-sauce can be read in **English, French (Français), Chinese (中文), Spanish (Español), Brazilian Portuguese (Português), German (Deutsch) and Japanese (日本語)**. The website, gamesauce.app, has a page in each of them too.
+
+- **Choose a language:** **⚙ → My account → Language**. Each language has its flag and its own name on a button; **Automatic** (the first button) follows your browser's language, and falls back to English when your browser asks for one that is not on the list. The change applies at once, with a page reload.
+- **It follows you.** The choice is kept on this device and with your account, so you see the same language when you sign in somewhere else. Each person chooses their own: someone else can use the app in another language on the same server.
+- **What is translated:** the menus, buttons, hover text and tips, Settings and its explanations, messages and warnings (including the ones the server sends), and the welcome tour. A flag is only a picture beside the name; it does not mean a country.
+- **What is not translated:** game titles, descriptions and other details that come from the metadata providers or your files; names you type yourself (collections, notes, messages); the file and folder names on your disk; and the small **launcher setup page** that opens on your PC for choosing emulators. Anything that has no translation yet simply stays in English.
+- **Wording that sounds wrong?** The translations are written by hand and have not all been checked by native speakers. If something reads oddly, please say so by opening an issue on GitHub (or by email). Better still, fix it: each language is one file, `public/lang/<code>.json` (`fr`, `zh`, `es`, `pt`, `de`, `ja`), with the English text on the left and the translation on the right, and [CONTRIBUTING.md](../CONTRIBUTING.md#translations) explains how to send a change.
 
 ---
 

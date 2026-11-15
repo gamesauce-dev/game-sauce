@@ -70,6 +70,11 @@ The first time it starts, the account that was made for you is shown once: write
 - **Tidy Library home:** search and filters on one line, compact collapsible rows for *Continue
   playing* and *Recently added*, and a heading with the platform name when you filter.
 - **Scales** from 1080p to 4K, with a retro-neon sign-in screen.
+- **Seven languages:** English, French, Chinese, Spanish, Brazilian Portuguese, German and Japanese. The app
+  follows your browser, and each person can choose another under **Settings, My account, Language** (kept
+  with the account). The [website](https://gamesauce.app) is available in the same languages. Fixing a
+  translation is easy: see [Translations](CONTRIBUTING.md#translations).
+- **Security:** to report a vulnerability privately, see [SECURITY.md](SECURITY.md).
 
 <details>
 <summary>More screenshots</summary>
