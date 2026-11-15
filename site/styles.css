@@ -28,7 +28,7 @@ a:hover { text-decoration: underline; }
 /* header */
 .top { position: sticky; top: 0; z-index: 10; background: rgba(11, 12, 16, .86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text); }
+.brand { white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text); }
 .brand:hover { text-decoration: none; }
 .top nav { display: flex; align-items: center; gap: 4px; }
 .top nav a { padding: 8px 12px; border-radius: 8px; color: var(--dim); font-size: .95rem; }
@@ -77,6 +77,13 @@ h2 { margin: 0 0 10px; font-size: clamp(1.6rem, 3.4vw, 2.3rem); letter-spacing: 
 /* screenshots */
 .shots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
 .shots figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
+
+/* big screen */
+#bigscreen .shot { max-width: 980px; margin-inline: auto; }
+#bigscreen figcaption { margin-top: 10px; color: var(--dim); font-size: .9rem; text-align: center; }
+.ticks { list-style: none; margin: 34px auto; padding: 0; max-width: 720px; display: grid; gap: 12px; }
+.ticks li { position: relative; padding-left: 30px; color: var(--dim); }
+.ticks li::before { content: ''; position: absolute; left: 4px; top: .55em; width: 10px; height: 10px; border-radius: 3px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
 
 /* faq */
 details { border: 1px solid var(--line); border-radius: 12px; background: var(--bg-3); margin-bottom: 10px; }
