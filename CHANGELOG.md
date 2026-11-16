@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-16
+
 ### Added
 - **A progress card for Play on this PC.** Starting a big game was a silent wait. A card now follows the launch in the details window, the Carousel and Big Screen: waiting for the launcher, then a download bar with the size so far, the speed and the time left, then unpacking, starting your emulator and playing. A failure shows in red with the launcher's own message. The server counts the bytes it sends, so the download bar works with any launcher; a newer launcher also reports its steps (update it to see unpacking and starting). It is translated in every language and described in `docs/LOCAL-LAUNCH.md`.
 - **Italian.** The app and the website can now be read in Italian (Italiano), with the Italian flag beside the name in the language picker. The website has an Italian page at gamesauce.app/it/. The translations are written by hand and have not yet been checked by a native speaker.
