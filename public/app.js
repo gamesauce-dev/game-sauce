@@ -5506,6 +5506,21 @@ const wzSaying = (el, text) => { if (el) el.innerHTML = `<span class="spin" aria
 
 function wirePasswordCard() {
   const form = $('#wz-password'), msg = $('#wz-password-msg');
+  // Text in either box means a password change is half done: Next stays off until it is saved (Change password) or the
+  // boxes are cleared, so nobody moves on thinking it was changed. The other cards' buttons are not affected.
+  const typed = () => [...form.querySelectorAll('input')].some((i) => i.value !== '');
+  const guardNext = () => {
+    if (!form.isConnected) return;   // the card has been left (a save finishing late must not touch the next card)
+    const next = $('#wz-next');
+    const hold = typed();
+    next.disabled = hold;
+    next.title = hold ? 'Press Change password to save it, or clear both boxes to skip this step' : '';
+    if (hold && !msg.textContent) msg.textContent = 'Press Change password to save it, or clear both boxes to skip.';
+    else if (!hold && msg.textContent.startsWith('Press Change password')) msg.textContent = '';
+  };
+  form.addEventListener('input', guardNext);
+  form.addEventListener('change', guardNext);   // a browser's autofill can fill the boxes without typing
+  setTimeout(guardNext, 300);                   // ...and it may do so just after the card appears
   form.onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(form);
@@ -5521,7 +5536,7 @@ function wirePasswordCard() {
       if (WELCOME.step < WELCOME.cards.length - 1) { WELCOME.step++; paintWelcome(); }   // on to the next card, as if Next had been pressed (Enter in the box does this too)
       return;
     } catch (err) { msg.textContent = ''; toast(err.message, true); }
-    finally { wzBusy(false); }
+    finally { wzBusy(false); guardNext(); }   // a failed save leaves the text in the boxes, so Next stays off
   };
 }
 
