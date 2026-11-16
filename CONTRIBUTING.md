@@ -65,12 +65,12 @@ that touches files on disk get extra scrutiny and need tests. To report a vulner
 
 ## Translations
 
-The app and the website are available in English, French, Chinese, Spanish, Brazilian Portuguese, German
-and Japanese. The text in the code is English; each language is one file that maps the English text to its
+The app and the website are available in English, French, Chinese, Spanish, Brazilian Portuguese, German,
+Japanese and Italian. The text in the code is English; each language is one file that maps the English text to its
 translation, and a small watcher swaps the text of the page as it appears. Fixing wording is the easiest way
 to help, and needs no programming.
 
-- **Fix a translation:** edit `public/lang/<code>.json` (`fr`, `zh`, `es`, `pt`, `de`, `ja`). The English text
+- **Fix a translation:** edit `public/lang/<code>.json` (`fr`, `zh`, `es`, `pt`, `de`, `ja`, `it`). The English text
   is on the left (do not change it) and the translation on the right. Keep any `{a}`, `{b}` marks: they stand
   for a number or a name. A `{b}` straight after a word is an "s" the code adds for a plural; you may drop it
   if your language does not need it. Run the tests (`node scripts/run-tests.mjs`): one checks that you did not

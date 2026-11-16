@@ -14,6 +14,7 @@
 <link rel="alternate" hreflang="pt-BR" href="https://gamesauce.app/pt/">
 <link rel="alternate" hreflang="de" href="https://gamesauce.app/de/">
 <link rel="alternate" hreflang="ja" href="https://gamesauce.app/ja/">
+<link rel="alternate" hreflang="it" href="https://gamesauce.app/it/">
 <link rel="alternate" hreflang="x-default" href="https://gamesauce.app/">
 <!--/hreflang-->
 <link rel="icon" href="../img/logo.svg" type="image/svg+xml">
@@ -42,7 +43,7 @@
       <a href="#faq">Perguntas</a>
       <a href="https://buymeacoffee.com/gamesauce" rel="noopener">Apoie</a>
       <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
-      <!--langmenu--><details class="langmenu"><summary aria-label="Idioma"><img src="/flags/br.svg" alt="" width="24" height="16"><span>Português</span></summary><ul><li><a href="/" hreflang="en" lang="en" data-lang="en"><img src="/flags/gb.svg" alt="" width="24" height="16"><span>English</span></a></li><li><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr"><img src="/flags/fr.svg" alt="" width="24" height="16"><span>Français</span></a></li><li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh"><img src="/flags/cn.svg" alt="" width="24" height="16"><span>中文</span></a></li><li><a href="/es/" hreflang="es" lang="es" data-lang="es"><img src="/flags/es.svg" alt="" width="24" height="16"><span>Español</span></a></li><li><a href="/pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt" aria-current="true"><img src="/flags/br.svg" alt="" width="24" height="16"><span>Português</span></a></li><li><a href="/de/" hreflang="de" lang="de" data-lang="de"><img src="/flags/de.svg" alt="" width="24" height="16"><span>Deutsch</span></a></li><li><a href="/ja/" hreflang="ja" lang="ja" data-lang="ja"><img src="/flags/jp.svg" alt="" width="24" height="16"><span>日本語</span></a></li></ul></details><!--/langmenu-->
+      <!--langmenu--><details class="langmenu"><summary aria-label="Idioma"><img src="/flags/br.svg" alt="" width="24" height="16"><span>Português</span></summary><ul><li><a href="/" hreflang="en" lang="en" data-lang="en"><img src="/flags/gb.svg" alt="" width="24" height="16"><span>English</span></a></li><li><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr"><img src="/flags/fr.svg" alt="" width="24" height="16"><span>Français</span></a></li><li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh"><img src="/flags/cn.svg" alt="" width="24" height="16"><span>中文</span></a></li><li><a href="/es/" hreflang="es" lang="es" data-lang="es"><img src="/flags/es.svg" alt="" width="24" height="16"><span>Español</span></a></li><li><a href="/pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt" aria-current="true"><img src="/flags/br.svg" alt="" width="24" height="16"><span>Português</span></a></li><li><a href="/de/" hreflang="de" lang="de" data-lang="de"><img src="/flags/de.svg" alt="" width="24" height="16"><span>Deutsch</span></a></li><li><a href="/ja/" hreflang="ja" lang="ja" data-lang="ja"><img src="/flags/jp.svg" alt="" width="24" height="16"><span>日本語</span></a></li><li><a href="/it/" hreflang="it" lang="it" data-lang="it"><img src="/flags/it.svg" alt="" width="24" height="16"><span>Italiano</span></a></li></ul></details><!--/langmenu-->
     </nav>
   </div>
 </header>
@@ -284,7 +285,7 @@
 // Remember a language choice, and on the first visit to the English page follow the browser (to a language the site has) once.
 (function () {
   var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
-  var AVAIL = /*langs*/["fr","zh","es","pt","de","ja"]/*/langs*/;
+  var AVAIL = /*langs*/["fr","zh","es","pt","de","ja","it"]/*/langs*/;
   try { saved = localStorage.getItem(K); } catch (e) {}
   document.querySelectorAll('.langmenu a').forEach(function (a) {
     a.addEventListener('click', function () { try { localStorage.setItem(K, a.dataset.lang); } catch (e) {} });

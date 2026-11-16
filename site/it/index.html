@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>game-sauce: una libreria self-hosted per i giochi che possiedi</title>
+<meta name="description" content="game-sauce è un gestore di ROM gratuito e self-hosted per la tua collezione: scansiona le tue cartelle, scarica le grafiche, gioca nel browser o sul tuo PC e sfoglia dal divano con Schermo grande.">
+<link rel="canonical" href="https://gamesauce.app/it/">
+<!--hreflang-->
+<link rel="alternate" hreflang="en" href="https://gamesauce.app/">
+<link rel="alternate" hreflang="fr" href="https://gamesauce.app/fr/">
+<link rel="alternate" hreflang="zh-Hans" href="https://gamesauce.app/zh/">
+<link rel="alternate" hreflang="es" href="https://gamesauce.app/es/">
+<link rel="alternate" hreflang="pt-BR" href="https://gamesauce.app/pt/">
+<link rel="alternate" hreflang="de" href="https://gamesauce.app/de/">
+<link rel="alternate" hreflang="ja" href="https://gamesauce.app/ja/">
+<link rel="alternate" hreflang="it" href="https://gamesauce.app/it/">
+<link rel="alternate" hreflang="x-default" href="https://gamesauce.app/">
+<!--/hreflang-->
+<link rel="icon" href="../img/logo.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="game-sauce: una libreria self-hosted per i giochi che possiedi">
+<meta property="og:description" content="Scansiona le tue cartelle, scarica le grafiche, gioca nel browser o sul tuo PC e sfoglia dal divano con Schermo grande. Gratuito e open source.">
+<meta property="og:url" content="https://gamesauce.app/it/">
+<meta property="og:image" content="https://gamesauce.app/img/social-preview.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="home di game-sauce"><img src="../img/logo.svg" alt="" width="36" height="36"><span>game<span class="saucy">-sauce</span></span></a>
+    <nav aria-label="Sezioni">
+      <a href="#features">Funzionalità</a>
+      <a href="#video">Video</a>
+      <a href="#bigscreen">Schermo grande</a>
+      <a href="#carousel">Carosello</a>
+      <a href="#shelf">Scaffale</a>
+      <a href="#screens">Screenshot</a>
+      <a href="#start">Inizia</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://buymeacoffee.com/gamesauce" rel="noopener">Supporto</a>
+      <a class="btn btn-ghost" href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <!--langmenu--><details class="langmenu"><summary aria-label="Lingua"><img src="/flags/it.svg" alt="" width="24" height="16"><span>Italiano</span></summary><ul><li><a href="/" hreflang="en" lang="en" data-lang="en"><img src="/flags/gb.svg" alt="" width="24" height="16"><span>English</span></a></li><li><a href="/fr/" hreflang="fr" lang="fr" data-lang="fr"><img src="/flags/fr.svg" alt="" width="24" height="16"><span>Français</span></a></li><li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh"><img src="/flags/cn.svg" alt="" width="24" height="16"><span>中文</span></a></li><li><a href="/es/" hreflang="es" lang="es" data-lang="es"><img src="/flags/es.svg" alt="" width="24" height="16"><span>Español</span></a></li><li><a href="/pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt"><img src="/flags/br.svg" alt="" width="24" height="16"><span>Português</span></a></li><li><a href="/de/" hreflang="de" lang="de" data-lang="de"><img src="/flags/de.svg" alt="" width="24" height="16"><span>Deutsch</span></a></li><li><a href="/ja/" hreflang="ja" lang="ja" data-lang="ja"><img src="/flags/jp.svg" alt="" width="24" height="16"><span>日本語</span></a></li><li><a href="/it/" hreflang="it" lang="it" data-lang="it" aria-current="true"><img src="/flags/it.svg" alt="" width="24" height="16"><span>Italiano</span></a></li></ul></details><!--/langmenu-->
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <p class="wordmark" aria-hidden="true">game<span class="saucy">-sauce</span></p>
+    <p class="eyebrow">Gratuito &middot; open source &middot; self-hosted</p>
+    <h1>La tua collezione di giochi,<br>sul tuo server.</h1>
+    <p class="lead">game-sauce cataloga i giochi che possiedi, scarica le grafiche, ne fa girare molti nel tuo browser, avvia gli altri negli emulatori sul tuo PC e porta l'intera libreria sulla TV con uno Schermo grande comandato dal gamepad.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">Scarica</a>
+      <a class="btn" href="#start">Come avviarlo</a>
+      <a class="btn" href="https://github.com/gamesauce-dev/game-sauce" rel="noopener">&#9733; Una stella su GitHub</a>
+    </div>
+    <p class="small">Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid e Proxmox &middot; Raspberry Pi</p>
+    <figure class="shot hero-shot">
+      <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="La libreria di game-sauce: una griglia di copertine di giochi con filtri per piattaforma e una barra dalla A alla Z">
+    </figure>
+    <p class="small note">Gli screenshot usano dati demo integrati con copertine generate.</p>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <div class="wrap">
+    <h2>Tutto per una collezione che hai già</h2>
+    <p class="sub">Un unico posto per la libreria di tutta la famiglia, su una macchina che controlli tu.</p>
+    <div class="grid">
+      <article class="card">
+        <h3>Scansiona le tue cartelle sul posto</h3>
+        <p>Indicagli le cartelle che hai già. I file vengono catalogati dove sono e non vengono mai spostati, rinominati o eliminati, e un file danneggiato non interrompe mai una scansione.</p>
+      </article>
+      <article class="card">
+        <h3>Grafiche e dettagli, trovati per te</h3>
+        <p>Copertine, descrizioni, anni e altro da ScreenScraper, TheGamesDB, IGDB e SteamGridDB usando i tuoi account, oppure importa le grafiche da cartelle e carica le tue.</p>
+      </article>
+      <article class="card">
+        <h3>Gioca nel browser</h3>
+        <p>Molte console più vecchie girano direttamente da una pagina web, con stati salvati e salvataggi nel gioco conservati per ogni persona sul tuo server. Una riga Continua a giocare ricorda dove eri rimasto.</p>
+      </article>
+      <article class="card">
+        <h3>Gioca sul tuo PC</h3>
+        <p>Un clic avvia un gioco nell'emulatore installato sul tuo computer, come RetroArch, MAME o Dolphin. I giochi si possono conservare per riavviarli rapidamente e una pagina di configurazione imposta ogni emulatore.</p>
+      </article>
+      <article class="card">
+        <h3>Schermo grande per la TV</h3>
+        <p>Una vista a schermo intero comandata dal gamepad, pensata per il divano: una ruota di giochi con loghi e marquee, preferiti e raccolte, una barra dalla A alla Z, manuali sullo schermo e suoni che puoi silenziare.</p>
+      </article>
+      <article class="card">
+        <h3>Raccolte e persone</h3>
+        <p>Preferiti, raccolte private e giochi nascosti, più account per le persone di cui ti fidi, compresi account solo gioco senza download né amministrazione. Le persone possono scambiarsi messaggi privati e l'admin può pubblicare un avviso per tutti.</p>
+      </article>
+      <article class="card">
+        <h3>Tieni tutto in ordine</h3>
+        <p>Verifica i dump con i DAT No-Intro e Redump, trova le versioni duplicate e suggerisci la copia migliore da conservare, e ripulisci i file di grafiche inutilizzati, senza eliminare i tuoi giochi.</p>
+      </article>
+      <article class="card">
+        <h3>Il tuo scaffale e anche il tuo Steam</h3>
+        <p>Importa la tua libreria Steam con le ore che hai giocato e i tuoi giochi PlayStation, Nintendo e Xbox da un elenco. Tieni traccia anche dei dischi e delle cartucce che possiedi fisicamente, tutto accanto alle tue ROM.</p>
+      </article>
+      <article class="card">
+        <h3>Da gestire a modo tuo</h3>
+        <p>Nessun account, nessun abbonamento e nessun cloud. La tua libreria e i suoi dati restano sul tuo hardware, in un database di cui puoi fare il backup e il ripristino dall'app.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="video" class="section alt">
+  <div class="wrap">
+    <h2>Guardalo in azione</h2>
+    <p class="sub">Due brevi clip dalla libreria demo integrata.</p>
+    <div class="clips">
+      <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="Schermo grande: scorrere la ruota dei giochi, saltare per lettera, aprire un gioco e tornare indietro"><source src="../video/bigscreen.mp4" type="video/mp4"></video><figcaption>Schermo grande sulla TV</figcaption></figure>
+      <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="La Libreria: cercare un gioco e aprirne i dettagli"><source src="../video/library.mp4" type="video/mp4"></video><figcaption>Cercare nella Libreria e aprire un gioco</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="bigscreen" class="section">
+  <div class="wrap">
+    <h2>Schermo grande: la tua libreria sulla TV</h2>
+    <p class="sub">Una vista a schermo intero pensata per un gamepad e un divano. Aprila dalla Libreria con un clic e metti il browser o l'app desktop a schermo intero sulla TV.</p>
+    <figure class="shot"><img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="Schermo grande: una ruota di giochi con il gioco selezionato al centro, una barra dalla A alla Z a destra e i suggerimenti del controller in basso"><figcaption>La ruota: scorri con la leva, salta per lettera con i dorsali</figcaption></figure>
+    <ul class="ticks">
+      <li>Funziona interamente con un gamepad, con i suggerimenti dei pulsanti sullo schermo.</li>
+      <li>Loghi e marquee dove li hai, copertine dove non li hai, e uno sfondo sfocato ricavato dalla grafica del gioco stesso.</li>
+      <li>Preferiti e le tue raccolte su una riga a parte, più una tastiera a schermo per dare un nome a quelle nuove.</li>
+      <li>Leggi il manuale di un gioco sullo schermo e vedi quali giochi sono segnalati come problematici per l'emulazione.</li>
+      <li>Gioca nel browser o avvia il gioco su questo PC dalla stessa schermata.</li>
+    </ul>
+    <figure class="shot"><img src="../img/bigscreen-game.webp" loading="lazy" width="1920" height="1080" alt="La pagina di un gioco in Schermo grande: Gioca, Preferito, Aggiungi alla raccolta, Non funzionante e Nascondi a sinistra, la copertina al centro e i dettagli a destra"><figcaption>La pagina di un gioco: giocalo, aggiungilo ai preferiti, aggiungilo a una raccolta</figcaption></figure>
+  </div>
+</section>
+
+<section id="carousel" class="section alt">
+  <div class="wrap">
+    <h2>Il Carosello: scegli un gioco e gioca</h2>
+    <p class="sub">Uno scaffale di copertine a schermo intero disposte in un arco morbido. Scegli una famiglia e una piattaforma, scorri con i tasti freccia, la rotellina del mouse, uno swipe o un gamepad e premi gioca.</p>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="Il Carosello: scorrere le copertine, saltare a un titolo per lettera e mettere una stella a un preferito"><source src="../video/carousel.mp4" type="video/mp4"></video><figcaption>Scorrere il Carosello, saltare per lettera e mettere una stella a un preferito</figcaption></figure>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="Scegliere un gioco Game Boy nel Carosello, premere Gioca nel browser e il gioco che gira nella pagina"><source src="../video/play.mp4" type="video/mp4"></video><figcaption>Premi <b>Gioca nel browser</b> e il gioco gira nella pagina. Il gioco è <a href="https://github.com/pinobatch/libbet">Libbet and the Magic Floor</a>, un homebrew gratuito di Damian Yerrick (licenza zlib).</figcaption></figure>
+    <ul class="ticks">
+      <li><b>Gioca nel browser</b> per i giochi che girano in una pagina web, oppure <b>Gioca su questo PC</b> per avviare l'emulatore che hai configurato.</li>
+      <li>Una stella dorata segna i tuoi preferiti sulla copertina e accanto al titolo, e puoi mettere o togliere la stella al gioco al centro senza uscire.</li>
+      <li>Premi una lettera per saltare al primo titolo che inizia con quella lettera.</li>
+      <li>Se un gioco ha un video, viene riprodotto sotto le copertine quando ti fermi su di esso.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="shelf" class="section">
+  <div class="wrap">
+    <h2>Il tuo scaffale: dischi e cartucce che possiedi</h2>
+    <p class="sub">Cataloga i giochi in scatola sul tuo scaffale reale, a mano o da un elenco, accanto alla tua collezione digitale. Ogni persona ha il proprio scaffale.</p>
+    <figure class="shot"><video muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="Lo scaffale Fisico: passare allo scaffale di dorsi, estrarne uno, portare avanti la custodia, girarla, aprirla sul manuale e sul disco e leggere il manuale"><source src="../video/shelf.mp4" type="video/mp4"></video><figcaption>Dalle tessere a uno scaffale di dorsi, poi estrai una custodia, girala, aprila e leggi il manuale</figcaption></figure>
+    <ul class="ticks">
+      <li>Guarda i tuoi giochi come tessere oppure come uno scaffale di dorsi che stanno in piedi come le vere custodie.</li>
+      <li>Clicca un dorso per estrarlo, clicca di nuovo per portare avanti la custodia e ancora per aprirla: il manuale da un lato e il disco o la cartuccia dall'altro.</li>
+      <li>Gira la custodia per vedere il retro e leggi il manuale sullo schermo.</li>
+      <li>Aggiungi le tue immagini e i tuoi manuali, oppure recupera copertine, dorsi, retri e dischi dai tuoi provider di metadati.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="chat" class="section alt">
+  <div class="wrap">
+    <h2>Chat: resta in contatto con la famiglia</h2>
+    <p class="sub">Messaggi privati tra le persone sul tuo server e avvisi dell'admin. Nulla esce dalla tua macchina.</p>
+    <figure class="shot"><img src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="Il pannello Messaggi: un avviso dell'admin sopra l'elenco delle conversazioni e una conversazione privata tra due persone con i loro colori"><figcaption>Una conversazione privata, con un avviso dell'admin sopra l'elenco</figcaption></figure>
+    <ul class="ticks">
+      <li>Conversazioni uno a uno che solo tu e l'altra persona potete leggere.</li>
+      <li>Ogni persona ha il proprio colore nella chat.</li>
+      <li>Hai cambiato idea? Ritira un messaggio per entrambi entro pochi minuti.</li>
+      <li>L'admin può pubblicare un avviso che tutti vedono, come una manutenzione programmata. Raggiunge anche gli account solo gioco.</li>
+      <li>Solo testo semplice, niente link, e tutto resta sul tuo server.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="screens" class="section">
+  <div class="wrap">
+    <h2>Guardalo</h2>
+    <p class="sub">Aspetti Classico e Moderno, chiaro e scuro. Stessa libreria, a tua scelta.</p>
+    <div class="shots">
+      <figure class="shot"><img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="I dettagli di un gioco fissati accanto alla libreria, con stati salvati e abbinamento dei metadati"><figcaption>Dettagli del gioco accanto alla libreria</figcaption></figure>
+      <figure class="shot"><img src="../img/library-light.webp" loading="lazy" width="1500" height="900" alt="La libreria nel tema chiaro"><figcaption>Il tema chiaro</figcaption></figure>
+      <figure class="shot"><img src="../img/collections.webp" loading="lazy" width="2400" height="528" alt="La pagina Raccolte: due raccolte con le copertine dei giochi e il numero di giochi"><figcaption>Raccolte</figcaption></figure>
+      <figure class="shot"><img src="../img/library-classic.webp" loading="lazy" width="1920" height="1080" alt="L'aspetto classico: una barra laterale, chip delle famiglie di piattaforme con i conteggi e una griglia di copertine con stelle dorate sui preferiti"><figcaption>L'aspetto classico</figcaption></figure>
+      <figure class="shot"><img src="../img/login.webp" loading="lazy" width="2560" height="1440" alt="La schermata di accesso: il logo di game-sauce su una griglia al neon, con i campi nome utente e password"><figcaption>La schermata di accesso</figcaption></figure>
+      <figure class="shot"><img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="Lo scaffale Fisico con una custodia PlayStation 2 aperta, che mostra il libretto di istruzioni e il disco"><figcaption>Una custodia aperta sullo scaffale</figcaption></figure>
+      <figure class="shot"><img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="Il Carosello: un ventaglio di copertine con Gioca nel browser e Gioca su questo PC sotto"><figcaption>Il Carosello</figcaption></figure>
+      <figure class="shot"><img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="La pagina di configurazione del launcher: una riga per ogni piattaforma con il suo programma emulatore e gli argomenti, e un pulsante per i core RetroArch"><figcaption>Configurazione degli emulatori sul tuo PC, con un selettore di core RetroArch</figcaption></figure>
+      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="La libreria Digitale: una griglia di giochi Steam con le ore giocate e schede per Steam, PlayStation, Nintendo e Xbox"><figcaption>La libreria Digitale: i tuoi giochi Steam e i giochi per console che possiedi</figcaption></figure>
+      <figure class="shot"><img src="../img/emulators.webp" loading="lazy" width="1500" height="900" alt="La pagina degli emulatori, con una scheda per ogni piattaforma"><figcaption>Emulatori</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="start" class="section alt">
+  <div class="wrap">
+    <h2>Inizia</h2>
+    <p class="sub">Scegli quello che fa per te. Ognuno richiede pochi minuti.</p>
+    <div class="grid two">
+      <article class="card">
+        <h3>Sul tuo computer</h3>
+        <p>Scarica l'app desktop o la versione portatile per Windows, macOS o Linux. Nient'altro da installare: nessun server, nessun Docker, nessuna impostazione da modificare.</p>
+        <a class="btn btn-primary" href="https://github.com/gamesauce-dev/game-sauce/releases/latest">Scarica l'ultima versione</a>
+      </article>
+      <article class="card">
+        <h3>Su un server domestico</h3>
+        <p>Eseguilo con Docker, su Unraid o in un container Proxmox e usalo da ogni dispositivo di casa. La guida alla distribuzione spiega i passaggi.</p>
+        <a class="btn" href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/DEPLOYMENT.md">Leggi la guida alla distribuzione</a>
+      </article>
+    </div>
+    <p class="small">La prima volta che si avvia, l'account creato per te viene mostrato una sola volta. Annotalo e cambia la password in Impostazioni. Se lo esponi a Internet, mettilo dietro una VPN o un reverse proxy con HTTPS.</p>
+  </div>
+</section>
+
+<section id="faq" class="section">
+  <div class="wrap narrow">
+    <h2>Domande</h2>
+    <details>
+      <summary>Include dei giochi?</summary>
+      <p>No. game-sauce serve a gestire i giochi che possiedi. Non include né fornisce giochi o file BIOS e non scarica giochi per te: porti la tua collezione. Per giocare, il gioco nel browser usa EmulatorJS, un emulatore open source che il tuo browser carica quando premi Gioca. Per giocare sul tuo PC, la pagina Emulatori consiglia degli emulatori e rimanda a dove ottenerli, e il launcher avvia quelli che installi tu.</p>
+    </details>
+    <details>
+      <summary>È davvero gratuito?</summary>
+      <p>Sì. È open source con licenza MIT. Non c'è nessun account da creare, nessun abbonamento e nessun tracciamento. Alcuni provider di metadati ti chiedono di registrarti con un tuo account gratuito per usare il loro servizio.</p>
+    </details>
+    <details>
+      <summary>Quali giochi posso giocare nel browser?</summary>
+      <p>Molte console più vecchie che non richiedono BIOS funzionano da una pagina web. I sistemi più recenti, e tutto ciò che richiede più di quanto un browser possa offrire, si avviano invece in un emulatore sul tuo PC tramite il launcher.</p>
+    </details>
+    <details>
+      <summary>Sposterà o modificherà i miei file?</summary>
+      <p>Non nelle cartelle che gli indichi. Li legge dove sono e non sposta, rinomina o elimina mai i file al loro interno. Gli strumenti di pulizia toccano solo le grafiche e i file che game-sauce ha memorizzato da sé.</p>
+    </details>
+    <details>
+      <summary>Può usarlo tutta la famiglia?</summary>
+      <p>Sì. Crea account per le persone di cui ti fidi. Le raccolte sono private per chi le ha create e gli account solo gioco vedono soltanto i giochi che si possono giocare nel browser.</p>
+    </details>
+    <details>
+      <summary>Dove trovo aiuto o segnalo un problema?</summary>
+      <p>Apri una issue o una discussione su <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>, oppure scrivi a <a href="mailto:hello@gamesauce.app">hello@gamesauce.app</a>. La pagina Stato del sistema in Impostazioni crea un rapporto da copiare e incollare senza segreti.</p>
+    </details>
+  </div>
+</section>
+
+<section id="support" class="section support">
+  <div class="wrap narrow">
+    <h2>Ti piace game-sauce?</h2>
+    <p class="sub">game-sauce è gratuito e open source. Se ti è utile, puoi offrirmi un caffè. Mi aiuta a dedicare più tempo a nuove funzionalità, ai test su Windows, Mac e Linux e alle risposte alle domande.</p>
+    <p class="cta"><a class="btn btn-gold" href="https://buymeacoffee.com/gamesauce" rel="noopener">&#9733; Offrimi un caffè</a></p>
+    <details class="pay"><summary><span class="wx">WeChat Pay</span> <span lang="zh-Hans">微信支付</span></summary><figure><img src="../img/wechat-pay.webp" loading="lazy" width="414" height="562" alt="Codice QR di WeChat Pay"><figcaption>Scansiona con WeChat per sostenere game-sauce</figcaption></figure></details>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="foot-brand">game<span class="saucy">-sauce</span></p>
+    <div class="links">
+      <a href="https://github.com/gamesauce-dev/game-sauce">GitHub</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/releases">Versioni</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/CHANGELOG.md">Registro delle modifiche</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/docs/USER-GUIDE.md">Guida utente</a>
+      <a href="https://github.com/gamesauce-dev/game-sauce/blob/main/LICENSE">Licenza MIT</a>
+      <a href="mailto:hello@gamesauce.app">hello@gamesauce.app</a>
+      <a href="https://buymeacoffee.com/gamesauce" rel="noopener">Sostieni il progetto</a>
+    </div>
+    <p class="small">game-sauce è un progetto indipendente. Non è affiliato né approvato da alcun produttore di console o editore di giochi; tutti i nomi e i loghi di console, giochi e aziende appartengono ai rispettivi proprietari. È pensato per gestire giochi che possiedi legalmente.</p>
+  </div>
+</footer>
+
+<script>
+// Remember a language choice, and on the first visit to the English page follow the browser (to a language the site has) once.
+(function () {
+  var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
+  var AVAIL = /*langs*/["fr","zh","es","pt","de","ja","it"]/*/langs*/;
+  try { saved = localStorage.getItem(K); } catch (e) {}
+  document.querySelectorAll('.langmenu a').forEach(function (a) {
+    a.addEventListener('click', function () { try { localStorage.setItem(K, a.dataset.lang); } catch (e) {} });
+  });
+  document.addEventListener('click', function (ev) { var d = document.querySelector('.langmenu[open]'); if (d && !d.contains(ev.target)) d.removeAttribute('open'); });
+  if (here === 'en' && !saved && location.pathname === '/' && !location.hash) {
+    var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
+    for (var i = 0; i < l.length; i++) { if (AVAIL.indexOf(l[i]) >= 0) { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
+  }
+})();
+(function () {
+  var vids = document.querySelectorAll('video');
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm || !('IntersectionObserver' in window)) { vids.forEach(function (v) { v.setAttribute('controls', ''); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { var p = e.target.play(); if (p && p.catch) p.catch(function () {}); } else e.target.pause();
+    });
+  }, { threshold: 0.2 });
+  vids.forEach(function (v) { io.observe(v); });
+})();
+</script>
+<!-- Buy Me a Coffee: the floating button. It loads a script from buymeacoffee.com. Delete this line to remove it. -->
+<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="gamesauce" data-description="Sostienimi su Buy me a coffee!" data-message="Grazie per il tuo sostegno. Buon divertimento!" data-color="#7c5cff" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+</body>
+</html>

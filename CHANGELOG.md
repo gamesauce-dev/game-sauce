@@ -4,6 +4,14 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Italian.** The app and the website can now be read in Italian (Italiano), with the Italian flag beside the name in the language picker. The website has an Italian page at gamesauce.app/it/. The translations are written by hand and have not yet been checked by a native speaker.
+
+### Changed
+- **The welcome tour no longer lets you move on from the password card with half a password typed.** While either password box has text, Next stays off, with a hint to press Change password or clear the boxes to skip.
+- **The System health cards are translated.** Their titles and sentences were always English; they are now in all the languages, including times such as "last scan 28 minutes ago".
+- **The upgrade and restore checklist** (`docs/UPGRADE-TEST.md`) starts the test copy with `--data`, says where the database ends up, and uses a release older than 0.6.1 for the "newer backup on an older app" test (releases from 0.6.1 on share database version 57, so they cannot refuse it).
+
 ## [0.11.1] - 2026-11-15
 
 ### Changed

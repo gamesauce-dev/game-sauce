@@ -14,7 +14,8 @@ export const LANGS = [
   { code: 'es', name: 'Español', flag: 'es', html: 'es' },
   { code: 'pt', name: 'Português', flag: 'br', html: 'pt-BR' },   // Brazilian Portuguese
   { code: 'de', name: 'Deutsch', flag: 'de', html: 'de' },
-  { code: 'ja', name: '日本語', flag: 'jp', html: 'ja' }
+  { code: 'ja', name: '日本語', flag: 'jp', html: 'ja' },
+  { code: 'it', name: 'Italiano', flag: 'it', html: 'it' }
 ];
 const KEY = 'gamesauce_lang';          // 'auto' (or nothing) follows the browser
 const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
@@ -41,6 +42,7 @@ export function makeTranslator(strings = {}, lang = '') {
   // The code adds an "s" to make a plural (game + s), which is not how every language does it: jeu + s is jeux in French; Spiel + s is Spiele in German.
   const plurals = {
     fr: [[/\bjeus\b/g, 'jeux']],
+    it: [[/\bgiocos\b/g, 'giochi'], [/\bcopertinas\b/g, 'copertine'], [/\bsalvatas\b/g, 'salvate'], [/\bcontrassegnatos\b/g, 'contrassegnati'], [/\bselezionatos\b/g, 'selezionati'], [/\blogos\b/g, 'loghi']],
     de: [[/\bSpiels\b/g, 'Spiele'], [/\bDateis\b/g, 'Dateien'], [/\bBilds\b/g, 'Bilder'], [/\bZeiles\b/g, 'Zeilen'], [/\bKopies\b/g, 'Kopien']]
   }[lang];
   const fix = plurals ? (x) => plurals.reduce((s, [re, to]) => s.replace(re, to), x) : (x) => x;

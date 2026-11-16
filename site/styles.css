@@ -136,7 +136,7 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
 
 /* The section links hide when they no longer fit; other languages' words are longer, so they need more room. */
 @media (max-width: 1160px) { .top nav > a:not(.btn) { display: none; } }
-@media (max-width: 1240px) { html:lang(de) .top nav > a:not(.btn), html:lang(es) .top nav > a:not(.btn), html:lang(pt) .top nav > a:not(.btn) { display: none; } }
+@media (max-width: 1240px) { html:lang(de) .top nav > a:not(.btn), html:lang(es) .top nav > a:not(.btn), html:lang(pt) .top nav > a:not(.btn), html:lang(it) .top nav > a:not(.btn) { display: none; } }
 @media (max-width: 1300px) { html:lang(fr) .top nav > a:not(.btn), html:lang(ja) .top nav > a:not(.btn) { display: none; } }
 .langmenu { position: relative; margin-left: 8px; }
 .langmenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; color: var(--text); font-size: .9rem; border: 1px solid var(--line); background: var(--bg-2); }
