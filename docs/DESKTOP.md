@@ -13,7 +13,7 @@ The first time you run it on this computer, the account that was made for you is
 
 ## Install
 
-Download the installer for your system from the project's *Releases* page: Windows (`.exe`, installs for you only, no administrator rights), Apple Silicon Mac (`.dmg`), Linux (`.deb` or `.AppImage`). Windows may warn that the app is from an unknown publisher the first time (choose *More info*, then *Run anyway*); on a Mac, right-click it and choose *Open*.
+Download the installer for your system from the project's *Releases* page: Windows (`.exe`, installs for you only, no administrator rights), Apple Silicon Mac (`.dmg`), Linux (`.deb` or `.AppImage`). Windows may warn that the app is from an unknown publisher the first time (choose *More info*, then *Run anyway*); on a Mac, see [If macOS won't open it](../README.md#if-macos-wont-open-it) (the app is not signed with an Apple developer certificate yet, so macOS asks for one extra step the first time).
 
 ## Building it yourself
 

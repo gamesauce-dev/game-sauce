@@ -152,19 +152,19 @@ test('package manager entries: for one version, pointing at the release files th
   assert.match(scoop.architecture['64bit'].hash, /^[0-9a-f]{64}$/); assert.equal(scoop.architecture['64bit'].extract_dir, `game-sauce-v${v}-windows-x64`);
   assert.ok(scoop.checkver && scoop.autoupdate.hash.url.endsWith('/SHA256SUMS'));
   const cask = read('install/packages/homebrew/Casks/game-sauce.rb');
-  assert.ok(cask.includes(`version "${v}"`) && /sha256 "[0-9a-f]{64}"/.test(cask) && cask.includes('game-sauce_#{version}_aarch64.dmg') && cask.includes('depends_on arch: :arm64'));
+  assert.ok(cask.includes(`version "${v}"`) && /sha256 "[0-9a-f]{64}"/.test(cask) && cask.includes('game-sauce-v#{version}-macos-arm64.dmg') && cask.includes('depends_on arch: :arm64'));
   assert.ok(cask.includes('com.apple.quarantine'));
   assert.ok(!/zap trash:[\s\S]*game-sauce-data/.test(cask), 'zap never removes the library');
   // the file names the release workflow produces are the ones the entries use
   const sc = read('scripts/make-package-manifests.mjs');
-  assert.ok(sc.includes('SHA256SUMS') && sc.includes('x64-setup.exe') && sc.includes('windows-x64.zip') && sc.includes('aarch64.dmg'));
+  assert.ok(sc.includes('SHA256SUMS') && sc.includes('x64-setup.exe') && sc.includes('windows-x64.zip') && sc.includes('macos-arm64.dmg'));
   assert.ok(read('docs/PACKAGES.md').includes('winget') && read('docs/PACKAGES.md').includes('Community Applications'));
 });
 
 test('the README has a Download section naming the files each release really carries', () => {
   const r = read('README.md');
   assert.ok(r.includes('## Download') && r.includes('releases/latest'));
-  for (const f of ['game-sauce_<version>_x64-setup.exe', 'game-sauce-v<version>-windows-x64.zip', 'game-sauce_<version>_aarch64.dmg', 'game-sauce-v<version>-macos-arm64.tar.gz', 'game-sauce_<version>_amd64.deb', 'game-sauce-v<version>-linux-x64.tar.gz', 'game-sauce-v<version>-linux-arm64.tar.gz']) assert.ok(r.includes(f), f);
+  for (const f of ['game-sauce_<version>_x64-setup.exe', 'game-sauce-v<version>-windows-x64.zip', 'game-sauce-v<version>-macos-arm64.dmg', 'game-sauce-v<version>-macos-arm64.tar.gz', 'game-sauce_<version>_amd64.deb', 'game-sauce-v<version>-linux-x64.tar.gz', 'game-sauce-v<version>-linux-arm64.tar.gz']) assert.ok(r.includes(f), f);
   assert.ok(r.indexOf('## Download') < r.indexOf('## What it does'), 'near the top');
   assert.ok(r.includes('amd64.AppImage'), 'the AppImage is in the table (it ships from 0.3.1)');
 });

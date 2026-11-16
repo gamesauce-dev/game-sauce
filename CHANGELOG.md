@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **The Mac app is signed, and the Mac installer is named like the other downloads.** The Mac installer was named `game-sauce_<version>_aarch64.dmg` (aarch64 is Tauri's word for Apple Silicon) and was not signed at all, so macOS said the app was "damaged and can't be opened". It is now called `game-sauce-v<version>-macos-arm64.dmg`, like the portable Mac download, and the app is signed (ad hoc) and checked in the build, so macOS offers **Open Anyway** (or one `xattr` command in the README) instead of "damaged". The README has a section on it and the release page carries a note. Signing with an Apple Developer ID and notarising is wired into the release workflow and switches on when its secrets are added (it needs a paid Apple developer account).
+
 ## [0.12.0] - 2026-11-16
 
 ### Added

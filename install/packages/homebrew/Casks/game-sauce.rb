@@ -2,7 +2,7 @@ cask "game-sauce" do
   version "0.3.0"
   sha256 "35e044a09b276645100a15c898ea2327fd859870f75a7c53b5611dda3add77ec"
 
-  url "https://github.com/gamesauce-dev/game-sauce/releases/download/v#{version}/game-sauce_#{version}_aarch64.dmg"
+  url "https://github.com/gamesauce-dev/game-sauce/releases/download/v#{version}/game-sauce-v#{version}-macos-arm64.dmg"
   name "game-sauce"
   desc "Self-hosted game library for your household, in its own window"
   homepage "https://github.com/gamesauce-dev/game-sauce"

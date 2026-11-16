@@ -87,15 +87,59 @@ jobs:
       - name: Build the installer
         working-directory: desktop
         shell: bash
+        env:
+          # Optional: an Apple Developer ID certificate (a paid Apple developer account). With these secrets set, the Mac app is signed and notarised, and macOS opens it
+          # with no warning. Without them it is signed "ad hoc" (see tauri.conf.json): macOS asks for one extra step the first time (see the README).
+          GS_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          GS_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          GS_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          GS_APPLE_ID: ${{ secrets.APPLE_ID }}
+          GS_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          GS_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           npm ci
           npm run prepare-server
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            if [ -n "$GS_APPLE_CERTIFICATE" ] && [ -n "$GS_APPLE_SIGNING_IDENTITY" ]; then
+              export APPLE_CERTIFICATE="$GS_APPLE_CERTIFICATE" APPLE_CERTIFICATE_PASSWORD="$GS_APPLE_CERTIFICATE_PASSWORD" APPLE_SIGNING_IDENTITY="$GS_APPLE_SIGNING_IDENTITY"
+              if [ -n "$GS_APPLE_ID" ] && [ -n "$GS_APPLE_PASSWORD" ] && [ -n "$GS_APPLE_TEAM_ID" ]; then
+                export APPLE_ID="$GS_APPLE_ID" APPLE_PASSWORD="$GS_APPLE_PASSWORD" APPLE_TEAM_ID="$GS_APPLE_TEAM_ID"
+                echo "Mac: signing with the Developer ID and notarising"
+              else
+                echo "Mac: signing with the Developer ID (no notarisation: the Apple ID secrets are not set)"
+              fi
+            else
+              echo "Mac: no Apple certificate, signing ad hoc"
+            fi
+          fi
           # When a download still fails, wait and try again: up to five attempts, a little longer each time.
           for i in 1 2 3 4 5; do
             npx tauri build --bundles ${{ matrix.bundles }} && exit 0
             echo "The build failed (attempt $i of 5), trying again in $((45 * i)) seconds..."; sleep $((45 * i))
           done
           exit 1
+      # The Mac installer: check the signature held (a seal that does not hold is what macOS calls "damaged": stop here rather than ship it), look at what Gatekeeper
+      # says about the copy inside the disk image, and name it like the portable Mac download.
+      - name: Mac - check the signature and name the installer
+        if: runner.os == 'macOS'
+        working-directory: desktop
+        shell: bash
+        run: |
+          set -e
+          v="$(node -p "require('../package.json').version")"
+          dir=src-tauri/target/release/bundle/dmg
+          dmg="$(ls $dir/*.dmg | head -1)"
+          hdiutil attach -nobrowse -readonly -mountpoint /tmp/gs-dmg "$dmg"
+          app=/tmp/gs-dmg/game-sauce.app
+          echo "== the signature"; codesign -dv --verbose=2 "$app" 2>&1 | head -20
+          codesign --verify --deep --strict --verbose=2 "$app"
+          echo "== what Gatekeeper says (rejected is expected without a Developer ID; this is for the log)"
+          cp -R "$app" /tmp/gs-check.app
+          xattr -w com.apple.quarantine "0083;$(date +%s);Safari;" /tmp/gs-check.app
+          spctl --assess --type execute --verbose=4 /tmp/gs-check.app 2>&1 || true
+          hdiutil detach /tmp/gs-dmg
+          mv "$dmg" "$dir/game-sauce-v${v}-macos-arm64.dmg"
+          ls -la $dir
       # The AppImage needs a packaging tool downloaded from GitHub, which is the part that fails when GitHub is having a bad moment. It is tried on its own and may fail
       # without stopping the release: the .deb (and the portable bundle) are already built.
       - name: Linux AppImage (optional)
@@ -163,5 +207,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --generate-notes --notes-start-tag "$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)" \
-            || gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --generate-notes
+          note="**Mac:** if macOS says game-sauce can't be opened or is damaged, it is not a bad download: the app is not signed with an Apple developer certificate yet. Run \`xattr -dr com.apple.quarantine /Applications/game-sauce.app\` in Terminal once (or use System Settings, Privacy & Security, Open Anyway), then open it. Details in the README."
+          gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --notes "$note" --generate-notes --notes-start-tag "$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)" \
+            || gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --notes "$note" --generate-notes

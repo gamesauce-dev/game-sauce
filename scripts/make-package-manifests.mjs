@@ -34,7 +34,7 @@ const need = (file) => hashOf[file] || die(`${file} is not in SHA256SUMS`);
 const files = {
   exe: `game-sauce_${version}_x64-setup.exe`,
   zip: `game-sauce-v${version}-windows-x64.zip`,
-  dmg: `game-sauce_${version}_aarch64.dmg`
+  dmg: `game-sauce-v${version}-macos-arm64.dmg`
 };
 const description = 'A self-hosted game library for your household: your ROMs, your digital games and the boxed games on your shelf, with covers and details found for you, play in the browser, and a small private chat.';
 const out = (rel, text) => { const p = path.join(root, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, text.replace(/\r\n/g, '\n')); console.log('•', rel); };
@@ -109,7 +109,7 @@ out('install/packages/homebrew/Casks/game-sauce.rb', `cask "game-sauce" do
   version "${version}"
   sha256 "${need(files.dmg)}"
 
-  url "https://github.com/${REPO}/releases/download/v#{version}/game-sauce_#{version}_aarch64.dmg"
+  url "https://github.com/${REPO}/releases/download/v#{version}/game-sauce-v#{version}-macos-arm64.dmg"
   name "game-sauce"
   desc "Self-hosted game library for your household, in its own window"
   homepage "https://github.com/${REPO}"

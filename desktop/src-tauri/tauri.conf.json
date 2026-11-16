@@ -27,6 +27,9 @@
       "../server-stage/server/runtime/": "runtime/",
       "../server-stage/server/app/": "app/"
     },
+    "macOS": {
+      "signingIdentity": "-"
+    },
     "windows": {
       "nsis": {
         "installMode": "currentUser"

@@ -26,7 +26,7 @@ Get the latest version from the **[Releases page](https://github.com/gamesauce-d
 |---|---|---|
 | **Windows** | `game-sauce_<version>_x64-setup.exe` (the app, in its own window) | Run it. |
 | | or `game-sauce-v<version>-windows-x64.zip` (portable) | Unpack it, double-click **Start game-sauce.bat**. |
-| **Mac** (Apple Silicon: M1 and newer) | `game-sauce_<version>_aarch64.dmg` (the app) | Open it and drag game-sauce to Applications. If macOS refuses to open it, right-click it and choose **Open**. |
+| **Mac** (Apple Silicon: M1 and newer) | `game-sauce-v<version>-macos-arm64.dmg` (the app) | Open it and drag game-sauce to Applications. The first time, macOS may refuse to open it: see [If macOS won't open it](#if-macos-wont-open-it). |
 | | or `game-sauce-v<version>-macos-arm64.tar.gz` (portable) | Unpack it, double-click **Start game-sauce.command**. |
 | **Linux** | `game-sauce_<version>_amd64.deb` (Debian, Ubuntu, Mint) | Install it. |
 | | or `game-sauce-<version>-1.x86_64.rpm` (Fedora, Bazzite, Nobara) | Install it (`sudo dnf install ./file.rpm`; on Bazzite `rpm-ostree install ./file.rpm`, then restart). |
@@ -36,6 +36,21 @@ Get the latest version from the **[Releases page](https://github.com/gamesauce-d
 | **A home server** (Docker, Unraid, Proxmox) | no download needed | See [Deployment](docs/DEPLOYMENT.md) and [Unraid](docs/UNRAID.md). |
 
 The first time it starts, the account that was made for you is shown once: write it down and change the password under Settings. Your library is kept in a `game-sauce-data` folder in your home folder, outside the download, so updating is just installing or unpacking the new version. Windows may say the app is from an unknown publisher (choose **More info**, then **Run anyway**): the downloads are not signed yet. Each release has a `SHA256SUMS` file if you want to check yours. More about the app: [Desktop app](docs/DESKTOP.md).
+
+### If macOS won't open it
+
+On a Mac, the first start can fail with "game-sauce can't be opened" or "game-sauce is damaged and can't be opened". The download is fine. macOS blocks apps that are not signed with an Apple developer certificate (a paid Apple account, which this free project does not have yet), and the word "damaged" is how it says that about a file that came from the internet. Do this once:
+
+- **Easiest:** drag game-sauce to Applications, then open **Terminal** and run
+
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/game-sauce.app
+  ```
+
+  That removes the "downloaded from the internet" mark. Open game-sauce as normal; it does not ask again.
+- **Without Terminal:** try to open it once, then go to **System Settings, Privacy & Security**, scroll down to the message about game-sauce and press **Open Anyway** (on macOS 14 and older you can also right-click the app and choose **Open**).
+- **With Homebrew** this is done for you: `brew install --cask gamesauce-dev/game-sauce/game-sauce`.
+- The portable download (`game-sauce-v<version>-macos-arm64.tar.gz`) has the same mark; run `xattr -dr com.apple.quarantine <the unpacked folder>` once if macOS refuses **Start game-sauce.command**.
 
 ## What it does
 
