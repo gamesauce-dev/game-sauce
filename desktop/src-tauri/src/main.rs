@@ -121,10 +121,26 @@ fn stop_server(state: &AppState) {
     }
 }
 
+/// On a Mac, every file of an app that came from the internet carries macOS's "downloaded from the internet" mark. The person approves the app itself
+/// ("Open Anyway"), but the files inside it are checked one by one when something loads them, and the database library's native module
+/// (darwin-arm64/better_sqlite3.node) was blocked there ("can't be opened because the developer cannot be verified") with no way to approve it.
+/// The person has just approved this app, so it takes the mark off its own server folder, once, before the server starts. Does nothing elsewhere.
+#[cfg(target_os = "macos")]
+fn clear_quarantine(dir: &std::path::Path) {
+    let node = dir.join("runtime").join("node");
+    let marked = Command::new("/usr/bin/xattr").args(["-p", "com.apple.quarantine"]).arg(&node).output().map(|o| o.status.success()).unwrap_or(false);
+    if marked {
+        let _ = Command::new("/usr/bin/xattr").args(["-dr", "com.apple.quarantine"]).arg(dir).output();
+    }
+}
+#[cfg(not(target_os = "macos"))]
+fn clear_quarantine(_dir: &std::path::Path) {}
+
 fn start_server(app: &AppHandle, lan: bool) -> Result<Started, String> {
     let state = app.state::<AppState>();
     stop_server(&state);
     let dir = server_dir(app);
+    clear_quarantine(&dir);
     let exe = dir.join("runtime").join(if cfg!(windows) { "node.exe" } else { "node" });
     if !exe.exists() {
         return Err(format!("The built-in server is missing ({}). Reinstall game-sauce.", exe.display()));
