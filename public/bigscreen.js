@@ -4,6 +4,7 @@
 //   game       a menu on the left (Play, Favourite, Add to Collection, Broken, Hide), the cover, and the details.
 // On top of those: the collection chooser, a keyboard to type a name with the pad, and a question (hide from everyone?).
 // The pad is read by public/gamepad.js, which sends what was pressed to this layer as a 'cv-pad' event (the same way the cover carousel is driven).
+import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -374,8 +375,8 @@ export function openBigScreen(host) {
     pauseVideo();
     try {
       const j = await host.api(`/roms/${g.id}/launch`, { method: 'POST' });
-      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '' });
-      say('Starting the emulator…'); location.href = `gamesauce://launch?${q}`;
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
+      trackLaunch({ api: host.api, launch: j, big: true }); location.href = `gamesauce://launch?${q}`;   // a card with how far it has got (see public/launch-progress.js)
     } catch (err) { say(err.message || 'Could not start the game', true); }
   };
   // a game with issues can often still be played: Play only says so, and starts it

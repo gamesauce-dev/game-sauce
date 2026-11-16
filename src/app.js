@@ -33,7 +33,7 @@ import { launcherEntries } from './lib/launcherpack.js';
 import { zipChunks } from './lib/export.js';
 import { detectMultiDisc } from './lib/multidisc.js';
 import { scanStorage, publicScan, clearOut, reattach } from './lib/storageclean.js';
-import { launchFileHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
+import { launchFileHandler, launchProgressHandler, launchStatusHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
 // admin catalogue below needs extensions as an array and must be auditable,
@@ -101,6 +101,8 @@ export function createApp() {
   // Play locally: the launcher on the user's PC has no session, so the one-time token in the address is its credential
   // (see src/lib/launch.js). Must stay above requireAuth.
   api.get('/launch/:token', launchFileHandler);
+  // The launcher tells the server how far it has got (downloading, unpacking, starting, running); the launch id is its credential.
+  api.post('/launch/:lid/progress', launchProgressHandler);
   // The launcher reports which platforms it has an emulator for (the one-time sync token is its credential; see mintSyncToken below).
   api.post('/launcher/sync', launcherSyncHandler);
   api.get('/launcher/platforms', launcherPlatformsHandler);
@@ -513,6 +515,8 @@ export function createApp() {
 
   // "Check my PC": a one-time token the page hands to the launcher (gamesauce://sync?...), which answers with the platforms it has an emulator for.
   // Same rule as playing locally: only people allowed to download use the launcher.
+  // How far this person's own launch has got, for the progress card on the page (signed in; only the person who started it).
+  api.get('/launch-status/:lid', launchStatusHandler);
   api.post('/launcher/sync-token', (req, res) => {
     if (!canDownload(req.user)) return res.status(403).json({ error: 'Playing locally needs the ROM file, and downloads are turned off for this account.' });
     res.json(mintSyncToken(req.user.id));

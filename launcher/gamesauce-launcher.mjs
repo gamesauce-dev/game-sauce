@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { Readable } from 'node:stream';
+import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { pathToFileURL } from 'node:url';
 import { wantsUnpack, unpackArchive, listFiles, pickLaunchFile, UnpackError } from './unpack.mjs';
@@ -99,7 +99,10 @@ export function parseLaunchUrl(raw) {
   // Optional, for quick launch: which game it is, and a fingerprint of the file (its size and date) to tell a kept copy is still the server's.
   const rom = /^\d{1,12}$/.test(String(q.get('rom') || '')) ? String(q.get('rom')) : '';
   const fp = /^[A-Za-z0-9._-]{1,60}$/.test(String(q.get('fp') || '')) ? String(q.get('fp')) : '';
-  return { server, token, platform, ext, title, rom, fp };
+  // Optional, for the progress card on the page: the launch id (where to report progress) and the file's size in bytes.
+  const lid = /^[A-Za-z0-9_-]{16,100}$/.test(String(q.get('lid') || '')) ? String(q.get('lid')) : '';
+  const size = /^\d{1,15}$/.test(String(q.get('size') || '')) ? Number(q.get('size')) : 0;
+  return { server, token, platform, ext, title, rom, fp, lid, size };
 }
 
 /** Read a gamesauce://sync link ("Check my PC"): the server address and a one-time token. */
@@ -238,7 +241,7 @@ export function sweepStale(parent = tempParent(), now = Date.now()) {
   return removed;
 }
 
-async function download(server, token, destFile) {
+async function download(server, token, destFile, onProgress) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 30_000); // time to get a response; the body itself may take as long as it needs
   let res;
@@ -253,7 +256,17 @@ async function download(server, token, destFile) {
     throw new LaunchError(why);
   }
   if (!res.body) throw new LaunchError('The server sent an empty answer.');
-  await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(destFile));
+  const total = Number(res.headers.get('content-length')) || 0;
+  let got = 0, last = 0;
+  const counter = new Transform({
+    transform(chunk, _enc, cb) {
+      got += chunk.length;
+      const now = Date.now();
+      if (onProgress && now - last >= 500) { last = now; onProgress(got, total); }
+      cb(null, chunk);
+    }
+  });
+  await pipeline(Readable.fromWeb(res.body), counter, fs.createWriteStream(destFile));
   if (fs.statSync(destFile).size === 0) throw new LaunchError('The downloaded ROM is empty.');
 }
 
@@ -264,9 +277,39 @@ function waitForExit(child) {
   });
 }
 
+/** Tell the server how far a launch has got, so the page can show a progress card (downloading, unpacking, starting, running).
+ *  Only once the server has been checked against the config's "servers" list, only when the link carries a launch id, and never
+ *  allowed to slow or stop a launch: every failure here is ignored. */
+export function makeReporter(link, fetchImpl = fetch) {
+  let on = false;
+  return {
+    enable() { on = true; },
+    send(phase, data = {}) {
+      if (!on || !link.lid) return Promise.resolve();
+      try {
+        return Promise.resolve(fetchImpl(`${link.server}/api/launch/${encodeURIComponent(link.lid)}/progress`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase, ...data }), signal: AbortSignal.timeout(3000)
+        })).then(() => {}, () => {});
+      } catch { return Promise.resolve(); }
+    }
+  };
+}
+
 /** Do one launch from a gamesauce:// link. Resolves to a short result object; throws LaunchError for problems to show the person. */
-export async function launch(rawUrl, { configFile = configPath() } = {}) {
+export async function launch(rawUrl, { configFile = configPath(), fetchImpl } = {}) {
   const link = parseLaunchUrl(rawUrl);
+  const rep = makeReporter(link, fetchImpl);
+  try {
+    const r = await doLaunch(link, rep, configFile);
+    await rep.send('closed');
+    return r;
+  } catch (e) {
+    await rep.send('error', { message: e && e.message ? String(e.message) : 'The launch failed.' });
+    throw e;
+  }
+}
+
+async function doLaunch(link, rep, configFile) {
 
   const cfg = loadConfig(configFile);
   if (!cfg) {
@@ -276,6 +319,7 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
   if (!cfg.servers.includes(link.server)) {
     throw new LaunchError(`${link.server} is not listed under "servers" in ${configFile}. Add it there if you trust it.`);
   }
+  rep.enable();   // from here on the server is one the person listed, so it may be told how the launch is going
   const entry = cfg.emulators[link.platform];
   if (!entry) throw new LaunchError(`No emulator is set for "${link.platform}" in ${configFile}.`);
 
@@ -312,15 +356,18 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
     if (fresh) {
       startPath = path.join(dir, ...fresh.start.split('/'));
       log(`Quick launch: "${link.title}" (${link.platform}) is already on this PC, starting it without downloading`);
+      rep.send('starting');
     } else {
       log(`Downloading "${link.title}" (${link.platform}) from ${link.server}`);
-      await download(link.server, link.token, romPath);
+      rep.send('downloading', { bytes: 0, total: link.size });
+      await download(link.server, link.token, romPath, (got, total) => rep.send('downloading', { bytes: got, total: total || link.size }));
 
       // A zipped game for an emulator that cannot open one: unpack it next to the download, drop the archive, and start the file that boots the game.
       startPath = romPath;
       if (wantsUnpack(entry, link.platform, link.ext)) {
         unpacked = path.join(dir, 'game');
         log(`Unpacking "${link.title}" (this can take a while for a big game)`);
+        rep.send('unpacking');
         let how;
         try { how = await unpackArchive(romPath, unpacked, { sevenZip: typeof cfg.sevenZip === 'string' ? cfg.sevenZip : undefined }); } catch (e) { throw new LaunchError(e instanceof UnpackError ? e.message : `Could not unpack the game: ${e.message}`); }
         try { fs.rmSync(romPath, { force: true }); } catch { /* the copy is deleted at the end anyway */ }
@@ -339,10 +386,12 @@ export async function launch(rawUrl, { configFile = configPath() } = {}) {
 
     const { command, args } = buildCommand(entry, startPath);
     log(`Starting ${command}`);
+    rep.send('starting');
     child = spawn(command, args, {
       stdio: 'ignore',
       cwd: path.isAbsolute(command) && fs.existsSync(path.dirname(command)) ? path.dirname(command) : undefined
     });
+    child.once('spawn', () => { rep.send('running'); });
     const r = await waitForExit(child);
     if (r.error) throw new LaunchError(`Could not start ${command}: ${r.error.code === 'ENOENT' ? 'file not found' : r.error.message}`);
     log(`Emulator closed (${r.signal ? `signal ${r.signal}` : `exit code ${r.code}`})`);

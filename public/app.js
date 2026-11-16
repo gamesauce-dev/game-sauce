@@ -11,6 +11,7 @@ import { assetWords } from './video.js';   // the video in a game's details wind
 import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
+import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 import './pwreveal.js';   // the eye in password boxes
 import { initI18n, LANGS, chosenLanguage, setLanguage, t } from './i18n.js';   // the language of the page (public/lang/*.json)
 
@@ -1729,8 +1730,8 @@ async function openDetail(id) {
     btn.disabled = true;
     try {
       const j = await api(`/roms/${rom.id}/launch`, { method: 'POST' });
-      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '' });
-      toast('Opening your local emulator… this needs the game-sauce launcher installed on this PC (docs/LOCAL-LAUNCH.md).');
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
+      trackLaunch({ api, launch: j });   // a card with how far it has got (see public/launch-progress.js)
       location.href = `gamesauce://launch?${q}`;
     } catch (err) {
       toast(err.message || 'Could not start a local launch', true);

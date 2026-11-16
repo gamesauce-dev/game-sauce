@@ -126,7 +126,11 @@ test('a launch is logged as its own kind and does not count as a download', asyn
 
 test('parseLaunchUrl accepts a real link and rejects odd ones', () => {
   const ok = launcher.parseLaunchUrl('gamesauce://launch?server=http://Host:3000/&token=' + 'a'.repeat(43) + '&platform=SNES&ext=.sfc&title=Sonic');
-  assert.deepEqual(ok, { server: 'http://host:3000', token: 'a'.repeat(43), platform: 'snes', ext: '.sfc', title: 'Sonic', rom: '', fp: '' });
+  assert.deepEqual(ok, { server: 'http://host:3000', token: 'a'.repeat(43), platform: 'snes', ext: '.sfc', title: 'Sonic', rom: '', fp: '', lid: '', size: 0 });
+  const prog = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&ext=.sfc&title=Sonic&lid=' + 'b'.repeat(32) + '&size=734003200');
+  assert.equal(prog.lid, 'b'.repeat(32)); assert.equal(prog.size, 734003200, 'the launch id and file size for the progress card');
+  const badProg = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&lid=..%2F..&size=big');
+  assert.equal(badProg.lid, ''); assert.equal(badProg.size, 0, 'a launch id or size that is not plain is dropped');
   const withId = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&ext=.sfc&title=Sonic&rom=42&fp=123-456');
   assert.equal(withId.rom, '42'); assert.equal(withId.fp, '123-456');
   const junk = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&rom=..%2F..&fp=a%20b');
@@ -612,4 +616,80 @@ test('buildCommand fills {romname} (the file name without its extension) and doe
   const rom = path.join(TMP, 'x', '1941.zip');
   assert.deepEqual(launcher.buildCommand({ command: 'mame', args: ['-rompath', 'C:\MAME\roms;{romdir}', '{romname}'] }, rom), { command: 'mame', args: ['-rompath', `C:\MAME\roms;${path.dirname(rom)}`, '1941'] });
   assert.deepEqual(launcher.buildCommand({ command: 'mame', args: ['{romname}'] }, path.join(TMP, 'x', 'Game (World).7z')), { command: 'mame', args: ['Game (World)'] });
+});
+
+/* ───────────── progress: the page shows how far a launch has got ───────────── */
+
+test('a launch gets a launch id and the file size, and only its owner can ask how it is going', async () => {
+  const m = (await mint()).body;
+  assert.ok(/^[A-Za-z0-9_-]{16,}$/.test(m.lid), 'a launch id');
+  assert.equal(m.size, ROM_BYTES.length);
+  assert.equal((await call(`/api/launch-status/${m.lid}`)).status, 401, 'signed out is refused');
+  const own = await call(`/api/launch-status/${m.lid}`, { token: adminTok });
+  assert.equal(own.status, 200);
+  assert.equal(own.body.phase, 'waiting', 'nobody has fetched the file yet');
+  assert.equal(own.body.title, 'Test Game');
+  const id = db.prepare("SELECT id FROM users WHERE username = 'lnmember'").get().id;
+  await call(`/api/auth/users/${id}`, { token: adminTok, method: 'PATCH', body: { download: 'allow' } });
+  try { assert.equal((await call(`/api/launch-status/${m.lid}`, { token: memberTok })).status, 404, 'someone else cannot see it'); }
+  finally { await call(`/api/auth/users/${id}`, { token: adminTok, method: 'PATCH', body: { download: 'default' } }); }
+  assert.equal((await call('/api/launch-status/nothing-like-it-0123456789', { token: adminTok })).status, 404);
+});
+
+test('the server counts what it sends, so an older launcher still shows a download', async () => {
+  const m = (await mint()).body;
+  await call(`/api/launch/${m.token}`);   // the "launcher" downloads the whole file
+  const v = (await call(`/api/launch-status/${m.lid}`, { token: adminTok })).body;
+  assert.equal(v.phase, 'sent');
+  assert.equal(v.bytes, ROM_BYTES.length);
+  assert.equal(v.total, ROM_BYTES.length);
+});
+
+test('the launcher can report its steps; only known steps, plain text, a launch that exists', async () => {
+  const m = (await mint()).body;
+  const post = (lid, body) => call(`/api/launch/${lid}/progress`, { method: 'POST', body });
+  assert.equal((await post(m.lid, { phase: 'downloading', bytes: 300, total: 1000 })).status, 200, 'no session needed: the launch id is the credential');
+  let v = (await call(`/api/launch-status/${m.lid}`, { token: adminTok })).body;
+  assert.deepEqual([v.phase, v.bytes, v.total], ['downloading', 300, 1000]);
+  await post(m.lid, { phase: 'unpacking' });
+  v = (await call(`/api/launch-status/${m.lid}`, { token: adminTok })).body;
+  assert.equal(v.phase, 'unpacking'); assert.equal(v.bytes, v.total, 'a finished download shows full');
+  await post(m.lid, { phase: 'error', message: 'It broke\nbadly ' + 'x'.repeat(500) });
+  v = (await call(`/api/launch-status/${m.lid}`, { token: adminTok })).body;
+  assert.equal(v.phase, 'error'); assert.ok(!v.message.includes('\n') && v.message.length <= 300);
+  assert.equal((await post(m.lid, { phase: 'exploding' })).status, 400, 'an unknown step is refused');
+  assert.equal((await post(m.lid, {})).status, 400);
+  assert.equal((await post('no-such-launch-id-0123456789', { phase: 'running' })).status, 404);
+});
+
+test('a real launch reports downloading, starting, running and closed to the server, in order', async () => {
+  const cfgFile = writeConfig({ snes: { command: process.execPath, args: [FAKE, '{rom}'] } });
+  const m = (await mint()).body;
+  const seen = [];
+  const fetchImpl = async (url, init) => {
+    if (String(url).includes('/progress')) seen.push(JSON.parse(init.body).phase);
+    return fetch(url, init);
+  };
+  const r = await launcher.launch(linkFor(m, { lid: m.lid, size: m.size }), { configFile: cfgFile, fetchImpl });
+  assert.equal(r.ok, true);
+  const order = seen.filter((p, i) => seen.indexOf(p) === i);
+  assert.deepEqual(order, ['downloading', 'starting', 'running', 'closed']);
+  const v = (await call(`/api/launch-status/${m.lid}`, { token: adminTok })).body;
+  assert.equal(v.phase, 'closed');
+});
+
+test('a failed launch reports the error, and nothing is reported to a server that is not in the config', async () => {
+  const m = (await mint()).body;
+  const cfgFile = writeConfig({ snes: { command: process.execPath, args: [FAKE, '{rom}'] } }, ['http://127.0.0.1:1']);   // our server is not listed
+  const posts = [];
+  const fetchImpl = async (url, init) => { if (String(url).includes('/progress')) posts.push(String(url)); return fetch(url, init); };
+  await assert.rejects(() => launcher.launch(linkFor(m, { lid: m.lid }), { configFile: cfgFile, fetchImpl }), /not listed/);
+  assert.deepEqual(posts, [], 'an unlisted server is never contacted');
+
+  const m2 = (await mint()).body;
+  const bad = writeConfig({ snes: { command: path.join(TMP, 'no-such-emulator.exe') } });
+  await assert.rejects(() => launcher.launch(linkFor(m2, { lid: m2.lid }), { configFile: bad }), /Could not start/);
+  const v = (await call(`/api/launch-status/${m2.lid}`, { token: adminTok })).body;
+  assert.equal(v.phase, 'error');
+  assert.match(v.message, /Could not start/);
 });

@@ -1,6 +1,7 @@
 // Cover carousel: a full-screen way to browse the ROM Library. Family chips along the top, the family's platform chips under them, and the games of the chosen
 // platform as covers on a gentle arc, the middle one in front. Enter, or a click on the middle cover, plays it (in the browser when it can be, otherwise on this PC's own emulator).
 // The backdrop is the family's colour, drifting slowly, with a wash of the middle cover's own colours that changes as you scroll.
+import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -227,8 +228,8 @@ export function openCarousel(host) {
     if (host.user()?.can_download === false) { host.toast('This account cannot play on a local emulator', true); return; }
     try {
       const j = await host.api(`/roms/${g.id}/launch`, { method: 'POST' });
-      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '' });
-      host.toast('Opening your local emulator… this needs the game-sauce launcher installed on this PC.');
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
+      trackLaunch({ api: host.api, launch: j });   // a card with how far it has got (see public/launch-progress.js)
       location.href = `gamesauce://launch?${q}`;
     } catch (err) { host.toast(err.message || 'Could not start a local launch', true); }
   };

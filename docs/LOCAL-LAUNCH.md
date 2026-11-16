@@ -16,6 +16,21 @@ so it cannot start programs on your PC itself; the launcher is the part that can
                                                │ 3. waits for it to close, deletes the copy
 ```
 
+## What you see while it starts
+
+A card at the bottom of the page follows the launch, so a big game is not a silent wait: **Waiting for the launcher** (the link has been
+sent to your PC), then **Downloading to your PC** with a bar, how much has arrived out of the total, the speed and about how long is left,
+then **Unpacking** (a zipped game for an emulator that cannot open one), **Starting your emulator** and **Playing on this PC**. A problem
+shows in red with the launcher's own message and stays until you close it. If nothing answers for a few seconds the card says what to check
+(the launcher installed, and your browser allowed to open it); after two minutes it gives up.
+
+It works from two sources. The server counts the bytes it has sent to the launcher, which is enough for the download bar with any launcher.
+A newer launcher also reports its own steps (the page asks the server, the launcher tells the server; nothing is sent anywhere else). It
+reports only the step name, the byte counts and its error message, never a path or a command, and only to a server you listed under `servers`.
+With an older launcher the card shows the download and then "Sent to your PC", because the rest happens on your PC where the server cannot see.
+Update the launcher (**Settings, My account, Play on this PC, Download the launcher**) to see every step. A game kept by quick launch skips
+the download and goes straight to **Starting your emulator**.
+
 ## Set it up (once per PC)
 
 You need **Node.js 18 or newer** on that PC (the game-sauce server already needs it, so a PC that runs the server
