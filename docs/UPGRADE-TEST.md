@@ -68,3 +68,4 @@ the backup and the test proves nothing. Use a release with a lower number: **0.6
   System health, and open an issue.
 
 Record of runs (add a line each time): date, from version, to version, result.
+- 2026-11-16: 0.6.3, 0.9.0 and 0.11.0 to 0.11.1: upgrade and restore passed (all database version 57, so no migration was exercised). 0.6.0 (database version 56) refused the version 57 backup, as it should.
