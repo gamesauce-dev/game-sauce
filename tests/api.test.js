@@ -520,6 +520,9 @@ test('play stream serves BIOS-free platforms and refuses the rest', async () => 
   const { playableCore } = await import('../src/routes/roms.js');
   assert.equal(playableCore('genesis'), 'segaMD');
   assert.equal(playableCore('snes'), 'snes');
+  // Game Boy Color games run on EmulatorJS's Game Boy system: it has no 'gbc' system (the core download 404s and nothing starts).
+  assert.equal(playableCore('gbc'), 'gb');
+  assert.equal(playableCore('gb'), 'gb');
   assert.equal(playableCore('ps2'), null);
   // An unknown id 404s rather than leaking anything.
   assert.equal((await fetch(`${base}/api/roms/99999999/play`, { headers: authHeaders() })).status, 404);

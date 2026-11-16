@@ -476,14 +476,14 @@
   "ja": "カルーセルをスクロールし、文字でジャンプして、お気に入りにスターを付ける",
   "it": "Scorrere il Carosello, saltare per lettera e mettere una stella a un preferito"
  },
- "Press <b>Play in browser</b> and the game runs in the page. The game is <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, a free homebrew by Damian Yerrick (zlib licence).": {
-  "fr": "Appuyez sur <b>Jouer dans le navigateur</b> et le jeu se lance dans la page. Le jeu est <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, un homebrew gratuit de Damian Yerrick (licence zlib).",
-  "zh": "点击<b>在浏览器中游玩</b>，游戏就会在页面中运行。这个游戏是 <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>，由 Damian Yerrick 制作的免费自制游戏（zlib 许可）。",
-  "es": "Pulsa <b>Jugar en el navegador</b> y el juego se ejecuta en la página. El juego es <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, un homebrew gratuito de Damian Yerrick (licencia zlib).",
-  "pt": "Pressione <b>Jogar no navegador</b> e o jogo roda na página. O jogo é <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, um homebrew gratuito de Damian Yerrick (licença zlib).",
-  "de": "Drücke <b>Im Browser spielen</b>, und das Spiel läuft auf der Seite. Das Spiel ist <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, ein kostenloses Homebrew von Damian Yerrick (zlib-Lizenz).",
-  "ja": "<b>ブラウザーでプレイ</b>を押すと、ページ内でゲームが動きます。このゲームは、Damian Yerrick さんによる無料のホームブリュー <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>（zlib ライセンス）です。",
-  "it": "Premi <b>Gioca nel browser</b> e il gioco gira nella pagina. Il gioco è <a href=\"https://github.com/pinobatch/libbet\">Libbet and the Magic Floor</a>, un homebrew gratuito di Damian Yerrick (licenza zlib)."
+ "Scroll to a game, press <b>Play in browser</b> and it runs in the page. The game is <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>, a free homebrew by Tangram Games (code MIT, art and music <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>).": {
+  "fr": "Faites défiler jusqu'à un jeu, appuyez sur <b>Jouer dans le navigateur</b> et il se lance dans la page. Le jeu est <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>, un homebrew gratuit de Tangram Games (code MIT, graphismes et musique <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>).",
+  "zh": "滚动到一款游戏，点击<b>在浏览器中游玩</b>，它就会在页面中运行。这个游戏是 <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>，由 Tangram Games 制作的免费自制游戏（代码为 MIT，美术与音乐为 <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>）。",
+  "es": "Desplázate hasta un juego, pulsa <b>Jugar en el navegador</b> y se ejecuta en la página. El juego es <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>, un homebrew gratuito de Tangram Games (código MIT, arte y música <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>).",
+  "pt": "Role até um jogo, pressione <b>Jogar no navegador</b> e ele roda na página. O jogo é <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>, um homebrew gratuito da Tangram Games (código MIT, arte e música <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>).",
+  "de": "Scrolle zu einem Spiel, drücke <b>Im Browser spielen</b>, und es läuft auf der Seite. Das Spiel ist <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>, ein kostenloses Homebrew von Tangram Games (Code MIT, Grafik und Musik <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>).",
+  "ja": "ゲームまでスクロールして<b>ブラウザーでプレイ</b>を押すと、ページ内で動きます。このゲームは Tangram Games による無料のホームブリュー <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>（コードは MIT、グラフィックと音楽は <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>）です。",
+  "it": "Scorri fino a un gioco, premi <b>Gioca nel browser</b> e gira nella pagina. Il gioco è <a href=\"https://tangramgames.itch.io/tobu-tobu-girl-deluxe\">Tobu Tobu Girl Deluxe</a>, un homebrew gratuito di Tangram Games (codice MIT, grafica e musica <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>)."
  },
  "<b>Play in browser</b> for games that can run in a web page, or <b>Play on this PC</b> to start the emulator you have set up.": {
   "fr": "<b>Jouer dans le navigateur</b> pour les jeux qui peuvent tourner dans une page web, ou <b>Jouer sur ce PC</b> pour lancer l'émulateur que vous avez configuré.",
@@ -1034,14 +1034,14 @@
   "ja": "カルーセル：カバーをスクロールし、文字でタイトルにジャンプして、お気に入りにスターを付ける",
   "it": "Il Carosello: scorrere le copertine, saltare a un titolo per lettera e mettere una stella a un preferito"
  },
- "Choosing a Game Boy game in the Carousel, pressing Play in browser, and the game running in the page": {
-  "fr": "Choix d'un jeu Game Boy dans le Carrousel, appui sur Jouer dans le navigateur, et le jeu qui tourne dans la page",
-  "zh": "在封面轮播中选择一个 Game Boy 游戏，点击“在浏览器中游玩”，游戏随即在页面中运行",
-  "es": "Elegir un juego de Game Boy en el Carrusel, pulsar Jugar en el navegador, y el juego ejecutándose en la página",
-  "pt": "Escolhendo um jogo de Game Boy no Carrossel, pressionando Jogar no navegador, e o jogo rodando na página",
-  "de": "Ein Game-Boy-Spiel im Karussell wählen, Im Browser spielen drücken, und das Spiel läuft auf der Seite",
-  "ja": "カルーセルで Game Boy のゲームを選び、「ブラウザーでプレイ」を押すと、ページ内でゲームが動く",
-  "it": "Scegliere un gioco Game Boy nel Carosello, premere Gioca nel browser e il gioco che gira nella pagina"
+ "Scrolling the Carousel to a Game Boy Color game, pressing Play in browser, and the game running in the page": {
+  "fr": "Défilement du Carrousel jusqu'à un jeu Game Boy Color, appui sur Jouer dans le navigateur, et le jeu qui tourne dans la page",
+  "zh": "在封面轮播中滚动到一个 Game Boy Color 游戏，点击“在浏览器中游玩”，游戏随即在页面中运行",
+  "es": "Desplazarse por el Carrusel hasta un juego de Game Boy Color, pulsar Jugar en el navegador, y el juego ejecutándose en la página",
+  "pt": "Rolando o Carrossel até um jogo de Game Boy Color, pressionando Jogar no navegador, e o jogo rodando na página",
+  "de": "Im Karussell zu einem Game-Boy-Color-Spiel scrollen, Im Browser spielen drücken, und das Spiel läuft auf der Seite",
+  "ja": "カルーセルを Game Boy Color のゲームまでスクロールし、「ブラウザーでプレイ」を押すと、ページ内でゲームが動く",
+  "it": "Scorrere il Carosello fino a un gioco Game Boy Color, premere Gioca nel browser e il gioco che gira nella pagina"
  },
  "The Physical shelf: switching to the shelf of spines, pulling one out, bringing the case forward, turning it over, opening it to the manual and disc, and reading the manual": {
   "fr": "L'étagère physique : passage à l'étagère de tranches, sortie d'une tranche, boîtier amené vers l'avant, retourné, ouvert sur le manuel et le disque, et lecture du manuel",

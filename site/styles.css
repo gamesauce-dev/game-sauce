@@ -30,13 +30,15 @@ a:hover { text-decoration: underline; }
 /* header */
 .top { position: sticky; top: 0; z-index: 10; background: rgba(11, 12, 16, .86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 .top .wrap { width: min(1280px, 100% - 32px); }
-.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+/* three columns: the logo, the section links truly centred, and GitHub + the language on the right */
+.bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; min-height: 64px; }
+.bar-end { justify-self: end; display: flex; align-items: center; gap: 6px; }
 .brand { white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text); }
 .brand:hover { text-decoration: none; }
 .top nav { display: flex; align-items: center; gap: 4px; }
 .top nav a { padding: 8px 10px; white-space: nowrap; border-radius: 8px; color: var(--dim); font-size: .95rem; }
 .top nav a:hover { color: var(--text); text-decoration: none; background: var(--bg-3); }
-.top nav .btn { margin-left: 6px; color: var(--text); }
+.top .bar-end .btn { color: var(--text); }
 
 /* the name: "-sauce" in the app's flowing colours */
 .saucy {
@@ -144,11 +146,11 @@ details p { margin: 0; padding: 0 18px 16px; color: var(--dim); }
 .langmenu summary::after { content: ""; width: 6px; height: 6px; border-right: 2px solid var(--dim); border-bottom: 2px solid var(--dim); transform: rotate(45deg) translateY(-2px); margin-left: 2px; }
 .langmenu summary:hover { background: var(--bg-3); }
 .langmenu ul { list-style: none; margin: 0; padding: 6px; position: absolute; right: 0; top: calc(100% + 6px); min-width: 190px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.45); z-index: 30; }
-.top nav .langmenu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--text); font-size: .95rem; }
-.top nav .langmenu a:hover { background: var(--bg-3); }
-.top nav .langmenu a[aria-current] { background: var(--bg-3); font-weight: 600; }
+.top .langmenu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--text); font-size: .95rem; }
+.top .langmenu a:hover { background: var(--bg-3); }
+.top .langmenu a[aria-current] { background: var(--bg-3); font-weight: 600; }
 .langmenu img { border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,.18); object-fit: cover; flex: none; }
-@media (max-width: 420px) { .top nav .btn { display: none; } }
+@media (max-width: 420px) { .top .bar-end .btn { display: none; } }
 .langmenu summary { white-space: nowrap; }
 /* Japanese and Chinese have no spaces between words: break lines at sensible places instead of leaving one character on a line. */
 html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: auto-phrase; }

@@ -883,7 +883,7 @@ const PLAYABLE_CORES = {
   nes: 'nes',
   snes: 'snes',
   gb: 'gb',
-  gbc: 'gbc',
+  gbc: 'gb',   // EmulatorJS has no 'gbc' system: its Game Boy core plays Game Boy Color games too
   gba: 'gba',
   genesis: 'segaMD',
   mastersystem: 'segaMS',
