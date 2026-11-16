@@ -85,8 +85,11 @@ export function hit(key, limit, now = Date.now()) {
 
 export function resetRateLimits() { buckets.clear(); }
 
-// Cover art and media are hundreds of small GETs when a library page loads: never count them.
-const FREE_PATH = /^\/(health$|roms\/\d+\/(cover|media\/))/;
+// Cover art and media are hundreds of small GETs when a library page loads: never count them. That is every picture a list shows: the Library's covers, media
+// and files (spine, disc, back), the Digital library's console covers, the Physical shelf's covers, backs, discs and spines, the platform and family logos and the
+// profile pictures. (The Digital and Physical ones used to be counted: a big console list went over the limit, and the covers past it came back "too many
+// requests" and stayed as empty tiles until the page was refreshed.)
+const FREE_PATH = /^\/(health$|roms\/\d+\/(cover|media\/|file\/)|digital\/cover\/|physical\/(cover|back|disc|spine)\/\d+|platforms\/(families\/logo|[^/]+\/logo)$|auth\/avatar\/\d+)/;
 
 // Actions that cost real resources (provider quota, disk, bandwidth), with their own, tighter caps.
 const EXPENSIVE = [

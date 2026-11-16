@@ -112,6 +112,18 @@ test('cover art and the health check are never counted', async () => {
   assert.equal((await raw('/api/roms?limit=1')).status, 200, 'the budget is untouched');
 });
 
+test('every picture a list shows is free: Library, Digital and Physical covers, spines, logos, avatars', async () => {
+  // A big console list asks for hundreds of covers at once. If those counted, the ones past the limit came back "429 too many requests" and stayed as empty tiles.
+  const pictures = ['/api/roms/1/cover', '/api/roms/1/file/spine', '/api/digital/cover/xbox/12345', '/api/physical/cover/1', '/api/physical/back/1', '/api/physical/disc/1', '/api/physical/spine/1', '/api/platforms/snes/logo', '/api/platforms/families/logo', '/api/auth/avatar/1'];
+  for (let i = 0; i < 8; i++) {
+    for (const p of pictures) {
+      const r = await raw(p);
+      assert.notEqual(r.status, 429, p + ' is never limited');
+    }
+  }
+  assert.equal((await raw('/api/roms?limit=1')).status, 200, 'and the budget is untouched');
+});
+
 test('expensive actions have a tighter cap than ordinary ones', async () => {
   // 900-based defaults scale with GAMESAUCE_RATE_LIMIT (40): metadata = round(60 * 40/900) = 3
   const statuses = [];

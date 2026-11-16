@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **Covers missing on a big Digital or Physical list.** A list with hundreds of console games asks for hundreds of cover pictures at once. The Library's covers were exempt from the server's request limit, but the Digital and Physical ones were not, so the covers past the limit came back "too many requests" and stayed as empty tiles (with only a refresh, once the limit had cleared, showing them, and the "No cover" filter finding almost nothing because the covers really were there). Every picture a list shows (Digital and Physical covers, backs, discs and spines, spines and files in the Library, platform logos and profile pictures) is now exempt.
+
 ## [0.12.1] - 2026-11-16
 
 ### Fixed
