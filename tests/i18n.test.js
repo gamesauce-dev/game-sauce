@@ -70,3 +70,14 @@ test('i18n: the code adds an "s" to make a plural; French and German make their 
   assert.equal(de.lookup('3 games and 2 files'), '3 Spiele und 2 Dateien');
   assert.equal(de.lookup('1 game and 1 file'), '1 Spiel und 1 Datei');
 });
+
+test('i18n: a time inside a sentence is translated on its own (System health: "last scan 28 minutes ago")', () => {
+  const fr = JSON.parse(read('public/lang/fr.json'));
+  const t = makeTranslator(fr, 'fr');
+  assert.equal(t.lookup('Reachable; last scan 28 minutes ago: 3 found, 3 new.'), 'Accessible ; dernière analyse il y a 28 minutes : 3 trouvés, 3 nouveaux.');
+  assert.equal(t.lookup('Reachable; last scan just now: 1 found, 0 new; 2 file(s) missing.'), 'Accessible ; dernière analyse à l\'instant : 1 trouvés, 0 nouveaux ; 2 fichier(s) manquant(s).');
+  assert.equal(t.lookup('Disk space: data folder'), 'Espace disque : dossier des données');
+  assert.equal(t.lookup('Source: snes'), 'Source : snes', 'a name inside a pattern is left as it is');
+  const e = makeTranslator({ 'Last seen {a}': 'Vu {a}' }, 'fr');
+  assert.equal(e.lookup('Last seen Tuesday'), 'Vu Tuesday', 'only a time is translated inside a pattern, never an arbitrary name');
+});

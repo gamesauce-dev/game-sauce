@@ -21,6 +21,7 @@ const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
 const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'NOSCRIPT', 'CODE', 'PRE']);
 const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 const hasLetters = (s) => /[A-Za-zÀ-ɏ]/.test(s);
+const AGE = /^(?:just now|[\d,.]+ (?:minutes|hours|days) ago)$/;   // how the server words "how long ago" (src/lib/health.js fmtAge)
 
 /** A translator for one language file: { lookup(text) } returns the translation, or null when there is none. Pure, so it can be tested. */
 export function makeTranslator(strings = {}, lang = '') {
@@ -52,7 +53,12 @@ export function makeTranslator(strings = {}, lang = '') {
       if (w !== undefined) return fix(w);
       for (const p of patterns) {
         const m = p.re.exec(n);
-        if (m) return fix(p.tr.replace(/\{([a-z0-9_]+)\}/gi, (all, name) => { const i = p.names.indexOf(name); return i >= 0 ? m[i + 1] : all; }));
+        if (m) return fix(p.tr.replace(/\{([a-z0-9_]+)\}/gi, (all, name) => {
+          const i = p.names.indexOf(name);
+          if (i < 0) return all;
+          const v = m[i + 1];
+          return AGE.test(v) ? (this.lookup(v) ?? v) : v;   // a time inside a sentence ("last scan 28 minutes ago") is translated on its own
+        }));
       }
       return null;
     }
