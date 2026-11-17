@@ -248,8 +248,8 @@ test('chips and cover badges read the same on Physical and Digital: one shared s
   assert.equal(names.platformBadge({ slug: 'nds', short_name: 'NDS' }), 'DS'); assert.equal(names.platformBadge({ slug: 'xbox', short_name: 'XBX' }), 'XBOX');
   assert.equal(names.platformBadge({ slug: 'snes', short_name: 'SNES' }), 'SNES'); assert.equal(names.platformBadge({ slug: 'gb', short_name: 'gb' }), 'GB');
   assert.equal(names.platformBadge({ slug: 'odd', name: 'Odd Machine' }), 'ODD MACHINE', 'falls back to the name');
-  // families: the brand, in capitals (the Library files these consoles under Sony and Microsoft / Xbox)
-  for (const [f, label] of [['Sony', 'PLAYSTATION'], ['Microsoft', 'XBOX'], ['Xbox', 'XBOX'], ['PlayStation', 'PLAYSTATION'], ['Nintendo', 'NINTENDO'], ['Sega', 'SEGA'], ['NEC', 'NEC'], ['Steam', 'STEAM']]) assert.equal(names.familyLabel(f), label, f);
+  // families: the name as the Library has it, in capitals (Sony reads PLAYSTATION; Microsoft and the Xbox store read MICROSOFT)
+  for (const [f, label] of [['Sony', 'PLAYSTATION'], ['Microsoft', 'MICROSOFT'], ['Xbox', 'MICROSOFT'], ['PlayStation', 'PLAYSTATION'], ['Nintendo', 'NINTENDO'], ['Sega', 'SEGA'], ['NEC', 'NEC'], ['Steam', 'STEAM']]) assert.equal(names.familyLabel(f), label, f);
   assert.equal(names.familyName('Sony'), 'PlayStation', 'the tooltip keeps the brand\'s own capitals');
   // Digital's own table of consoles agrees with the shared one, console by console
   const dg = read('public/digital.js');

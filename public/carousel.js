@@ -44,7 +44,7 @@ export function openCarousel(host) {
   // Until the launcher has reported (Check my PC), every platform is shown, because nothing is known yet. An account that cannot download has no launcher.
   const noLauncher = () => host.user()?.can_download === false;
   const known = () => (noLauncher() ? [] : st.lp);
-  const launchable = (slug) => known() === null || known().includes(slug);
+  const launchable = (slug) => known() === null || known().includes(slug) || (slug === 'xbla' && known().includes('xbox360'));   // an Xbox Live Arcade game starts in the Xbox 360 emulator
   const plats = () => [...(host.platforms() || []).map((p) => (launchable(p.slug) ? p : { ...p, visible_count: p.playable_count || 0 })).filter((p) => ((p.visible_count ?? p.count) || 0) > 0), ...steamPlat()];
   const fams = () => { const m = new Map(); for (const p of plats()) { const f = p.family || 'Others'; if (!m.has(f)) m.set(f, []); m.get(f).push(p); } return m; };
   const famColour = (f) => { const c = fams().get(f)?.[0]?.family_colour; return HEX.test(c || '') ? c : '#7c8aa5'; };

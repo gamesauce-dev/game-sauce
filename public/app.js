@@ -12,10 +12,12 @@ import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
 import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
+import { initDescScroll } from './descscroll.js';   // a long description scrolls itself
 import './pwreveal.js';   // the eye in password boxes
 import { initI18n, LANGS, chosenLanguage, setLanguage, t } from './i18n.js';   // the language of the page (public/lang/*.json)
 
 await initI18n();   // before anything is drawn, so the first screen is already in the person's language
+initDescScroll();
 
 const state = {
   view: 'library',
@@ -1631,7 +1633,6 @@ async function openDetail(id) {
     ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.${rom.multidisc_override == null ? ' (Decided from its file name.)' : ' (Set by hand.)'}</p>` : ''}
     <div class="section-label">Identify this game</div>
     <div class="panel" style="padding:12px">
-      <p class="hint" style="margin:0 0 10px">No match, wrong game, or missing art? Search and pick the right entry — cover included.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input id="identify-q" class="search" style="flex:1;min-width:180px" type="search"
           placeholder="Title to search…" value="${esc(rom.title)}" autocomplete="off" />
@@ -1641,16 +1642,14 @@ async function openDetail(id) {
       </div>
       <div id="identify-list" class="results" style="margin-top:10px"></div>
     </div>
-      <div id="identify-list" class="results" style="margin-top:10px"></div>
-    </div>
 
     ${rom.missing ? `<p class="hint" style="color:var(--warn)">This file is not reachable — its drive may be offline. The catalogue entry is kept.</p>` : ''}
 
     ${rom.description ? `<p class="detail-desc">${esc(rom.description)}</p>` : ''}
 
     ${(() => {
-      // The provider's pictures, then the spine, disc and back an admin imported from a folder.
-      const art = [...Object.keys(rom.media || {}).map((k) => [k, `/api/roms/${rom.id}/media/${k}`]), ...(rom.files || []).filter((f) => f.kind !== 'manual').map((f) => [f.kind, f.url])];
+      // The provider's pictures, then the disc and back (not the spine) an admin imported from a folder.
+      const art = [...Object.keys(rom.media || {}).filter((k) => k !== 'spine').map((k) => [k, `/api/roms/${rom.id}/media/${k}`]), ...(rom.files || []).filter((f) => f.kind !== 'manual' && f.kind !== 'spine').map((f) => [f.kind, f.url])];
       return art.length ? `
       <div class="section-label">Artwork</div>
       <div class="media-strip">
@@ -5476,7 +5475,7 @@ function startWelcome() {
   document.body.append(el);
   $('#wz-skip', el).onclick = () => finishWelcome(true);
   $('#wz-back', el).onclick = () => { if (WELCOME.step > 0) { WELCOME.step--; paintWelcome(); } };
-  $('#wz-next', el).onclick = () => {
+  $('#wz-next', el).onclick = () => { if (WELCOME.hold?.()) { WELCOME.guard?.(); return; }   // half a password typed: stay on the card, however the button came to be enabled
     if (WELCOME.step >= WELCOME.cards.length - 1) return finishWelcome(true);
     WELCOME.step++; paintWelcome();
   };
@@ -5486,7 +5485,7 @@ function startWelcome() {
 function paintWelcome() {
   const card = WELCOME.cards[WELCOME.step];
   const last = WELCOME.step === WELCOME.cards.length - 1;
-  clearTimeout(WELCOME.lbTimer);
+  clearTimeout(WELCOME.lbTimer); WELCOME.hold = WELCOME.guard = null;
   $('#wz-title').textContent = card.title;
   $('#wz-body').innerHTML = card.body();
   $('#wz-dots').innerHTML = WELCOME.cards.map((c, i) => `<i class="${i === WELCOME.step ? 'on' : i < WELCOME.step ? 'past' : ''}"></i>`).join('');
@@ -5519,6 +5518,8 @@ function wirePasswordCard() {
     if (hold && !msg.textContent) msg.textContent = 'Press Change password to save it, or clear both boxes to skip.';
     else if (!hold && msg.textContent.startsWith('Press Change password')) msg.textContent = '';
   };
+  WELCOME.hold = typed; WELCOME.guard = guardNext;
+  form.addEventListener('keyup', guardNext); form.addEventListener('paste', () => setTimeout(guardNext, 0));
   form.addEventListener('input', guardNext);
   form.addEventListener('change', guardNext);   // a browser's autofill can fill the boxes without typing
   setTimeout(guardNext, 300);                   // ...and it may do so just after the card appears

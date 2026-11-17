@@ -887,22 +887,24 @@ const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); 
 /** The details window's Manual section: what the game has (a link or the person's own file), and ways to add or change it. */
 function manualBlock(g) {
   const m = g.manual;
-  const now = m
-    ? `<p class="hint" style="margin:0">${m.kind === 'file' ? `Your file: <b>${esc(m.name)}</b>` : `A link: <b>${esc(hostOf(m.url))}</b>`}</p>`
-    : '<p class="hint" style="margin:0">No manual yet. Add a web link to one, or upload your own PDF. On the shelf, open the game\'s case and click the manual to read it.</p>';
-  return `<div class="section-label">Manual</div>
+  const ic = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const BOOK = ic('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16"/><path d="M9 8h7"/>');
+  const UP = ic('<path d="M12 16V5"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/>');
+  const WEB = ic('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>');
+  const DEL = ic('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/>');
+  const SAVE = ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>');
+  return `<div class="section-label">${m ? 'Manual' : 'Add manual'}</div>
     <div class="panel ph-manual-box" style="padding:12px;display:grid;gap:10px">
-      ${now}
       <div class="ph-man-actions">
-        ${m ? '<button type="button" class="btn btn-sm btn-primary" id="ph-man-open" title="Read the manual">Read the manual</button>' : ''}
-        <button type="button" class="btn btn-sm" id="ph-man-upload" title="Upload a PDF or pictures of the pages. It is kept privately with your shelf">Upload a file</button>
+        ${m ? `<button type="button" class="ibtn ibtn-primary" id="ph-man-open" data-tip="Read the manual (${m.kind === 'file' ? esc(m.name) : esc(hostOf(m.url))})" aria-label="Read the manual">${BOOK}</button>` : ''}
+        <button type="button" class="ibtn" id="ph-man-upload" data-tip="Upload a PDF or pictures of the pages. It is kept privately with your shelf" aria-label="Upload a manual">${UP}</button>
         <input type="file" id="ph-man-file" accept="application/pdf,image/png,image/jpeg,image/webp,.pdf" hidden />
-        <button type="button" class="btn btn-sm" id="ph-man-find" title="Search the web for this game's manual (opens a search page)">Look for one online</button>
-        ${m ? '<button type="button" class="btn btn-sm btn-ghost" id="ph-man-remove" title="Take this manual away from the game">Remove</button>' : ''}
+        <button type="button" class="ibtn" id="ph-man-find" data-tip="Search the web for this game's manual (opens a search page)" aria-label="Look for one online">${WEB}</button>
+        ${m ? `<button type="button" class="ibtn ibtn-danger" id="ph-man-remove" data-tip="Take this manual away from the game" aria-label="Remove the manual">${DEL}</button>` : ''}
       </div>
-      <form class="edit-form" id="ph-man-link" style="grid-template-columns:1fr auto;align-items:end">
-        <label class="field"><span>Link to a manual</span><input name="link" type="url" inputmode="url" placeholder="https://…" value="${esc(g.manual_link || '')}" /></label>
-        <button class="btn btn-sm" id="ph-man-save" type="submit" title="Save this link">Save link</button>
+      <form class="ph-man-link" id="ph-man-link">
+        <input name="link" type="url" inputmode="url" placeholder="Link to a manual: https://…" aria-label="Link to a manual" title="A web link to this game's manual" value="${esc(g.manual_link || '')}" />
+        <button class="ibtn" id="ph-man-save" type="submit" data-tip="Save this link" aria-label="Save link">${SAVE}</button>
       </form>
     </div>`;
 }

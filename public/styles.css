@@ -1878,3 +1878,17 @@ body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
 
 /* Long words (German: "Bibliothekswerkzeuge") break rather than get cut off in a tile. */
 .settings-anchor .tile.group .tile-label { overflow-wrap: anywhere; hyphens: auto; }
+
+/* The description in the details window: at most 7 lines; a longer one scrolls itself up and down (public/descscroll.js). */
+#drawer-body .detail-desc { max-height: calc(1.55em * 7); overflow: hidden; }
+#drawer-body .detail-desc .detail-desc-text { display: block; }
+#drawer-body .detail-desc.is-long .detail-desc-text { animation: desc-scroll var(--desc-time, 14s) ease-in-out infinite alternate; }
+#drawer-body .detail-desc.is-long:hover .detail-desc-text { animation-play-state: paused; }
+@keyframes desc-scroll { 0%, 14% { transform: translateY(0); } 86%, 100% { transform: translateY(var(--desc-dist, 0)); } }
+@media (prefers-reduced-motion: reduce) { #drawer-body .detail-desc.is-long { overflow-y: auto; } #drawer-body .detail-desc.is-long .detail-desc-text { animation: none; } }
+
+/* The headings in the details window sit on a wide coloured band. */
+#drawer-body .section-label {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel)); color: var(--text); border-left: 3px solid var(--accent-2);
+  border-radius: var(--radius-sm); padding: 0.4rem 0.75rem; margin: 1.4286rem 0 0.7rem;
+}

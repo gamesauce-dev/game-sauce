@@ -58,7 +58,7 @@ test('the Physical Library carries the badge text for its tiles, chips and spine
 test('the badge text wins on every cover badge, in capitals; the chips follow the short name; and the settings form has the field', () => {
   const pn = read('public/platform-names.js'), dg = read('public/digital.js'), app = read('public/app.js'), mj = read('public/modern.js');
   assert.ok(pn.includes("String(p?.badge || BADGE[p?.slug] || p?.short_name"), 'Physical badges and spines');
-  assert.ok(pn.includes("platformChip = (p) => platformBadge({ ...p, badge: '' })"), 'a chip never uses the badge text');
+  assert.ok(pn.includes("platformBadge({ ...p, badge: '' })"), 'a chip never uses the badge text');
   assert.ok(read('public/physical.js').includes('<span>${esc(platformChip(p))}</span> <small>'), 'Physical chips');
   assert.ok(dg.includes('customBadge(g.platform) || st.short') && dg.includes('<span>${esc(platformChip({'), 'Digital tiles use the badge text, its chips the short name');
   assert.ok(app.includes('rom.platform_badge ? String(rom.platform_badge).toUpperCase() : rom.platform_short'), 'the ROM Library tiles');
@@ -79,4 +79,18 @@ test('the ROM Library list and a collection carry the badge text, so the tiles s
   await call(`/api/collections/${coll.id}/roms`, { method: 'POST', body: { rom_ids: [id] } });
   const inside = (await call(`/api/collections/${coll.id}`)).body;
   assert.equal((inside.roms || inside.items).find((r) => r.id === id).platform_badge, 'PS-4', 'a collection');
+});
+
+test('a short name an admin typed shows on the chip; the default short name still gives way to the shared names; Microsoft reads as in the Library', async () => {
+  const { platformChip, familyLabel } = await import('../public/platform-names.js');
+  assert.equal(platformChip({ slug: 'xboxseries', short_name: 'XBOX S|X', short_default: 'XSX' }), 'XBOX S|X', 'typed in Settings');
+  assert.equal(platformChip({ slug: 'xboxseries', short_name: 'XSX', short_default: 'XSX' }), 'X|S', 'the default is not typed');
+  assert.equal(platformChip({ slug: 'xboxseries', short_name: 'XBOX S|X', short_default: 'XSX', badge: 'NOPE' }), 'XBOX S|X', 'a chip never uses the badge text');
+  assert.equal(familyLabel('Microsoft'), 'MICROSOFT');
+});
+
+test('Xbox Live Arcade games start in the Xbox 360 emulator: the launcher reports xbla with xbox360 and falls back to it', async () => {
+  const { configuredPlatforms } = await import('../launcher/gamesauce-launcher.mjs');
+  assert.deepEqual(configuredPlatforms({ emulators: { xbox360: { command: 'xenia' } } }, () => true), ['xbla', 'xbox360']);
+  assert.deepEqual(configuredPlatforms({ emulators: { xbox360: { command: 'xenia' }, xbla: { command: 'other' } } }, () => true), ['xbla', 'xbox360']);
 });

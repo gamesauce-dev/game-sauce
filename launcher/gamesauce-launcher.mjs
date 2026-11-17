@@ -179,6 +179,7 @@ export function configuredPlatforms(cfg, exists = (p) => fs.existsSync(p)) {
     if ((path.isAbsolute(cmd) || /^[A-Za-z]:[\\/]/.test(cmd)) && !exists(cmd)) continue;
     out.push(slug);
   }
+  if (out.includes('xbox360') && !out.includes('xbla')) out.push('xbla');   // Xbox Live Arcade games start in the Xbox 360 emulator
   return out.sort();
 }
 
@@ -320,7 +321,7 @@ async function doLaunch(link, rep, configFile) {
     throw new LaunchError(`${link.server} is not listed under "servers" in ${configFile}. Add it there if you trust it.`);
   }
   rep.enable();   // from here on the server is one the person listed, so it may be told how the launch is going
-  const entry = cfg.emulators[link.platform];
+  const entry = cfg.emulators[link.platform] || (link.platform === 'xbla' ? cfg.emulators.xbox360 : undefined);   // an Xbox Live Arcade game starts in the Xbox 360 emulator unless xbla has its own
   if (!entry) throw new LaunchError(`No emulator is set for "${link.platform}" in ${configFile}.`);
 
   sweepStale();

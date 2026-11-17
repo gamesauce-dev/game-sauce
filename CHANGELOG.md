@@ -4,6 +4,15 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Xbox Live Arcade shows up in Big Screen and the Carousel.** XBLA games start in your Xbox 360 emulator, but the lists only offered a platform this PC reported an emulator for, so XBLA had no tile of its own. It now counts as ready whenever Xbox 360 is (and the launcher reports and starts it that way too, unless you give xbla its own emulator).
+- **Chips read as in the Library.** The Xbox family chip in the Digital and Physical libraries now says Microsoft. A short name you typed in Settings > Platforms (for example XBOX S|X) shows on the platform chips instead of the built-in X|S.
+- **The details window is tidier.** The description shows 7 lines at most and scrolls itself slowly when it is longer (it stops under the mouse). The section headings sit on a wide coloured band. The Identify box no longer carries the "No match, wrong game..." sentence. The empty "Video and artwork" section is gone (Refresh metadata / Look up again already fetch the video and pictures a game is missing). The Library no longer shows the spine in the artwork row. On the Physical shelf the manual section reads "Add manual" and is a row of icons with hover text, plus the link box.
+
+### Fixed
+- **The Digital Library icon stays an outline when selected** in the Modern look.
+- **The welcome tour's Next button** now also checks the password boxes when it is pressed, so it cannot move on with half a password typed on any system.
+
 ## [0.12.2] - 2026-11-18
 
 ### Fixed

@@ -10,7 +10,7 @@ import db from './db.js';
 // Side-effect import: forward-compatible schema migrations (sources, source paths,
 // provider ids). Must run before anything queries the new columns.
 import './migrations.js';
-import { seedPlatforms, ICON_TYPES } from './lib/platforms.js';
+import { seedPlatforms, ICON_TYPES, PLATFORM_BY_SLUG } from './lib/platforms.js';
 import romsRouter, { playableSql } from './routes/roms.js';
 import collectionsRouter from './routes/collections.js';
 import digitalRouter from './routes/digital.js';
@@ -225,7 +225,7 @@ export function createApp() {
         , COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
-      `).all().map((p) => ({ ...p, multidisc_count: md[p.slug] || 0, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
+      `).all().map((p) => ({ ...p, short_default: PLATFORM_BY_SLUG.get(p.slug)?.short_name ?? null, multidisc_count: md[p.slug] || 0, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
     });
   });
 

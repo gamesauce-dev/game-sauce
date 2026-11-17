@@ -124,11 +124,7 @@ function show(slot, s) {
     return;
   }
   if (!s.can_fetch) { slot.innerHTML = ''; return; }   // no source is set up: no empty section
-  slot.innerHTML = `<div class="section-label">Video and artwork</div>
-    <p class="hint">${s.missed ? 'No video was found for this game the last time it was looked for.' : 'No video kept for this game yet.'}${s.why ? ` <span class="vid-why">${esc(s.why)}</span>` : ''}</p>
-    ${finder('Find assets')}`;
-  const btn = slot.querySelector('.vid-find'), msg = slot.querySelector('.vid-msg');
-  btn.addEventListener('click', () => findAssets(slot, btn, msg));
+  slot.innerHTML = '';   // nothing to show: "Refresh metadata" (or Look up again) fetches the video and the pictures a game is missing, so there is no empty section here
 }
 
 async function fill(slot) {

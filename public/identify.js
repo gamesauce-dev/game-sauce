@@ -45,7 +45,6 @@ export function identifyBlock({ idp, title, platform, prefs }) {
   return `
     <div class="section-label">Identify this game</div>
     <div class="panel" style="padding:12px">
-      <p class="hint" style="margin:0 0 10px">No match, wrong game, or missing art? Search and pick the right entry — cover included.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input id="${idp}-id-q" class="search" style="flex:1;min-width:180px" type="search" placeholder="Title to search…" value="${esc(title)}" autocomplete="off" />
         <div class="provpick" id="${idp}-id-prov" data-value="${esc(prov)}" title="Which catalogue to search — click ☆ to make one your default"></div>

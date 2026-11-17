@@ -245,3 +245,4 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-disc.ph-cart.ph-ds::before, .ph-disc.ph-cart.ph-gb::before, .ph-disc.ph-cart.ph-gba::before, .ph-disc.ph-cart.ph-md::before, .ph-disc.ph-cart.ph-n64::before { inset: 14% 12% 38% 12%; }
 .ph-disc.ph-cart.ph-gba::before { inset: 16% 10% 40% 10%; }
 .ph-disc.ph-cart.ph-md::after, .ph-disc.ph-cart.ph-n64::after { inset: auto 14% 6% 14%; }
+.ph-man-link { display: flex; gap: 8px; align-items: center; } .ph-man-link input { flex: 1; min-width: 0; }

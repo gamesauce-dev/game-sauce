@@ -62,7 +62,7 @@ test('Big Screen is wired in: a button in the Library bar and the Modern bar, #/
   assert.ok(app.includes("import * as bigscreen from './bigscreen.js'") && app.includes("location.hash === '#/bigscreen'") && app.includes('openBigScreen: openBigScreenView'));
   assert.ok(mj.includes('id="mb-bigscreen"') && mj.includes("v === 'bigscreen'") && fs.existsSync(new URL('../public/modern/icons/big-screen.svg', import.meta.url)));
   assert.ok(pad.includes("$('.cv') || $('.bs')") && pad.includes("root.classList.contains('bs')"), 'the pad reaches Big Screen');
-  assert.ok(bs.includes('st.lp.includes(p.slug)'), 'only the platforms the emulator setup reports (once it has)');
+  assert.ok(bs.includes('launchable(p.slug)') && bs.includes('known().includes(slug)'), 'only the platforms the emulator setup reports (once it has)');
 });
 
 test('Big Screen: a game shows its logo and its marquee when it has them (the pictures a ScreenScraper match keeps as "wheel" and "marquee"), and the platform choice goes family first, then platform', async () => {

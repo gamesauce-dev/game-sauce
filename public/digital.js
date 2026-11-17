@@ -44,6 +44,7 @@ const badgeOf = (g) => {
 };
 /** The badge text an admin set for the Library platform behind a Digital console (Settings > Platforms), or null for the default. */
 const customBadge = (platform) => { const p = (window.__platformsCache || []).find((x) => x.slug === DG_PLATFORM[platform]?.lib); const b = String(p?.badge || '').trim(); return b ? b.toUpperCase() : null; };
+const libRow = (platform) => (window.__platformsCache || []).find((x) => x.slug === DG_PLATFORM[platform]?.lib);
 const libAccent = (platform) => { const p = (window.__platformsCache || []).find((x) => x.slug === DG_PLATFORM[platform]?.lib); return /^#[0-9a-f]{6}$/i.test(p?.accent || '') ? p.accent : null; };
 
 const dg = {
@@ -174,7 +175,7 @@ function renderChips() {
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-dg-chip-all title="All your games">All <small>${n(total)}</small></button>
       ${stores.map((s) => `<button type="button" class="ph-chip${dg.family === s.store ? ' open' : ''}${famState(s.store)}" data-dg-chip-store="${esc(s.store)}" style="--chip-c:${DG_STORE[s.store]?.chip || '#6b7280'}"${subsOf(s.store).length ? ` aria-expanded="${dg.family === s.store}"` : ''} title="${esc(s.label || storeLabel(s.store))}${subsOf(s.store).length ? ': show its consoles' : ''}">${esc(familyLabel(s.label || storeLabel(s.store)))} <small>${n(s.visible)}</small></button>`).join('')}
     </div>
-    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc(platformChip({ slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: DG_PLATFORM[p.platform]?.short }))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc(platformChip({ ...libRow(p.platform), slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: libRow(p.platform)?.short_name || DG_PLATFORM[p.platform]?.short }))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
   landChips(host, dg.family);
 }
 

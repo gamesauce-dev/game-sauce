@@ -9,13 +9,15 @@ export const BADGE = {
   xbox: 'XBOX', xbox360: 'XBOX 360', xbla: 'XBLA', xboxone: 'XBOX ONE', xboxseries: 'X|S'
 };
 
-/** The brand a Library family goes by (the Library files Sony's and Microsoft's consoles under those makers). Other families keep their own name. */
-export const FAMILY = { sony: 'PlayStation', playstation: 'PlayStation', microsoft: 'Xbox', xbox: 'Xbox' };
+/** The name a family chip shows: Sony's consoles read PlayStation, and Microsoft's (and the Digital Library's Xbox store) read Microsoft, as in the Library. Other families keep their own name. */
+export const FAMILY = { sony: 'PlayStation', playstation: 'PlayStation', microsoft: 'Microsoft', xbox: 'Microsoft' };
 
 /** The text on a platform's chip or cover badge, in capitals. p: { slug, short_name?, name?, badge? } (a Library platform row). A badge text an admin set for the platform (Settings > Platforms) wins over everything. */
 export const platformBadge = (p) => String(p?.badge || BADGE[p?.slug] || p?.short_name || p?.name || p?.slug || '').toUpperCase();
+/** A short name an admin typed (Settings > Platforms) is not the one the platform came with (short_default, sent by the server). */
+const ownShort = (p) => { const s = String(p?.short_name || '').trim(); return s && p?.short_default !== undefined && s !== p.short_default ? s : ''; };
 /** The text on a platform's chip: the same, but a badge text is never used (it is for the cover badges only; the chip follows the short name). */
-export const platformChip = (p) => platformBadge({ ...p, badge: '' });
+export const platformChip = (p) => (ownShort(p) || platformBadge({ ...p, badge: '' })).toUpperCase();
 
 /** A family's name as people say it (for a tooltip), and the same in capitals (for a chip). */
 export const familyName = (f) => FAMILY[String(f || '').toLowerCase()] || String(f || '');
