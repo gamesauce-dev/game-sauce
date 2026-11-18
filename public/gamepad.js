@@ -5,7 +5,7 @@
  *   B                     back: close the panel / dialog, or return to the Library
  *   X                     play the focused game in the browser (when it can be played)
  *   Y                     jump to the search box
- *   LB / RB               previous / next game in the open game panel, otherwise previous / next section
+ *   LB / RB               previous / next game in the open game panel; in the carousel previous / next letter; otherwise previous / next section
  *
  *   Select + Start (hold ~1 s)   while a game is running: close the player. Nothing else is
  *                                intercepted then, so the game gets every other button.
@@ -248,7 +248,7 @@
       legend = document.createElement('div');
       legend.id = 'gp-legend';
       legend.setAttribute('aria-hidden', 'true');
-      legend.innerHTML = '<b>◀▲▼▶</b> move <span>·</span> <b>A</b> select <span>·</span> <b>B</b> back <span>·</span> <b>X</b> play <span>·</span> <b>Y</b> search <span>·</span> <b>LB/RB</b> prev/next <span>·</span> in a game: hold <b>Select+Start</b> to close';
+      legend.innerHTML = '<b>◀▲▼▶</b> move <span>·</span> <b>A</b> select <span>·</span> <b>B</b> back <span>·</span> <b>X</b> play <span>·</span> <b>Y</b> search <span>·</span> <b>LB/RB</b> prev/next (letter in a list) <span>·</span> in a game: hold <b>Select+Start</b> to close';
       document.body.appendChild(legend);
     }
     // The legend names buttons the way the player's pad labels them, so it must follow the layout.

@@ -176,6 +176,14 @@ export function openCarousel(host) {
     nav.classList.toggle('hidden', !st.games.length);
     const here = letterOf(gameAt(st.idx)); for (const b of nav.children) b.classList.toggle('on', b.dataset.l === here);
   };
+  /** Jump to the first game of the previous (d = -1) or next (d = 1) letter that has games. */
+  const jumpLetter = (d) => {
+    if (!st.games.length) return;
+    paintAz();
+    const have = AZ.filter((l) => st.az?.has(l)), here = have.indexOf(letterOf(gameAt(st.idx)));
+    const to = have[Math.max(0, Math.min(have.length - 1, here + d))];
+    if (to != null && st.az.get(to) !== st.idx) go(st.az.get(to));
+  };
   const go = (i) => { const n = st.games.length; if (!n) return; st.idx = Math.max(0, Math.min(n - 1, i)); render(); };
 
   // ── loading ──
@@ -334,7 +342,7 @@ export function openCarousel(host) {
     }
   };
   document.addEventListener('keydown', onKey);
-  // The controller (public/gamepad.js sends what was pressed): left and right move through the games, up and down through the platforms, LB and RB through the families, A plays, X plays too, Y plays on this PC, B closes.
+  // The controller (public/gamepad.js sends what was pressed): left and right move through the games, up and down through the platforms and families, LB and RB through the letters (# then A-Z, as in Big Screen), A plays, X plays too, Y plays on this PC, B closes.
   const step = (list, cur, d) => { const i = list.indexOf(cur); return list[Math.max(0, Math.min(list.length - 1, (i < 0 ? 0 : i) + d))]; };
   const platList = () => [...root.querySelectorAll('[data-plat]')].map((b) => b.dataset.plat);
   const famList = () => [...root.querySelectorAll('[data-fam]')].map((b) => b.dataset.fam);
@@ -344,7 +352,7 @@ export function openCarousel(host) {
     if (a === 'left' || a === 'right') { const d = a === 'right' ? 1 : -1; if (z === 'covers') go(st.idx + d); else hlStep(d); }
     else if (a === 'up') { if (z === 'covers') { if (platList().length) setZone('subs'); else if (famList().length) setZone('fams'); } else if (z === 'subs' && famList().length) setZone('fams'); }
     else if (a === 'down') { if (z === 'fams' && platList().length) setZone('subs'); else if (z === 'subs') setZone('covers'); }
-    else if (a === 'prev-family' || a === 'next-family') { const f = step(famList(), st.fam, a === 'next-family' ? 1 : -1); if (f && f !== st.fam) chooseFam(f); }
+    else if (a === 'prev-family' || a === 'next-family') jumpLetter(a === 'next-family' ? 1 : -1);   // LB / RB: the previous / next letter that has games, as in Big Screen
     else if (a === 'select') {
       if (z === 'covers') play(gameAt(st.idx));
       else if (z === 'subs') { const p = st.hl; setZone('covers'); if (p && p !== st.plat) choose(p); }
