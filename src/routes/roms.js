@@ -1442,6 +1442,19 @@ router.post('/upload', upload.array('roms', 50), async (req, res, next) => {
 
 /* ------------------------------------------------------------ delete */
 
+// Take out the games whose file is gone from its folder (flagged missing by a scan). Admin only. Without dry_run=0 it only counts, so the page can say what it would remove.
+// Catalogue rows only (and their imported pictures and manuals): the files are gone, and nothing on disk is touched. A locked (Keep) game is never removed.
+router.delete('/missing', requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM roms WHERE missing = 1 AND COALESCE(keep_override, -1) <> 1').all();
+  if (req.query.dry_run !== '0' && req.query.dry_run !== 'false') {
+    return res.json({ dry_run: true, missing: rows.length, locked_kept: db.prepare('SELECT COUNT(*) AS n FROM roms WHERE missing = 1 AND keep_override = 1').get().n, sample: rows.slice(0, 10).map((r) => ({ id: r.id, title: r.title })) });
+  }
+  let deleted = 0; const errors = [];
+  for (const rom of rows) { try { deleteRomRow(rom, { deleteFile: false }); deleted++; } catch (err) { errors.push({ id: rom.id, error: err.message }); } }
+  req.auditDetail = { deleted };
+  res.json({ dry_run: false, deleted, errors: errors.slice(0, 20) });
+});
+
 router.delete('/:id', (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });

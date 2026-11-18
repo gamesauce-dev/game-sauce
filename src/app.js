@@ -476,6 +476,7 @@ export function createApp() {
       library: db.prepare(`
         SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
                COUNT(DISTINCT platform_id) AS platforms,
+               ${req.user?.role === 'admin' ? 'SUM(CASE WHEN missing = 1 THEN 1 ELSE 0 END)' : '0'} AS missing,   -- the games whose file is gone from its folder (an admin's own list to clean up)
                (SELECT COUNT(*) FROM favorites WHERE user_id = ${mine == null ? -1 : mine}) AS favorites
         FROM roms${req.user?.role === 'admin' ? ' WHERE source_hidden = 0' : ' WHERE hidden_all = 0 AND source_hidden = 0'}
       `).get(),

@@ -499,7 +499,7 @@ async function loadPlatforms() {
     window.__orphanCount = orphaned;
     window.__unmatchedCount = neverEnriched;
     usage.innerHTML = `${fmtBytes(stats.library.bytes)} across ${stats.library.roms} ROMs
-      ${missing ? `<span class="pill warn" style="margin-left:6px">${missing} missing</span>` : ''}
+      ${missing ? `<span class="pill warn" style="margin-left:6px${authState.user?.role === 'admin' ? ';cursor:pointer' : ''}"${authState.user?.role === 'admin' ? ' data-open-missing title="Show the games whose file is gone from its folder"' : ''}>${missing} missing</span>` : ''}
       ${orphaned ? `<span class="pill bad" style="margin-left:6px" title="ROMs with no valid source folder">${orphaned} orphaned</span>` : ''}
       ${neverEnriched ? `<span class="pill warn" style="margin-left:6px" title="ROMs no provider has ever matched">${neverEnriched} need match</span>` : ''}
       <div class="usage-bar"><i style="width:${Math.min(100, (stats.library.bytes / (50 * 1024 ** 3)) * 100)}%"></i></div>`;
@@ -507,6 +507,7 @@ async function loadPlatforms() {
   syncOrphanToggle();
   syncUnmatchedToggle();
   document.querySelector('[data-toggle="locked"]')?.classList.toggle('hidden', authState.user?.role !== 'admin');
+  document.querySelector('[data-toggle="missing"]')?.classList.toggle('hidden', authState.user?.role !== 'admin' || !(stats.library.missing || state.missing));
 }
 
 /* ─────────────────────────── library ─────────────────────────── */
@@ -1367,7 +1368,8 @@ function syncFilterToggles() {
       : key === 'nocover' ? state.cover === 'none'
       : key === 'orphan' ? state.orphan
       : key === 'locked' ? state.locked
-      : key === 'unmatched' ? state.unmatched : false;
+      : key === 'unmatched' ? state.unmatched
+      : key === 'missing' ? state.missing : false;
     btn.classList.toggle('is-active', Boolean(on));
   });
   syncOrphanToggle();
@@ -1407,6 +1409,7 @@ $$('[data-toggle]').forEach((btn) => btn.addEventListener('click', () => {
   else if (btn.dataset.toggle === 'orphan') state.orphan = !state.orphan;
   else if (btn.dataset.toggle === 'locked') state.locked = !state.locked;
   else if (btn.dataset.toggle === 'unmatched') state.unmatched = !state.unmatched;
+  else if (btn.dataset.toggle === 'missing') { state.missing = !state.missing; if (state.missing) state.hidden = false; }
   if (state.orphan || state.unmatched || state.locked) state.hidden = false;
   if (state.locked && btn.dataset.toggle === 'locked') { state.orphan = false; state.unmatched = false; state.system = false; }
   else if (state.locked && (btn.dataset.toggle === 'orphan' || btn.dataset.toggle === 'unmatched' || btn.dataset.toggle === 'system')) state.locked = false;
@@ -3128,6 +3131,28 @@ This cannot be undone. Games, ROMs, saves and your own folders are not touched.`
     const r = await api('/admin/storage/clear', { method: 'POST', body: JSON.stringify({}) });
     toast(`Cleared ${r.removed.toLocaleString()} file${r.removed === 1 ? '' : 's'} (${fmtBytes(r.bytes)})${r.failed ? `; ${r.failed} could not be deleted` : ''}`);
     await checkStorage();
+  } catch (err) { toast(err.message, true); }
+});
+
+// Games whose file is gone from its folder: look at them, or take them out (admin; locked games stay).
+$('#db-show-missing')?.addEventListener('click', () => openLibraryFor('missing'));
+document.addEventListener('click', (e) => { if (e.target.closest('[data-open-missing]')) openLibraryFor('missing'); });   // the count in the sidebar
+$('#db-purge-missing')?.addEventListener('click', async () => {
+  let info;
+  try { info = await api('/roms/missing', { method: 'DELETE' }); } catch (err) { return toast(err.message, true); }
+  if (!info.missing) return toast('No missing games: nothing to remove');
+  const sample = (info.sample || []).map((s) => s.title).join(', ');
+  const ok = await confirmDialog({
+    title: `Remove ${info.missing} missing game${info.missing === 1 ? '' : 's'}?`,
+    body: `Their file is gone from its folder, so they cannot be played. This takes them (and their imported pictures and manuals) out of the library; nothing on disk is touched. A scan that finds a file again would add it back as a new game.${info.locked_kept ? `\n${info.locked_kept} locked game${info.locked_kept === 1 ? '' : 's'} stay.` : ''}\n\nFor example: ${sample}${info.missing > 10 ? '…' : ''}`,
+    okLabel: 'Remove', danger: true
+  });
+  if (!ok) return;
+  try {
+    const r = await api('/roms/missing?dry_run=0', { method: 'DELETE' });
+    toast(`Removed ${r.deleted} missing game${r.deleted === 1 ? '' : 's'}`);
+    await Promise.all([loadPlatforms(), checkStorage?.()]).catch(() => {});
+    const facets = await api('/roms/facets'); renderDbTools(facets); loadLibrary();
   } catch (err) { toast(err.message, true); }
 });
 

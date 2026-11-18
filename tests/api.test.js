@@ -634,3 +634,37 @@ test('the fast native CRC32 gives exactly the same answers as the JavaScript one
   assert.equal(h.crc32, (zlib.crc32(buf) >>> 0).toString(16).padStart(8, '0').toUpperCase());
   assert.equal(h.size, 5000);
 });
+
+test('missing games: counted first, removed only by an admin, a locked one stays, the file on disk is never touched', async () => {
+  const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'gamesauce-missing-'));
+  fs.mkdirSync(path.join(lib, 'SNES'), { recursive: true });
+  for (const n of ['Gone One', 'Gone Two', 'Gone Locked', 'Still Here']) fs.writeFileSync(path.join(lib, 'SNES', `${n}.sfc`), (n + '-bytes-').repeat(8));
+  const post = (p, token) => fetch(`${base}${p}`, { method: 'POST', headers: { ...(token ? { Authorization: 'Bearer ' + token } : authHeaders()), 'Content-Type': 'application/json' }, body: '{}' });
+  const src = await fetch(`${base}/api/sources`, { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Missing lib', path: lib, platform_hint: 'snes' }) }).then((r) => r.json());
+  await post(`/api/sources/${src.id}/scan`);
+  for (const n of ['Gone One', 'Gone Two', 'Gone Locked']) fs.rmSync(path.join(lib, 'SNES', `${n}.sfc`));
+  await post(`/api/sources/${src.id}/scan`);
+  const gone = (await get('/api/roms?missing=1&hidden=all')).body.items.filter((r) => r.title.startsWith('Gone'));
+  assert.equal(gone.length, 3, 'a scan flags the games whose file is gone');
+  const locked = gone.find((r) => r.title === 'Gone Locked');
+  await fetch(`${base}/api/roms/bulk/lock`, { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [locked.id], locked: true }) });
+  await fetch(`${base}/api/auth/users`, { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'missingmember', password: 'missing-member-1', role: 'user' }) });
+  const mtok = (await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'missingmember', password: 'missing-member-1' }) }).then((r) => r.json())).token;
+  assert.equal((await fetch(`${base}/api/roms/missing?dry_run=0`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + mtok } })).status, 403, 'admin only');
+  const dry = await fetch(`${base}/api/roms/missing`, { method: 'DELETE', headers: authHeaders() }).then((r) => r.json());
+  assert.equal(dry.dry_run, true); assert.ok(dry.missing >= 2); assert.ok(dry.sample.every((s) => !s.title.includes('Locked') && !s.title.includes('Still')), 'a count first: not the locked one, not the one still there');
+  assert.equal((await get('/api/roms?missing=1&hidden=all')).body.items.filter((r) => r.title.startsWith('Gone')).length, 3, 'the count removes nothing');
+  const real = await fetch(`${base}/api/roms/missing?dry_run=0`, { method: 'DELETE', headers: authHeaders() }).then((r) => r.json());
+  assert.ok(real.deleted >= 2);
+  const left = (await get('/api/roms?hidden=all&limit=500')).body.items.map((r) => r.title);
+  assert.ok(left.includes('Gone Locked') && left.includes('Still Here') && !left.includes('Gone One') && !left.includes('Gone Two'), 'the two removed; the locked and the present one stay');
+  assert.ok(fs.existsSync(path.join(lib, 'SNES', 'Still Here.sfc')), 'files on disk are untouched');
+  fs.rmSync(lib, { recursive: true, force: true });
+});
+
+test('the Library has a Missing files filter for admins, a clickable missing count, and a Delete missing button in Database maintenance', () => {
+  const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8'), app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), mj = fs.readFileSync(new URL('../public/modern.js', import.meta.url), 'utf8');
+  assert.ok(html.includes('data-toggle="missing"') && html.includes('id="db-purge-missing"') && html.includes('id="db-show-missing"'));
+  assert.ok(app.includes("toggle=\"missing\"]')?.classList.toggle('hidden', authState.user?.role !== 'admin'") && app.includes('data-open-missing'), 'admin only, and the count opens it');
+  assert.ok(mj.includes("['missing', 'Missing files'"), 'in the Modern ⋯ menu');
+});
