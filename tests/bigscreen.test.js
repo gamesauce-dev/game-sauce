@@ -455,3 +455,37 @@ test('Big Screen lists a platform with no emulator on this PC when some of its g
   assert.ok(bs.includes("noLauncher() || !launchable(p.slug) ? { ...p, visible_count: p.playable_count || 0 } : p"));
   assert.ok(!bs.includes('st.lp === null || launchable(p.slug)) && count(p) > 0'), 'the emulator list no longer hides a platform outright');
 });
+
+test('Art import for all three lists: a game in the Library, on the shelf and in Digital gets its cover in each, the spine in the Library and the shelf, and its logo in the Library only; only an admin may', async () => {
+  const { previewArtImport } = await import('../src/lib/artimport.js');
+  const dir = path.join(path.resolve(process.env.GAMESAUCE_STORAGE_DIR), '..', 'all3art'); const png = Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(80)]);
+  const ps3 = path.join(dir, 'sony playstation 3');
+  for (const [sub, name] of [['box - front', 'Triple Title-01.png'], ['box - spine', 'Triple Title-01.png'], ['clearlogo', 'Triple Title-01.png'], ['box - front', 'Shelf Only Title-01.png']]) { fs.mkdirSync(path.join(ps3, sub), { recursive: true }); fs.writeFileSync(path.join(ps3, sub, name), png); }
+  db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, size_bytes, sha1) VALUES ((SELECT id FROM platforms WHERE slug = 'ps3'), 'Triple Title', 'triple title', 'Triple Title.iso', 'x', 5, 'c3c3000000000000000000000000000000000001')").run();
+  assert.equal((await call('/api/physical/games', { method: 'POST', body: { platform: 'ps3', title: 'Triple Title' } })).status, 201);
+  assert.equal((await call('/api/physical/games', { method: 'POST', body: { platform: 'ps3', title: 'Shelf Only Title' } })).status, 201);
+  assert.equal((await call('/api/digital/games', { method: 'POST', body: { platform: 'ps3', title: 'Triple Title' } })).status, 201);
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: [dir] } })).status, 200);
+  const all = await previewArtImport(1, { target: 'all', folder: dir });
+  assert.equal(all.matched.cover, 4, 'Triple Title in three lists, Shelf Only on the shelf');
+  assert.equal(all.matched.spine, 2, 'the Library and the shelf (Digital has no spine)');
+  assert.equal(all.matched.logo, 1, 'the Library only');
+  assert.equal(all.unmatched_total, 0);
+  const both = await previewArtImport(1, { target: 'both', folder: dir });
+  assert.equal(both.matched.cover, 3); assert.equal(both.matched.spine, 1); assert.equal(both.matched.logo ?? 0, 0, 'without the Library there is no logo');
+  assert.equal((await call('/api/art/import', { method: 'POST', as: 'ann', body: { target: 'all', folder: dir } })).status, 403, 'the shared Library is an admin\'s');
+});
+
+test('Art import for all three lists: applying puts each picture on its own list\'s entry', async () => {
+  const { startArtImport, artJobIdle } = await import('../src/lib/artimport.js');
+  const dir = path.join(path.resolve(process.env.GAMESAUCE_STORAGE_DIR), '..', 'all3art');
+  const png = (w, h) => { const b = Buffer.alloc(80); Buffer.from('89504e470d0a1a0a', 'hex').copy(b, 0); b.writeUInt32BE(13, 8); b.write('IHDR', 12); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20); return b; };   // a picture header of the size a cover or a spine has
+  for (const [sub, w, h] of [['box - front', 300, 420], ['box - spine', 40, 400], ['clearlogo', 300, 100]]) fs.writeFileSync(path.join(dir, 'sony playstation 3', sub, 'Triple Title-01.png'), png(w, h));
+  fs.writeFileSync(path.join(dir, 'sony playstation 3', 'box - front', 'Shelf Only Title-01.png'), png(300, 420));
+  await startArtImport(1, { target: 'all', folder: dir }); await artJobIdle(1);
+  const rom = db.prepare("SELECT id, cover_path FROM roms WHERE title = 'Triple Title'").get();
+  assert.ok(rom.cover_path, 'the Library cover');
+  assert.ok(db.prepare("SELECT 1 FROM rom_files WHERE rom_id = ? AND kind = 'logo'").get(rom.id), 'the Library logo');
+  assert.ok(db.prepare("SELECT spine_path, cover_path FROM physical_games WHERE title = 'Triple Title'").get().spine_path, 'the shelf spine');
+  assert.ok(db.prepare("SELECT cover_path FROM digital_user_meta WHERE app_id IN (SELECT app_id FROM digital_games WHERE name = 'Triple Title')").get()?.cover_path, 'the Digital cover');
+});

@@ -4276,7 +4276,8 @@ function loadTools() { showToolsModule(activeToolsModule || 'playpc'); }
 
 /** Game Assets: the importer for pictures, manuals and videos from a folder on the server. It matches your Physical shelf and your Digital list in one pass: a game in both gets its cover in both. */
 function paintGameAssets() {
-  renderArtImport({ api, toast }, $('#ga-body'), { target: 'both', openOptions: true, onDone: () => { digital.load(true); physical.load(true); } });
+  // An admin's import also fills the Library (logos, marquees and backgrounds too); anyone else's is their own Physical shelf and Digital list.
+  renderArtImport({ api, toast }, $('#ga-body'), { target: authState.user?.role === 'admin' ? 'all' : 'both', openOptions: true, onDone: () => { digital.load(true); physical.load(true); loadLibrary(); } });
 }
 
 /* ─────────────────────────── settings hub ─────────────────────────── */

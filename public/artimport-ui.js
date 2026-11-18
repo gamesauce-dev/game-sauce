@@ -7,7 +7,7 @@ const n = (v) => Number(v || 0).toLocaleString();
 /** Draw the panel into `body`. ctx: the page's { api, toast }. target: 'physical' (covers, spines, discs, manuals) or 'digital' (covers of console games). onDone runs after an import. */
 export async function renderArtImport(ctx, body, { target, onDone = () => {}, select = '', openOptions = false }) {
   const video = target === 'video';
-  const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers'], ['video', 'Videos']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals'], ...(target === 'rom' ? [['logo', 'Game logos'], ['marquee', 'Marquees'], ['fanart', 'Backgrounds']] : []), ['video', 'Videos']];
+  const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers'], ['video', 'Videos']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals'], ...(target === 'rom' || target === 'all' ? [['logo', 'Game logos'], ['marquee', 'Marquees'], ['fanart', 'Backgrounds']] : []), ['video', 'Videos']];
   const what = video ? 'videos' : target === 'digital' ? 'covers and videos' : 'pictures, manuals and videos';
   body.innerHTML = `
     <h2 class="detail-title">${video ? 'Import videos' : 'Import game assets'}</h2>
