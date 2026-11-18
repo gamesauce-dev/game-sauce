@@ -17,7 +17,8 @@ router.get('/', (req, res) => {
   const stores = db.prepare("SELECT store, COUNT(*) AS count FROM digital_games WHERE user_id = ? GROUP BY store ORDER BY store").all(me(req));
   // visible = not hidden, which is what the chips show (count keeps the total, hidden games included); platforms = each console's own count.
   const seen = countStores(me(req));
-  res.json({ steam: describeAccount(me(req)), stores: stores.map((s) => ({ ...s, visible: seen.stores[s.store] || 0, label: STORE_LABELS[s.store] || s.store })), platforms: seen.platforms.map((p) => ({ ...p, label: platformLabel(p.store, p.platform) })), counts: countGames(me(req)), details_job: detailsJobStatus() });
+  const sl = db.prepare("SELECT updated, plate FROM family_logos WHERE family = 'Steam'").get();   // the Steam logo an admin set (Settings > Platforms), for the Steam button when logos are chosen
+  res.json({ store_logos: { steam: sl ? { v: sl.updated, plate: sl.plate || 0 } : null }, steam: describeAccount(me(req)), stores: stores.map((s) => ({ ...s, visible: seen.stores[s.store] || 0, label: STORE_LABELS[s.store] || s.store })), platforms: seen.platforms.map((p) => ({ ...p, label: platformLabel(p.store, p.platform) })), counts: countGames(me(req)), details_job: detailsJobStatus() });
 });
 
 // Delete several of this person's own console games at once: { items: [{ store, app_id }] }. Steam games come from Steam and are not removed here.

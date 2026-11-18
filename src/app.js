@@ -276,9 +276,13 @@ export function createApp() {
     res.json({ from, to, changed, merged });
   });
 
+  // Digital's stores that are not a Library family have a logo too (Steam: it has no platforms, so no family of its own). Kept with the family logos, under the store's name.
+  const EXTRA_LOGO_FAMILIES = ['Steam'];
+  const extraLogos = () => Object.fromEntries(EXTRA_LOGO_FAMILIES.map((f) => { const r = db.prepare('SELECT updated, plate FROM family_logos WHERE family = ?').get(f); return [f, r ? { v: r.updated, plate: r.plate || 0 } : null]; }));
   api.get('/platforms/all', requireAdmin, (req, res) => {
     const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap();
     res.json({
+      store_logos: extraLogos(),
       items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v, COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 })),
       defaults: FAMILY_DEFAULTS
     });
@@ -296,7 +300,7 @@ export function createApp() {
     logoUpload.single('logo')(req, res, (err) => {
       if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'That logo is over 512 KB' : err.message });
       const family = String(req.body?.family || '').trim();
-      if (!family || !db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(family)) return res.status(404).json({ error: 'No such family' });
+      if (!family || !(EXTRA_LOGO_FAMILIES.includes(family) || db.prepare('SELECT 1 FROM platforms WHERE family = ?').get(family))) return res.status(404).json({ error: 'No such family' });
       if (!req.file) return res.status(400).json({ error: 'Choose a picture first' });
       const kind = sniffLogo(req.file.buffer);
       if (!kind) return res.status(400).json({ error: 'That file is not a JPEG, PNG, WebP or SVG picture' });

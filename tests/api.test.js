@@ -668,3 +668,24 @@ test('the Library has a Missing files filter for admins, a clickable missing cou
   assert.ok(app.includes("toggle=\"missing\"]')?.classList.toggle('hidden', authState.user?.role !== 'admin'") && app.includes('data-open-missing'), 'admin only, and the count opens it');
   assert.ok(mj.includes("['missing', 'Missing files'"), 'in the Modern ⋯ menu');
 });
+
+test('a Steam logo can be kept (it is a Digital store, not a platform family), shows in Digital\'s info, and an unknown family is still refused', async () => {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  const up = (family) => { const fd = new FormData(); fd.append('family', family); fd.append('logo', new Blob([png], { type: 'image/png' }), 'logo.png'); return fetch(`${base}/api/platforms/families/logo`, { method: 'POST', headers: authHeaders(), body: fd }); };
+  assert.equal((await up('Nonsense Family')).status, 404, 'a family nobody has is refused');
+  const ok = await up('Steam');
+  assert.equal(ok.status, 200);
+  const info = await fetch(`${base}/api/digital`, { headers: authHeaders() }).then((r) => r.json());
+  assert.ok(info.store_logos.steam.v > 0, 'Digital is told the Steam logo');
+  assert.equal((await fetch(`${base}/api/platforms/families/logo?family=Steam`, { headers: authHeaders() })).status, 200, 'and it can be fetched');
+  const admin = await fetch(`${base}/api/platforms/all`, { headers: authHeaders() }).then((r) => r.json());
+  assert.ok(admin.store_logos.Steam.v > 0, 'the admin screen sees it');
+  await fetch(`${base}/api/platforms/families/logo?family=Steam`, { method: 'DELETE', headers: authHeaders() });
+  assert.equal((await fetch(`${base}/api/digital`, { headers: authHeaders() }).then((r) => r.json())).store_logos.steam, null, 'removed');
+});
+
+test('Settings > Platforms has a Steam row for its logo, and Digital\'s Steam button uses it when logos are chosen', () => {
+  const ap = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), dg = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
+  assert.ok(ap.includes('data-famlogo-file="Steam"') && ap.includes("+ steamRow"), 'the Steam row, with the same logo controls as a family');
+  assert.ok(dg.includes("s.store === 'steam' ? familyLogoHtml(dg.info.store_logos?.steam"), 'the Steam button');
+});

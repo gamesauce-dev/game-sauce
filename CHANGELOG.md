@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **A logo for the Steam button.** Settings > Platforms (admin) has a Steam row under the families with the same controls as a family logo: upload a picture, remove it, and a light backing for dark logos. When someone has chosen logos for the platform buttons, Digital's Steam button shows it. Steam is a Digital store, not a platform, so it had nowhere to keep a logo before.
+
 ## [0.14.0] - 2026-11-18
 
 ### Added

@@ -3348,10 +3348,10 @@ async function loadPlatformAdmin() {
     }
   }
 
-  let items = [];
+  let items = [], storeLogos = {};
   try {
     const data = await api('/platforms/all');
-    items = data.items || [];
+    items = data.items || []; storeLogos = data.store_logos || {};
   } catch (err) {
     list.innerHTML = `<div class="side-empty">${esc(err.message || 'Could not load platforms')}</div>`;
     return;
@@ -3372,6 +3372,9 @@ async function loadPlatformAdmin() {
   const hexOk = (c) => /^#[0-9a-f]{6}$/i.test(c || '');
   const logoHtml = (slug, v, plate) => (v ? `<span class="lib-logo plat-logo${plate ? ' on-plate' : ''}"><img src="/api/platforms/${encodeURIComponent(slug)}/logo?v=${v}" alt="" loading="lazy" /></span>` : '<span class="lib-logo plat-logo plat-nologo" title="No logo yet: add one under Edit">no logo</span>');
   const platId = (p) => `<span class="plat-id" data-plat-id>${hexOk(p.accent) ? `<i class="plat-swatch" style="background:${esc(p.accent)}" title="Colour ${esc(p.accent)}" aria-label="Colour ${esc(p.accent)}"></i>` : '<i class="plat-swatch none" title="No colour set" aria-label="No colour set"></i>'}${logoHtml(p.slug, p.logo_v, p.logo_plate)}</span>`;
+  const steamLogo = storeLogos.Steam;
+  const steamRow = `
+    <div class="section-label fam-head" style="margin-top:18px" data-fam="Steam"><span class="fam-name">Steam</span> <span class="note">a Digital store (not a platform): its logo is for the Steam button in the Digital Library</span> <span class="lib-logo fam-logo-box" data-famlogo-box="Steam">${steamLogo ? `<img src="/api/platforms/families/logo?family=Steam&v=${steamLogo.v}" alt="" />` : ''}</span> <label class="btn btn-sm btn-ghost" data-famlogo-pick="Steam" title="A logo for the Steam button in the Digital Library (shown when a person chose logos instead of chips)">Logo<input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,.svg" hidden data-famlogo-file="Steam" /></label> <button class="btn btn-sm btn-ghost" data-famlogo-remove="Steam" ${steamLogo ? '' : 'hidden'} title="Remove the Steam logo">Remove logo</button> <label class="policy-row fam-plate" ${steamLogo ? '' : 'hidden'} title="For a logo drawn in black that vanishes on the dark theme: show it on a light plate when the theme is dark" style="margin:0"><input type="checkbox" data-famlogo-plate="Steam" ${steamLogo?.plate ? 'checked' : ''} /> <span>Light backing in dark mode</span></label></div>`;
   list.innerHTML = [...byFamily.entries()].map(([fam, plats]) => `
     <div class="section-label fam-head" style="margin-top:10px" data-fam="${esc(fam)}"><span class="fam-name">${esc(fam)}</span> <input type="color" class="fam-colour" data-fam-colour="${esc(fam)}" value="${esc(/^#[0-9a-f]{6}$/i.test(plats[0]?.family_colour || '') ? plats[0].family_colour : '#6b7280')}" title="The colour of the ${esc(fam)} chip (the platform chips keep their own colours)" aria-label="Colour of the ${esc(fam)} family" /> <button class="btn btn-sm btn-ghost" data-fam-colour-reset="${esc(fam)}" title="Back to the default colour for this family">Reset colour</button> <span class="lib-logo fam-logo-box" data-famlogo-box="${esc(fam)}">${plats[0]?.family_logo_v ? `<img src="/api/platforms/families/logo?family=${encodeURIComponent(fam)}&v=${plats[0].family_logo_v}" alt="" />` : ''}</span> <label class="btn btn-sm btn-ghost" data-famlogo-pick="${esc(fam)}" title="A logo for the ${esc(fam)} family, shown in the Library when several of its platforms are picked (optional; the system supplies none)">Logo<input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,.svg" hidden data-famlogo-file="${esc(fam)}" /></label> <button class="btn btn-sm btn-ghost" data-famlogo-remove="${esc(fam)}" ${plats[0]?.family_logo_v ? '' : 'hidden'} title="Remove the family logo">Remove logo</button> <label class="policy-row fam-plate" ${plats[0]?.family_logo_v ? '' : 'hidden'} title="For a logo drawn in black that vanishes on the dark theme: show it on a light plate when the theme is dark" style="margin:0"><input type="checkbox" data-famlogo-plate="${esc(fam)}" ${plats[0]?.family_logo_plate ? 'checked' : ''} /> <span>Light backing in dark mode</span></label> <button class="btn btn-sm btn-ghost" data-fam-rename="${esc(fam)}" title="Rename this family for all ${plats.length} of its platforms (use an existing family's name to merge them)">Rename</button></div>
     ${plats.map((p) => `
@@ -3386,7 +3389,7 @@ async function loadPlatformAdmin() {
       </div>
       <div class="plat-edit hidden" data-pedit="${esc(p.slug)}" style="margin:6px 0 10px 18px;display:grid;gap:8px;grid-template-columns:1fr 1fr">
       </div>`).join('')}
-  `).join('');
+  `).join('') + steamRow;
 
   makeFoldable(list, '.fam-head', 'platforms', (h) => h.dataset.fam);
 
