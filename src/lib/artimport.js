@@ -331,9 +331,12 @@ export function planArtImport(userId, scan, opts = {}) {
 
 function planPictures(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
   if (target === 'video') return planVideoImport(userId, scan, { replace, cut });
+  // 'both' is the person's shelf and their Digital list in one pass: what the shelf takes (covers, spines, discs, backs, manuals) goes to the shelf, and Digital takes the covers of the same files.
+  const listOf = (g) => (target === 'both' ? g._list : target);
   const wanted = target === 'digital' ? new Set(['cover']) : target === 'rom' ? new Set(['cover', 'spine', 'disc', 'manual', 'back', 'logo', 'marquee', 'fanart']) : new Set(['cover', 'spine', 'disc', 'manual', 'wrap', 'back']);
-  const games = target === 'digital' ? digitalGames(userId) : target === 'rom' ? romGames() : physicalGames(userId);
-  const slugOf = (g) => (target === 'digital' ? g.lib : g.platform);
+  const games = target === 'both' ? [...physicalGames(userId).map((g) => ({ ...g, _list: 'physical' })), ...digitalGames(userId).map((g) => ({ ...g, _list: 'digital' }))]
+    : target === 'digital' ? digitalGames(userId) : target === 'rom' ? romGames() : physicalGames(userId);
+  const slugOf = (g) => (listOf(g) === 'digital' ? g.lib : g.platform);
   const byKey = new Map();
   for (const g of games) { const k = `${slugOf(g)}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(g); }
   const byStem = new Map();   // Library ROMs by their file name: a picture named like the ROM (ggx15.png for ggx15.zip) belongs to it, whatever the game's title
@@ -353,8 +356,9 @@ function planPictures(userId, scan, { target = 'physical', replace = false, cut 
     const list = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`) || byStem.get(`${slug}\n${squash(cutTitle(e.title, cut))}`) || byStem.get(`${slug}\n${firstWord(cutTitle(e.title, cut))}`);
     if (!list) { unmatchedTotal++; unmatchedPer[e.kind] = (unmatchedPer[e.kind] || 0) + 1; if (unmatchedPer[e.kind] <= 6) unmatched.push({ kind: e.kind, platform: slug, title: e.title }); continue; }   // a few of each kind, so every kind shows
     for (const g of list) for (const k of e.kind === 'wrap' ? ['cover', 'spine', 'back'] : [e.kind]) {   // a wrap gives all three
-      const id = target === 'digital' ? `${g.store}/${g.app_id}` : g.id;
-      const key = `${id}|${k}`;
+      if (listOf(g) === 'digital' && k !== 'cover') continue;   // a Digital game has a cover and nothing else
+      const id = listOf(g) === 'digital' ? `${g.store}/${g.app_id}` : g.id;
+      const key = `${target === 'both' ? listOf(g) + ':' : ''}${id}|${k}`;
       const rank = (e.kind === 'wrap' ? 1000 : 0) + (e.weak ? 20 : 0) + regionRank(g.region, e.region || e.fileRegion) * 100 + (e.n || 1);   // a real cover or spine beats one cut from a wrap
       const cur = best.get(key);
       if (!cur || rank < cur.rank) best.set(key, { game: g, id, kind: k, entry: e, rank, slug, fromWrap: e.kind === 'wrap' });
@@ -381,7 +385,7 @@ function planPictures(userId, scan, { target = 'physical', replace = false, cut 
     matched[b.kind]++;
     const g = b.game; let gap;
     if (target === 'rom') gap = b.kind === 'cover' ? (!hasFile(g.cover_path) || (replace && !g.cover_locked)) : (!hasFile(g[`${b.kind}_path`]) || replace || (['logo', 'marquee', 'fanart'].includes(b.kind) && g[`${b.kind}_source`] !== 'folder'));   // a fetched logo, marquee or background gives way to the person's own (a file from a folder is kept unless replacing)   // a cover that was uploaded or imported is kept; a file brought in earlier is replaced only when asked
-    else if (target === 'digital') gap = !hasFile(g.own) && (replace || !hasFile(g.shared));   // a cover of their own is never replaced; an automatic one only when asked
+    else if (listOf(g) === 'digital') gap = !hasFile(g.own) && (replace || !hasFile(g.shared));   // a cover of their own is never replaced; an automatic one only when asked
     else if (b.kind === 'manual') gap = !g.manual_link && !hasFile(g.manual_path);       // there is no automatic manual: only gaps are filled
     else { const path_ = g[`${b.kind}_path`], locked = g[`${b.kind}_locked`]; gap = !hasFile(path_) || (replace && !locked); }
     if (gap) { will[b.kind]++; items.push(b); }
@@ -449,7 +453,7 @@ async function applyOne(userId, target, b) {
       if (lastWrap.key !== key) lastWrap = { key, parts: splitWrap(buf, b.split) };
       buf = lastWrap.parts[b.kind];
     }
-    if (target === 'digital') setConsoleCover(userId, b.game.store, b.game.app_id, buf);
+    if ((target === 'both' ? b.game._list : target) === 'digital') setConsoleCover(userId, b.game.store, b.game.app_id, buf);
     else setPhysicalArt(userId, b.game.id, b.kind, buf);
   }
 }

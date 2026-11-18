@@ -157,7 +157,7 @@ test('the screens and the settings: Game assets (admin), Import game assets in t
   const ui = read('public/artimport-ui.js');
   assert.ok(ui.includes("'/art/import'") && ui.includes("'/art/import/status'") && ui.includes('Replace what is already there') && ui.includes('id="art-preview"') && ui.includes('id="art-apply" type="button" disabled'), 'preview first, then Import');
   // the Physical and Digital importers live in Tools > Game Assets (one panel, a choice of list), not in the two libraries
-  assert.ok(html.includes('id="mod-gameassets"') && html.includes('name="ga-target"') && app.includes("renderArtImport({ api, toast }, $('#ga-body'), { target"));
+  assert.ok(html.includes('id="mod-gameassets"') && !html.includes('name="ga-target"') && app.includes("renderArtImport({ api, toast }, $('#ga-body'), { target: 'both'"), 'no choice of list: the shelf and Digital in one pass');
   assert.ok(!html.includes('data-ph-act="art"') && !html.includes('data-dg-act="art"') && !ph.includes('openArtImport') && !dg.includes('openArtImport'));
   // an admin can add a folder from the import screen itself: type or paste a path, or browse the server's folders
   assert.ok(ui.includes('function wireAddFolder(') && ui.includes('id="art-newpath"') && ui.includes('id="art-browse"') && ui.includes("`/sources/browse${p ? `?path=${encodeURIComponent(p)}` : ''}`") && ui.includes("'/art/folders', { method: 'PUT'"), 'type, paste or browse, then Add');
@@ -300,4 +300,28 @@ test('a numbered LaunchBox logo (Clear Logo/Game-01.png) is read as the game\'s 
   assert.equal(c.kind, 'logo');
   assert.equal(c.title, 'Auto Modellista');
   assert.equal(c.n, 1);
+});
+
+test('both lists in one pass: a game on the shelf and in Digital gets its cover in both, the shelf alone takes the spine, and a file for a game in neither is unmatched', async () => {
+  const BOTH = path.join(TMP, 'art', 'Both', 'images');
+  const prev = (await call('/api/art/folders')).body.folders.map((f) => f.path);
+  const shelf = await add('ps3', 'Twin Peaks Racer'); await add('ps3', 'Shelf Only Game');
+  assert.equal((await call('/api/digital/games', { method: 'POST', body: { platform: 'ps3', title: 'Twin Peaks Racer' } })).status, 201);
+  assert.equal((await call('/api/digital/games', { method: 'POST', body: { platform: 'ps3', title: 'Download Only Game' } })).status, 201);
+  const ps3 = 'sony playstation 3';
+  put(`Both/images/${ps3}/box - front/Twin Peaks Racer-01.png`, png(300, 420)); put(`Both/images/${ps3}/box - spine/Twin Peaks Racer-01.png`, png(40, 400));
+  put(`Both/images/${ps3}/box - front/Shelf Only Game-01.png`, png(300, 420)); put(`Both/images/${ps3}/box - front/Download Only Game-01.png`, png(300, 420));
+  put(`Both/images/${ps3}/box - front/In Neither List-01.png`, png(300, 420));
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: [...prev, BOTH] } })).status, 200);
+  const go = (extra = {}) => call('/api/art/import', { method: 'POST', body: { target: 'both', folder: BOTH, ...extra } });
+  const pv = (await go()).body;
+  assert.equal(pv.matched.cover, 4, 'Twin Peaks (shelf and Digital), Shelf Only, Download Only');
+  assert.equal(pv.matched.spine, 1, 'the spine goes to the shelf entry only');
+  assert.equal(pv.unmatched_total, 1); assert.equal(pv.unmatched[0].title, 'In Neither List');
+  assert.equal((await go({ apply: true })).status, 200); await art.artJobIdle(ids.iadmin);
+  assert.ok(db.prepare('SELECT cover_path, spine_path FROM physical_games WHERE id = ?').get(shelf.id).spine_path, 'the shelf entry has its spine');
+  const twin = db.prepare("SELECT app_id FROM digital_games WHERE name = 'Twin Peaks Racer' AND user_id = ?").get(ids.iadmin).app_id;
+  assert.ok(db.prepare('SELECT cover_path FROM digital_user_meta WHERE app_id = ? AND user_id = ?').get(twin, ids.iadmin).cover_path, 'and so does the Digital one, its cover');
+  assert.equal(db.prepare('SELECT cover_path FROM physical_games WHERE id = ?').get(shelf.id).cover_path ? 1 : 0, 1);
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: prev } })).status, 200);
 });

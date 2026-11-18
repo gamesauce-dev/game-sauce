@@ -4249,12 +4249,9 @@ function showToolsModule(id) {
 }
 function loadTools() { showToolsModule(activeToolsModule || 'playpc'); }
 
-/** Game Assets: the importer for pictures, manuals and videos from a folder on the server, for the Physical shelf or the Digital Library. */
+/** Game Assets: the importer for pictures, manuals and videos from a folder on the server. It matches your Physical shelf and your Digital list in one pass: a game in both gets its cover in both. */
 function paintGameAssets() {
-  const target = $('input[name="ga-target"]:checked')?.value === 'digital' ? 'digital' : 'physical';
-  const radios = $$('input[name="ga-target"]');
-  radios.forEach((r) => { if (!r.dataset.ready) { r.dataset.ready = '1'; r.addEventListener('change', paintGameAssets); } });
-  renderArtImport({ api, toast }, $('#ga-body'), { target, openOptions: true, onDone: () => { if (target === 'digital') digital.load(true); else physical.load(true); } });
+  renderArtImport({ api, toast }, $('#ga-body'), { target: 'both', openOptions: true, onDone: () => { digital.load(true); physical.load(true); } });
 }
 
 /* ─────────────────────────── settings hub ─────────────────────────── */
