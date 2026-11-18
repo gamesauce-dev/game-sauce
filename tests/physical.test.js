@@ -685,3 +685,10 @@ test('the Digital and Physical bars follow the Library: no ticker, the tools in 
   assert.ok(bulk.includes('Add the selected games to your favourites') && bulk.includes('Remove the selected games from your favourites') && bulk.includes('Hide the selected games') && bulk.includes('Show the selected hidden games again'));
   assert.ok(dg.includes("'/digital/games/bulk-mark'") && ph.includes("'/physical/games/bulk-mark'"));
 });
+
+test('the Physical details window: no spine art row, the manual buttons are drawn once in Modern, and Digital says Platform like Physical', () => {
+  const ph = read('public/physical.js'), dg = read('public/digital.js'), css = read('public/modern.css');
+  assert.ok(!ph.includes("['Spine art'"), 'no spine row in the details table');
+  assert.match(css, /body\.ui-modern \.ph-manual-box \.ibtn > svg \{ display: none; \}/, 'the drawn manual icons give way to the Modern icon set');
+  assert.ok(!dg.includes('<span>Console</span>') && dg.includes('<span>Platform</span>${comboHtml('), 'Digital: Platform, not Console');
+});

@@ -7,6 +7,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ### Added
 - **Missing games are easier to find and to clean up (admin).** The Library has a **Missing files** filter (in the ⋯ menu in the Modern look, a pill in Classic) that lists the games whose file is gone from its folder, and the "N missing" count in the sidebar opens it (that count never showed before). Settings > Database maintenance has **Show missing** and **Delete missing…**: it says how many it would remove and gives examples, takes out the catalogue rows and their imported pictures and manuals, leaves locked games alone, and never touches a file on disk.
 
+### Changed
+- **Physical details window.** The "Spine art" row is gone (the shelf shows the spine). In Digital, the Edit and Add forms say **Platform** instead of Console, like Physical.
+
+### Fixed
+- **The manual buttons showed two icons each in the Modern look** (the search button had two magnifying glasses). They are drawn once now.
+
 ## [0.13.1] - 2026-11-18
 
 ### Fixed

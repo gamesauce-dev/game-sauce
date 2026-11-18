@@ -468,7 +468,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
     <form class="edit-form" id="dg-edit">
       <div class="field-row">
         <label class="field"><span>Title</span><input name="name" required value="${esc(g.name)}" /></label>
-        <label class="field"><span>Console</span>${comboHtml({ options: consoleOptions(), selected: g.platform || '', placeholder: 'Type to find a console…', required: Boolean(g.platform) })}</label>
+        <label class="field"><span>Platform</span>${comboHtml({ options: consoleOptions(), selected: g.platform || '', placeholder: 'Type to find a platform…', required: Boolean(g.platform) })}</label>
       </div>
       <div class="field-row">
         <label class="field"><span>Developer</span><input name="developers" value="${esc(list(d?.developers))}" /></label>
@@ -547,7 +547,7 @@ function openAdd() {
     <form class="edit-form" id="dg-add">
       <label class="field"><span>Title</span><input name="title" required autocomplete="off" /></label>
       <div class="field-row">
-        <label class="field"><span>Console</span>${comboHtml({ options: consoleOptions(), selected: first, placeholder: 'Type to find a console…' })}</label>
+        <label class="field"><span>Platform</span>${comboHtml({ options: consoleOptions(), selected: first, placeholder: 'Type to find a platform…' })}</label>
         <label class="field"><span>Store country (optional)</span><input name="country" placeholder="Australia or AU" value="${esc(lastAdd.country)}" /></label>
       </div>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to Digital Library</button><button class="btn" type="button" id="dg-add-more" title="Add this game and keep the form open">Add and another</button></div>

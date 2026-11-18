@@ -745,7 +745,6 @@ export async function openDetail(id) {
     ['Players', g.players || '—'],
     ['Rating', g.rating != null ? `${g.rating} / 5` : '—'],
     ['Details from', g.matched ? esc(g.meta_source) : 'not matched yet'],
-    ['Spine art', g.has_spine ? `<img src="${esc(g.spine_url)}" alt="" style="height:5.5rem;max-width:100%;border-radius:2px;vertical-align:middle" />` : 'none found (the shelf draws one)'],
     ['Notes', g.notes ? esc(g.notes) : '—']
   ];
   const I = ctx.ICON;
