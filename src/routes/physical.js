@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
-import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, startMatchJob, matchJobStatus } from '../lib/physical.js';
+import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, purchaseSellers, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { flagVideos } from '../lib/emumovies.js';
 import { fillAfterLookup } from '../lib/assets.js';
@@ -37,6 +37,9 @@ router.post('/games', (req, res) => {
   try { const g = addPhysical(me(req), req.body || {}); res.status(201).json(g); }
   catch (err) { fail(res, err); }
 });
+
+// Where this person has bought games before (for suggestions when typing one).
+router.get('/sellers', (req, res) => { res.json({ sellers: purchaseSellers(me(req)) }); });
 
 router.get('/games/:id', (req, res) => {
   try { res.json(getPhysical(me(req), req.params.id)); } catch (err) { fail(res, err); }

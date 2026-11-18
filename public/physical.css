@@ -246,3 +246,11 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-disc.ph-cart.ph-gba::before { inset: 16% 10% 40% 10%; }
 .ph-disc.ph-cart.ph-md::after, .ph-disc.ph-cart.ph-n64::after { inset: auto 14% 6% 14%; }
 .ph-man-link { display: flex; gap: 8px; align-items: center; } .ph-man-link input { flex: 1; min-width: 0; }
+
+/* Purchase and condition: folded away, quiet until opened. */
+.ph-buy { border: 1px solid var(--line, #262b3a); border-radius: 0.6rem; padding: 0.5rem 0.8rem; display: grid; gap: 0.6rem; }
+.ph-buy > summary { cursor: pointer; color: var(--muted, #8a90a2); font-size: 0.9em; }
+.ph-buy[open] > summary { margin-bottom: 0.2rem; }
+.ph-buy-inc { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.ph-buy-inc .check { display: inline-flex; align-items: center; gap: 0.4rem; }
+.ph-buy-inc .check input { width: auto; }

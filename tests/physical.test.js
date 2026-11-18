@@ -698,3 +698,87 @@ test('the video note in the details window has room above it and between its but
   assert.match(css, /#drawer-body \.vid-slot \{ margin-top: 1rem; \}/);
   assert.match(css, /#drawer-body \.vid-slot \.vid-note \{ margin: 0 0 0\.6rem; row-gap: 0\.7rem; \}/);
 });
+
+
+/* ───────── purchase and condition details ───────── */
+
+test('purchase details: added with a game, read back, and the game is "complete in box" only when the box, manual and disc are all there', async () => {
+  const r = await call('/api/physical/games', { method: 'POST', body: { platform: 'ps2', title: 'Buy Test One', price_paid: '12.5', price_currency: 'gbp', bought_from: ' CeX ', bought_on: '2024-03-09', condition: 'Good', inc_box: 1, inc_manual: 1, inc_media: 1, inc_inserts: 0 } });
+  assert.equal(r.status, 201);
+  const g = r.body;
+  assert.equal(g.price_paid, 12.5); assert.equal(g.price_currency, 'GBP'); assert.equal(g.bought_from, 'CeX'); assert.equal(g.bought_on, '2024-03-09'); assert.equal(g.condition, 'good');
+  assert.deepEqual([g.inc_box, g.inc_manual, g.inc_media, g.inc_inserts], [1, 1, 1, 0]);
+  assert.equal(g.complete, false, 'missing inserts: not complete');
+  const p = await call(`/api/physical/games/${g.id}`, { method: 'PATCH', body: { inc_inserts: null } });
+  assert.equal(p.body.complete, true, 'inserts not recorded do not count against it');
+  const q = await call(`/api/physical/games/${g.id}`, { method: 'PATCH', body: { inc_manual: 0 } });
+  assert.equal(q.body.complete, false);
+});
+
+test('purchase details: a game with none recorded shows null everywhere, and a plain edit leaves it so', async () => {
+  const g = (await call('/api/physical/games', { method: 'POST', body: { platform: 'ps2', title: 'Buy Test Plain' } })).body;
+  for (const f of ['price_paid', 'price_currency', 'bought_from', 'bought_on', 'condition', 'inc_box', 'inc_manual', 'inc_media', 'inc_inserts', 'complete']) assert.equal(g[f], null, f);
+  const e = await call(`/api/physical/games/${g.id}`, { method: 'PATCH', body: { notes: 'x' } });
+  assert.equal(e.body.price_paid, null);
+});
+
+test('purchase details: bad values are refused, a price needs a currency, and clearing the price clears its currency', async () => {
+  const add = (extra) => call('/api/physical/games', { method: 'POST', body: { platform: 'ps2', title: 'Buy Test Bad ' + Math.random(), ...extra } });
+  assert.equal((await add({ price_paid: -1, price_currency: 'GBP' })).status, 400);
+  assert.equal((await add({ price_paid: 'abc', price_currency: 'GBP' })).status, 400);
+  assert.equal((await add({ price_paid: 5, price_currency: 'XXX' })).status, 400);
+  assert.equal((await add({ condition: 'shiny' })).status, 400);
+  assert.equal((await add({ bought_on: '2024-02-31' })).status, 400, 'not a real date');
+  assert.equal((await add({ bought_on: '2999-01-01' })).status, 400, 'not in the future');
+  assert.equal((await add({ inc_box: 'maybe' })).status, 400);
+  assert.equal((await add({ price_paid: 5 })).status, 400, 'no currency and no default: refused, not guessed');
+  db.prepare("INSERT INTO user_prefs (user_id, key, value) VALUES (?, 'price_currency', 'EUR') ON CONFLICT(user_id, key) DO UPDATE SET value = 'EUR'").run(adminId);
+  const g = (await add({ price_paid: '7,99' })).body;
+  assert.equal(g.price_paid, 7.99); assert.equal(g.price_currency, 'EUR', 'the default currency fills in');
+  const c = (await call(`/api/physical/games/${g.id}`, { method: 'PATCH', body: { price_paid: '' } })).body;
+  assert.equal(c.price_paid, null); assert.equal(c.price_currency, null);
+  db.prepare("DELETE FROM user_prefs WHERE user_id = ? AND key = 'price_currency'").run(adminId);
+});
+
+test('purchase details: the default currency is a preference from the fixed list, and shops are suggested from earlier entries, per person', async () => {
+  assert.equal((await call('/api/prefs/price_currency', { method: 'PUT', body: { value: 'USD' } })).status, 200);
+  assert.equal((await call('/api/prefs/price_currency', { method: 'PUT', body: { value: 'ZZZ' } })).status, 400);
+  assert.equal(phys.defaultCurrency(adminId), 'USD');
+  await call('/api/prefs/price_currency', { method: 'PUT', body: { value: null } });
+  for (const [t, s] of [['Seller A', 'Retro Shop'], ['Seller B', 'Boot Sale'], ['Seller C', 'Retro Shop']]) await call('/api/physical/games', { method: 'POST', body: { platform: 'snes', title: t, bought_from: s } });
+  const mine = (await call('/api/physical/sellers')).body.sellers;
+  assert.equal(mine[0], 'Retro Shop', 'most used first');
+  assert.ok(mine.includes('Boot Sale'));
+  assert.ok(!(await call('/api/physical/sellers', { token: annTok })).body.sellers.includes('Boot Sale'), 'another person does not see these shops');
+});
+
+test('purchase details: a CSV can carry them, a filled cell updates and an empty one never wipes, an old free-text Condition still goes to the notes', async () => {
+  const csv = 'Platform,Game,Price,Currency,Bought from,Bought on,Condition,Box,Has manual,Disc,Inserts\nSNES,Csv Buy A,£4.50,,Fair Shop,2023-05-01,Mint,yes,yes,yes,\nSNES,Csv Buy B,"3,00",EUR,,,Slightly scuffed,no,,yes,\nSNES,Csv Buy C,5,,,,,,,,\n';
+  const prev = await call('/api/physical/import', { method: 'POST', body: { csv } });
+  assert.equal(prev.status, 200); assert.equal(prev.body.applied, false);
+  assert.equal(prev.body.details, 2, 'C has a price but no currency or default: its details are left out, and said so');
+  assert.equal(prev.body.bad_details, 1);
+  const r = await call('/api/physical/import', { method: 'POST', body: { csv, apply: true } });
+  assert.equal(r.body.added, 3);
+  const all = (await call('/api/physical/games?platforms=snes')).body.items;
+  const A = all.find((x) => x.title === 'Csv Buy A'), B = all.find((x) => x.title === 'Csv Buy B'), C = all.find((x) => x.title === 'Csv Buy C');
+  assert.equal(A.price_paid, 4.5); assert.equal(A.price_currency, 'GBP', 'a pound sign gives the currency'); assert.equal(A.condition, 'mint'); assert.equal(A.bought_from, 'Fair Shop'); assert.equal(A.complete, true);
+  assert.equal(B.price_paid, 3); assert.equal(B.price_currency, 'EUR'); assert.equal(B.condition, null); assert.equal(B.notes, 'Slightly scuffed'); assert.equal(B.inc_box, 0); assert.equal(B.inc_media, 1);
+  assert.equal(C.price_paid, null);
+  const again = await call('/api/physical/import', { method: 'POST', body: { csv: 'Platform,Game,Condition\nSNES,Csv Buy A,Poor\nSNES,Csv Buy B,\n', apply: true } });
+  assert.equal(again.body.updated, 1);
+  const after = (await call('/api/physical/games?platforms=snes')).body.items;
+  assert.equal(after.find((x) => x.title === 'Csv Buy A').condition, 'poor');
+  assert.equal(after.find((x) => x.title === 'Csv Buy A').price_paid, 4.5, 'other fields kept');
+  assert.equal(after.find((x) => x.title === 'Csv Buy B').price_paid, 3, 'an empty cell wipes nothing');
+});
+
+test('purchase details: the front end and the server agree on the fixed lists, and the new text is translated', () => {
+  const ph = fs.readFileSync(new URL('../public/physical.js', import.meta.url), 'utf8');
+  for (const c of phys.CONDITIONS) assert.ok(ph.includes(`'${c}'`), c);
+  for (const c of phys.CURRENCIES) assert.ok(ph.includes(`'${c}'`), c);
+  for (const l of ['de', 'es', 'fr', 'it', 'ja', 'pt', 'zh']) {
+    const j = JSON.parse(fs.readFileSync(new URL(`../public/lang/${l}.json`, import.meta.url), 'utf8'));
+    for (const k of ['Purchase and condition (optional)', 'Price paid', 'Bought from', 'Date bought', 'Comes with', 'Complete in box', 'Sealed']) assert.ok(j[k], `${l}: ${k}`);
+  }
+});

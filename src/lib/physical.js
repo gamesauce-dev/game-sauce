@@ -87,12 +87,94 @@ const HEADER = {
   platform: ['platform', 'platformname', 'console', 'system'],
   title: ['game', 'gametitle', 'title', 'gamename', 'name'],
   region: ['region', 'country', 'countryofsourcestore', 'territory'],
-  notes: ['notes', 'note', 'condition', 'comment', 'comments', 'edition'],
+  notes: ['notes', 'note', 'comment', 'comments', 'edition'],
+  price: ['price', 'pricepaid', 'paid', 'cost', 'purchaseprice', 'amountpaid'],
+  currency: ['currency', 'pricecurrency', 'currencycode'],
+  from: ['boughtfrom', 'purchasedfrom', 'seller', 'shop', 'store', 'source', 'wherebought', 'acquiredfrom'],
+  on: ['boughton', 'datebought', 'purchasedate', 'purchased', 'dateacquired', 'dateofpurchase'],
+  condition: ['condition', 'state'],
+  box: ['box', 'hasbox', 'boxed', 'boxincluded', 'withbox'],
+  manualin: ['hasmanual', 'manualincluded', 'withmanual', 'instructions'],
+  media: ['disc', 'hasdisc', 'cartridge', 'hascartridge', 'cart', 'media', 'hasmedia', 'withdisc'],
+  inserts: ['inserts', 'hasinserts', 'withinserts'],
   year: ['year', 'releaseyear', 'released'],
   manual: ['manual', 'manuallink', 'manualurl', 'manuals', 'manualaddress'],
   digital: ['digital', 'alsodigital', 'digitalcopy', 'todigital', 'digitalcounterpart']
 };
 const yesNo = (v) => { const t = squash(v); if (!t) return null; if (['yes', 'y', 'true', '1', 'on', 'x'].includes(t)) return true; if (['no', 'n', 'false', '0', 'off'].includes(t)) return false; return null; };
+
+/* ───────── purchase and condition details (all optional) ───────── */
+
+/** The fixed condition words (stored as these, lower case, so a report can count them). */
+export const CONDITIONS = ['sealed', 'mint', 'good', 'fair', 'poor'];
+/** Currency codes a price can be in (stored as the code, so a report can total each one separately). */
+export const CURRENCIES = ['GBP', 'USD', 'EUR', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'CNY', 'KRW', 'INR', 'BRL', 'MXN'];
+const INCLUDES = ['inc_box', 'inc_manual', 'inc_media', 'inc_inserts'];
+const SYMBOLS = { '£': 'GBP', '$': 'USD', '€': 'EUR', '¥': 'JPY', '₩': 'KRW', '₹': 'INR' };
+
+/** A person's default price currency (the one they last chose), or null. */
+export const defaultCurrency = (userId) => { const v = db.prepare("SELECT value FROM user_prefs WHERE user_id = ? AND key = 'price_currency'").get(userId)?.value; return CURRENCIES.includes(v) ? v : null; };
+
+const isBlank = (v) => v === null || v === '' || (typeof v === 'string' && !v.trim());
+const triState = (v, f) => {
+  if (isBlank(v)) return null;
+  const t = String(v).trim().toLowerCase();
+  if (v === true || v === 1 || ['1', 'true', 'yes', 'y', 'x'].includes(t)) return 1;
+  if (v === false || v === 0 || ['0', 'false', 'no', 'n'].includes(t)) return 0;
+  throw Object.assign(new Error(`${f.replace('inc_', '')} must be yes or no`), { status: 400 });
+};
+
+/**
+ * Check the purchase and condition fields of a request body. Returns only the fields that were given, as column → value (blank = null = cleared).
+ * current is the game's present row (so a price can be given without repeating its currency). A price always ends up with a currency: the one given,
+ * else the one already there, else the person's default; with none of them it is refused rather than guessed.
+ */
+export function parseDetails(body = {}, userId = null, current = {}) {
+  const out = {};
+  const refuse = (m) => Object.assign(new Error(m), { status: 400 });
+  if (body.price_paid !== undefined) {
+    if (isBlank(body.price_paid)) out.price_paid = null;
+    else {
+      const n = typeof body.price_paid === 'number' ? body.price_paid : Number(String(body.price_paid).trim().replace(',', '.'));
+      if (!Number.isFinite(n) || n < 0 || n > 1000000) throw refuse('The price must be a number from 0 to 1,000,000.');
+      out.price_paid = Math.round(n * 100) / 100;
+    }
+  }
+  if (body.price_currency !== undefined) {
+    if (isBlank(body.price_currency)) out.price_currency = null;
+    else { const c = String(body.price_currency).trim().toUpperCase(); if (!CURRENCIES.includes(c)) throw refuse('Choose a currency from the list.'); out.price_currency = c; }
+  }
+  const price = out.price_paid !== undefined ? out.price_paid : current.price_paid ?? null;
+  if (price === null) { if (out.price_paid === null) out.price_currency = null; else if (out.price_currency !== undefined) out.price_currency = null; }   // no price: no currency either
+  else {
+    const cur = out.price_currency !== undefined ? out.price_currency : current.price_currency ?? null;
+    if (!cur) { const d = userId != null ? defaultCurrency(userId) : null; if (!d) throw refuse('Choose a currency for the price.'); out.price_currency = d; }
+  }
+  if (body.bought_from !== undefined) out.bought_from = clean(body.bought_from, 100) || null;
+  if (body.bought_on !== undefined) {
+    if (isBlank(body.bought_on)) out.bought_on = null;
+    else {
+      const d = String(body.bought_on).trim();
+      const t = /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T00:00:00Z') : null;
+      if (!t || Number.isNaN(t.getTime()) || t.toISOString().slice(0, 10) !== d || t.getUTCFullYear() < 1970 || t.getTime() > Date.now() + 2 * 86400000) throw refuse('The date bought must be a real date (YYYY-MM-DD), not in the future.');
+      out.bought_on = d;
+    }
+  }
+  if (body.condition !== undefined) {
+    if (isBlank(body.condition)) out.condition = null;
+    else { const c = String(body.condition).trim().toLowerCase(); if (!CONDITIONS.includes(c)) throw refuse('Choose a condition from the list.'); out.condition = c; }
+  }
+  for (const f of INCLUDES) if (body[f] !== undefined) out[f] = triState(body[f], f);
+  return out;
+}
+
+/** Complete in box: the box, the manual and the disc or cartridge are all there (inserts count against it only when said to be missing). null when none of it is recorded. */
+export const isComplete = (r) => (INCLUDES.every((f) => r[f] == null) ? null : r.inc_box === 1 && r.inc_manual === 1 && r.inc_media === 1 && r.inc_inserts !== 0);
+
+/** Where the person has bought games before (most used first), to suggest when typing a new one. */
+export function purchaseSellers(userId) {
+  return db.prepare('SELECT bought_from AS name, COUNT(*) AS n FROM physical_games WHERE user_id = ? AND bought_from IS NOT NULL GROUP BY bought_from ORDER BY n DESC, name COLLATE NOCASE LIMIT 200').all(userId).map((r) => r.name);
+}
 
 const dedupeKey = (title, region) => `${appIdFor(title)}|${squash(region)}`;
 const clean = (v, n = 200) => decodeEntities(String(v ?? '').trim()).slice(0, n);
@@ -107,9 +189,9 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
   if (!rows.length) throw Object.assign(new Error('The file is empty.'), { status: 400 });
   const head = rows[0].map(squash);
   const col = Object.fromEntries(Object.entries(HEADER).map(([k, names]) => [k, names.map((n) => head.indexOf(n)).find((i) => i >= 0) ?? -1]));
-  if (col.platform < 0 || col.title < 0) throw Object.assign(new Error('The first row must name the columns: Platform, Game (Region, Notes, Year and Manual are optional).'), { status: 400 });
+  if (col.platform < 0 || col.title < 0) throw Object.assign(new Error('The first row must name the columns: Platform, Game (Region, Notes, Year, Manual, Price, Currency, Bought from, Bought on, Condition, Box, Has manual, Disc and Inserts are optional).'), { status: 400 });
 
-  const seen = new Map(); const problems = []; let skipped = 0, duplicates = 0, badLinks = 0;
+  const seen = new Map(); const problems = []; let skipped = 0, duplicates = 0, badLinks = 0, badDetails = 0;
   const problem = (line, reason) => { skipped++; if (problems.length < 10) problems.push({ line, reason }); };
   rows.slice(1).forEach((r, i) => {
     const line = i + 2;
@@ -128,17 +210,33 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
     if (col.manual >= 0 && String(r[col.manual] || '').trim()) {
       try { manual = cleanManualLink(r[col.manual]); } catch { badLinks++; if (problems.length < 10) problems.push({ line, reason: `The manual link for "${title.slice(0, 40)}" is not a web address (it must start with http:// or https://), so it was left out` }); }
     }
-    seen.set(key, { platform: slug, title, region: region || null, notes: col.notes >= 0 ? clean(r[col.notes], 300) || null : null, year: y >= 1950 && y <= 2100 ? y : null, manual, digital: col.digital >= 0 ? yesNo(r[col.digital]) : null, key: dedupeKey(title, region) });
+    // Purchase and condition cells: only a filled cell is read. A condition that is not one of the fixed words (an older file's free text) goes to the notes, as it always did.
+    const cell = (k) => (col[k] >= 0 ? String(r[col[k]] ?? '').trim() : '');
+    const raw = {};
+    if (cell('price')) {
+      const sym = SYMBOLS[cell('price').replace(/[0-9.,\s-]/g, '').charAt(0)];
+      raw.price_paid = cell('price').replace(/[^0-9.,-]/g, '');
+      if (!cell('currency') && sym) raw.price_currency = sym;
+    }
+    if (cell('currency')) raw.price_currency = cell('currency');
+    if (cell('from')) raw.bought_from = cell('from');
+    if (cell('on')) raw.bought_on = cell('on');
+    let condNote = null;
+    if (cell('condition')) { if (CONDITIONS.includes(cell('condition').toLowerCase())) raw.condition = cell('condition'); else condNote = clean(cell('condition'), 300); }
+    for (const [k, f] of [['box', 'inc_box'], ['manualin', 'inc_manual'], ['media', 'inc_media'], ['inserts', 'inc_inserts']]) if (cell(k)) raw[f] = cell(k);
+    let details = {};
+    try { details = parseDetails(raw, userId); } catch (err) { badDetails++; if (problems.length < 10) problems.push({ line, reason: `The purchase details for "${title.slice(0, 40)}" were left out: ${err.message}` }); }
+    seen.set(key, { platform: slug, title, region: region || null, details, notes: (col.notes >= 0 ? clean(r[col.notes], 300) || null : null) || condNote, year: y >= 1950 && y <= 2100 ? y : null, manual, digital: col.digital >= 0 ? yesNo(r[col.digital]) : null, key: dedupeKey(title, region) });
   });
 
   const games = [...seen.values()];
   const platforms = [...new Set(games.map((g) => g.platform))];
-  const existing = new Map(db.prepare('SELECT id, platform, dedupe_key, title, notes, region, manual_link, digital_off FROM physical_games WHERE user_id = ?').all(userId).map((g) => [g.platform + '\n' + g.dedupe_key, g]));
+  const existing = new Map(db.prepare('SELECT id, platform, dedupe_key, title, notes, region, manual_link, digital_off, price_paid, price_currency, bought_from, bought_on, condition, inc_box, inc_manual, inc_media, inc_inserts FROM physical_games WHERE user_id = ?').all(userId).map((g) => [g.platform + '\n' + g.dedupe_key, g]));
   let added = 0, updated = 0, unchanged = 0;
   for (const g of games) {
     const had = existing.get(g.platform + '\n' + g.key);
     if (!had) added++;
-    else if ((g.notes && g.notes !== had.notes) || had.title !== g.title || (g.manual && g.manual !== had.manual_link)) updated++;
+    else if ((g.notes && g.notes !== had.notes) || had.title !== g.title || (g.manual && g.manual !== had.manual_link) || Object.entries(g.details).some(([k, v]) => v !== had[k])) updated++;
     else unchanged++;
   }
   const inFile = new Set(games.map((g) => g.platform + '\n' + g.key));
@@ -158,8 +256,11 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
       for (const g of gone) dropDigital(userId, g);
       for (const g of games) {
         const had = existing.get(g.platform + '\n' + g.key);
+        let id = had?.id;
         if (had) upd.run(g.title, sortTitle(g.title), g.notes, g.year, g.manual, had.id);
-        else ins.run(userId, g.platform, g.title, sortTitle(g.title), g.key, g.region, g.notes, g.year, g.manual);
+        else id = ins.run(userId, g.platform, g.title, sortTitle(g.title), g.key, g.region, g.notes, g.year, g.manual).lastInsertRowid;
+        const ks = Object.keys(g.details);   // only what the file filled: an empty cell never wipes what is there
+        if (ks.length) db.prepare(`UPDATE physical_games SET ${ks.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`).run(...ks.map((k) => g.details[k]), id);
       }
       for (const g of removing) del.run(g.id, userId);
     })();
@@ -176,7 +277,7 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
   }
   return {
     applied: Boolean(apply), csv_rows: rows.length - 1, games: games.length, by_platform: byPlatform,
-    added, updated, unchanged, removed: removing.length, digital_on: digitalOn, digital_off: digitalOff, duplicates, skipped, problems, manuals: games.filter((g) => g.manual).length, bad_links: badLinks,
+    added, updated, unchanged, removed: removing.length, digital_on: digitalOn, digital_off: digitalOff, duplicates, skipped, problems, manuals: games.filter((g) => g.manual).length, bad_links: badLinks, details: games.filter((g) => Object.keys(g.details).length).length, bad_details: badDetails,
     sample: games.slice(0, 5).map((g) => ({ platform: g.platform, title: g.title, region: g.region }))
   };
 }
@@ -248,6 +349,9 @@ const toGame = (r) => ({
   manual: r.manual_path ? { kind: 'file', name: r.manual_name || 'Manual', type: manualType(r.manual_path), url: `/api/physical/manual/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` }
     : r.manual_link ? { kind: 'link', url: r.manual_link } : null,
   manual_link: r.manual_link || null, has_manual: Boolean(r.manual_path || r.manual_link),
+  // purchase and condition (all optional; null = not recorded)
+  price_paid: r.price_paid ?? null, price_currency: r.price_currency || null, bought_from: r.bought_from || null, bought_on: r.bought_on || null, condition: r.condition || null,
+  inc_box: r.inc_box ?? null, inc_manual: r.inc_manual ?? null, inc_media: r.inc_media ?? null, inc_inserts: r.inc_inserts ?? null, complete: isComplete(r),
   digital_possible: Boolean(DIGITAL_TWIN[r.platform]), digital_linked: Boolean(r.digital_app_id), digital_made: Boolean(r.digital_app_id && r.digital_made)
 });
 
@@ -314,16 +418,19 @@ export function getPhysical(userId, id) {
   return { ...toGame(r), platform_name: p?.name || r.platform, platform_short: p?.short_name || r.platform, platform_badge: p?.badge || null, platform_family: p?.family || null, platform_accent: p?.accent || null };
 }
 
-export function addPhysical(userId, { platform, title, region = '', notes = '', year = null, digital = false }) {
+export function addPhysical(userId, { platform, title, region = '', notes = '', year = null, digital = false, ...rest }) {
   const slug = resolvePlatform(platform);
   if (!slug) throw Object.assign(new Error('Choose a platform from the list.'), { status: 400 });
   const t = clean(title);
   if (!appIdFor(t)) throw Object.assign(new Error('Type the game\'s title.'), { status: 400 });
   const key = dedupeKey(t, region);
   if (db.prepare('SELECT 1 FROM physical_games WHERE user_id = ? AND platform = ? AND dedupe_key = ?').get(userId, slug, key)) throw Object.assign(new Error('That game is already on your shelf for this platform (add a region or note to keep a second copy).'), { status: 409 });
+  const details = parseDetails(rest, userId);   // refused before anything is saved
   const y = Math.round(Number(year));
   const info = db.prepare('INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, region, notes, release_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     .run(userId, slug, t, sortTitle(t), key, clean(region, 40) || null, clean(notes, 300) || null, y >= 1950 && y <= 2100 ? y : null);
+  const dk = Object.keys(details);
+  if (dk.length) db.prepare(`UPDATE physical_games SET ${dk.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`).run(...dk.map((k) => details[k]), info.lastInsertRowid);
   // An Xbox One / Series disc is in Digital only when the person switched that on (the icon in its details, or digital: true here).
   if (DIGITAL_TWIN[slug] && (digital === true || digital === 'true') && linkDigital(userId, own(userId, info.lastInsertRowid))) startDetailsJob();
   startMatchJob();
@@ -344,6 +451,8 @@ export function updatePhysical(userId, id, body = {}) {
   }
   const num = (f, lo, hi, round) => { if (body[f] === undefined) return; const n = body[f] === null || body[f] === '' ? null : Number(body[f]); if (n !== null && !(Number.isFinite(n) && n >= lo && n <= hi)) throw Object.assign(new Error(`${f.replace('_', ' ')} is out of range`), { status: 400 }); sets.push(`${f} = ?`); vals.push(n === null ? null : round ? Math.round(n) : n); };
   num('release_year', 1950, 2100, true); num('players', 1, 16, true); num('rating', 0, 5, false);
+  const details = parseDetails(body, userId, r);
+  for (const [k, v] of Object.entries(details)) { sets.push(`${k} = ?`); vals.push(v); }
   if (body.favourite !== undefined) { sets.push('favourite = ?'); vals.push(body.favourite ? 1 : 0); }
   if (body.hidden !== undefined) { sets.push('hidden = ?'); vals.push(body.hidden ? 1 : 0); }
   if (body.platform !== undefined) { const slug = resolvePlatform(body.platform); if (!slug) throw Object.assign(new Error('Choose a platform from the list.'), { status: 400 }); sets.push('platform = ?'); vals.push(slug); }

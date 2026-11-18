@@ -644,3 +644,9 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '58') ON CON
 /* ── v59: a daily snapshot of the headline collection counts (Settings > Reports), so trends can be shown from the day it started. ── */
 db.exec(`CREATE TABLE IF NOT EXISTS report_snapshots (day TEXT PRIMARY KEY, json TEXT NOT NULL)`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '59') ON CONFLICT(key) DO UPDATE SET value = '59'").run();
+
+/* ── v60: optional purchase and condition details on a Physical game, for reports later: what was paid (a number, with a currency code), where and when it was bought, its condition (a short fixed word) and what comes with it (box, manual, disc or cartridge, inserts: 1 = yes, 0 = no, NULL = not recorded). ── */
+for (const [col, type] of [['price_paid', 'REAL'], ['price_currency', 'TEXT'], ['bought_from', 'TEXT'], ['bought_on', 'TEXT'], ['condition', 'TEXT'], ['inc_box', 'INTEGER'], ['inc_manual', 'INTEGER'], ['inc_media', 'INTEGER'], ['inc_inserts', 'INTEGER']]) {
+  if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '60') ON CONFLICT(key) DO UPDATE SET value = '60'").run();

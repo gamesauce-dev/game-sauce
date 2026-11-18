@@ -748,7 +748,8 @@ export async function openDetail(id) {
     ['Players', g.players || '—'],
     ['Rating', g.rating != null ? `${g.rating} / 5` : '—'],
     ['Details from', g.matched ? esc(g.meta_source) : 'not matched yet'],
-    ['Notes', g.notes ? esc(g.notes) : '—']
+    ['Notes', g.notes ? esc(g.notes) : '—'],
+    ...purchaseRows(g)
   ];
   const I = ctx.ICON;
   $('#drawer-body').innerHTML = `
@@ -801,11 +802,13 @@ ${manualBlock(g)}
         <label class="field"><span>Players</span><input name="players" type="number" min="1" max="16" value="${g.players || ''}" /></label>
         <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" min="0" max="5" step="0.1" value="${g.rating ?? ''}" /></label>
       </div>
-      <label class="field"><span>Notes (condition, edition, where it is kept)</span><input name="notes" value="${esc(g.notes || '')}" /></label>
+      <label class="field"><span>Notes (edition, where it is kept)</span><input name="notes" value="${esc(g.notes || '')}" /></label>
+      ${purchaseFields(g)}
       <label class="field"><span>Description</span><textarea name="description" rows="4">${esc(g.description || '')}</textarea></label>
       <button class="btn btn-primary" type="submit">Save</button>
     </form>`;
   bindDetail(g);
+  fillSellers($('#drawer-body'));
 }
 
 function bindDetail(g) {
@@ -850,6 +853,9 @@ function bindDetail(g) {
     e.preventDefault();
     const out = {};
     for (const [k, v] of new FormData(e.target).entries()) out[k] = ['release_year', 'players', 'rating'].includes(k) ? (v === '' ? null : Number(v)) : v;
+    for (const k of INCLUDE_KEYS) delete out[k];
+    Object.assign(out, includesOf(e.target));
+    if (out.price_paid !== '' && out.price_currency) rememberCurrency(out.price_currency);
     try { await ctx.api(`/physical/games/${id}`, { method: 'PATCH', body: JSON.stringify(out) }); ctx.toast('Saved'); await refreshAll(); } catch (err) { ctx.toast(err.message, true); }
   });
 
@@ -969,7 +975,8 @@ function openAdd() {
         <label class="field"><span>Platform</span>${comboHtml({ options: platformOptions(), selected: first, placeholder: 'Type to find a platform…' })}</label>
         <label class="field"><span>Region (optional)</span><input name="region" placeholder="PAL, NTSC-U, JP…" value="${esc(lastAdd.region)}" /></label>
       </div>
-      <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Boxed, manual, disc only…" /></label>
+      <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Edition, where it is kept…" /></label>
+      ${purchaseFields({})}
       <p class="hint" style="margin:0">An Xbox One or Series disc is only added to your Digital library if you switch on the disc to digital icon in the game's details.</p>
       <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add and another</button></div>
     </form>`;
@@ -977,16 +984,79 @@ function openAdd() {
   wireCombo(form, 'platform', platformOptions());
   const submit = async (again) => {
     const body = Object.fromEntries(new FormData(form).entries());
+    for (const k of INCLUDE_KEYS) delete body[k];
+    Object.assign(body, includesOf(form));
+    if (body.price_paid) rememberCurrency(body.price_currency); else { delete body.price_paid; delete body.price_currency; }
     try { await ctx.api('/physical/games', { method: 'POST', body: JSON.stringify(body) }); } catch (err) { ctx.toast(err.message, true); return; }
     ctx.toast(`Added “${body.title}”`);
     lastAdd = { platform: body.platform || '', region: body.region || '' };   // the next game is usually the same platform and region
     await load(true);
-    if (again || ctx.pinned()) { form.title.value = ''; form.notes.value = ''; form.title.focus(); }   // pinned: the window stays, ready for the next one
+    if (again || ctx.pinned()) { form.title.value = ''; form.notes.value = ''; form.price_paid.value = ''; form.title.focus(); }   // pinned: the window stays, ready for the next one
     else { lastAdd = { platform: '', region: '' }; ctx.closeDrawer(); }
   };
   form.addEventListener('submit', (e) => { e.preventDefault(); submit(false); });
   $('#ph-add-more').onclick = () => { if (form.reportValidity()) submit(true); };
   form.title.focus();
+  fillSellers(form);
+}
+
+/* ───────────── purchase and condition (all optional, kept quiet) ───────────── */
+
+const CONDITIONS = ['sealed', 'mint', 'good', 'fair', 'poor'];
+const CURRENCIES = ['GBP', 'USD', 'EUR', 'JPY', 'CAD', 'AUD', 'NZD', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'CNY', 'KRW', 'INR', 'BRL', 'MXN'];
+const INCLUDE_KEYS = ['inc_box', 'inc_manual', 'inc_media', 'inc_inserts'];
+const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+const money = (v, cur) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }).format(v); } catch { return `${v} ${cur}`; } };
+
+/** The rows the details table gets for a game: only what has been recorded, so a game with nothing recorded shows nothing extra. */
+function purchaseRows(g) {
+  const rows = [];
+  if (g.price_paid != null) rows.push(['Paid', esc(money(g.price_paid, g.price_currency || 'GBP'))]);
+  if (g.bought_from) rows.push(['Bought from', esc(g.bought_from)]);
+  if (g.bought_on) rows.push(['Bought on', esc(g.bought_on)]);
+  if (g.condition) rows.push(['Condition', esc(cap(g.condition))]);
+  const has = [g.inc_box === 1 && 'Box', g.inc_manual === 1 && 'Manual', g.inc_media === 1 && (isCart(g.platform) ? 'Cartridge' : 'Disc'), g.inc_inserts === 1 && 'Inserts'].filter(Boolean);
+  if (g.complete != null) rows.push(['Comes with', g.complete ? 'Complete in box' : (has.length ? esc(has.join(', ')) : 'Nothing')]);
+  return rows;
+}
+
+/** The optional price, shop, date, condition and what-comes-with-it fields, folded away until wanted (open when the game already has some). */
+function purchaseFields(g) {
+  const cur = g.price_currency || ctx.state.prefs?.price_currency || 'GBP';
+  const open = g.price_paid != null || g.bought_from || g.bought_on || g.condition || g.complete != null;
+  const chk = (name, label, v) => `<label class="check"><input type="checkbox" name="${name}" value="1"${v === 1 ? ' checked' : ''} /> <span>${label}</span></label>`;
+  return `<details class="ph-buy"${open ? ' open' : ''}>
+    <summary>Purchase and condition (optional)</summary>
+    <div class="field-row">
+      <label class="field"><span>Price paid</span><input name="price_paid" type="number" min="0" max="1000000" step="0.01" value="${g.price_paid ?? ''}" /></label>
+      <label class="field"><span>Currency</span><select name="price_currency" class="select">${CURRENCIES.map((c) => `<option${c === cur ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
+    </div>
+    <div class="field-row">
+      <label class="field"><span>Bought from</span><input name="bought_from" list="ph-sellers" maxlength="100" placeholder="Shop, seller, car boot…" value="${esc(g.bought_from || '')}" autocomplete="off" /></label>
+      <label class="field"><span>Date bought</span><input name="bought_on" type="date" value="${esc(g.bought_on || '')}" /></label>
+    </div>
+    <label class="field"><span>Condition</span><select name="condition" class="select"><option value="">Not recorded</option>${CONDITIONS.map((c) => `<option value="${c}"${g.condition === c ? ' selected' : ''}>${cap(c)}</option>`).join('')}</select></label>
+    <div class="field"><span>Comes with</span><div class="ph-buy-inc">${chk('inc_box', 'Box', g.inc_box)}${chk('inc_manual', 'Manual', g.inc_manual)}${chk('inc_media', 'Disc or cartridge', g.inc_media)}${chk('inc_inserts', 'Inserts', g.inc_inserts)}</div></div>
+    <datalist id="ph-sellers"></datalist>
+  </details>`;
+}
+
+/** What comes with the game, from the four boxes: all four are recorded when any is ticked (an unticked one then means it is missing); none ticked = not recorded. */
+function includesOf(form) {
+  const any = INCLUDE_KEYS.some((k) => form.elements[k]?.checked);
+  return Object.fromEntries(INCLUDE_KEYS.map((k) => [k, any ? (form.elements[k].checked ? 1 : 0) : null]));
+}
+
+/** The currency last used becomes the default next time. */
+function rememberCurrency(code) {
+  if (!code || ctx.state.prefs?.price_currency === code) return;
+  (ctx.state.prefs ||= {}).price_currency = code;
+  ctx.api('/prefs/price_currency', { method: 'PUT', body: JSON.stringify({ value: code }) }).catch(() => {});
+}
+
+/** Suggest the shops and sellers already used. */
+async function fillSellers(root) {
+  try { const r = await ctx.api('/physical/sellers'); const dl = $('#ph-sellers', root); if (dl) dl.innerHTML = (r.sellers || []).map((n) => `<option value="${esc(n)}"></option>`).join(''); } catch { /* suggestions are a nicety */ }
 }
 
 /** One line telling what an import did (or would do), shared with Settings › CSV tools. */
