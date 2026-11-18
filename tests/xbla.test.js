@@ -69,3 +69,20 @@ test('XBLA: the launcher hands the package over with no extension, and a zipped 
   const files = [{ path: `Castlevania/58410847/000D0000/${HEX}`, size: 5e6 }, { path: 'Castlevania/58410847/000B0000/ABCDEF', size: 9e6 }, { path: 'Castlevania/readme.txt', size: 3 }];
   assert.equal(U.pickLaunchFile(files, 'xbox360'), `Castlevania/58410847/000D0000/${HEX}`, 'the Arcade package, not the bigger title update');
 });
+
+test('XBLA: a zipped or imaged game in a folder named for it, or tagged (XBLA), is its own platform; an arcade disc and other games stay where they were', () => {
+  const slug = (filename, relativePath, sourceHint = '') => resolvePlatform({ filename, relativePath, sourceHint }).slug;
+  assert.equal(slug('Aegis Wing (World) (XBLA).zip', 'Aegis Wing (World) (XBLA).zip'), 'xbla', 'the tag, in a source with no platform');
+  assert.equal(slug('0-D Beat Drop (World) (XBLA).7z', '0-D Beat Drop (World) (XBLA).7z', 'xbox360'), 'xbla', 'the tag, in an Xbox 360 source');
+  assert.equal(slug('Some Game.zip', 'XBLA/Some Game.zip', 'xbox360'), 'xbla', 'a folder called XBLA');
+  assert.equal(slug('Game.iso', 'Xbox Live Arcade/Game.iso'), 'xbla', 'a folder called Xbox Live Arcade');
+  assert.equal(slug('Xbox Live Arcade (USA, Europe) (En,Ja).zip', 'Xbox Live Arcade (USA, Europe) (En,Ja).zip', 'xbox360'), 'xbox360', 'a disc of arcade games is a full game');
+  assert.equal(slug('Midway Arcade Origins (USA, Europe).zip', 'Midway Arcade Origins (USA, Europe).zip', 'xbox360'), 'xbox360');
+  assert.equal(slug('Game (XBLA).zip', 'Game (XBLA).zip', 'ps3'), 'ps3', 'a source that says another platform is believed');
+});
+
+test('XBLA: a zipped game is unpacked and started like an Xbox 360 one (its package is the last choice)', () => {
+  assert.equal(U.wantsUnpack({}, 'xbla', '.zip'), true);
+  assert.equal(U.pickLaunchFile([{ path: 'Game/000D0000/ABCDEF0123', size: 50 }, { path: 'readme.txt', size: 1 }], 'xbla'), 'Game/000D0000/ABCDEF0123');
+  assert.equal(U.pickLaunchFile([{ path: 'default.xex', size: 5 }, { path: 'Game/000D0000/ABCDEF0123', size: 50 }], 'xbla'), 'default.xex', 'the same order as Xbox 360');
+});

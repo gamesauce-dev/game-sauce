@@ -20,11 +20,21 @@ const IGNORED_FILES = new Set(['.ds_store', 'thumbs.db', 'desktop.ini']);
  * "D:/roms/ps4/Game.pkg" -> ps4, even though .pkg is shared by PS3/4/5.
  * Returns { slug, confidence: 'hint' | 'folder' | 'extension' | 'none' }.
  */
+const XBLA_PACKED_EXT = new Set(['zip', '7z', 'rar', 'iso', 'xex']);
+const XBLA_TAG = /(xbla)/i;
 export function resolvePlatform({ filename, relativePath, sourceHint }) {
   const ext = (filename.split('.').pop() || '').toLowerCase();
 
   // 0. An Xbox Live Arcade package is its own platform (its emulator needs other settings than a disc game's), even inside a source that says Xbox 360.
   if (ext === 'xbla' && (!sourceHint || sourceHint === 'xbox360' || sourceHint === 'xbla')) return { slug: 'xbla', confidence: sourceHint ? 'hint' : 'extension' };
+
+  // 0b. A zipped or imaged Xbox Live Arcade game is XBLA too: one in a folder named for it (XBLA, Xbox Live Arcade) or with the "(XBLA)" tag in its name, in a source that says Xbox 360 or nothing.
+  //     (A disc of arcade games named "Xbox Live Arcade (USA)..." has neither, so it stays Xbox 360.)
+  if ((!sourceHint || sourceHint === 'xbox360') && XBLA_PACKED_EXT.has(ext)) {
+    const dirs = String(relativePath || '').split(/[\/]/).slice(0, -1).map((s) => s.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const names = new Set([...folderNamesFor('xbla'), 'xbla']);
+    if (dirs.some((d) => names.has(d)) || XBLA_TAG.test(filename)) return { slug: 'xbla', confidence: 'folder' };
+  }
 
   // 1. An explicit hint on the source always wins — the user told us.
   if (sourceHint && (PLATFORM_BY_SLUG.has(sourceHint) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(sourceHint)))) {

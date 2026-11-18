@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process';
 
 export const ARCHIVE_EXT = new Set(['.zip', '.7z', '.rar']);
 /** Platforms that unpack unless the config says "unpack": false (their emulators cannot open an archive). */
-export const AUTO_UNPACK = new Set(['xbox360', 'ps3']);
+export const AUTO_UNPACK = new Set(['xbox360', 'xbla', 'ps3']);
 
 export const isArchive = (ext) => ARCHIVE_EXT.has(String(ext || '').toLowerCase());
 
@@ -46,6 +46,7 @@ const RULES = {
   wiiu: [(p) => p.endsWith('.wua'), (p) => p.endsWith('.wud') || p.endsWith('.wux'), (p) => /(^|\/)code\/[^/]+\.rpx$/.test(p)],
   default: [(p) => p.endsWith('.cue'), (p) => p.endsWith('.gdi'), (p) => p.endsWith('.m3u'), ISO, (p) => p.endsWith('.chd')]
 };
+RULES.xbla = RULES.xbox360;   // a zipped Xbox Live Arcade game starts the way an Xbox 360 one does (its package is the last rule)
 const JUNK = /(^|\/)(__macosx|\.ds_store|thumbs\.db|desktop\.ini)(\/|$)|\.(txt|nfo|jpg|jpeg|png|url|diz|md5|sfv|sha1)$/i;
 
 /**
