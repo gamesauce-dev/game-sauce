@@ -51,4 +51,6 @@ test('Platform buttons can be logos instead of chips: a per-person choice, the s
   for (const [name, src] of [['Library', mj], ['Physical', ph], ['Digital', dg]]) assert.ok(src.includes("from './chip-face.js'") && src.includes('chipFace(') && src.includes("addEventListener('gs:chipstyle'"), name + ' draws logos and redraws when the choice changes');
   assert.ok(html.includes('id="chipstyle-picker"') && ap.includes("api('/prefs/chip_style'"), 'the setting in My account');
   assert.ok(fs2.existsSync(new URL('../public/chip-face.js', import.meta.url)));
+  assert.ok(app.includes("chip_plate: ['on']") && html.includes('id="chipplate"') && ap.includes("classList.toggle('chip-plates'"), 'the light plate for every logo');
+  assert.match(read('public/styles.css'), /body.chip-plates .chip-logo-img { background: rgba(255,255,255,.94)/);
 });

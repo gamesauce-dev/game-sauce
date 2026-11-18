@@ -1914,3 +1914,7 @@ body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
 .ph-chip:has(> .chip-logo-img) { padding: 0 0.55rem; }
 .chip-logo-img.lib-logo { width: auto; min-width: 2.4rem; max-width: 6rem; height: 1.45rem; }
 .chip-logo-img.lib-logo img { width: auto; max-width: 100%; }
+
+/* A logo on a light plate in dark mode: a logo set to have a light backing (on-plate), or every logo when the person chose "Put every logo on a light plate". */
+html:not([data-theme="light"]) .chip-logo-img.on-plate, html:not([data-theme="light"]) body.chip-plates .chip-logo-img { background: rgba(255,255,255,.94); border-radius: 0.55rem; padding: 0.22rem 0.5rem; box-sizing: border-box; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-theme="light"]) body.chip-plates .chip-logo-img.lib-logo { height: 1.75rem; }   /* room for the plate's padding */

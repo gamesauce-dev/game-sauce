@@ -4007,6 +4007,9 @@ async function shrinkImage(file, size = 256) {
   c.getContext('2d').drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, size, size);
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not read that image'))), 'image/jpeg', 0.9));
 }
+/** Every logo button on a light plate, when the person asked (a class on the page; the platform buttons are drawn with or without it). */
+function applyChipPlate() { document.body.classList.toggle('chip-plates', state.prefs?.chip_plate === 'on'); }
+
 function initProfilePanel() {
   const u = authState.user; if (!u) return;
   const prev = $('#profile-preview');
@@ -4031,6 +4034,16 @@ function initProfilePanel() {
       try { await api('/prefs/chip_style', { method: 'PUT', body: JSON.stringify({ value: v === 'chips' ? null : v }) }); } catch (err) { return toast(err.message, true); }
       state.prefs = { ...(state.prefs || {}) }; if (v === 'logos') state.prefs.chip_style = 'logos'; else delete state.prefs.chip_style;
       paintCs(); window.dispatchEvent(new Event('gs:chipstyle'));
+    };
+  }
+  const plateBox = $('#chipplate');
+  if (plateBox) {
+    plateBox.checked = state.prefs?.chip_plate === 'on';
+    plateBox.onchange = async () => {
+      const on = plateBox.checked;
+      try { await api('/prefs/chip_plate', { method: 'PUT', body: JSON.stringify({ value: on ? 'on' : null }) }); } catch (err) { plateBox.checked = !on; return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}) }; if (on) state.prefs.chip_plate = 'on'; else delete state.prefs.chip_plate;
+      applyChipPlate();
     };
   }
   $('#profile-file').onchange = async (e) => {
@@ -4127,7 +4140,7 @@ function showApp(user, { restore = false } = {}) {
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, showToolsModule, user: () => authState.user });
   modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView });
-  api('/prefs').then((p) => { state.prefs = p || {}; syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
+  api('/prefs').then((p) => { state.prefs = p || {}; applyChipPlate(); syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog
