@@ -242,6 +242,9 @@ export async function loadDigital(keep = false) {
   const sync = $('#dg-sync');
   sync.classList.toggle('hidden', !connected && !consoleGames);
   sync.title = connected && consoleGames ? 'Fetch your Steam library again, and look up details for console games that have none' : connected ? 'Fetch your Steam library again' : 'Look up details and covers for console games that have none';
+  // Fetch missing covers: only the console games that have no cover (the same lookup as Refresh, without fetching Steam again). Shown while there are some.
+  const fetchBtn = $('#dg-fetch'), missing = (info.counts || {}).nocover || 0;
+  if (fetchBtn) { fetchBtn.classList.toggle('hidden', !consoleGames || !missing); fetchBtn.textContent = `▢ Fetch missing covers (${n(missing)})`; fetchBtn.disabled = Boolean((info.details_job || {}).running); }
   const hasGames = connected || consoleGames;
   $('#dg-bar').classList.toggle('hidden', !hasGames); $('#dg-az').classList.toggle('hidden', !hasGames);
   paintSort(); paintToolbar(); renderChips();
@@ -324,6 +327,13 @@ async function onClick(e) {
   }
   const tile = e.target.closest('.dg-card');
   if (tile && !e.target.closest('.dg-launch')) { openDigitalDetail(tile.dataset.dgStoreOf, tile.dataset.dgApp); return; }
+  if (e.target.closest('#dg-fetch')) {
+    const b = $('#dg-fetch'); b.disabled = true;
+    try { const j = await ctx.api('/digital/consoles/details', { method: 'POST', body: JSON.stringify({ retry: true }) }); ctx.toast(j.running ? `Looking up ${j.total.toLocaleString()} console games` : 'Every console game already has its details'); }
+    catch (err) { ctx.toast(err.message, true); }
+    loadDigital();
+    return;
+  }
   if (e.target.closest('#dg-sync')) {
     const b = $('#dg-sync'); b.disabled = true;
     let steamOn = false;
