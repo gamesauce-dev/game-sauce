@@ -43,3 +43,12 @@ test('the Tools page scrolls, and Game Assets puts its explanation beside the im
   assert.match(css, /#ga-body #art-box > #art-result \{ grid-column: 2;/, 'the preview is the right-hand column');
   assert.ok(read('public/artimport-ui.js').includes('openOptions') && read('public/app.js').includes('openOptions: true'), 'the options are open');
 });
+
+test('Platform buttons can be logos instead of chips: a per-person choice, the same in the Library, Physical and Digital, a platform with no logo keeps its text, and the count moves into the hover text', () => {
+  const fs2 = fs, app = read('src/app.js'), cf = read('public/chip-face.js'), mj = read('public/modern.js'), ph = read('public/physical.js'), dg = read('public/digital.js'), ap = read('public/app.js'), html = read('public/index.html');
+  assert.ok(app.includes("chip_style: ['chips', 'logos']"), 'the preference the server keeps');
+  assert.ok(cf.includes("state?.prefs?.chip_style === 'logos'") && cf.includes('logo || ') || cf.includes('logoHtml ||'), 'the choice, and the text as the fallback');
+  for (const [name, src] of [['Library', mj], ['Physical', ph], ['Digital', dg]]) assert.ok(src.includes("from './chip-face.js'") && src.includes('chipFace(') && src.includes("addEventListener('gs:chipstyle'"), name + ' draws logos and redraws when the choice changes');
+  assert.ok(html.includes('id="chipstyle-picker"') && ap.includes("api('/prefs/chip_style'"), 'the setting in My account');
+  assert.ok(fs2.existsSync(new URL('../public/chip-face.js', import.meta.url)));
+});

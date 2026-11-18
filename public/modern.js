@@ -4,6 +4,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 import { landChips } from './chip-motion.js';
+import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 const ICON_BASE = '/modern/icons/';
 const cache = new Map();
 
@@ -487,6 +488,7 @@ const allPlats = () => (window.__platformsCache || []).filter((p) => pc(p) > 0);
 const familyOfSlug = (slug) => allPlats().find((p) => p.slug === slug)?.family || 'Others';
 const familySlugs = (f) => allPlats().filter((p) => (p.family || 'Others') === f).sort((a, b) => chipSort(a.name, b.name)).map((p) => p.slug);
 
+window.addEventListener('gs:chipstyle', () => renderChips());   // the person changed Chips / Logos in Settings
 export function renderChips() {
   const host = $('#chip-rows'); if (!host) return;
   const items = (window.__platformsCache || []).filter((p) => pc(p) > 0);
@@ -506,12 +508,13 @@ export function renderChips() {
   const famState = (f) => { const sl = fams.get(f).map((p) => p.slug); const n = sl.filter((s) => picked.has(s)).length; return n === 0 ? '' : n === sl.length ? ' on whole' : ' on part'; };
   if (chipFamily && !fams.has(chipFamily)) chipFamily = null;
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const logos = useLogos(ctx.state());
   host.innerHTML = `
     <div class="chip-row chip-fams" role="tablist">
       <button class="chip${picked.size === 0 ? ' on' : ''}" data-chip-all title="All platforms">All <small>${total.toLocaleString()}</small></button>
-      ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" style="--chip-c:${esc(famColour(f))}" aria-expanded="${chipFamily === f}" title="${esc(f)}: show its platforms">${esc(f)} <small>${famCount(f).toLocaleString()}</small></button>`).join('')}
+      ${order.map((f) => `<button class="chip${chipFamily === f ? ' open' : ''}${famState(f)}" data-chip-fam="${esc(f)}" style="--chip-c:${esc(famColour(f))}" aria-expanded="${chipFamily === f}" title="${esc(f)} (${famCount(f).toLocaleString()}): show its platforms">${chipFace(logos ? familyLogoHtml(fams.get(f)[0]) : '', esc(f), famCount(f).toLocaleString())}</button>`).join('')}
     </div>
-    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" style="--chip-c:${esc(/^#[0-9a-f]{6}$/i.test(p.accent || '') ? p.accent : (p.family_colour || '#6b7280'))}" title="${esc(p.name)}: click to ${picked.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p).toLocaleString()}</small></button>`).join('')}</div>` : ''}`;
+    ${chipFamily ? `<div class="chip-row chip-plats">${fams.get(chipFamily).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button class="chip plat${picked.has(p.slug) && !wholeNow ? ' on' : ''}" data-chip-plat="${esc(p.slug)}" style="--chip-c:${esc(/^#[0-9a-f]{6}$/i.test(p.accent || '') ? p.accent : (p.family_colour || '#6b7280'))}" title="${esc(p.name)} (${pc(p).toLocaleString()}): click to ${picked.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}">${chipFace(logos ? platformLogoHtml(p) : '', `<span>${esc(String(p.short_name || p.name).toUpperCase())}</span>`, pc(p).toLocaleString())}</button>`).join('')}</div>` : ''}`;
   landChips(host, chipFamily);
 }
 

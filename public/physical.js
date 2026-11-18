@@ -8,6 +8,7 @@ import { assetWords } from './video.js';
 import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
 import { platformBadge, platformChip, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
+import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { drawPage, mountViewer, pdfReady } from './pdfview.js';
 import { attachBulk } from './bulk.js';
 
@@ -38,6 +39,7 @@ export function initPhysical(c) {
   const view = $('#view-physical'); if (!view || view.dataset.ready) return;
   view.dataset.ready = '1';
   view.addEventListener('click', onClick);
+  window.addEventListener('gs:chipstyle', () => { if (!view.classList.contains('hidden')) renderChips(); });
   // Select mode: pick tiles, or Select all under the current filters, and delete them together (a Digital counterpart the shelf made goes with its disc).
   attachBulk({
     view, grid: $('#ph-tiles'), tile: '.ph-card', barAfter: $('#ph-bar'), toggleSel: '[data-bulk-toggle]', ctx, noun: 'game', where: 'your shelf',
@@ -183,12 +185,13 @@ function renderChips() {
   const total = S.platforms.reduce((t, p) => t + p.count, 0);
   const famCount = (f) => fams.get(f).reduce((t, p) => t + p.count, 0);
   const famState = (f) => { const sl = famSlugs(f); const k = sl.filter((s) => pk.has(s)).length; return k === 0 ? '' : k === sl.length ? ' on whole' : ' on part'; };
+  const logos = useLogos(ctx.state), cacheRows = window.__platformsCache || [];
   host.innerHTML = `
     <div class="ph-chip-row" role="tablist">
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-ph-chip-all title="All platforms">All <small>${n(total)}</small></button>
-      ${order.map((f) => `<button type="button" class="ph-chip${S.family === f ? ' open' : ''}${famState(f)}" data-ph-chip-fam="${esc(f)}" style="--chip-c:${famColourOf(f)}" aria-expanded="${S.family === f}" title="${esc(familyName(f))}: show its platforms">${esc(familyLabel(f))} <small>${n(famCount(f))}</small></button>`).join('')}
+      ${order.map((f) => `<button type="button" class="ph-chip${S.family === f ? ' open' : ''}${famState(f)}" data-ph-chip-fam="${esc(f)}" style="--chip-c:${famColourOf(f)}" aria-expanded="${S.family === f}" title="${esc(familyName(f))} (${n(famCount(f))}): show its platforms">${chipFace(logos ? familyLogoHtml(cacheRows.find((r) => (r.family || 'Others') === f)) : '', esc(familyLabel(f)), n(famCount(f)))}</button>`).join('')}
     </div>
-    ${S.family ? `<div class="ph-chip-row ph-chip-plats">${fams.get(S.family).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button type="button" class="ph-chip plat${pk.has(p.slug) && !wholeNow ? ' on' : ''}" data-ph-chip-plat="${esc(p.slug)}" style="--chip-c:${accentOf(p.slug)}" title="${esc(p.name)}: click to ${pk.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}"><span>${esc(platformChip(p))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${S.family ? `<div class="ph-chip-row ph-chip-plats">${fams.get(S.family).sort((a, b) => chipSort(a.name, b.name)).map((p) => `<button type="button" class="ph-chip plat${pk.has(p.slug) && !wholeNow ? ' on' : ''}" data-ph-chip-plat="${esc(p.slug)}" style="--chip-c:${accentOf(p.slug)}" title="${esc(p.name)} (${n(p.count)}): click to ${pk.has(p.slug) && !wholeNow ? 'turn off' : 'turn on'}">${chipFace(logos ? platformLogoHtml(cacheRows.find((r) => r.slug === p.slug)) : '', `<span>${esc(platformChip(p))}</span>`, n(p.count))}</button>`).join('')}</div>` : ''}`;
   landChips(host, S.family);
 }
 

@@ -59,10 +59,10 @@ test('the badge text wins on every cover badge, in capitals; the chips follow th
   const pn = read('public/platform-names.js'), dg = read('public/digital.js'), app = read('public/app.js'), mj = read('public/modern.js');
   assert.ok(pn.includes("String(p?.badge || BADGE[p?.slug] || p?.short_name"), 'Physical badges and spines');
   assert.ok(pn.includes("platformBadge({ ...p, badge: '' })"), 'a chip never uses the badge text');
-  assert.ok(read('public/physical.js').includes('<span>${esc(platformChip(p))}</span> <small>'), 'Physical chips');
+  assert.ok(read('public/physical.js').includes('<span>${esc(platformChip(p))}</span>`, n(p.count))'), 'Physical chips');
   assert.ok(dg.includes('customBadge(g.platform) || st.short') && dg.includes('<span>${esc(platformChip({'), 'Digital tiles use the badge text, its chips the short name');
   assert.ok(app.includes('rom.platform_badge ? String(rom.platform_badge).toUpperCase() : rom.platform_short'), 'the ROM Library tiles');
-  assert.ok(mj.includes('<span>${esc(String(p.short_name || p.name).toUpperCase())}</span> <small>${pc(p)'), 'the ROM Library chips');
+  assert.ok(mj.includes('<span>${esc(String(p.short_name || p.name).toUpperCase())}</span>`, pc(p).toLocaleString())'), 'the ROM Library chips');
   assert.ok(read('public/carousel.js').includes('${esc(String(p.short_name || p.name).toUpperCase())}<small>'), 'the Carousel chips');
   assert.ok(app.includes('data-pf="badge" maxlength="12"'), 'Settings > Platforms > Edit');
   const sv = read('src/app.js');

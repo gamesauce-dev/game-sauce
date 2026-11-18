@@ -4021,6 +4021,18 @@ function initProfilePanel() {
       + LANGS.map((l) => `<button type="button" class="lang-opt" data-lang="${l.code}" aria-pressed="${now === l.code}"><img src="/flags/${l.flag}.svg" alt="" width="24" height="16"><span class="notranslate">${esc(l.name)}</span></button>`).join('');
     langBox.onclick = (ev) => { const b = ev.target.closest('.lang-opt'); if (!b) return; const v = b.dataset.lang; api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: v }) }).catch(() => {}).finally(() => setLanguage(v)); };
   }
+  // Platform buttons: chips (text and a count) or logos. Kept with the account; the rows above the games are drawn again at once.
+  const csBox = $('#chipstyle-picker');
+  if (csBox) {
+    const paintCs = () => { const now = state.prefs?.chip_style === 'logos' ? 'logos' : 'chips'; csBox.innerHTML = [['chips', 'Chips', 'text and the number of games'], ['logos', 'Logos', 'their pictures; the number shows on hover']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-chipstyle="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    paintCs();
+    csBox.onclick = async (ev) => {
+      const b = ev.target.closest('[data-chipstyle]'); if (!b) return; const v = b.dataset.chipstyle;
+      try { await api('/prefs/chip_style', { method: 'PUT', body: JSON.stringify({ value: v === 'chips' ? null : v }) }); } catch (err) { return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}) }; if (v === 'logos') state.prefs.chip_style = 'logos'; else delete state.prefs.chip_style;
+      paintCs(); window.dispatchEvent(new Event('gs:chipstyle'));
+    };
+  }
   $('#profile-file').onchange = async (e) => {
     const file = e.target.files?.[0]; e.target.value = '';
     if (!file) return;

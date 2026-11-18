@@ -638,3 +638,4 @@ body.ui-modern .mb-btn.is-on svg path[stroke] { fill: currentColor; }
 body.ui-modern .mb-navbtn[data-mview="digital"].is-on svg path[stroke] { fill: none; }   /* the Digital Library icon is an outline when it is selected too */
 body.ui-modern .ph-manual-box .ibtn > svg { display: none; }   /* the Modern icon set draws the manual buttons; the drawn icons are for Classic */
 body.ui-modern .mb-navbtn[data-mview="tools"].is-on svg path[stroke] { fill: none; }   /* Tools is an outline when it is selected too */
+body.ui-modern .chip:has(> .chip-logo-img) { padding: 0 0.55rem; }   /* a platform button shown as its logo */

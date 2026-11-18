@@ -5,6 +5,7 @@ import { identifyBlock, wireIdentify, comboHtml, wireCombo } from './identify.js
 import { attachBulk } from './bulk.js';
 import { assetWords } from './video.js';
 import { landChips } from './chip-motion.js';
+import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { familyLabel, platformBadge, platformChip } from './platform-names.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -66,6 +67,7 @@ export function initDigital(c) {
   const view = $('#view-digital'); if (!view || view.dataset.ready) return;
   view.dataset.ready = '1';
   view.addEventListener('click', onClick);
+  window.addEventListener('gs:chipstyle', () => { if (!view.classList.contains('hidden')) renderChips(); });
   // Select mode: pick tiles, or Select all under the current filters, and delete them together (console games; Steam's come from Steam).
   attachBulk({
     view, grid: $('#dg-grid'), tile: '.dg-card', barAfter: $('#dg-bar'), toggleSel: '[data-bulk-toggle]', ctx, noun: 'game', where: 'your Digital library',
@@ -175,12 +177,13 @@ function renderChips() {
   const part = (s) => subsOf(s).some((p) => pk.has(tok.plat(p.platform)));
   if (dg.family && !subsOf(dg.family).length) dg.family = null;
   const famState = (s) => (whole(s) ? ' on whole' : part(s) ? ' on part' : '');
+  const logos = useLogos(ctx.state), cacheRows = window.__platformsCache || [], FAMILY_OF_STORE = { playstation: 'sony', nintendo: 'nintendo', xbox: 'microsoft' };
   host.innerHTML = `
     <div class="ph-chip-row" role="tablist">
       <button type="button" class="ph-chip${pk.size === 0 ? ' on' : ''}" data-dg-chip-all title="All your games">All <small>${n(total)}</small></button>
-      ${stores.map((s) => `<button type="button" class="ph-chip${dg.family === s.store ? ' open' : ''}${famState(s.store)}" data-dg-chip-store="${esc(s.store)}" style="--chip-c:${DG_STORE[s.store]?.chip || '#6b7280'}"${subsOf(s.store).length ? ` aria-expanded="${dg.family === s.store}"` : ''} title="${esc(s.label || storeLabel(s.store))}${subsOf(s.store).length ? ': show its consoles' : ''}">${esc(familyLabel(s.label || storeLabel(s.store)))} <small>${n(s.visible)}</small></button>`).join('')}
+      ${stores.map((s) => `<button type="button" class="ph-chip${dg.family === s.store ? ' open' : ''}${famState(s.store)}" data-dg-chip-store="${esc(s.store)}" style="--chip-c:${DG_STORE[s.store]?.chip || '#6b7280'}"${subsOf(s.store).length ? ` aria-expanded="${dg.family === s.store}"` : ''} title="${esc(s.label || storeLabel(s.store))} (${n(s.visible)})${subsOf(s.store).length ? ': show its consoles' : ''}">${chipFace(logos && FAMILY_OF_STORE[s.store] ? familyLogoHtml(cacheRows.find((r) => String(r.family || '').toLowerCase() === FAMILY_OF_STORE[s.store])) : '', esc(familyLabel(s.label || storeLabel(s.store))), n(s.visible))}</button>`).join('')}
     </div>
-    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)}: click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}"><span>${esc(platformChip({ ...libRow(p.platform), slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: libRow(p.platform)?.short_name || DG_PLATFORM[p.platform]?.short }))}</span> <small>${n(p.count)}</small></button>`).join('')}</div>` : ''}`;
+    ${dg.family ? `<div class="ph-chip-row ph-chip-plats">${subsOf(dg.family).map((p) => `<button type="button" class="ph-chip plat${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? ' on' : ''}" data-dg-chip-plat="${esc(p.platform)}" style="--chip-c:${libAccent(p.platform) || DG_STORE[dg.family]?.chip || '#6b7280'}" title="${esc(p.label)} (${n(p.count)}): click to ${pk.has(tok.plat(p.platform)) && !whole(dg.family) ? 'turn off' : 'turn on'}">${chipFace(logos ? platformLogoHtml(libRow(p.platform)) : '', `<span>${esc(platformChip({ ...libRow(p.platform), slug: DG_PLATFORM[p.platform]?.lib || p.platform, short_name: libRow(p.platform)?.short_name || DG_PLATFORM[p.platform]?.short }))}</span>`, n(p.count))}</button>`).join('')}</div>` : ''}`;
   landChips(host, dg.family);
 }
 
