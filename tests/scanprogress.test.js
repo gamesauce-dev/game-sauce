@@ -9,6 +9,7 @@ process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
 process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
 process.env.GAMESAUCE_ADMIN_USER = 'progadmin';
 process.env.GAMESAUCE_ADMIN_PASSWORD = 'prog-admin-password-1';
+process.env.GAMESAUCE_HASH_MODE = 'inline';   // these tests read the fingerprints straight after a scan
 
 let server, base, tok, dir;
 const call = async (p, { method = 'GET', body } = {}) => {

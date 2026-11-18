@@ -9,6 +9,7 @@ process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
 process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
 process.env.GAMESAUCE_ADMIN_USER = 'radmin';
 process.env.GAMESAUCE_ADMIN_PASSWORD = 'r-admin-password-1';
+process.env.GAMESAUCE_HASH_MODE = 'inline';   // these tests read the fingerprints straight after a scan
 
 let server, base, db, tok;
 const call = async (p, { method = 'GET', body } = {}) => {
@@ -43,6 +44,7 @@ test('a renamed folder: the source is pointed at its new place and every game ke
   assert.equal(wrong.status, 400); assert.match(wrong.body.error, /None of this source's 2 games/);
   assert.equal((await call(`/api/sources/${id}/relocate`, { method: 'POST', body: { path: oldDir } })).status, 400, 'the same folder is not a move');
 
+  await (await import('../src/lib/hashjob.js')).hashJobIdle();   // the background fingerprints open the files: let them finish before the folder is renamed (Windows)
   fs.renameSync(oldDir, newDir);
   const done = await call(`/api/sources/${id}/relocate`, { method: 'POST', body: { path: newDir } });
   assert.equal(done.status, 200); assert.deepEqual({ moved: done.body.moved, found: done.body.found, not_found: done.body.not_found }, { moved: 2, found: 2, not_found: 0 });

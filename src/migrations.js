@@ -644,3 +644,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '58') ON CON
 /* ── v59: a daily snapshot of the headline collection counts (Settings > Reports), so trends can be shown from the day it started. ── */
 db.exec(`CREATE TABLE IF NOT EXISTS report_snapshots (day TEXT PRIMARY KEY, json TEXT NOT NULL)`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '59') ON CONFLICT(key) DO UPDATE SET value = '59'").run();
+
+/* ── v60: a game whose file could not be fingerprinted in the background (1: unreadable, 2: a duplicate that was kept, 3: bigger than the size limit the admin set) is not tried again until the file changes. ── */
+if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'hash_failed')) db.exec('ALTER TABLE roms ADD COLUMN hash_failed INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '60') ON CONFLICT(key) DO UPDATE SET value = '60'").run();

@@ -800,6 +800,9 @@
  "a few notes to read": {
   "files": 1
  },
+ "A fingerprint (CRC32, MD5 and SHA1) is worked out by reading a game's whole file. It is used to spot duplicates and to match a game to the official game lists exactly. It is not needed to play, download or launch a game: a game without one works as normal. Big files on a network share take a long time to read, so a scan now adds your games at once and the fingerprints follow in the background.": {
+  "files": 1
+ },
  "A free game database that lives on this server: no key, no limit, and lookups are instant. It matches by exact name, so it fills in games the other providers cannot find. It is tried after IGDB. Download it once (about 110 MB), then update it whenever you like.": {
   "files": 1
  },
@@ -1154,6 +1157,9 @@
  "As an admin your Hide takes this game away from every member as well. It stays in the Library under Hidden, where you can show it again.": {
   "files": 1
  },
+ "As before: the scan takes as long as reading every new file.": {
+  "files": 1
+ },
  "Asking the launcher on this PC…": {
   "files": 1
  },
@@ -1273,6 +1279,9 @@
  },
  "Big Screen: the Library for a TV, played with a gamepad": {
   "files": 2
+ },
+ "Bigger files are left without one (they play as normal). 0 means every file is read.": {
+  "files": 1
  },
  "BIOS and devices": {
   "files": 1
@@ -1521,6 +1530,9 @@
   "files": 1
  },
  "Choose the emulators this PC uses (opens a small setup page on this PC)": {
+  "files": 1
+ },
+ "Choose when the fingerprints are made from the list.": {
   "files": 1
  },
  "Choose your own password": {
@@ -2090,6 +2102,12 @@
  "duplicate of “{b}”": {
   "files": 1
  },
+ "duplicates removed in this run": {
+  "files": 1
+ },
+ "During the scan": {
+  "files": 1
+ },
  "Edit": {
   "files": 3
  },
@@ -2157,6 +2175,9 @@
   "files": 1
  },
  "Every game already has its details": {
+  "files": 1
+ },
+ "Every game has its fingerprints.": {
   "files": 1
  },
  "Every message in it is deleted for you only. The other person keeps their copy, and a new message from them starts a fresh conversation.": {
@@ -2291,6 +2312,9 @@
  "filename only": {
   "files": 1
  },
+ "files could not be read and are skipped until they change": {
+  "files": 1
+ },
  "Fill the gaps": {
   "files": 1
  },
@@ -2329,6 +2353,9 @@
  },
  "Finding files…": {
   "files": 1
+ },
+ "Fingerprints": {
+  "files": 2
  },
  "Fit the width": {
   "files": 1
@@ -2426,6 +2453,9 @@
  "Found for your games": {
   "files": 1
  },
+ "From": {
+  "files": 1
+ },
  "From date": {
   "files": 1
  },
@@ -2505,6 +2535,12 @@
   "files": 2
  },
  "games across": {
+  "files": 1
+ },
+ "games are waiting for the overnight window": {
+  "files": 1
+ },
+ "games are waiting for their fingerprints.": {
   "files": 1
  },
  "Games by genre": {
@@ -2843,6 +2879,9 @@
  "In Steam: Profile → Edit profile → Privacy settings → set": {
   "files": 1
  },
+ "In the background, one game at a time.": {
+  "files": 1
+ },
  "In the backup": {
   "files": 1
  },
@@ -2946,6 +2985,12 @@
   "files": 1
  },
  "Language": {
+  "files": 1
+ },
+ "large files skipped (over the size limit)": {
+  "files": 1
+ },
+ "Largest file to fingerprint": {
   "files": 1
  },
  "Last fetched {a} UTC ({b} games).": {
@@ -3998,6 +4043,9 @@
  "over 8 MB": {
   "files": 1
  },
+ "Overnight only": {
+  "files": 1
+ },
  "Overwrite": {
   "files": 1
  },
@@ -4634,6 +4682,9 @@
  "Review Xbox Digital entries": {
   "files": 2
  },
+ "Right after a scan": {
+  "files": 1
+ },
  "Right edge of the spine": {
   "files": 1
  },
@@ -4692,6 +4743,9 @@
   "files": 1
  },
  "Run": {
+  "files": 1
+ },
+ "Run now": {
   "files": 1
  },
  "Run the welcome tour again": {
@@ -5654,6 +5708,9 @@
  "The saved key could not be read. Save it again.": {
   "files": 1
  },
+ "The size limit is a number of gigabytes, or 0 for no limit.": {
+  "files": 1
+ },
  "The Steam ID should be the 17-digit number (starting 7656119…) or your steamcommunity.com/profiles/… link.": {
   "files": 1
  },
@@ -5828,6 +5885,9 @@
  "This removes your Steam key, your games list, and your favourites, hidden games and play-button choices from game-sauce. Nothing changes on Steam.": {
   "files": 1
  },
+ "This server's clock. Games wait for the window and carry on the next night if it closes first.": {
+  "files": 1
+ },
  "This source's games are hidden from the library": {
   "files": 1
  },
@@ -5847,6 +5907,9 @@
   "files": 1
  },
  "Tick the box to remove imported files from storage/roms as well. Unticked = catalogue rows only, every file stays on disk.": {
+  "files": 1
+ },
+ "Times are written as HH:MM, for example 01:30.": {
   "files": 1
  },
  "Title": {

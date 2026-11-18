@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Scans no longer wait for the fingerprints.** A scan used to read every new file in full (CRC32, MD5 and SHA1) before adding it, which made adding big files or many files very slow, especially from a network share. A scan now adds the games straight away and a background job reads the files afterwards, one game at a time. A new Settings > Maintenance > **Fingerprints** page shows its progress and lets the admin choose when it runs: right after a scan (the default), only inside an **overnight window** (it carries on the next night if the window closes first), or during the scan as before. **Run now** and **Stop** are there too, and a **Largest file to fingerprint** limit leaves very big files (such as 30 to 150 GB packages) without one. A game does not need its fingerprints to be played, downloaded or launched; they are used to find duplicates (the duplicate that is found is removed once its fingerprint is known, the older entry stays) and to match a game to the official game lists exactly. Games still waiting carry on after a restart. `GAMESAUCE_HASH_MODE` (background, overnight or inline) fixes the choice from the environment.
+
 ## [0.15.0] - 2026-11-18
 
 ### Added
