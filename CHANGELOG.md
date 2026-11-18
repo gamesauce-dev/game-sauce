@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **Xbox 360 Games on Demand in an archive now start.** The launcher chose the biggest file in the unpacked title (one of the `Data0000...` parts), which Xenia cannot start. It now gives Xenia the small extensionless package under the `00007000` folder, the file that starts a Games on Demand game. Download the launcher again to get it.
+
 ## [0.15.0] - 2026-11-18
 
 ### Added

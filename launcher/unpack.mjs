@@ -40,13 +40,13 @@ export function globTest(pattern) {
 /* What to start, best first, per platform. A rule is a test on the path (lower case, forward slashes) and the picks are the shallowest, then the biggest. */
 const ISO = (p) => p.endsWith('.iso');
 const RULES = {
-  xbox360: [ISO, (p) => p.endsWith('/default.xex') || p === 'default.xex', (p) => p.endsWith('.xex'), (p) => /(^|\/)000d0000\/[^/.]+$/.test(p)],   // the last: an Xbox Live Arcade package
+  xbox360: [ISO, (p) => p.endsWith('/default.xex') || p === 'default.xex', (p) => p.endsWith('.xex'), (p) => /(^|\/)000d0000\/[^/.]+$/.test(p), (p) => /(^|\/)00007000\/[^/.]+$/.test(p)],   // the last two: an Xbox Live Arcade package, and a Games on Demand package (the small extensionless file beside its .data folder: it is what Xenia starts)
   xbox: [ISO, (p) => p.endsWith('/default.xbe') || p === 'default.xbe', (p) => p.endsWith('.xbe')],
   ps3: [ISO, (p) => /(^|\/)ps3_game\/usrdir\/eboot\.bin$/.test(p), (p) => /(^|\/)eboot\.bin$/.test(p)],
   wiiu: [(p) => p.endsWith('.wua'), (p) => p.endsWith('.wud') || p.endsWith('.wux'), (p) => /(^|\/)code\/[^/]+\.rpx$/.test(p)],
   default: [(p) => p.endsWith('.cue'), (p) => p.endsWith('.gdi'), (p) => p.endsWith('.m3u'), ISO, (p) => p.endsWith('.chd')]
 };
-RULES.xbla = RULES.xbox360;   // a zipped Xbox Live Arcade game starts the way an Xbox 360 one does (its package is the last rule)
+RULES.xbla = RULES.xbox360;   // a zipped Xbox Live Arcade game starts the way an Xbox 360 one does (the packages are the last rules)
 const JUNK = /(^|\/)(__macosx|\.ds_store|thumbs\.db|desktop\.ini)(\/|$)|\.(txt|nfo|jpg|jpeg|png|url|diz|md5|sfv|sha1)$/i;
 
 /**

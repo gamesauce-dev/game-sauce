@@ -22,6 +22,13 @@ test('unpack: which file starts the game', () => {
   assert.equal(U.pickLaunchFile([f('Halo.iso', 8e9), f('default.xex')], 'xbox360'), 'Halo.iso', 'an .iso wins');
   assert.equal(U.pickLaunchFile([f('a/b/default.xex'), f('default.xex')], 'xbox360'), 'default.xex', 'the shallowest');
   assert.equal(U.pickLaunchFile([f('Game.xex'), f('Game.png')], 'xbox360'), 'Game.xex');
+  // A Games on Demand game (Legend of Kay): the small extensionless package under 00007000 starts it, never one of the big Data parts beside it.
+  const god = 'Legend of Kay - Anniversary/354807DD/00007000/13DE4AB27FEF46DA8A51';
+  const gameFiles = [f(god, 45056), ...Array.from({ length: 16 }, (_, i) => f(`${god}.data/Data${String(i).padStart(4, '0')}`, 170459136))];
+  assert.equal(U.pickLaunchFile(gameFiles, 'xbox360'), god, 'the GoD package, not Data0000');
+  assert.equal(U.pickLaunchFile(gameFiles, 'xbla'), god);
+  assert.equal(U.pickLaunchFile([...gameFiles, f('Legend/354807DD/000B0000/readme.txt', 9)], 'xbox360'), god, 'an empty title-update folder does not matter');
+  assert.equal(U.pickLaunchFile([f('Halo.iso', 8e9), ...gameFiles], 'xbox360'), 'Halo.iso', 'an .iso still wins');
   // PS3: an .iso, else the game folder's EBOOT.BIN
   assert.equal(U.pickLaunchFile([f('BLUS1/PS3_GAME/USRDIR/EBOOT.BIN'), f('BLUS1/PS3_GAME/PARAM.SFO'), f('BLUS1/PS3_DISC.SFB')], 'ps3'), 'BLUS1/PS3_GAME/USRDIR/EBOOT.BIN');
   assert.equal(U.pickLaunchFile([f('x/EBOOT.BIN'), f('PS3_GAME/USRDIR/EBOOT.BIN')], 'ps3'), 'PS3_GAME/USRDIR/EBOOT.BIN');
