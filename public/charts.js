@@ -36,7 +36,7 @@ export function donutCard({ title, parts, centre, other = 'Other', unit = 'games
 export function stackedCard({ title, rows, segments, note = '', of = 'of' }) {
   const body = rows.map((r) => {
     const t = r.count || 1;
-    const bar = segments.map((s, i) => { const v = r[s.key] || 0; return v ? `<div class="s${i + 1}" style="width:${(v / t) * 100}%" title="${esc(s.label)}: ${num(v)} (${Math.round((v / t) * 100)}%)"></div>` : ''; }).join('');
+    const bar = segments.map((s, i) => { const v = r[s.key] || 0; return v ? `<div class="s${i + 1}${r.slug ? ' go' : ''}" style="width:${(v / t) * 100}%" title="${esc(s.label)}: ${num(v)} (${Math.round((v / t) * 100)}%)"${r.slug ? ` role="button" tabindex="0" data-seg="${esc(s.key)}" data-row="${esc(r.slug)}"` : ''}></div>` : ''; }).join('');
     return `<div class="rp-lbl"><span>${esc(r.label)}</span><span>${Math.round(((r[segments[0].key] || 0) / t) * 100)}% ${esc(segments[0].label.toLowerCase())} <small>${esc(of)} ${num(r.count)}</small></span></div><div class="rp-stk">${bar}</div>`;
   }).join('');
   const legend = segments.map((s, i) => `<span><s class="s${i + 1}"></s>${esc(s.label)}</span>`).join('');

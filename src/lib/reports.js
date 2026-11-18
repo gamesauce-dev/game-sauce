@@ -94,8 +94,8 @@ export function collectReports() {
     p.count++; p[g.kind]++; if (!p.slug && g.slug) p.slug = g.slug; plat.set(g.pkey, p);
     for (const x of g.genres) genre.set(x, (genre.get(x) || 0) + 1);
     if (g.year) year.set(String(g.year), (year.get(String(g.year)) || 0) + 1);
-    const c = comp.get(g.pkey) || { label: g.platform, count: 0, complete: 0, no_cover: 0, no_desc: 0, neither: 0 };
-    c.count++;
+    const c = comp.get(g.pkey) || { label: g.platform, slug: g.slug, count: 0, complete: 0, no_cover: 0, no_desc: 0, neither: 0 };
+    c.count++; if (!c.slug && g.slug) c.slug = g.slug;
     if (g.cover && g.desc) c.complete++; else if (!g.cover && g.desc) c.no_cover++; else if (g.cover && !g.desc) c.no_desc++; else c.neither++;
     comp.set(g.pkey, c);
   }

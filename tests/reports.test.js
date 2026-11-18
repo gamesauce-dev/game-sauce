@@ -116,6 +116,18 @@ test('Every generation keeps its games in the same-game list, however many earli
   assert.ok(cp.groups.some((g) => g.gen === 9 && g.title === 'Late Game'), 'a generation 9 game is not cut off by the 1,000+ groups before it');
 });
 
+test('A part of a completeness bar opens that platform in the Library with the same gap: no description is a Library filter, and the bar carries the platform', async () => {
+  const withoutDesc = db.prepare("SELECT COUNT(*) AS n FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE p.slug = 'snes' AND r.is_system = 0 AND (r.description IS NULL OR TRIM(r.description) = '')").get().n;
+  const list = (await call('/api/roms?platform=snes&desc=0&limit=5000')).body;
+  assert.equal(list.total ?? list.items?.length, withoutDesc, 'desc=0 lists exactly the games with no description');
+  const all = (await call('/api/roms?platform=snes&limit=5000')).body;
+  assert.ok((all.total ?? all.items.length) > withoutDesc, 'and not every game');
+  const row = (await call('/api/admin/reports')).body.completeness.find((c) => c.label === 'Super Nintendo');
+  assert.equal(row.slug, 'snes');
+  const app = read('public/app.js'), rep = read('public/reports.js');
+  assert.ok(app.includes("params.set('desc', '0')") && app.includes("label: 'No description'") && rep.includes("data-seg"));
+});
+
 test('A daily snapshot is written once a day and comes back as history', async () => {
   db.prepare('DELETE FROM report_snapshots').run();   // earlier requests in this file already wrote today's row
   const a = (await call('/api/admin/reports')).body;

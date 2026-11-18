@@ -490,6 +490,7 @@ router.get('/', (req, res) => {
   // the rest are names taken from the file.
   if (req.query.cover === '0') { sweepMissingCovers(); where.push('r.cover_path IS NULL'); }
   if (req.query.cover === '1') where.push('r.cover_path IS NOT NULL');
+  if (req.query.desc === '0') where.push("(r.description IS NULL OR TRIM(r.description) = '')");
   if (req.query.matched === '1') where.push("(r.meta_source IS NOT NULL AND r.meta_source NOT IN ('', 'none', 'filename', 'seed'))");
   if (req.query.matched === '0') where.push("(r.meta_source IS NULL OR r.meta_source IN ('', 'none', 'filename', 'seed'))");
   if (req.query.missing === '1') where.push('r.missing = 1');

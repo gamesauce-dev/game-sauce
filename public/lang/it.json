@@ -2033,7 +2033,6 @@
  "Games by genre": "Giochi per genere",
  "Games by release year": "Giochi per anno di uscita",
  "Completeness by platform": "Completezza per piattaforma",
- "the 14 biggest platforms": "le 14 piattaforme più grandi",
  "of": "su",
  "Complete": "Completo",
  "Neither": "Nessuno dei due",
@@ -2057,5 +2056,6 @@
  "no console generation": "nessuna generazione di console",
  "also on {n} other platform(s) of this generation": "anche su altre {n} piattaforme di questa generazione",
  "not on another platform of this generation": "su nessun’altra piattaforma di questa generazione",
- "No game with that name.": "Nessun gioco con questo nome."
+ "No game with that name.": "Nessun gioco con questo nome.",
+ "the 14 biggest platforms; click a part of a bar to see those games": "le 14 piattaforme più grandi; clicca su una parte della barra per vedere quei giochi"
 }

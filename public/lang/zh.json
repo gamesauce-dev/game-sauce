@@ -2020,7 +2020,6 @@
  "Games by genre": "按类型统计的游戏",
  "Games by release year": "按发行年份统计的游戏",
  "Completeness by platform": "各平台的完整度",
- "the 14 biggest platforms": "最大的 14 个平台",
  "of": "/",
  "Complete": "完整",
  "Neither": "两者都没有",
@@ -2044,5 +2043,6 @@
  "no console generation": "无主机世代",
  "also on {n} other platform(s) of this generation": "同一代还有 {n} 个其他平台",
  "not on another platform of this generation": "同一代没有其他平台",
- "No game with that name.": "没有该名称的游戏。"
+ "No game with that name.": "没有该名称的游戏。",
+ "the 14 biggest platforms; click a part of a bar to see those games": "最大的 14 个平台；点击条形的某一段即可查看对应游戏"
 }

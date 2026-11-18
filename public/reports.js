@@ -28,7 +28,7 @@ function draw() {
       ${card('platforms', 'Games by platform', 'platforms')}
       ${card('genres', 'Games by genre', 'genres')}
       ${card('years', 'Games by release year', 'years')}
-      ${stackedCard({ title: t('Completeness by platform'), note: t('the 14 biggest platforms'), of: t('of'), rows: data.completeness || [],
+      ${stackedCard({ title: t('Completeness by platform'), note: t('the 14 biggest platforms; click a part of a bar to see those games'), of: t('of'), rows: data.completeness || [],
         segments: [{ key: 'complete', label: t('Complete') }, { key: 'no_cover', label: t('No cover') }, { key: 'no_desc', label: t('No description') }, { key: 'neither', label: t('Neither') }] })}
       ${sameGameCard({ title: t('The same game on several platforms'), note: t('ROM library, shelves and Digital together; same console generation; for information'), groups: cp.groups, byGen: cp.by_generation, gen, all: open.has('same'),
         genLabel: (g) => t('Generation {n}', { n: g }), more: t('show all'), less: t('show fewer'), empty: t('No game turns up on more than one platform of a generation.'), check: t('Check a title'), checkHint: t('Type part of a game name') })}
@@ -41,6 +41,13 @@ function draw() {
 function onClick(e) {
   const more = e.target.closest('[data-more]');
   if (more) { const id = more.dataset.more; open.has(id) ? open.delete(id) : open.add(id); draw(); return; }
+  const seg = e.target.closest('[data-seg]');
+  if (seg) {   // a part of a completeness bar: that platform's games with that gap (no cover, no description, or both)
+    const k = seg.dataset.seg, go = { platform: seg.dataset.row };
+    if (k === 'no_cover' || k === 'neither') go.cover = 'none';
+    if (k === 'no_desc' || k === 'neither') go.desc = 'none';
+    ctx.openLibrary(go); return;
+  }
   const tab = e.target.closest('[data-gen]');
   if (tab) { gen = Number(tab.dataset.gen); open.delete('same'); draw(); return; }
   const row = e.target.closest('[data-go]');
@@ -61,7 +68,7 @@ async function find(form) {
 /** Show the Reports panel's charts. ctx: { api, t, openLibrary({ platform?, genre? }) }. */
 export async function load(el, c) {
   root = el; ctx = c;
-  if (!root.dataset.wired) { root.dataset.wired = '1'; root.addEventListener('submit', (e) => { if (e.target.closest('.rp-find')) { e.preventDefault(); find(e.target).catch(() => {}); } }); root.addEventListener('click', onClick); root.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-go]')) { e.preventDefault(); onClick(e); } }); }
+  if (!root.dataset.wired) { root.dataset.wired = '1'; root.addEventListener('submit', (e) => { if (e.target.closest('.rp-find')) { e.preventDefault(); find(e.target).catch(() => {}); } }); root.addEventListener('click', onClick); root.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-go], [data-seg]')) { e.preventDefault(); onClick(e); } }); }
   root.innerHTML = `<p class="hint">${esc(ctx.t('Counting the collection…'))}</p>`;
   data = await ctx.api('/admin/reports');
   draw();

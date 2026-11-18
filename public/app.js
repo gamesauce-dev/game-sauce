@@ -40,6 +40,7 @@ const state = {
   unmatched: false,
   datStatus: null,
   cover: null,     // 'with' | 'none': from the Stats totals
+  desc: null,      // 'none': games with no description (from Settings > Reports)
   matched: null,   // 'yes' | 'no': from the Stats totals
   incl: null,      // 'all' (hidden and System games too) | 'hidden' (hidden games too): the Stats page counts them, so its links must
   selectMode: false,
@@ -553,13 +554,13 @@ function renderLibHeading() {
 function filtersActive() {
   return Boolean(state.q || state.platform !== 'all' || (state.extraPlatforms || []).length || state.tag || state.genre || state.favorite
     || state.source || state.missing || state.hidden || state.system || state.orphan || state.locked || state.unmatched
-    || state.datStatus || state.cover || state.matched || state.incl);
+    || state.datStatus || state.cover || state.desc || state.matched || state.incl);
 }
 /** Back to the whole library: search cleared, every platform and filter off. Sort and tile size stay as the person set them. */
 async function resetFilters() {
   state.azOffset = 0; state.azLetter = null; state.azFor = null;   // the list starts at its beginning again
   Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null, libKey: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null, libKey: null });
   const sb = $('#search'); if (sb) sb.value = '';
   const tq = $('#tl-q'); if (tq) tq.value = '';
   const g = $('#grid'); if (g) g.scrollTop = 0;
@@ -580,6 +581,7 @@ function activeFilterChips() {
   if (state.datStatus) chips.push({ label: `DAT: ${state.datStatus}`, clear: () => { state.datStatus = null; } });
   if (state.incl) chips.push({ label: state.incl === 'all' ? 'Including hidden and System games' : 'Including hidden games', clear: () => { state.incl = null; } });
   if (state.cover) chips.push({ label: state.cover === 'none' ? 'No cover' : 'With a cover', clear: () => { state.cover = null; } });
+  if (state.desc) chips.push({ label: 'No description', clear: () => { state.desc = null; } });
   if (state.matched) chips.push({ label: state.matched === 'yes' ? 'Matched by a provider or DAT' : 'Name from the file only', clear: () => { state.matched = null; } });
   if (state.hidden) chips.push({ label: 'Hidden only', clear: () => { state.hidden = false; } });
   if (state.system) chips.push({ label: 'System entries', clear: () => { state.system = false; } });
@@ -648,7 +650,7 @@ async function loadLibrary() {
   // owns the full height.
   if (state.platform === 'all') state.extraPlatforms = [];
   const isHome = !state.q && state.platform === 'all' && !state.tag && !state.genre &&
-    !state.favorite && !state.source && !state.missing && !state.datStatus && !state.cover && !state.matched && !state.incl &&
+    !state.favorite && !state.source && !state.missing && !state.datStatus && !state.cover && !state.desc && !state.matched && !state.incl &&
     !state.hidden && !state.system && !orphanOnly && !unmatchedOnly && !lockedOnly;
   $('#lib-overview')?.classList.toggle('hidden', !isHome);
   $('#lib-recent-wrap')?.classList.toggle('hidden', !isHome);
@@ -669,6 +671,7 @@ async function loadLibrary() {
   if (state.datStatus) params.set('dat_status', state.datStatus);
   if (state.incl && !orphanOnly && !unmatchedOnly && !state.system && !state.hidden) { params.set('hidden', 'all'); if (state.incl === 'all') params.set('system', 'all'); }
   if (state.cover) params.set('cover', state.cover === 'none' ? '0' : '1');
+  if (state.desc) params.set('desc', '0');
   if (state.matched) params.set('matched', state.matched === 'yes' ? '1' : '0');
   if (unmatchedOnly) { params.set('unmatched', 'only'); params.set('hidden', 'all'); }
   else if (orphanOnly) { params.set('orphan', 'only'); params.set('hidden', 'all'); }
@@ -4185,7 +4188,7 @@ function showApp(user, { restore = false } = {}) {
     // Fresh start: forget filters from any earlier session in this tab.
     clearNav();
     Object.assign(state, { platform: 'all', q: '', sort: 'title', tag: null, genre: null, favorite: false,
-      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null });
     $('#search').value = '';
     $('#sort').value = 'title';
     activeSettingsModule = null;
@@ -4830,10 +4833,10 @@ async function loadStatsPanel() {
 }
 
 /** Open the Library on one platform or one genre (from a click in Settings > Reports). */
-function openLibraryWith({ platform = 'all', genre = null } = {}) {
+function openLibraryWith({ platform = 'all', genre = null, cover = null, desc = null } = {}) {
   closeDrawer();
   Object.assign(state, { platform, extraPlatforms: [], q: '', tag: null, genre, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover, desc, matched: null, incl: null });
   const sb = $('#search'); if (sb) sb.value = '';
   state.libKey = null;
   setView('library');
@@ -4845,7 +4848,7 @@ function openLibraryWith({ platform = 'all', genre = null } = {}) {
 function openLibraryFor(kind) {
   closeDrawer();
   Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null });
   const sb = $('#search'); if (sb) sb.value = '';
   // The Stats page counts every game, so the lists these links open include hidden games (and System ones where the total does).
   if (kind === 'all' || kind === 'matched' || kind === 'unmatched-name' || kind === 'cover' || kind === 'missing') state.incl = 'all';

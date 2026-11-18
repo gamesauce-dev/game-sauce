@@ -2022,7 +2022,6 @@
  "Games by genre": "ジャンル別のゲーム",
  "Games by release year": "発売年別のゲーム",
  "Completeness by platform": "プラットフォーム別の充実度",
- "the 14 biggest platforms": "上位14のプラットフォーム",
  "of": "/",
  "Complete": "完全",
  "Neither": "どちらもなし",
@@ -2046,5 +2045,6 @@
  "no console generation": "世代情報なし",
  "also on {n} other platform(s) of this generation": "この世代のほかの{n}プラットフォームにもあり",
  "not on another platform of this generation": "この世代のほかのプラットフォームにはなし",
- "No game with that name.": "その名前のゲームはありません。"
+ "No game with that name.": "その名前のゲームはありません。",
+ "the 14 biggest platforms; click a part of a bar to see those games": "上位14のプラットフォーム。バーの一部をクリックすると該当ゲームを表示"
 }
