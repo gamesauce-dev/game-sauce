@@ -699,6 +699,7 @@ test('arcade romsets keep their own file name (MAME finds a game by it); other p
   assert.equal(link().file, 'sf2');
   assert.equal(launcher.copyName(link(), {}), 'sf2.zip', 'MAME gets sf2.zip, not the title');
   assert.equal(launcher.copyName(link({ platform: 'fba', file: 'sf2ue' }), {}), 'sf2ue.zip');
+  for (const p of ['neogeo', 'naomi', 'atomiswave', 'segamodel2', 'segamodel3']) assert.equal(launcher.copyName(link({ platform: p, file: 'mslug' }), {}), 'mslug.zip', p + ' keeps the set name');
   assert.equal(launcher.copyName(link({ platform: 'snes', ext: '.sfc', file: 'Some Game (USA)' }), {}), launcher.safeFileName('Street Fighter II: The World Warrior', '.sfc'), 'a console game keeps the title');
   assert.equal(launcher.copyName(link({ platform: 'snes', ext: '.sfc', file: 'Some Game (USA)' }), { keepFileName: true }), 'Some Game (USA).sfc', 'unless the entry asks for the file name');
   assert.equal(launcher.copyName(link({ file: '' }), {}), launcher.safeFileName('Street Fighter II: The World Warrior', '.zip'), 'an older page sends no file name: the title, as before');

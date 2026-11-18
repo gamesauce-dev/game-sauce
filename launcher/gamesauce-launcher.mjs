@@ -130,8 +130,8 @@ export function parseConfigureUrl(raw) {
 }
 
 /** A safe file name for the temporary copy: the game's title (some emulators guess the system from the name) plus extension. */
-/** Platforms whose emulator finds a game by its file name (MAME and the other arcade romsets): the copy keeps the ROM's own name, not the game's title. An entry can ask for it too ("keepFileName": true). */
-export const KEEP_FILE_NAME = new Set(['mame', 'arcade', 'fba']);
+/** Platforms whose emulator finds a game by its file name (MAME, FinalBurn Neo, Neo Geo, NAOMI and the other arcade romsets): the copy keeps the ROM's own name, not the game's title. An entry can ask for it too ("keepFileName": true). */
+export const KEEP_FILE_NAME = new Set(['mame', 'arcade', 'fba', 'neogeo', 'naomi', 'atomiswave', 'segamodel2', 'segamodel3']);
 export const copyName = (link, entry) => ((KEEP_FILE_NAME.has(link.platform) || entry?.keepFileName === true) && link.file ? link.file + (link.ext || '') : safeFileName(link.title, link.ext === '.xbla' ? '' : link.ext));
 
 export function safeFileName(title, ext) {
