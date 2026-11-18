@@ -161,6 +161,12 @@ export function createApp() {
     res.json({ ...rep, history: listSnapshots() });
   });
 
+  // "Why is this game not listed as being on several platforms?": the games matching some words, with what the report knows about each.
+  api.get('/admin/reports/find', requireAuth, requireAdmin, async (req, res) => {
+    const { findTitle } = await import('./lib/reports.js');
+    res.json({ items: findTitle(String(req.query.q || '').slice(0, 80)) });
+  });
+
   api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {
     const { collectHealth, collectSummary, diagnosticsText } = await import('./lib/health.js');
     const report = collectHealth();

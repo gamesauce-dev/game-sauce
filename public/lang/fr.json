@@ -2025,7 +2025,6 @@
  "Complete": "Complet",
  "Neither": "Ni l’un ni l’autre",
  "The same game on several platforms": "Le même jeu sur plusieurs plateformes",
- "same console generation, for information": "même génération de consoles, à titre d’information",
  "Generation {n}": "Génération {n}",
  "show all": "tout afficher",
  "show fewer": "afficher moins",
@@ -2037,5 +2036,13 @@
  "One reading a day: the trend appears as the days pass.": "Un relevé par jour : la tendance apparaîtra au fil des jours.",
  "Counts every account together; a game on several accounts is counted once. Hidden and System items are left out.": "Compte tous les comptes ensemble ; un jeu présent sur plusieurs comptes n’est compté qu’une fois. Les éléments masqués et système sont exclus.",
  "Counting the collection…": "Comptage de la collection…",
- "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "Toute la collection en graphiques : votre bibliothèque de ROM, les étagères physiques et les listes numériques réunies. Cliquez sur une plateforme ou un genre pour ouvrir ses jeux dans la bibliothèque."
+ "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "Toute la collection en graphiques : votre bibliothèque de ROM, les étagères physiques et les listes numériques réunies. Cliquez sur une plateforme ou un genre pour ouvrir ses jeux dans la bibliothèque.",
+ "Check a title": "Vérifier un titre",
+ "Type part of a game name": "Saisissez une partie du nom d’un jeu",
+ "ROM library, shelves and Digital together; same console generation; for information": "Bibliothèque de ROM, étagères et numérique réunis ; même génération de consoles ; à titre d’information",
+ "Physical shelf": "Étagère physique",
+ "no console generation": "pas de génération de console",
+ "also on {n} other platform(s) of this generation": "aussi sur {n} autre(s) plateforme(s) de cette génération",
+ "not on another platform of this generation": "sur aucune autre plateforme de cette génération",
+ "No game with that name.": "Aucun jeu de ce nom."
 }

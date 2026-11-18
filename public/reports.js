@@ -30,8 +30,8 @@ function draw() {
       ${card('years', 'Games by release year', 'years')}
       ${stackedCard({ title: t('Completeness by platform'), note: t('the 14 biggest platforms'), of: t('of'), rows: data.completeness || [],
         segments: [{ key: 'complete', label: t('Complete') }, { key: 'no_cover', label: t('No cover') }, { key: 'no_desc', label: t('No description') }, { key: 'neither', label: t('Neither') }] })}
-      ${sameGameCard({ title: t('The same game on several platforms'), note: t('same console generation, for information'), groups: cp.groups, byGen: cp.by_generation, gen, all: open.has('same'),
-        genLabel: (g) => t('Generation {n}', { n: g }), more: t('show all'), less: t('show fewer'), empty: t('No game turns up on more than one platform of a generation.') })}
+      ${sameGameCard({ title: t('The same game on several platforms'), note: t('ROM library, shelves and Digital together; same console generation; for information'), groups: cp.groups, byGen: cp.by_generation, gen, all: open.has('same'),
+        genLabel: (g) => t('Generation {n}', { n: g }), more: t('show all'), less: t('show fewer'), empty: t('No game turns up on more than one platform of a generation.'), check: t('Check a title'), checkHint: t('Type part of a game name') })}
       ${years.length > 1 ? columnsCard({ title: t('Release years, in order'), rows: years, note: t('the latest 40 years with games') }) : ''}
       ${columnsCard({ title: t('Collection size by day'), rows: hist, note: hist.length > 1 ? t('one reading a day') : t('One reading a day: the trend appears as the days pass.') })}
     </div>
@@ -47,10 +47,21 @@ function onClick(e) {
   if (row) { const r = rows(row.dataset.go)[Number(row.dataset.i)]; if (r?.go) ctx.openLibrary(r.go); }
 }
 
+const KIND = { roms: 'ROM library', physical: 'Physical shelf', digital: 'Digital' };
+async function find(form) {
+  const out = form.parentNode.querySelector('.rp-found'), q = form.q.value.trim();
+  if (q.length < 2) { out.textContent = ''; return; }
+  const { items } = await ctx.api('/admin/reports/find?q=' + encodeURIComponent(q));
+  const t = ctx.t;
+  out.innerHTML = items.length ? `<table>${items.map((i) => `<tr><td>${esc(i.title)}</td><td>${esc(i.platform)}</td><td>${esc(t(KIND[i.kind] || i.kind))}</td>
+    <td>${i.gen ? esc(t('Generation {n}', { n: i.gen })) : esc(t('no console generation'))}</td>
+    <td class="${i.same_generation ? 'ok' : 'no'}">${i.same_generation ? esc(t('also on {n} other platform(s) of this generation', { n: i.same_generation })) : esc(t('not on another platform of this generation'))}</td></tr>`).join('')}</table>` : `<span class="no">${esc(t('No game with that name.'))}</span>`;
+}
+
 /** Show the Reports panel's charts. ctx: { api, t, openLibrary({ platform?, genre? }) }. */
 export async function load(el, c) {
   root = el; ctx = c;
-  if (!root.dataset.wired) { root.dataset.wired = '1'; root.addEventListener('click', onClick); root.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-go]')) { e.preventDefault(); onClick(e); } }); }
+  if (!root.dataset.wired) { root.dataset.wired = '1'; root.addEventListener('submit', (e) => { if (e.target.closest('.rp-find')) { e.preventDefault(); find(e.target).catch(() => {}); } }); root.addEventListener('click', onClick); root.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-go]')) { e.preventDefault(); onClick(e); } }); }
   root.innerHTML = `<p class="hint">${esc(ctx.t('Counting the collection…'))}</p>`;
   data = await ctx.api('/admin/reports');
   draw();

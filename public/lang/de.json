@@ -2027,7 +2027,6 @@
  "Complete": "Vollständig",
  "Neither": "Weder noch",
  "The same game on several platforms": "Dasselbe Spiel auf mehreren Plattformen",
- "same console generation, for information": "gleiche Konsolengeneration, nur zur Information",
  "Generation {n}": "Generation {n}",
  "show all": "alle anzeigen",
  "show fewer": "weniger anzeigen",
@@ -2039,5 +2038,13 @@
  "One reading a day: the trend appears as the days pass.": "Eine Messung pro Tag: der Verlauf erscheint mit den Tagen.",
  "Counts every account together; a game on several accounts is counted once. Hidden and System items are left out.": "Zählt alle Konten zusammen; ein Spiel auf mehreren Konten wird einmal gezählt. Versteckte und System-Einträge sind nicht enthalten.",
  "Counting the collection…": "Sammlung wird gezählt …",
- "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "Die ganze Sammlung als Diagramme: ROM-Bibliothek, Physische Regale und Digital-Listen zusammen. Klicke auf eine Plattform oder ein Genre, um die Spiele in der Bibliothek zu öffnen."
+ "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "Die ganze Sammlung als Diagramme: ROM-Bibliothek, Physische Regale und Digital-Listen zusammen. Klicke auf eine Plattform oder ein Genre, um die Spiele in der Bibliothek zu öffnen.",
+ "Check a title": "Titel prüfen",
+ "Type part of a game name": "Teil eines Spielnamens eingeben",
+ "ROM library, shelves and Digital together; same console generation; for information": "ROM-Bibliothek, Regale und Digital zusammen; gleiche Konsolengeneration; nur zur Information",
+ "Physical shelf": "Physisches Regal",
+ "no console generation": "keine Konsolengeneration",
+ "also on {n} other platform(s) of this generation": "auch auf {n} weiteren Plattform(en) dieser Generation",
+ "not on another platform of this generation": "auf keiner weiteren Plattform dieser Generation",
+ "No game with that name.": "Kein Spiel mit diesem Namen."
 }

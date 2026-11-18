@@ -84,6 +84,30 @@ test('The same game on several platforms of one generation is listed; different 
   assert.equal(cp.by_generation.find((g) => g.gen === 6).count, 1);
 });
 
+test('One console is one platform whichever library it is in, and Digital takes the Library platform name', async () => {
+  db.prepare("UPDATE platforms SET name = 'XBOX 360' WHERE slug = 'xbox360'").run();   // a Library platform renamed (here in capitals)
+  rom('xbox360', 'Far Cry 3');
+  const uid = db.prepare("SELECT id FROM users WHERE username = 'rpadmin'").get().id;
+  db.prepare("INSERT INTO digital_games (user_id, store, app_id, name, platform) VALUES (?, 'xbox', 'fc3', 'Far Cry 3', 'x360')").run(uid);
+  db.prepare("INSERT INTO digital_games (user_id, store, app_id, name, platform) VALUES (?, 'playstation', 'fc3p', 'Far Cry 3 Standard Edition', 'ps3')").run(uid);
+  const r = (await call('/api/admin/reports')).body;
+  const x = r.platforms.filter((p) => /xbox 360/i.test(p.label));
+  assert.equal(x.length, 1, 'one Xbox 360 entry, not two');
+  assert.equal(x[0].label, 'XBOX 360'); assert.equal(x[0].roms >= 1 && x[0].digital >= 1, true, 'the ROM and the Digital game are both in it');
+  const g = r.cross_platform.groups.find((y) => /far cry 3/i.test(y.title));
+  assert.ok(g, 'Far Cry 3 is on two platforms of generation 7 (an edition word does not split it)');
+  assert.deepEqual(g.platforms.map((p) => p.name).sort(), ['Sony PlayStation 3', 'XBOX 360'].sort());
+  assert.deepEqual(g.platforms.find((p) => p.name === 'XBOX 360').kinds, ['digital', 'roms']);
+});
+
+test('Check a title says what the report knows about a game, and is for the admin only', async () => {
+  assert.equal((await call('/api/admin/reports/find?q=far', userTok)).status, 403);
+  const { items } = (await call('/api/admin/reports/find?q=far%20cry')).body;
+  assert.ok(items.length >= 3 && items.every((i) => i.gen === 7));
+  assert.ok(items.every((i) => i.same_generation === 1), 'each copy is also on one other platform of its generation');
+  assert.deepEqual((await call('/api/admin/reports/find?q=x')).body.items, [], 'too short a search gives nothing');
+});
+
 test('A daily snapshot is written once a day and comes back as history', async () => {
   db.prepare('DELETE FROM report_snapshots').run();   // earlier requests in this file already wrote today's row
   const a = (await call('/api/admin/reports')).body;

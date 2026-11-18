@@ -2027,7 +2027,6 @@
  "Complete": "完全",
  "Neither": "どちらもなし",
  "The same game on several platforms": "複数のプラットフォームにある同じゲーム",
- "same console generation, for information": "同じ世代のゲーム機、参考情報のみ",
  "Generation {n}": "第{n}世代",
  "show all": "すべて表示",
  "show fewer": "表示を減らす",
@@ -2039,5 +2038,13 @@
  "One reading a day: the trend appears as the days pass.": "1日1回記録します。日が経つにつれて推移が表示されます。",
  "Counts every account together; a game on several accounts is counted once. Hidden and System items are left out.": "すべてのアカウントをまとめて集計します。複数のアカウントにあるゲームは1回だけ数えます。非表示とシステムの項目は含みません。",
  "Counting the collection…": "コレクションを集計中…",
- "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "コレクション全体をグラフで表示します。ROMライブラリ、実物の棚、デジタルのリストをまとめて集計します。プラットフォームやジャンルをクリックすると、そのゲームがライブラリで開きます。"
+ "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "コレクション全体をグラフで表示します。ROMライブラリ、実物の棚、デジタルのリストをまとめて集計します。プラットフォームやジャンルをクリックすると、そのゲームがライブラリで開きます。",
+ "Check a title": "タイトルを調べる",
+ "Type part of a game name": "ゲーム名の一部を入力",
+ "ROM library, shelves and Digital together; same console generation; for information": "ROMライブラリ、棚、デジタルをまとめて集計。同じ世代のゲーム機。参考情報のみ",
+ "Physical shelf": "実物の棚",
+ "no console generation": "世代情報なし",
+ "also on {n} other platform(s) of this generation": "この世代のほかの{n}プラットフォームにもあり",
+ "not on another platform of this generation": "この世代のほかのプラットフォームにはなし",
+ "No game with that name.": "その名前のゲームはありません。"
 }

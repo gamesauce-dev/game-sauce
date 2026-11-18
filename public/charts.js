@@ -51,11 +51,12 @@ export function columnsCard({ title, rows, note = '' }) {
 }
 
 /** The same game on several platforms of one generation. groups: [{ title, gen, platforms: [{ name }] }]. Tabs pick the generation; informational only. */
-export function sameGameCard({ title, groups, byGen, gen, all = false, top = 12, note = '', genLabel = (g) => 'Generation ' + g, more = 'show all', less = 'show fewer', empty = 'No game turns up on more than one platform of a generation.' }) {
+export function sameGameCard({ title, groups, byGen, gen, all = false, top = 12, note = '', genLabel = (g) => 'Generation ' + g, more = 'show all', less = 'show fewer', empty = 'No game turns up on more than one platform of a generation.', check = 'Check a title', checkHint = 'Type part of a game name' }) {
   const tabs = byGen.map((g) => `<button type="button" class="rp-tab${g.gen === gen ? ' on' : ''}" data-gen="${g.gen}">${esc(genLabel(g.gen))} <small>${num(g.count)}</small></button>`).join('');
   const list = groups.filter((x) => x.gen === gen);
   const shown = all ? list : list.slice(0, top);
-  const rows = shown.map((x) => `<li><b>${esc(x.title)}</b><span>${x.platforms.map((p) => `<s>${esc(p.name)}</s>`).join('')}</span></li>`).join('');
+  const rows = shown.map((x) => `<li><b>${esc(x.title)}</b><span>${x.platforms.map((p) => `<s title="${esc((p.kinds || []).join(', '))}">${esc(p.name)}</s>`).join('')}</span></li>`).join('');
   return `<section class="rp-card rp-wide" id="rp-same"><header><b>${esc(title)}</b>${note ? `<small>${esc(note)}</small>` : ''}</header><div class="rp-body">
+    <form class="rp-find" role="search"><input type="search" name="q" placeholder="${esc(checkHint)}" aria-label="${esc(check)}" maxlength="80"><button type="submit" class="btn btn-sm">${esc(check)}</button></form><div class="rp-found" aria-live="polite"></div>
     ${byGen.length ? `<div class="rp-tabs" role="tablist">${tabs}</div><ul class="rp-same">${rows}</ul>${list.length > top ? `<button type="button" class="rp-more rp-more-same" data-more="same">${esc(all ? less : `${more} (${num(list.length)})`)}</button>` : ''}` : `<p class="rp-empty">${esc(empty)}</p>`}</div></section>`;
 }

@@ -58,3 +58,9 @@ html[data-theme="light"] { --rp1: #2a78d6; --rp2: #eb6834; --rp3: #1baf7a; --rp4
 .rp-same span { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; }
 .rp-same s { text-decoration: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 0.4rem; padding: 0.05rem 0.5rem; font-size: 0.82rem; color: var(--muted); }
 .rp-more-same { display: block; margin-top: 0.6rem; }
+.rp-find { display: flex; gap: 0.5rem; margin: 0 0 0.7rem; }
+.rp-find input { flex: 1; max-width: 22rem; }
+.rp-found { margin: 0 0 0.7rem; font-size: 0.9rem; }
+.rp-found table { border-collapse: collapse; width: 100%; }
+.rp-found td { padding: 0.25rem 0.6rem 0.25rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rp-found .ok { color: var(--good); } .rp-found .no { color: var(--muted); }

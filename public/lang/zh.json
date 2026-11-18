@@ -2025,7 +2025,6 @@
  "Complete": "完整",
  "Neither": "两者都没有",
  "The same game on several platforms": "出现在多个平台上的同一款游戏",
- "same console generation, for information": "同一代主机，仅供参考",
  "Generation {n}": "第 {n} 代",
  "show all": "显示全部",
  "show fewer": "显示更少",
@@ -2037,5 +2036,13 @@
  "One reading a day: the trend appears as the days pass.": "每天记录一次，随着时间推移会显示趋势。",
  "Counts every account together; a game on several accounts is counted once. Hidden and System items are left out.": "汇总所有账户；多个账户中的同一游戏只计一次。不含隐藏项和系统项。",
  "Counting the collection…": "正在统计收藏…",
- "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "以图表展示整个收藏：ROM 游戏库、实体收藏架和数字版列表合并统计。点击某个平台或类型，即可在游戏库中打开对应的游戏。"
+ "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "以图表展示整个收藏：ROM 游戏库、实体收藏架和数字版列表合并统计。点击某个平台或类型，即可在游戏库中打开对应的游戏。",
+ "Check a title": "查询游戏名称",
+ "Type part of a game name": "输入游戏名称的一部分",
+ "ROM library, shelves and Digital together; same console generation; for information": "ROM 游戏库、收藏架和数字版合并统计；同一代主机；仅供参考",
+ "Physical shelf": "实体收藏架",
+ "no console generation": "无主机世代",
+ "also on {n} other platform(s) of this generation": "同一代还有 {n} 个其他平台",
+ "not on another platform of this generation": "同一代没有其他平台",
+ "No game with that name.": "没有该名称的游戏。"
 }

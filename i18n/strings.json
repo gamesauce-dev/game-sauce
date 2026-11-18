@@ -1052,6 +1052,9 @@
  "also in": {
   "files": 1
  },
+ "also on {n} other platform(s) of this generation": {
+  "files": 1
+ },
  "Also replace covers games already have": {
   "files": 1
  },
@@ -1414,6 +1417,9 @@
  },
  "Check": {
   "files": 1
+ },
+ "Check a title": {
+  "files": 2
  },
  "Check for unused files": {
   "files": 1
@@ -3464,6 +3470,9 @@
  "No colour set": {
   "files": 1
  },
+ "no console generation": {
+  "files": 1
+ },
  "No controller detected yet (press a button on it).": {
   "files": 1
  },
@@ -3532,6 +3541,9 @@
  },
  "No game turns up on more than one platform of a generation.": {
   "files": 2
+ },
+ "No game with that name.": {
+  "files": 1
  },
  "No games here yet.": {
   "files": 2
@@ -3747,6 +3759,9 @@
   "files": 1
  },
  "not matched yet": {
+  "files": 1
+ },
+ "not on another platform of this generation": {
   "files": 1
  },
  "not played yet": {
@@ -4044,7 +4059,7 @@
   "files": 1
  },
  "Physical shelf": {
-  "files": 1
+  "files": 2
  },
  "Physical shelves": {
   "files": 1
@@ -4631,6 +4646,9 @@
  "ROM Library": {
   "files": 3
  },
+ "ROM library, shelves and Digital together; same console generation; for information": {
+  "files": 1
+ },
  "ROM not found": {
   "files": 3
  },
@@ -4680,9 +4698,6 @@
   "files": 1
  },
  "Safety backup saved as": {
-  "files": 1
- },
- "same console generation, for information": {
   "files": 1
  },
  "Same sidebar size you asked for (54px) plus the login-screen context. The controller-as-face idea is in all three — only the mood changes. Tell me which one and I'll make it": {
@@ -5923,6 +5938,9 @@
  },
  "Type at least two letters of a game's name.": {
   "files": 1
+ },
+ "Type part of a game name": {
+  "files": 2
  },
  "Type RESTORE (capitals) to confirm": {
   "files": 1

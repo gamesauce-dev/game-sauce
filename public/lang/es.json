@@ -2027,7 +2027,6 @@
  "Complete": "Completo",
  "Neither": "Ninguno",
  "The same game on several platforms": "El mismo juego en varias plataformas",
- "same console generation, for information": "misma generación de consolas, solo informativo",
  "Generation {n}": "Generación {n}",
  "show all": "mostrar todo",
  "show fewer": "mostrar menos",
@@ -2039,5 +2038,13 @@
  "One reading a day: the trend appears as the days pass.": "Una lectura al día: la tendencia aparecerá con el paso de los días.",
  "Counts every account together; a game on several accounts is counted once. Hidden and System items are left out.": "Cuenta todas las cuentas juntas; un juego en varias cuentas se cuenta una vez. Se omiten los elementos ocultos y de sistema.",
  "Counting the collection…": "Contando la colección…",
- "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "Toda la colección en gráficos: tu biblioteca de ROM, las estanterías físicas y las listas digitales juntas. Haz clic en una plataforma o un género para abrir sus juegos en la biblioteca."
+ "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": "Toda la colección en gráficos: tu biblioteca de ROM, las estanterías físicas y las listas digitales juntas. Haz clic en una plataforma o un género para abrir sus juegos en la biblioteca.",
+ "Check a title": "Comprobar un título",
+ "Type part of a game name": "Escribe parte del nombre de un juego",
+ "ROM library, shelves and Digital together; same console generation; for information": "Biblioteca de ROM, estanterías y Digital juntos; misma generación de consolas; solo informativo",
+ "Physical shelf": "Estantería física",
+ "no console generation": "sin generación de consola",
+ "also on {n} other platform(s) of this generation": "también en {n} plataforma(s) más de esta generación",
+ "not on another platform of this generation": "en ninguna otra plataforma de esta generación",
+ "No game with that name.": "Ningún juego con ese nombre."
 }
