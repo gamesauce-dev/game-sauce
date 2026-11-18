@@ -7,7 +7,7 @@ const LANGS = ['fr', 'zh', 'es', 'pt', 'de', 'ja', 'it'];
 
 test('the website hero is a slider: each slide has a picture, a title and a link to a section that exists, and the controls are labelled', () => {
   const html = read('site/index.html');
-  const slides = [...html.matchAll(/<div class="slide(?: is-on)?"([^>]*)>([\s\S]*?)<a class="slide-hit" href="#([a-z]+)" aria-label="([^"]+)"><\/a>\s*<\/div>/g)];
+  const slides = [...html.matchAll(/<div class="slide(?: is-on| fit)?"([^>]*)>([\s\S]*?)<a class="slide-hit" href="#([a-z]+)" aria-label="([^"]+)"><\/a>\s*<\/div>/g)];
   assert.ok(slides.length >= 6, 'several slides');
   let clips = 0;
   for (const [, attrs, body, target, label] of slides) {
