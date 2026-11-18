@@ -126,7 +126,7 @@ test('a launch is logged as its own kind and does not count as a download', asyn
 
 test('parseLaunchUrl accepts a real link and rejects odd ones', () => {
   const ok = launcher.parseLaunchUrl('gamesauce://launch?server=http://Host:3000/&token=' + 'a'.repeat(43) + '&platform=SNES&ext=.sfc&title=Sonic');
-  assert.deepEqual(ok, { server: 'http://host:3000', token: 'a'.repeat(43), platform: 'snes', ext: '.sfc', title: 'Sonic', rom: '', fp: '', lid: '', size: 0 });
+  assert.deepEqual(ok, { server: 'http://host:3000', token: 'a'.repeat(43), platform: 'snes', ext: '.sfc', title: 'Sonic', file: '', rom: '', fp: '', lid: '', size: 0 });
   const prog = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&ext=.sfc&title=Sonic&lid=' + 'b'.repeat(32) + '&size=734003200');
   assert.equal(prog.lid, 'b'.repeat(32)); assert.equal(prog.size, 734003200, 'the launch id and file size for the progress card');
   const badProg = launcher.parseLaunchUrl('gamesauce://launch?server=http://h:1&token=' + 'a'.repeat(43) + '&platform=snes&lid=..%2F..&size=big');
@@ -692,4 +692,17 @@ test('a failed launch reports the error, and nothing is reported to a server tha
   const v = (await call(`/api/launch-status/${m2.lid}`, { token: adminTok })).body;
   assert.equal(v.phase, 'error');
   assert.match(v.message, /Could not start/);
+});
+
+test('arcade romsets keep their own file name (MAME finds a game by it); other platforms keep the title', () => {
+  const link = (extra) => launcher.parseLaunchUrl('gamesauce://launch?' + new URLSearchParams({ server: 'http://x:1', token: 'a'.repeat(24), platform: 'mame', ext: '.zip', title: 'Street Fighter II: The World Warrior', file: 'sf2', ...extra }));
+  assert.equal(link().file, 'sf2');
+  assert.equal(launcher.copyName(link(), {}), 'sf2.zip', 'MAME gets sf2.zip, not the title');
+  assert.equal(launcher.copyName(link({ platform: 'fba', file: 'sf2ue' }), {}), 'sf2ue.zip');
+  assert.equal(launcher.copyName(link({ platform: 'snes', ext: '.sfc', file: 'Some Game (USA)' }), {}), launcher.safeFileName('Street Fighter II: The World Warrior', '.sfc'), 'a console game keeps the title');
+  assert.equal(launcher.copyName(link({ platform: 'snes', ext: '.sfc', file: 'Some Game (USA)' }), { keepFileName: true }), 'Some Game (USA).sfc', 'unless the entry asks for the file name');
+  assert.equal(launcher.copyName(link({ file: '' }), {}), launcher.safeFileName('Street Fighter II: The World Warrior', '.zip'), 'an older page sends no file name: the title, as before');
+  assert.equal(link({ file: '../../evil' }).file, '', 'a file name with a path in it is dropped');
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), bs = fs.readFileSync(new URL('../public/bigscreen.js', import.meta.url), 'utf8'), cv = fs.readFileSync(new URL('../public/carousel.js', import.meta.url), 'utf8');
+  for (const src of [app, bs, cv]) assert.ok(src.includes("file: j.file ?? ''"), 'every page that starts a game sends the file name');
 });

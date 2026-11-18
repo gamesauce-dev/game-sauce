@@ -375,7 +375,7 @@ export function openBigScreen(host) {
     pauseVideo();
     try {
       const j = await host.api(`/roms/${g.id}/launch`, { method: 'POST' });
-      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, file: j.file ?? '', rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
       trackLaunch({ api: host.api, launch: j, big: true }); location.href = `gamesauce://launch?${q}`;   // a card with how far it has got (see public/launch-progress.js)
     } catch (err) { say(err.message || 'Could not start the game', true); }
   };

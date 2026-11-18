@@ -228,7 +228,7 @@ export function openCarousel(host) {
     if (host.user()?.can_download === false) { host.toast('This account cannot play on a local emulator', true); return; }
     try {
       const j = await host.api(`/roms/${g.id}/launch`, { method: 'POST' });
-      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
+      const q = new URLSearchParams({ server: location.origin, token: j.token, platform: j.platform, ext: j.ext, title: j.title, file: j.file ?? '', rom: j.id ?? '', fp: j.fp ?? '', lid: j.lid ?? '', size: j.size ?? '' });
       trackLaunch({ api: host.api, launch: j });   // a card with how far it has got (see public/launch-progress.js)
       location.href = `gamesauce://launch?${q}`;
     } catch (err) { host.toast(err.message || 'Could not start a local launch', true); }

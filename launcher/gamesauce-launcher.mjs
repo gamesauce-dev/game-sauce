@@ -92,6 +92,8 @@ export function parseLaunchUrl(raw) {
   const platform = String(q.get('platform') || '').toLowerCase();
   let ext = String(q.get('ext') || '').toLowerCase();
   const title = String(q.get('title') || 'game');
+  // The file's own name without its extension ("sf2" for sf2.zip): an arcade emulator finds a game by it, so it must reach the temporary copy unchanged.
+  const file = /^[\w .()\-\[\]]{1,120}$/.test(String(q.get('file') || '')) ? String(q.get('file')) : '';
   if (!server) throw new LaunchError('The link has no valid server address.');
   if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) throw new LaunchError('The link has no valid launch token.');
   if (!/^[a-z0-9_-]{1,40}$/.test(platform)) throw new LaunchError('The link has no valid platform.');
@@ -102,7 +104,7 @@ export function parseLaunchUrl(raw) {
   // Optional, for the progress card on the page: the launch id (where to report progress) and the file's size in bytes.
   const lid = /^[A-Za-z0-9_-]{16,100}$/.test(String(q.get('lid') || '')) ? String(q.get('lid')) : '';
   const size = /^\d{1,15}$/.test(String(q.get('size') || '')) ? Number(q.get('size')) : 0;
-  return { server, token, platform, ext, title, rom, fp, lid, size };
+  return { server, token, platform, ext, title, file, rom, fp, lid, size };
 }
 
 /** Read a gamesauce://sync link ("Check my PC"): the server address and a one-time token. */
@@ -128,6 +130,10 @@ export function parseConfigureUrl(raw) {
 }
 
 /** A safe file name for the temporary copy: the game's title (some emulators guess the system from the name) plus extension. */
+/** Platforms whose emulator finds a game by its file name (MAME and the other arcade romsets): the copy keeps the ROM's own name, not the game's title. An entry can ask for it too ("keepFileName": true). */
+export const KEEP_FILE_NAME = new Set(['mame', 'arcade', 'fba']);
+export const copyName = (link, entry) => ((KEEP_FILE_NAME.has(link.platform) || entry?.keepFileName === true) && link.file ? link.file + (link.ext || '') : safeFileName(link.title, link.ext === '.xbla' ? '' : link.ext));
+
 export function safeFileName(title, ext) {
   const base = String(title || 'game').replace(/[^\w .()\-\[\]]+/g, '_').replace(/^[ .]+|[ .]+$/g, '').slice(0, 80) || 'game';
   return base + (ext || '');
@@ -342,7 +348,7 @@ async function doLaunch(link, rep, configFile) {
     fs.mkdirSync(dir, { recursive: true });
   }
   // An Xbox Live Arcade package (".xbla" in the library) is handed over with no extension: Xenia takes a file without one for an STFS package.
-  const romPath = path.join(dir, safeFileName(link.title, link.ext === '.xbla' ? '' : link.ext));
+  const romPath = path.join(dir, copyName(link, entry));
   let child = null, unpacked = null, prepared = Boolean(fresh);
   const onSignal = (sig) => {
     try { child?.kill(); } catch { /* already gone */ }

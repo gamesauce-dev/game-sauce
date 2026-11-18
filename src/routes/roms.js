@@ -858,7 +858,7 @@ router.post('/:id/launch', (req, res) => {
   if (!fs.existsSync(rom.storage_path)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
   const { token, lid, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null, { title: rom.title, size: rom.size_bytes });
   // id and fp (the file's size and date) let the launcher's quick launch tell that a copy it kept is still this file.
-  res.json({ token, lid, size: Number(rom.size_bytes) || 0, expires_in, platform: rom.platform, title: rom.title, ext: path.extname(rom.filename).toLowerCase(), id: rom.id, fp: `${Number(rom.size_bytes) || 0}-${Number(rom.scanned_mtime) || 0}` });
+  res.json({ token, lid, size: Number(rom.size_bytes) || 0, expires_in, platform: rom.platform, title: rom.title, file: path.basename(rom.filename, path.extname(rom.filename)), ext: path.extname(rom.filename).toLowerCase(), id: rom.id, fp: `${Number(rom.size_bytes) || 0}-${Number(rom.scanned_mtime) || 0}` });
 });
 
 /* ── play: browser streaming for BIOS-free platforms (EmulatorJS) ──
