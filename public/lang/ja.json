@@ -2074,5 +2074,6 @@
  "GB": "GB",
  "Bigger files are left without one (they play as normal). 0 means every file is read.": "これより大きいファイルはフィンガープリントなしになります（通常どおり動作します）。0 の場合はすべてのファイルを読み込みます。",
  "large files skipped (over the size limit)": "個の大きなファイルをスキップしました（サイズ上限を超過）",
- "The size limit is a number of gigabytes, or 0 for no limit.": "サイズの上限はギガバイト単位の数値で指定します。上限なしの場合は 0 にします。"
+ "The size limit is a number of gigabytes, or 0 for no limit.": "サイズの上限はギガバイト単位の数値で指定します。上限なしの場合は 0 にします。",
+ "Server time now": "サーバーの現在時刻"
 }

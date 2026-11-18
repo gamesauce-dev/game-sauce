@@ -48,6 +48,7 @@ test('the settings are for the admin only, have defaults, and refuse nonsense', 
   assert.equal((await call('/api/admin/hashing', { token: userTok })).status, 403);
   const s = (await call('/api/admin/hashing')).body;
   assert.deepEqual([s.mode, s.window_start, s.window_end], ['background', '01:00', '07:00']);
+  assert.match(s.server_time, /^\d\d:\d\d$/); assert.ok(s.server_tz, 'the page can say what the server clock reads, since the window uses it');
   assert.equal((await call('/api/admin/hashing', { method: 'PUT', body: { mode: 'whenever' } })).status, 400);
   assert.equal((await call('/api/admin/hashing', { method: 'PUT', body: { window_start: '25:00' } })).status, 400);
   const saved = (await call('/api/admin/hashing', { method: 'PUT', body: { mode: 'overnight', window_start: '23:30', window_end: '05:15' } })).body;

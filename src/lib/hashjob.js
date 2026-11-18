@@ -67,6 +67,7 @@ export function hashStatus() {
   return {
     ...s, pending: pendingCount(), unreadable: countWhere('hash_failed = 1'), kept_duplicates: countWhere('hash_failed = 2'), skipped_large: countWhere('hash_failed = 3'),
     running: job.running, total: job.total, done: job.done, current: job.current, duplicates_removed: job.duplicates, failed: job.failed,
+    server_time: `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`, server_tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     started_at: job.started_at, last_finished_at: job.last_finished_at, in_window: inWindow(s.window_start, s.window_end),
     waiting_for_window: s.mode === 'overnight' && pendingCount() > 0 && !job.running && !inWindow(s.window_start, s.window_end)
   };

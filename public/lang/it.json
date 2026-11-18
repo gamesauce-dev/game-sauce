@@ -2085,5 +2085,6 @@
  "GB": "GB",
  "Bigger files are left without one (they play as normal). 0 means every file is read.": "I file più grandi restano senza impronta (si giocano normalmente). 0 significa che ogni file viene letto.",
  "large files skipped (over the size limit)": "file grandi saltati (oltre il limite di dimensione)",
- "The size limit is a number of gigabytes, or 0 for no limit.": "Il limite di dimensione è un numero di gigabyte, oppure 0 per nessun limite."
+ "The size limit is a number of gigabytes, or 0 for no limit.": "Il limite di dimensione è un numero di gigabyte, oppure 0 per nessun limite.",
+ "Server time now": "Ora attuale del server"
 }

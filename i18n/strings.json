@@ -5009,6 +5009,9 @@
  "Sent to your PC. Your emulator should open any moment.": {
   "files": 1
  },
+ "Server time now": {
+  "files": 1
+ },
  "Set a new password for {a}. They are signed out everywhere and any sign-in lockout is cleared. Tell them the new password; they can change it under Settings → Change password.": {
   "files": 1
  },

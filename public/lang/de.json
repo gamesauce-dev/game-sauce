@@ -2074,5 +2074,6 @@
  "GB": "GB",
  "Bigger files are left without one (they play as normal). 0 means every file is read.": "Größere Dateien bleiben ohne Fingerabdruck (sie laufen ganz normal). 0 bedeutet, dass jede Datei gelesen wird.",
  "large files skipped (over the size limit)": "große Dateien übersprungen (über dem Größenlimit)",
- "The size limit is a number of gigabytes, or 0 for no limit.": "Das Größenlimit ist eine Zahl in Gigabyte, oder 0 für kein Limit."
+ "The size limit is a number of gigabytes, or 0 for no limit.": "Das Größenlimit ist eine Zahl in Gigabyte, oder 0 für kein Limit.",
+ "Server time now": "Serverzeit jetzt"
 }

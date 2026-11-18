@@ -2072,5 +2072,6 @@
  "GB": "Go",
  "Bigger files are left without one (they play as normal). 0 means every file is read.": "Les fichiers plus gros restent sans empreinte (ils fonctionnent normalement). 0 signifie que tous les fichiers sont lus.",
  "large files skipped (over the size limit)": "gros fichiers ignorés (au-dessus de la limite de taille)",
- "The size limit is a number of gigabytes, or 0 for no limit.": "La limite de taille est un nombre de gigaoctets, ou 0 pour aucune limite."
+ "The size limit is a number of gigabytes, or 0 for no limit.": "La limite de taille est un nombre de gigaoctets, ou 0 pour aucune limite.",
+ "Server time now": "Heure du serveur maintenant"
 }

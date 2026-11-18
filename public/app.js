@@ -4411,6 +4411,7 @@ async function loadHashing() {
   if (s.duplicates_removed) lines.push(`${n(s.duplicates_removed)} ${esc(t('duplicates removed in this run'))}`);
   if (s.skipped_large) lines.push(`${n(s.skipped_large)} ${esc(t('large files skipped (over the size limit)'))}`);
   if (s.unreadable) lines.push(`${n(s.unreadable)} ${esc(t('files could not be read and are skipped until they change'))}`);
+  lines.push(`<small class="hint">${esc(t('Server time now'))}: ${esc(s.server_time)} (${esc(s.server_tz)})</small>`);
   box.innerHTML = `${s.running ? `<div class="hash-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>` : ''}<p>${lines.join('<br>')}</p>`;
   if (!$('#hash-save').dataset.wired) {
     $('#hash-save').dataset.wired = '1';
