@@ -640,3 +640,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '57') ON CON
 /* ── v58: a game on the Physical shelf can be hidden (the person's own mark, like Digital's): it stays out of the shelf and the counts until Show hidden is on. ── */
 if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === 'hidden')) db.exec('ALTER TABLE physical_games ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '58') ON CONFLICT(key) DO UPDATE SET value = '58'").run();
+
+/* ── v59: a daily snapshot of the headline collection counts (Settings > Reports), so trends can be shown from the day it started. ── */
+db.exec(`CREATE TABLE IF NOT EXISTS report_snapshots (day TEXT PRIMARY KEY, json TEXT NOT NULL)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '59') ON CONFLICT(key) DO UPDATE SET value = '59'").run();

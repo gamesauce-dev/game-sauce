@@ -153,6 +153,14 @@ export function createApp() {
     res.json(collectStats());
   });
 
+  // Reports across the whole collection (Settings > Reports, admin, read-only). Asking also records today's snapshot, once a day.
+  api.get('/admin/reports', requireAuth, requireAdmin, async (req, res) => {
+    const { collectReports, recordSnapshot, listSnapshots } = await import('./lib/reports.js');
+    const rep = collectReports();
+    try { recordSnapshot(rep); } catch { /* a snapshot problem must not hide the report */ }
+    res.json({ ...rep, history: listSnapshots() });
+  });
+
   api.get('/admin/health', requireAuth, requireAdmin, async (req, res) => {
     const { collectHealth, collectSummary, diagnosticsText } = await import('./lib/health.js');
     const report = collectHealth();

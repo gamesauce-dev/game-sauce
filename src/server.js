@@ -2,6 +2,7 @@ import './lib/restore-boot.js'; // MUST stay first: applies a staged restore bef
 import { prepareApp } from './app.js';
 import { startBackupScheduler } from './lib/backup.js';
 import { startUpdateNotifier } from './lib/updatenotify.js';
+import { startSnapshotTimer } from './lib/reports.js';
 import { fetchLatestRelease } from './routes/emulators.js';
 
 const PORT = Number(process.env.PORT || 8080);
@@ -12,5 +13,6 @@ const { app } = await prepareApp();
 app.listen(PORT, HOST, () => {
   console.log(`game-sauce listening on http://${HOST}:${PORT}`);
   startBackupScheduler(); // runs only when a schedule is set under Settings → Backups
+  startSnapshotTimer(); // one row of headline counts a day, for the Reports trends
   startUpdateNotifier(fetchLatestRelease); // tells the admins in Messages when a newer game-sauce is out (off with GAMESAUCE_UPDATE_CHECK=0)
 });

@@ -12,6 +12,7 @@ import { assetWords } from './video.js';   // the video in a game's details wind
 import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
+import * as reports from './reports.js';   // Settings > Reports
 import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 import { initDescScroll } from './descscroll.js';   // a long description scrolls itself
 import './pwreveal.js';   // the eye in password boxes
@@ -4329,7 +4330,8 @@ const SETTINGS_MODULES = [
   { id: 'dat',       label: 'DAT files',       mi: 'DAT-files', ico: '💾', adminOnly: true },
   { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
-  { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true }
+  { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true },
+  { id: 'reports',   label: 'Reports',         mi: 'stats', ico: '📈', adminOnly: true }
 ];
 
 
@@ -4338,7 +4340,7 @@ const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
-  { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
+  { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
   { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
 ];
@@ -4694,6 +4696,7 @@ function showSettingsModule(id) {
   if (id === 'names') initNamesPanel();
   if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
+  if (id === 'reports') reports.load($('#reports-box'), { api, t, openLibrary: openLibraryWith }).catch((err) => toast(err.message, true));
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
   panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -4824,6 +4827,18 @@ async function loadStatsPanel() {
     </div>
   </div>`;
   $$('[data-stat-go]', box).forEach((el) => el.addEventListener('click', (e) => { e.preventDefault(); openLibraryFor(el.dataset.statGo); }));
+}
+
+/** Open the Library on one platform or one genre (from a click in Settings > Reports). */
+function openLibraryWith({ platform = 'all', genre = null } = {}) {
+  closeDrawer();
+  Object.assign(state, { platform, extraPlatforms: [], q: '', tag: null, genre, favorite: false, source: null, sourceName: null,
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, matched: null, incl: null });
+  const sb = $('#search'); if (sb) sb.value = '';
+  state.libKey = null;
+  setView('library');
+  loadPlatforms();
+  loadLibrary();
 }
 
 /** Open the Library showing exactly the games behind a total on the Stats page. */
