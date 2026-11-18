@@ -53,6 +53,7 @@ const PENDING = "sha1 IS NULL AND source_id IS NOT NULL AND missing = 0 AND hash
 export const pendingCount = () => db.prepare(`SELECT COUNT(*) AS n FROM roms WHERE ${PENDING}`).get().n;
 const countWhere = (w) => db.prepare(`SELECT COUNT(*) AS n FROM roms WHERE ${w}`).get().n;
 
+let paused = false;   // the admin pressed Stop: nothing starts by itself until Run now (or saving the settings), so Stop is not undone a minute later
 const job = { running: false, forced: false, stop: false, total: 0, done: 0, current: '', duplicates: 0, failed: 0, started_at: null, last_finished_at: null, waiting_for_window: false };
 
 /** Whether the job may work now: always when started by hand, else the mode's own rule. */
@@ -66,7 +67,7 @@ export function hashStatus() {
   const s = getHashSettings();
   return {
     ...s, pending: pendingCount(), unreadable: countWhere('hash_failed = 1'), kept_duplicates: countWhere('hash_failed = 2'), skipped_large: countWhere('hash_failed = 3'),
-    running: job.running, total: job.total, done: job.done, current: job.current, duplicates_removed: job.duplicates, failed: job.failed,
+    paused, running: job.running, total: job.total, done: job.done, current: job.current, duplicates_removed: job.duplicates, failed: job.failed,
     server_time: `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`, server_tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     started_at: job.started_at, last_finished_at: job.last_finished_at, in_window: inWindow(s.window_start, s.window_end),
     waiting_for_window: s.mode === 'overnight' && pendingCount() > 0 && !job.running && !inWindow(s.window_start, s.window_end)
@@ -83,7 +84,8 @@ async function one(r) {
   const fail = (code) => { db.prepare("UPDATE roms SET hash_failed = ?, updated_at = datetime('now') WHERE id = ?").run(code, r.id); job.failed++; };
   let st = null; try { st = fs.statSync(file); } catch { /* unreachable or gone */ }
   if (!st || !st.isFile()) return fail(1);
-  let h; try { h = await hashFile(file); } catch { return fail(1); }
+  // Stop, a change to overnight outside the window, or the window closing ends the read within a moment, not after a 150 GB file: the game stays waiting.
+  let h; try { h = await hashFile(file, { shouldStop: () => job.stop || !allowedNow(job.forced) }); } catch (e) { if (e.stopped) return 'stopped'; return fail(1); }
   const dupe = db.prepare('SELECT id FROM roms WHERE sha1 = ? AND id != ?').get(h.sha1, r.id);
   if (dupe) {
     // The same bytes are already in the library. Remove this entry unless it has been worked on (a title from a provider or by hand): then keep it, unhashed.
@@ -97,9 +99,10 @@ async function one(r) {
 }
 
 /** Start working through the waiting games. forced: the admin pressed Run now (the window does not apply). Returns at once. */
-export function startHashJob({ forced = false } = {}) {
+export function startHashJob({ forced = false, resume = false } = {}) {
+  if (forced || resume) paused = false;
   if (job.running) { job.forced = job.forced || forced; return hashStatus(); }
-  if (!pendingCount() || !allowedNow(forced)) return hashStatus();
+  if (paused || !pendingCount() || !allowedNow(forced)) return hashStatus();
   Object.assign(job, { running: true, forced, stop: false, total: pendingCount(), done: 0, current: '', duplicates: 0, failed: 0, started_at: new Date().toISOString() });
   (async () => {
     try {
@@ -107,7 +110,8 @@ export function startHashJob({ forced = false } = {}) {
         if (job.stop || !allowedNow(job.forced)) break;   // stopped, or the overnight window has closed: the rest waits for the next one
         const r = nextRom(); if (!r) break;
         job.current = r.title || ''; job.total = Math.max(job.total, job.done + pendingCount());
-        try { await one(r); } catch { db.prepare("UPDATE roms SET hash_failed = 1 WHERE id = ?").run(r.id); job.failed++; }
+        let outcome; try { outcome = await one(r); } catch { db.prepare("UPDATE roms SET hash_failed = 1 WHERE id = ?").run(r.id); job.failed++; }
+        if (outcome === 'stopped') break;
         job.done++;
       }
     } catch { /* ends the run */ } finally { job.running = false; job.current = ''; job.last_finished_at = new Date().toISOString(); clearDuplicateCache(); }
@@ -115,7 +119,7 @@ export function startHashJob({ forced = false } = {}) {
   return hashStatus();
 }
 
-export function stopHashJob() { job.stop = true; return hashStatus(); }
+export function stopHashJob() { paused = true; job.stop = true; return hashStatus(); }
 
 /** For tests: wait until the job has stopped. */
 export async function hashJobIdle(timeoutMs = 10000) {

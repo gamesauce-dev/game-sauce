@@ -2543,6 +2543,9 @@
  "games are waiting for their fingerprints.": {
   "files": 1
  },
+ "games are waiting. Press Run now to continue.": {
+  "files": 1
+ },
  "Games by genre": {
   "files": 1
  },

@@ -4397,14 +4397,15 @@ async function loadVersionLine() {
 
 /* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
 let hashTimer = null;
-async function loadHashing() {
+async function loadHashing(fillForm = true) {   // fillForm: put the saved choices into the form (the first time, and after Save); the refreshes while a job runs only touch the status, so a change you are making is not undone
   const box = $('#hash-status'); if (!box) return;
   clearTimeout(hashTimer);
   const s = await api('/admin/hashing');
   const n = (v) => Number(v || 0).toLocaleString();
   const pct = s.running && s.total ? Math.min(100, Math.round((s.done / s.total) * 100)) : 0;
   const lines = [];
-  if (s.running) lines.push(`<b>${esc(t('Working'))}</b>: ${n(s.done)} ${esc(t('of'))} ${n(s.total)}${s.current ? ` · ${esc(s.current)}` : ''}`);
+  if (s.paused && !s.running && s.pending) lines.push(`<b>${esc(t('Paused'))}</b>: ${n(s.pending)} ${esc(t('games are waiting. Press Run now to continue.'))}`);
+  else if (s.running) lines.push(`<b>${esc(t('Working'))}</b>: ${n(s.done)} ${esc(t('of'))} ${n(s.total)}${s.current ? ` · ${esc(s.current)}` : ''}`);
   else if (s.waiting_for_window) lines.push(`${n(s.pending)} ${esc(t('games are waiting for the overnight window'))} (${esc(s.window_start)}–${esc(s.window_end)}).`);
   else if (s.pending) lines.push(`${n(s.pending)} ${esc(t('games are waiting for their fingerprints.'))}`);
   else lines.push(esc(t('Every game has its fingerprints.')));
@@ -4417,19 +4418,19 @@ async function loadHashing() {
     $('#hash-save').dataset.wired = '1';
     $('#hash-save').addEventListener('click', async () => {
       const mode = ($('input[name="hash-mode"]:checked') || {}).value;
-      try { await api('/admin/hashing', { method: 'PUT', body: JSON.stringify({ mode, window_start: $('#hash-from').value, window_end: $('#hash-to').value, max_gb: $('#hash-max').value }) }); $('#hash-msg').textContent = t('Saved.'); loadHashing(); }
+      try { await api('/admin/hashing', { method: 'PUT', body: JSON.stringify({ mode, window_start: $('#hash-from').value, window_end: $('#hash-to').value, max_gb: $('#hash-max').value }) }); $('#hash-msg').textContent = t('Saved.'); loadHashing(true); }
       catch (err) { $('#hash-msg').textContent = err.message; }
     });
-    $('#hash-run').addEventListener('click', async () => { await api('/admin/hashing/run', { method: 'POST' }).catch((e) => toast(e.message, true)); loadHashing(); });
-    $('#hash-stop').addEventListener('click', async () => { await api('/admin/hashing/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadHashing(); });
+    $('#hash-run').addEventListener('click', async () => { await api('/admin/hashing/run', { method: 'POST' }).catch((e) => toast(e.message, true)); loadHashing(false); });
+    $('#hash-stop').addEventListener('click', async () => { await api('/admin/hashing/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadHashing(false); });
   }
-  const radio = $(`input[name="hash-mode"][value="${s.mode}"]`); if (radio) radio.checked = true;
-  if (document.activeElement !== $('#hash-from')) $('#hash-from').value = s.window_start;
-  if (document.activeElement !== $('#hash-to')) $('#hash-to').value = s.window_end;
-  if (document.activeElement !== $('#hash-max')) $('#hash-max').value = s.max_gb || 0;
+  if (fillForm) {
+    const radio = $(`input[name="hash-mode"][value="${s.mode}"]`); if (radio) radio.checked = true;
+    $('#hash-from').value = s.window_start; $('#hash-to').value = s.window_end; $('#hash-max').value = s.max_gb || 0;
+  }
   $('#hash-run').disabled = s.running || !s.pending; $('#hash-stop').disabled = !s.running;
   // while this page is open and the job is working (or about to), keep the figures fresh
-  if (activeSettingsModule === 'hashing' && (s.running || (s.pending && s.mode !== 'overnight'))) hashTimer = setTimeout(() => loadHashing().catch(() => {}), 3000);
+  if (activeSettingsModule === 'hashing' && (s.running || (s.pending && s.mode !== 'overnight'))) hashTimer = setTimeout(() => loadHashing(false).catch(() => {}), 3000);
 }
 
 /* ── Backups module ── */

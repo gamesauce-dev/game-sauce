@@ -2073,5 +2073,7 @@
  "Bigger files are left without one (they play as normal). 0 means every file is read.": "更大的文件不生成指纹（可正常游玩）。0 表示读取所有文件。",
  "large files skipped (over the size limit)": "个大文件已跳过（超出大小限制）",
  "The size limit is a number of gigabytes, or 0 for no limit.": "大小限制为以 GB 为单位的数字，0 表示不限制。",
- "Server time now": "服务器当前时间"
+ "Server time now": "服务器当前时间",
+ "Paused": "已暂停",
+ "games are waiting. Press Run now to continue.": "个游戏正在等待。点击“立即运行”继续。"
 }

@@ -143,6 +143,28 @@ test('files over the size limit are skipped, and come back when the limit is rai
   assert.match(db.prepare('SELECT sha1 FROM roms WHERE source_id = ?').get(src).sha1, /^[0-9a-f]{40}$/);
 });
 
+test('Stop ends a read at once, leaves the game waiting, and nothing restarts by itself until Run now', async () => {
+  const dir = path.join(TMP, 'roms-f'); fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'Huge (USA).sfc'); fs.writeFileSync(file, Buffer.alloc(120 * 1024 * 1024, 7));
+  const src = (await call('/api/sources', { method: 'POST', body: { path: dir, platform_hint: 'snes' } })).body.id;
+  const id = db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, source_path, source_id, size_bytes, meta_source) VALUES ((SELECT id FROM platforms WHERE slug = 'snes'), 'Huge', 'huge', 'Huge (USA).sfc', ?, ?, ?, ?, 'filename')")
+    .run(file, file, src, 120 * 1024 * 1024).lastInsertRowid;
+  const { hashFile } = await import('../src/lib/hash.js');
+  await assert.rejects(hashFile(file, { shouldStop: () => true }), (e) => e.stopped === true, 'a read can be told to stop part-way');
+  await call('/api/admin/hashing/run', { method: 'POST' });
+  await call('/api/admin/hashing/stop', { method: 'POST' });
+  await hj.hashJobIdle();
+  const row = db.prepare('SELECT sha1, hash_failed FROM roms WHERE id = ?').get(id);
+  assert.deepEqual([row.sha1, row.hash_failed], [null, 0], 'stopped, not failed: it is still waiting');
+  assert.equal((await call('/api/admin/hashing')).body.paused, true);
+  hj.startHashJob();   // what the once-a-minute check does
+  await hj.hashJobIdle();
+  assert.equal(db.prepare('SELECT sha1 FROM roms WHERE id = ?').get(id).sha1, null, 'Stop is not undone by the scheduler');
+  await call('/api/admin/hashing/run', { method: 'POST' }); await hj.hashJobIdle();
+  assert.match(db.prepare('SELECT sha1 FROM roms WHERE id = ?').get(id).sha1, /^[0-9a-f]{40}$/, 'Run now carries on');
+  assert.equal((await call('/api/admin/hashing')).body.paused, false);
+});
+
 test('a game without fingerprints is still a normal game: the play and download routes never need them', () => {
   for (const f of ['src/routes/roms.js']) {
     const src = read(f);

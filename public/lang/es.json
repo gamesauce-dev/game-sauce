@@ -2075,5 +2075,7 @@
  "Bigger files are left without one (they play as normal). 0 means every file is read.": "Los archivos más grandes se dejan sin huella (se juegan con normalidad). 0 significa que se lee todo archivo.",
  "large files skipped (over the size limit)": "archivos grandes omitidos (por encima del límite de tamaño)",
  "The size limit is a number of gigabytes, or 0 for no limit.": "El límite de tamaño es un número de gigabytes, o 0 para no tener límite.",
- "Server time now": "Hora actual del servidor"
+ "Server time now": "Hora actual del servidor",
+ "Paused": "En pausa",
+ "games are waiting. Press Run now to continue.": "juegos esperan. Pulsa «Ejecutar ahora» para continuar."
 }

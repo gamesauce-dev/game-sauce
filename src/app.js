@@ -162,7 +162,7 @@ export function createApp() {
     const { saveHashSettings, hashStatus, startHashJob } = await import('./lib/hashjob.js');
     try { saveHashSettings(req.body || {}); } catch (err) { return res.status(err.status || 400).json({ error: err.message }); }
     req.auditDetail = { mode: req.body?.mode };
-    startHashJob();
+    startHashJob({ resume: true });
     res.json(hashStatus());
   });
   api.post('/admin/hashing/run', requireAuth, requireAdmin, async (req, res) => {
