@@ -1339,5 +1339,59 @@
   "de": "Nächstes Bild",
   "ja": "次のスライド",
   "it": "Diapositiva successiva"
+ },
+ "Watch the intro": {
+  "fr": "Voir l’introduction",
+  "zh": "观看介绍片",
+  "es": "Ver la presentación",
+  "pt": "Assistir à introdução",
+  "de": "Das Intro ansehen",
+  "ja": "紹介ビデオを見る",
+  "it": "Guarda l’intro"
+ },
+ "A 74-second tour of the whole library, with music. Press play for the sound.": {
+  "fr": "Une visite de 74 secondes de toute la bibliothèque, avec de la musique. Lancez la lecture pour le son.",
+  "zh": "74 秒带你游览整个游戏库，配有音乐。点击播放即可听到声音。",
+  "es": "Un recorrido de 74 segundos por toda la biblioteca, con música. Pulsa reproducir para oír el sonido.",
+  "pt": "Um passeio de 74 segundos por toda a biblioteca, com música. Toque em reproduzir para ouvir o som.",
+  "de": "Eine 74-sekündige Tour durch die ganze Bibliothek, mit Musik. Auf Play drücken für den Ton.",
+  "ja": "ライブラリ全体を74秒で巡るツアーです。音楽付き。再生すると音が出ます。",
+  "it": "Un tour di 74 secondi di tutta la libreria, con musica. Premi play per ascoltare l’audio."
+ },
+ "The game-sauce logo: a gamepad and a joystick above the name, on a neon sunset": {
+  "fr": "Le logo de game-sauce : une manette et un joystick au-dessus du nom, sur un coucher de soleil néon",
+  "zh": "game-sauce 标志：名称上方是手柄和摇杆，背景为霓虹落日",
+  "es": "El logotipo de game-sauce: un mando y un joystick sobre el nombre, en un atardecer de neón",
+  "pt": "O logótipo do game-sauce: um comando e um joystick sobre o nome, num pôr do sol néon",
+  "de": "Das game-sauce-Logo: ein Gamepad und ein Joystick über dem Namen, vor einem Neon-Sonnenuntergang",
+  "ja": "game-sauce のロゴ：名前の上にゲームパッドとジョイスティック、ネオンの夕日を背景に",
+  "it": "Il logo di game-sauce: un gamepad e un joystick sopra il nome, su un tramonto al neon"
+ },
+ "The game-sauce intro": {
+  "fr": "L’introduction de game-sauce",
+  "zh": "game-sauce 介绍片",
+  "es": "La presentación de game-sauce",
+  "pt": "A introdução do game-sauce",
+  "de": "Das game-sauce-Intro",
+  "ja": "game-sauce の紹介ビデオ",
+  "it": "L’intro di game-sauce"
+ },
+ "The game-sauce intro film": {
+  "fr": "Le film d’introduction de game-sauce",
+  "zh": "game-sauce 介绍影片",
+  "es": "El vídeo de presentación de game-sauce",
+  "pt": "O vídeo de introdução do game-sauce",
+  "de": "Der game-sauce-Introfilm",
+  "ja": "game-sauce の紹介ビデオ",
+  "it": "Il video di introduzione di game-sauce"
+ },
+ "Close": {
+  "fr": "Fermer",
+  "zh": "关闭",
+  "es": "Cerrar",
+  "pt": "Fechar",
+  "de": "Schließen",
+  "ja": "閉じる",
+  "it": "Chiudi"
  }
 }

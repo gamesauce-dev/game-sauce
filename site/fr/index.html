@@ -66,7 +66,13 @@
     <p class="small">Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid et Proxmox &middot; Raspberry Pi</p>
     <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="Écrans à la une">
     <div class="slides">
-      <div class="slide is-on" data-seconds="10">
+      <div class="slide is-on" data-seconds="9">
+        <img src="../img/poster-intro.webp" width="1280" height="720" alt="Le logo de game-sauce : une manette et un joystick au-dessus du nom, sur un coucher de soleil néon">
+        <span class="slide-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg></span>
+        <div class="slide-cap"><p class="slide-title">Voir l’introduction</p><p class="slide-sub">Une visite de 74 secondes de toute la bibliothèque, avec de la musique. Lancez la lecture pour le son.</p></div>
+        <a class="slide-hit" href="#intro" aria-label="Voir l’introduction"></a>
+      </div>
+      <div class="slide" data-seconds="10">
         <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="La bibliothèque : recherche d'un jeu et ouverture de ses détails"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Tout pour une collection que vous avez déjà</p><p class="slide-sub">Un seul endroit pour la bibliothèque de toute la maison, sur une machine que vous contrôlez.</p></div>
         <a class="slide-hit" href="#features" aria-label="Tout pour une collection que vous avez déjà"></a>
@@ -122,6 +128,10 @@
       </div>
     </div>
     </div>
+    <dialog class="intro-dialog" id="intro" aria-label="L’introduction de game-sauce">
+      <button type="button" class="intro-close" aria-label="Fermer">&times;</button>
+      <video class="slide-video intro-player" controls playsinline preload="none" poster="../img/poster-intro.webp" width="1280" height="720" aria-label="Le film d’introduction de game-sauce"><source src="../video/intro-fr.mp4" type="video/mp4"></video>
+    </dialog>
     <p class="small note">Les captures d'écran utilisent les données de démonstration intégrées, avec des jaquettes générées.</p>
   </div>
 </section>
@@ -398,6 +408,14 @@
   box.addEventListener('pointerup', function (e) { if (x0 !== null && Math.abs(e.clientX - x0) > 50) { swiped = true; go(cur + (e.clientX < x0 ? 1 : -1)); } x0 = null; });
   box.addEventListener('click', function (e) { if (swiped) { e.preventDefault(); swiped = false; } }, true);
   if (userPaused) { pauseBtn.hidden = true; playBtn.hidden = false; }
+  var dlg = document.getElementById('intro');
+  if (dlg && dlg.showModal) {
+    var pv = dlg.querySelector('video');
+    box.querySelector('a.slide-hit[href="#intro"]').addEventListener('click', function (e) { e.preventDefault(); userPaused = true; hold(); dlg.showModal(); var p = pv.play(); if (p && p.catch) p.catch(function () {}); });
+    dlg.querySelector('.intro-close').addEventListener('click', function () { dlg.close(); });
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', function () { pv.pause(); setPaused(false); });
+  }
   hold(); go(0);
 })();
 (function () {

@@ -59,6 +59,7 @@ for (const l of others) {
   let html = translate(src, l.code);
   html = chrome(html, l);
   html = html.replace('<html lang="en">', `<html lang="${l.html}">`);
+  html = html.replace('video/intro-en.mp4', `video/intro-${l.code}.mp4`);   // the intro film in this language
   // the page lives one folder down, so the files it shares with the English page are found one level up
   html = html.replace(/(href|src|poster)="(img|video|styles\.css)([^"]*)"/g, (all, a, d, rest) => `${a}="../${d}${rest}"`);
   html = html.replace('<link rel="canonical" href="https://gamesauce.app/">', `<link rel="canonical" href="https://gamesauce.app/${l.code}/">`);

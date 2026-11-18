@@ -66,7 +66,13 @@
     <p class="small">Windows &middot; macOS (Apple Silicon) &middot; Linux &middot; Docker, Unraid und Proxmox &middot; Raspberry Pi</p>
     <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="Ausgewählte Ansichten">
     <div class="slides">
-      <div class="slide is-on" data-seconds="10">
+      <div class="slide is-on" data-seconds="9">
+        <img src="../img/poster-intro.webp" width="1280" height="720" alt="Das game-sauce-Logo: ein Gamepad und ein Joystick über dem Namen, vor einem Neon-Sonnenuntergang">
+        <span class="slide-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg></span>
+        <div class="slide-cap"><p class="slide-title">Das Intro ansehen</p><p class="slide-sub">Eine 74-sekündige Tour durch die ganze Bibliothek, mit Musik. Auf Play drücken für den Ton.</p></div>
+        <a class="slide-hit" href="#intro" aria-label="Das Intro ansehen"></a>
+      </div>
+      <div class="slide" data-seconds="10">
         <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="Die Bibliothek: ein Spiel suchen und seine Details öffnen"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Alles für eine Sammlung, die du schon hast</p><p class="slide-sub">Ein Ort für die Bibliothek des ganzen Haushalts, auf einer Maschine, die du kontrollierst.</p></div>
         <a class="slide-hit" href="#features" aria-label="Alles für eine Sammlung, die du schon hast"></a>
@@ -122,6 +128,10 @@
       </div>
     </div>
     </div>
+    <dialog class="intro-dialog" id="intro" aria-label="Das game-sauce-Intro">
+      <button type="button" class="intro-close" aria-label="Schließen">&times;</button>
+      <video class="slide-video intro-player" controls playsinline preload="none" poster="../img/poster-intro.webp" width="1280" height="720" aria-label="Der game-sauce-Introfilm"><source src="../video/intro-de.mp4" type="video/mp4"></video>
+    </dialog>
     <p class="small note">Die Screenshots verwenden eingebaute Demodaten mit generierten Covern.</p>
   </div>
 </section>
@@ -398,6 +408,14 @@
   box.addEventListener('pointerup', function (e) { if (x0 !== null && Math.abs(e.clientX - x0) > 50) { swiped = true; go(cur + (e.clientX < x0 ? 1 : -1)); } x0 = null; });
   box.addEventListener('click', function (e) { if (swiped) { e.preventDefault(); swiped = false; } }, true);
   if (userPaused) { pauseBtn.hidden = true; playBtn.hidden = false; }
+  var dlg = document.getElementById('intro');
+  if (dlg && dlg.showModal) {
+    var pv = dlg.querySelector('video');
+    box.querySelector('a.slide-hit[href="#intro"]').addEventListener('click', function (e) { e.preventDefault(); userPaused = true; hold(); dlg.showModal(); var p = pv.play(); if (p && p.catch) p.catch(function () {}); });
+    dlg.querySelector('.intro-close').addEventListener('click', function () { dlg.close(); });
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', function () { pv.pause(); setPaused(false); });
+  }
   hold(); go(0);
 })();
 (function () {

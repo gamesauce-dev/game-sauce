@@ -165,6 +165,15 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .pay img { width: 100%; height: auto; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
 .pay figcaption { margin-top: 10px; font-size: .9rem; color: var(--dim); }
 
+/* the intro film: a play badge on its slide and a dialog that plays it with sound */
+.slide-play { position: absolute; left: 50%; top: 44%; z-index: 2; width: clamp(64px, 11vw, 112px); aspect-ratio: 1; margin: calc(clamp(64px, 11vw, 112px) / -2) 0 0 calc(clamp(64px, 11vw, 112px) / -2); display: grid; place-items: center; border-radius: 50%; color: #fff; background: rgba(124, 92, 255, .78); border: 2px solid rgba(255, 255, 255, .6); box-shadow: 0 0 0 10px rgba(124, 92, 255, .22), 0 10px 40px rgba(0, 0, 0, .5); pointer-events: none; transition: transform .2s; }
+.slide-play svg { width: 46%; margin-left: 6%; }
+.slide:hover .slide-play { transform: scale(1.08); }
+.intro-dialog { width: min(1100px, 94vw); padding: 0; border: 1px solid var(--line); border-radius: 18px; background: #000; overflow: hidden; }
+.intro-dialog::backdrop { background: rgba(3, 4, 8, .82); }
+.intro-dialog video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; border-radius: 0; box-shadow: none; }
+.intro-close { position: absolute; top: 10px; right: 10px; z-index: 2; width: 40px; height: 40px; padding: 0; border: 1px solid rgba(255, 255, 255, .3); border-radius: 12px; background: rgba(12, 13, 20, .7); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.intro-close:hover { background: rgba(124, 92, 255, .7); }
 /* hero slider: the pictures step by themselves; a click goes to the section they show */
 .slider { position: relative; margin-top: 44px; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; background: #000; box-shadow: 0 24px 60px rgba(0, 0, 0, .5); text-align: left; }
 .slides { position: absolute; inset: 0; }

@@ -66,7 +66,13 @@
     <p class="small">Windows &middot; macOS（Apple シリコン）&middot; Linux &middot; Docker、Unraid、Proxmox &middot; Raspberry Pi</p>
     <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="注目の画面">
     <div class="slides">
-      <div class="slide is-on" data-seconds="10">
+      <div class="slide is-on" data-seconds="9">
+        <img src="../img/poster-intro.webp" width="1280" height="720" alt="game-sauce のロゴ：名前の上にゲームパッドとジョイスティック、ネオンの夕日を背景に">
+        <span class="slide-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg></span>
+        <div class="slide-cap"><p class="slide-title">紹介ビデオを見る</p><p class="slide-sub">ライブラリ全体を74秒で巡るツアーです。音楽付き。再生すると音が出ます。</p></div>
+        <a class="slide-hit" href="#intro" aria-label="紹介ビデオを見る"></a>
+      </div>
+      <div class="slide" data-seconds="10">
         <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="ライブラリ：ゲームを検索して詳細を開く"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">すでにあるコレクションのためのすべて</p><p class="slide-sub">家族全員のライブラリを、自分で管理するマシンにひとまとめに。</p></div>
         <a class="slide-hit" href="#features" aria-label="すでにあるコレクションのためのすべて"></a>
@@ -122,6 +128,10 @@
       </div>
     </div>
     </div>
+    <dialog class="intro-dialog" id="intro" aria-label="game-sauce の紹介ビデオ">
+      <button type="button" class="intro-close" aria-label="閉じる">&times;</button>
+      <video class="slide-video intro-player" controls playsinline preload="none" poster="../img/poster-intro.webp" width="1280" height="720" aria-label="game-sauce の紹介ビデオ"><source src="../video/intro-ja.mp4" type="video/mp4"></video>
+    </dialog>
     <p class="small note">スクリーンショットは、内蔵のデモデータと生成されたカバーを使っています。</p>
   </div>
 </section>
@@ -398,6 +408,14 @@
   box.addEventListener('pointerup', function (e) { if (x0 !== null && Math.abs(e.clientX - x0) > 50) { swiped = true; go(cur + (e.clientX < x0 ? 1 : -1)); } x0 = null; });
   box.addEventListener('click', function (e) { if (swiped) { e.preventDefault(); swiped = false; } }, true);
   if (userPaused) { pauseBtn.hidden = true; playBtn.hidden = false; }
+  var dlg = document.getElementById('intro');
+  if (dlg && dlg.showModal) {
+    var pv = dlg.querySelector('video');
+    box.querySelector('a.slide-hit[href="#intro"]').addEventListener('click', function (e) { e.preventDefault(); userPaused = true; hold(); dlg.showModal(); var p = pv.play(); if (p && p.catch) p.catch(function () {}); });
+    dlg.querySelector('.intro-close').addEventListener('click', function () { dlg.close(); });
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', function () { pv.pause(); setPaused(false); });
+  }
   hold(); go(0);
 })();
 (function () {
