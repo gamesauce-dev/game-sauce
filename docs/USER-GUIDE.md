@@ -399,7 +399,7 @@ To bring in details and covers in one go, choose the CSV and add the zip from **
 
 ## Digital: your Steam, PlayStation, Nintendo and Xbox games
 
-Under **Settings → My account → Steam** each person can show the games they own on Steam, with their hours played, on the **Digital** page. Only you see your list.
+Under **Tools → Steam** each person can show the games they own on Steam, with their hours played, on the **Digital** page. Only you see your list.
 
 1. Get a Web API key at steamcommunity.com/dev/apikey (any domain name will do).
 2. Find your 17-digit Steam ID (steamid.io shows it) or copy your steamcommunity.com/profiles/... link.

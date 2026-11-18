@@ -5,7 +5,6 @@ import { identifyBlock, wireIdentify, comboHtml, wireCombo } from './identify.js
 import { attachBulk } from './bulk.js';
 import { assetWords } from './video.js';
 import { landChips } from './chip-motion.js';
-import { renderArtImport } from './artimport-ui.js';
 import { familyLabel, platformBadge, platformChip } from './platform-names.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -60,7 +59,6 @@ const store = {
 const tok = { store: (s) => `s:${s}`, plat: (p) => `p:${p}` };
 const picks = () => ({ stores: dg.picked.filter((t) => t.startsWith('s:')).map((t) => t.slice(2)), platforms: dg.picked.filter((t) => t.startsWith('p:')).map((t) => t.slice(2)) });
 const steamPossible = () => !dg.picked.length || dg.picked.includes('s:steam');
-const isAdmin = () => ctx?.user?.()?.role === 'admin';
 
 export function initDigital(c) {
   ctx = c;
@@ -234,7 +232,6 @@ export async function loadDigital(keep = false) {
   const sync = $('#dg-sync');
   sync.classList.toggle('hidden', !connected && !consoleGames);
   sync.title = connected && consoleGames ? 'Fetch your Steam library again, and look up details for console games that have none' : connected ? 'Fetch your Steam library again' : 'Look up details and covers for console games that have none';
-  $('[data-dg-act="import"]')?.classList.toggle('hidden', !isAdmin());
   const hasGames = connected || consoleGames;
   $('#dg-bar').classList.toggle('hidden', !hasGames); $('#dg-az').classList.toggle('hidden', !hasGames);
   paintSort(); paintToolbar(); renderChips();
@@ -248,9 +245,9 @@ export async function loadDigital(keep = false) {
   if (!hasGames) {
     $('#dg-heading').classList.add('hidden'); grid.innerHTML = '';
     empty.classList.remove('hidden');
-    empty.innerHTML = `<div class="empty"><h2>Your Digital Library is empty</h2><p>Connect Steam and the games you own appear here with your hours played. PlayStation, Nintendo and Xbox games are added by hand${isAdmin() ? ' or from a CSV' : ''}. Only you can see your list.</p>
-      <div class="dg-actions"><button class="btn btn-primary" id="dg-setup">Set up Steam</button><button class="btn" data-dg-act="add">Add a game</button>${isAdmin() ? '<button class="btn" data-dg-act="import">Import a CSV</button>' : ''}</div></div>`;
-    $('#dg-setup').onclick = () => { ctx.setView('settings'); ctx.showSettingsModule('steam'); };
+    empty.innerHTML = `<div class="empty"><h2>Your Digital Library is empty</h2><p>Connect Steam and the games you own appear here with your hours played. PlayStation, Nintendo and Xbox games are added by hand or from a CSV (Tools > Add My Games). Only you can see your list.</p>
+      <div class="dg-actions"><button class="btn btn-primary" id="dg-setup">Set up Steam</button><button class="btn" data-dg-act="add">Add a game</button><button class="btn" data-dg-act="tools">Add from a CSV</button></div></div>`;
+    $('#dg-setup').onclick = () => { ctx.setView('tools'); ctx.showToolsModule('steam'); };
     return;
   }
   empty.classList.add('hidden');
@@ -305,7 +302,7 @@ async function onClick(e) {
   if (e.target.closest('#dg-reset')) { reset(); loadDigital(); return; }
   if (e.target.closest('[data-dg-clear]')) { dg.family = null; dg.picked = []; dg.letter = ''; loadDigital(); return; }
   const act = e.target.closest('[data-dg-act]');
-  if (act) { if (act.dataset.dgAct === 'add') openAdd(); else if (act.dataset.dgAct === 'import') openImport(); else if (act.dataset.dgAct === 'art') openArtImport(); return; }
+  if (act) { if (act.dataset.dgAct === 'add') openAdd(); else if (act.dataset.dgAct === 'tools') { ctx.setView('tools'); ctx.showToolsModule('addgames'); } return; }
   const mk = e.target.closest('[data-dg-mark]');
   if (mk) {
     e.preventDefault(); e.stopPropagation();
@@ -539,7 +536,7 @@ function openAdd() {
   const first = lastAdd.platform || (dg.picked.length === 1 && dg.picked[0].startsWith('p:') ? dg.picked[0].slice(2) : '');
   $('#drawer-body').innerHTML = `
     <h2 class="detail-title">Add a game to your Digital Library</h2>
-    <p class="hint">For PlayStation, Nintendo and Xbox games you own as downloads. Steam games come from Steam (set that up under Settings → My account → Steam), so they are not added by hand. Details and a cover are looked up afterwards, and you can match the game by hand if they are wrong.</p>
+    <p class="hint">For PlayStation, Nintendo and Xbox games you own as downloads. Steam games come from Steam (set that up under Tools → Steam), so they are not added by hand. Details and a cover are looked up afterwards, and you can match the game by hand if they are wrong.</p>
     <form class="edit-form" id="dg-add">
       <label class="field"><span>Title</span><input name="title" required autocomplete="off" /></label>
       <div class="field-row">
@@ -565,7 +562,7 @@ function openAdd() {
 }
 
 /** One line telling what an import did (or would do). */
-function importSummary(r) {
+export function importSummary(r) {
   const per = Object.entries(r.by_store || {}).map(([k, v]) => `${esc(storeLabel(k))} ${n(v)}`).join(', ');
   const what = r.applied
     ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
@@ -576,35 +573,3 @@ function importSummary(r) {
     + (r.applied && r.details_job?.running ? `<br>Details and covers are being looked up now (${n(r.details_job.total)} games). They appear here as they are found.` : '');
 }
 
-/** Bring in covers for your console games from a folder on the server (see public/artimport-ui.js). */
-function openArtImport() {
-  openShell(true); $('#drawer-nav')?.classList.add('hidden');
-  renderArtImport(ctx, $('#drawer-body'), { target: 'digital', onDone: () => loadDigital(true) });
-}
-
-
-function openImport() {
-  openShell(true); $('#drawer-nav')?.classList.add('hidden');
-  $('#drawer-body').innerHTML = `
-    <h2 class="detail-title">Import a CSV</h2>
-    <p class="hint">A CSV with the columns <code>Platform</code>, <code>Game</code> and <code>Country</code>, and optionally <code>Media</code> (the first row names the columns, in any order). The platform can be <b>PS3</b>, <b>PS4</b>, <b>PS5</b>, <b>Switch 2</b>, <b>Switch</b>, <b>Wii</b>, <b>Wii U</b>, <b>3DS</b>, <b>DS</b>, <b>Xbox</b>, <b>Xbox 360</b>, <b>Xbox One</b> or <b>Xbox Series X|S</b>. Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
-    <div class="panel" style="padding:12px;display:grid;gap:10px">
-      <label class="field"><span>CSV file</span><input type="file" id="dg-imp-file" accept=".csv,text/csv" class="file-input" /></label>
-      <label class="policy-row"><input type="checkbox" id="dg-imp-replace" /> <span>Remove games no longer in the file (only for the platforms the file lists)</span></label>
-      <div style="display:flex;gap:8px"><button class="btn" id="dg-imp-preview">Preview</button><button class="btn btn-primary" id="dg-imp-apply" disabled>Import games</button></div>
-      <p class="hint" id="dg-imp-result" style="margin:0"></p>
-    </div>`;
-  const file = $('#dg-imp-file'), out = $('#dg-imp-result'), apply = $('#dg-imp-apply');
-  const run = async (doApply) => {
-    const f = file.files?.[0]; if (!f) return ctx.toast('Choose a CSV file first', true);
-    let csv; try { csv = await f.text(); } catch { return ctx.toast('The file could not be read', true); }
-    try {
-      const r = await ctx.api('/digital/consoles/import', { method: 'POST', body: JSON.stringify({ csv, apply: doApply, replace: $('#dg-imp-replace').checked }) });
-      out.innerHTML = importSummary(r);
-      apply.disabled = doApply || !(r.added || r.updated || r.removed || r.physical_on || r.physical_off);
-      if (doApply) { ctx.toast(`${n(r.added)} console games added to your Digital Library`); loadDigital(true); }
-    } catch (err) { out.textContent = err.message; ctx.toast(err.message, true); }
-  };
-  $('#dg-imp-preview').onclick = () => run(false); apply.onclick = () => run(true);
-  file.onchange = () => { apply.disabled = true; out.textContent = ''; }; $('#dg-imp-replace').onchange = () => { apply.disabled = true; };
-}

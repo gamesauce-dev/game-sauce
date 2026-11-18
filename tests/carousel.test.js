@@ -97,7 +97,7 @@ test('controller on the shelf: A on a spine keeps the pad on the shelf (the case
 test('the Settings has a Play on this PC card (for anyone who can use the launcher): Set up emulators and Check my PC', () => {
   const html = read('public/index.html'), app = read('public/app.js');
   assert.ok(html.includes('id="mod-playpc"') && html.includes('id="playpc-setup"') && html.includes('id="playpc-check"'));
-  assert.ok(app.includes("{ id: 'playpc', label: 'Play on this PC'") && app.includes("launcherLink('configure')") && app.includes("launcherLink('sync')") && app.includes('can_download === false'));
+  assert.ok(app.includes("{ id: 'playpc', label: 'Emulators'") && app.includes("launcherLink('configure')") && app.includes("launcherLink('sync')") && app.includes('can_download === false'));
 });
 
 test('Carousel: a favourite shows a star on its cover and by its title, and the middle game has a button to mark or unmark it', () => {

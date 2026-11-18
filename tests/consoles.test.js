@@ -87,7 +87,7 @@ test('lookup tries each platform of the store and prefers a match with a cover',
 test('import: header required, preview saves nothing, apply adds, duplicates and bad rows are reported', async () => {
   const bad = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'a,b\n1,2' } });
   assert.equal(bad.status, 400); assert.match(bad.body.error, /Platform, Game, Country/);
-  assert.equal((await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV }, token: annTok })).status, 403, 'CSV tools are for admins');
+  assert.equal((await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV }, token: annTok })).status, 200, 'anyone can preview an import into their own list (Tools > Add My Games)');
 
   const pre = await call('/api/digital/consoles/import', { method: 'POST', body: { csv: CSV } });
   assert.equal(pre.status, 200); assert.equal(pre.body.applied, false);

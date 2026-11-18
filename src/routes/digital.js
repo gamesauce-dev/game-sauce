@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
-import { requireAdmin } from './auth.js';
 import { flagVideos } from '../lib/emumovies.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, libSlug, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
@@ -138,7 +137,7 @@ router.get('/cover/:store/:appId', (req, res) => {
 
 // Console games from a CSV (Platform, Game, Country) into the signed-in person's own list.
 // { csv: text, apply?: boolean, replace?: boolean }. Without apply nothing is saved: the answer is the preview.
-router.post('/consoles/import', requireAdmin, (req, res) => {
+router.post('/consoles/import', (req, res) => {
   try {
     const r = importConsoleCsv(me(req), req.body?.csv, { apply: req.body?.apply === true, replace: req.body?.replace === true });
     if (r.applied) req.auditDetail = { added: r.added, updated: r.updated, removed: r.removed };

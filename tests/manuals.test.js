@@ -129,7 +129,7 @@ test('the screens: a Manual section in the details window, the manual side of th
   assert.ok(js.includes("if (m.kind === 'link') { window.open(m.url, '_blank', 'noopener,noreferrer'); return; }"), 'a link opens in a new tab (the desktop app hands it to your browser)');
   assert.ok(js.includes('<iframe src="${esc(m.url)}"') && js.includes("e.key === 'Escape'"), 'a file opens in a viewer over the page: it needs your sign-in, which a separate browser would not have');
   assert.ok(js.includes('No manual for this game yet'), 'no manual: it says so');
-  assert.ok(js.includes('<code>Manual</code> (a web link to the game\'s manual)'), 'the CSV panel names the column');
+  assert.ok(read('public/index.html').includes('<code>Manual</code> (a web link to the game\'s manual)'), 'the CSV panel names the column');
   assert.ok(css.includes('.ph-manview {') && css.includes('.ph-manual.has-manual'));
   for (const id of ['ph-man-open', 'ph-man-upload', 'ph-man-find', 'ph-man-remove', 'ph-man-save']) assert.ok(mj.includes(`'#${id}'`), `Modern gives ${id} an icon`);
 });

@@ -25,6 +25,7 @@ const NAV = [
   { view: 'upload', icon: 'add-roms', label: 'Add ROMs', admin: true },
   { view: 'emulators', icon: 'emulators-2', label: 'Emulators' },
   { view: 'messages', icon: 'messages', label: 'Messages' },
+  { view: 'tools', icon: 'maintenance', label: 'Tools' },
   { view: 'settings', icon: 'settings', label: 'Settings' }
 ];
 
@@ -74,7 +75,7 @@ function buildBar() {
 }
 async function doBuildBar() {
   const bar = $('#modern-bar'); if (!bar) return;
-  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'carousel', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'messages', 'settings', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'game-assets', 'grid', 'grid-condensed', 'back-to-top', 'pin', 'big-screen'].map(async (n) => [n, await icon(n)])));
+  const ic = Object.fromEntries(await Promise.all(['home', 'Library', 'collection', 'carousel', 'sources', 'add-roms', 'digital-library', 'physical-shelf', 'emulators-2', 'maintenance', 'messages', 'settings', 'gamepad', 'fetch-games', 'game-add', 'covers', 'light-mode', 'dark-mode', 'gui-toggle', 'sign-out', 'my-account', 'search', 'sort', 'favourite', 'hidden', 'visible', 'select-2', 'no-covers-2', 'fetch-metadata-3', '3-dot-spinner', 'more-actions', 'system', 'orphans', 'issue', 'lock', 'clear-reset-2', 'filter', 'game-assets', 'grid', 'grid-condensed', 'back-to-top', 'pin', 'big-screen'].map(async (n) => [n, await icon(n)])));
   const isAdmin = ctx.user()?.role === 'admin';
   const playOnly = Boolean(ctx.user()?.play_only);
   const items = NAV.filter((n) => (!n.admin || isAdmin) && !(playOnly && ['collections', 'sources', 'upload', 'emulators', 'digital', 'physical'].includes(n.view)));

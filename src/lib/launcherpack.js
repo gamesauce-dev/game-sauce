@@ -26,7 +26,7 @@ export function readMe(origin) {
     '   - Windows: double-click install-windows.bat',
     '   - Linux:   open a terminal in the folder and run   sh install-linux.sh',
     '   - macOS:   open a terminal in the folder and run   sh install-macos.sh',
-    `3. In game-sauce (${origin}) open Settings > My account > Play on this PC, and press "Set up emulators".`,
+    `3. In game-sauce (${origin}) open Tools > Emulators, and press "Set up emulators".`,
     '   A page opens on this computer: choose the program that plays each platform, then Save.',
     '4. Press "Check my PC" in the same place so the Carousel only shows games this computer can start.',
     '',

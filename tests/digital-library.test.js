@@ -199,7 +199,7 @@ test('the page: laid out like Physical, store and console chips, Steam hours in 
   for (const id of ['dg-bar', 'dg-q', 'dg-sort', 'dg-toggles', 'dg-reset', 'dg-sync', 'dg-chips', 'dg-az', 'dg-letters', 'dg-top', 'dg-heading', 'dg-empty', 'dg-grid']) assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, /<div class="ph-bar" id="dg-bar">/); assert.match(html, /<nav class="ph-chips" id="dg-chips"/); assert.match(html, /<div id="dg-heading" class="lib-heading hidden">/);
   assert.doesNotMatch(html, /id="dg-total"/); assert.doesNotMatch(html.slice(html.indexOf('id="view-digital"'), html.indexOf('id="view-emulators"')), /<h1 class="page-title">/);
-  assert.match(html, /data-dg-act="import"/); assert.match(html, /data-dg-act="add"/); assert.doesNotMatch(html.slice(html.indexOf('id="view-digital"'), html.indexOf('id="view-emulators"')), /data-dg-view="shelf"/, 'no shelf view in Digital');
+  assert.doesNotMatch(html.slice(html.indexOf('id="view-digital"'), html.indexOf('id="view-emulators"')), /data-dg-act="import"/, 'the CSV import is in Tools'); assert.match(html, /data-dg-act="add"/); assert.doesNotMatch(html.slice(html.indexOf('id="view-digital"'), html.indexOf('id="view-emulators"')), /data-dg-view="shelf"/, 'no shelf view in Digital');
   // chips: a store, then its consoles; the same click rules as Physical
   assert.match(js, /data-dg-chip-store/); assert.match(js, /data-dg-chip-plat/); assert.match(js, /ph-chip-plats/); assert.match(js, /'s:'|`s:\$\{s\}`/); assert.match(js, /params\.set\('stores'/); assert.match(js, /params\.set\('platforms'/);
   // Steam alone shows the hours next to the count; the sorts are Physical's with Steam's two below a divider
@@ -207,7 +207,7 @@ test('the page: laid out like Physical, store and console chips, Steam hours in 
   assert.match(js, /<optgroup label="Steam only"><option value="hours">Most played<\/option><option value="recent">Recently played<\/option><\/optgroup>/);
   for (const v of ['name', '-name', 'platform', 'added', 'year']) assert.match(js, new RegExp(`<option value="${v}">`), v);
   // add by hand and import, for Digital's own consoles; match and edit are for console games (a Steam game's details come from Steam)
-  assert.match(js, /'\/digital\/games', \{ method: 'POST'/); assert.match(js, /'\/digital\/consoles\/import'/); assert.match(js, /isAdmin\(\)/);
+  assert.match(js, /'\/digital\/games', \{ method: 'POST'/); assert.match(fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), /'\/digital\/consoles\/import'/, 'Add My Games (Tools) sends the Digital rows');
   assert.match(js, /identifyBlock\(\{ idp: 'dg'/); assert.match(js, /wireIdentify\(body, \{ idp: 'dg'/); assert.match(js, /id="dg-edit"/); assert.match(js, /\/match`, \{ method: 'POST'/);
   const steam = js.slice(js.indexOf('function renderSteamDetail'), js.indexOf('function renderConsoleDetail'));
   assert.ok(!steam.includes('identifyBlock') && !steam.includes('dg-edit'), 'no match or edit for a Steam game');

@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **A Tools page, before Settings.** Each person's own things in one place: **Emulators** (Play on this PC) and **Controller**, moved out of My account; **Add My Games**, the CSV import moved out of the Digital and Physical libraries and CSV tools, now with a **Library** column (Digital or Physical) so one file can fill both lists (games with no value go to the list you pick; a file with no such column goes wholly to it); **Game Assets**, the importer for pictures, manuals and videos moved out of the two libraries, for the Physical shelf or the Digital Library; and **Steam** (your Steam details and Fetch my games, moved out of My account; the Refresh button in Digital stays). An empty Digital or Physical list points to Tools. A play-only account sees Emulators and Controller only.
+
 ### Changed
 - **Xbox Live Arcade shows up in Big Screen and the Carousel.** XBLA games start in your Xbox 360 emulator, but the lists only offered a platform this PC reported an emulator for, so XBLA had no tile of its own. It now counts as ready whenever Xbox 360 is (and the launcher reports and starts it that way too, unless you give xbla its own emulator).
 - **Chips read as in the Library.** The Xbox family chip in the Digital and Physical libraries now says Microsoft. A short name you typed in Settings > Platforms (for example XBOX S|X) shows on the platform chips instead of the built-in X|S.

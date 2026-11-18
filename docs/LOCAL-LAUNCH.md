@@ -28,7 +28,7 @@ It works from two sources. The server counts the bytes it has sent to the launch
 A newer launcher also reports its own steps (the page asks the server, the launcher tells the server; nothing is sent anywhere else). It
 reports only the step name, the byte counts and its error message, never a path or a command, and only to a server you listed under `servers`.
 With an older launcher the card shows the download and then "Sent to your PC", because the rest happens on your PC where the server cannot see.
-Update the launcher (**Settings, My account, Play on this PC, Download the launcher**) to see every step. A game kept by quick launch skips
+Update the launcher (**Tools, Emulators, Download the launcher**) to see every step. A game kept by quick launch skips
 the download and goes straight to **Starting your emulator**.
 
 ## Set it up (once per PC)
@@ -36,7 +36,7 @@ the download and goes straight to **Starting your emulator**.
 You need **Node.js 18 or newer** on that PC (the game-sauce server already needs it, so a PC that runs the server
 from `start.bat` has it).
 
-1. Get the `launcher` folder onto the PC: in game-sauce press **Settings, My account, Play on this PC, Download the launcher** (a zip with a READ ME FIRST), or copy the `launcher` folder from this repository (or use the whole repository).
+1. Get the `launcher` folder onto the PC: in game-sauce press **Tools, Emulators, Download the launcher** (a zip with a READ ME FIRST), or copy the `launcher` folder from this repository (or use the whole repository).
 2. Register the `gamesauce://` link:
    - **Windows:** double-click `launcher\install-windows.bat`. No administrator rights are needed.
    - **Linux:** `sh launcher/install-linux.sh`

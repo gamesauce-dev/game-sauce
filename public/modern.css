@@ -633,3 +633,4 @@ body.ui-modern .detail-hero > .detail-cover.has-video:not(.show-art) { width: mi
 body.ui-modern [data-mi="favourite"].is-on::before, body.ui-modern .ibtn.fav.is-on [data-mi="favourite"]::before { -webkit-mask-image: url(/modern/icons/star-fill.svg); mask-image: url(/modern/icons/star-fill.svg); }
 body.ui-modern .mb-btn.is-on svg path[stroke] { fill: currentColor; }
 body.ui-modern .mb-navbtn[data-mview="digital"].is-on svg path[stroke] { fill: none; }   /* the Digital Library icon is an outline when it is selected too */
+body.ui-modern .mb-navbtn[data-mview="tools"].is-on svg path[stroke] { fill: none; }   /* Tools is an outline when it is selected too */

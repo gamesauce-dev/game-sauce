@@ -156,8 +156,9 @@ test('the screens and the settings: Game assets (admin), Import game assets in t
   assert.ok(app.includes("id: 'artfolders'") && app.includes("'/art/folders'"));
   const ui = read('public/artimport-ui.js');
   assert.ok(ui.includes("'/art/import'") && ui.includes("'/art/import/status'") && ui.includes('Replace what is already there') && ui.includes('id="art-preview"') && ui.includes('id="art-apply" type="button" disabled'), 'preview first, then Import');
-  assert.ok(ph.includes("renderArtImport(ctx, $('#drawer-body'), { target: 'physical'") && dg.includes("renderArtImport(ctx, $('#drawer-body'), { target: 'digital'"));
-  assert.ok(html.includes('data-ph-act="art"') && html.includes('data-dg-act="art"'));
+  // the Physical and Digital importers live in Tools > Game Assets (one panel, a choice of list), not in the two libraries
+  assert.ok(html.includes('id="mod-gameassets"') && html.includes('name="ga-target"') && app.includes("renderArtImport({ api, toast }, $('#ga-body'), { target"));
+  assert.ok(!html.includes('data-ph-act="art"') && !html.includes('data-dg-act="art"') && !ph.includes('openArtImport') && !dg.includes('openArtImport'));
   // an admin can add a folder from the import screen itself: type or paste a path, or browse the server's folders
   assert.ok(ui.includes('function wireAddFolder(') && ui.includes('id="art-newpath"') && ui.includes('id="art-browse"') && ui.includes("`/sources/browse${p ? `?path=${encodeURIComponent(p)}` : ''}`") && ui.includes("'/art/folders', { method: 'PUT'"), 'type, paste or browse, then Add');
   assert.ok(ui.includes('if (can_edit) wireAddFolder('), 'only for an admin (the folders list is theirs to set)');
@@ -287,7 +288,7 @@ test('Game assets: one Import game assets button everywhere, the Settings entry 
   assert.ok(html.includes('<h3>Game assets ') && !html.includes('<h3>Artwork folders'));
   assert.ok(app.includes("label: 'Game assets'") && app.includes("toast('Game asset folders saved')"));
   assert.match(html, /id="artfolders-save"[^>]*><svg/, 'the save button is an icon');
-  assert.ok(html.includes('id="lib-assets"') && html.includes('data-ph-act="art"') && html.includes('data-dg-act="art"'));
+  assert.ok(html.includes('id="lib-assets"') && html.includes('id="mod-gameassets"'));
   assert.ok(!html.includes('id="lib-art"') && !html.includes('id="lib-video"') && !html.includes('data-ph-act="videos"') && !html.includes('data-dg-act="videos"'), 'no separate video buttons');
   assert.ok(modern.includes("id=\"tl-assets\"") && modern.includes("'game-assets'") && !modern.includes("'import-media'] ") );
   assert.ok(ui.includes("file${p.unmatched_total === 1 ? '' : 's'} matched none of your games") && !ui.includes("picture${p.unmatched_total"));

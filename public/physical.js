@@ -8,7 +8,6 @@ import { assetWords } from './video.js';
 import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
 import { platformBadge, platformChip, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
-import { renderArtImport } from './artimport-ui.js';
 import { drawPage, mountViewer, pdfReady } from './pdfview.js';
 import { attachBulk } from './bulk.js';
 
@@ -94,7 +93,7 @@ export async function load(keep = false) {
     scroll.classList.add('hidden');
     empty.classList.remove('hidden');
     empty.innerHTML = `<div class="empty"><h2>Your shelf is empty</h2><p>Catalogue the games you own on disc or cartridge: add one by hand, or bring a whole list in from a CSV. Covers and details are looked up for you, and you can match any game by hand.</p>
-      <div class="dg-actions"><button class="btn btn-primary" data-ph-act="add">Add a game</button><button class="btn" data-ph-act="import">Import a CSV</button></div></div>`;
+      <div class="dg-actions"><button class="btn btn-primary" data-ph-act="add">Add a game</button><button class="btn" data-ph-act="tools">Add from a CSV</button></div></div>`;
     return;
   }
   scroll.classList.remove('hidden');
@@ -251,7 +250,7 @@ function onClick(e) {
   if (e.target.closest('#ph-reset')) { reset(); load(); return; }
   if (e.target.closest('[data-ph-clear]')) { S.family = null; S.picked = []; S.letter = ''; load(); return; }
   const act = e.target.closest('[data-ph-act]');
-  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'import') openImport(); else if (a === 'art') openArtImport(); else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); else if (a === 'review') reviewDigital(); return; }
+  if (act) { const a = act.dataset.phAct; if (a === 'add') openAdd(); else if (a === 'tools') { ctx.setView('tools'); ctx.showToolsModule('addgames'); } else if (a === 'lookup') lookupAgain(act); else if (a === 'digital') digitalAll(act); else if (a === 'review') reviewDigital(); return; }
   const fav = e.target.closest('[data-ph-fav]');
   if (fav) { e.stopPropagation(); toggleFav(Number(fav.dataset.phFav)); return; }
   const tile = e.target.closest('[data-ph-id]');
@@ -989,41 +988,4 @@ export function importSummary(r, platformName = (s) => s) {
   return what + (notes ? ` ${notes}.` : '')
     + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
     + (r.applied && r.match_job?.running ? `<br>Details and covers are being looked up now (${n(r.match_job.total)} games). Open <b>Physical</b> to watch them arrive.` : '');
-}
-
-/** Bring in pictures and manuals from a folder on the server (see public/artimport-ui.js). */
-function openArtImport() {
-  ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;
-  openShell(); $('#drawer-nav')?.classList.add('hidden');
-  renderArtImport(ctx, $('#drawer-body'), { target: 'physical', onDone: () => load(true) });
-}
-
-
-function openImport() {
-  ctx.state.openRomId = null; ctx.state.openDigital = null; ctx.state.openPhysical = 0; S.openId = null; ctx.state.detailToken = (ctx.state.detailToken || 0) + 1;
-  openShell(); $('#drawer-nav')?.classList.add('hidden');
-  $('#drawer-body').innerHTML = `
-    <h2 class="detail-title">Import a CSV</h2>
-    <p class="hint">A CSV with the columns <code>Platform</code> and <code>Game</code>, and optionally <code>Region</code>, <code>Notes</code>, <code>Year</code>, <code>Manual</code> (a web link to the game's manual) and <code>Digital</code> (yes or no, for Xbox One and Series discs: whether the game is also in your Digital library) (the first row names the columns, in any order). The platform can be any name from the Library's platform list: <b>SNES</b>, <b>Mega Drive</b>, <b>PS2</b>, <b>Game Boy</b>… Importing the same file again adds nothing twice. Preview shows what would change before anything is saved.</p>
-    <div class="panel" style="padding:12px;display:grid;gap:10px">
-      <label class="field"><span>CSV file</span><input type="file" id="ph-imp-file" accept=".csv,text/csv" class="file-input" /></label>
-      <label class="policy-row"><input type="checkbox" id="ph-imp-digital" /> <span>Also add Xbox One and Xbox Series discs to my Digital library (a <code>Digital</code> column of no keeps one out)</span></label>
-      <label class="policy-row"><input type="checkbox" id="ph-imp-replace" /> <span>Remove games no longer in the file (only for the platforms the file lists)</span></label>
-      <div style="display:flex;gap:8px"><button class="btn" id="ph-imp-preview">Preview</button><button class="btn btn-primary" id="ph-imp-apply" disabled>Import games</button></div>
-      <p class="hint" id="ph-imp-result" style="margin:0"></p>
-    </div>`;
-  const file = $('#ph-imp-file'), out = $('#ph-imp-result'), apply = $('#ph-imp-apply');
-  const pname = (s) => platOf(s).name;
-  const run = async (doApply) => {
-    const f = file.files?.[0]; if (!f) return ctx.toast('Choose a CSV file first', true);
-    let csv; try { csv = await f.text(); } catch { return ctx.toast('The file could not be read', true); }
-    try {
-      const r = await ctx.api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply: doApply, replace: $('#ph-imp-replace').checked, digital: $('#ph-imp-digital').checked }) });
-      out.innerHTML = importSummary(r, pname);
-      apply.disabled = doApply || !(r.added || r.updated || r.removed);
-      if (doApply) { ctx.toast(`${n(r.added)} games added to your shelf`); load(true); }
-    } catch (err) { out.textContent = err.message; ctx.toast(err.message, true); }
-  };
-  $('#ph-imp-preview').onclick = () => run(false); apply.onclick = () => run(true);
-  file.onchange = () => { apply.disabled = true; out.textContent = ''; }; $('#ph-imp-replace').onchange = $('#ph-imp-digital').onchange = () => { apply.disabled = true; };
 }

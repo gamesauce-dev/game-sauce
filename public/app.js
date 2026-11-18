@@ -7,6 +7,7 @@ import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
 import { renderArtImport } from './artimport-ui.js';
+import { splitByLibrary } from './csvsplit.js';   // Add My Games: the Library column
 import { assetWords } from './video.js';   // the video in a game's details window
 import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
@@ -51,13 +52,14 @@ const state = {
 /* Remember where the user is (view, platform, search, filters, sort, density, settings tile)
  * for this browser TAB, so a refresh puts them back instead of on the Library home.
  * sessionStorage: survives reload, not a new tab/browser; cleared on sign-in and sign-out. */
+let activeToolsModule = null; // which Tools tile is open
 let activeSettingsModule = null; // which Settings tile is open (declared early: saveNav reads it)
 const NAV_KEY = 'gamesauce_nav';
 const NAV_FIELDS = ['platform', 'extraPlatforms', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
   'missing', 'hidden', 'orphan', 'locked', 'unmatched', 'datStatus', 'cover', 'matched', 'incl'];
 function saveNav() {
   try {
-    const snap = { view: state.view, settingsModule: activeSettingsModule };
+    const snap = { view: state.view, settingsModule: activeSettingsModule, toolsModule: activeToolsModule };
     for (const k of NAV_FIELDS) snap[k] = state[k];
     sessionStorage.setItem(NAV_KEY, JSON.stringify(snap));
   } catch { /* storage unavailable: refresh just starts at the Library */ }
@@ -295,6 +297,7 @@ function setView(view) {
   if (view === 'upload') loadUploadPlatforms();
   if (view === 'sources') loadSources();
   if (view === 'settings') loadSettings();
+  if (view === 'tools') loadTools();
   if (view === 'emulators') loadEmulators();
   if (view === 'digital') digital.load();
   if (view === 'physical') physical.load();
@@ -4083,9 +4086,9 @@ function showApp(user, { restore = false } = {}) {
   syncTopbar();
   // The look: Classic (default) or Modern, chosen per person. Modern is a preview: it is only used when asked for.
   state.prefs = state.prefs || {};
-  physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON });
+  physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showToolsModule });
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
-  digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, user: () => authState.user });
+  digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, showToolsModule, user: () => authState.user });
   modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView });
   api('/prefs').then((p) => { state.prefs = p || {}; syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
@@ -4114,12 +4117,13 @@ function showApp(user, { restore = false } = {}) {
   const saved = restore ? readNav() : null;
   if (saved && $(`#view-${saved.view}`)) {
     for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
-    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'digital', 'physical', 'messages'].includes(saved.view)) saved.view = 'library';
-    if (playOnly && saved.view !== 'settings') saved.view = 'library'; // a play-only account lives on the Play screen
+    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'tools', 'digital', 'physical', 'messages'].includes(saved.view)) saved.view = 'library';
+    if (playOnly && saved.view !== 'settings' && saved.view !== 'tools') saved.view = 'library'; // a play-only account lives on the Play screen
     if (state.sort) $('#sort').value = state.sort;
     $('#search').value = state.q || '';
     $$('#density button').forEach((x) => x.classList.toggle('is-active', x.dataset.density === state.density));
     activeSettingsModule = saved.settingsModule || null;
+    activeToolsModule = saved.toolsModule || null;
     // Members cannot open admin-only views; fall back to the Library.
     const target = ((saved.view === 'sources' || saved.view === 'upload') && !isAdmin) ? 'library' : saved.view;
     setView(target);
@@ -4202,6 +4206,57 @@ $('#to-top')?.addEventListener('click', () => {
   const v = $('#view-library'); if (v) v.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
+/* ─────────────────────────── tools hub ─────────────────────────── */
+
+/* Tools: the things a person does for themselves (their emulators and controller, adding their own games and game assets, their Steam). One row of tiles; the tile picked shows its panel. */
+const TOOLS_MODULES = [
+  { id: 'playpc', label: 'Emulators', mi: 'emulators-2' },
+  { id: 'controller', label: 'Controller', mi: 'gamepad' },
+  { id: 'addgames', label: 'Add My Games', mi: 'game-add', own: true },
+  { id: 'gameassets', label: 'Game Assets', mi: 'game-assets', own: true },
+  { id: 'steam', label: 'Steam', mi: 'steam', own: true }
+];
+/** A play-only account has no Digital or Physical list, so it gets the Emulators and the Controller only. */
+const toolsVisible = () => TOOLS_MODULES.filter((m) => !m.own || !authState.user?.play_only);
+function renderToolsTiles(activeId = activeToolsModule) {
+  const wrap = $('#tools-tiles'); if (!wrap) return;
+  const ae = document.activeElement, refocus = ae && wrap.contains(ae) ? ae.dataset.tool : null;
+  wrap.innerHTML = toolsVisible().map((m) => `
+    <button class="tile group${m.id === activeId ? ' is-active' : ''}" data-mi="${m.mi}" data-tool="${m.id}" aria-label="${esc(t(m.label))}" title="${esc(t(m.label))}">
+      <span class="tile-ico">${tileIco(m)}</span>
+      <span class="tile-label">${esc(t(m.label))}</span>
+    </button>`).join('');
+  $$('[data-tool]', wrap).forEach((b) => b.addEventListener('click', () => showToolsModule(b.dataset.tool)));
+  if (refocus) $(`[data-tool="${refocus}"]`, wrap)?.focus({ preventScroll: true });
+}
+function showToolsModule(id) {
+  const mods = toolsVisible();
+  if (!mods.some((m) => m.id === id)) id = mods[0].id;
+  $$('#view-tools .panel').forEach((p) => p.classList.add('hidden'));
+  activeToolsModule = id;
+  renderToolsTiles(id);
+  saveNav();
+  if (id === 'playpc') {   // the launcher needs the ROM file: an account without downloads is told so, instead of getting a browser error
+    const off = authState.user?.can_download === false;
+    $('#playpc-download')?.classList.toggle('hidden', off);
+    $('#playpc-dl-note')?.classList.toggle('hidden', !off);
+  }
+  $(`#mod-${id}`)?.classList.remove('hidden');
+  if (id === 'controller') initPadLayoutPanel();
+  if (id === 'steam') initSteamPanel();
+  if (id === 'addgames') initConsoleImport();
+  if (id === 'gameassets') paintGameAssets();
+}
+function loadTools() { showToolsModule(activeToolsModule || 'playpc'); }
+
+/** Game Assets: the importer for pictures, manuals and videos from a folder on the server, for the Physical shelf or the Digital Library. */
+function paintGameAssets() {
+  const target = $('input[name="ga-target"]:checked')?.value === 'digital' ? 'digital' : 'physical';
+  const radios = $$('input[name="ga-target"]');
+  radios.forEach((r) => { if (!r.dataset.ready) { r.dataset.ready = '1'; r.addEventListener('change', paintGameAssets); } });
+  renderArtImport({ api, toast }, $('#ga-body'), { target, onDone: () => { if (target === 'digital') digital.load(true); else physical.load(true); } });
+}
+
 /* ─────────────────────────── settings hub ─────────────────────────── */
 
 /* Role-dependent tile grid. Modules render in a fixed order; admins get the
@@ -4209,11 +4264,8 @@ $('#to-top')?.addEventListener('click', () => {
 const SETTINGS_MODULES = [
   { id: 'profile', label: 'Profile picture', mi: 'profile-pic', ico: '🖼', adminOnly: false },
   { id: 'welcome', label: 'Welcome tour', mi: 'welcome-tour', ico: '👋', adminOnly: false },
-  { id: 'steam', label: 'Steam', mi: 'steam', ico: '🎮', adminOnly: false },
   { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
-  { id: 'controller', label: 'Controller', mi: 'gamepad', ico: '🎮', adminOnly: false },
-  { id: 'playpc', label: 'Play on this PC', mi: 'emulators-2', ico: '🖥', adminOnly: false },
   { id: 'providers', label: 'Metadata providers', mi: 'providers-2', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   mi: 'users', ico: '👥', adminOnly: true },
   { id: 'platforms', label: 'Platforms',       mi: 'Library', ico: '🕹', adminOnly: true },
@@ -4232,7 +4284,7 @@ const SETTINGS_MODULES = [
 
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
-  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'steam', 'password', 'controller', 'playpc'] },
+  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage'], adminOnly: true },
@@ -4490,41 +4542,48 @@ function initCoverImport() {
   $('#covers-replace').onchange = () => { applyBtn.disabled = true; };
 }
 
-/* CSV tools › Import console games into Digital: PlayStation, Nintendo and Xbox games from a CSV into the signed-in person's own Digital list. */
+/* Tools > Add My Games: games from a CSV into the signed-in person's own Digital list and/or onto their Physical shelf. A "Library" column (Digital or Physical) in the file
+ * says which list each game goes in; games with no value there (or a file with no such column) go to the list chosen above the file box. */
 function initConsoleImport() {
   const file = $('#dgc-file'), out = $('#dgc-result'), applyBtn = $('#dgc-apply');
   if (!file || file.dataset.ready) return;
   file.dataset.ready = '1';
   const n = (v) => Number(v || 0).toLocaleString();
   const dest = () => $('input[name="dgc-dest"]:checked')?.value === 'physical' ? 'physical' : 'digital';
-  // The choice (Digital or Physical) decides where the games go and which help is shown; changing it starts over with a fresh preview.
-  const paintDest = () => { $('#dgc-digital-row').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-physical-help').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-digital-help').style.display = dest() === 'digital' ? '' : 'none'; applyBtn.disabled = true; out.textContent = ''; };
+  // The choice (Digital or Physical) decides where games with no Library value go and which help is shown; changing it starts over with a fresh preview.
+  const paintDest = () => { $('#dgc-digital-row').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-physical-help').style.display = dest() === 'physical' ? '' : 'none'; $('#dgc-digital-help').style.display = dest() === 'digital' ? '' : 'none'; applyBtn.disabled = true; };
   $$('input[name="dgc-dest"]').forEach((r) => r.addEventListener('change', paintDest));
   paintDest();
+  const platName = (s) => (window.__platformsCache || []).find((p) => p.slug === s)?.name || s;
   const run = async (apply) => {
     const f = file.files?.[0];
     if (!f) return toast('Choose a CSV file first', true);
     let csv; try { csv = await f.text(); } catch { return toast('The file could not be read', true); }
     try {
-      if (dest() === 'physical') {
-        // Onto the Physical shelf: any Library platform, not only the consoles Digital knows.
-        const r = await api('/physical/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked, digital: $('#dgc-digital').checked }) });
-        out.innerHTML = physical.importSummary(r, (s) => (window.__platformsCache || []).find((p) => p.slug === s)?.name || s);
-        applyBtn.disabled = apply || !(r.added || r.updated || r.removed);
-        if (apply) toast(`${n(r.added)} games added to your Physical shelf`);
-        return;
+      // With a Library column the file is split in two; without one the whole file goes to the chosen list.
+      const split = splitByLibrary(csv, dest());
+      const parts = split.hasColumn ? { digital: split.digital, physical: split.physical } : { [dest()]: csv };
+      const notes = [], can = [];
+      if (split.problems.length) notes.push(split.problems.slice(0, 10).map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>'));
+      for (const lib of ['digital', 'physical']) {
+        if (!parts[lib]) continue;
+        const head = split.hasColumn ? `<b>${lib === 'digital' ? 'Digital Library' : 'Physical shelf'}</b> (${n(split.counts[lib])} ${split.counts[lib] === 1 ? 'game' : 'games'}): ` : '';
+        if (lib === 'physical') {
+          // Onto the Physical shelf: any Library platform, not only the consoles Digital knows.
+          const r = await api('/physical/import', { method: 'POST', body: JSON.stringify({ csv: parts.physical, apply, replace: $('#dgc-replace').checked, digital: $('#dgc-digital').checked }) });
+          notes.push(head + physical.importSummary(r, platName));
+          if (!apply && (r.added || r.updated || r.removed)) can.push(lib);
+          if (apply) toast(`${n(r.added)} games added to your Physical shelf`);
+        } else {
+          const r = await api('/digital/consoles/import', { method: 'POST', body: JSON.stringify({ csv: parts.digital, apply, replace: $('#dgc-replace').checked }) });
+          notes.push(head + digital.importSummary(r));
+          if (!apply && (r.added || r.updated || r.removed || r.physical_on || r.physical_off)) can.push(lib);
+          if (apply) toast(`${n(r.added)} console games added to Digital`);
+        }
       }
-      const r = await api('/digital/consoles/import', { method: 'POST', body: JSON.stringify({ csv, apply, replace: $('#dgc-replace').checked }) });
-      const per = Object.entries(r.by_store || {}).map(([k, v]) => `${esc(digital.storeLabel(k))} ${n(v)}`).join(', ');
-      const what = apply
-        ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
-        : `${n(r.games)} games in the file (${per || 'none'}): ${n(r.added)} would be added, ${n(r.updated)} updated, ${n(r.unchanged)} ${r.unchanged === 1 ? 'is' : 'are'} already there${r.removed ? `, ${n(r.removed)} would be removed` : ''}.`;
-      const notes = [r.physical_on ? `${n(r.physical_on)} marked as owned on disc or cartridge` : '', r.physical_off ? `${n(r.physical_off)} marked digital only` : '', r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
-      out.innerHTML = what + (notes ? ` ${notes}.` : '')
-        + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
-        + (apply && r.details_job?.running ? `<br>Details and covers are being looked up now (${n(r.details_job.total)} games). Open <b>Digital</b> to watch them arrive.` : '');
-      applyBtn.disabled = apply || !(r.added || r.updated || r.removed || r.physical_on || r.physical_off);
-      if (apply) toast(`${n(r.added)} console games added to Digital`);
+      if (!notes.length) notes.push('There are no games in the file.');
+      out.innerHTML = notes.join('<br><br>');
+      applyBtn.disabled = apply || !can.length;
     } catch (err) { out.textContent = err.message; toast(err.message, true); }
   };
   $('#dgc-preview').onclick = () => run(false);
@@ -4536,7 +4595,6 @@ function initConsoleImport() {
 function initNamesPanel() {
   initExportBox();
   initCoverImport();
-  initConsoleImport();
   const sel = $('#names-platform');
   if (!sel.options.length) sel.innerHTML = '<option value="">From the CSV\'s platform column</option>' + (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
   const out = $('#names-result'); const applyBtn = $('#names-apply');
@@ -4579,15 +4637,8 @@ function showSettingsModule(id) {
   saveNav();
   const panel = $(`#mod-${id}`);
   if (!panel) return;
-  if (id === 'playpc') {   // the launcher needs the ROM file: an account without downloads is told so, instead of getting a browser error
-    const off = authState.user?.can_download === false;
-    $('#playpc-download')?.classList.toggle('hidden', off);
-    $('#playpc-dl-note')?.classList.toggle('hidden', !off);
-  }
   panel.classList.remove('hidden');
-  if (id === 'controller') initPadLayoutPanel();
   if (id === 'profile') { initProfilePanel(); loadVersionLine(); }
-  if (id === 'steam') initSteamPanel();
   if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
   if (id === 'names') initNamesPanel();
   if (id === 'platforms') fillPlatArtFolders();
@@ -5393,7 +5444,7 @@ function welcomeCards(isAdmin) {
           </div>
         </div>` },
     { id: 'steam', title: 'Show your Steam games (optional)', body: () => `
-        <p>If you use Steam, your own library can appear on the <b>Digital</b> page with your hours played. Only you see it, and nothing changes on Steam. You can skip this and do it later in Settings &rarr; My account &rarr; Steam.</p>
+        <p>If you use Steam, your own library can appear on the <b>Digital</b> page with your hours played. Only you see it, and nothing changes on Steam. You can skip this and do it later in Tools &rarr; Steam.</p>
         <ol class="note dg-steps">
           <li>Get a Web API key at <b>steamcommunity.com/dev/apikey</b> (any domain name will do, e.g. <i>localhost</i>).</li>
           <li>Your 17-digit Steam ID (steamid.io shows it), or paste your <b>steamcommunity.com/profiles/&hellip;</b> link.</li>
