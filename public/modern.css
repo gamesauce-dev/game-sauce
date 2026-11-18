@@ -129,6 +129,7 @@ body.ui-modern .tl-search .mi { position: absolute; left: 0.6rem; width: 1.15rem
 body.ui-modern .tl-search input { width: 100%; height: 2.4rem; padding: 0 0.8rem 0 2.2rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.65rem; color: var(--text); outline: none; font-size: 0.9rem; }
 body.ui-modern .tl-search input:focus { border-color: var(--accent); background: var(--panel-2); }
 body.ui-modern #mb-library-tools .mb-btn { flex: 0 0 auto; }
+body.ui-modern #mb-library-tools .mb-btn.tl-gap { margin-left: 0.9rem; }   /* Digital and Physical: the page's actions sit a little apart from the search and filter buttons */
 body.ui-modern .tl-sp { display: none; }
 body.ui-modern #tl-fetch.is-busy .tl-ic { display: none; }
 body.ui-modern #tl-fetch.is-busy .tl-sp { display: inline-flex; }

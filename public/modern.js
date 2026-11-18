@@ -397,13 +397,13 @@ const LIST_TOOLS = {
   digital: {
     q: '#dg-q', reset: '#dg-reset', sort: '#dg-sort', sortDefault: 'name', fav: '[data-dg-toggle="fav"]', hidden: '[data-dg-toggle="hidden"]', nocover: '[data-dg-toggle="nocover"]', select: '#view-digital [data-bulk-toggle]',
     nocoverTip: 'Show console games with no cover',
-    extras: [['installed', 'gamepad', '[data-dg-toggle="installed"]', 'Show installed Steam games'], ['refresh', 'fetch-games', '#dg-sync', 'Fetch my Steam games again, and look up console games that have no details'], ['add', 'game-add', '[data-dg-act="add"]', 'Add a game by hand']],
+    extras: [['installed', 'gamepad', '[data-dg-toggle="installed"]', 'Show installed Steam games'], ['refresh', 'fetch-games', '#dg-sync', 'Fetch my Steam games again, and look up console games that have no details', true], ['add', 'game-add', '[data-dg-act="add"]', 'Add a game by hand', true]],
     more: []
   },
   physical: {
     q: '#ph-q', reset: '#ph-reset', sort: '#ph-sort', sortDefault: 'title', fav: '[data-ph-toggle="fav"]', hidden: '[data-ph-toggle="hidden"]', nocover: '[data-ph-toggle="nocover"]', select: '#view-physical [data-bulk-toggle]',
     nocoverTip: 'Show games with no cover',
-    extras: [['unmatched', 'issue', '[data-ph-toggle="unmatched"]', 'Show games that need a match'], ['spine', 'covers', '[data-ph-toggle="spine"]', 'Show games with spine art'], ['lookup', 'fetch-metadata-3', '[data-ph-act="lookup"]', 'Look up details and covers again for games that have none'], ['add', 'game-add', '[data-ph-act="add"]', 'Add a game by hand']],
+    extras: [['unmatched', 'issue', '[data-ph-toggle="unmatched"]', 'Show games that need a match'], ['spine', 'covers', '[data-ph-toggle="spine"]', 'Show games with spine art'], ['lookup', 'fetch-metadata-3', '[data-ph-act="lookup"]', 'Look up details and covers again for games that have none', true], ['add', 'game-add', '[data-ph-act="add"]', 'Add a game by hand', true]],
     more: [['review', 'Review Xbox Digital entries', '[data-ph-act="review"]', 'the Digital entries disc to digital added on its own'], ['digital', 'Xbox discs to Digital', '[data-ph-act="digital"]', 'add every Xbox One and Xbox Series disc to your Digital library']]
   }
 };
@@ -418,6 +418,9 @@ function retool(view) {
   if (want === 'library') { buildLibraryTools(toolIcons); return; }
   const ic = toolIcons, T = LIST_TOOLS[want];
   host.dataset.view = want;
+  // The page's own filters sit before Select (like the Library's); its actions (fetch, add) come after it, set a little apart.
+  const xbtn = ([k, icon, , tip, act], first) => `<button class="mb-btn${act && first ? ' tl-gap' : ''}" data-x="${k}" title="${tip}" aria-label="${tip}">${ic[icon] || tip}</button>`;
+  const filters = T.extras.filter((x) => !x[4]).map((x) => xbtn(x)).join(''), actions = T.extras.filter((x) => x[4]).map((x, i) => xbtn(x, i === 0)).join('');
   host.innerHTML = `
     <label class="tl-search">${ic.search}<input id="tl-q" type="search" placeholder="Search" autocomplete="off" aria-label="Search your games" title="Search your games" /></label>
     <button class="mb-btn" id="tl-reset" title="Clear search and filters" aria-label="Clear search and filters">${ic['clear-reset-2']}</button>
@@ -425,8 +428,9 @@ function retool(view) {
     <button class="mb-btn" id="tl-fav" title="Show favourites" aria-label="Show favourites">${ic.favourite}</button>
     <button class="mb-btn" id="tl-hidden" title="Show hidden games" aria-label="Show hidden games">${ic.hidden}</button>
     <button class="mb-btn" id="tl-nocover" title="${T.nocoverTip}" aria-label="${T.nocoverTip}">${ic['no-covers-2']}</button>
+    ${filters}
     <button class="mb-btn" id="tl-select" title="Select several games to favourite, hide or delete" aria-label="Select several games">${ic['select-2']}</button>
-    ${T.extras.map(([k, icon, , tip]) => `<button class="mb-btn" data-x="${k}" title="${tip}" aria-label="${tip}">${ic[icon] || tip}</button>`).join('')}
+    ${actions}
     ${T.more.length ? `<button class="mb-btn" id="tl-more" title="More" aria-label="More" aria-haspopup="menu">${ic['more-actions']}</button>` : ''}`;
   document.body.classList.add('mb-tools');
   $('#tl-q')?.addEventListener('input', (e) => { const s = q(T.q); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });

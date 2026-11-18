@@ -670,13 +670,14 @@ test('the Digital and Physical bars follow the Library: no ticker, the tools in 
   const modern = read('public/modern.js'), css = read('public/modern.css'), html = read('public/index.html'), bulk = read('public/bulk.js'), dg = read('public/digital.js'), ph = read('public/physical.js');
   const order = (s, ids) => ids.map((i) => s.indexOf(i));
   const inc = (arr) => arr.every((v, i) => v > 0 && (i === 0 || v > arr[i - 1]));
-  assert.ok(inc(order(modern.slice(modern.indexOf('function retool')), ['id="tl-q"', 'id="tl-reset"', 'id="tl-sort"', 'id="tl-fav"', 'id="tl-hidden"', 'id="tl-nocover"', 'id="tl-select"', 'data-x='])), 'search, clear, sort, favourites, hidden, no cover, select, then the page\'s own');
+  assert.ok(inc(order(modern.slice(modern.indexOf('function retool')), ['id="tl-q"', 'id="tl-reset"', 'id="tl-sort"', 'id="tl-fav"', 'id="tl-hidden"', 'id="tl-nocover"', '${filters}', 'id="tl-select"', '${actions}'])), 'search, clear, sort, favourites, hidden, no cover, the page\'s filters, select, then the page\'s actions');
+  assert.match(css, /\.mb-btn\.tl-gap \{ margin-left: 0\.9rem; \}/, 'a little space before the actions');
   const lib = modern.slice(modern.indexOf('function buildLibraryTools'));
   assert.ok(inc(order(lib, ['id="tl-q"', 'id="tl-reset"', 'id="tl-sort"', 'id="tl-fav"', 'id="tl-hidden"', 'id="tl-nocover"', 'id="tl-select"'])), 'the Library has the same order');
   assert.match(css, /mb-tools #dg-bar, body\.ui-modern\.mb-tools #ph-bar \{ display: none; \}/, 'their own bar gives way to the tools in the bar');
   for (const bar of ['dg', 'ph']) {
     const seg = html.slice(html.indexOf(`id="${bar}-bar"`), html.indexOf(`id="${bar}-chips"`));
-    assert.ok(inc(order(seg, [`id="${bar}-q"`, `id="${bar}-reset"`, `id="${bar}-sort"`, `id="${bar}-toggles"`, 'data-bulk-toggle', `id="${bar}-toggles-x"`])), bar + ' bar: the same order in Classic');
+    assert.ok(inc(order(seg, [`id="${bar}-q"`, `id="${bar}-reset"`, `id="${bar}-sort"`, `id="${bar}-toggles"`, `id="${bar}-toggles-x"`, 'data-bulk-toggle'])), bar + ' bar: the same order in Classic');
   }
   for (const [file, src, toggles] of [['digital', dg, ['Show favourites', 'Show hidden games', 'Show console games with no cover']], ['physical', ph, ['Show favourites', 'Show hidden games', 'Show games with no cover']]]) for (const t of toggles) assert.ok(src.includes(`title="${t}`), `${file}: hover text "${t}"`);
   assert.ok(modern.includes("title=\"Show hidden games\"") && modern.includes('title="Show favourites"'));
