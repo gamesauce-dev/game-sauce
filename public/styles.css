@@ -1889,6 +1889,6 @@ body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
 
 /* The headings in the details window sit on a wide coloured band. */
 #drawer-body .section-label {
-  background: color-mix(in srgb, var(--accent) 18%, var(--panel)); color: var(--text); border-left: 3px solid var(--accent-2);
-  border-radius: var(--radius-sm); padding: 0.4rem 0.75rem; margin: 1.4286rem 0 0.7rem;
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel)); color: var(--text);
+  padding: 0.4rem 0.75rem; margin: 1.4286rem 0 0.7rem;
 }
