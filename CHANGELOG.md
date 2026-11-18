@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-18
+
 ### Fixed
 - **MAME games started with Play on this PC (Big Screen, Carousel, the details window) could not be found by MAME.** The temporary copy was named after the game's title (Street Fighter II.zip), but MAME finds a game by its set name (sf2.zip): only a game whose title happened to match worked. For MAME, Arcade, FinalBurn Neo, Neo Geo, NAOMI, Atomiswave and Sega Model 2 and 3 the copy now keeps the ROM's own file name (any platform can ask for this with "keepFileName": true). Download the launcher again for it to take effect. A clone also needs its parent set and many games a BIOS set, which one downloaded file cannot hold: docs/LOCAL-LAUNCH.md shows how to point MAME at your full ROM folder as well.
 

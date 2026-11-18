@@ -1,6 +1,6 @@
 [package]
 name = "game-sauce-desktop"
-version = "0.13.0"
+version = "0.13.1"
 description = "game-sauce desktop app"
 edition = "2021"
 
