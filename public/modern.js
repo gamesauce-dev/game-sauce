@@ -105,6 +105,7 @@ async function doBuildBar() {
     </div>`;
   built = true;
   buildLibraryTools(ic);
+  retool(document.body.dataset.mview);   // restored onto Digital or Physical: their tools, not the Library's
   buildAzBar(ic);
   usePinIcon(ic.pin);
   trackBarHeight();
@@ -168,6 +169,7 @@ export function go(view) {
   // The pin itself is remembered, so it is there again when a game is opened in the Library.
   const keepPinned = view === 'library' && document.body.classList.contains('details-pinned');
   if (!keepPinned && !$('#drawer')?.classList.contains('hidden')) ctx.closeDrawer?.();
+  retool(view);   // Library, Digital and Physical each have their tools in the bar (the ticker is for the other pages)
   if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
   refreshTicker(view === 'library');   // home: rebuild so the ticker starts again from the name
   document.body.dataset.mview = view;
@@ -321,6 +323,7 @@ const proxy = (sel) => { q(sel)?.click(); setTimeout(syncTools, 60); };
 
 function buildLibraryTools(ic) {
   const host = $('#mb-library-tools'); if (!host) return;
+  toolIcons = ic; host.dataset.view = 'library';
   const u = ctx.user(); const admin = u?.role === 'admin'; const po = Boolean(u?.play_only);
   host.innerHTML = `
     <label class="tl-search">${ic.search}<input id="tl-q" type="search" placeholder="Search" autocomplete="off" aria-label="Search the library" title="Search titles, developers, genres and platforms" /></label>
@@ -336,11 +339,13 @@ function buildLibraryTools(ic) {
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue, lock: ic.lock });
   document.body.classList.add('mb-tools');
   $('#tl-q')?.addEventListener('input', (e) => { const s = q('#search'); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });
-  if (!buildLibraryTools.timer) buildLibraryTools.timer = setInterval(() => { if (isModern() && document.body.dataset.mview === 'library') { syncTools(); syncAz(); } }, 700);
+  if (!buildLibraryTools.timer) buildLibraryTools.timer = setInterval(() => { const v = document.body.dataset.mview; if (isModern() && v === 'library') { syncTools(); syncAz(); } else if (isModern() && LISTS.includes(v)) syncTools(); }, 700);
 }
 
 /** Handle a click on one of the tool buttons. Returns true when it was one. */
 function toolClick(e) {
+  const view = $('#mb-library-tools')?.dataset.view;
+  if (LISTS.includes(view)) return listToolClick(e, view);
   const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more, #tl-assets');
   if (!b) return false;
   if (b.id === 'tl-reset') { chipFamily = null; ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
@@ -368,6 +373,7 @@ function toolClick(e) {
 
 /** Make the icons reflect the real filters, and the fetch button show a spinner while a metadata run is going. */
 function syncTools() {
+  { const v = $('#mb-library-tools')?.dataset.view; if (LISTS.includes(v)) { syncListTools(v); return; } }
   { const r = $('#tl-reset'); if (r) { const act = Boolean(ctx.filtersActive?.() || chipFamily); /* an open family row (the platform pills) counts too, even with nothing picked in it */ r.classList.toggle('is-dim', !act); r.disabled = !act; } }
   const on = (sel) => Boolean(q(sel)?.classList.contains('is-active'));
   $('#tl-fav')?.classList.toggle('is-on', on('[data-toggle="favorite"]'));
@@ -379,6 +385,87 @@ function syncTools() {
   const search = $('#tl-q'), real = q('#search'); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
   const f = $('#tl-fetch');
   if (f) { const txt = q('#bulk-enrich')?.textContent || ''; const busy = /Fetching/.test(txt); f.classList.toggle('is-busy', busy); f.classList.toggle('is-on', busy); f.title = busy ? txt.replace('✦', '').trim() + ' (click to stop)' : 'Fetch metadata'; }
+}
+
+
+
+/* ───────────── The same tools in the bar for Digital and Physical ─────────────
+   Digital and Physical have no ticker: their own search, sort and filter buttons are in the bar, in the Library's order (clear, sort, favourites, hidden, no cover, select),
+   then the ones only that page has. As in the Library they click the page's own (hidden) buttons, so the two looks cannot drift apart. Their hover text says what the
+   button does for you, since these lists are your own. */
+const LIST_TOOLS = {
+  digital: {
+    q: '#dg-q', reset: '#dg-reset', sort: '#dg-sort', sortDefault: 'name', fav: '[data-dg-toggle="fav"]', hidden: '[data-dg-toggle="hidden"]', nocover: '[data-dg-toggle="nocover"]', select: '#view-digital [data-bulk-toggle]',
+    nocoverTip: 'Show console games with no cover',
+    extras: [['installed', 'gamepad', '[data-dg-toggle="installed"]', 'Show installed Steam games'], ['refresh', 'fetch-games', '#dg-sync', 'Fetch my Steam games again, and look up console games that have no details'], ['add', 'game-add', '[data-dg-act="add"]', 'Add a game by hand']],
+    more: []
+  },
+  physical: {
+    q: '#ph-q', reset: '#ph-reset', sort: '#ph-sort', sortDefault: 'title', fav: '[data-ph-toggle="fav"]', hidden: '[data-ph-toggle="hidden"]', nocover: '[data-ph-toggle="nocover"]', select: '#view-physical [data-bulk-toggle]',
+    nocoverTip: 'Show games with no cover',
+    extras: [['unmatched', 'issue', '[data-ph-toggle="unmatched"]', 'Show games that need a match'], ['spine', 'covers', '[data-ph-toggle="spine"]', 'Show games with spine art'], ['lookup', 'fetch-metadata-3', '[data-ph-act="lookup"]', 'Look up details and covers again for games that have none'], ['add', 'game-add', '[data-ph-act="add"]', 'Add a game by hand']],
+    more: [['review', 'Review Xbox Digital entries', '[data-ph-act="review"]', 'the Digital entries disc to digital added on its own'], ['digital', 'Xbox discs to Digital', '[data-ph-act="digital"]', 'add every Xbox One and Xbox Series disc to your Digital library']]
+  }
+};
+let toolIcons = null;
+const LISTS = ['digital', 'physical'];
+
+/** The tools for a page: the Library's own, or the Digital or Physical set. Rebuilt only when the page changes. */
+function retool(view) {
+  const host = $('#mb-library-tools'); if (!host || !toolIcons) return;
+  const want = LISTS.includes(view) ? view : 'library';
+  if (host.dataset.view === want) return;
+  if (want === 'library') { buildLibraryTools(toolIcons); return; }
+  const ic = toolIcons, T = LIST_TOOLS[want];
+  host.dataset.view = want;
+  host.innerHTML = `
+    <label class="tl-search">${ic.search}<input id="tl-q" type="search" placeholder="Search" autocomplete="off" aria-label="Search your games" title="Search your games" /></label>
+    <button class="mb-btn" id="tl-reset" title="Clear search and filters" aria-label="Clear search and filters">${ic['clear-reset-2']}</button>
+    <button class="mb-btn" id="tl-sort" title="Sort order" aria-label="Sort order" aria-haspopup="menu">${ic.sort}</button>
+    <button class="mb-btn" id="tl-fav" title="Show favourites" aria-label="Show favourites">${ic.favourite}</button>
+    <button class="mb-btn" id="tl-hidden" title="Show hidden games" aria-label="Show hidden games">${ic.hidden}</button>
+    <button class="mb-btn" id="tl-nocover" title="${T.nocoverTip}" aria-label="${T.nocoverTip}">${ic['no-covers-2']}</button>
+    <button class="mb-btn" id="tl-select" title="Select several games to favourite, hide or delete" aria-label="Select several games">${ic['select-2']}</button>
+    ${T.extras.map(([k, icon, , tip]) => `<button class="mb-btn" data-x="${k}" title="${tip}" aria-label="${tip}">${ic[icon] || tip}</button>`).join('')}
+    ${T.more.length ? `<button class="mb-btn" id="tl-more" title="More" aria-label="More" aria-haspopup="menu">${ic['more-actions']}</button>` : ''}`;
+  document.body.classList.add('mb-tools');
+  $('#tl-q')?.addEventListener('input', (e) => { const s = q(T.q); if (s) { s.value = e.target.value; s.dispatchEvent(new Event('input', { bubbles: true })); } });
+  setTimeout(syncTools, 80);
+}
+
+/** A click on one of the Digital or Physical tools. Returns true when it was one. */
+function listToolClick(e, view) {
+  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-sort, #tl-more, [data-x]');
+  if (!b) return false;
+  const T = LIST_TOOLS[view];
+  const press = (sel) => { q(sel)?.click(); setTimeout(syncTools, 60); setTimeout(syncTools, 600); };
+  if (b.id === 'tl-reset') press(T.reset);
+  else if (b.id === 'tl-fav') press(T.fav);
+  else if (b.id === 'tl-hidden') press(T.hidden);
+  else if (b.id === 'tl-nocover') press(T.nocover);
+  else if (b.id === 'tl-select') press(T.select);
+  else if (b.dataset.x) press(T.extras.find(([k]) => k === b.dataset.x)?.[2]);
+  else if (b.id === 'tl-sort') {
+    const sel = q(T.sort); if (!sel) return true;
+    openPop(b, [...sel.options].map((o) => `<button class="mb-menu-item${o.value === sel.value ? ' on' : ''}" role="menuitemradio" aria-checked="${o.value === sel.value}" data-pick="${o.value}"><span>${o.textContent}</span></button>`).join(''),
+      (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(syncTools, 120); });
+  } else if (b.id === 'tl-more') {
+    openPop(b, T.more.map(([k, label, , sub]) => `<button class="mb-menu-item" role="menuitem" data-pick="${k}"><span>${label}<small>${sub}</small></span></button>`).join(''),
+      (k) => q(T.more.find(([x]) => x === k)?.[2])?.click());
+  }
+  e.stopPropagation();
+  return true;
+}
+
+/** The icons follow the page's real filters. The page's own buttons are redrawn on every load, so they are looked up each time. */
+function syncListTools(view) {
+  const T = LIST_TOOLS[view]; if (!T) return;
+  const lit = (sel) => Boolean(q(sel)?.classList.contains('on') || q(sel)?.classList.contains('is-on'));
+  const r = $('#tl-reset'); if (r) { const act = Boolean(q(T.reset) && !q(T.reset).classList.contains('hidden')); r.classList.toggle('is-dim', !act); r.disabled = !act; }
+  for (const [id, sel] of [['tl-fav', T.fav], ['tl-hidden', T.hidden], ['tl-nocover', T.nocover], ['tl-select', T.select]]) $('#' + id)?.classList.toggle('is-on', lit(sel));
+  for (const [k, , sel] of T.extras) { const x = $(`[data-x="${k}"]`); if (!x) continue; x.classList.toggle('hidden', !q(sel)); x.classList.toggle('is-on', lit(sel) && /toggle/.test(sel)); }
+  const sel = q(T.sort), sort = $('#tl-sort'); if (sel && sort) { sort.classList.toggle('is-on', sel.value !== T.sortDefault); sort.title = 'Sort order: ' + (sel.selectedOptions?.[0]?.textContent || ''); }
+  const search = $('#tl-q'), real = q(T.q); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
 }
 
 
@@ -579,7 +666,7 @@ const ICON_MAP = [
   ['#view-physical #ph-reset', 'clear-reset-2'], ['#view-physical [data-ph-act="lookup"]', 'fetch-metadata-3'], ['#view-physical [data-ph-act="import"]', 'csv-import'], ['#view-physical [data-ph-act="add"]', 'game-add'],
   ['#view-digital [data-dg-toggle="fav"]', 'favourite'], ['#view-digital [data-dg-toggle="nocover"]', 'no-covers-2'], ['#view-digital [data-dg-toggle="installed"]', 'gamepad'], ['#view-digital [data-dg-toggle="hidden"]', 'hidden'],
   ['#view-physical [data-ph-act="digital"]', 'disc'], ['#view-physical [data-ph-act="review"]', 'preview-2'], ['#ph-rv-go', 'delete'], ['#ph-rv-none', 'clear-reset-2'],
-  ['#view-digital [data-bulk-toggle], #view-physical [data-bulk-toggle]', 'select-2'], ['.sel-bar [data-bulk="all"]', 'select-2'], ['.sel-bar [data-bulk="none"]', 'clear-reset-2'], ['.sel-bar [data-bulk="delete"]', 'delete'], ['.sel-bar [data-bulk="done"]', 'done'],
+  ['#view-digital [data-bulk-toggle], #view-physical [data-bulk-toggle]', 'select-2'], ['.sel-bar [data-bulk="all"]', 'select-2'], ['.sel-bar [data-bulk="none"]', 'clear-reset-2'], ['.sel-bar [data-bulk="delete"]', 'delete'], ['.sel-bar [data-bulk="fav-on"]', 'favourite'], ['.sel-bar [data-bulk="fav-off"]', 'star-fill'], ['.sel-bar [data-bulk="hide"]', 'hidden'], ['.sel-bar [data-bulk="unhide"]', 'visible'], ['.sel-bar [data-bulk="done"]', 'done'],
   ['#view-digital #dg-reset', 'clear-reset-2'], ['#view-digital [data-dg-act="import"]', 'csv-import'], ['#view-digital [data-dg-act="add"]', 'game-add'],
   ['#dg-id-go', 'search'], ['#dg-edit button[type="submit"]', 'save'], ['#dg-add button[type="submit"]', 'tick'], ['#dg-add-more', 'game-add'], ['#dg-imp-preview', 'preview-2'], ['#dg-imp-apply', 'csv-import'],
   ['#view-messages [data-msg-act="new"]', 'edit'], ['#msg-send', 'arrow-right'], ['#msg-share', 'game-cartridge'], ['#msg-notice-toggle', 'issue'], ['#msg-notice-send', 'tick'],

@@ -13,8 +13,8 @@ import { attachBulk } from './bulk.js';
 
 let ctx = null;
 const S = {
-  platforms: [], picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '',
-  view: 'tiles', density: 'comfortable', items: [], byId: new Map(), counts: { total: 0, favourites: 0, nocover: 0, unmatched: 0, spines: 0 },
+  platforms: [], picked: [], family: null, q: '', sort: 'title', fav: false, hidden: false, nocover: false, unmatched: false, spine: false, letter: '',
+  view: 'tiles', density: 'comfortable', items: [], byId: new Map(), counts: { total: 0, hidden: 0, favourites: 0, nocover: 0, unmatched: 0, spines: 0 },
   shapes: new Map(), openId: null, jobWas: false, jobTimer: null, tilesShown: 80, rows: [], rowsShown: 0, rowOf: new Map(), packW: 0, obs: null, token: 0
 };
 const store = {
@@ -43,6 +43,10 @@ export function initPhysical(c) {
     view, grid: $('#ph-tiles'), tile: '.ph-card', barAfter: $('#ph-bar'), toggleSel: '[data-bulk-toggle]', ctx, noun: 'game', where: 'your shelf',
     keyOf: (t) => Number(t.dataset.phId) || null,
     allKeys: () => S.items.map((g) => g.id),
+    marks: {
+      favourite: async (ids, value) => (await ctx.api('/physical/games/bulk-mark', { method: 'POST', body: JSON.stringify({ ids, field: 'favourite', value }) })).changed,
+      hidden: async (ids, value) => (await ctx.api('/physical/games/bulk-mark', { method: 'POST', body: JSON.stringify({ ids, field: 'hidden', value }) })).changed
+    },
     canStart: () => { if (S.view === 'shelf') { ctx.toast('Switch to the tile view to select games', true); return false; } return true; },
     remove: async (ids) => (await ctx.api('/physical/games/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) })).removed,
     reload: () => load(true)
@@ -55,7 +59,7 @@ export function initPhysical(c) {
 
 export const isOpen = () => S.openId != null;
 export const openIdNow = () => S.openId;
-export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, nocover: false, unmatched: false, spine: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
+export function reset() { Object.assign(S, { picked: [], family: null, q: '', sort: 'title', fav: false, hidden: false, nocover: false, unmatched: false, spine: false, letter: '' }); const q = $('#ph-q'); if (q) q.value = ''; const s = $('#ph-sort'); if (s) s.value = 'title'; }
 export function forgetOpen() { lastAdd = { platform: '', region: '' }; closeCase(true); S.openId = null; $$('.ph-card.nav-current, .ph-spine.is-open:not(.is-fore)').forEach((e) => e.classList.remove('nav-current', 'is-open')); slideShelfBack(); }
 
 /* ───────────── loading ───────────── */
@@ -72,7 +76,7 @@ export async function load(keep = false) {
   S.picked = S.picked.filter((s) => S.platforms.some((p) => p.slug === s));
   const params = new URLSearchParams({ sort: S.sort });
   if (S.picked.length) params.set('platforms', S.picked.join(','));
-  if (S.q) params.set('q', S.q); if (S.fav) params.set('favourites', '1'); if (S.nocover) params.set('nocover', '1'); if (S.unmatched) params.set('unmatched', '1'); if (S.spine) params.set('spine', '1'); if (S.letter) params.set('letter', S.letter);
+  if (S.q) params.set('q', S.q); if (S.fav) params.set('favourites', '1'); if (S.nocover) params.set('nocover', '1'); if (S.unmatched) params.set('unmatched', '1'); if (S.spine) params.set('spine', '1'); if (S.hidden) params.set('hidden', 'show'); if (S.letter) params.set('letter', S.letter);
   let list;
   try { list = await ctx.api('/physical/games?' + params); } catch (err) { msg.textContent = err.message; return; }
   if (token !== S.token) return;
@@ -150,15 +154,18 @@ function renderHeading(total) {
 
 function paintToolbar() {
   const c = S.counts;
+  // The same order as the ROM Library: favourites, hidden, no cover; then the ones only the shelf has. The hover text says what the button does for you.
   $('#ph-toggles').innerHTML = `
-    <button type="button" class="ph-pill${S.fav ? ' on' : ''}" data-ph-toggle="fav" title="Favourites: only your favourites (${n(c.favourites)})">★ Favourites <small>${n(c.favourites)}</small></button>
-    <button type="button" class="ph-pill${S.nocover ? ' on' : ''}" data-ph-toggle="nocover" title="No cover: games with no cover picture yet (${n(c.nocover)})">▢ No cover <small>${n(c.nocover)}</small></button>
-    <button type="button" class="ph-pill${S.unmatched ? ' on' : ''}" data-ph-toggle="unmatched" title="Needs match: games no provider has matched, the worklist for matching by hand (${n(c.unmatched)})">○ Needs match <small>${n(c.unmatched)}</small></button>
-    <button type="button" class="ph-pill${S.spine ? ' on' : ''}" data-ph-toggle="spine" title="With spine art: games that have a real spine picture for the shelf (${n(c.spines)})">▯ With spine art <small>${n(c.spines)}</small></button>`;
+    <button type="button" class="ph-pill${S.fav ? ' on' : ''}" data-ph-toggle="fav" title="Show favourites (${n(c.favourites)})">★ Favourites <small>${n(c.favourites)}</small></button>
+    <button type="button" class="ph-pill${S.hidden ? ' on' : ''}" data-ph-toggle="hidden" title="Show hidden games">◌ Show hidden <small>${n(c.hidden)}</small></button>
+    <button type="button" class="ph-pill${S.nocover ? ' on' : ''}" data-ph-toggle="nocover" title="Show games with no cover (${n(c.nocover)})">▢ No cover <small>${n(c.nocover)}</small></button>`;
+  const x = $('#ph-toggles-x'); if (x) x.innerHTML = `
+    <button type="button" class="ph-pill${S.unmatched ? ' on' : ''}" data-ph-toggle="unmatched" title="Show games that need a match: the ones no provider has matched, the worklist for matching by hand (${n(c.unmatched)})">○ Needs match <small>${n(c.unmatched)}</small></button>
+    <button type="button" class="ph-pill${S.spine ? ' on' : ''}" data-ph-toggle="spine" title="Show games with spine art: the ones with a real spine picture for the shelf (${n(c.spines)})">▯ With spine art <small>${n(c.spines)}</small></button>`;
   // The three look buttons beside the A-Z row: two grid sizes (tiles) and the shelf; the lit one is the look in use.
   $$('[data-ph-density]').forEach((b) => b.classList.toggle('is-on', S.view === 'tiles' && b.dataset.phDensity === S.density));
   $$('[data-ph-view="shelf"]').forEach((b) => b.classList.toggle('is-on', S.view === 'shelf'));
-  const anyFilter = S.picked.length || S.q || S.fav || S.nocover || S.unmatched || S.spine || S.letter;
+  const anyFilter = S.picked.length || S.q || S.fav || S.hidden || S.nocover || S.unmatched || S.spine || S.letter;
   $('#ph-reset')?.classList.toggle('hidden', !anyFilter);
 }
 
@@ -754,6 +761,7 @@ export async function openDetail(id) {
     </div></div>
     <div class="detail-actions">
       <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-d="fav" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? I.starFill : I.star}</button>
+      <button class="ibtn${g.hidden ? ' is-on' : ''}" data-d="hide" data-tip="${g.hidden ? 'Show this game again' : 'Hide this game'}" aria-label="${g.hidden ? 'Show this game again' : 'Hide this game'}">${g.hidden ? I.eye : I.eyeOff}</button>
       <button class="ibtn" data-d="auto" data-tip="Look this game up again by its title and platform" aria-label="Look up again">${I.refresh}</button>
       ${g.digital_possible ? `<button class="ibtn${g.digital_linked ? ' is-on' : ''}" data-d="digital" aria-pressed="${Boolean(g.digital_linked)}" data-tip="Disc to digital" aria-label="Disc to digital">${I.disc}</button>` : ''}
       ${g.matched ? `<button class="ibtn" data-d="clear" data-tip="Clear the match: remove a wrong cover and details" aria-label="Clear match">${I.undo}</button>` : ''}
@@ -802,6 +810,7 @@ function bindDetail(g) {
   const body = $('#drawer-body'), id = g.id;
   const refreshAll = async () => { await load(true); await openDetail(id); };
   $('[data-d="fav"]', body).onclick = () => toggleFav(id);
+  $('[data-d="hide"]', body).onclick = async () => { try { await ctx.api(`/physical/games/${id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !g.hidden }) }); } catch (err) { ctx.toast(err.message, true); return; } ctx.toast(g.hidden ? 'Shown again' : 'Hidden: Show hidden brings it back'); await refreshAll(); };
   $('[data-d="auto"]', body).onclick = async (e) => {
     const b = e.currentTarget; b.disabled = true; b.classList.add('spin');
     try { const r = await ctx.api(`/physical/games/${id}/auto-match`, { method: 'POST' }); const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : ''; ctx.toast((r.matched ? `Details found (${r.game.meta_source}).` : 'No match found: search for it below.') + added, !r.matched && !added); await refreshAll(); }

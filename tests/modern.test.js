@@ -106,7 +106,7 @@ test('the ticker lives in the top bar on every page, and Library will swap it fo
   assert.match(js, /<div class="mb-slot" id="mb-slot">[\s\S]*id="mh-ticker"[\s\S]*id="mb-library-tools"/, 'one slot in the bar holds both');
   assert.doesNotMatch(js.slice(js.indexOf('async function renderHome')), /id="mh-ticker"/, 'Home no longer carries its own ticker');
   assert.match(js, /refreshTicker\(view === 'library'\);/, 'it is refreshed on every page change');
-  assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/, 'hidden in Library once the tools are in the bar');
+  assert.match(css, /mb-tools:is\(\[data-mview="library"\], \[data-mview="digital"\], \[data-mview="physical"\]\) \.mh-ticker \{ display: none; \}/, 'hidden in Library, Digital and Physical once the tools are in the bar');
 });
 
 test('the logo is the vector file, sized to the icon row; the account is an avatar menu on the right', () => {
@@ -129,7 +129,7 @@ test('Library tools in the bar drive the Classic controls instead of duplicating
   assert.match(js, /sel\.dispatchEvent\(new Event\('change'/, 'sort fires the real sort control');
   assert.match(js, /3-dot-spinner/, 'a metadata run shows the three-dot spinner');
   assert.match(css, /#view-library > \.toolbar \{ display: none; \}/);
-  assert.match(css, /mb-tools\[data-mview="library"\] \.mh-ticker \{ display: none; \}/);
+  assert.match(css, /mb-tools:is\(\[data-mview="library"\], \[data-mview="digital"\], \[data-mview="physical"\]\) \.mh-ticker \{ display: none; \}/);
   // play-only accounts get the cut-down set: no sort, hidden, select, more
   assert.match(js, /po \? '' :/);
 });

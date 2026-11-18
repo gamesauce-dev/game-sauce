@@ -238,7 +238,7 @@ export function linkAllDigital(userId) {
 
 const toGame = (r) => ({
   id: r.id, platform: r.platform, title: r.title, region: r.region, notes: r.notes, release_year: r.release_year, developer: r.developer, publisher: r.publisher,
-  genre: r.genre, players: r.players, rating: r.rating, description: r.description, favourite: Boolean(r.favourite), matched: Boolean(r.meta_source), meta_source: r.meta_source,
+  genre: r.genre, players: r.players, rating: r.rating, description: r.description, favourite: Boolean(r.favourite), hidden: Boolean(r.hidden), matched: Boolean(r.meta_source), meta_source: r.meta_source,
   cover_url: r.cover_path ? `/api/physical/cover/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_cover: Boolean(r.cover_path), cover_locked: Boolean(r.cover_locked), created_at: r.created_at,
   cover_ar: r.cover_ar || null, spine_ar: r.spine_ar || null,
   spine_url: r.spine_path ? `/api/physical/spine/${r.id}?v=${encodeURIComponent(r.updated_at || '')}` : null, has_spine: Boolean(r.spine_path), spine_locked: Boolean(r.spine_path && r.spine_locked),
@@ -263,9 +263,11 @@ function backfillShapes(rows) {
 }
 
 /** The person's games, filtered and sorted. platforms: [] = all. */
-export function listPhysical(userId, { platforms = [], q = '', sort = 'title', favourites = false, nocover = false, unmatched = false, spine = false, letter = '' } = {}) {
+export function listPhysical(userId, { platforms = [], q = '', sort = 'title', favourites = false, nocover = false, unmatched = false, spine = false, letter = '', hidden = '' } = {}) {
   let rows = db.prepare('SELECT * FROM physical_games WHERE user_id = ?').all(userId);
   backfillShapes(rows);
+  // Hidden games stay out unless asked for (hidden: 'show' adds them, 'only' lists only them), as in Digital.
+  if (hidden === 'only') rows = rows.filter((r) => r.hidden); else if (hidden !== 'show') rows = rows.filter((r) => !r.hidden);
   if (platforms.length) { const ps = new Set(platforms); rows = rows.filter((r) => ps.has(r.platform)); }
   if (favourites) rows = rows.filter((r) => r.favourite);
   if (nocover) rows = rows.filter((r) => !r.cover_path);
@@ -294,13 +296,14 @@ export function physicalPlatforms(userId) {
   const ars = {};
   for (const r of db.prepare('SELECT platform, spine_ar FROM physical_games WHERE user_id = ? AND spine_ar IS NOT NULL').all(userId)) (ars[r.platform] ||= []).push(r.spine_ar);
   return db.prepare(`SELECT g.platform AS slug, COUNT(*) AS count, p.name, p.short_name, p.badge, p.family, p.accent FROM physical_games g
-    LEFT JOIN platforms p ON p.slug = g.platform WHERE g.user_id = ? GROUP BY g.platform`).all(userId)
+    LEFT JOIN platforms p ON p.slug = g.platform WHERE g.user_id = ? AND g.hidden = 0 GROUP BY g.platform`).all(userId)
     .map((r) => ({ ...r, name: r.name || r.slug, short_name: r.short_name || r.slug, spine_ars: ars[r.slug] || [] }));
 }
 
 export function physicalCounts(userId) {
-  const r = db.prepare('SELECT COUNT(*) AS total, SUM(favourite) AS favourites, SUM(CASE WHEN cover_path IS NULL THEN 1 ELSE 0 END) AS nocover, SUM(CASE WHEN meta_source IS NULL THEN 1 ELSE 0 END) AS unmatched, SUM(CASE WHEN spine_path IS NULL THEN 0 ELSE 1 END) AS spines FROM physical_games WHERE user_id = ?').get(userId);
-  return { total: r.total || 0, favourites: r.favourites || 0, nocover: r.nocover || 0, unmatched: r.unmatched || 0, spines: r.spines || 0 };
+  // total is every game (so a shelf with everything hidden is not called empty); the others count the games that show, and hidden counts the ones kept out.
+  const r = db.prepare('SELECT COUNT(*) AS total, SUM(hidden) AS hidden, SUM(CASE WHEN hidden = 0 THEN favourite ELSE 0 END) AS favourites, SUM(CASE WHEN hidden = 0 AND cover_path IS NULL THEN 1 ELSE 0 END) AS nocover, SUM(CASE WHEN hidden = 0 AND meta_source IS NULL THEN 1 ELSE 0 END) AS unmatched, SUM(CASE WHEN hidden = 0 AND spine_path IS NOT NULL THEN 1 ELSE 0 END) AS spines FROM physical_games WHERE user_id = ?').get(userId);
+  return { total: r.total || 0, hidden: r.hidden || 0, favourites: r.favourites || 0, nocover: r.nocover || 0, unmatched: r.unmatched || 0, spines: r.spines || 0 };
 }
 
 const own = (userId, id) => db.prepare('SELECT * FROM physical_games WHERE id = ? AND user_id = ?').get(Number(id), userId);
@@ -342,6 +345,7 @@ export function updatePhysical(userId, id, body = {}) {
   const num = (f, lo, hi, round) => { if (body[f] === undefined) return; const n = body[f] === null || body[f] === '' ? null : Number(body[f]); if (n !== null && !(Number.isFinite(n) && n >= lo && n <= hi)) throw Object.assign(new Error(`${f.replace('_', ' ')} is out of range`), { status: 400 }); sets.push(`${f} = ?`); vals.push(n === null ? null : round ? Math.round(n) : n); };
   num('release_year', 1950, 2100, true); num('players', 1, 16, true); num('rating', 0, 5, false);
   if (body.favourite !== undefined) { sets.push('favourite = ?'); vals.push(body.favourite ? 1 : 0); }
+  if (body.hidden !== undefined) { sets.push('hidden = ?'); vals.push(body.hidden ? 1 : 0); }
   if (body.platform !== undefined) { const slug = resolvePlatform(body.platform); if (!slug) throw Object.assign(new Error('Choose a platform from the list.'), { status: 400 }); sets.push('platform = ?'); vals.push(slug); }
   if (sets.length) {
     // The duplicate key follows the title and region, so editing them cannot make two copies of one game look different.

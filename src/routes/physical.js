@@ -25,7 +25,8 @@ router.get('/games', (req, res) => {
   const sort = ['title', '-title', 'added', 'year', 'platform'].includes(String(req.query.sort)) ? String(req.query.sort) : 'title';
   const out = listPhysical(me(req), {
     platforms, q: String(req.query.q || '').trim().slice(0, 100), sort, favourites: req.query.favourites === '1', nocover: req.query.nocover === '1',
-    unmatched: req.query.unmatched === '1', spine: req.query.spine === '1', letter: String(req.query.letter || '').toUpperCase()
+    unmatched: req.query.unmatched === '1', spine: req.query.spine === '1', letter: String(req.query.letter || '').toUpperCase(),
+    hidden: ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : ''
   });
   flagVideos(out.items, (g) => g.title, (g) => g.platform);
   res.json({ ...out, total: out.items.length });
@@ -58,6 +59,16 @@ router.post('/games/bulk-delete', (req, res) => {
   let removed = 0;
   db.transaction(() => { for (const id of ids) { try { removePhysical(me(req), id); removed++; } catch (err) { if (err.status !== 404) throw err; } } })();
   res.json({ removed });
+});
+
+// Favourite or hide several of this person's own games at once: { ids: [...], field: 'favourite' | 'hidden', value: true | false }.
+router.post('/games/bulk-mark', (req, res) => {
+  const field = String(req.body?.field || '');
+  if (!['favourite', 'hidden'].includes(field)) return res.status(400).json({ error: 'Unknown mark' });
+  const ids = [...new Set((Array.isArray(req.body?.ids) ? req.body.ids : []).map(Number))].filter(Number.isInteger).slice(0, 20000);
+  let changed = 0;
+  db.transaction(() => { for (const id of ids) { try { updatePhysical(me(req), id, { [field]: req.body?.value === true }); changed++; } catch (err) { if (err.status !== 404) throw err; } } })();
+  res.json({ changed });
 });
 
 // Review the Digital entries that disc to digital made on its own, and drop the ones the person confirms: { ids: [disc ids] }. Nothing is taken out without this.

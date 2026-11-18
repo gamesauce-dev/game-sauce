@@ -263,3 +263,20 @@ test('a console game\'s cover in the details window keeps its own shape (a Wii U
   const block = dg.slice(i, i + 700);
   assert.ok(block.includes('this.parentElement.style.aspectRatio=Math.min(1.6,Math.max(0.5,this.naturalWidth/this.naturalHeight))'));
 });
+
+test('hide and favourite several Digital games at once (console and Steam alike), turn them off again, and only the owner is touched', async () => {
+  await call('/api/digital/consoles/import', { method: 'POST', body: { csv: 'Platform,Game\nPS5,Bulk One\nPS5,Bulk Two\nSwitch,Bulk Three', apply: true } });
+  const all = (await call('/api/digital/games?hidden=show')).body.items.filter((g) => g.name.startsWith('Bulk'));
+  assert.equal(all.length, 3);
+  const items = all.slice(0, 2).map((g) => ({ store: g.store, app_id: g.app_id }));
+  assert.equal((await call('/api/digital/games/bulk-mark', { method: 'POST', body: { items, field: 'hidden', value: true } })).body.changed, 2);
+  assert.equal((await call('/api/digital/games')).body.items.filter((g) => g.name.startsWith('Bulk')).length, 1, 'two are hidden');
+  assert.equal((await call('/api/digital/games/bulk-mark', { method: 'POST', body: { items, field: 'hidden', value: false } })).body.changed, 2);
+  assert.equal((await call('/api/digital/games')).body.items.filter((g) => g.name.startsWith('Bulk')).length, 3, 'shown again');
+  await call('/api/digital/games/bulk-mark', { method: 'POST', body: { items, field: 'favourite', value: true } });
+  assert.equal((await call('/api/digital/games?favourites=1')).body.items.filter((g) => g.name.startsWith('Bulk')).length, 2);
+  await call('/api/digital/games/bulk-mark', { method: 'POST', body: { items: items.slice(0, 1), field: 'favourite', value: false } });
+  assert.equal((await call('/api/digital/games?favourites=1')).body.items.filter((g) => g.name.startsWith('Bulk')).length, 1, 'turned off again');
+  assert.equal((await call('/api/digital/games/bulk-mark', { method: 'POST', body: { items, field: 'play', value: true } })).status, 400);
+  assert.equal((await call('/api/digital/games/bulk-mark', { method: 'POST', token: annTok, body: { items, field: 'hidden', value: true } })).body.changed, 0, "someone else's games are not touched");
+});

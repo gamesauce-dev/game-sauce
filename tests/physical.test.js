@@ -198,7 +198,7 @@ test('Modern: the Physical page uses icons with hover words (reusing the icon se
   assert.match(mcss, /html\[data-theme="light"\] body\.ui-modern \.ph-row \{ background: linear-gradient\(180deg, #e8e9ef, #ffffff/);
   assert.match(mcss, /body\.ui-modern \.ph-pill\[data-mi\] small \{ display: none; \}/);
   // the words are kept for Classic and become the hover text, with the counts
-  assert.match(ph, /title="Favourites: only your favourites \(\$\{n\(c\.favourites\)\}\)">★ Favourites/);
+  assert.match(ph, /title="Show favourites \(\$\{n\(c\.favourites\)\}\)">★ Favourites/);
   assert.match(read('public/physical.css'), /#ph-id-q \{ padding-left: 0\.7143rem; \}/);
 });
 
@@ -641,4 +641,46 @@ test('the open case works for more platforms, and from a Library tile with no sh
   assert.ok(ph.includes('export function putCaseAway()') && app.includes('physical.putCaseAway();   // a case brought to the front'), 'the next and back arrows in the details window put the case away');
   assert.ok(app.includes('physical.hasCase(rom.platform)') && app.includes('data-case="${rom.id}"') && app.includes('physical.popCase('), 'the tile has a case button that brings the case out');
   assert.ok(app.includes("file('spine')") && app.includes("file('back')") && app.includes("file('disc')") && app.includes("file('manual')"), 'the case uses the spine, back, disc and manual kept for the Library game');
+});
+
+test('hide and favourite several shelf games at once: hidden games stay out of the list and the counts until Show hidden, and only the owner can change them', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const a = phys.addPhysical(adminId, { platform: 'ps2', title: 'Hide Alpha' }), b = phys.addPhysical(adminId, { platform: 'ps2', title: 'Hide Beta' }), c = phys.addPhysical(adminId, { platform: 'snes', title: 'Hide Gamma' });
+  await phys.matchJobIdle();
+  assert.equal((await call('/api/physical/games/bulk-mark', { method: 'POST', body: { ids: [a.id, b.id], field: 'hidden', value: true } })).body.changed, 2);
+  assert.deepEqual((await call('/api/physical/games')).body.items.map((g) => g.title), ['Hide Gamma'], 'hidden games are out of the list');
+  assert.deepEqual((await call('/api/physical/games?hidden=show')).body.items.map((g) => g.title).sort(), ['Hide Alpha', 'Hide Beta', 'Hide Gamma'], 'Show hidden adds them');
+  assert.deepEqual((await call('/api/physical/games?hidden=only')).body.items.map((g) => g.title).sort(), ['Hide Alpha', 'Hide Beta']);
+  const info = (await call('/api/physical')).body;
+  assert.equal(info.counts.hidden, 2); assert.equal(info.counts.total, 3, 'a shelf with hidden games is not empty');
+  assert.deepEqual(info.platforms.map((p) => [p.slug, p.count]), [['snes', 1]], 'the chips count what shows');
+  assert.equal((await call('/api/physical/games/bulk-mark', { method: 'POST', body: { ids: [a.id, b.id], field: 'hidden', value: false } })).body.changed, 2);
+  assert.equal((await call('/api/physical/games')).body.items.length, 3, 'shown again');
+  assert.equal((await call('/api/physical/games/bulk-mark', { method: 'POST', body: { ids: [a.id, c.id], field: 'favourite', value: true } })).body.changed, 2);
+  assert.deepEqual((await call('/api/physical/games?favourites=1')).body.items.map((g) => g.title).sort(), ['Hide Alpha', 'Hide Gamma']);
+  await call('/api/physical/games/bulk-mark', { method: 'POST', body: { ids: [a.id], field: 'favourite', value: false } });
+  assert.equal((await call('/api/physical/games?favourites=1')).body.items.length, 1, 'turned off again');
+  assert.equal((await call('/api/physical/games/bulk-mark', { method: 'POST', body: { ids: [a.id], field: 'title', value: true } })).status, 400, 'only the two marks');
+  assert.equal((await call('/api/physical/games/bulk-mark', { method: 'POST', token: annTok, body: { ids: [a.id], field: 'hidden', value: true } })).body.changed, 0, "someone else's games are not touched");
+  assert.equal((await call('/api/physical/games?hidden=only')).body.items.length, 0);
+});
+
+test('the Digital and Physical bars follow the Library: no ticker, the tools in the bar in the Library order, favourites and hide in the select bar', () => {
+  const modern = read('public/modern.js'), css = read('public/modern.css'), html = read('public/index.html'), bulk = read('public/bulk.js'), dg = read('public/digital.js'), ph = read('public/physical.js');
+  const order = (s, ids) => ids.map((i) => s.indexOf(i));
+  const inc = (arr) => arr.every((v, i) => v > 0 && (i === 0 || v > arr[i - 1]));
+  assert.ok(inc(order(modern.slice(modern.indexOf('function retool')), ['id="tl-q"', 'id="tl-reset"', 'id="tl-sort"', 'id="tl-fav"', 'id="tl-hidden"', 'id="tl-nocover"', 'id="tl-select"', 'data-x='])), 'search, clear, sort, favourites, hidden, no cover, select, then the page\'s own');
+  const lib = modern.slice(modern.indexOf('function buildLibraryTools'));
+  assert.ok(inc(order(lib, ['id="tl-q"', 'id="tl-reset"', 'id="tl-sort"', 'id="tl-fav"', 'id="tl-hidden"', 'id="tl-nocover"', 'id="tl-select"'])), 'the Library has the same order');
+  assert.match(css, /mb-tools #dg-bar, body\.ui-modern\.mb-tools #ph-bar \{ display: none; \}/, 'their own bar gives way to the tools in the bar');
+  for (const bar of ['dg', 'ph']) {
+    const seg = html.slice(html.indexOf(`id="${bar}-bar"`), html.indexOf(`id="${bar}-chips"`));
+    assert.ok(inc(order(seg, [`id="${bar}-q"`, `id="${bar}-reset"`, `id="${bar}-sort"`, `id="${bar}-toggles"`, 'data-bulk-toggle', `id="${bar}-toggles-x"`])), bar + ' bar: the same order in Classic');
+  }
+  for (const [file, src, toggles] of [['digital', dg, ['Show favourites', 'Show hidden games', 'Show console games with no cover']], ['physical', ph, ['Show favourites', 'Show hidden games', 'Show games with no cover']]]) for (const t of toggles) assert.ok(src.includes(`title="${t}`), `${file}: hover text "${t}"`);
+  assert.ok(modern.includes("title=\"Show hidden games\"") && modern.includes('title="Show favourites"'));
+  for (const a of ['fav-on', 'fav-off', 'hide', 'unhide']) assert.ok(bulk.includes(`data-bulk="${a}"`) && modern.includes(`.sel-bar [data-bulk="${a}"]`), a);
+  assert.ok(bulk.includes('Add the selected games to your favourites') && bulk.includes('Remove the selected games from your favourites') && bulk.includes('Hide the selected games') && bulk.includes('Show the selected hidden games again'));
+  assert.ok(dg.includes("'/digital/games/bulk-mark'") && ph.includes("'/physical/games/bulk-mark'"));
 });

@@ -69,8 +69,13 @@ export function initDigital(c) {
   // Select mode: pick tiles, or Select all under the current filters, and delete them together (console games; Steam's come from Steam).
   attachBulk({
     view, grid: $('#dg-grid'), tile: '.dg-card', barAfter: $('#dg-bar'), toggleSel: '[data-bulk-toggle]', ctx, noun: 'game', where: 'your Digital library',
-    keyOf: (t) => (t.dataset.dgStoreOf === 'steam' ? null : dgKey(t.dataset.dgStoreOf, t.dataset.dgApp)),
-    allKeys: () => dgIds().filter((k) => !k.startsWith('steam:')),
+    keyOf: (t) => dgKey(t.dataset.dgStoreOf, t.dataset.dgApp),
+    allKeys: () => dgIds(),
+    deletable: (keys) => keys.filter((k) => !k.startsWith('steam:')),   // a Steam game comes from Steam: it can be favourited or hidden, not deleted
+    marks: {
+      favourite: async (keys, value) => (await ctx.api('/digital/games/bulk-mark', { method: 'POST', body: JSON.stringify({ items: keys.map(dgItem), field: 'favourite', value }) })).changed,
+      hidden: async (keys, value) => (await ctx.api('/digital/games/bulk-mark', { method: 'POST', body: JSON.stringify({ items: keys.map(dgItem), field: 'hidden', value }) })).changed
+    },
     remove: async (keys) => (await ctx.api('/digital/games/bulk-delete', { method: 'POST', body: JSON.stringify({ items: keys.map((k) => { const i = k.indexOf(':'); return { store: k.slice(0, i), app_id: k.slice(i + 1) }; }) }) })).removed,
     reload: () => loadDigital()
   });
@@ -91,6 +96,7 @@ export function forgetOpen() { lastAdd = { platform: '', country: '' }; $$('.dg-
 const dgIds = () => dg.ids || [];
 // One game in the list: its store and its id in that store (the same title on two consoles is two games, each with its own id).
 const dgKey = (store, appId) => `${store}:${appId}`;
+const dgItem = (k) => { const i = k.indexOf(':'); return { store: k.slice(0, i), app_id: k.slice(i + 1) }; };
 function dgRender(reset) {
   const grid = $('#dg-grid'); if (!grid) return;
   if (reset) { grid.innerHTML = ''; dg.rendered = 0; }
@@ -146,11 +152,12 @@ function paintSort() {
 
 function paintToolbar() {
   const cn = dg.info.counts || {}, hasSteam = (dg.info.stores || []).some((s) => s.store === 'steam');
+  // The same order as the ROM Library: favourites, hidden, no cover; then the ones only Digital has. The hover text says what the button does for you.
   $('#dg-toggles').innerHTML = `
-    <button type="button" class="ph-pill${dg.fav ? ' on' : ''}" data-dg-toggle="fav" title="Favourites: only your favourites (${n(cn.favourites)})">★ Favourites <small>${n(cn.favourites)}</small></button>`
-    + `<button type="button" class="ph-pill${dg.nocover ? ' on' : ''}" data-dg-toggle="nocover" title="No cover: console games with no cover picture yet (${n(cn.nocover)})">▢ No cover <small>${n(cn.nocover)}</small></button>`
-    + (hasSteam ? `<button type="button" class="ph-pill${dg.installed ? ' on' : ''}" data-dg-toggle="installed" title="Installed: only the Steam games you switched the play button on for, installed on this PC (${n(cn.installed)})">▶ Installed <small>${n(cn.installed)}</small></button>` : '')
-    + `<button type="button" class="ph-pill${dg.hidden ? ' on' : ''}" data-dg-toggle="hidden" title="Show hidden: also show the games you hid (${n(cn.hidden)})">◌ Show hidden <small>${n(cn.hidden)}</small></button>`;
+    <button type="button" class="ph-pill${dg.fav ? ' on' : ''}" data-dg-toggle="fav" title="Show favourites (${n(cn.favourites)})">★ Favourites <small>${n(cn.favourites)}</small></button>`
+    + `<button type="button" class="ph-pill${dg.hidden ? ' on' : ''}" data-dg-toggle="hidden" title="Show hidden games">◌ Show hidden <small>${n(cn.hidden)}</small></button>`
+    + `<button type="button" class="ph-pill${dg.nocover ? ' on' : ''}" data-dg-toggle="nocover" title="Show console games with no cover (${n(cn.nocover)})">▢ No cover <small>${n(cn.nocover)}</small></button>`;
+  const x = $('#dg-toggles-x'); if (x) x.innerHTML = hasSteam ? `<button type="button" class="ph-pill${dg.installed ? ' on' : ''}" data-dg-toggle="installed" title="Show installed Steam games: the ones you switched the play button on for (${n(cn.installed)})">▶ Installed <small>${n(cn.installed)}</small></button>` : '';
   const any = dg.picked.length || dg.q || dg.fav || dg.nocover || dg.installed || dg.hidden || dg.letter;
   $('#dg-reset')?.classList.toggle('hidden', !any);
   $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density));

@@ -636,3 +636,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '56') ON CON
 /* ── v57: where a game's file came from: 'folder' (brought in from the person's own artwork folder) or 'screenscraper' (fetched). NULL = before this was recorded. The import replaces a fetched picture with the person's own, and Big Screen shows the person's own first. ── */
 if (!db.prepare('PRAGMA table_info(rom_files)').all().some((c) => c.name === 'source')) db.exec('ALTER TABLE rom_files ADD COLUMN source TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '57') ON CONFLICT(key) DO UPDATE SET value = '57'").run();
+
+/* ── v58: a game on the Physical shelf can be hidden (the person's own mark, like Digital's): it stays out of the shelf and the counts until Show hidden is on. ── */
+if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === 'hidden')) db.exec('ALTER TABLE physical_games ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '58') ON CONFLICT(key) DO UPDATE SET value = '58'").run();

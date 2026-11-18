@@ -51,6 +51,16 @@ router.post('/games', (req, res) => {
   catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; }
 });
 
+// Favourite or hide several of this person's own games at once: { items: [{ store, app_id }], field: 'favourite' | 'hidden', value: true | false }. Steam games too: the marks are only theirs.
+router.post('/games/bulk-mark', (req, res) => {
+  const field = String(req.body?.field || '');
+  if (!['favourite', 'hidden'].includes(field)) return res.status(400).json({ error: 'Unknown mark' });
+  const items = (Array.isArray(req.body?.items) ? req.body.items : []).filter((g) => g && knownStore(String(g.store)) && g.app_id != null).slice(0, 20000);
+  let changed = 0;
+  db.transaction(() => { for (const g of items) { try { setMark(me(req), String(g.store), String(g.app_id), field, req.body?.value === true); changed++; } catch (err) { if (err.status !== 404) throw err; } } })();
+  res.json({ changed });
+});
+
 // One mark on one game: { field: 'favourite' | 'hidden' | 'play' | 'physical', value: true | false }. Private to the person; a refresh keeps them.
 router.put('/games/:store/:appId/mark', (req, res) => {
   const store = String(req.params.store);
