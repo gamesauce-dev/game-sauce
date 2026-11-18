@@ -33,9 +33,9 @@ router.put('/folders', requireAdmin, (req, res) => {
 
 // body: { target: 'physical' | 'digital', folder, replace, apply }. Without apply: what it would do. With apply: starts it in the background.
 router.post('/import', async (req, res, next) => {
-  const target = ['digital', 'video', 'rom', 'both'].includes(req.body?.target) ? req.body.target : 'physical';
+  const target = ['digital', 'video', 'rom', 'both', 'all'].includes(req.body?.target) ? req.body.target : 'physical';
   // The Library is shared by everyone, so only an admin changes the pictures and manuals of its games (videos are shared too, but only ever added).
-  if (target === 'rom' && req.user?.role !== 'admin') return res.status(403).json({ error: 'Only an admin can import pictures and manuals for the Library.' });
+  if ((target === 'rom' || target === 'all') && req.user?.role !== 'admin') return res.status(403).json({ error: 'Only an admin can import pictures and manuals for the Library.' });
   const opts = { target, folder: String(req.body?.folder || ''), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 200), kind: String(req.body?.kind || ''), platform: String(req.body?.platform || '').slice(0, 60) };
   const sent = cleanMap(req.body?.split), split = { ...savedSplit(me(req)), ...sent };
   opts.split = split;

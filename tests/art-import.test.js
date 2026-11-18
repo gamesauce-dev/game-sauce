@@ -157,7 +157,7 @@ test('the screens and the settings: Game assets (admin), Import game assets in t
   const ui = read('public/artimport-ui.js');
   assert.ok(ui.includes("'/art/import'") && ui.includes("'/art/import/status'") && ui.includes('Replace what is already there') && ui.includes('id="art-preview"') && ui.includes('id="art-apply" type="button" disabled'), 'preview first, then Import');
   // the Physical and Digital importers live in Tools > Game Assets (one panel, a choice of list), not in the two libraries
-  assert.ok(html.includes('id="mod-gameassets"') && !html.includes('name="ga-target"') && app.includes("renderArtImport({ api, toast }, $('#ga-body'), { target: 'both'"), 'no choice of list: the shelf and Digital in one pass');
+  assert.ok(html.includes('id="mod-gameassets"') && !html.includes('name="ga-target"') && app.includes("{ target: authState.user?.role === 'admin' ? 'all' : 'both'"), 'no choice of list: the Library (an admin), the shelf and Digital in one pass');
   assert.ok(!html.includes('data-ph-act="art"') && !html.includes('data-dg-act="art"') && !ph.includes('openArtImport') && !dg.includes('openArtImport'));
   // an admin can add a folder from the import screen itself: type or paste a path, or browse the server's folders
   assert.ok(ui.includes('function wireAddFolder(') && ui.includes('id="art-newpath"') && ui.includes('id="art-browse"') && ui.includes("`/sources/browse${p ? `?path=${encodeURIComponent(p)}` : ''}`") && ui.includes("'/art/folders', { method: 'PUT'"), 'type, paste or browse, then Add');

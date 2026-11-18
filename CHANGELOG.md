@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Tools > Game Assets covers the ROM Library too (admin).** For an admin the one import now matches your Library, your Physical shelf and your Digital list together: a file can fill a Library game, a shelf game and a Digital game at once, the Library also takes its logos, marquees and backgrounds (the picture behind a game in Big Screen), the shelf takes spines, discs, backs and manuals, and Digital takes covers. Everyone else still imports to their own shelf and Digital list. The Library's own Import game assets button is unchanged.
+
 ## [0.13.1] - 2026-11-18
 
 ### Fixed
