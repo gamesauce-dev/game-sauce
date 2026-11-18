@@ -13,6 +13,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 - **The manual buttons showed two icons each in the Modern look** (the search button had two magnifying glasses). They are drawn once now.
+- **The video line in the details window no longer touches the box above it.** Show cover and Find missing assets have room around them.
 
 ## [0.13.1] - 2026-11-18
 

@@ -691,4 +691,9 @@ test('the Physical details window: no spine art row, the manual buttons are draw
   assert.ok(!ph.includes("['Spine art'"), 'no spine row in the details table');
   assert.match(css, /body\.ui-modern \.ph-manual-box \.ibtn > svg \{ display: none; \}/, 'the drawn manual icons give way to the Modern icon set');
   assert.ok(!dg.includes('<span>Console</span>') && dg.includes('<span>Platform</span>${comboHtml('), 'Digital: Platform, not Console');
+
+test('the video note in the details window has room above it and between its buttons', () => {
+  const css = read('public/styles.css');
+  assert.match(css, /#drawer-body \.vid-slot \{ margin-top: 1rem; \}/);
+  assert.match(css, /#drawer-body \.vid-slot \.vid-note \{ margin: 0 0 0\.6rem; row-gap: 0\.7rem; \}/);
 });
