@@ -36,3 +36,10 @@ test('Tools: a menu option before Settings, with Emulators, Controller, Add My G
   assert.ok(app.includes("splitByLibrary(csv, dest())") && app.includes("'/physical/import'") && app.includes("'/digital/consoles/import'"));
   assert.ok(app.includes('!m.own || !authState.user?.play_only'), 'a play-only account gets Emulators and Controller only');
 });
+
+test('the Tools page scrolls, and Game Assets puts its explanation beside the importer', () => {
+  const css = read('public/styles.css');
+  assert.match(css, /#view-settings, #view-tools, #view-account[^{]*\{ overflow-y: auto;/, 'the page scrolls like Settings');
+  assert.match(css, /#ga-body \{ display: grid; grid-template-columns: minmax\(0, 3fr\) minmax\(0, 2fr\);/);
+  assert.match(css, /#ga-body > \.hint \{ grid-column: 2; grid-row: 2;/, 'the explanation is the right-hand column');
+});
