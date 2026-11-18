@@ -101,6 +101,8 @@ async function one(r) {
 /** Start working through the waiting games. forced: the admin pressed Run now (the window does not apply). Returns at once. */
 export function startHashJob({ forced = false, resume = false } = {}) {
   if (forced || resume) paused = false;
+  // In overnight mode Stop only holds for the rest of that window: once it is closed, the next night starts as normal.
+  if (paused) { const c = getHashSettings(); if (c.mode === 'overnight' && !inWindow(c.window_start, c.window_end)) paused = false; }
   if (job.running) { job.forced = job.forced || forced; return hashStatus(); }
   if (paused || !pendingCount() || !allowedNow(forced)) return hashStatus();
   Object.assign(job, { running: true, forced, stop: false, total: pendingCount(), done: 0, current: '', duplicates: 0, failed: 0, started_at: new Date().toISOString() });

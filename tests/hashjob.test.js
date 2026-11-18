@@ -165,6 +165,25 @@ test('Stop ends a read at once, leaves the game waiting, and nothing restarts by
   assert.equal((await call('/api/admin/hashing')).body.paused, false);
 });
 
+test('In overnight mode Stop holds only until the window is over; the next night starts again by itself', async () => {
+  const dir = path.join(TMP, 'roms-g'); fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'Night (USA).sfc'); fs.writeFileSync(file, 'night bytes');
+  const src = (await call('/api/sources', { method: 'POST', body: { path: dir, platform_hint: 'snes' } })).body.id;
+  const id = db.prepare("INSERT INTO roms (platform_id, title, sort_title, filename, storage_path, source_path, source_id, size_bytes, meta_source) VALUES ((SELECT id FROM platforms WHERE slug = 'snes'), 'Night', 'night', 'Night (USA).sfc', ?, ?, ?, 11, 'filename')").run(file, file, src).lastInsertRowid;
+  const now = new Date(), a = hhmm(new Date(now.getTime() - 60_000)), b = hhmm(new Date(now.getTime() + 3600e3));
+  await call('/api/admin/hashing', { method: 'PUT', body: { mode: 'overnight', window_start: a, window_end: b } });   // the window is open now
+  await hj.hashJobIdle();
+  await call('/api/admin/hashing/stop', { method: 'POST' });
+  assert.equal((await call('/api/admin/hashing')).body.paused, true, 'stopped inside the window');
+  const later = new Date(now.getTime() + 2 * 3600e3), end = new Date(now.getTime() + 3 * 3600e3);
+  await call('/api/admin/hashing', { method: 'PUT', body: { mode: 'overnight', window_start: hhmm(later), window_end: hhmm(end) } });   // the window has closed
+  hj.startHashJob();   // the once-a-minute check, outside the window
+  assert.equal((await call('/api/admin/hashing')).body.paused, false, 'the pause ended with the window');
+  assert.ok(id);
+  await call('/api/admin/hashing', { method: 'PUT', body: { mode: 'background' } });
+  await hj.hashJobIdle();
+});
+
 test('a game without fingerprints is still a normal game: the play and download routes never need them', () => {
   for (const f of ['src/routes/roms.js']) {
     const src = read(f);
