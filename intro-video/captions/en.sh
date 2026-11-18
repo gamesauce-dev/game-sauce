@@ -1,0 +1,20 @@
+# Captions for the en cut
+FONT=work/font.ttf
+FS=1
+TAG='Free. Open source. Yours.'
+C01='Ready player one?'
+C02='Welcome to your collection.'
+C03='Every game you own. Covers and details, found for you.'
+C04='Press play. Right in the browser.'
+C05='Spin through the whole collection.'
+C06='Jump to any letter. Star your favourites.'
+C07='Then take it to the sofa.'
+C08='Big Screen. Gamepad in hand, everything on the TV.'
+C09='Your boxed games too.'
+C10='Pull one out, and its video plays.'
+C11='Turn it, open it, read the manual.'
+C12='Your Steam library too.'
+C13='And the console games you own.'
+C14='Use your own logos as chips.'
+C15='Keep in touch with the household.'
+C16='Private messages. No cloud.'

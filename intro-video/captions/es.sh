@@ -1,0 +1,20 @@
+# Captions for the es cut
+FONT=work/font.ttf
+FS=0.9
+TAG='Gratis. Código abierto. Tuyo.'
+C01='¿Listo, jugador uno?'
+C02='Bienvenido a tu colección.'
+C03='Todos tus juegos. Carátulas y detalles, encontrados por ti.'
+C04='Dale a play. Directamente en el navegador.'
+C05='Recorre toda la colección.'
+C06='Salta a cualquier letra. Marca tus favoritos.'
+C07='Y llévalo al sofá.'
+C08='Pantalla grande. Mando en mano, todo en la tele.'
+C09='También tus juegos en caja.'
+C10='Saca uno y su vídeo se reproduce.'
+C11='Dale la vuelta, ábrelo, lee el manual.'
+C12='También tu biblioteca de Steam.'
+C13='Y los juegos de consola que tienes.'
+C14='Usa tus propios logotipos como chips.'
+C15='Mantente en contacto con los de casa.'
+C16='Mensajes privados. Sin nube.'

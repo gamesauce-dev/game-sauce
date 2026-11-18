@@ -1,0 +1,20 @@
+# Captions for the de cut
+FONT=work/font.ttf
+FS=0.86
+TAG='Kostenlos. Open Source. Deins.'
+C01='Bereit, Spieler eins?'
+C02='Willkommen in deiner Sammlung.'
+C03='Jedes Spiel, das du besitzt. Cover und Details, für dich gefunden.'
+C04='Drück auf Play. Direkt im Browser.'
+C05='Blättere durch die ganze Sammlung.'
+C06='Spring zu jedem Buchstaben. Markiere deine Favoriten.'
+C07='Und dann ab aufs Sofa.'
+C08='Großbildmodus. Gamepad in der Hand, alles auf dem Fernseher.'
+C09='Auch deine Spiele im Karton.'
+C10='Zieh eines raus, und sein Video läuft.'
+C11='Dreh es um, öffne es, lies die Anleitung.'
+C12='Auch deine Steam-Bibliothek.'
+C13='Und die Konsolenspiele, die du besitzt.'
+C14='Nimm deine eigenen Logos als Chips.'
+C15='Bleib mit dem Haushalt in Kontakt.'
+C16='Private Nachrichten. Keine Cloud.'

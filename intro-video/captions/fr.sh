@@ -1,0 +1,20 @@
+# Captions for the fr cut
+FONT=work/font.ttf
+FS=0.88
+TAG='Gratuit. Open source. À vous.'
+C01='Prêt, joueur un ?'
+C02='Bienvenue dans votre collection.'
+C03='Tous vos jeux. Jaquettes et détails, trouvés pour vous.'
+C04='Appuyez sur play. Directement dans le navigateur.'
+C05='Parcourez toute la collection.'
+C06='Sautez à n’importe quelle lettre. Étoilez vos favoris.'
+C07='Puis emmenez tout sur le canapé.'
+C08='Grand écran. Manette en main, tout sur la télé.'
+C09='Vos jeux en boîte aussi.'
+C10='Sortez-en un, et sa vidéo se lance.'
+C11='Retournez-le, ouvrez-le, lisez le manuel.'
+C12='Votre bibliothèque Steam aussi.'
+C13='Et les jeux de console que vous possédez.'
+C14='Utilisez vos propres logos comme pastilles.'
+C15='Restez en contact avec toute la maison.'
+C16='Messages privés. Pas de cloud.'

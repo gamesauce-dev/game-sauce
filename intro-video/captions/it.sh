@@ -1,0 +1,20 @@
+# Captions for the it cut
+FONT=work/font.ttf
+FS=0.9
+TAG='Gratis. Open source. Tuo.'
+C01='Pronto, giocatore uno?'
+C02='Benvenuto nella tua collezione.'
+C03='Tutti i giochi che possiedi. Copertine e dettagli, trovati per te.'
+C04='Premi play. Direttamente nel browser.'
+C05='Scorri tutta la collezione.'
+C06='Salta a qualsiasi lettera. Segna i tuoi preferiti.'
+C07='Poi portalo sul divano.'
+C08='Schermo grande. Gamepad in mano, tutto sulla TV.'
+C09='Anche i tuoi giochi in scatola.'
+C10='Tirane fuori uno e parte il suo video.'
+C11='Giralo, aprilo, leggi il manuale.'
+C12='Anche la tua libreria Steam.'
+C13='E i giochi per console che possiedi.'
+C14='Usa i tuoi loghi come chip.'
+C15='Resta in contatto con la famiglia.'
+C16='Messaggi privati. Niente cloud.'

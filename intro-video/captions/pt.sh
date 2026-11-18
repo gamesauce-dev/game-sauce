@@ -1,0 +1,20 @@
+# Captions for the pt cut
+FONT=work/font.ttf
+FS=0.9
+TAG='Grátis. Código aberto. Seu.'
+C01='Pronto, jogador um?'
+C02='Bem-vindo à sua coleção.'
+C03='Todos os jogos que você tem. Capas e detalhes, encontrados para você.'
+C04='Aperte play. Direto no navegador.'
+C05='Percorra a coleção inteira.'
+C06='Pule para qualquer letra. Marque seus favoritos.'
+C07='Depois leve para o sofá.'
+C08='Tela grande. Controle na mão, tudo na TV.'
+C09='Seus jogos em caixa também.'
+C10='Puxe um, e o vídeo dele começa.'
+C11='Vire, abra, leia o manual.'
+C12='Sua biblioteca Steam também.'
+C13='E os jogos de console que você tem.'
+C14='Use seus próprios logotipos como chips.'
+C15='Fique em contato com a casa toda.'
+C16='Mensagens privadas. Sem nuvem.'
