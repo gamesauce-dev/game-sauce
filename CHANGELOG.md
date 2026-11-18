@@ -16,6 +16,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **The details window is tidier.** The description shows 7 lines at most and scrolls itself slowly when it is longer (it stops under the mouse). The section headings sit on a wide coloured band. The Identify box no longer carries the "No match, wrong game..." sentence. The empty "Video and artwork" section is gone (Refresh metadata / Look up again already fetch the video and pictures a game is missing). The Library no longer shows the spine in the artwork row. On the Physical shelf the manual section reads "Add manual" and is a row of icons with hover text, plus the link box.
 
 ### Fixed
+- **Big Screen shows the platforms that play in the browser even with no emulator set up for them.** A platform this PC had no emulator for was left out of Big Screen altogether, although the Carousel already kept it with the games that play in the browser. Big Screen now does the same: such a platform shows with just those games.
 - **The Digital Library icon stays an outline when selected** in the Modern look.
 - **The welcome tour's Next button** now also checks the password boxes when it is pressed, so it cannot move on with half a password typed on any system.
 

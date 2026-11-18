@@ -449,3 +449,9 @@ test('Art import: a logo fetched from ScreenScraper gives way to the one in your
   db.prepare("UPDATE rom_files SET source = 'folder' WHERE rom_id = ? AND kind = 'logo'").run(id);
   assert.equal((await previewArtImport(1, { target: 'rom', folder: dir })).will.logo, 0, 'your own is kept');
 });
+
+test('Big Screen lists a platform with no emulator on this PC when some of its games play in the browser, with just those (as the Carousel does)', () => {
+  const bs = fs.readFileSync(new URL('../public/bigscreen.js', import.meta.url), 'utf8');
+  assert.ok(bs.includes("noLauncher() || !launchable(p.slug) ? { ...p, visible_count: p.playable_count || 0 } : p"));
+  assert.ok(!bs.includes('st.lp === null || launchable(p.slug)) && count(p) > 0'), 'the emulator list no longer hides a platform outright');
+});

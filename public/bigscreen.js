@@ -91,11 +91,11 @@ export function openBigScreen(host) {
   const launchable = (slug) => known() === null || known().includes(slug) || (slug === 'xbla' && known().includes('xbox360'));   // an Xbox Live Arcade game starts in the Xbox 360 emulator
   const isAdmin = () => host.user()?.role === 'admin';
   const accent = (p) => (HEX.test(p?.accent || '') ? p.accent : HEX.test(p?.family_colour || '') ? p.family_colour : '#3b82f6');
-  // Only the platforms this PC's emulator setup reports as ready (Set up emulators / Check my PC). An account that cannot use the launcher gets the platforms that play in the browser.
+  // The platforms this PC's emulator setup reports as ready (Set up emulators / Check my PC) show with all their games; a platform with no emulator here still shows if some of its games play in the browser (with just those). An account that cannot use the launcher gets the platforms that play in the browser.
   // Until the launcher has reported once, nothing is known, so every platform shows (and a note says how to narrow it).
   const platList = () => (host.platforms() || [])
-    .map((p) => (noLauncher() ? { ...p, visible_count: p.playable_count || 0 } : p))
-    .filter((p) => (noLauncher() || st.lp === null || launchable(p.slug)) && count(p) > 0)
+    .map((p) => (noLauncher() || !launchable(p.slug) ? { ...p, visible_count: p.playable_count || 0 } : p))   // no emulator for it on this PC: it still shows, with the games that play in the browser
+    .filter((p) => count(p) > 0)
     .sort((a, b) => String(a.family || '').localeCompare(String(b.family || '')) || (a.generation || 99) - (b.generation || 99) || String(a.name).localeCompare(b.name));
   const count = (p) => Math.max(0, ((p.visible_count ?? p.count) || 0) - (p.multidisc_count || 0));   // a game on several discs cannot be started from here, so it is not counted
   const famColour = (p) => (HEX.test(p?.family_colour || '') ? p.family_colour : '#6b7280');
