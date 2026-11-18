@@ -1294,5 +1294,50 @@
   "de": "WeChat-Pay-QR-Code",
   "ja": "WeChat Pay の QR コード",
   "it": "Codice QR di WeChat Pay"
+ },
+ "Featured screens": {
+  "fr": "Écrans à la une",
+  "zh": "精选画面",
+  "es": "Pantallas destacadas",
+  "pt": "Telas em destaque",
+  "de": "Ausgewählte Ansichten",
+  "ja": "注目の画面",
+  "it": "Schermate in evidenza"
+ },
+ "Pause slideshow": {
+  "fr": "Mettre le diaporama en pause",
+  "zh": "暂停幻灯片",
+  "es": "Pausar la presentación",
+  "pt": "Pausar a apresentação",
+  "de": "Diashow anhalten",
+  "ja": "スライドショーを一時停止",
+  "it": "Metti in pausa la presentazione"
+ },
+ "Play slideshow": {
+  "fr": "Lancer le diaporama",
+  "zh": "播放幻灯片",
+  "es": "Reanudar la presentación",
+  "pt": "Retomar a apresentação",
+  "de": "Diashow starten",
+  "ja": "スライドショーを再生",
+  "it": "Riprendi la presentazione"
+ },
+ "Previous slide": {
+  "fr": "Image précédente",
+  "zh": "上一张",
+  "es": "Diapositiva anterior",
+  "pt": "Slide anterior",
+  "de": "Vorheriges Bild",
+  "ja": "前のスライド",
+  "it": "Diapositiva precedente"
+ },
+ "Next slide": {
+  "fr": "Image suivante",
+  "zh": "下一张",
+  "es": "Diapositiva siguiente",
+  "pt": "Próximo slide",
+  "de": "Nächstes Bild",
+  "ja": "次のスライド",
+  "it": "Diapositiva successiva"
  }
 }

@@ -64,9 +64,59 @@
       <a class="btn" href="https://github.com/gamesauce-dev/game-sauce" rel="noopener">&#9733; Una stella su GitHub</a>
     </div>
     <p class="small">Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid e Proxmox &middot; Raspberry Pi</p>
-    <figure class="shot hero-shot">
-      <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="La libreria di game-sauce: una griglia di copertine di giochi con filtri per piattaforma e una barra dalla A alla Z">
-    </figure>
+    <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="Schermate in evidenza">
+    <div class="slides">
+      <div class="slide is-on">
+        <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="La libreria di game-sauce: una griglia di copertine di giochi con filtri per piattaforma e una barra dalla A alla Z">
+        <div class="slide-cap"><p class="slide-title">Tutto per una collezione che hai già</p><p class="slide-sub">Un unico posto per la libreria di tutta la famiglia, su una macchina che controlli tu.</p></div>
+        <a class="slide-hit" href="#features" aria-label="Tutto per una collezione che hai già"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="Schermo grande: una ruota di giochi con il gioco selezionato al centro, una barra dalla A alla Z a destra e i suggerimenti del controller in basso">
+        <div class="slide-cap"><p class="slide-title">Schermo grande: la tua libreria sulla TV</p><p class="slide-sub">Funziona interamente con un gamepad, con i suggerimenti dei pulsanti sullo schermo.</p></div>
+        <a class="slide-hit" href="#bigscreen" aria-label="Schermo grande: la tua libreria sulla TV"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="Il Carosello: un ventaglio di copertine con Gioca nel browser e Gioca su questo PC sotto">
+        <div class="slide-cap"><p class="slide-title">Il Carosello: scegli un gioco e gioca</p><p class="slide-sub">Uno scaffale di copertine a schermo intero disposte in un arco morbido. Scegli una famiglia e una piattaforma, scorri con i tasti freccia, la rotellina del mouse, uno swipe o un gamepad e premi gioca.</p></div>
+        <a class="slide-hit" href="#carousel" aria-label="Il Carosello: scegli un gioco e gioca"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="Lo scaffale Fisico con una custodia PlayStation 2 aperta, che mostra il libretto di istruzioni e il disco">
+        <div class="slide-cap"><p class="slide-title">Il tuo scaffale: dischi e cartucce che possiedi</p><p class="slide-sub">Cataloga i giochi in scatola sul tuo scaffale reale, a mano o da un elenco, accanto alla tua collezione digitale. Ogni persona ha il proprio scaffale.</p></div>
+        <a class="slide-hit" href="#shelf" aria-label="Il tuo scaffale: dischi e cartucce che possiedi"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="La libreria Digitale: una griglia di giochi Steam con le ore giocate e schede per Steam, PlayStation, Nintendo e Xbox">
+        <div class="slide-cap"><p class="slide-title">Il tuo scaffale e anche il tuo Steam</p><p class="slide-sub">Importa la tua libreria Steam con le ore che hai giocato e i tuoi giochi PlayStation, Nintendo e Xbox da un elenco. Tieni traccia anche dei dischi e delle cartucce che possiedi fisicamente, tutto accanto alle tue ROM.</p></div>
+        <a class="slide-hit" href="#features" aria-label="Il tuo scaffale e anche il tuo Steam"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="Il pannello Messaggi: un avviso dell'admin sopra l'elenco delle conversazioni e una conversazione privata tra due persone con i loro colori">
+        <div class="slide-cap"><p class="slide-title">Chat: resta in contatto con la famiglia</p><p class="slide-sub">Messaggi privati tra le persone sul tuo server e avvisi dell'admin. Nulla esce dalla tua macchina.</p></div>
+        <a class="slide-hit" href="#chat" aria-label="Chat: resta in contatto con la famiglia"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="La pagina di configurazione del launcher: una riga per ogni piattaforma con il suo programma emulatore e gli argomenti, e un pulsante per i core RetroArch">
+        <div class="slide-cap"><p class="slide-title">Gioca sul tuo PC</p><p class="slide-sub">Un clic avvia un gioco nell'emulatore installato sul tuo computer, come RetroArch, MAME o Dolphin. I giochi si possono conservare per riavviarli rapidamente e una pagina di configurazione imposta ogni emulatore.</p></div>
+        <a class="slide-hit" href="#features" aria-label="Gioca sul tuo PC"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="I dettagli di un gioco fissati accanto alla libreria, con stati salvati e abbinamento dei metadati">
+        <div class="slide-cap"><p class="slide-title">Dettagli del gioco accanto alla libreria</p><p class="slide-sub">Aspetti Classico e Moderno, chiaro e scuro. Stessa libreria, a tua scelta.</p></div>
+        <a class="slide-hit" href="#screens" aria-label="Dettagli del gioco accanto alla libreria"></a>
+      </div>
+    </div>
+    <div class="slider-ui" hidden>
+      <div class="slider-dots"></div>
+      <div class="slider-btns">
+        <button type="button" class="slider-pause" aria-label="Metti in pausa la presentazione"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+        <button type="button" class="slider-play" aria-label="Riprendi la presentazione" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg></button>
+        <button type="button" class="slider-prev" aria-label="Diapositiva precedente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" class="slider-next" aria-label="Diapositiva successiva"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+    </div>
     <p class="small note">Gli screenshot usano dati demo integrati con copertine generate.</p>
   </div>
 </section>
@@ -297,6 +347,45 @@
     var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
     for (var i = 0; i < l.length; i++) { if (AVAIL.indexOf(l[i]) >= 0) { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
   }
+})();
+(function () {
+  var box = document.getElementById('slider'); if (!box) return;
+  var slides = [].slice.call(box.querySelectorAll('.slide')), ui = box.querySelector('.slider-ui'), dots = box.querySelector('.slider-dots');
+  var pauseBtn = box.querySelector('.slider-pause'), playBtn = box.querySelector('.slider-play');
+  var cur = 0, userPaused = window.matchMedia('(prefers-reduced-motion: reduce)').matches, hover = false, focus = false, swiped = false;
+  box.classList.add('js'); ui.hidden = false;
+  var segs = slides.map(function (sl, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'seg'; b.setAttribute('aria-label', sl.querySelector('.slide-title').textContent); b.innerHTML = '<i></i>';
+    b.addEventListener('click', function () { go(i); }); dots.appendChild(b); return b;
+  });
+  // The picture changes when the progress line of the current one has filled (an animation end), so holding the pointer on it, a keyboard focus,
+  // the pause button, a hidden tab and reduced motion all stop it by pausing that animation.
+  function hold() { box.classList.toggle('is-held', userPaused || hover || focus || document.hidden); }
+  function go(n) {
+    cur = (n + slides.length) % slides.length;
+    slides.forEach(function (sl, i) { sl.classList.toggle('is-on', i === cur); });
+    segs.forEach(function (sg, i) { sg.classList.remove('is-on'); sg.classList.toggle('is-done', i < cur); if (i === cur) sg.setAttribute('aria-current', 'true'); else sg.removeAttribute('aria-current'); });
+    void box.offsetWidth; segs[cur].classList.add('is-on');   // the line starts again from the left
+  }
+  dots.addEventListener('animationend', function (e) { if (e.target.parentNode === segs[cur]) go(cur + 1); });
+  box.querySelector('.slider-next').addEventListener('click', function () { go(cur + 1); });
+  box.querySelector('.slider-prev').addEventListener('click', function () { go(cur - 1); });
+  function setPaused(v) { userPaused = v; pauseBtn.hidden = v; playBtn.hidden = !v; hold(); (v ? playBtn : pauseBtn).focus(); }
+  pauseBtn.addEventListener('click', function () { setPaused(true); });
+  playBtn.addEventListener('click', function () { setPaused(false); });
+  box.addEventListener('mouseenter', function () { hover = true; hold(); });
+  box.addEventListener('mouseleave', function () { hover = false; hold(); });
+  box.addEventListener('focusin', function (e) { focus = !!(e.target.matches && e.target.matches(':focus-visible')); hold(); });   // keyboard focus holds it; a mouse click does not
+  box.addEventListener('focusout', function () { focus = false; hold(); });
+  document.addEventListener('visibilitychange', hold);
+  box.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { go(cur + 1); } else if (e.key === 'ArrowLeft') { go(cur - 1); } });
+  // a swipe moves on or back; a click on the picture (not a swipe) goes to its section
+  var x0 = null;
+  box.addEventListener('pointerdown', function (e) { x0 = e.clientX; swiped = false; });
+  box.addEventListener('pointerup', function (e) { if (x0 !== null && Math.abs(e.clientX - x0) > 50) { swiped = true; go(cur + (e.clientX < x0 ? 1 : -1)); } x0 = null; });
+  box.addEventListener('click', function (e) { if (swiped) { e.preventDefault(); swiped = false; } }, true);
+  if (userPaused) { pauseBtn.hidden = true; playBtn.hidden = false; }
+  hold(); go(0);
 })();
 (function () {
   var vids = document.querySelectorAll('video');

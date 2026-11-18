@@ -64,9 +64,59 @@
       <a class="btn" href="https://github.com/gamesauce-dev/game-sauce" rel="noopener">&#9733; Une étoile sur GitHub</a>
     </div>
     <p class="small">Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid et Proxmox &middot; Raspberry Pi</p>
-    <figure class="shot hero-shot">
-      <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="La bibliothèque game-sauce : une grille de jaquettes avec des filtres de plateforme et une barre de A à Z">
-    </figure>
+    <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="Écrans à la une">
+    <div class="slides">
+      <div class="slide is-on">
+        <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="La bibliothèque game-sauce : une grille de jaquettes avec des filtres de plateforme et une barre de A à Z">
+        <div class="slide-cap"><p class="slide-title">Tout pour une collection que vous avez déjà</p><p class="slide-sub">Un seul endroit pour la bibliothèque de toute la maison, sur une machine que vous contrôlez.</p></div>
+        <a class="slide-hit" href="#features" aria-label="Tout pour une collection que vous avez déjà"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="Grand écran : une roue de jeux avec le jeu sélectionné au milieu, une barre de A à Z à droite et les indications de la manette en bas">
+        <div class="slide-cap"><p class="slide-title">Grand écran : votre bibliothèque sur la télé</p><p class="slide-sub">Se pilote entièrement à la manette, avec les indications des boutons à l'écran.</p></div>
+        <a class="slide-hit" href="#bigscreen" aria-label="Grand écran : votre bibliothèque sur la télé"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="Le Carrousel : un éventail de jaquettes avec Jouer dans le navigateur et Jouer sur ce PC en dessous">
+        <div class="slide-cap"><p class="slide-title">Le Carrousel : choisissez un jeu et jouez</p><p class="slide-sub">Une étagère de jaquettes plein écran sur un arc doux. Choisissez une famille et une plateforme, faites défiler avec les flèches, la molette, un balayage ou une manette, et appuyez sur jouer.</p></div>
+        <a class="slide-hit" href="#carousel" aria-label="Le Carrousel : choisissez un jeu et jouez"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="L'étagère physique avec un boîtier PlayStation 2 ouvert, montrant son livret et son disque">
+        <div class="slide-cap"><p class="slide-title">Votre étagère : les disques et cartouches que vous possédez</p><p class="slide-sub">Répertoriez les jeux en boîte de votre vraie étagère, à la main ou depuis une liste, à côté de votre collection numérique. Chaque personne a sa propre étagère.</p></div>
+        <a class="slide-hit" href="#shelf" aria-label="Votre étagère : les disques et cartouches que vous possédez"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="La bibliothèque numérique : une grille de jeux Steam avec les heures jouées, et des onglets Steam, PlayStation, Nintendo et Xbox">
+        <div class="slide-cap"><p class="slide-title">Votre étagère et votre Steam aussi</p><p class="slide-sub">Importez votre bibliothèque Steam avec les heures jouées, et vos jeux PlayStation, Nintendo et Xbox depuis une liste. Suivez aussi les disques et cartouches que vous possédez physiquement, le tout à côté de vos ROM.</p></div>
+        <a class="slide-hit" href="#features" aria-label="Votre étagère et votre Steam aussi"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="Le panneau Messages : un avis de l'administrateur au-dessus de la liste des conversations, et une conversation privée entre deux personnes, chacune avec sa couleur">
+        <div class="slide-cap"><p class="slide-title">Discussion : restez en contact avec toute la maison</p><p class="slide-sub">Des messages privés entre les personnes de votre serveur, et des avis de l'administrateur. Rien ne quitte votre propre machine.</p></div>
+        <a class="slide-hit" href="#chat" aria-label="Discussion : restez en contact avec toute la maison"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="La page de configuration du lanceur : une ligne par plateforme avec son programme d'émulateur et ses arguments, et un bouton de cœur RetroArch">
+        <div class="slide-cap"><p class="slide-title">Jouer sur votre PC</p><p class="slide-sub">Un clic lance un jeu dans l'émulateur installé sur votre propre ordinateur, comme RetroArch, MAME ou Dolphin. Les jeux peuvent être gardés pour un relancement rapide, et une page de configuration règle chaque émulateur.</p></div>
+        <a class="slide-hit" href="#features" aria-label="Jouer sur votre PC"></a>
+      </div>
+      <div class="slide">
+        <img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="Les détails d'un jeu épinglés à côté de la bibliothèque, avec les états sauvegardés et l'association des métadonnées">
+        <div class="slide-cap"><p class="slide-title">Les détails du jeu à côté de la bibliothèque</p><p class="slide-sub">Looks Classique et Moderne, clair et sombre. La même bibliothèque, à votre goût.</p></div>
+        <a class="slide-hit" href="#screens" aria-label="Les détails du jeu à côté de la bibliothèque"></a>
+      </div>
+    </div>
+    <div class="slider-ui" hidden>
+      <div class="slider-dots"></div>
+      <div class="slider-btns">
+        <button type="button" class="slider-pause" aria-label="Mettre le diaporama en pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+        <button type="button" class="slider-play" aria-label="Lancer le diaporama" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg></button>
+        <button type="button" class="slider-prev" aria-label="Image précédente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" class="slider-next" aria-label="Image suivante"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+    </div>
     <p class="small note">Les captures d'écran utilisent les données de démonstration intégrées, avec des jaquettes générées.</p>
   </div>
 </section>
@@ -297,6 +347,45 @@
     var l = (navigator.languages || [navigator.language]).map(function (x) { return String(x || '').slice(0, 2).toLowerCase(); });
     for (var i = 0; i < l.length; i++) { if (AVAIL.indexOf(l[i]) >= 0) { try { localStorage.setItem(K, l[i]); } catch (e) {} location.replace('/' + l[i] + '/'); break; } if (l[i] === 'en') break; }
   }
+})();
+(function () {
+  var box = document.getElementById('slider'); if (!box) return;
+  var slides = [].slice.call(box.querySelectorAll('.slide')), ui = box.querySelector('.slider-ui'), dots = box.querySelector('.slider-dots');
+  var pauseBtn = box.querySelector('.slider-pause'), playBtn = box.querySelector('.slider-play');
+  var cur = 0, userPaused = window.matchMedia('(prefers-reduced-motion: reduce)').matches, hover = false, focus = false, swiped = false;
+  box.classList.add('js'); ui.hidden = false;
+  var segs = slides.map(function (sl, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'seg'; b.setAttribute('aria-label', sl.querySelector('.slide-title').textContent); b.innerHTML = '<i></i>';
+    b.addEventListener('click', function () { go(i); }); dots.appendChild(b); return b;
+  });
+  // The picture changes when the progress line of the current one has filled (an animation end), so holding the pointer on it, a keyboard focus,
+  // the pause button, a hidden tab and reduced motion all stop it by pausing that animation.
+  function hold() { box.classList.toggle('is-held', userPaused || hover || focus || document.hidden); }
+  function go(n) {
+    cur = (n + slides.length) % slides.length;
+    slides.forEach(function (sl, i) { sl.classList.toggle('is-on', i === cur); });
+    segs.forEach(function (sg, i) { sg.classList.remove('is-on'); sg.classList.toggle('is-done', i < cur); if (i === cur) sg.setAttribute('aria-current', 'true'); else sg.removeAttribute('aria-current'); });
+    void box.offsetWidth; segs[cur].classList.add('is-on');   // the line starts again from the left
+  }
+  dots.addEventListener('animationend', function (e) { if (e.target.parentNode === segs[cur]) go(cur + 1); });
+  box.querySelector('.slider-next').addEventListener('click', function () { go(cur + 1); });
+  box.querySelector('.slider-prev').addEventListener('click', function () { go(cur - 1); });
+  function setPaused(v) { userPaused = v; pauseBtn.hidden = v; playBtn.hidden = !v; hold(); (v ? playBtn : pauseBtn).focus(); }
+  pauseBtn.addEventListener('click', function () { setPaused(true); });
+  playBtn.addEventListener('click', function () { setPaused(false); });
+  box.addEventListener('mouseenter', function () { hover = true; hold(); });
+  box.addEventListener('mouseleave', function () { hover = false; hold(); });
+  box.addEventListener('focusin', function (e) { focus = !!(e.target.matches && e.target.matches(':focus-visible')); hold(); });   // keyboard focus holds it; a mouse click does not
+  box.addEventListener('focusout', function () { focus = false; hold(); });
+  document.addEventListener('visibilitychange', hold);
+  box.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { go(cur + 1); } else if (e.key === 'ArrowLeft') { go(cur - 1); } });
+  // a swipe moves on or back; a click on the picture (not a swipe) goes to its section
+  var x0 = null;
+  box.addEventListener('pointerdown', function (e) { x0 = e.clientX; swiped = false; });
+  box.addEventListener('pointerup', function (e) { if (x0 !== null && Math.abs(e.clientX - x0) > 50) { swiped = true; go(cur + (e.clientX < x0 ? 1 : -1)); } x0 = null; });
+  box.addEventListener('click', function (e) { if (swiped) { e.preventDefault(); swiped = false; } }, true);
+  if (userPaused) { pauseBtn.hidden = true; playBtn.hidden = false; }
+  hold(); go(0);
 })();
 (function () {
   var vids = document.querySelectorAll('video');
