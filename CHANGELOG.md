@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+- **The video line in the details window no longer touches the box above it.** Show cover and Find missing assets have room around them.
+
 ## [0.13.1] - 2026-11-18
 
 ### Fixed

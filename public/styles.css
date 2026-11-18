@@ -1905,3 +1905,7 @@ body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
 }
 #ga-body #art-pick > summary { cursor: default; list-style: none; pointer-events: none; }
 #ga-body #art-pick > summary::-webkit-details-marker { display: none; }
+
+/* The video note and its buttons (Show cover, Find missing assets) sit clear of the box above and of each other. */
+#drawer-body .vid-slot { margin-top: 1rem; }
+#drawer-body .vid-slot .vid-note { margin: 0 0 0.6rem; row-gap: 0.7rem; }

@@ -685,3 +685,9 @@ test('the Digital and Physical bars follow the Library: no ticker, the tools in 
   assert.ok(bulk.includes('Add the selected games to your favourites') && bulk.includes('Remove the selected games from your favourites') && bulk.includes('Hide the selected games') && bulk.includes('Show the selected hidden games again'));
   assert.ok(dg.includes("'/digital/games/bulk-mark'") && ph.includes("'/physical/games/bulk-mark'"));
 });
+
+test('the video note in the details window has room above it and between its buttons', () => {
+  const css = read('public/styles.css');
+  assert.match(css, /#drawer-body \.vid-slot \{ margin-top: 1rem; \}/);
+  assert.match(css, /#drawer-body \.vid-slot \.vid-note \{ margin: 0 0 0\.6rem; row-gap: 0\.7rem; \}/);
+});
