@@ -4,6 +4,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **Physical details window.** The "Spine art" row is gone (the shelf shows the spine). In Digital, the Edit and Add forms say **Platform** instead of Console, like Physical.
+
+### Fixed
+- **The manual buttons showed two icons each in the Modern look** (the search button had two magnifying glasses). They are drawn once now.
+
 ## [0.13.1] - 2026-11-18
 
 ### Fixed
