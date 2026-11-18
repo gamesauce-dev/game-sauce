@@ -108,6 +108,14 @@ test('Check a title says what the report knows about a game, and is for the admi
   assert.deepEqual((await call('/api/admin/reports/find?q=x')).body.items, [], 'too short a search gives nothing');
 });
 
+test('Every generation keeps its games in the same-game list, however many earlier ones there are', async () => {
+  const add = db.transaction(() => { for (let i = 0; i < 1050; i++) { rom('snes', `Bulk ${i}`); rom('genesis', `Bulk ${i}`); } rom('ps5', 'Late Game'); rom('xboxseries', 'Late Game'); });
+  add();
+  const cp = (await call('/api/admin/reports')).body.cross_platform;
+  assert.ok(cp.by_generation.find((g) => g.gen === 4).count >= 1050);
+  assert.ok(cp.groups.some((g) => g.gen === 9 && g.title === 'Late Game'), 'a generation 9 game is not cut off by the 1,000+ groups before it');
+});
+
 test('A daily snapshot is written once a day and comes back as history', async () => {
   db.prepare('DELETE FROM report_snapshots').run();   // earlier requests in this file already wrote today's row
   const a = (await call('/api/admin/reports')).body;

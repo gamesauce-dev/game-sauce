@@ -66,7 +66,7 @@ function crossPlatform(games) {
   list.sort((a, b) => a.gen - b.gen || b.platforms.length - a.platforms.length || a.title.localeCompare(b.title));
   const byGen = new Map();
   for (const x of list) byGen.set(x.gen, (byGen.get(x.gen) || 0) + 1);
-  return { total: list.length, by_generation: [...byGen].map(([gen, count]) => ({ gen, count })).sort((a, b) => a.gen - b.gen), groups: list.slice(0, 1000) };
+  return { total: list.length, by_generation: [...byGen].map(([gen, count]) => ({ gen, count })).sort((a, b) => a.gen - b.gen), groups: list.slice(0, 20000) };
 }
 
 /** "Why is this game not in the list?": every game whose title contains the words, with its platform, console generation, which library it is in, and
