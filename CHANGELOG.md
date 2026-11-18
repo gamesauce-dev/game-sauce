@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-18
+
 ### Added
 - **Favourite and hide several games at once in Digital and Physical.** Select mode now has four more buttons beside Delete: add the picked games to your favourites, take them out again, hide them, and show them again (Select all works with them too; a Steam game can be favourited or hidden, not deleted). The Physical shelf can now hide games like Digital: a Show hidden button, a hide button in the details window, and the hidden games stay out of the lists and counts until Show hidden is on.
 - **A Tools page, before Settings.** Each person's own things in one place: **Emulators** (Play on this PC) and **Controller**, moved out of My account; **Add My Games**, the CSV import moved out of the Digital and Physical libraries and CSV tools, now with a **Library** column (Digital or Physical) so one file can fill both lists (games with no value go to the list you pick; a file with no such column goes wholly to it); **Game Assets**, the importer for pictures, manuals and videos moved out of the two libraries, matched against your Physical shelf and your Digital Library in one pass (a game in both gets its cover in both); and **Steam** (your Steam details and Fetch my games, moved out of My account; the Refresh button in Digital stays). An empty Digital or Physical list points to Tools. A play-only account sees Emulators and Controller only.
