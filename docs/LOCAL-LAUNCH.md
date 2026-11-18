@@ -157,7 +157,13 @@ Windows:
                   "args": ["-batch", "-fullscreen", "--", "{rom}"] },
     "ps2":      { "command": "C:/Emulators/PCSX2/pcsx2-qt.exe", "args": ["-batch", "-fullscreen", "--", "{rom}"] },
     "psp":      { "command": "C:/Emulators/PPSSPP/PPSSPPWindows64.exe",
-                  "args": ["--fullscreen", "--pause-menu-exit", "{rom}"] }
+                  "args": ["--fullscreen", "--pause-menu-exit", "{rom}"] },
+    "mame":     { "command": "C:/Emulators/MAME/mame.exe",
+                  "args": ["-rompath", "C:/Emulators/MAME/roms;{romdir}", "{romname}"] },
+    "neogeo":   { "command": "C:/Emulators/MAME/mame.exe",
+                  "args": ["-rompath", "C:/Emulators/MAME/roms;{romdir}", "{romname}"] },
+    "xbox360":  { "command": "C:/Emulators/Xenia/xenia_canary.exe", "args": ["{rom}"] },
+    "xbla":     { "command": "C:/Emulators/Xenia-XBLA/xenia_canary.exe", "args": ["{rom}"] }
   }
 }
 ```
@@ -167,6 +173,8 @@ Windows:
   platform, changing only the core. Install the cores from inside RetroArch first.
 - **Dolphin** `-b` hides the main window and runs just the game; `-e` names the game to open.
 - **DuckStation and PCSX2** need their BIOS files set up once in their own settings. The `--` marks the end of the options.
+- **MAME, Neo Geo and other arcade romsets.** `{romname}` is the game's set name (`sf2`), `{romdir}` is the temporary folder holding the one file the launcher downloaded, and `-rompath` lists the folders MAME looks in, separated by `;` (use `:` on Linux and macOS). Put **your full MAME ROM folder first**: a clone needs its parent set and many games a BIOS set (`neogeo.zip`, `pgm.zip`), and the single downloaded file cannot hold those. The same line works for **neogeo, naomi, atomiswave, segamodel2, segamodel3, arcade and fba** when MAME (or FinalBurn Neo) is the emulator. On the setup page type it as one line: `-rompath "C:/Emulators/MAME/roms;{romdir}" {romname}`.
+- **Xbox 360 and Xbox Live Arcade.** Both start in Xenia, but an arcade game often needs a different Xenia setting than a disc game (a trial game unlocks to the full game with the licence mask set to 1, where disc games use 0). Give `xbla` its own copy of Xenia (its own folder and config) and `xbox360` another, as above. Zipped games of both are unpacked for you (see Zipped games).
 - **If you already use LaunchBox**, point `command` at the same emulators it uses; nothing about them changes.
 
 Linux (examples):
