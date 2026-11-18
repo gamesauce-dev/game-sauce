@@ -4,6 +4,18 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-18
+
+### Added
+- **An A-Z rail in the Carousel.** A strip down the right edge (# then A to Z) jumps to the first game with that letter, the letter of the game in the middle is lit, and letters with no games are dimmed. LB / RB on a gamepad jump to the previous and next letter, as in Big Screen. The Carousel's hint ("jump to any letter") now matches what is on the screen.
+- **Fetch missing covers in Digital.** A button beside Refresh, with the number of console games that have no cover, looks them up again (the same console lookup as Refresh, without fetching Steam again). It is greyed out while a lookup is running.
+
+### Fixed
+- **Digital's "No cover" filter and count missed games whose picture file was gone.** A cover can be recorded while its file is missing (a cleaned media folder, a restored backup without the media): the tile was blank, yet the game was not listed under No cover, not counted and not fetched by Fetch missing covers. Such a record is now forgotten, so the game counts as having no cover. Fetch missing covers also tries games that matched a provider but ended up without a picture.
+
+### Website
+- The intro film (about 74 seconds, music and short captions, in the site's eight languages) is the first slide of the home page slider: a short muted preview plays in the slide, and a click opens the full film with sound.
+
 ## [0.14.1] - 2026-11-18
 
 ### Added
