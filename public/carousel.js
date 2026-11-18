@@ -59,6 +59,7 @@ export function openCarousel(host) {
     <div class="cv-subs" id="cv-subs"></div>
     <div class="cv-note hidden" id="cv-note"></div>
     <div class="cv-stage" id="cv-stage" aria-label="Games: use the arrow keys, the mouse wheel or swipe; Enter plays"><div class="cv-rail" id="cv-rail"></div><div class="cv-empty hidden" id="cv-empty"></div></div>
+    <nav class="cv-az" id="cv-az" aria-label="Jump to letter"></nav>
     <div class="cv-video" id="cv-video" aria-hidden="true"></div>
     <div class="cv-info" id="cv-info" aria-live="polite"></div>
     <div class="cv-pad-hint" aria-hidden="true"><b>◂ ▸</b> games <i>·</i> <b>▲ ▼</b> chips <i>·</i> <b>A</b> play or choose <i>·</i> <b>X</b> browser <i>·</i> <b>Y</b> emulator <i>·</i> <b>B</b> back</div>`;
@@ -143,7 +144,7 @@ export function openCarousel(host) {
     $('#cv-info').innerHTML = g ? `<div class="cv-title">${g.favorite ? '<span class="cv-favmark" aria-label="Favourite">★</span> ' : ''}${esc(g.title)}</div>
       <div class="cv-meta">${esc([g.platform_name, g.release_year, g.developer].filter(Boolean).join('  ·  '))}<span class="cv-pos">${(st.idx + 1).toLocaleString()} of ${n.toLocaleString()}</span></div>
       <div class="cv-acts">${actsHtml(g)}</div>` : '';
-    tint(); scheduleVideo();
+    tint(); scheduleVideo(); paintAz();
   };
   // ── the video of the middle game: a box below the covers (they move up to make room). It waits until you stop on a game, so scrolling never starts or stops one. ──
   let vTimer = 0;
@@ -163,6 +164,18 @@ export function openCarousel(host) {
     }
   };
   const scheduleVideo = () => { clearTimeout(vTimer); if (root?.classList.contains('cv-lite')) return; vTimer = setTimeout(() => showVideo(gameAt(st.idx)), 450); };   // Linux draws in software: no video there
+  // ── the A-Z rail on the right: # then A to Z; a letter jumps to the first game that starts with it (letters with no game are dimmed) ──
+  const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+  const letterOf = (g) => (String(g?.sort_title || g?.title || '').replace(/^[^a-z0-9]+/i, '')[0] || '#').toUpperCase().replace(/[0-9]/, '#');
+  const paintAz = () => {
+    const nav = $('#cv-az'); if (!nav) return;
+    if (st.azFor !== st.games.length || st.azPlat !== st.plat) {
+      st.azFor = st.games.length; st.azPlat = st.plat; st.az = new Map(); st.games.forEach((g, i) => { const l = letterOf(g); if (!st.az.has(l)) st.az.set(l, i); });
+      nav.innerHTML = AZ.map((l) => `<button type="button" tabindex="-1" data-l="${l}" class="${st.az.has(l) ? 'has' : ''}">${l}</button>`).join('');
+    }
+    nav.classList.toggle('hidden', !st.games.length);
+    const here = letterOf(gameAt(st.idx)); for (const b of nav.children) b.classList.toggle('on', b.dataset.l === here);
+  };
   const go = (i) => { const n = st.games.length; if (!n) return; st.idx = Math.max(0, Math.min(n - 1, i)); render(); };
 
   // ── loading ──
@@ -286,6 +299,7 @@ export function openCarousel(host) {
     if (e.target.closest('#cv-close')) return close();
     if (e.target.closest('#cv-pc')) return checkPc();
     if (e.target.closest('#cv-setup')) return setupEmulators();
+    const az = e.target.closest('#cv-az button[data-l]'); if (az) { if (st.az?.has(az.dataset.l)) go(st.az.get(az.dataset.l)); return; }
     const fam = e.target.closest('[data-fam]'); if (fam) return chooseFam(fam.dataset.fam);
     const pl = e.target.closest('[data-plat]'); if (pl) return choose(pl.dataset.plat);
     const act = e.target.closest('[data-act]');
@@ -298,6 +312,7 @@ export function openCarousel(host) {
     const card = e.target.closest('.cv-card'); if (card && !drag.moved) { const i = Number(card.dataset.i); if (i === st.idx) play(gameAt(i)); else go(i); }
   });
   const stage = $('#cv-stage');
+  $('#cv-az').addEventListener('pointerdown', (e) => e.stopPropagation());
   stage.addEventListener('wheel', (e) => {
     e.preventDefault(); st.wheel += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     const step = Math.trunc(st.wheel / 70); if (step) { st.wheel -= step * 70; go(st.idx + step); }
