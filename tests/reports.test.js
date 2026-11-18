@@ -141,7 +141,7 @@ test('A daily snapshot is written once a day and comes back as history', async (
 
 test('The Reports tab is wired into Settings, with charts that need no library', () => {
   const app = read('public/app.js'), html = read('public/index.html'), srv = read('src/server.js');
-  assert.ok(app.includes("id: 'reports'") && app.includes("modules: ['health', 'coverage', 'reports']") && app.includes("id === 'reports'"));
+  assert.ok(app.includes("id: 'reports'") && app.includes("modules: ['health', 'reports']") && app.includes("id === 'reports'"));
   assert.ok(html.includes('id="mod-reports"') && html.includes('/reports.css'));
   assert.ok(srv.includes('startSnapshotTimer()'));
   const charts = read('public/charts.js');

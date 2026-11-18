@@ -86,14 +86,16 @@ test('slow requests carry a start and an end time', async () => {
   assert.equal(Date.parse(e.ended_at) - Date.parse(e.started_at), e.ms);
 });
 
-test('Settings groups: "System health", Stats and a Covers panel inside Library tools', () => {
+test('Settings groups: "System health" holds Health and Reports & stats, and a Covers panel sits inside Library tools', () => {
   const ui = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(ui, /label: 'System health'/);
-  assert.match(ui, /id: 'coverage',\s+label: 'Stats'/);
+  assert.match(ui, /id: 'reports',\s+label: 'Reports & stats'/);
+  assert.doesNotMatch(ui, /id: 'coverage'/, 'Stats is part of Reports now');
   assert.match(ui, /modules: \['dat', 'names', 'duplicates', 'covers', 'artfolders'\]/);
   assert.doesNotMatch(ui, /label: 'Health & coverage'/);
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-  const stats = html.slice(html.indexOf('id="mod-coverage"'), html.indexOf('id="mod-covers"'));
+  const stats = html.slice(html.indexOf('id="mod-reports"'), html.indexOf('id="mod-covers"'));
+  assert.ok(stats.includes('id="meta-counts"') && stats.includes('id="reports-box"'), 'the Stats figures and the charts share one panel');
   assert.doesNotMatch(stats, /enrich-missing-covers/, 'the buttons moved out of Stats');
   assert.match(html.slice(html.indexOf('id="mod-covers"'), html.indexOf('id="mod-db"')), /enrich-missing-covers[\s\S]*check-ss-systems/);
 });

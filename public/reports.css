@@ -65,3 +65,4 @@ html[data-theme="light"] { --rp1: #2a78d6; --rp2: #eb6834; --rp3: #1baf7a; --rp4
 .rp-found td { padding: 0.25rem 0.6rem 0.25rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 .rp-found .ok { color: var(--good); } .rp-found .no { color: var(--muted); }
 .rp-stk div.go { cursor: pointer; } .rp-stk div.go:hover, .rp-stk div.go:focus-visible { filter: brightness(1.25); outline: none; }
+.rp-sect { margin: 1.2rem 0 0.3rem; font-size: 1.05rem; }

@@ -2046,5 +2046,8 @@
  "also on {n} other platform(s) of this generation": "この世代のほかの{n}プラットフォームにもあり",
  "not on another platform of this generation": "この世代のほかのプラットフォームにはなし",
  "No game with that name.": "その名前のゲームはありません。",
- "the 14 biggest platforms; click a part of a bar to see those games": "上位14のプラットフォーム。バーの一部をクリックすると該当ゲームを表示"
+ "the 14 biggest platforms; click a part of a bar to see those games": "上位14のプラットフォーム。バーの一部をクリックすると該当ゲームを表示",
+ "Reports & stats": "レポートと統計",
+ "Charts": "グラフ",
+ "ROM library figures": "ROMライブラリの数値"
 }

@@ -1406,6 +1406,9 @@
  "Change your cover": {
   "files": 1
  },
+ "Charts": {
+  "files": 1
+ },
  "Chat is not available for this account, but notices from the admin appear here.": {
   "files": 1
  },
@@ -4574,8 +4577,11 @@
  "Replying to": {
   "files": 1
  },
- "Reports": {
-  "files": 2
+ "Reports & stats": {
+  "files": 1
+ },
+ "Reports &amp; stats": {
+  "files": 1
  },
  "Request failed ({a})": {
   "files": 1
@@ -4645,6 +4651,9 @@
  },
  "ROM Library": {
   "files": 3
+ },
+ "ROM library figures": {
+  "files": 1
  },
  "ROM library, shelves and Digital together; same console generation; for information": {
   "files": 1
@@ -5257,9 +5266,6 @@
  },
  "Starting your emulator…": {
   "files": 1
- },
- "Stats": {
-  "files": 2
  },
  "stay where they are": {
   "files": 1

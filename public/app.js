@@ -4324,7 +4324,6 @@ const SETTINGS_MODULES = [
   { id: 'providers', label: 'Metadata providers', mi: 'providers-2', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   mi: 'users', ico: '👥', adminOnly: true },
   { id: 'platforms', label: 'Platforms',       mi: 'Library', ico: '🕹', adminOnly: true },
-  { id: 'coverage',  label: 'Stats',           mi: 'stats', ico: '📊', adminOnly: true },
   { id: 'covers',    label: 'Covers & platform ids', mi: 'covers', ico: '🖼', adminOnly: true },
   { id: 'artfolders', label: 'Game assets', mi: 'folder-enable', ico: '📁', adminOnly: true },
   { id: 'db',        label: 'Database maintenance', mi: 'database-maintenance', ico: '🗄️', adminOnly: true },
@@ -4334,7 +4333,7 @@ const SETTINGS_MODULES = [
   { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
   { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true },
-  { id: 'reports',   label: 'Reports',         mi: 'stats', ico: '📈', adminOnly: true }
+  { id: 'reports',   label: 'Reports & stats', mi: 'stats', ico: '📈', adminOnly: true }
 ];
 
 
@@ -4343,7 +4342,7 @@ const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
-  { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'coverage', 'reports'], adminOnly: true },
+  { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
   { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
 ];
