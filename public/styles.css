@@ -1918,3 +1918,10 @@ body:has(#bulk-bar:not(.hidden)) .card-casebtn { display: none; }
 /* A logo on a light plate in dark mode: a logo set to have a light backing (on-plate), or every logo when the person chose "Put every logo on a light plate". */
 html:not([data-theme="light"]) .chip-logo-img.on-plate, html:not([data-theme="light"]) body.chip-plates .chip-logo-img { background: rgba(255,255,255,.94); border-radius: 0.55rem; padding: 0.22rem 0.5rem; box-sizing: border-box; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
 html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-theme="light"]) body.chip-plates .chip-logo-img.lib-logo { height: 1.75rem; }   /* room for the plate's padding */
+
+/* A platform button shown as its logo has no box: the logo itself glows in its own colour when it is picked (a family: when it is open), a little when the pointer is on it. */
+.ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img) { background: transparent; border-color: transparent; box-shadow: none; }
+.ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img):focus-visible { box-shadow: 0 0 0 2px var(--chip-c); }
+.ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--chip-c) 75%, transparent)); }
+.ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img, .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img { filter: drop-shadow(0 0 3px var(--chip-c)) drop-shadow(0 0 9px var(--chip-c)); }
+.ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--chip-c) 80%, transparent)); }
