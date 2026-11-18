@@ -66,3 +66,8 @@ html[data-theme="light"] { --rp1: #2a78d6; --rp2: #eb6834; --rp3: #1baf7a; --rp4
 .rp-found .ok { color: var(--good); } .rp-found .no { color: var(--muted); }
 .rp-stk div.go { cursor: pointer; } .rp-stk div.go:hover, .rp-stk div.go:focus-visible { filter: brightness(1.25); outline: none; }
 .rp-sect { margin: 1.2rem 0 0.3rem; font-size: 1.05rem; }
+.hash-status p { margin: 0.4rem 0 0.8rem; }
+.hash-bar { height: 0.8rem; background: var(--panel-2); border-radius: 0.4rem; overflow: hidden; }
+.hash-bar i { display: block; height: 100%; background: color-mix(in srgb, var(--accent) 70%, var(--panel-2)); transition: width .4s; }
+.hash-form input[type="time"] { width: auto; }
+.hash-max { margin-top: 0.6rem; } .hash-max input { width: 6rem; }

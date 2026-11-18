@@ -26,11 +26,12 @@ export function crc32(buf, seed = 0) {
  * so we store all three — that's what lets the metadata matcher
  * identify a ROM exactly instead of by fuzzy filename.
  */
-export async function hashFile(filePath) {
+export async function hashFile(filePath, { shouldStop = null } = {}) {   // shouldStop: asked every few MB; true ends the read at once with an error that has .stopped set
   const md5 = crypto.createHash('md5');
   const sha1 = crypto.createHash('sha1');
   let crc = 0;
   let size = 0;
+  let chunks = 0;
 
   await new Promise((resolve, reject) => {
     const stream = fs.createReadStream(filePath, { highWaterMark: 1024 * 1024 });
@@ -40,6 +41,7 @@ export async function hashFile(filePath) {
       // Node's built-in CRC32 (native) is about six times faster than the JavaScript loop above, with identical results.
       crc = nativeCrc ? zlib.crc32(chunk, crc) : crc32(chunk, crc);
       size += chunk.length;
+      if (shouldStop && ++chunks % 8 === 0 && shouldStop()) stream.destroy(Object.assign(new Error('stopped'), { stopped: true }));
     });
     stream.on('error', reject);
     stream.on('end', resolve);

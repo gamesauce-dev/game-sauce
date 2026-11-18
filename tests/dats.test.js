@@ -10,6 +10,7 @@ process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
 process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
 process.env.GAMESAUCE_ADMIN_USER = 'datadmin';
 process.env.GAMESAUCE_ADMIN_PASSWORD = 'dat-admin-password-1';
+process.env.GAMESAUCE_HASH_MODE = 'inline';   // these tests read the fingerprints straight after a scan
 
 let server, base, token, library, datPath;
 

@@ -5,6 +5,7 @@ import path from 'node:path';
 import db from '../db.js';
 import { dropRomFiles } from '../lib/romfiles.js';
 import { scanSource, scanAll, getScanProgress, getAllScanProgress, sourceRoots } from '../lib/scanner.js';
+import { getHashSettings, startHashJob } from '../lib/hashjob.js';
 import { PLATFORM_SLUGS, PLATFORMS } from '../lib/platforms.js';
 
 const router = express.Router();
@@ -184,12 +185,15 @@ router.get('/:id/scan/progress', (req, res) => res.json(getScanProgress(req.para
 
 router.post('/:id/scan', async (req, res, next) => {
   try {
+    // Unless the admin chose to fingerprint during the scan, games are added at once and a background job reads the files afterwards (src/lib/hashjob.js).
+    const inline = getHashSettings().mode === 'inline';
     const result = await scanSource(Number(req.params.id), {
-      hash: req.body?.hash !== false,
+      hash: req.body?.hash !== false && inline, deferHash: req.body?.hash !== false && !inline,
       // Auto-enrich: UI sends enrich=true on "scan now"; create-source also
       // passes it so a freshly added folder gets metadata immediately.
       enrich: req.body?.enrich === true
     });
+    startHashJob();   // the games just added wait for their fingerprints: right away, or in the overnight window
     res.json(result);
   } catch (err) {
     if (err.message === 'Source not found') return res.status(404).json({ error: err.message });
@@ -200,7 +204,9 @@ router.post('/:id/scan', async (req, res, next) => {
 
 router.post('/scan', async (req, res, next) => {
   try {
-    const results = await scanAll({ hash: req.body?.hash !== false, enrich: req.body?.enrich === true });
+    const inline = getHashSettings().mode === 'inline';
+    const results = await scanAll({ hash: req.body?.hash !== false && inline, deferHash: req.body?.hash !== false && !inline, enrich: req.body?.enrich === true });
+    startHashJob();
     res.json({ sources: results });
   } catch (err) {
     next(err);

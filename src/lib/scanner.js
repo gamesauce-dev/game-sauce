@@ -280,7 +280,7 @@ export async function scanSource(sourceId, opts = {}) {
   try { return await scanSourceInner(sourceId, opts); } finally { clearDuplicateCache(); }
 }
 
-async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgress = null } = {}) {
+async function scanSourceInner(sourceId, { hash = true, deferHash = false, enrich = null, onProgress = null } = {}) {
   const source = db.prepare('SELECT * FROM sources WHERE id = ?').get(sourceId);
   if (!source) throw new Error('Source not found');
 
@@ -431,6 +431,8 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
         platformRow.id, file.size, file.size, file.mtimeMs, now, file.path, file.path,
         hashes.crc32, hashes.md5, hashes.sha1, existing.id
       );
+      // A changed file waits for new fingerprints from the background job: the old ones no longer describe it.
+      if (deferHash) db.prepare("UPDATE roms SET crc32 = NULL, md5 = NULL, sha1 = NULL, hash_failed = 0 WHERE id = ?").run(existing.id);
       touched.add(existing.id);
       updated++;
       continue;
@@ -534,13 +536,13 @@ async function scanSourceInner(sourceId, { hash = true, enrich = null, onProgres
   }
 }
 
-export async function scanAll({ hash = true, enrich = false, onSource = null } = {}) {
+export async function scanAll({ hash = true, deferHash = false, enrich = false, onSource = null } = {}) {
   const sources = db.prepare('SELECT id, name FROM sources WHERE enabled = 1').all();
   const results = [];
   for (const s of sources) {
     // Sequential on purpose: hashing many large files in parallel thrashes disks.
     onSource?.({ id: s.id, name: s.name });
-    results.push({ source_id: s.id, source: s.name, ...(await scanSource(s.id, { hash, enrich })) });
+    results.push({ source_id: s.id, source: s.name, ...(await scanSource(s.id, { hash, deferHash, enrich })) });
   }
   return results;
 }

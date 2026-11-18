@@ -650,3 +650,7 @@ for (const [col, type] of [['price_paid', 'REAL'], ['price_currency', 'TEXT'], [
   if (!db.prepare('PRAGMA table_info(physical_games)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE physical_games ADD COLUMN ${col} ${type}`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '60') ON CONFLICT(key) DO UPDATE SET value = '60'").run();
+
+/* ── v61: a game whose file could not be fingerprinted in the background (1: unreadable, 2: a duplicate that was kept, 3: bigger than the size limit the admin set) is not tried again until the file changes. ── */
+if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'hash_failed')) db.exec('ALTER TABLE roms ADD COLUMN hash_failed INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '61') ON CONFLICT(key) DO UPDATE SET value = '61'").run();

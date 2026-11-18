@@ -4,6 +4,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **Purchase and condition details for Physical games.** Each game on a shelf can now record, all optionally: what was paid (with a currency, and your last choice is remembered), where and when it was bought (suggesting places you used before), its condition (Sealed, Mint, Good, Fair or Poor) and what comes with it (box, manual, disc or cartridge, inserts), from which "complete in box" is worked out. They are in the Add form, the details window and the CSV import (a "Condition" column is now its own field, no longer part of the notes). They are stored as numbers and short fixed words, ready for reports later.
+
+### Changed
+- **Scans no longer wait for the fingerprints.** A scan used to read every new file in full (CRC32, MD5 and SHA1) before adding it, which made adding big files or many files very slow, especially from a network share. A scan now adds the games straight away and a background job reads the files afterwards, one game at a time. A new Settings > Maintenance > **Fingerprints** page shows its progress and lets the admin choose when it runs: right after a scan (the default), only inside an **overnight window** (it carries on the next night if the window closes first), or during the scan as before. **Run now** and **Stop** are there too, and a **Largest file to fingerprint** limit leaves very big files (such as 30 to 150 GB packages) without one. A game does not need its fingerprints to be played, downloaded or launched; they are used to find duplicates (the duplicate that is found is removed once its fingerprint is known, the older entry stays) and to match a game to the official game lists exactly. Games still waiting carry on after a restart. `GAMESAUCE_HASH_MODE` (background, overnight or inline) fixes the choice from the environment.
+
 ### Fixed
 - **Xbox 360 Games on Demand in an archive now start.** The launcher chose the biggest file in the unpacked title (one of the `Data0000...` parts), which Xenia cannot start. It now gives Xenia the small extensionless package under the `00007000` folder, the file that starts a Games on Demand game. Download the launcher again to get it.
 

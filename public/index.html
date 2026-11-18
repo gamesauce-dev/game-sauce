@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/carousel.css?v=2" />
 <link rel="stylesheet" href="/bigscreen.css?v=11" />
 <link rel="stylesheet" href="/messages.css?v=1" />
-<link rel="stylesheet" href="/reports.css?v=1" />
+<link rel="stylesheet" href="/reports.css?v=2" />
 <link rel="icon" href="/logo.svg" type="image/svg+xml" />
 </head>
 <body>
@@ -534,6 +534,24 @@
           </div>
         </form>
         <div id="platform-admin-list" class="results" style="margin-top:14px"></div>
+      </div>
+
+      <div class="panel hidden" id="mod-hashing">
+        <h3>Fingerprints <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">A fingerprint (CRC32, MD5 and SHA1) is worked out by reading a game's whole file. It is used to spot duplicates and to match a game to the official game lists exactly. It is not needed to play, download or launch a game: a game without one works as normal. Big files on a network share take a long time to read, so a scan now adds your games at once and the fingerprints follow in the background.</p>
+        <div id="hash-status" class="hash-status"></div>
+        <div class="hash-form">
+          <label class="policy-row"><input type="radio" name="hash-mode" value="background" /> <span><b>Right after a scan</b><br><small class="hint">In the background, one game at a time.</small></span></label>
+          <label class="policy-row"><input type="radio" name="hash-mode" value="overnight" /> <span><b>Overnight only</b><br><small class="hint">From <input type="time" id="hash-from" /> to <input type="time" id="hash-to" /></small><br><small class="hint">This server's clock. Games wait for the window and carry on the next night if it closes first.</small></span></label>
+          <label class="policy-row"><input type="radio" name="hash-mode" value="inline" /> <span><b>During the scan</b><br><small class="hint">As before: the scan takes as long as reading every new file.</small></span></label>
+          <div class="hash-max"><label for="hash-max"><b>Largest file to fingerprint</b></label> <input type="number" id="hash-max" min="0" step="1" /> <span>GB</span><br><small class="hint">Bigger files are left without one (they play as normal). 0 means every file is read.</small></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn btn-primary" id="hash-save" type="button">Save</button>
+            <button class="btn" id="hash-run" type="button">Run now</button>
+            <button class="btn" id="hash-stop" type="button">Stop</button>
+          </div>
+          <p class="hint" id="hash-msg"></p>
+        </div>
       </div>
 
       <div class="panel hidden" id="mod-reports">

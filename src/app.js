@@ -154,6 +154,27 @@ export function createApp() {
     res.json(collectStats());
   });
 
+  // Background fingerprints (Settings > Maintenance): status, the mode and overnight window, run now, stop.
+  api.get('/admin/hashing', requireAuth, requireAdmin, async (req, res) => {
+    const { hashStatus } = await import('./lib/hashjob.js');
+    res.json(hashStatus());
+  });
+  api.put('/admin/hashing', requireAuth, requireAdmin, async (req, res) => {
+    const { saveHashSettings, hashStatus, startHashJob } = await import('./lib/hashjob.js');
+    try { saveHashSettings(req.body || {}); } catch (err) { return res.status(err.status || 400).json({ error: err.message }); }
+    req.auditDetail = { mode: req.body?.mode };
+    startHashJob({ resume: true });
+    res.json(hashStatus());
+  });
+  api.post('/admin/hashing/run', requireAuth, requireAdmin, async (req, res) => {
+    const { startHashJob } = await import('./lib/hashjob.js');
+    res.json(startHashJob({ forced: true }));
+  });
+  api.post('/admin/hashing/stop', requireAuth, requireAdmin, async (req, res) => {
+    const { stopHashJob } = await import('./lib/hashjob.js');
+    res.json(stopHashJob());
+  });
+
   // Reports across the whole collection (Settings > Reports, admin, read-only). Asking also records today's snapshot, once a day.
   api.get('/admin/reports', requireAuth, requireAdmin, async (req, res) => {
     const { collectReports, recordSnapshot, listSnapshots } = await import('./lib/reports.js');

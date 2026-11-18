@@ -4333,6 +4333,7 @@ const SETTINGS_MODULES = [
   { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
   { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true },
+  { id: 'hashing',   label: 'Fingerprints',    mi: 'database-check', ico: '🔍', adminOnly: true },
   { id: 'reports',   label: 'Reports & stats', mi: 'stats', ico: '📈', adminOnly: true }
 ];
 
@@ -4341,7 +4342,7 @@ const SETTINGS_MODULES = [
 const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
-  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup'], adminOnly: true },
+  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
   { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
@@ -4392,6 +4393,44 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
 async function loadVersionLine() {
   const el = $('#about-version'); if (!el) return;
   try { const v = await api('/version'); el.textContent = `game-sauce ${v.version} · database version ${v.schema}`; } catch { el.textContent = ''; }
+}
+
+/* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
+let hashTimer = null;
+async function loadHashing(fillForm = true) {   // fillForm: put the saved choices into the form (the first time, and after Save); the refreshes while a job runs only touch the status, so a change you are making is not undone
+  const box = $('#hash-status'); if (!box) return;
+  clearTimeout(hashTimer);
+  const s = await api('/admin/hashing');
+  const n = (v) => Number(v || 0).toLocaleString();
+  const pct = s.running && s.total ? Math.min(100, Math.round((s.done / s.total) * 100)) : 0;
+  const lines = [];
+  if (s.paused && !s.running && s.pending) lines.push(`<b>${esc(t('Paused'))}</b>: ${n(s.pending)} ${esc(t('games are waiting. Press Run now to continue.'))}`);
+  else if (s.running) lines.push(`<b>${esc(t('Working'))}</b>: ${n(s.done)} ${esc(t('of'))} ${n(s.total)}${s.current ? ` · ${esc(s.current)}` : ''}`);
+  else if (s.waiting_for_window) lines.push(`${n(s.pending)} ${esc(t('games are waiting for the overnight window'))} (${esc(s.window_start)}–${esc(s.window_end)}).`);
+  else if (s.pending) lines.push(`${n(s.pending)} ${esc(t('games are waiting for their fingerprints.'))}`);
+  else lines.push(esc(t('Every game has its fingerprints.')));
+  if (s.duplicates_removed) lines.push(`${n(s.duplicates_removed)} ${esc(t('duplicates removed in this run'))}`);
+  if (s.skipped_large) lines.push(`${n(s.skipped_large)} ${esc(t('large files skipped (over the size limit)'))}`);
+  if (s.unreadable) lines.push(`${n(s.unreadable)} ${esc(t('files could not be read and are skipped until they change'))}`);
+  lines.push(`<small class="hint">${esc(t('Server time now'))}: ${esc(s.server_time)} (${esc(s.server_tz)})</small>`);
+  box.innerHTML = `${s.running ? `<div class="hash-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>` : ''}<p>${lines.join('<br>')}</p>`;
+  if (!$('#hash-save').dataset.wired) {
+    $('#hash-save').dataset.wired = '1';
+    $('#hash-save').addEventListener('click', async () => {
+      const mode = ($('input[name="hash-mode"]:checked') || {}).value;
+      try { await api('/admin/hashing', { method: 'PUT', body: JSON.stringify({ mode, window_start: $('#hash-from').value, window_end: $('#hash-to').value, max_gb: $('#hash-max').value }) }); $('#hash-msg').textContent = t('Saved.'); loadHashing(true); }
+      catch (err) { $('#hash-msg').textContent = err.message; }
+    });
+    $('#hash-run').addEventListener('click', async () => { await api('/admin/hashing/run', { method: 'POST' }).catch((e) => toast(e.message, true)); loadHashing(false); });
+    $('#hash-stop').addEventListener('click', async () => { await api('/admin/hashing/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadHashing(false); });
+  }
+  if (fillForm) {
+    const radio = $(`input[name="hash-mode"][value="${s.mode}"]`); if (radio) radio.checked = true;
+    $('#hash-from').value = s.window_start; $('#hash-to').value = s.window_end; $('#hash-max').value = s.max_gb || 0;
+  }
+  $('#hash-run').disabled = s.running || !s.pending; $('#hash-stop').disabled = !s.running;
+  // while this page is open and the job is working (or about to), keep the figures fresh
+  if (activeSettingsModule === 'hashing' && (s.running || (s.pending && s.mode !== 'overnight'))) hashTimer = setTimeout(() => loadHashing(false).catch(() => {}), 3000);
 }
 
 /* ── Backups module ── */
@@ -4698,6 +4737,7 @@ function showSettingsModule(id) {
   if (id === 'names') initNamesPanel();
   if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
+  if (id === 'hashing') loadHashing().catch((err) => toast(err.message, true));
   if (id === 'reports') reports.load($('#reports-box'), { api, t, openLibrary: openLibraryWith }).catch((err) => toast(err.message, true));
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
