@@ -5,7 +5,7 @@ import db from '../db.js';
 import { flagVideos } from '../lib/emumovies.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, libSlug, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
-import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
+import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, forgetMissingConsoleCovers, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -158,6 +158,7 @@ router.post('/consoles/import', (req, res) => {
 
 // Look up details and covers again for console games that have none (retry: also the ones nothing was found for last time).
 router.post('/consoles/details', (req, res) => {
+  if (req.body?.retry === true) forgetMissingConsoleCovers(true);   // a cover whose file is gone counts as missing, so it is fetched again
   res.json(startDetailsJob({ retry: req.body?.retry === true }));
 });
 

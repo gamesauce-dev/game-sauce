@@ -477,7 +477,7 @@ export const detailsJobStatus = () => ({ running: job.running, total: job.total,
 
 const pendingSql = (retry) => `SELECT g.store, g.app_id, MIN(g.name) AS name, MIN(g.platform) AS platform FROM digital_games g
   LEFT JOIN digital_details d ON d.store = g.store AND d.app_id = g.app_id
-  WHERE g.store IN (${CONSOLE_LIST.map(() => '?').join(',')}) AND (d.app_id IS NULL${retry ? ' OR d.found = 0' : ''})
+  WHERE g.store IN (${CONSOLE_LIST.map(() => '?').join(',')}) AND (d.app_id IS NULL${retry ? " OR d.found = 0 OR (d.found = 1 AND COALESCE(d.cover_path, '') = '')" : ''})
   GROUP BY g.store, g.app_id ORDER BY MIN(g.id)`;
 
 export function startDetailsJob({ retry = false, enrichImpl, cacheImpl } = {}) {

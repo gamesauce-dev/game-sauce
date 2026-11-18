@@ -265,12 +265,24 @@ test('chips and cover badges read the same on Physical and Digital: one shared s
 test('No cover: console games with no picture yet (Steam covers are Steam\'s own, so never counted), with a count', async () => {
   const all = await games('');
   const covered = db.prepare("SELECT app_id FROM digital_games WHERE user_id = ? AND store != 'steam' ORDER BY id LIMIT 1").get(adminId).app_id;
-  db.prepare("INSERT INTO digital_user_meta (user_id, store, app_id, cover_path, json) VALUES (?, (SELECT store FROM digital_games WHERE user_id = ? AND app_id = ? LIMIT 1), ?, '/x/cover.jpg', '{}') ON CONFLICT DO UPDATE SET cover_path = excluded.cover_path").run(adminId, adminId, covered, covered);
+  const pic = path.join(TMP, 'cover.jpg'); fs.writeFileSync(pic, 'x');
+  db.prepare("INSERT INTO digital_user_meta (user_id, store, app_id, cover_path, json) VALUES (?, (SELECT store FROM digital_games WHERE user_id = ? AND app_id = ? LIMIT 1), ?, ?, '{}') ON CONFLICT DO UPDATE SET cover_path = excluded.cover_path").run(adminId, adminId, covered, covered, pic);
   const none = await games('nocover=1');
   assert.ok(none.items.length > 0 && none.items.every((g) => g.store !== 'steam' && !g.cover_url), 'only console games with no cover');
   assert.equal(none.items.some((g) => g.app_id === covered), false, 'a game with a cover is not listed');
   assert.equal((await call('/api/digital')).body.counts.nocover, none.items.length, 'the pill shows the same number');
   assert.equal(none.items.length, all.items.filter((g) => g.store !== 'steam').length - 1);
+});
+
+test('No cover also lists a game whose cover is recorded but whose picture file is gone, and counts it', async () => {
+  const gone = db.prepare("SELECT store, app_id FROM digital_games WHERE user_id = ? AND store != 'steam' ORDER BY id DESC LIMIT 1").get(adminId);
+  db.prepare("DELETE FROM digital_user_meta WHERE user_id = ? AND store = ? AND app_id = ?").run(adminId, gone.store, gone.app_id);
+  db.prepare("INSERT INTO digital_details (store, app_id, json, found, cover_path) VALUES (?, ?, '{}', 1, ?) ON CONFLICT(store, app_id) DO UPDATE SET cover_path = excluded.cover_path, found = 1").run(gone.store, gone.app_id, path.join(TMP, 'not-there.jpg'));
+  const sweep = (await import('../src/lib/steam.js')).forgetMissingConsoleCovers; sweep(true);
+  const after = await games('nocover=1');
+  assert.ok(after.items.some((g) => g.app_id === gone.app_id && !g.cover_url), 'the game with a dead cover is in the list');
+  assert.equal(db.prepare('SELECT cover_path FROM digital_details WHERE store = ? AND app_id = ?').get(gone.store, gone.app_id).cover_path, null, 'the dead record is forgotten');
+  assert.equal((await call('/api/digital')).body.counts.nocover, after.items.length, 'the count agrees');
 });
 
 test('the platform box on the add forms is type-to-find, and the add forms are cleared when they close', () => {

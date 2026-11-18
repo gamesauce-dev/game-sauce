@@ -1,5 +1,6 @@
 // Steam, per person: a member's own Web API key + SteamID64 are kept encrypted, and the owned-games list (with hours played)
 // is fetched from Steam's public Web API when they ask. Nothing here touches ROMs, and nothing is shared between members.
+import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
 import { encryptSecret, decryptSecret } from '../settings.js';
@@ -99,6 +100,7 @@ export function setMark(userId, store, appId, field, value) {
 /** The person's own list for the page: store chips and tiles. Steam's cover art is a fixed public address per app id.
  *  Hidden games stay out unless asked for (hidden: 'show' adds them, 'only' lists only them); favourites: true lists only favourites. */
 export function listGames(userId, { store = '', stores = [], platforms = [], q = '', sort = 'name', favourites = false, nocover = false, installed = false, hidden = '' } = {}) {
+  if (nocover) forgetMissingConsoleCovers();
   const where = ['g.user_id = ?']; const args = [userId];
   if (store) { where.push('g.store = ?'); args.push(store); }
   // A whole store (stores) and / or single consoles (platforms): a game is in the list when it is in either. A console game saved before consoles were told apart has no
@@ -160,7 +162,23 @@ export function countStores(userId) {
   return { stores, platforms };
 }
 
+/* A console game's cover can be recorded while its picture file is gone from the disk (a cleaned media folder, a restored backup without the media...).
+ * The tile then showed nothing, yet the game was missing from the "No cover" filter, its count and "Fetch missing covers", which only looked at the record.
+ * Forget the dead records so all three treat it as a game with no cover. The sweep reads each recorded path once, so at most once a minute. */
+let lastCoverSweep = 0;
+export function forgetMissingConsoleCovers(force = false) {
+  if (!force && Date.now() - lastCoverSweep < 60_000) return 0;
+  lastCoverSweep = Date.now();
+  let n = 0;
+  for (const table of ['digital_details', 'digital_user_meta']) {
+    const clear = db.prepare(`UPDATE ${table} SET cover_path = NULL WHERE rowid = ?`);
+    for (const r of db.prepare(`SELECT rowid AS id, cover_path FROM ${table} WHERE cover_path IS NOT NULL AND cover_path != ''`).all()) if (!fs.existsSync(r.cover_path)) { clear.run(r.id); n++; }
+  }
+  return n;
+}
+
 export function countGames(userId) {
+  forgetMissingConsoleCovers();
   const r = db.prepare(`SELECT COUNT(*) AS total,
       SUM(CASE WHEN COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS visible,
       SUM(CASE WHEN COALESCE(m.favourite, 0) = 1 AND COALESCE(m.hidden, 0) = 0 THEN 1 ELSE 0 END) AS favourites,
