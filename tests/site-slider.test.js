@@ -7,14 +7,19 @@ const LANGS = ['fr', 'zh', 'es', 'pt', 'de', 'ja', 'it'];
 
 test('the website hero is a slider: each slide has a picture, a title and a link to a section that exists, and the controls are labelled', () => {
   const html = read('site/index.html');
-  const slides = [...html.matchAll(/<div class="slide(?: is-on)?">([\s\S]*?)<a class="slide-hit" href="#([a-z]+)" aria-label="([^"]+)"><\/a>\s*<\/div>/g)];
+  const slides = [...html.matchAll(/<div class="slide(?: is-on)?"([^>]*)>([\s\S]*?)<a class="slide-hit" href="#([a-z]+)" aria-label="([^"]+)"><\/a>\s*<\/div>/g)];
   assert.ok(slides.length >= 6, 'several slides');
-  for (const [, body, target, label] of slides) {
+  let clips = 0;
+  for (const [, attrs, body, target, label] of slides) {
     assert.ok(html.includes(`id="${target}"`), `the section #${target} exists`);
-    const img = /<img src="(img\/[^"]+)"[^>]*alt="([^"]+)"/.exec(body);
-    assert.ok(img && fs.existsSync(new URL('../site/' + img[1], import.meta.url)), 'the picture exists: ' + (img && img[1]));
+    const img = /<img src="(img\/[^"]+)"[^>]*alt="([^"]+)"/.exec(body), clip = /<video class="slide-video"[^>]*poster="(img\/[^"]+)"[^>]*aria-label="[^"]+"><source src="(video\/[^"]+)"/.exec(body);
+    assert.ok(img || clip, 'a picture or a clip');
+    for (const file of img ? [img[1]] : [clip[1], clip[2]]) assert.ok(fs.existsSync(new URL('../site/' + file, import.meta.url)), 'the file exists: ' + file);
+    if (clip) { clips++; assert.ok(Number(/data-seconds="(\d+)"/.exec(attrs)?.[1]) >= 6, 'a clip slide says how long it stays'); }
     assert.ok(body.includes(`<p class="slide-title">${label}</p>`), 'the link says what the title says');
   }
+  assert.ok(clips >= 4, 'the demo clips play in the slider');
+  assert.ok(html.includes('video:not(.slide-video)') && html.includes('v.pause()'), "the page's own video script leaves the clips to the slider, which plays only the showing one");
   assert.equal([...html.matchAll(/class="slide is-on"/g)].length, 1, 'one slide shows before the script runs');
   for (const l of ['Pause slideshow', 'Play slideshow', 'Previous slide', 'Next slide', 'Featured screens']) assert.ok(html.includes(`aria-label="${l}"`), l);
   assert.ok(html.includes("addEventListener('animationend'") && html.includes("prefers-reduced-motion: reduce"), 'it steps when the progress line fills, and stays still for reduced motion');

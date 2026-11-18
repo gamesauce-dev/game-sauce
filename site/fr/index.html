@@ -66,23 +66,28 @@
     <p class="small">Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid et Proxmox &middot; Raspberry Pi</p>
     <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="Écrans à la une">
     <div class="slides">
-      <div class="slide is-on">
-        <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="La bibliothèque game-sauce : une grille de jaquettes avec des filtres de plateforme et une barre de A à Z">
+      <div class="slide is-on" data-seconds="10">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="La bibliothèque : recherche d'un jeu et ouverture de ses détails"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Tout pour une collection que vous avez déjà</p><p class="slide-sub">Un seul endroit pour la bibliothèque de toute la maison, sur une machine que vous contrôlez.</p></div>
         <a class="slide-hit" href="#features" aria-label="Tout pour une collection que vous avez déjà"></a>
       </div>
-      <div class="slide">
-        <img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="Grand écran : une roue de jeux avec le jeu sélectionné au milieu, une barre de A à Z à droite et les indications de la manette en bas">
+      <div class="slide" data-seconds="14">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="Grand écran : défilement de la roue de jeux, saut par lettre, ouverture d'un jeu et retour"><source src="../video/bigscreen.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Grand écran : votre bibliothèque sur la télé</p><p class="slide-sub">Se pilote entièrement à la manette, avec les indications des boutons à l'écran.</p></div>
         <a class="slide-hit" href="#bigscreen" aria-label="Grand écran : votre bibliothèque sur la télé"></a>
       </div>
-      <div class="slide">
-        <img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="Le Carrousel : un éventail de jaquettes avec Jouer dans le navigateur et Jouer sur ce PC en dessous">
+      <div class="slide" data-seconds="15">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="Le Carrousel : défilement des jaquettes, saut vers un titre par lettre, et mise en étoile d'un favori"><source src="../video/carousel.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Le Carrousel : choisissez un jeu et jouez</p><p class="slide-sub">Une étagère de jaquettes plein écran sur un arc doux. Choisissez une famille et une plateforme, faites défiler avec les flèches, la molette, un balayage ou une manette, et appuyez sur jouer.</p></div>
         <a class="slide-hit" href="#carousel" aria-label="Le Carrousel : choisissez un jeu et jouez"></a>
       </div>
-      <div class="slide">
-        <img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="L'étagère physique avec un boîtier PlayStation 2 ouvert, montrant son livret et son disque">
+      <div class="slide" data-seconds="14">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="Défilement du Carrousel jusqu'à un jeu Game Boy Color, appui sur Jouer dans le navigateur, et le jeu qui tourne dans la page"><source src="../video/play.mp4" type="video/mp4"></video>
+        <div class="slide-cap"><p class="slide-title">Jouer dans le navigateur</p><p class="slide-sub">De nombreuses consoles anciennes tournent directement depuis une page web, avec les états sauvegardés et les sauvegardes de jeu conservés par personne sur votre serveur. Une ligne Continuer à jouer se souvient d'où vous en étiez.</p></div>
+        <a class="slide-hit" href="#carousel" aria-label="Jouer dans le navigateur"></a>
+      </div>
+      <div class="slide" data-seconds="15">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="L'étagère physique : passage à l'étagère de tranches, sortie d'une tranche, boîtier amené vers l'avant, retourné, ouvert sur le manuel et le disque, et lecture du manuel"><source src="../video/shelf.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Votre étagère : les disques et cartouches que vous possédez</p><p class="slide-sub">Répertoriez les jeux en boîte de votre vraie étagère, à la main ou depuis une liste, à côté de votre collection numérique. Chaque personne a sa propre étagère.</p></div>
         <a class="slide-hit" href="#shelf" aria-label="Votre étagère : les disques et cartouches que vous possédez"></a>
       </div>
@@ -360,12 +365,20 @@
   });
   // The picture changes when the progress line of the current one has filled (an animation end), so holding the pointer on it, a keyboard focus,
   // the pause button, a hidden tab and reduced motion all stop it by pausing that animation.
-  function hold() { box.classList.toggle('is-held', userPaused || hover || focus || document.hidden); }
+  var vids = slides.map(function (sl) { return sl.querySelector('video'); });
+  function hold() {
+    var stop = userPaused || hover || focus || document.hidden;
+    box.classList.toggle('is-held', stop);
+    vids.forEach(function (v, i) { if (!v) return; if (i === cur && !stop) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else v.pause(); });   // only the showing clip plays, and it stops when the slideshow is held
+  }
   function go(n) {
     cur = (n + slides.length) % slides.length;
     slides.forEach(function (sl, i) { sl.classList.toggle('is-on', i === cur); });
     segs.forEach(function (sg, i) { sg.classList.remove('is-on'); sg.classList.toggle('is-done', i < cur); if (i === cur) sg.setAttribute('aria-current', 'true'); else sg.removeAttribute('aria-current'); });
+    segs[cur].style.setProperty('--dur', (Number(slides[cur].dataset.seconds) || 6) + 's');   // a clip's slide lasts as long as the clip
+    vids.forEach(function (v, i) { if (v && i === cur) { try { v.currentTime = 0; } catch (e) {} } });
     void box.offsetWidth; segs[cur].classList.add('is-on');   // the line starts again from the left
+    hold();
   }
   dots.addEventListener('animationend', function (e) { if (e.target.parentNode === segs[cur]) go(cur + 1); });
   box.querySelector('.slider-next').addEventListener('click', function () { go(cur + 1); });
@@ -388,7 +401,7 @@
   hold(); go(0);
 })();
 (function () {
-  var vids = document.querySelectorAll('video');
+  var vids = document.querySelectorAll('video:not(.slide-video)');
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (calm || !('IntersectionObserver' in window)) { vids.forEach(function (v) { v.setAttribute('controls', ''); }); return; }
   var io = new IntersectionObserver(function (entries) {

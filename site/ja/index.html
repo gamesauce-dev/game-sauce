@@ -66,23 +66,28 @@
     <p class="small">Windows &middot; macOS（Apple シリコン）&middot; Linux &middot; Docker、Unraid、Proxmox &middot; Raspberry Pi</p>
     <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="注目の画面">
     <div class="slides">
-      <div class="slide is-on">
-        <img src="../img/library.webp" fetchpriority="high" width="1500" height="900" alt="game-sauce のライブラリ：プラットフォームのフィルターと A〜Z バーが付いた、ゲームカバーのグリッド">
+      <div class="slide is-on" data-seconds="10">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="ライブラリ：ゲームを検索して詳細を開く"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">すでにあるコレクションのためのすべて</p><p class="slide-sub">家族全員のライブラリを、自分で管理するマシンにひとまとめに。</p></div>
         <a class="slide-hit" href="#features" aria-label="すでにあるコレクションのためのすべて"></a>
       </div>
-      <div class="slide">
-        <img src="../img/bigscreen-wheel.webp" loading="lazy" width="1920" height="1080" alt="ビッグスクリーン：選択したゲームが中央にあるゲームのホイール、右に A〜Z のバー、下にコントローラーのヒント">
+      <div class="slide" data-seconds="14">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="ビッグスクリーン：ゲームのホイールをスクロールし、文字でジャンプして、ゲームを開き、戻る"><source src="../video/bigscreen.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">ビッグスクリーン：ライブラリをテレビに</p><p class="slide-sub">すべてゲームパッドで操作でき、ボタンのヒントが画面に表示されます。</p></div>
         <a class="slide-hit" href="#bigscreen" aria-label="ビッグスクリーン：ライブラリをテレビに"></a>
       </div>
-      <div class="slide">
-        <img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="カルーセル：扇状のカバーと、その下の「ブラウザーでプレイ」「この PC でプレイ」">
+      <div class="slide" data-seconds="15">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="カルーセル：カバーをスクロールし、文字でタイトルにジャンプして、お気に入りにスターを付ける"><source src="../video/carousel.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">カルーセル：ゲームを選んでプレイ</p><p class="slide-sub">なだらかな弧を描くカバーのフル画面の棚。ファミリーとプラットフォームを選び、矢印キー、マウスホイール、スワイプ、ゲームパッドでスクロールして、プレイを押します。</p></div>
         <a class="slide-hit" href="#carousel" aria-label="カルーセル：ゲームを選んでプレイ"></a>
       </div>
-      <div class="slide">
-        <img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="PlayStation 2 のケースが開いた物理の棚。説明書とディスクが見える">
+      <div class="slide" data-seconds="14">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="カルーセルを Game Boy Color のゲームまでスクロールし、「ブラウザーでプレイ」を押すと、ページ内でゲームが動く"><source src="../video/play.mp4" type="video/mp4"></video>
+        <div class="slide-cap"><p class="slide-title">ブラウザーでプレイ</p><p class="slide-sub">多くの古いコンソールは、ウェブページからそのまま動きます。ステートセーブとゲーム内セーブは、人ごとにあなたのサーバーに保存されます。「続きをプレイ」の行が、どこまで遊んだかを覚えています。</p></div>
+        <a class="slide-hit" href="#carousel" aria-label="ブラウザーでプレイ"></a>
+      </div>
+      <div class="slide" data-seconds="15">
+        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="物理の棚：背表紙の棚に切り替え、1本引き出し、ケースを手前に出し、裏返し、開いてマニュアルとディスクを見て、マニュアルを読む"><source src="../video/shelf.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">あなたの棚：持っているディスクとカートリッジ</p><p class="slide-sub">本物の棚にある箱入りのゲームを、手動またはリストからカタログ化し、デジタルコレクションと並べて管理します。棚は人ごとに別々です。</p></div>
         <a class="slide-hit" href="#shelf" aria-label="あなたの棚：持っているディスクとカートリッジ"></a>
       </div>
@@ -360,12 +365,20 @@
   });
   // The picture changes when the progress line of the current one has filled (an animation end), so holding the pointer on it, a keyboard focus,
   // the pause button, a hidden tab and reduced motion all stop it by pausing that animation.
-  function hold() { box.classList.toggle('is-held', userPaused || hover || focus || document.hidden); }
+  var vids = slides.map(function (sl) { return sl.querySelector('video'); });
+  function hold() {
+    var stop = userPaused || hover || focus || document.hidden;
+    box.classList.toggle('is-held', stop);
+    vids.forEach(function (v, i) { if (!v) return; if (i === cur && !stop) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else v.pause(); });   // only the showing clip plays, and it stops when the slideshow is held
+  }
   function go(n) {
     cur = (n + slides.length) % slides.length;
     slides.forEach(function (sl, i) { sl.classList.toggle('is-on', i === cur); });
     segs.forEach(function (sg, i) { sg.classList.remove('is-on'); sg.classList.toggle('is-done', i < cur); if (i === cur) sg.setAttribute('aria-current', 'true'); else sg.removeAttribute('aria-current'); });
+    segs[cur].style.setProperty('--dur', (Number(slides[cur].dataset.seconds) || 6) + 's');   // a clip's slide lasts as long as the clip
+    vids.forEach(function (v, i) { if (v && i === cur) { try { v.currentTime = 0; } catch (e) {} } });
     void box.offsetWidth; segs[cur].classList.add('is-on');   // the line starts again from the left
+    hold();
   }
   dots.addEventListener('animationend', function (e) { if (e.target.parentNode === segs[cur]) go(cur + 1); });
   box.querySelector('.slider-next').addEventListener('click', function () { go(cur + 1); });
@@ -388,7 +401,7 @@
   hold(); go(0);
 })();
 (function () {
-  var vids = document.querySelectorAll('video');
+  var vids = document.querySelectorAll('video:not(.slide-video)');
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (calm || !('IntersectionObserver' in window)) { vids.forEach(function (v) { v.setAttribute('controls', ''); }); return; }
   var io = new IntersectionObserver(function (entries) {
