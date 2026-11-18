@@ -40,6 +40,6 @@ test('Tools: a menu option before Settings, with Emulators, Controller, Add My G
 test('the Tools page scrolls, and Game Assets puts its explanation beside the importer', () => {
   const css = read('public/styles.css');
   assert.match(css, /#view-settings, #view-tools, #view-account[^{]*\{ overflow-y: auto;/, 'the page scrolls like Settings');
-  assert.match(css, /#ga-body \{ display: grid; grid-template-columns: minmax\(0, 3fr\) minmax\(0, 2fr\);/);
-  assert.match(css, /#ga-body > \.hint \{ grid-column: 2; grid-row: 2;/, 'the explanation is the right-hand column');
+  assert.match(css, /#ga-body #art-box > #art-result \{ grid-column: 2;/, 'the preview is the right-hand column');
+  assert.ok(read('public/artimport-ui.js').includes('openOptions') && read('public/app.js').includes('openOptions: true'), 'the options are open');
 });

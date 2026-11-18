@@ -4254,7 +4254,7 @@ function paintGameAssets() {
   const target = $('input[name="ga-target"]:checked')?.value === 'digital' ? 'digital' : 'physical';
   const radios = $$('input[name="ga-target"]');
   radios.forEach((r) => { if (!r.dataset.ready) { r.dataset.ready = '1'; r.addEventListener('change', paintGameAssets); } });
-  renderArtImport({ api, toast }, $('#ga-body'), { target, onDone: () => { if (target === 'digital') digital.load(true); else physical.load(true); } });
+  renderArtImport({ api, toast }, $('#ga-body'), { target, openOptions: true, onDone: () => { if (target === 'digital') digital.load(true); else physical.load(true); } });
 }
 
 /* ─────────────────────────── settings hub ─────────────────────────── */

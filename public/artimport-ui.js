@@ -5,7 +5,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const n = (v) => Number(v || 0).toLocaleString();
 
 /** Draw the panel into `body`. ctx: the page's { api, toast }. target: 'physical' (covers, spines, discs, manuals) or 'digital' (covers of console games). onDone runs after an import. */
-export async function renderArtImport(ctx, body, { target, onDone = () => {}, select = '' }) {
+export async function renderArtImport(ctx, body, { target, onDone = () => {}, select = '', openOptions = false }) {
   const video = target === 'video';
   const kinds = video ? [['video', 'Videos']] : target === 'digital' ? [['cover', 'Covers'], ['video', 'Videos']] : [['cover', 'Covers'], ['spine', 'Spines'], ['back', 'Backs'], ['disc', 'Discs'], ['manual', 'Manuals'], ...(target === 'rom' ? [['logo', 'Game logos'], ['marquee', 'Marquees'], ['fanart', 'Backgrounds']] : []), ['video', 'Videos']];
   const what = video ? 'videos' : target === 'digital' ? 'covers and videos' : 'pictures, manuals and videos';
@@ -15,7 +15,7 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
     <div class="panel" id="art-box" style="padding:12px;display:grid;gap:10px">
       <div id="art-add"></div>
       <label class="field" id="art-folder-row"><span>Folder to import from</span><select id="art-folder" class="select"></select></label>
-      <details id="art-pick"><summary>Options: the folder names do not say what the files are, or the file names are unusual</summary>
+      <details id="art-pick"${openOptions ? ' open' : ''}><summary>Options: the folder names do not say what the files are, or the file names are unusual</summary>
         <div style="display:grid;gap:10px;margin-top:8px">
           <label class="field"><span>Everything in the folder is</span><select id="art-kind" class="select"><option value="">Work it out from the folder names</option>${kinds.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}${target === 'digital' || target === 'rom' || video ? '' : '<option value="wrap">Full wraps (back, spine and front in one picture)</option>'}</select></label>
           <label class="field"><span>for the platform (type to search)</span><input id="art-plat" list="art-plat-list" placeholder="Work it out from the folder names, or type e.g. PlayStation 3" autocomplete="off" spellcheck="false" /><datalist id="art-plat-list"></datalist><small class="hint" id="art-plat-note"></small></label>
@@ -31,7 +31,7 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
   let folders = [], can_edit = false;
   try { ({ folders, can_edit } = await ctx.api('/art/folders')); } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; previewBtn.disabled = true; return; }
   const usable = folders.filter((f) => f.exists);
-  if (can_edit) wireAddFolder(ctx, body, folders, (path) => renderArtImport(ctx, body, { target, onDone, select: path }));
+  if (can_edit) wireAddFolder(ctx, body, folders, (path) => renderArtImport(ctx, body, { target, onDone, select: path, openOptions }));
   if (!usable.length) {
     $('#art-folder-row', body).classList.add('hidden');
     res.innerHTML = `<p class="hint" style="margin:0">${folders.length ? 'None of the listed folders can be reached right now.' : 'No folder has been added yet.'} ${can_edit ? 'Add one above: type or paste its full path on the server, or press <b>Browse…</b>.' : 'An admin adds them (Settings → Game assets).'}</p>`;
