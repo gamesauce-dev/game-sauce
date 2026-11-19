@@ -1199,6 +1199,9 @@
  "Automatic cover": {
   "files": 1
  },
+ "Available Content": {
+  "files": 1
+ },
  "B — neon night face": {
   "files": 1
  },
@@ -2563,6 +2566,9 @@
  },
  "games": {
   "files": 2
+ },
+ "Games": {
+  "files": 1
  },
  "games across": {
   "files": 1
@@ -5002,6 +5008,9 @@
  },
  "Select + Start": {
   "files": 3
+ },
+ "Select a Game": {
+  "files": 1
  },
  "Select all": {
   "files": 1

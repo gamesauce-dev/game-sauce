@@ -263,6 +263,7 @@ export function openBigScreen(host) {
     if (tok !== st.tok || st.screen !== 'games') return;
     if (!st.games.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games here yet.</div>'; return; }
     st.gi = Math.min(st.gi, st.games.length - 1);
+    if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; }
     st.az = new Map(); st.games.forEach((g, i) => { const l = letter(g); if (!st.az.has(l)) st.az.set(l, i); });   // the first game of each letter
     $('#bs-main').innerHTML = `<div class="bs-wheel" id="bs-wheel"></div><nav class="bs-az" id="bs-az" aria-label="Jump to letter">${AZ.map((l) => `<button type="button" tabindex="-1" data-l="${l}" class="${st.az.has(l) ? 'has' : ''}">${l}</button>`).join('')}</nav><div class="bs-pos" id="bs-pos"></div>`;
     st.els = new Map(); placeWheel();
@@ -271,6 +272,33 @@ export function openBigScreen(host) {
     const logo = wheelArt(g);
     return `<div class="bs-title">${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark" aria-label="Favourite">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
+  // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
+  const blades = () => root.classList.contains('bs-theme-xbox360');
+  const bladesShell = () => `<div class="bs-bl" id="bs-bl"><aside class="bs-blade bs-bl-l" aria-hidden="true"><span>${esc(String(st.src?.name || 'games').toLowerCase())}</span></aside>
+    <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${esc(st.src?.name || '')}</span></header>
+      <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div></section>
+    <aside class="bs-blade bs-bl-r" aria-hidden="true"><span>game-sauce</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
+  const BL_ROWS = 6;
+  const placeBlades = () => {
+    const list = $('#bs-bl-list'); if (!list) return;
+    const n = st.games.length, start = Math.max(0, Math.min(n - BL_ROWS, st.gi - 2));
+    let rows = '';
+    for (let i = start; i < Math.min(n, start + BL_ROWS); i++) {
+      const g = st.games[i], sub = g.publisher || g.developer || (g.release_year ? String(g.release_year) : '');
+      rows += `<div class="bs-bl-row${i === st.gi ? ' on' : ''}${g.broken ? ' is-broken' : ''}" role="option" aria-selected="${i === st.gi}" data-i="${i}"><span class="bs-bl-thumb"><em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : ''}</span><span class="bs-bl-text"><b>${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</b><small>${esc(sub)}</small></span><span class="bs-bl-badge">${esc(g.platform_short || g.platform_name || '')}</span></div>`;
+    }
+    list.innerHTML = rows; list.classList.toggle('more', start + BL_ROWS < n);
+    const g = game(), pic = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : (gameBackdrop(g) || '');
+    const chips = [g.genre, g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`].filter(Boolean);
+    const extras = [g.has_video && 'Video', g.manual_url && 'Manual'].filter(Boolean);
+    $('#bs-bl-prev').innerHTML = `<div class="bs-bl-shot${pic ? '' : ' cover'}">${pic || g.cover_url ? `<img src="${esc(pic || g.cover_url)}" alt="" onerror="this.remove()" />` : ''}</div>
+      <p class="bs-bl-desc">${esc(g.description || 'No description yet.')}</p>
+      <div class="bs-bl-foot"><span class="bs-bl-chips">${chips.map((c) => `<i>${esc(c)}</i>`).join('')}</span>${extras.length ? `<span class="bs-bl-extras"><small>Available Content</small>${extras.map((c) => `<i>${esc(c)}</i>`).join('')}</span>` : ''}</div>`;
+    $('#bs-pos').textContent = `${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}`;
+    root.style.setProperty('--ac', gameAccent(g));
+    clearTimeout(st.bgT); st.bgT = setTimeout(() => { const art = gameBackdrop(g); if (root && st.screen === 'games' && game() === g) setBackdrop(art || g.cover_url, gameAccent(g), Boolean(art)); }, 140);
+  };
+  const placeGames = () => (blades() ? placeBlades() : placeWheel());
   const placeWheel = () => {
     const wheel = $('#bs-wheel'); if (!wheel) return;
     const n = st.games.length, reach = root.classList.contains('bs-lite') ? 3 : 4;
@@ -287,7 +315,7 @@ export function openBigScreen(host) {
     root.style.setProperty('--ac', gameAccent(g));
     clearTimeout(st.bgT); st.bgT = setTimeout(() => { const art = gameBackdrop(g); if (root && st.screen === 'games' && game() === g) setBackdrop(art || g.cover_url, gameAccent(g), Boolean(art)); }, 140);   // the picture follows when the wheel settles
   };
-  const goGame = (i) => { if (!st.games.length) return; st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeWheel(); };
+  const goGame = (i) => { if (!st.games.length) return; st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames(); };
   const AZ = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
   const letter = (g) => (String(g.sort_title || g.title).replace(/^[^a-z0-9]+/i, '')[0] || '#').toUpperCase().replace(/[0-9]/, '#');
   const jumpLetter = (d) => {
@@ -507,7 +535,7 @@ export function openBigScreen(host) {
   };
 
   // ── moving between screens ──
-  const backToWheel = () => { st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
+  const backToWheel = () => { st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
     document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer);
@@ -595,7 +623,7 @@ export function openBigScreen(host) {
     if (e.target.closest('#bs-snd')) { toggleSound(); return; }
     const t = e.target.closest('.bs-ptile'); if (t && st.screen === 'platforms') { const i = Number(t.dataset.i), r = Number(t.dataset.r || 0); if (st.level === 0 && r !== st.row) { switchRow(r); focusPlatform(i); return; } if (i === st.pi) act('select'); else focusPlatform(i); return; }
     const az = e.target.closest('#bs-az button[data-l]'); if (az && st.screen === 'games') { if (st.az?.has(az.dataset.l)) goGame(st.az.get(az.dataset.l)); return; }   // the A-Z rail: straight to that letter
-    const r = e.target.closest('.bs-row'); if (r && st.screen === 'games') { const i = Number(r.dataset.i); if (i === st.gi) act('select'); else goGame(i); return; }
+    const r = e.target.closest('.bs-row, .bs-bl-row'); if (r && st.screen === 'games') { const i = Number(r.dataset.i); if (i === st.gi) act('select'); else goGame(i); return; }
     const m = e.target.closest('.bs-mi[data-k]'); if (m && st.screen === 'game') { st.mi = [...m.parentElement.querySelectorAll('.bs-mi')].indexOf(m); paintMenu(); runMenu(m.dataset.k); return; }
     const c = e.target.closest('.bs-pi'); if (c && st.screen === 'pick') { st.pk.i = Number(c.dataset.ci); pickChoose(); return; }
     const k = e.target.closest('.bs-key'); if (k && st.screen === 'kbd') { st.kb.r = Number(k.dataset.r); st.kb.c = Number(k.dataset.c); kbPress(KEYBOARD[st.kb.r][st.kb.c]); return; }

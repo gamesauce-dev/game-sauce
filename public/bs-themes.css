@@ -57,3 +57,47 @@
 .bs-theme-xbox360 .bs-cfb.on, .bs-theme-xbox360 .bs-key.on { background: linear-gradient(180deg, #fff, #cdf3a4); color: var(--x-ink); }
 .bs-theme-xbox360 .bs-kbfield { background: rgba(6, 44, 2, .7); border-color: rgba(255, 255, 255, .45); }
 .bs-theme-xbox360 .bs-az button.on { background: #fff; color: var(--x-ink); }
+
+/* ── Xbox 360: the Blades layout of the games screen ── */
+.bs-theme-xbox360 .bs-bl { position: absolute; inset: 0; display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 7.5em; padding: 1.2em 0 .6em; }
+/* a blade at each side: a silver curved panel with its label standing on it */
+.bs-theme-xbox360 .bs-blade { position: relative; display: flex; align-items: center; justify-content: center; margin: -1.2em 0 -.6em; background: linear-gradient(90deg, #7e857d, #cdd1cb 45%, #eef0ec); box-shadow: 0 0 1.4em rgba(0, 45, 0, .5); }
+.bs-theme-xbox360 .bs-bl-l { border-radius: 0 4.6em 4.6em 0 / 0 22% 22% 0; }
+.bs-theme-xbox360 .bs-bl-r { border-radius: 4.6em 0 0 4.6em / 22% 0 0 22%; background: linear-gradient(270deg, #7e857d, #cdd1cb 45%, #eef0ec); }
+.bs-theme-xbox360 .bs-blade::before { content: ''; position: absolute; top: 12%; bottom: 12%; width: 56%; border-radius: 3em; background: linear-gradient(180deg, #b8f06a, #62b523 60%, #3f8f17); box-shadow: inset 0 .1em 0 rgba(255, 255, 255, .7), 0 0 1em rgba(0, 60, 0, .35); }
+.bs-theme-xbox360 .bs-bl-l::before { right: 0; }
+.bs-theme-xbox360 .bs-bl-r::before { left: 0; background: linear-gradient(180deg, #d4d8d2, #aab0a8); }
+.bs-theme-xbox360 .bs-blade span { position: relative; z-index: 1; writing-mode: vertical-rl; font-size: 2.1em; font-weight: 600; letter-spacing: .03em; white-space: nowrap; color: #fff; text-shadow: 0 .05em .25em rgba(0, 60, 0, .6); }
+.bs-theme-xbox360 .bs-bl-l span { transform: rotate(180deg); margin-right: -1.6em; }
+.bs-theme-xbox360 .bs-bl-r span { color: #4d554b; text-shadow: none; margin-left: -1.6em; }
+/* the middle: a glossy header, then the list and the preview */
+.bs-theme-xbox360 .bs-bl-main { display: flex; flex-direction: column; min-width: 0; padding: 0 1.2em; }
+.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; padding: .35em 1.2em; border-radius: 1.1em; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .55); font-size: 1.7em; font-weight: 600; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
+.bs-theme-xbox360 .bs-bl-head span { font-size: .8em; opacity: .9; text-transform: uppercase; letter-spacing: .03em; }
+.bs-theme-xbox360 .bs-bl-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 1.6em; padding-top: 1em; }
+.bs-theme-xbox360 .bs-bl-list { position: relative; display: flex; flex-direction: column; gap: .35em; min-height: 0; }
+.bs-theme-xbox360 .bs-bl-list.more::after { content: ''; position: absolute; left: 50%; bottom: -.2em; border: .6em solid transparent; border-top-color: rgba(255, 255, 255, .85); transform: translateX(-50%); }
+.bs-theme-xbox360 .bs-bl-row { flex: 0 0 auto; display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; align-items: center; gap: .9em; height: 4.4em; padding: .4em 1em .4em .45em; border-radius: .8em; background: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .05)); border: 1px solid rgba(255, 255, 255, .3); cursor: pointer; }
+.bs-theme-xbox360 .bs-bl-row.on { background: linear-gradient(180deg, #fff, #d5f3b2); border-color: #fff; box-shadow: 0 0 1.2em rgba(255, 255, 255, .55), inset 0 .1em 0 #fff; color: var(--x-ink); }
+.bs-theme-xbox360 .bs-bl-thumb { position: relative; width: 3.4em; height: 3.4em; display: grid; place-items: center; overflow: hidden; border-radius: .4em; background: linear-gradient(160deg, #3f8f17, #174d09); border: 1px solid rgba(255, 255, 255, .5); }
+.bs-theme-xbox360 .bs-bl-thumb em { font-style: normal; font-weight: 700; font-size: 1.4em; color: rgba(255, 255, 255, .8); }
+.bs-theme-xbox360 .bs-bl-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bs-theme-xbox360 .bs-bl-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.bs-theme-xbox360 .bs-bl-text b { font-size: 1.2em; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 .04em .2em rgba(0, 60, 0, .5); }
+.bs-theme-xbox360 .bs-bl-text small { font-size: .95em; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bs-theme-xbox360 .bs-bl-row.on .bs-bl-text b { text-shadow: none; }
+.bs-theme-xbox360 .bs-bl-badge { font-size: .8em; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; padding: .25em .9em; border-radius: .5em; background: rgba(255, 255, 255, .22); white-space: nowrap; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+.bs-theme-xbox360 .bs-bl-row.on .bs-bl-badge { background: rgba(60, 130, 20, .18); }
+.bs-theme-xbox360 .bs-bl-row.is-broken .bs-bl-thumb { filter: saturate(.7) brightness(.9); }
+/* the preview: a picture with a bright edge, the description, and what the game has */
+.bs-theme-xbox360 .bs-bl-prev { display: flex; flex-direction: column; gap: .8em; min-width: 0; min-height: 0; }
+.bs-theme-xbox360 .bs-bl-shot { aspect-ratio: 16 / 9; width: 100%; border-radius: .4em; overflow: hidden; background: linear-gradient(160deg, #3f8f17, #174d09); border: .16em solid rgba(255, 255, 255, .7); box-shadow: 0 .4em 1.2em rgba(0, 45, 0, .5); }
+.bs-theme-xbox360 .bs-bl-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bs-theme-xbox360 .bs-bl-shot.cover img { object-fit: contain; padding: .5em; }   /* a game with only a cover is shown whole, not cropped to a wide picture */
+.bs-theme-xbox360 .bs-bl-desc { margin: 0; flex: 1 1 0; min-height: 3em; overflow: hidden; font-size: .95em; line-height: 1.45; font-weight: 600; color: #f6fdea; text-shadow: 0 .04em .2em rgba(0, 60, 0, .55); -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 1.6em), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 1.6em), transparent); }
+.bs-theme-xbox360 .bs-bl-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 1em; }
+.bs-theme-xbox360 .bs-bl-chips { display: flex; flex-wrap: wrap; gap: .4em; }
+.bs-theme-xbox360 .bs-bl-chips i, .bs-theme-xbox360 .bs-bl-extras i { font-style: normal; padding: .2em .7em; border-radius: .4em; background: rgba(255, 255, 255, .26); font-size: .85em; font-weight: 600; }
+.bs-theme-xbox360 .bs-bl-extras { display: flex; flex-wrap: wrap; align-items: center; gap: .4em; padding: .4em .7em; border-radius: .6em; background: rgba(8, 60, 4, .45); border: 1px solid rgba(255, 255, 255, .35); }
+.bs-theme-xbox360 .bs-bl-extras small { width: 100%; font-size: .75em; opacity: .85; }
+.bs-theme-xbox360 .bs-pos { right: 8.5em; }

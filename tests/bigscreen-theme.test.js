@@ -47,6 +47,11 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   // a logo set to have a light backing (or every logo, if the person asked) gets a class the look draws a plate with; Favourites and Collections keep their colours
   assert.ok(js.includes("plated = (x) => (x.plate || x.logo_plate || host.plateAll?.()") && js.includes('family_logo_plate') && app.includes("plateAll: () => state.prefs?.chip_plate === 'on'"));
   assert.ok(css.includes('img.bs-plate') && css.includes('.bs-ptile.bs-t-fav') && css.includes('.bs-ptile.bs-t-colls'));
+  // the Blades layout of the games screen: drawn only with the Xbox 360 look, and the standard wheel is still what every other look gets
+  assert.ok(js.includes("const blades = () => root.classList.contains('bs-theme-xbox360')") && js.includes("if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; }"));
+  assert.ok(js.includes('const placeGames = () => (blades() ? placeBlades() : placeWheel())') && js.includes("st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames();"), 'moving through the games redraws whichever layout is on');
+  assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
+  for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // inspired by, not copied: no outside address, no font file, no picture
   assert.ok(!/url\(|@font-face|https?:/i.test(css), 'plain gradients and system fonts only');
 });
