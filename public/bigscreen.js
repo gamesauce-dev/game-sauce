@@ -303,35 +303,36 @@ export function openBigScreen(host) {
     return { sib, i0, left: [...pad(prev, 2, true), { cur: true, p: sib[i0], i: i0 }], right: pad(next, 3, false) };   // left: outermost first; right: nearest the middle first
   };
   const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('error'); return; } st.slide = to > m.i0 ? 1 : -1; sfx('whoosh'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
-  // A drawing of tall sheets laid over each other (the outermost first, each a little lighter): rounded ends, a bright highlight along the inner edge, and an inner edge that bulges toward the middle of the screen.
-  // The current blade (left, innermost) is wider and green, running into the green of the screen. The right blade is the left one mirrored in CSS.
+  // The blades run the whole height of the screen and off both edges, with no end to see. Each is a sheet from the edge of the previous one to its own inner edge, which is one gentle curve
+  // (a quadratic) bulging toward the middle of the screen. The outermost sheet is the widest and they get narrower toward the middle; the current blade (left, innermost) is the slimmest, in green.
+  // The right blade is the left one mirrored in CSS.
+  const EDGE_TOP = [46, 74, 98];   // where each sheet's inner edge meets the top and bottom of the screen (of 120 units)
+  const BULGE = 20;                // how far it swings toward the middle halfway down (about 27 px at 720p)
   const SHEET = [['#6d746c', '#a9afa6', '#e3e6e0', '#f6f7f4'], ['#868d84', '#bcc1b9', '#eceee9', '#fafbf9'], ['#9aa197', '#c9cdc6', '#f1f3ee', '#ffffff']];
   const bladeSvg = (left, bands) => {
     const id = left ? 'L' : 'R', draw = left ? bands : [...bands].reverse();   // draw[d]: d = 0 the outermost sheet
     let svg = `<svg class="bl-svg" viewBox="0 0 120 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><defs>
-      <linearGradient id="bv${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".14"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
-      <filter id="bf${id}" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur stdDeviation="3.5"/></filter>
-      <linearGradient id="bg${id}" x1="0" x2="1"><stop offset="0" stop-color="#cdf784"/><stop offset=".16" stop-color="#7ccb36"/><stop offset=".55" stop-color="#62b523"/><stop offset="1" stop-color="#5db023"/></linearGradient>
+      <linearGradient id="bv${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".14"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+      <filter id="bf${id}" x="-40%" y="-5%" width="180%" height="110%"><feGaussianBlur stdDeviation="3.5"/></filter>
+      <linearGradient id="bg${id}" x1="0" x2="1"><stop offset="0" stop-color="#cdf784"/><stop offset=".2" stop-color="#7ccb36"/><stop offset=".6" stop-color="#62b523"/><stop offset="1" stop-color="#5db023"/></linearGradient>
       ${SHEET.map((c, d) => `<linearGradient id="bs${id}${d}" x1="0" x2="1">${[0, .55, .92, 1].map((o, k) => `<stop offset="${o}" stop-color="${c[k]}"/>`).join('')}</linearGradient>`).join('')}</defs>`;
+    const curve = (x, down) => (down ? `Q${x + 2 * BULGE},500 ${x},1030` : `Q${x + 2 * BULGE},500 ${x},-30`);   // one quadratic between a little above and a little below the screen
     draw.forEach((b, d) => {
-      const L = d * 31, cur = Boolean(b?.cur), R = L + (cur ? 54 : 44), fill = cur ? `url(#bg${id})` : `url(#bs${id}${d})`;
-      // the inner edge is one quadratic curve from the top to the bottom (a bulge of 18 units, about 25 px at 720p, toward the middle of the screen), rounded where it meets the top and bottom
-      const xe = R - 4, inner = `Q${xe},0 ${xe},30 Q${xe + 36},500 ${xe},970 Q${xe},1000 ${xe - 16},1000`;
-      const path = `M${L},0 H${xe - 16} ${inner} H${L} Z`;
-      if (cur) svg += `<path d="${path}" fill="#0b2a05" opacity=".38" filter="url(#bf${id})" transform="translate(-5 0)"/>`;   // the active blade casts a soft shadow onto the ones beside it
-      svg += `<path d="${path}" fill="${fill}"/>${cur ? '' : `<path d="${path}" fill="url(#bv${id})"/>`}`
-        + `<path d="M${xe - 16},0 ${inner}" fill="none" stroke="#fff" stroke-opacity="${cur ? '.7' : '.9'}" stroke-width="2.6"/>`
-        + `<path d="M${xe - 16},0 ${inner}" fill="none" stroke="#2a3a28" stroke-opacity=".22" stroke-width="1" transform="translate(2.2 0)"/>`
-        + `<path d="M${L},0 V1000" stroke="#fff" stroke-opacity="${cur ? '.7' : '.45'}" stroke-width="1.4" fill="none"/>`;
+      const cur = Boolean(b?.cur), xt = EDGE_TOP[d], xp = d ? EDGE_TOP[d - 1] - 7 : -12;   // each sheet slightly overlaps the one outside it
+      const path = `M${xp},-30 H${xt} ${curve(xt, true)} H${xp} ${d ? curve(xp, false) : `V-30`} Z`;
+      const edge = `M${xt},-30 ${curve(xt, true)}`;
+      if (cur) svg += `<path d="${path}" fill="#0b2a05" opacity=".38" filter="url(#bf${id})" transform="translate(-5 0)"/>`;   // the active blade casts a soft shadow onto the ones outside it
+      svg += `<path d="${path}" fill="${cur ? `url(#bg${id})` : `url(#bs${id}${d})`}"/>${cur ? '' : `<path d="${path}" fill="url(#bv${id})"/>`}`
+        + `<path d="${edge}" fill="none" stroke="#fff" stroke-opacity="${cur ? '.7' : '.9'}" stroke-width="2.6"/>`
+        + `<path d="${edge}" fill="none" stroke="#2a3a28" stroke-opacity=".22" stroke-width="1" transform="translate(2.2 0)"/>`;
     });
     return svg + '</svg>';
   };
-  // the words on a band that leads somewhere (a platform the current one can be swapped for); the others have none
   const bladeLabels = (left, bands) => (left ? bands : [...bands].reverse()).map((b, d) => {
     if (!b?.p) return '';
     const name = esc(String(b.p.name).replace(/^microsoft\s+/i, '').toLowerCase());
-    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${((d * 31 + 27) / 120 * 100).toFixed(1)}%">${name}</span>`;   // where you are: no tab, nothing to press
-    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${((d * 31 + 22) / 120 * 100).toFixed(1)}%">${name}</span>`;
+    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${[87, 87, 87][d]}%">${name}</span>`;   // where you are: no tab, nothing to press
+    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${[26.7, 65.3, 87][d]}%">${name}</span>`;
   }).join('');
   const bladesShell = () => {
     const src = st.src || {}, m = bladeModel();

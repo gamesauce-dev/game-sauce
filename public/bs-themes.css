@@ -65,7 +65,6 @@
 /* ── Xbox 360: the Blades layout of the games screen ── */
 .bs-theme-xbox360 .bs-bl { position: absolute; inset: 0; display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 9.6em; padding: 1.2em 0 .6em; }
 /* a blade at each side: a drawing (see bladeSvg in bigscreen.js) with the words laid on its tabs. The right blade is the left one mirrored. */
-.bs-theme-xbox360 .bs-blade { position: relative; margin: -1.2em 0 -.6em; }
 .bs-theme-xbox360 .bl-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; filter: drop-shadow(.25em 0 .6em rgba(0, 45, 0, .4)); }
 .bs-theme-xbox360 .bs-bl-r .bl-svg { transform: scaleX(-1); filter: drop-shadow(-.25em 0 .6em rgba(0, 45, 0, .4)); }
 /* the middle: a glossy header, then the list and the preview */
@@ -150,3 +149,10 @@
 @keyframes bs-slide-r { from { transform: translateX(6%); opacity: .25; } }
 @keyframes bs-slide-l { from { transform: translateX(-6%); opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .bs-theme-xbox360 .bs-bl-main.slide-r, .bs-theme-xbox360 .bs-bl-main.slide-l { animation: none; } }
+
+/* the blades are drawn from the very top of the screen to the very bottom, so they have no end to see; the top bar only spans the middle */
+.bs-theme-xbox360 .bs-blade { position: fixed; top: 0; bottom: 0; width: 9.6em; margin: 0; z-index: 3; }
+.bs-theme-xbox360 .bs-bl-l { left: 0; }
+.bs-theme-xbox360 .bs-bl-r { right: 0; }
+.bs-theme-xbox360 .bs-bl-main { grid-column: 2; }
+.bs-theme-xbox360.bs-bl-on .bs-top { margin: 0 9.6em; }
