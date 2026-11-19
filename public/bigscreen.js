@@ -476,7 +476,7 @@ export function openBigScreen(host) {
     const m = bladeModel(), cats = $('#xm-cats');
     if (cats.dataset.at !== String(m.i0)) {
       cats.dataset.at = String(m.i0);
-      cats.innerHTML = m.sib.map((p, j) => { const d = j - m.i0, tag = d ? 'button type="button"' : 'div'; return `<${tag} class="xm-cat${d ? ' bs-bl-lab' : ' on'}" ${d ? `data-bi="${j}" ` : ''}style="left: calc(29% + ${d * XM_STEP}em)">${xmIcon(p)}${d ? '' : `<span>${esc(String(p.name).replace(/^sony\s+/i, ''))}</span>`}</${d ? 'button' : 'div'}>`; }).join('');
+      cats.innerHTML = m.sib.map((p, j) => { const d = j - m.i0, tag = d ? 'button type="button"' : 'div'; return `<${tag} class="xm-cat${d ? ' bs-bl-lab' : ' on'}" ${d ? `data-bi="${j}" ` : ''}style="left: calc(29% + ${d * XM_STEP}em)">${xmIcon(p)}${d || (p.logo_v && !p.logo_text) ? '' : `<span>${esc(String(p.name).replace(/^sony\s+/i, ''))}</span>`}</${d ? 'button' : 'div'}>`; }).join('');
     }
     const col = $('#xm-col'), n = st.games.length, lo = Math.max(0, st.gi - 2), hi = Math.min(n - 1, st.gi + 5);
     for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
