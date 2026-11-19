@@ -467,7 +467,7 @@ export function openBigScreen(host) {
   const xmY = (d) => (d === 0 ? 0 : d < 0 ? -16 + (d + 1) * 3.5 : 7.6 + (d - 1) * 3.5);   // em from the middle: the ones above sit over the icon row
   const xmArt = (g, on) => {
     const a = xmbArt(g, host.xmbArt?.() || 'auto');
-    if (!a) return on ? `<em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>` : `<span>${esc(g.title)}</span>`;
+    if (!a) return `<span>${esc(g.title)}</span>`;   // no picture of the chosen kind: the name stands in for it
     return `<img class="k-${a.kind}" src="${esc(a.src)}" alt="" draggable="false" onerror="this.remove()" />`;
   };
   const placeXmb = () => {

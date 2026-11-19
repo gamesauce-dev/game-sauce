@@ -226,3 +226,4 @@
 .bs-theme-ps3 .xm-vid:empty { display: none; }
 .bs-theme-ps3 .xm-vid.on { opacity: 1; }
 .bs-theme-ps3 .xm-vid video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bs-theme-ps3 .xm-item.on span { font-size: 1.25em; line-height: 1.2; -webkit-line-clamp: 4; text-shadow: 0 .05em .3em rgba(0, 0, 0, .4); }
