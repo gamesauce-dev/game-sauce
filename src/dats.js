@@ -26,7 +26,27 @@ for (const [name, ddl] of [
 // Which DAT entry or set a game matched: the DAT cards count these for every DAT, so without an index each count read the whole library once per entry.
 db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
 db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_set ON roms(dat_set_id)');
-db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
+
+/**
+ * A game's name with the region, language, revision and other bracketed tags taken off, lower case, no punctuation, "Halo 3 (USA) (En,Fr)" and
+ * "Halo 3.iso" both become "halo 3": the key a game is matched on by name (a console game whose file cannot be matched by checksum, such as an Xbox 360 Games on Demand package).
+ */
+export function normTitle(s) {
+  let t = String(s ?? '').replace(/\.(iso|zip|7z|rar|god|xex|bin|cue|chd|rvz|wbfs|nsp|xci|nds|3ds|gba|gbc|gb|sfc|smc|nes|z64|n64|v64|md|gen|gg|sms|a26|lnx)$/i, '');
+  t = t.replace(/[\(\[][^)\]]*[)\]]/g, ' ').toLowerCase();
+  t = t.replace(/^(.+?),\s*(the|a|an)\b(.*)$/, '$2 $1$3');   // "Legend of Zelda, The" is "the legend of zelda"
+  t = t.replace(/&/g, ' and ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return t;
+}
+if (!new Set(db.prepare('PRAGMA table_info(dat_entries)').all().map((c) => c.name)).has('norm')) db.exec('ALTER TABLE dat_entries ADD COLUMN norm TEXT');
+db.exec('CREATE INDEX IF NOT EXISTS idx_dat_norm ON dat_entries(platform_slug, norm)');
+{
+  const rows = db.prepare('SELECT id, title FROM dat_entries WHERE norm IS NULL').all();   // entries imported before names were matched
+  if (rows.length) {
+    const up = db.prepare('UPDATE dat_entries SET norm = ? WHERE id = ?');
+    db.transaction(() => { for (const r of rows) up.run(normTitle(r.title), r.id); })();
+  }
+}
 
 /* ─────────────────────────── import ─────────────────────────── */
 
@@ -136,8 +156,8 @@ export async function importDat({ filePath, platform = null, name = null, userId
 
   const insert = db.prepare(`
     INSERT INTO dat_entries
-      (datfile_id, platform_slug, title, rom_name, size, crc32, md5, sha1, status, cloneof)
-    VALUES (@datfile_id, @platform_slug, @title, @rom_name, @size, @crc32, @md5, @sha1, @status, @cloneof)
+      (datfile_id, platform_slug, title, rom_name, size, crc32, md5, sha1, status, cloneof, norm)
+    VALUES (@datfile_id, @platform_slug, @title, @rom_name, @size, @crc32, @md5, @sha1, @status, @cloneof, @norm)
   `);
 
   const insertSet = db.prepare('INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, status) VALUES (@datfile_id, @platform_slug, @set_name, @title, @cloneof, @status)');
@@ -155,7 +175,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
         skipped++;
         continue;
       }
-      insert.run({ ...row, platform_slug: slug, datfile_id: datfileId });
+      insert.run({ ...row, platform_slug: slug, datfile_id: datfileId, norm: normTitle(row.title) });
       inserted++;
     }
   });
@@ -226,7 +246,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
  * SHA1 first (unambiguous), then CRC32 + size (CRC32 alone collides across a big
  * enough library). Returns the best entry or null.
  */
-export function lookupDat({ sha1, crc32, size, platform, name = null }) {
+export function lookupDat({ sha1, crc32, size, platform, name = null, title = null, region = null }) {
   if (sha1) {
     const row = db.prepare(`
       SELECT * FROM dat_entries WHERE sha1 = ?
@@ -251,6 +271,22 @@ export function lookupDat({ sha1, crc32, size, platform, name = null }) {
     const set = db.prepare('SELECT * FROM dat_sets WHERE set_name = ? ORDER BY (platform_slug = ?) DESC, id LIMIT 1').get(String(name).toLowerCase(), platform);
     if (set) return { id: null, set_id: set.id, title: set.title, rom_name: null, status: set.status, cloneof: set.cloneof };
   }
+  // A console game that no checksum finds (a Games on Demand package, a folder, a re-ripped disc) is found by its name, with the region tags off.
+  // Only entries of the game's own platform count; of several regions, the game's own region first, then USA, Europe and World.
+  if (!ARCADE_ROMSET.has(platform)) {
+    for (const key of [normTitle(name), normTitle(title)]) {
+      if (!key) continue;
+      const rows = db.prepare('SELECT * FROM dat_entries WHERE platform_slug = ? AND norm = ? ORDER BY id LIMIT 40').all(platform || '', key);
+      if (!rows.length) continue;
+      const rank = (e) => {
+        const t = e.title.toLowerCase();
+        const own = region && t.includes(String(region).toLowerCase()) ? 0 : 1;
+        const pref = ['(usa', '(europe', '(world'].findIndex((r) => t.includes(r));
+        return own * 10 + (pref < 0 ? 5 : pref);
+      };
+      return { ...rows.sort((a, b) => rank(a) - rank(b))[0], by_name: true };
+    }
+  }
   return null;
 }
 
@@ -264,7 +300,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
   // The caller may pass a slim row (the scanner does); fill in the rest.
   if (rom.meta_source === undefined || rom.size_bytes === undefined || rom.filename === undefined) {
     const full = db.prepare(`
-      SELECT r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status, p.slug AS platform
+      SELECT r.title, r.region, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status, p.slug AS platform
       FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?
     `).get(rom.id);
     if (full) rom = { ...full, id: rom.id };
@@ -272,7 +308,8 @@ export function applyDatMatch(rom, { force = false } = {}) {
 
   const entry = lookupDat({
     sha1: rom.sha1, crc32: rom.crc32, size: rom.size_bytes, platform: rom.platform,
-    name: String(rom.filename || '').replace(/\.(zip|7z|rar)$/i, '')   // the file's own name, which a title never replaces
+    name: String(rom.filename || '').replace(/\.(zip|7z|rar)$/i, ''),   // the file's own name, which a title never replaces
+    title: rom.title, region: rom.region
   });
 
   if (!entry) {
@@ -301,7 +338,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
-    entry.status, entry.id, entry.set_id ?? null, entry.title,
+    entry.by_name ? 'named' : entry.status, entry.id, entry.set_id ?? null, entry.title,
     rename ? 1 : 0, entry.title,
     rename ? 1 : 0, sortTitle(entry.title),
     rename ? 1 : 0,
@@ -315,7 +352,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
 /** Re-match a whole library (or one platform). */
 export function rematchAll({ platform = null, force = false } = {}) {
   const rows = db.prepare(`
-    SELECT r.id, r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status,
+    SELECT r.id, r.title, r.region, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status,
            p.slug AS platform
     FROM roms r JOIN platforms p ON p.id = r.platform_id
     ${platform ? 'WHERE p.slug = ?' : ''}

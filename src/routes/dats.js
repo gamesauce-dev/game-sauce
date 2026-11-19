@@ -154,6 +154,23 @@ router.get('/:id/have-want', (req, res) => {
     return res.json({ datfile, want, total, limit, offset, items });
   }
 
+  // One line per game, whatever the region: "Halo 3 (USA)", "Halo 3 (Europe)" and "Halo 3 (Japan)" are one game, held if any of them is.
+  if (String(req.query.group || '') === 'game') {
+    const baseTitle = (t) => String(t).replace(/\s*[(\[][^)\]]*[)\]]/g, '').trim() || t;
+    const w = ['e.datfile_id = @datfile', "e.norm IS NOT NULL AND e.norm <> ''"], p = { datfile: id };
+    const haveNorms = 'e.norm IN (SELECT x.norm FROM dat_entries x JOIN roms r ON r.dat_entry_id = x.id WHERE x.datfile_id = @datfile)';
+    const games = db.prepare("SELECT COUNT(DISTINCT norm) AS n FROM dat_entries WHERE datfile_id = ? AND norm <> ''").get(id).n;
+    const gamesHave = db.prepare("SELECT COUNT(DISTINCT x.norm) AS n FROM dat_entries x JOIN roms r ON r.dat_entry_id = x.id WHERE x.datfile_id = ? AND x.norm <> ''").get(id).n;
+    if (want === 'missing') w.push('NOT ' + haveNorms); else if (want === 'have') w.push(haveNorms);
+    if (q) { w.push('instr(lower(e.title), lower(@q)) > 0'); p.q = q; }
+    const total = db.prepare(`SELECT COUNT(DISTINCT e.norm) AS n FROM dat_entries e WHERE ${w.join(' AND ')}`).get(p).n;
+    const items = db.prepare(`
+      SELECT MIN(e.id) AS id, MIN(e.title) AS title, e.norm, COUNT(*) AS releases, ${haveNorms} AS have
+      FROM dat_entries e WHERE ${w.join(' AND ')} GROUP BY e.norm ORDER BY e.norm LIMIT ${limit} OFFSET ${offset}
+    `).all(p).map((e) => ({ id: e.id, title: baseTitle(e.title), rom_name: null, releases: e.releases, have: Boolean(e.have) }));
+    return res.json({ datfile, want, group: 'game', games, games_have: gamesHave, total, limit, offset, items });
+  }
+
   const where = ['e.datfile_id = @datfile'];
   const params = { datfile: id };
   if (want === 'missing') where.push('NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_entry_id = e.id)');

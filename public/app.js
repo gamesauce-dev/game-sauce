@@ -2765,6 +2765,7 @@ function renderProviderForms(config, status = []) {
 
 const DAT_STATUS_META = {
   verified: { label: 'Verified', color: '#34d399' },
+  named: { label: 'Matched by name', color: '#38bdf8' },
   bad: { label: 'Bad dump', color: '#f87171' },
   variant: { label: 'Variant', color: '#fbbf24' },
   'not-in-dat': { label: 'Not in DAT', color: '#64748b' },
@@ -2793,7 +2794,7 @@ async function loadDats() {
 
   const total = coverage.total || 0;
   const counts = coverage.status || {};
-  const order = ['verified', 'variant', 'bad', 'not-in-dat', 'unchecked'];
+  const order = ['verified', 'named', 'variant', 'bad', 'not-in-dat', 'unchecked'];
 
   $('#dat-coverage').innerHTML = total ? `
     <div class="coverage-bar">
@@ -2859,7 +2860,7 @@ async function loadDats() {
  * Have/want: what one DAT lists vs what this library holds. Missing means the
  * DAT knows the dump but nothing in the library matched it.
  */
-const hwState = { datId: null, want: 'missing', q: '', offset: 0, total: 0 };
+const hwState = { datId: null, want: 'missing', q: '', offset: 0, total: 0, byGame: true };
 
 async function openHaveWant(datId) {
   hwState.datId = datId;
@@ -2883,9 +2884,11 @@ async function loadHaveWant(reset = false) {
     offset: String(hwState.offset)
   });
   if (hwState.q) params.set('q', hwState.q);
+  if (hwState.byGame) params.set('group', 'game');   // an arcade DAT is already one line per game, so the server ignores this there
 
   const data = await api(`/dats/${hwState.datId}/have-want?${params}`);
   hwState.total = data.total;
+  $('#hw-bygame-wrap').classList.toggle('hidden', data.datfile.sets > 0);
 
   const have = data.datfile.roms_matched || 0;
   const want = data.datfile.missing_count ?? Math.max(0, (data.datfile.entries || 0) - have);
@@ -2899,10 +2902,13 @@ async function loadHaveWant(reset = false) {
         ? '“Have” = DAT entries matched by a ROM in your library.'
         : 'Everything this DAT lists, flagged by whether you hold it.');
 
+  if (data.group === 'game') {
+    $('#hw-summary').textContent = `${data.games.toLocaleString()} games in DAT · ${data.games_have.toLocaleString()} have · ${(data.games - data.games_have).toLocaleString()} missing. A game counts once whatever its region, and is held if any release of it matched a game in your library.`;
+  }
   const items = data.items.map((e) => `
     <div class="result-row ${e.have ? 'ok' : 'err'}">
       <span class="status"></span>
-      <span class="name">${esc(e.title)}${e.rom_name && e.rom_name !== e.title ? ` <span class="note">(${esc(e.rom_name)})</span>` : ''}</span>
+      <span class="name">${esc(e.title)}${e.releases > 1 ? ` <span class="note">(${e.releases} releases)</span>` : ''}${e.rom_name && e.rom_name !== e.title ? ` <span class="note">(${esc(e.rom_name)})</span>` : ''}</span>
       <span class="note">${e.have ? 'have' : 'missing'}</span>
     </div>
   `).join('');
@@ -2932,6 +2938,7 @@ $$('#hw-tabs button').forEach((b) => b.addEventListener('click', () => {
   loadHaveWant(true);
 }));
 
+$('#hw-bygame').addEventListener('change', (e) => { hwState.byGame = e.target.checked; loadHaveWant(true); });
 $('#hw-more').addEventListener('click', () => loadHaveWant(false));
 $('#hw-close').addEventListener('click', () => $('#have-want').classList.add('hidden'));
 

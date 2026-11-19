@@ -260,7 +260,7 @@ POST   /api/dats                     { path }  or multipart field `dat` (+ optio
 DELETE /api/dats/:id
 POST   /api/dats/rematch             { platform?, force? }
 GET    /api/dats/:id/coverage
-GET    /api/dats/:id/have-want?want=missing|have|all&q=&limit=&offset=
+GET    /api/dats/:id/have-want?want=missing|have|all&group=game&q=&limit=&offset=
 GET    /api/roms?dat_status=verified|bad|variant|not-in-dat
 GET    /api/roms?orphan=only                      rows with no valid source (hidden included)
 GET    /api/roms?hidden=only|all                 default hides hidden rows

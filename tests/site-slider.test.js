@@ -12,7 +12,7 @@ test('the website hero is a slider: each slide has a picture, a title and a link
   let clips = 0;
   for (const [, attrs, body, target, label] of slides) {
     assert.ok(html.includes(`id="${target}"`), `the section #${target} exists`);
-    const img = /<img src="(img\/[^"]+)"[^>]*alt="([^"]+)"/.exec(body), clip = /<video class="slide-video"[^>]*poster="(img\/[^"]+)"[^>]*aria-label="[^"]+"><source src="(video\/[^"]+)"/.exec(body);
+    const img = /<img (?:data-)?src="(img\/[^"]+)"[^>]*alt="([^"]+)"/.exec(body), clip = /<video class="slide-video"[^>]*(?:data-)?poster="(img\/[^"]+)"[^>]*aria-label="[^"]+"><source src="(video\/[^"]+)"/.exec(body);
     assert.ok(img || clip, 'a picture or a clip');
     for (const file of img ? [img[1]] : [clip[1], clip[2]]) assert.ok(fs.existsSync(new URL('../site/' + file, import.meta.url)), 'the file exists: ' + file);
     if (clip) { clips++; assert.ok(Number(/data-seconds="(\d+)"/.exec(attrs)?.[1]) >= 6, 'a clip slide says how long it stays'); }
