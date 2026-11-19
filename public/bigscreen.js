@@ -462,7 +462,7 @@ export function openBigScreen(host) {
   const xmIcon = (p) => (p.logo_v && !p.logo_text
     ? `<img class="xm-logo" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" draggable="false" />`
     : `<svg viewBox="0 0 48 48" aria-hidden="true">${XM_GLYPH[p.slug] || XM_GLYPH.ps3}</svg>`);
-  const xmbShell = () => `<div class="bs-xm" id="bs-xm"><div class="xm-clock" id="xm-clock"></div><nav class="xm-cats" id="xm-cats" aria-label="Platforms"></nav><div class="xm-col" id="xm-col" role="listbox" aria-label="Games"></div><div class="xm-info" id="xm-info"></div></div>`;
+  const xmbShell = () => `<div class="bs-xm" id="bs-xm"><div class="xm-clock" id="xm-clock"></div><nav class="xm-cats" id="xm-cats" aria-label="Platforms"></nav><div class="xm-col" id="xm-col" role="listbox" aria-label="Games"></div><div class="xm-info" id="xm-info"></div><div class="xm-vid" id="xm-vid" aria-hidden="true"></div></div>`;
   const XM_STEP = 8.4;   // em between the icons of the row
   const xmY = (d) => (d === 0 ? 0 : d < 0 ? -16 + (d + 1) * 3.5 : 7.6 + (d - 1) * 3.5);   // em from the middle: the ones above sit over the icon row
   const xmArt = (g, on) => {
@@ -491,6 +491,14 @@ export function openBigScreen(host) {
     const g = game(), plat = st.plats.find((p) => p.slug === g.platform), sub = [g.release_year, g.publisher || g.developer].filter(Boolean).join('  ·  ');
     $('#xm-info').innerHTML = `<b>${esc(g.title)}${g.broken ? ' <em class="xm-flag">Issues</em>' : ''}</b><small>${esc(sub)}</small><small>${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}</small><i class="xm-badge">${esc(plat?.short_name || g.platform_name || '')}</i>`;
     root.style.setProperty('--ac', gameAccent(g));
+    // a game with a video plays it beside the picture once the highlight has rested a moment (without sound: the list is for browsing)
+    const box = $('#xm-vid'); clearTimeout(st.vidT); box.classList.remove('on'); box.textContent = '';
+    if (g.has_video) st.vidT = setTimeout(() => {
+      if (!root || !xmb() || st.screen !== 'games' || game() !== g) return;
+      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}`;
+      v.addEventListener('playing', () => box.classList.add('on')); v.addEventListener('error', () => v.remove());
+      box.appendChild(v); v.play?.().catch(() => v.remove());
+    }, 700);
   };
   const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : placeWheel());
   const placeWheel = () => {

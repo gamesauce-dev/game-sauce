@@ -99,3 +99,8 @@ test('the cross bar picks the best picture a game has, or the kind the person ch
   assert.equal(xmbArt(g, 'box').src, '/c.jpg'); assert.equal(xmbArt(g, 'screenshot').kind, 'shot');
   assert.ok(read('public/app.js').includes("xmbArt: () => state.prefs?.bs_xmb_art") && read('public/index.html').includes('id="bsxmart-picker"'));
 });
+
+test('the cross bar plays the video of a game beside its picture once the highlight rests', () => {
+  const js = read('public/bigscreen.js'), css = read('public/bs-themes.css');
+  assert.ok(js.includes('id="xm-vid"') && js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes("const box = $('#xm-vid')") && css.includes('.bs-theme-ps3 .xm-vid.on'));
+});
