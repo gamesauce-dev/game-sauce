@@ -824,3 +824,9 @@ test('WebKit (Mac and Linux): native controls follow the look, the Digital tiles
   assert.match(ph, /\.ph-row \{[^}]*background: #07080b;/, 'a flat dark back panel');
   assert.doesNotMatch(ph.slice(ph.indexOf('.ph-row {'), ph.indexOf('.ph-books {')), /gradient/, 'no gradients on the shelf back (they band on some screens)');
 });
+
+test('Modern: the Select icon lights up when it is on but is never filled in, like the main-menu icons', () => {
+  const css = read('public/modern.css');
+  assert.ok(css.includes('body.ui-modern .mb-btn#tl-select.is-on svg path[stroke] { fill: none; }'), 'Select stays an outline');
+  assert.ok(css.includes('body.ui-modern .mb-navbtn.is-on svg path[stroke] { fill: none; }'), 'and so do the main-menu icons');
+});

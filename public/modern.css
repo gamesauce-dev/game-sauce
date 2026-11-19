@@ -637,6 +637,7 @@ body.ui-modern [data-mi="favourite"].is-on::before, body.ui-modern .ibtn.fav.is-
 body.ui-modern .mb-btn.is-on svg path[stroke] { fill: currentColor; }
 body.ui-modern .ph-manual-box .ibtn > svg { display: none; }   /* the Modern icon set draws the manual buttons; the drawn icons are for Classic */
 body.ui-modern .mb-navbtn.is-on svg path[stroke] { fill: none; }   /* no main-menu icon fills in when it is selected: they stay outlines */
+body.ui-modern .mb-btn#tl-select.is-on svg path[stroke] { fill: none; }   /* Select stays an outline when it is on: it lights up, it does not fill */
 body.ui-modern .chip:has(> .chip-logo-img) { padding: 0 0.55rem; }   /* a platform button shown as its logo */
 /* The same in the Library's chip rows: a logo button has no box, and the logo glows when picked. */
 html body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img) { background: transparent; border-color: transparent; box-shadow: none; }

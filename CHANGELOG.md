@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Fixed
+- **The Select icon in the Modern top bar no longer fills in** when it is switched on. It lights up and stays an outline, like the main-menu icons.
 - **A MAME DAT now matches your arcade games.** A DAT lists the chips inside each machine, so the checksum of a zip such as `pacman.zip` never equals anything in it, and none of your arcade games matched. A DAT is now also kept by machine name (one entry per machine, even a clone whose chips are shared with its parent), and an arcade game (MAME, Neo Geo, CPS, Naomi, Atomiswave, FBNeo, Arcade, Coin-op) is matched by its own file name, whatever title it has been given since: it shows as verified, and a game titled from its file name takes the DAT's name while one named from a names list or a CSV keeps its title. The import message now says how many sets were kept. A MAME `-listxml` file counts as a DAT too: importing it (it is still used for the names) now also keeps its machines as the sets of a DAT called "MAME (-listxml)" and matches your arcade games on them at once, and a newer file replaces the older one. The DAT card counts these matches, and its Have/want lists the games of an arcade DAT one row per game. **A DAT imported before needs importing again** (delete it on the DAT page first, then import it), since its sets were not stored then; after that, Rematch matches them.
 
 ### Changed
