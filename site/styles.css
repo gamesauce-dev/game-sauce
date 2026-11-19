@@ -414,6 +414,6 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .eye { transform-box: fill-box; transform-origin: center; animation: eye-blink 4.2s ease-in-out infinite; }
 @keyframes eye-blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.08); } }
 .eye .pupil { animation: eye-look 4.2s ease-in-out infinite; }
-@keyframes eye-look { 0%, 20% { transform: translateX(0); } 35%, 55% { transform: translateX(-6px); } 70%, 85% { transform: translateX(6px); } 100% { transform: translateX(0); } }
+@keyframes eye-look { 0%, 20% { transform: translateX(0); } 35%, 55% { transform: translateX(-3px); } 70%, 85% { transform: translateX(3px); } 100% { transform: translateX(0); } }
 @media (max-width: 620px) { .tile.w2:not(.h2).i-scan .ico:not(.ico3) { left: 12px; width: 34px; height: 34px; } .tile.w2:not(.h2) .ico3 { width: 34px; height: 34px; } .tile.w2:not(.h2) .ico3.e1 { left: 54px; } .tile.w2:not(.h2) .ico3.e2 { left: 96px; } .tile.w2:not(.h2) .ico3.e3 { left: 138px; } }
 @media (prefers-reduced-motion: reduce) { .x-disc, .eye, .eye .pupil { animation: none !important; } }
