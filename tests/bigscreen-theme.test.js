@@ -57,7 +57,11 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
-  assert.ok(js.includes("bladeSvg(true)") && js.includes("bladeSvg(false)") && js.includes('preserveAspectRatio="none"') && !js.includes("bs-tab"), "the blades are a drawing, with no tabs or words on them yet");
+  assert.ok(js.includes("bladeSvg(true, m.left)") && js.includes("bladeSvg(false, m.right)") && js.includes('preserveAspectRatio="none"') && !js.includes("bs-tab"), "the blades are a drawing of stacked bands");
+  // the blades lead somewhere: the Xbox platforms in order, with left and right changing blade; a band with no platform has no words
+  assert.ok(js.includes("THEME_CONSOLES.xbox360.has(p.slug)") && js.includes("const switchBlade = (to)") && js.includes("enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t })"));
+  assert.ok(js.includes("if (blades() && (a === 'left' || a === 'right'))") && js.includes("switchBlade(m.i0 + (a === 'left' ? -1 : 1))") && js.includes("e.target.closest('.bs-bl-lab')"));
+  assert.ok(js.includes("b?.p && !b.cur") && css.includes('.bs-theme-xbox360 .bs-bl-lab'), 'only a band that leads somewhere has words');
   // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
   assert.ok(js.includes("<i data-k=\"${b}\">${b}</i>") && js.includes("btn('Y', 'Play on this PC')") && js.includes("btn('A', 'Open', true)") && js.includes("root.classList.add('bs-bl-on')"));
   assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && js.includes('class="bs-bl-art"'));

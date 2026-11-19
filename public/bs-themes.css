@@ -132,3 +132,11 @@
 /* the buttons are staggered, as on the dashboard: the top one sits a little further in than the one below it */
 .bs-theme-xbox360 .bs-xbl .bs-xb:first-child { margin-left: 1.5em; }
 .bs-theme-xbox360 .bs-xbr .bs-xb:first-child { margin-right: 1.5em; }
+
+/* the words on a band that leads to another platform (the others have none) */
+.bs-theme-xbox360 .bs-bl-lab { position: absolute; top: 40%; writing-mode: vertical-rl; white-space: nowrap; font-size: 1.15em; font-weight: 600; letter-spacing: .02em; line-height: 1; cursor: pointer; }
+.bs-theme-xbox360 .bs-bl-l .bs-bl-lab { transform: translate(-50%, -50%) rotate(180deg); }
+.bs-theme-xbox360 .bs-bl-r .bs-bl-lab { transform: translate(50%, -50%); }
+.bs-theme-xbox360 .bs-bl-lab.d0, .bs-theme-xbox360 .bs-bl-lab.d1 { color: #eef1ea; text-shadow: 0 .05em .2em rgba(0, 0, 0, .45); }
+.bs-theme-xbox360 .bs-bl-lab.d2 { color: #454d44; text-shadow: 0 .05em 0 rgba(255, 255, 255, .5); }
+.bs-theme-xbox360 .bs-bl-lab:hover { filter: brightness(1.25); }

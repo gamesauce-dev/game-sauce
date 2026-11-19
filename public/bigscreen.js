@@ -283,28 +283,45 @@ export function openBigScreen(host) {
   const srcSlug = () => (st.src?.kind === 'platform' ? st.src.slug : null);
   const blades = () => root.classList.contains('bs-theme-xbox360');
   const logoImg = (p, cls) => (p?.logo_v ? `<img class="${cls}${plated(p)}" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.alt}))" />` : '');
-  // The blades are a drawing: curved bands whose inner edge bulges gently toward the middle of the screen and a pale rim. The right blade is the left one mirrored in CSS. (Tabs with words on them can be added to the drawing later.)
-  const bladeSvg = (left) => `<svg class="bl-svg" viewBox="0 0 120 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><defs>
-    <linearGradient id="bd${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#5d635c"/><stop offset="1" stop-color="#b9beb6"/></linearGradient>
-    <linearGradient id="bm${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#8e948c"/><stop offset=".55" stop-color="#c7cbc4"/><stop offset="1" stop-color="#e9ebe6"/></linearGradient>
-    <linearGradient id="bv${left ? 'L' : 'R'}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
-    <linearGradient id="bt${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#fafbf8"/><stop offset="1" stop-color="#bfc5bc"/></linearGradient>
-    <linearGradient id="bg${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#b9f070"/><stop offset=".35" stop-color="#6cbc2a"/><stop offset="1" stop-color="#5fb324"/></linearGradient></defs>
-    <path d="M0,0 H38 C38,190 46,330 46,500 C46,670 38,810 38,1000 H0 Z" fill="url(#bd${left ? 'L' : 'R'})"/>
-    <path d="M24,0 H82 C82,170 92,330 92,500 C92,670 82,830 82,1000 H24 Z" fill="url(#bm${left ? 'L' : 'R'})"/>
-    <path d="M24,0 H82 C82,170 92,330 92,500 C92,670 82,830 82,1000 H24 Z" fill="url(#bv${left ? 'L' : 'R'})"/>
-    <path d="M87,0 C87,172 97,328 97,500 C97,672 87,828 87,1000" fill="none" stroke="#f6f8f3" stroke-width="6" opacity=".95"/>
-    <path d="M90.5,0 C90.5,172 100.5,328 100.5,500 C100.5,672 90.5,828 90.5,1000" fill="none" stroke="#7c847a" stroke-opacity=".45" stroke-width="1.2"/>
-    </svg>`;
+  // The blades are the Xbox platforms in order (Xbox, Xbox 360, Xbox Live Arcade, Xbox One, Series): the current one on the left, joined to the green, the ones before it beside it, the ones after it on the right.
+  // Left and right on the controller (or the stick) change blade, as on the dashboard. A band with no platform is only decoration and has no words.
+  const bladeModel = () => {
+    const sib = st.plats.filter((p) => THEME_CONSOLES.xbox360.has(p.slug)).sort((a, b) => (a.generation || 99) - (b.generation || 99) || String(a.name).localeCompare(b.name));
+    const i0 = sib.findIndex((p) => p.slug === st.src?.slug);
+    const pad = (arr, n, front) => (front ? [...Array(Math.max(0, n - arr.length)).fill(null), ...arr] : [...arr, ...Array(Math.max(0, n - arr.length)).fill(null)]);
+    if (i0 < 0) return { sib, i0, left: [null, null, { cur: true }], right: [null, null, null] };
+    const prev = sib.slice(Math.max(0, i0 - 2), i0).map((p, k, a) => ({ p, i: i0 - a.length + k }));
+    const next = sib.slice(i0 + 1, i0 + 4).map((p, k) => ({ p, i: i0 + 1 + k }));
+    return { sib, i0, left: [...pad(prev, 2, true), { cur: true, p: sib[i0], i: i0 }], right: pad(next, 3, false) };   // left: outermost first; right: nearest the middle first
+  };
+  const switchBlade = (to) => { const t = bladeModel().sib[to]; if (!t) { sfx('error'); return; } enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
+  // A drawing of slim sheets laid over each other (the outermost first, each a little lighter), their ends cut at an angle. The right blade is the left one mirrored in CSS.
+  const SHEET = ['#4f554e,#868d84', '#6a7168,#a6ada3', '#868d84,#c6cac2'];
+  const bladeSvg = (left, bands) => {
+    const id = left ? 'L' : 'R', draw = left ? bands : [...bands].reverse();   // draw[d]: d = 0 the outermost sheet
+    let svg = `<svg class="bl-svg" viewBox="0 0 120 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><defs>
+      <linearGradient id="bv${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset=".2" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+      <linearGradient id="bg${id}" x1="0" x2="1"><stop offset="0" stop-color="#b9f070"/><stop offset=".3" stop-color="#6cbc2a"/><stop offset="1" stop-color="#5fb324"/></linearGradient>
+      ${SHEET.map((c, d) => `<linearGradient id="bs${id}${d}" x1="0" x2="1"><stop offset="0" stop-color="${c.split(',')[0]}"/><stop offset="1" stop-color="${c.split(',')[1]}"/></linearGradient>`).join('')}</defs>`;
+    draw.forEach((b, d) => {
+      const L = d * 28, R = b?.cur ? 120 : L + 40, fill = b?.cur ? `url(#bg${id})` : `url(#bs${id}${d})`;
+      const path = `M${L},10 L${L + 12},0 H${R} V1000 H${L + 12} L${L},990 Z`;
+      svg += `<path d="${path}" fill="${fill}"/>${b?.cur ? '' : `<path d="${path}" fill="url(#bv${id})"/>`}<path d="M${L},10 V990" stroke="#fff" stroke-opacity=".4" stroke-width="1.4" fill="none"/>`;
+    });
+    return svg + '</svg>';
+  };
+  // the words on a band that leads somewhere (a platform the current one can be swapped for); the others have none
+  const bladeLabels = (left, bands) => (left ? bands : [...bands].reverse()).map((b, d) => (b?.p && !b.cur
+    ? `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${((d * 28 + 20) / 120 * 100).toFixed(1)}%">${esc(String(b.p.name).replace(/^microsoft\s+/i, '').toLowerCase())}</span>` : '')).join('');
   const bladesShell = () => {
-    const src = st.src || {};
+    const src = st.src || {}, m = bladeModel();
     const btn = (k, label, right) => `<span class="bs-xb${right ? ' r' : ''}">${right ? `${label}<i data-k="${k}">${k}</i>` : `<i data-k="${k}">${k}</i>${label}`}</span>`;
     return `<div class="bs-bl" id="bs-bl">
-    <aside class="bs-blade bs-bl-l" aria-hidden="true">${bladeSvg(true)}</aside>
+    <aside class="bs-blade bs-bl-l">${bladeSvg(true, m.left)}${bladeLabels(true, m.left)}</aside>
     <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
       <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div>
-      <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm"><span><u>LB RB</u> Jump by letter</span><span><u>Select + Start</u> Hold in a game to close it</span></span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
-    <aside class="bs-blade bs-bl-r" aria-hidden="true">${bladeSvg(false)}</aside></div><div class="bs-pos" id="bs-pos"></div>`;
+      <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm">${m.sib.length > 1 ? '<span><u>◀ ▶</u> Change blade</span>' : ''}<span><u>LB RB</u> Jump by letter</span><span><u>Select + Start</u> Hold in a game to close it</span></span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
+    <aside class="bs-blade bs-bl-r">${bladeSvg(false, m.right)}${bladeLabels(false, m.right)}</aside></div><div class="bs-pos" id="bs-pos"></div>`;
   };
   const BL_ROWS = 6;
   const placeBlades = () => {
@@ -632,7 +649,8 @@ export function openBigScreen(host) {
       }
       else if (a === 'back') { if (st.level === 1) { const wasColls = st.sub === 'colls', k = wasColls ? extraItems().findIndex((f) => f.kind === 'colls') : families().findIndex((f) => f.name === st.fam); st.level = 0; st.sub = null; st.fam = null; st.row = wasColls ? 1 : 0; st.pi = Math.max(0, k); drawPlatforms(); } else if (!host.kiosk) close(); }
     } else if (s === 'games') {
-      if (a === 'up' || a === 'left') goGame(st.gi - (a === 'left' ? 10 : 1)); else if (a === 'down' || a === 'right') goGame(st.gi + (a === 'right' ? 10 : 1));
+      if (blades() && (a === 'left' || a === 'right')) { const m = bladeModel(); if (m.i0 >= 0) switchBlade(m.i0 + (a === 'left' ? -1 : 1)); }   // in the Blades look left and right change blade, as on the dashboard
+      else if (a === 'up' || a === 'left') goGame(st.gi - (a === 'left' ? 10 : 1)); else if (a === 'down' || a === 'right') goGame(st.gi + (a === 'right' ? 10 : 1));
       else if (a === 'prev-family') jumpLetter(-1); else if (a === 'next-family') jumpLetter(1);
       else if (a === 'select') drawGame();
       else if (a === 'back') leaveGames();
@@ -664,6 +682,7 @@ export function openBigScreen(host) {
     if (e.target.closest('#bs-snd')) { toggleSound(); return; }
     const t = e.target.closest('.bs-ptile'); if (t && st.screen === 'platforms') { const i = Number(t.dataset.i), r = Number(t.dataset.r || 0); if (st.level === 0 && r !== st.row) { switchRow(r); focusPlatform(i); return; } if (i === st.pi) act('select'); else focusPlatform(i); return; }
     const az = e.target.closest('#bs-az button[data-l]'); if (az && st.screen === 'games') { if (st.az?.has(az.dataset.l)) goGame(st.az.get(az.dataset.l)); return; }   // the A-Z rail: straight to that letter
+    const bl = e.target.closest('.bs-bl-lab'); if (bl && st.screen === 'games') { switchBlade(Number(bl.dataset.bi)); return; }
     const r = e.target.closest('.bs-row, .bs-bl-row'); if (r && st.screen === 'games') { const i = Number(r.dataset.i); if (i === st.gi) act('select'); else goGame(i); return; }
     const m = e.target.closest('.bs-mi[data-k]'); if (m && st.screen === 'game') { st.mi = [...m.parentElement.querySelectorAll('.bs-mi')].indexOf(m); paintMenu(); runMenu(m.dataset.k); return; }
     const c = e.target.closest('.bs-pi'); if (c && st.screen === 'pick') { st.pk.i = Number(c.dataset.ci); pickChoose(); return; }
