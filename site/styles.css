@@ -378,3 +378,5 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .tile .mock .cd { animation: cd-wave 2.4s ease-in-out infinite; }
 .tile .mock .fan > g:nth-child(2) .cd { animation-delay: -.4s; } .tile .mock .fan > g:nth-child(3) .cd { animation-delay: -.8s; } .tile .mock .fan > g:nth-child(4) .cd { animation-delay: -1.2s; } .tile .mock .fan > g:nth-child(5) .cd { animation-delay: -1.6s; }
 @keyframes cd-wave { 50% { transform: translateY(-9px); } }
+/* an italic word play in a title ("control-ler") stands out in the tile's colour */
+.tile h3 i { font-style: italic; color: var(--c); letter-spacing: .02em; text-shadow: 0 0 6px var(--c), 0 0 16px hsl(var(--h) 95% 60%); }
