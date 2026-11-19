@@ -372,3 +372,9 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 @keyframes ghost-patrol { 0% { left: 12px; transform: scaleX(1); } 49.9% { left: calc(100% - 50px); transform: scaleX(1); } 50% { left: calc(100% - 50px); transform: scaleX(-1); } 99.9% { left: 12px; transform: scaleX(-1); } 100% { left: 12px; transform: scaleX(1); } }
 @keyframes ghost-bob { 50% { translate: 0 -5px; } }
 @media (prefers-reduced-motion: reduce) { .tile .px.px-ghost { animation: none !important; } }
+/* the fan of cards on the carousel tile: a wave runs through them and the fan sways */
+.tile .mock .fan { transform-origin: 110px 152px; transform-box: view-box; animation: fan-sway 6s ease-in-out infinite alternate; }
+@keyframes fan-sway { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+.tile .mock .cd { animation: cd-wave 2.4s ease-in-out infinite; }
+.tile .mock .fan > g:nth-child(2) .cd { animation-delay: -.4s; } .tile .mock .fan > g:nth-child(3) .cd { animation-delay: -.8s; } .tile .mock .fan > g:nth-child(4) .cd { animation-delay: -1.2s; } .tile .mock .fan > g:nth-child(5) .cd { animation-delay: -1.6s; }
+@keyframes cd-wave { 50% { transform: translateY(-9px); } }
