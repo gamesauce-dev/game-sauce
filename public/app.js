@@ -389,7 +389,7 @@ document.addEventListener('click', async (e) => {
 const startsInBigScreen = () => (state.prefs?.bs_start ? state.prefs.bs_start === 'on' : Boolean(authState.user?.play_only && !authState.user?.previewing));
 async function openBigScreenView(kiosk = false) {
   if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
-  bigscreen.openBigScreen({ api, toast, theme: () => state.prefs?.bs_theme || '', xmbColour: () => state.prefs?.bs_xmb_colour || 'month', plateAll: () => state.prefs?.chip_plate === 'on', platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
+  bigscreen.openBigScreen({ api, toast, theme: () => state.prefs?.bs_theme || '', xmbColour: () => state.prefs?.bs_xmb_colour || 'month', xmbArt: () => state.prefs?.bs_xmb_art || 'auto', plateAll: () => state.prefs?.chip_plate === 'on', platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#open-bigscreen')) return;
@@ -4049,6 +4049,19 @@ function initProfilePanel() {
       try { await api('/prefs/bs_theme', { method: 'PUT', body: JSON.stringify({ value: v || null }) }); } catch (err) { return toast(err.message, true); }
       state.prefs = { ...(state.prefs || {}) }; if (v) state.prefs.bs_theme = v; else delete state.prefs.bs_theme;
       paintBs();
+    };
+  }
+  // The pictures of the PlayStation 3 look: the best a game has (a clear logo, a screenshot, the box), or one kind only.
+  const xmArtBox = $('#bsxmart-picker');
+  if (xmArtBox) {
+    const XA = [['auto', 'Best available', 'a clear logo, else a screenshot, else the box'], ['logo', 'Clear logos', 'the name in text when a game has none'], ['screenshot', 'Screenshots', 'then the box'], ['box', 'Box art', 'as before']];
+    const paintXa = () => { const now = state.prefs?.bs_xmb_art || 'auto'; xmArtBox.innerHTML = XA.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-xma="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    paintXa();
+    xmArtBox.onclick = async (ev) => {
+      const b = ev.target.closest('[data-xma]'); if (!b) return; const v = b.dataset.xma;
+      try { await api('/prefs/bs_xmb_art', { method: 'PUT', body: JSON.stringify({ value: v === 'auto' ? null : v }) }); } catch (err) { return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}) }; if (v === 'auto') delete state.prefs.bs_xmb_art; else state.prefs.bs_xmb_art = v;
+      paintXa();
     };
   }
   // The colour of the PlayStation 3 look: it follows the month (as the console did) unless one is chosen.

@@ -216,3 +216,8 @@
 .bs-theme-ps3 .bs-xm.nudge-r { animation: bs-nudge-r .24s ease-out; }
 .bs-theme-ps3 .bs-xm.nudge-l { animation: bs-nudge-l .24s ease-out; }
 @media (prefers-reduced-motion: reduce) { .bs-theme-ps3 .xm-item, .bs-theme-ps3 .xm-cat { transition: none; } .bs-theme-ps3 .bs-xm.slide-r, .bs-theme-ps3 .bs-xm.slide-l, .bs-theme-ps3 .bs-xm.nudge-r, .bs-theme-ps3 .bs-xm.nudge-l { animation: none; } }
+.bs-theme-ps3 .xm-item[data-k="logo"], .bs-theme-ps3 .xm-item[data-k="none"] { background: none; }
+.bs-theme-ps3 .xm-item img.k-logo { object-fit: contain; object-position: 50% 50%; filter: drop-shadow(0 .1em .3em rgba(0, 0, 0, .35)); }
+.bs-theme-ps3 .xm-item img.k-box { object-fit: contain; }
+.bs-theme-ps3 .xm-item span { padding: 0 .4em; text-align: center; font-size: .8em; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.bs-theme-ps3 .xm-item.on img.k-shot { object-fit: cover; }

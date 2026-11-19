@@ -88,3 +88,14 @@ test('the PlayStation 3 look: a cross bar of platforms with the games in a colum
   assert.ok(css.includes('.bs-theme-ps3 .xm-cat') && css.includes('.bs-theme-ps3 .xm-item.on') && css.includes('.bs-theme-ps3 .xm-clock'));
   assert.ok(app.includes("['ps3', 'PlayStation 3'") && app.includes("xmbColour: () => state.prefs?.bs_xmb_colour") && html.includes('id="bsxmb-picker"'));
 });
+
+test('the cross bar picks the best picture a game has, or the kind the person chose', async () => {
+  const { xmbArt } = await import('../public/bigscreen.js');
+  const g = { id: 7, cover_url: '/c.jpg', logo_url: '/l.png', media: { screenshot: true } };
+  assert.deepEqual(xmbArt(g), { src: '/l.png', kind: 'logo' }, 'a clear logo first');
+  assert.deepEqual(xmbArt({ ...g, logo_url: '' }), { src: '/api/roms/7/media/screenshot', kind: 'shot' }, 'then a screenshot');
+  assert.deepEqual(xmbArt({ id: 7, cover_url: '/c.jpg' }), { src: '/c.jpg', kind: 'box' }, 'then the box');
+  assert.equal(xmbArt({ id: 7, cover_url: '/c.jpg' }, 'logo'), null, 'logos only: none, the name shows');
+  assert.equal(xmbArt(g, 'box').src, '/c.jpg'); assert.equal(xmbArt(g, 'screenshot').kind, 'shot');
+  assert.ok(read('public/app.js').includes("xmbArt: () => state.prefs?.bs_xmb_art") && read('public/index.html').includes('id="bsxmart-picker"'));
+});

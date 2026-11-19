@@ -27,6 +27,14 @@ export const gameMarquee = (g) => g?.marquee_url || (g?.media?.marquee ? `/api/r
 /** What the wheel shows for a game: its logo (a clear logo looks best), else its marquee (a banner), else the cover. Your own pictures from your folders come first, then fetched ones. */
 export const wheelArt = (g) => (g?.art_from?.logo === 'folder' && g.logo_url) || (g?.art_from?.marquee === 'folder' && g.marquee_url) || g?.logo_url || g?.marquee_url || gameLogo(g) || gameMarquee(g);
 
+/** The picture of a game in the PlayStation 3 cross bar. Best available (the default): a clear logo, else a marquee, a screenshot, then the box. Or only logos, only screenshots, only the box. null when it has none. */
+export const xmbArt = (g, mode = 'auto') => {
+  const logo = wheelArt(g), shot = g?.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '', box = g?.cover_url || '';
+  const order = mode === 'logo' ? [[logo, 'logo']] : mode === 'screenshot' ? [[shot, 'shot'], [gameBackdrop(g), 'shot'], [box, 'box']] : mode === 'box' ? [[box, 'box']] : [[logo, 'logo'], [shot, 'shot'], [box, 'box']];
+  const hit = order.find(([u]) => u);
+  return hit ? { src: hit[0], kind: hit[1] } : null;
+};
+
 /** The picture behind a game: its own background art (imported, or a ScreenScraper match's fan art), else a screenshot; null when it has neither (the cover is blurred instead). */
 export const gameBackdrop = (g) => g?.backdrop_url || (g?.media?.fanart ? `/api/roms/${g.id}/media/fanart` : g?.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '');
 
@@ -458,8 +466,9 @@ export function openBigScreen(host) {
   const XM_STEP = 8.4;   // em between the icons of the row
   const xmY = (d) => (d === 0 ? 0 : d < 0 ? -16 + (d + 1) * 3.5 : 7.6 + (d - 1) * 3.5);   // em from the middle: the ones above sit over the icon row
   const xmArt = (g, on) => {
-    const src = on ? (wheelArt(g) || g.cover_url) : g.cover_url;
-    return src ? `<img src="${esc(src)}" alt="" draggable="false" onerror="this.remove()" />` : `<em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>`;
+    const a = xmbArt(g, host.xmbArt?.() || 'auto');
+    if (!a) return on ? `<em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>` : `<span>${esc(g.title)}</span>`;
+    return `<img class="k-${a.kind}" src="${esc(a.src)}" alt="" draggable="false" onerror="this.remove()" />`;
   };
   const placeXmb = () => {
     if (!$('#bs-xm')) return;
@@ -475,7 +484,7 @@ export function openBigScreen(host) {
       const g = st.games[i], d = i - st.gi, on = d === 0;
       let el = st.els.get(i);
       if (!el) { el = document.createElement('div'); el.className = 'xm-item bs-bl-row'; el.dataset.i = i; el.setAttribute('role', 'option'); col.appendChild(el); st.els.set(i, el); }
-      if (el.dataset.on !== String(on)) { el.dataset.on = String(on); el.innerHTML = xmArt(g, on); }
+      if (el.dataset.on !== String(on)) { el.dataset.on = String(on); el.innerHTML = xmArt(g, on); el.dataset.k = el.querySelector('img')?.className.slice(2) || 'none'; }
       el.classList.toggle('on', on); el.setAttribute('aria-selected', String(on));
       el.style.transform = `translate(-50%, calc(-50% + ${xmY(d)}em))`; el.style.opacity = on ? 1 : String(Math.max(0.3, d < 0 ? 0.85 : 0.9 - (d - 1) * 0.13));
     }
