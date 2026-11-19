@@ -225,7 +225,7 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .tile:hover { transform: rotate(0) translateY(-4px) scale(1.02); border-color: hsl(var(--h) 80% 60%); box-shadow: 0 18px 40px rgba(0, 0, 0, .5), 0 0 28px hsl(var(--h) 85% 55% / .25); z-index: 2; }
 .tile .ico { position: absolute; right: 12px; top: 9px; width: 34px; height: 34px; color: var(--c); filter: drop-shadow(0 0 10px hsl(var(--h) 90% 60% / .55)); opacity: .95; }
 .tile.h2 .ico { width: 84px; height: 84px; right: 16px; top: 16px; }
-.tile.w2.h2 .ico { width: 150px; height: 150px; right: 34px; top: 18px; opacity: .9; }
+
 .tile.w2:not(.h2) .ico { width: 60px; height: 60px; }
 .tile h3 { margin: 0; font-size: 1.12rem; line-height: 1.2; letter-spacing: -.01em; }
 .tile.w2.h2 h3 { font-size: 1.5rem; }
@@ -286,9 +286,81 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .tile .ico2 { right: 56px; opacity: .85; }
 .tile .pxt-x { }
 @media (max-width: 620px) { .tile .ico2 { right: 48px; } }
-/* the cluster of things around the big picture tile */
-.tile.w2.h2 .ico3 { width: 74px; height: 74px; right: auto; opacity: .7; }
-.tile.w2.h2 .ico3.e1 { left: 24px; top: 20px; transform: rotate(-9deg); }
-.tile.w2.h2 .ico3.e2 { left: 118px; top: 96px; transform: rotate(7deg); width: 66px; height: 66px; }
-.tile.w2.h2 .ico3.e3 { left: 30px; top: 112px; transform: rotate(-5deg); width: 60px; height: 60px; }
-@media (max-width: 620px) { .tile.w2.h2 .ico3 { width: 46px; height: 46px; } .tile.w2.h2 .ico3.e1 { left: 14px; top: 14px; } .tile.w2.h2 .ico3.e2 { left: 70px; top: 70px; width: 42px; height: 42px; } .tile.w2.h2 .ico3.e3 { left: 18px; top: 72px; width: 38px; height: 38px; } }
+/* the cluster of things around the big picture tile: sized and placed by the tile's own size */
+.tile.w2.h2 .ico { width: 36%; height: auto; aspect-ratio: 1; right: 8%; top: 7%; }
+.tile.w2.h2 .ico3 { height: auto; aspect-ratio: 1; right: auto; opacity: .7; }
+.tile.w2.h2 .ico3.e1 { left: 6%; top: 7%; width: 19%; transform: rotate(-9deg); }
+.tile.w2.h2 .ico3.e2 { left: 31%; top: 36%; width: 16%; transform: rotate(7deg); }
+.tile.w2.h2 .ico3.e3 { left: 9%; top: 42%; width: 14%; transform: rotate(-5deg); }
+
+/* little loops on the icons */
+.tile .ico *, .tile .px * { transform-box: fill-box; transform-origin: center; }
+/* scanning: the magnifier sweeps over the folder */
+.i-scan .ico circle, .i-scan .ico path:last-child { animation: im-scan 3s ease-in-out infinite alternate; }
+@keyframes im-scan { from { transform: translate(-5px, -3px); } to { transform: translate(5px, 3px); } }
+/* the play triangle pulses */
+.i-browser .ico path[fill] { animation: im-pulse 1.6s ease-in-out infinite; }
+@keyframes im-pulse { 50% { transform: scale(1.3); } }
+/* the buttons of the pad press in turn */
+.i-pad .ico circle { animation: im-press 1.4s steps(1) infinite; } .i-pad .ico circle:nth-of-type(2) { animation-delay: -.7s; }
+@keyframes im-press { 0% { transform: scale(1.9); } 50% { transform: scale(1); } }
+/* the TV's picture flickers */
+.i-tv .ico path:last-child { animation: im-flicker 3.4s steps(1) infinite; }
+@keyframes im-flicker { 0%, 40%, 46%, 100% { opacity: 1; } 42% { opacity: .2; } 44% { opacity: .7; } }
+/* the cards of the carousel sway */
+.i-carousel .ico rect:nth-of-type(1) { animation: im-bob 2.4s ease-in-out infinite; }
+.i-carousel .ico rect:nth-of-type(2) { animation: im-sway 2.4s ease-in-out infinite alternate; }
+.i-carousel .ico rect:nth-of-type(3) { animation: im-sway 2.4s ease-in-out infinite alternate-reverse; }
+@keyframes im-bob { 50% { transform: translateY(-4px); } } @keyframes im-sway { to { transform: rotate(6deg); } }
+/* a book slides out of the shelf */
+.i-shelf .ico rect:nth-of-type(3) { animation: im-pull 3.2s ease-in-out infinite; }
+@keyframes im-pull { 0%, 60%, 100% { transform: translateY(0); } 25%, 45% { transform: translateY(-7px); } }
+/* the clock hand turns; the birds bob */
+.i-digital .ico:not(.ico2) path { animation: im-turn 6s steps(12) infinite; transform-origin: 32px 32px; transform-box: view-box; }
+@keyframes im-turn { to { transform: rotate(360deg); } }
+.ico2 path { animation: im-fly 2.2s ease-in-out infinite alternate; }
+.ico2 path:last-child { animation-delay: -1.1s; }
+@keyframes im-fly { from { transform: translateY(2px); } to { transform: translateY(-4px) rotate(-3deg); } }
+/* the video's play arrow slides, the manual breathes */
+.i-video .ico path:last-child { animation: im-nudge 1.8s ease-in-out infinite alternate; }
+@keyframes im-nudge { to { transform: translateX(3px); } }
+.i-manual .ico { animation: im-breathe 3s ease-in-out infinite; }
+@keyframes im-breathe { 50% { transform: scale(1.1); } }
+/* the people bob, one after the other */
+.i-people .ico circle:first-of-type { animation: im-bob 1.8s ease-in-out infinite; } .i-people .ico circle:last-of-type { animation: im-bob 1.8s ease-in-out -.9s infinite; }
+/* the chat types, the check draws itself, the sheet's lines march */
+.i-chat .ico path:last-child { stroke-dasharray: 40; animation: im-type 3s ease-in-out infinite; }
+@keyframes im-type { 0% { stroke-dashoffset: 40; } 50%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 40; } }
+.i-verify .ico path:last-child { stroke-dasharray: 44; animation: im-type 2.6s ease-in-out infinite; }
+.i-csv .ico path { stroke-dasharray: 5 5; animation: im-march 1.2s linear infinite; }
+@keyframes im-march { to { stroke-dashoffset: -20; } }
+/* the moon rocks and its sparkle twinkles */
+.i-moon .ico path:first-child { animation: im-rock 4s ease-in-out infinite alternate; }
+.i-moon .ico path:last-child { animation: im-twinkle 1.6s steps(2) infinite; }
+@keyframes im-rock { to { transform: rotate(8deg); } } @keyframes im-twinkle { 50% { opacity: .1; } }
+/* the two bubbles talk in turn */
+.i-lang .ico path:nth-of-type(1) { animation: im-talk 2.4s ease-in-out infinite; } .i-lang .ico path:nth-of-type(2) { animation: im-talk 2.4s ease-in-out -1.2s infinite; }
+@keyframes im-talk { 0%, 40%, 100% { transform: scale(1); } 20% { transform: scale(1.12); } }
+/* the two looks swap, the d-pad pulses, the LEDs blink, the needle wobbles */
+.i-looks .ico path:nth-of-type(3) { animation: im-swap 3s steps(1) infinite; } .i-looks .ico path:nth-of-type(4) { animation: im-swap 3s steps(1) -1.5s infinite; }
+@keyframes im-swap { 0% { opacity: 1; } 50% { opacity: .25; } }
+.i-dpad .ico { animation: im-breathe 1.6s ease-in-out infinite; }
+.i-server .ico circle { animation: im-led 1.4s steps(1) infinite; } .i-server .ico circle:last-of-type { animation-delay: -.7s; }
+@keyframes im-led { 0% { opacity: 1; } 50% { opacity: .15; } }
+.i-compass .ico path { animation: im-wobble 3.4s ease-in-out infinite; }
+@keyframes im-wobble { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(40deg); } }
+/* the picture's sun bobs; the chart's bars grow; the cards flip */
+.i-art .ico circle { animation: im-bob 2.6s ease-in-out infinite; }
+.i-bars .mock rect { transform-origin: bottom; transform-box: fill-box; animation: im-grow 3.2s ease-in-out infinite; } .i-bars .mock rect:nth-of-type(2) { animation-delay: -.6s; } .i-bars .mock rect:nth-of-type(3) { animation-delay: -1.2s; } .i-bars .mock rect:nth-of-type(4) { animation-delay: -1.8s; }
+@keyframes im-grow { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.55); } }
+.i-reports .ico path { animation: im-march 2s linear infinite; }
+/* the pixel sprites idle */
+.px-alien { animation: px-step .9s steps(1) infinite; } @keyframes px-step { 0% { transform: translateX(-2px); } 50% { transform: translateX(2px); } }
+.px-ghost { animation: px-float 1.6s ease-in-out infinite; } @keyframes px-float { 50% { transform: translateY(-4px); } }
+.px-coin { animation: px-spin 2s steps(8) infinite; } @keyframes px-spin { 0% { transform: scaleX(1); } 50% { transform: scaleX(.15); } 100% { transform: scaleX(1); } }
+.px-star { animation: px-twinkle 1.4s steps(2) infinite; } @keyframes px-twinkle { 50% { transform: scale(.82) rotate(12deg); } }
+.px-heart { animation: px-beat 1.1s ease-in-out infinite; } @keyframes px-beat { 15% { transform: scale(1.18); } 30% { transform: scale(1); } 45% { transform: scale(1.12); } 60% { transform: scale(1); } }
+.px-key { animation: px-float 2s ease-in-out infinite; } .px-potion { animation: px-float 1.8s ease-in-out infinite; } .px-cart { animation: px-step 1.6s steps(1) infinite; }
+.px-chest { animation: px-twinkle 2.4s steps(1) infinite; } .px-hp { animation: px-blink 1.2s steps(1) infinite; } @keyframes px-blink { 50% { opacity: .55; } }
+.tile .px.px-coin, .tile .px.px-star { transform-box: fill-box; }
+@media (prefers-reduced-motion: reduce) { .tile .ico *, .tile .px, .tile .px *, .tile .ico, .tile .mock * { animation: none !important; } }
