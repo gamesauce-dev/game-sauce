@@ -367,12 +367,9 @@ export function openBigScreen(host) {
     const g = game(), pic = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : (gameBackdrop(g) || '');
     const chips = [g.genre, g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`].filter(Boolean);
     const extras = [g.has_video && 'Video', g.manual_url && 'Manual'].filter(Boolean);
-    // the artwork the game has besides the picture on show: the box, a screenshot, the background, the logo and the marquee (up to four, as small pictures)
-    const art = [['Box', g.cover_url], ['Screenshot', g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : ''], ['Background', g.backdrop_url || (g.media?.fanart ? `/api/roms/${g.id}/media/fanart` : '')], ['Logo', gameLogo(g)], ['Marquee', gameMarquee(g)]]
-      .filter(([, u]) => u && u !== (pic || g.cover_url)).slice(0, 4);
     $('#bs-bl-prev').innerHTML = `<div class="bs-bl-shot${pic ? '' : ' cover'}">${pic || g.cover_url ? `<img src="${esc(pic || g.cover_url)}" alt="" onerror="this.remove()" />` : ''}</div>
       <div class="bs-bl-desc" id="bs-bl-scroll"><p id="bs-bl-scrollin">${esc(g.description || 'No description yet.')}</p></div>
-      <div class="bs-bl-foot"><span class="bs-bl-chips">${[...chips, ...extras].map((c) => `<i>${esc(c)}</i>`).join('')}</span>${art.length ? `<span class="bs-bl-art"><small>Artwork</small><span>${art.map(([l, u]) => `<img src="${esc(u)}" alt="${esc(l)}" title="${esc(l)}" onerror="this.remove()" />`).join('')}</span></span>` : ''}</div>`;
+      <div class="bs-bl-foot"><span class="bs-bl-chips">${[...chips, ...extras].map((c) => `<i>${esc(c)}</i>`).join('')}</span></div>`;
     autoScroll('#bs-bl-scroll', '#bs-bl-scrollin');
     $('#bs-pos').textContent = `${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}`;
     root.style.setProperty('--ac', gameAccent(g));

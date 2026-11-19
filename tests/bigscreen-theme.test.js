@@ -65,7 +65,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes("sfx('whoosh')") && js.includes("kind === 'whoosh'") && css.includes("@keyframes bs-slide-r") && css.includes("prefers-reduced-motion"), "changing blade slides the middle in and whooshes, and stays still for reduced motion");
   // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
   assert.ok(js.includes("<i data-k=\"${b}\">${b}</i>") && js.includes("btn('Y', 'Play on this PC')") && js.includes("btn('A', 'Open', true)") && js.includes("root.classList.add('bs-bl-on')"));
-  assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && js.includes('class="bs-bl-art"'));
+  assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && !js.includes('class="bs-bl-art"'));
   for (const k of ['A', 'B', 'X', 'Y']) assert.ok(css.includes(`.bs-xb i[data-k="${k}"]`), k);
   assert.ok(css.includes('.bs-theme-xbox360.bs-bl-on .bs-hints { display: none; }') && css.includes('.bs-theme-xbox360 .bs-bl-desc { flex: 0 0 auto; height: 5.8em;'));
   assert.ok(js.includes("const logoImg = (p, cls)") && js.includes("logoImg(src.plat, 'bs-bl-hlogo')") && js.includes("logoImg(st.plats.find((p) => p.slug === g.platform), 'bs-bl-plogo')"));
