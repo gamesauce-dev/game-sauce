@@ -4042,10 +4042,13 @@ function initProfilePanel() {
   const bsBox = $('#bstheme-picker');
   if (bsBox) {
     const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy like the 2005 dashboard, on Xbox consoles'], ['ps3', 'PlayStation 3', 'a slow wave of light and a cross bar of platforms, on PlayStation consoles']];
-    const paintBs = () => { const now = state.prefs?.bs_theme || ''; bsBox.innerHTML = BS_LOOKS.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bstheme="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    const looksOn = () => new Set(String(state.prefs?.bs_theme || '').split(',').filter(Boolean));   // the looks switched on: any of them together, none means Standard
+    const paintBs = () => { const on = looksOn(); bsBox.innerHTML = BS_LOOKS.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bstheme="${k}" aria-pressed="${k ? on.has(k) : on.size === 0}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintBs();
     bsBox.onclick = async (ev) => {
-      const b = ev.target.closest('[data-bstheme]'); if (!b) return; const v = b.dataset.bstheme;
+      const b = ev.target.closest('[data-bstheme]'); if (!b) return; const k = b.dataset.bstheme, on = looksOn();
+      if (k) { if (on.has(k)) on.delete(k); else on.add(k); } else on.clear();   // a look switches on or off by itself; Standard switches them all off
+      const v = ['xbox360', 'ps3'].filter((t) => on.has(t)).join(',');
       try { await api('/prefs/bs_theme', { method: 'PUT', body: JSON.stringify({ value: v || null }) }); } catch (err) { return toast(err.message, true); }
       state.prefs = { ...(state.prefs || {}) }; if (v) state.prefs.bs_theme = v; else delete state.prefs.bs_theme;
       paintBs();

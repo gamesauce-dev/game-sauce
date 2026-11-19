@@ -31,6 +31,9 @@ test('the Big Screen look is a per-person setting: a known theme is kept, anythi
   assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'xbox360' } })).status, 200);
   assert.equal((await call('/api/prefs')).body.bs_theme, 'xbox360');
   assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'nonsense' } })).status, 400);
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'xbox360,ps3' } })).status, 200, 'both looks at once');
+  assert.equal((await call('/api/prefs')).body.bs_theme, 'xbox360,ps3');
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'xbox360' } })).status, 200);
   assert.equal((await call('/api/prefs/bs_start', { method: 'PUT', body: { value: 'on' } })).status, 200);
   assert.equal((await call('/api/prefs')).body.bs_start, 'on');
   assert.equal((await call('/api/prefs/bs_start', { method: 'PUT', body: { value: 'maybe' } })).status, 400);
@@ -40,7 +43,7 @@ test('the Big Screen look is a per-person setting: a known theme is kept, anythi
 
 test('Big Screen takes its look from the setting, and every theme rule stays inside its own class', () => {
   const js = read('public/bigscreen.js'), app = read('public/app.js'), html = read('public/index.html'), css = read('public/bs-themes.css');
-  assert.ok(js.includes("root.classList.add('bs-theme-' + th)") && js.includes('host.theme'), 'the root gets bs-theme-<name>');
+  assert.ok(js.includes("root.classList.add('bs-theme-' + th)") && js.includes('host.theme') && js.includes("looks.find((t) => /^[a-z0-9]+$/.test(t) && THEME_CONSOLES[t]?.has(slug))"), 'the root gets bs-theme-<name>, from whichever of the looks that are on is for this console');
   assert.ok(app.includes("theme: () => state.prefs?.bs_theme") && app.includes('id="bstheme-picker"') === false && html.includes('id="bstheme-picker"'), 'the picker and the hand-over');
   assert.ok(html.includes('/bs-themes.css'));
   // the look is for its own consoles only: it is put on and taken off as the screens change

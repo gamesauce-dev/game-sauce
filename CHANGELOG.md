@@ -5,6 +5,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ## [Unreleased]
 
 ### Added
+- **Both Big Screen looks at once.** The **Big Screen look** choice in My account is now a pair of switches: Xbox 360 and PlayStation 3 can both be on, each used only on its own consoles (Xbox consoles get the blades, PlayStation consoles the cross bar, everything else stays Standard). Standard switches them all off.
 - **A Big Screen look: PlayStation 3.** Settings > My account > **Big Screen look** now also offers **PlayStation 3**, used on PS1, PS2, PS3 and PSP. The games screen becomes a cross bar: the platforms are a row of icons across the screen (left and right change platform, with the same page-turn sound as the Xbox look), and the games run down from the current one, the highlighted game big with its title, year and platform beside it and the others small above and below. Behind it a slow wave of light drifts over a soft gradient with tiny specks, and a date and time panel sits at the top right. Its colour follows the month, as the console's did, or you pick one under **PlayStation 3 colour** in My account. The icons and the waves are drawn for game-sauce; nothing comes from Sony. The pictures are the best a game has (a clear logo, else a screenshot, else the box), or one kind only under **PlayStation 3 pictures** in My account (a game with no logo shows its name). A game with a video plays it beside its picture a moment after you stop on it (muted, looping). A game's own page keeps the standard look.
 
 ## [0.18.0] - 2026-11-19

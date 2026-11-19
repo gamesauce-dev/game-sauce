@@ -310,10 +310,11 @@ export function openBigScreen(host) {
   // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
   const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']), ps3: new Set(['ps1', 'ps2', 'ps3', 'psp']) };   // the consoles each look is for
   const useTheme = (slug) => {
-    const th = String(host.theme?.() || '');
+    const looks = String(host.theme?.() || '').split(',');   // several looks can be on at once: each is used on its own consoles only
     root.classList.remove('bs-bl-on');
     for (const c of [...root.classList]) if (c.startsWith('bs-theme-')) root.classList.remove(c);
-    if (/^[a-z0-9]+$/.test(th) && THEME_CONSOLES[th]?.has(slug)) root.classList.add('bs-theme-' + th);
+    const th = looks.find((t) => /^[a-z0-9]+$/.test(t) && THEME_CONSOLES[t]?.has(slug));
+    if (th) root.classList.add('bs-theme-' + th);
   };
   const srcSlug = () => (st.src?.kind === 'platform' ? st.src.slug : null);
   const blades = () => root.classList.contains('bs-theme-xbox360');
