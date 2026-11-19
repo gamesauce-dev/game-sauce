@@ -63,13 +63,13 @@
 .bs-theme-xbox360 .bs-az button.on { background: #fff; color: var(--x-ink); }
 
 /* ── Xbox 360: the Blades layout of the games screen ── */
-.bs-theme-xbox360 .bs-bl { position: absolute; inset: 0; display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 9.6em; padding: 1.2em 0 .6em; }
+.bs-theme-xbox360 .bs-bl { position: absolute; inset: 0; display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 9.6em; padding: 1.2em 0 0; overflow: hidden; }
 /* a blade at each side: a drawing (see bladeSvg in bigscreen.js) with the words laid on its tabs. The right blade is the left one mirrored. */
 .bs-theme-xbox360 .bl-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; filter: drop-shadow(.25em 0 .6em rgba(0, 45, 0, .4)); }
 .bs-theme-xbox360 .bs-bl-r .bl-svg { transform: scaleX(-1); filter: drop-shadow(-.25em 0 .6em rgba(0, 45, 0, .4)); }
 /* the middle: a glossy header, then the list and the preview */
 .bs-theme-xbox360 .bs-bl-main { display: flex; flex-direction: column; min-width: 0; padding: 0 1.2em; }
-.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; min-height: 2.35em; padding: .3em 1.5em; border-radius: .8em; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .55); font-size: 1.7em; font-weight: 600; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
+.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; min-height: 2.35em; padding: .3em 1.5em; margin: 0 -.9em; border-radius: .35em; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .55); font-size: 1.7em; font-weight: 600; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
 .bs-theme-xbox360 .bs-bl-head span { font-size: .8em; opacity: .9; text-transform: uppercase; letter-spacing: .03em; }
 .bs-theme-xbox360 .bs-bl-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 1.6em; padding-top: 1em; }
 .bs-theme-xbox360 .bs-bl-list { position: relative; display: flex; flex-direction: column; gap: .35em; min-height: 0; }
@@ -114,7 +114,7 @@
 
 /* the bottom of the screen: a glossy panel with the controller's coloured buttons, replacing the usual bar of hints */
 .bs-theme-xbox360.bs-bl-on .bs-hints { display: none; }
-.bs-theme-xbox360 .bs-bl-btns { flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1em; margin-top: .8em; padding: .55em 1.8em; border-radius: .9em; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .06)); border: 1px solid rgba(255, 255, 255, .45); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5), 0 .2em .8em rgba(0, 40, 0, .3); text-shadow: 0 .04em .2em rgba(0, 50, 0, .5); }
+.bs-theme-xbox360 .bs-bl-btns { flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1em; margin: .8em -.9em -1.6em; padding: .55em 1.8em 2.2em; border-radius: .9em .9em 0 0; border-bottom: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .06)); border: 1px solid rgba(255, 255, 255, .45); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5), 0 .2em .8em rgba(0, 40, 0, .3); text-shadow: 0 .04em .2em rgba(0, 50, 0, .5); }
 .bs-theme-xbox360 .bs-xbl, .bs-theme-xbox360 .bs-xbr { display: flex; flex-direction: column; gap: .3em; font-weight: 600; font-size: 1.05em; }
 .bs-theme-xbox360 .bs-xbr { align-items: flex-end; }
 .bs-theme-xbox360 .bs-xb { display: inline-flex; align-items: center; gap: .55em; }
@@ -159,7 +159,7 @@
 .bs-theme-xbox360.bs-bl-on .bs-top { margin: 0 9.6em; }
 
 /* a platform's logo on its blade: turned to read down the band, grey and printed into the metal (it blends with the silver); on the green it is a white print */
-.bs-theme-xbox360 img.bs-bl-lab.logo { position: absolute; top: calc(14% + 2.8em); width: 5.6em; height: 1.45em; object-fit: contain; padding: 0; border: 0; background: none; box-shadow: none; text-shadow: none; transform-origin: 50% 50%; transform: translate(-50%, -50%) rotate(90deg); mix-blend-mode: multiply; filter: grayscale(1) contrast(.85); opacity: .72; cursor: pointer; }
+.bs-theme-xbox360 img.bs-bl-lab.logo { position: absolute; top: calc(14% + 2em); width: 4em; height: 1.05em; object-fit: contain; padding: 0; border: 0; background: none; box-shadow: none; text-shadow: none; transform-origin: 50% 50%; transform: translate(-50%, -50%) rotate(90deg); mix-blend-mode: multiply; filter: grayscale(1) contrast(.85); opacity: .72; cursor: pointer; }
 .bs-theme-xbox360 .bs-bl-l img.bs-bl-lab.logo, .bs-theme-xbox360 .bs-bl-r img.bs-bl-lab.logo { transform: translate(-50%, -50%) rotate(90deg); }
 .bs-theme-xbox360 img.bs-bl-lab.logo:hover { opacity: .95; }
-.bs-theme-xbox360 img.bs-bl-lab.logo.cur { top: calc(12% + 3.2em); width: 6.4em; height: 1.65em; mix-blend-mode: normal; filter: brightness(0) invert(1) drop-shadow(0 .04em .12em rgba(0, 60, 0, .5)); opacity: .92; cursor: default; transform: translate(-50%, -50%) rotate(90deg); }
+.bs-theme-xbox360 img.bs-bl-lab.logo.cur { top: calc(12% + 2.3em); width: 4.6em; height: 1.2em; mix-blend-mode: normal; filter: brightness(0) invert(1) drop-shadow(0 .04em .12em rgba(0, 60, 0, .5)); opacity: .92; cursor: default; transform: translate(-50%, -50%) rotate(90deg); }
