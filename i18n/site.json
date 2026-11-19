@@ -1393,5 +1393,608 @@
   "de": "Schließen",
   "ja": "閉じる",
   "it": "Chiudi"
+ },
+ "Your games, your control<i>(ler)</i>": {
+  "fr": "Vos jeux, votre contrôle<i>(ur)</i>",
+  "zh": "你的游戏，你来掌控<i>（手柄）</i>",
+  "es": "Tus juegos, tu control<i>(ador)</i>",
+  "pt": "Seus jogos, seu controle<i> total</i>",
+  "de": "Deine Spiele, deine <i>Kontrolle</i>",
+  "ja": "あなたのゲーム、あなたの<i>コントロール</i>",
+  "it": "I tuoi giochi, il tuo <i>controllo</i>"
+ },
+ "game‑sauce NEVER changes or moves them, with your digital and physical libraries for your eyes only.": {
+  "fr": "game‑sauce ne les modifie et ne les déplace JAMAIS, et vos bibliothèques numérique et physique ne sont que pour vos yeux.",
+  "zh": "game‑sauce 绝不会修改或移动它们；你的数字库和实体库也只有你自己能看。",
+  "es": "game‑sauce NUNCA los modifica ni los mueve, y tus bibliotecas digital y física son solo para tus ojos.",
+  "pt": "O game‑sauce NUNCA altera nem move seus jogos, e suas bibliotecas digital e física são só para os seus olhos.",
+  "de": "game‑sauce verändert oder verschiebt sie NIEMALS, und deine digitale und physische Bibliothek ist nur für deine Augen.",
+  "ja": "game‑sauce がゲームを変更したり移動したりすることは絶対にありません。デジタルとパッケージのライブラリも、あなただけのものです。",
+  "it": "game‑sauce NON li modifica e NON li sposta MAI, e le tue librerie digitale e fisica sono solo per i tuoi occhi."
+ },
+ "Platforms galore": {
+  "fr": "Des plateformes à gogo",
+  "zh": "平台应有尽有",
+  "es": "Plataformas a montones",
+  "pt": "Plataformas de sobra",
+  "de": "Plattformen ohne Ende",
+  "ja": "プラットフォームがズラリ",
+  "it": "Piattaforme a non finire"
+ },
+ "Whatever your preference. We never judge.": {
+  "fr": "Peu importe vos goûts. On ne juge jamais.",
+  "zh": "喜欢哪个都行，我们从不评判。",
+  "es": "Sea cual sea tu gusto. Nunca juzgamos.",
+  "pt": "Seja qual for a sua preferência. A gente nunca julga.",
+  "de": "Ganz egal, was dir gefällt. Wir urteilen nie.",
+  "ja": "好みはなんでもOK。評価はしません。",
+  "it": "Qualunque sia il tuo gusto. Non giudichiamo mai."
+ },
+ "Pretty in pink?": {
+  "fr": "Tout en rose ?",
+  "zh": "粉红少女心？",
+  "es": "¿Todo de color rosa?",
+  "pt": "Rosa de cabo a rabo?",
+  "de": "Alles in Pink?",
+  "ja": "ピンクでキュートに？",
+  "it": "Tutto in rosa?"
+ },
+ "Covers, logos, videos, manuals. Fetched, or from your own sources.": {
+  "fr": "Jaquettes, logos, vidéos, manuels. Récupérés en ligne, ou depuis vos propres sources.",
+  "zh": "封面、标志、视频、手册。自动获取，或来自你自己的来源。",
+  "es": "Carátulas, logotipos, vídeos, manuales. Descargados, o de tus propias fuentes.",
+  "pt": "Capas, logos, vídeos, manuais. Buscados na internet ou das suas próprias fontes.",
+  "de": "Cover, Logos, Videos, Handbücher. Automatisch geholt oder aus deinen eigenen Quellen.",
+  "ja": "カバー、ロゴ、動画、マニュアル。自動取得も、手持ちの素材もOK。",
+  "it": "Copertine, loghi, video, manuali. Scaricati o dalle tue fonti."
+ },
+ "Play in browser": {
+  "fr": "Jouer dans le navigateur",
+  "zh": "在浏览器中玩",
+  "es": "Juega en el navegador",
+  "pt": "Jogue no navegador",
+  "de": "Im Browser spielen",
+  "ja": "ブラウザでプレイ",
+  "it": "Gioca nel browser"
+ },
+ "With supported games, mobility with server save states: put down, load up and carry on.": {
+  "fr": "Avec les jeux compatibles : libre de vos mouvements, vos sauvegardes d'état sont sur le serveur. Posez, rechargez, reprenez.",
+  "zh": "支持的游戏随时随地玩：即时存档保存在服务器上，放下、读取、继续。",
+  "es": "Con los juegos compatibles: movilidad con estados guardados en el servidor. Déjalo, cárgalo y sigue.",
+  "pt": "Com jogos compatíveis: mobilidade com save states no servidor. Pare, carregue e continue.",
+  "de": "Mit unterstützten Spielen: mobil dank Spielständen auf dem Server. Weglegen, laden, weiterspielen.",
+  "ja": "対応ゲームなら、サーバーのセーブステートでどこからでも。中断して、ロードして、続きから。",
+  "it": "Con i giochi supportati: mobilità grazie agli stati di salvataggio sul server. Metti giù, carica e riparti."
+ },
+ "game‑sauce at your service, select play and do just that with zero fuss.": {
+  "fr": "game‑sauce à votre service : choisissez Jouer, et c'est tout, sans prise de tête.",
+  "zh": "game‑sauce 听候差遣：选择“游玩”，轻松开玩，零烦恼。",
+  "es": "game‑sauce a tu servicio: elige jugar y listo, sin complicaciones.",
+  "pt": "O game‑sauce ao seu dispor: escolha jogar e pronto, sem complicação.",
+  "de": "game‑sauce zu deinen Diensten: Spielen wählen und loslegen, ganz ohne Aufwand.",
+  "ja": "game‑sauce におまかせ。「プレイ」を選ぶだけで、面倒なことは一切なし。",
+  "it": "game‑sauce al tuo servizio: scegli gioca e via, senza fatica."
+ },
+ "Your library on the TV. Controller focused, no keyboard required.": {
+  "fr": "Votre bibliothèque sur la télé. Pensé pour la manette, aucun clavier requis.",
+  "zh": "你的游戏库搬上电视。专为手柄设计，无需键盘。",
+  "es": "Tu biblioteca en la tele. Pensado para el mando, sin teclado.",
+  "pt": "Sua biblioteca na TV. Feito para o controle, sem precisar de teclado.",
+  "de": "Deine Bibliothek auf dem Fernseher. Für den Controller gemacht, keine Tastatur nötig.",
+  "ja": "ライブラリをテレビで。コントローラー中心の操作で、キーボードは不要。",
+  "it": "La tua libreria sulla TV. Pensato per il controller, niente tastiera."
+ },
+ "Nostalgia returns": {
+  "fr": "La nostalgie est de retour",
+  "zh": "情怀回归",
+  "es": "Vuelve la nostalgia",
+  "pt": "A nostalgia volta",
+  "de": "Die Nostalgie ist zurück",
+  "ja": "懐かしさが帰ってくる",
+  "it": "La nostalgia ritorna"
+ },
+ "XBOX 360 Blades in Big Screen mode.": {
+  "fr": "Les Blades de la XBOX 360 en mode Big Screen.",
+  "zh": "Big Screen 模式里的 XBOX 360 Blades 界面。",
+  "es": "Las Blades de la XBOX 360 en el modo Big Screen.",
+  "pt": "As Blades do XBOX 360 no modo Big Screen.",
+  "de": "Die XBOX-360-Blades im Big-Screen-Modus.",
+  "ja": "Big Screen モードで蘇る XBOX 360 のブレード UI。",
+  "it": "Le Blades della XBOX 360 in modalità Big Screen."
+ },
+ "The iconic PlayStation XMB": {
+  "fr": "L'iconique XMB de PlayStation",
+  "zh": "标志性的 PlayStation XMB",
+  "es": "El icónico XMB de PlayStation",
+  "pt": "O icônico XMB do PlayStation",
+  "de": "Das legendäre PlayStation-XMB",
+  "ja": "象徴的な PlayStation の XMB",
+  "it": "L'iconico XMB di PlayStation"
+ },
+ "Games front and centre.": {
+  "fr": "Les jeux au premier plan.",
+  "zh": "游戏永远是主角。",
+  "es": "Los juegos, en primer plano.",
+  "pt": "Os jogos em primeiro plano.",
+  "de": "Die Spiele im Mittelpunkt.",
+  "ja": "主役はゲーム。",
+  "it": "I giochi al centro della scena."
+ },
+ "Will Wii or won&#x27;t Wii?": {
+  "fr": "Wii ou non ?",
+  "zh": "Wii，还是不 Wii？",
+  "es": "¿Wii o no Wii?",
+  "pt": "Wii ou não Wii?",
+  "de": "Wii oder nicht Wii?",
+  "ja": "Wii するか、しないか？",
+  "it": "Wii o non Wii?"
+ },
+ "You decide.": {
+  "fr": "À vous de choisir.",
+  "zh": "由你决定。",
+  "es": "Tú decides.",
+  "pt": "Você decide.",
+  "de": "Du entscheidest.",
+  "ja": "決めるのはあなた。",
+  "it": "Decidi tu."
+ },
+ "to your heart&#x27;s content.": {
+  "fr": "à cœur joie.",
+  "zh": "尽情浏览。",
+  "es": "a tu gusto.",
+  "pt": "à vontade.",
+  "de": "so viel dein Herz begehrt.",
+  "ja": "思う存分どうぞ。",
+  "it": "a volontà."
+ },
+ "For lovers of Swedish flatpacks": {
+  "fr": "Pour les amoureux des meubles suédois en kit",
+  "zh": "献给热爱瑞典平板家具的你",
+  "es": "Para los amantes de los muebles suecos de montar",
+  "pt": "Para os amantes de móveis suecos de montar",
+  "de": "Für Fans schwedischer Bausätze",
+  "ja": "スウェーデン家具の組み立てが好きなあなたへ",
+  "it": "Per gli amanti dei mobili svedesi da montare"
+ },
+ "We give you shelves.": {
+  "fr": "Nous, on vous offre des étagères.",
+  "zh": "我们送你书架。",
+  "es": "Nosotros te damos estanterías.",
+  "pt": "A gente te dá estantes.",
+  "de": "Wir geben dir Regale.",
+  "ja": "こちらは棚をご用意しました。",
+  "it": "Noi ti diamo gli scaffali."
+ },
+ "How time flies": {
+  "fr": "Comme le temps passe vite",
+  "zh": "时光飞逝",
+  "es": "Cómo vuela el tiempo",
+  "pt": "Como o tempo voa",
+  "de": "Wie die Zeit vergeht",
+  "ja": "時間が経つのは早い",
+  "it": "Come vola il tempo"
+ },
+ "Playing your favourite Steam games.": {
+  "fr": "Quand on joue à ses jeux Steam préférés.",
+  "zh": "玩着你最爱的 Steam 游戏时。",
+  "es": "Jugando a tus juegos favoritos de Steam.",
+  "pt": "Jogando seus jogos favoritos da Steam.",
+  "de": "Beim Spielen deiner liebsten Steam-Spiele.",
+  "ja": "お気に入りの Steam ゲームを遊んでいると。",
+  "it": "Giocando ai tuoi giochi Steam preferiti."
+ },
+ "What you paid": {
+  "fr": "Ce que vous avez payé",
+  "zh": "你花了多少钱",
+  "es": "Lo que pagaste",
+  "pt": "O que você pagou",
+  "de": "Was du bezahlt hast",
+  "ja": "いくら払った？",
+  "it": "Quanto hai pagato"
+ },
+ "Look back at what you paid for your games, if you dare.": {
+  "fr": "Revoyez ce que vos jeux vous ont coûté, si vous osez.",
+  "zh": "回头看看你为游戏花了多少钱，敢看的话。",
+  "es": "Echa un vistazo a lo que pagaste por tus juegos, si te atreves.",
+  "pt": "Reveja quanto você pagou pelos seus jogos, se tiver coragem.",
+  "de": "Wirf einen Blick darauf, was du für deine Spiele bezahlt hast, wenn du dich traust.",
+  "ja": "ゲームにいくら使ったか、勇気があるなら振り返ってみよう。",
+  "it": "Dai un'occhiata a quanto hai pagato i tuoi giochi, se hai il coraggio."
+ },
+ "Geek out": {
+  "fr": "Mode geek",
+  "zh": "极客时刻",
+  "es": "Modo friki",
+  "pt": "Modo nerd",
+  "de": "Nerd-Modus",
+  "ja": "オタク全開",
+  "it": "Modalità nerd"
+ },
+ "With game and library reports.": {
+  "fr": "Avec des rapports sur les jeux et la bibliothèque.",
+  "zh": "游戏与游戏库报表尽在眼前。",
+  "es": "Con informes de juegos y de la biblioteca.",
+  "pt": "Com relatórios dos jogos e da biblioteca.",
+  "de": "Mit Berichten zu Spielen und Bibliothek.",
+  "ja": "ゲームとライブラリのレポートで。",
+  "it": "Con report su giochi e libreria."
+ },
+ "Video previews": {
+  "fr": "Aperçus vidéo",
+  "zh": "视频预览",
+  "es": "Vídeos de vista previa",
+  "pt": "Prévias em vídeo",
+  "de": "Videovorschau",
+  "ja": "動画プレビュー",
+  "it": "Anteprime video"
+ },
+ "Marvel at them and think: how did I miss that?": {
+  "fr": "Admirez-les et dites-vous : comment ai-je pu rater ça ?",
+  "zh": "好好欣赏，然后感叹：我之前怎么没发现？",
+  "es": "Admíralos y piensa: ¿cómo me lo perdí?",
+  "pt": "Admire e pense: como eu deixei isso passar?",
+  "de": "Staune und denk dir: Wie konnte mir das entgehen?",
+  "ja": "見て驚いて、「なんで今まで見逃してたんだ？」",
+  "it": "Ammirali e pensa: come ho fatto a perdermeli?"
+ },
+ "RTFM": {
+  "fr": "RTFM",
+  "zh": "RTFM",
+  "es": "RTFM",
+  "pt": "RTFM",
+  "de": "RTFM",
+  "ja": "RTFM",
+  "it": "RTFM"
+ },
+ "No excuse. It can be right there in game‑sauce.": {
+  "fr": "Plus d'excuse : c'est juste là, dans game‑sauce.",
+  "zh": "没有借口：就在 game‑sauce 里。",
+  "es": "Sin excusas: está ahí mismo, en game‑sauce.",
+  "pt": "Sem desculpas: está bem ali, no game‑sauce.",
+  "de": "Keine Ausreden: Es ist direkt in game‑sauce.",
+  "ja": "言い訳は無用。game‑sauce の中にちゃんとあります。",
+  "it": "Niente scuse: è proprio lì, in game‑sauce."
+ },
+ "Favourites": {
+  "fr": "Favoris",
+  "zh": "收藏夹",
+  "es": "Favoritos",
+  "pt": "Favoritos",
+  "de": "Favoriten",
+  "ja": "お気に入り",
+  "it": "Preferiti"
+ },
+ "A star for the good stuff and collections for the rest.": {
+  "fr": "Une étoile pour le meilleur, des collections pour le reste.",
+  "zh": "好东西打上星标，其余的放进合集。",
+  "es": "Una estrella para lo mejor y colecciones para el resto.",
+  "pt": "Uma estrela para o que é bom e coleções para o resto.",
+  "de": "Einen Stern für das Gute, Sammlungen für den Rest.",
+  "ja": "お気に入りには星、それ以外はコレクションに。",
+  "it": "Una stella per il meglio e le raccolte per il resto."
+ },
+ "Household first": {
+  "fr": "La maison d'abord",
+  "zh": "家人优先",
+  "es": "La familia primero",
+  "pt": "A família em primeiro lugar",
+  "de": "Haushalt zuerst",
+  "ja": "家族みんなのために",
+  "it": "Prima la famiglia"
+ },
+ "Accounts, roles and play-only for the kids.": {
+  "fr": "Comptes, rôles et accès jeu seul pour les enfants.",
+  "zh": "账户、角色，还有给孩子用的纯游玩账户。",
+  "es": "Cuentas, roles y modo solo jugar para los peques.",
+  "pt": "Contas, funções e modo só jogar para as crianças.",
+  "de": "Konten, Rollen und Nur-Spielen für die Kleinen.",
+  "ja": "アカウント、役割、そして子ども向けのプレイ専用モード。",
+  "it": "Account, ruoli e modalità solo gioco per i più piccoli."
+ },
+ "Private chat": {
+  "fr": "Chat privé",
+  "zh": "私密聊天",
+  "es": "Chat privado",
+  "pt": "Chat privado",
+  "de": "Privater Chat",
+  "ja": "プライベートチャット",
+  "it": "Chat privata"
+ },
+ "Gloat about your high score. Stays home.": {
+  "fr": "Vantez-vous de votre meilleur score. Ça reste à la maison.",
+  "zh": "尽管炫耀你的最高分，消息不会出门。",
+  "es": "Presume de tu récord. Se queda en casa.",
+  "pt": "Gabe-se do seu recorde. Fica em casa.",
+  "de": "Prahl mit deinem Highscore. Bleibt im Haus.",
+  "ja": "ハイスコア自慢もご自由に。外には出ません。",
+  "it": "Vanta il tuo record. Resta in casa."
+ },
+ "Verify dumps": {
+  "fr": "Vérifier les dumps",
+  "zh": "校验 dump",
+  "es": "Verifica los dumps",
+  "pt": "Verifique os dumps",
+  "de": "Dumps prüfen",
+  "ja": "ダンプを検証",
+  "it": "Verifica i dump"
+ },
+ "No-Intro and Redump say it&#x27;s legit.": {
+  "fr": "No-Intro et Redump confirment que c'est du propre.",
+  "zh": "No-Intro 和 Redump 都说它是正版。",
+  "es": "No-Intro y Redump dicen que es legítimo.",
+  "pt": "No-Intro e Redump garantem que é legítimo.",
+  "de": "No-Intro und Redump sagen: alles sauber.",
+  "ja": "No-Intro と Redump のお墨付き。",
+  "it": "No-Intro e Redump garantiscono che è tutto in regola."
+ },
+ "Ghost copies": {
+  "fr": "Copies fantômes",
+  "zh": "幽灵副本",
+  "es": "Copias fantasma",
+  "pt": "Cópias fantasma",
+  "de": "Geisterkopien",
+  "ja": "ゴーストコピー",
+  "it": "Copie fantasma"
+ },
+ "Finds duplicates, suggests the best to keep.": {
+  "fr": "Trouve les doublons, suggère le meilleur à garder.",
+  "zh": "找出重复项，建议保留最好的一份。",
+  "es": "Encuentra duplicados y sugiere el mejor para conservar.",
+  "pt": "Encontra duplicatas e sugere a melhor para manter.",
+  "de": "Findet Duplikate und schlägt das beste zum Behalten vor.",
+  "ja": "重複を見つけて、残すべきベストの1本を提案します。",
+  "it": "Trova i duplicati e suggerisce il migliore da tenere."
+ },
+ "Arcade aware": {
+  "fr": "À l'aise avec l'arcade",
+  "zh": "懂街机",
+  "es": "Entiende de arcade",
+  "pt": "Entende de arcade",
+  "de": "Arcade-erprobt",
+  "ja": "アーケードもおまかせ",
+  "it": "Esperto di arcade"
+ },
+ "sf2 becomes Street Fighter II.": {
+  "fr": "sf2 devient Street Fighter II.",
+  "zh": "sf2 变成 Street Fighter II。",
+  "es": "sf2 pasa a ser Street Fighter II.",
+  "pt": "sf2 vira Street Fighter II.",
+  "de": "Aus sf2 wird Street Fighter II.",
+  "ja": "sf2 が Street Fighter II に。",
+  "it": "sf2 diventa Street Fighter II."
+ },
+ "Spreadsheets?": {
+  "fr": "Des tableurs ?",
+  "zh": "还在用表格？",
+  "es": "¿Hojas de cálculo?",
+  "pt": "Planilhas?",
+  "de": "Tabellen?",
+  "ja": "表計算ソフト？",
+  "it": "Fogli di calcolo?"
+ },
+ "Cataloguing your games? Let game‑sauce be your ‘sauce’ of truth.": {
+  "fr": "Vous cataloguez vos jeux ? Faites de game‑sauce votre source de vérité.",
+  "zh": "还在整理游戏清单？让 game‑sauce 成为你唯一的真相来源。",
+  "es": "¿Catalogando tus juegos? Que game‑sauce sea tu fuente de verdad.",
+  "pt": "Catalogando seus jogos? Faça do game‑sauce a sua fonte da verdade.",
+  "de": "Du katalogisierst deine Spiele? Mach game‑sauce zu deiner Quelle der Wahrheit.",
+  "ja": "ゲームを管理中？ game‑sauce を信頼できる情報源にしましょう。",
+  "it": "Stai catalogando i tuoi giochi? Fai di game‑sauce la tua fonte di verità."
+ },
+ "PRESS START": {
+  "fr": "PRESS START",
+  "zh": "PRESS START",
+  "es": "PRESS START",
+  "pt": "PRESS START",
+  "de": "PRESS START",
+  "ja": "PRESS START",
+  "it": "PRESS START"
+ },
+ "your games, your way": {
+  "fr": "vos jeux, à votre façon",
+  "zh": "你的游戏，你的方式",
+  "es": "tus juegos, a tu manera",
+  "pt": "seus jogos, do seu jeito",
+  "de": "deine Spiele, auf deine Art",
+  "ja": "あなたのゲームを、あなたの流儀で",
+  "it": "i tuoi giochi, a modo tuo"
+ },
+ "Night shift": {
+  "fr": "Équipe de nuit",
+  "zh": "夜班",
+  "es": "Turno de noche",
+  "pt": "Turno da noite",
+  "de": "Nachtschicht",
+  "ja": "夜勤",
+  "it": "Turno di notte"
+ },
+ "game‑sauce works the night shift too. Game fingerprints get made while you sleep.": {
+  "fr": "game‑sauce travaille aussi de nuit : les empreintes de vos jeux se calculent pendant que vous dormez.",
+  "zh": "game‑sauce 也上夜班：游戏指纹在你睡觉时生成。",
+  "es": "game‑sauce también hace turno de noche: las huellas de los juegos se generan mientras duermes.",
+  "pt": "O game‑sauce também trabalha à noite: as impressões digitais dos jogos são geradas enquanto você dorme.",
+  "de": "game‑sauce schiebt auch Nachtschichten: Die Fingerabdrücke deiner Spiele entstehen, während du schläfst.",
+  "ja": "game‑sauce は夜も働きます。ゲームのフィンガープリントは、寝ている間に作られます。",
+  "it": "game‑sauce fa anche il turno di notte: le impronte dei giochi si creano mentre dormi."
+ },
+ "Save point": {
+  "fr": "Point de sauvegarde",
+  "zh": "存档点",
+  "es": "Punto de guardado",
+  "pt": "Ponto de salvamento",
+  "de": "Speicherpunkt",
+  "ja": "セーブポイント",
+  "it": "Punto di salvataggio"
+ },
+ "Easy backup and restore options, scheduled for peace of mind.": {
+  "fr": "Sauvegarde et restauration faciles, programmables pour dormir tranquille.",
+  "zh": "轻松备份与恢复，还能定时执行，让你安心。",
+  "es": "Copia de seguridad y restauración fáciles, programables para estar tranquilo.",
+  "pt": "Backup e restauração fáceis, agendáveis para você ficar tranquilo.",
+  "de": "Einfache Sicherung und Wiederherstellung, zeitgesteuert für ruhigen Schlaf.",
+  "ja": "かんたんなバックアップと復元。スケジュール実行で安心です。",
+  "it": "Backup e ripristino facili, programmabili per stare tranquilli."
+ },
+ "Health check": {
+  "fr": "Bilan de santé",
+  "zh": "健康检查",
+  "es": "Revisión de salud",
+  "pt": "Verificação de saúde",
+  "de": "Check-up",
+  "ja": "ヘルスチェック",
+  "it": "Controllo di salute"
+ },
+ "Everyone should have one.": {
+  "fr": "Tout le monde devrait en avoir un.",
+  "zh": "人人都该做一次。",
+  "es": "Todo el mundo debería tener una.",
+  "pt": "Todo mundo deveria ter uma.",
+  "de": "Jeder sollte einen haben.",
+  "ja": "誰にでも必要です。",
+  "it": "Dovrebbero averne uno tutti."
+ },
+ "Multi-language": {
+  "fr": "Multilingue",
+  "zh": "多语言",
+  "es": "Multilingüe",
+  "pt": "Multilíngue",
+  "de": "Mehrsprachig",
+  "ja": "多言語対応",
+  "it": "Multilingua"
+ },
+ "English, Français, 日本語 and more. Merci, 谢谢.": {
+  "fr": "English, Français, 日本語 et bien d'autres. Merci, 谢谢.",
+  "zh": "English、Français、日本語 等多种语言。Merci，谢谢。",
+  "es": "English, Français, 日本語 y más. Merci, 谢谢.",
+  "pt": "English, Français, 日本語 e mais. Merci, 谢谢.",
+  "de": "English, Français, 日本語 und mehr. Merci, 谢谢.",
+  "ja": "English、Français、日本語 ほか。Merci、谢谢。",
+  "it": "English, Français, 日本語 e altre. Merci, 谢谢."
+ },
+ "Controller first": {
+  "fr": "La manette d'abord",
+  "zh": "手柄优先",
+  "es": "El mando primero",
+  "pt": "Controle em primeiro lugar",
+  "de": "Controller zuerst",
+  "ja": "コントローラー優先",
+  "it": "Prima il controller"
+ },
+ "The whole app. Mouse optional.": {
+  "fr": "Toute l'application. Souris facultative.",
+  "zh": "整个应用都能用手柄，鼠标可有可无。",
+  "es": "Toda la aplicación. Ratón opcional.",
+  "pt": "O aplicativo todo. Mouse opcional.",
+  "de": "Die ganze App. Maus optional.",
+  "ja": "アプリ全体で。マウスは任意です。",
+  "it": "L'intera app. Mouse facoltativo."
+ },
+ "Free. Private. YOURS.": {
+  "fr": "Gratuit. Privé. À VOUS.",
+  "zh": "免费。私密。完全属于你。",
+  "es": "Gratis. Privado. TUYO.",
+  "pt": "Grátis. Privado. SEU.",
+  "de": "Kostenlos. Privat. DEINS.",
+  "ja": "無料。プライベート。あなたのもの。",
+  "it": "Gratis. Privato. TUO."
+ },
+ "No tracking. No catch. No kidding.": {
+  "fr": "Aucun suivi. Aucun piège. Promis.",
+  "zh": "不跟踪，没陷阱，不骗你。",
+  "es": "Sin rastreo. Sin trampa. En serio.",
+  "pt": "Sem rastreamento. Sem pegadinha. Sem brincadeira.",
+  "de": "Kein Tracking. Kein Haken. Kein Scherz.",
+  "ja": "追跡なし。落とし穴なし。冗談抜きで。",
+  "it": "Niente tracciamento. Nessuna fregatura. Giuro."
+ },
+ "Runs anywhere": {
+  "fr": "Tourne partout",
+  "zh": "随处运行",
+  "es": "Funciona en todas partes",
+  "pt": "Roda em qualquer lugar",
+  "de": "Läuft überall",
+  "ja": "どこでも動く",
+  "it": "Gira ovunque"
+ },
+ "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.": {
+  "fr": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
+  "zh": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
+  "es": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
+  "pt": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
+  "de": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
+  "ja": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
+  "it": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid."
+ },
+ "Two looks": {
+  "fr": "Deux styles",
+  "zh": "两种外观",
+  "es": "Dos aspectos",
+  "pt": "Dois visuais",
+  "de": "Zwei Looks",
+  "ja": "2つのデザイン",
+  "it": "Due look"
+ },
+ "Classic or Modern toward the light or the dark side?": {
+  "fr": "Classique ou Moderne, côté lumière ou côté obscur ?",
+  "zh": "经典还是现代，光明还是黑暗？",
+  "es": "¿Clásico o Moderno, hacia el lado luminoso o el oscuro?",
+  "pt": "Clássico ou Moderno, rumo ao lado claro ou ao escuro?",
+  "de": "Klassisch oder Modern: zur hellen oder zur dunklen Seite?",
+  "ja": "クラシックかモダンか、光か闇か？",
+  "it": "Classico o Moderno, verso il lato chiaro o quello oscuro?"
+ },
+ "New and Improved.": {
+  "fr": "Nouveau et amélioré.",
+  "zh": "全新升级。",
+  "es": "Nuevo y mejorado.",
+  "pt": "Novo e melhorado.",
+  "de": "Neu und verbessert.",
+  "ja": "新しくなって、さらに良く。",
+  "it": "Nuovo e migliorato."
+ },
+ "Update notifications go straight to game‑sauce admins in chat.": {
+  "fr": "Les notifications de mise à jour arrivent directement aux admins de game‑sauce, dans la messagerie.",
+  "zh": "更新通知会直接发给 game‑sauce 管理员的聊天。",
+  "es": "Los avisos de actualización llegan directamente a los administradores de game‑sauce, en el chat.",
+  "pt": "Os avisos de atualização vão direto para os administradores do game‑sauce, no chat.",
+  "de": "Update-Hinweise gehen direkt an die game‑sauce-Admins im Chat.",
+  "ja": "アップデートの通知は、game‑sauce の管理者へチャットで直接届きます。",
+  "it": "Le notifiche di aggiornamento arrivano direttamente agli admin di game‑sauce, in chat."
+ },
+ "Pick your sources": {
+  "fr": "Choisissez vos sources",
+  "zh": "自选来源",
+  "es": "Elige tus fuentes",
+  "pt": "Escolha suas fontes",
+  "de": "Wähle deine Quellen",
+  "ja": "取得元を選ぶ",
+  "it": "Scegli le tue fonti"
+ },
+ "ScreenScraper, SteamGridDB, IGDB, TheGamesDB, game assets and more, your choice.": {
+  "fr": "ScreenScraper, SteamGridDB, IGDB, TheGamesDB, ressources de jeu et plus encore : à vous de choisir.",
+  "zh": "ScreenScraper、SteamGridDB、IGDB、TheGamesDB、游戏素材等，任你选择。",
+  "es": "ScreenScraper, SteamGridDB, IGDB, TheGamesDB, recursos de juego y más, tú eliges.",
+  "pt": "ScreenScraper, SteamGridDB, IGDB, TheGamesDB, recursos de jogos e mais, você escolhe.",
+  "de": "ScreenScraper, SteamGridDB, IGDB, TheGamesDB, Spiele-Assets und mehr: du hast die Wahl.",
+  "ja": "ScreenScraper、SteamGridDB、IGDB、TheGamesDB、ゲームアセットなど、お好きなものを。",
+  "it": "ScreenScraper, SteamGridDB, IGDB, TheGamesDB, risorse di gioco e altro, scegli tu."
+ },
+ "Rename any platform. We won&#39;t tell.": {
+  "fr": "Renommez n'importe quelle plateforme. On ne dira rien.",
+  "zh": "想怎么改名都行，我们不会说出去。",
+  "es": "Renombra cualquier plataforma. No se lo diremos a nadie.",
+  "pt": "Renomeie qualquer plataforma. A gente não conta.",
+  "de": "Benenne jede Plattform um. Wir verraten nichts.",
+  "ja": "どのプラットフォームも自由に名前を変更。内緒にしておきます。",
+  "it": "Rinomina qualsiasi piattaforma. Non lo diremo a nessuno."
+ },
+ "FREE <i>&amp;</i> OPEN SOURCE": {
+  "fr": "GRATUIT <i>&amp;</i> OPEN SOURCE",
+  "zh": "免费 <i>&amp;</i> 开源",
+  "es": "GRATIS <i>Y</i> DE CÓDIGO ABIERTO",
+  "pt": "GRÁTIS <i>E</i> DE CÓDIGO ABERTO",
+  "de": "KOSTENLOS <i>&amp;</i> OPEN SOURCE",
+  "ja": "無料 <i>&amp;</i> オープンソース",
+  "it": "GRATIS <i>E</i> OPEN SOURCE"
  }
 }

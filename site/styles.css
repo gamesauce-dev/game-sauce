@@ -248,15 +248,15 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 @keyframes pxhop { 50% { transform: translateY(-5px); } }
 .tile .px[viewBox^="0 0 25"] { width: 96px; }
 .tile.sp { justify-content: center; align-items: center; text-align: center; font-family: ui-monospace, "Cascadia Mono", "Courier New", monospace; text-transform: uppercase; }
-.special.start span { display: block; font-size: 1.7rem; font-weight: 800; letter-spacing: .22em; color: var(--c); text-shadow: 0 0 14px hsl(var(--h) 90% 60% / .7); }
-.special.start small { display: block; margin-top: 6px; letter-spacing: .3em; color: hsl(var(--h) 25% 78%); font-size: .72rem; }
+.special.start h3 { display: block; font-size: 1.7rem; font-weight: 800; letter-spacing: .22em; color: var(--c); text-shadow: 0 0 14px hsl(var(--h) 90% 60% / .7); }
+.special.start p { display: block; margin-top: 6px; letter-spacing: .3em; color: hsl(var(--h) 25% 78%); font-size: .72rem; }
 .blink { animation: blink 1.1s steps(2, start) infinite; } @keyframes blink { to { visibility: hidden; } }
 .special.score { width: 100%; text-align: left; } .special.score b { display: block; letter-spacing: .25em; color: var(--c); font-size: .9rem; margin-bottom: 6px; text-shadow: 0 0 10px hsl(var(--h) 90% 60% / .6); }
 .special.score ol { list-style: none; margin: 0; padding: 0; font-size: .8rem; letter-spacing: .08em; color: hsl(var(--h) 25% 85%); }
 .special.score li { display: flex; gap: 10px; padding: 2px 0; } .special.score i { font-style: normal; color: var(--c); } .special.score em { font-style: normal; margin-left: auto; color: #fff; }
 .special.coin b { letter-spacing: .2em; font-size: .9rem; color: var(--c); }
 .tile.sp .px { position: static; width: 44px; margin-bottom: 6px; }
-@media (max-width: 620px) { .tile .px { width: 38px; right: 10px; top: 9px; } .tile .px[viewBox^="0 0 25"] { width: 72px; } .tile.sp .px { width: 38px; } .special.start span { font-size: 1.2rem; } }
+@media (max-width: 620px) { .tile .px { width: 38px; right: 10px; top: 9px; } .tile .px[viewBox^="0 0 25"] { width: 72px; } .tile.sp .px { width: 38px; } .special.start h3 { font-size: 1.2rem; } }
 @media (prefers-reduced-motion: reduce) { .blink, .tile:hover .px { animation: none; } }
 
 /* neon lettering: a glowing tube, a hollow outline tube, and a flickering sign */
@@ -265,12 +265,12 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .tile.neon-line.w2.h2 h3 { -webkit-text-stroke-width: 1.8px; font-size: 1.9rem; }
 .tile.neon.w2.h2 h3 { font-size: 1.7rem; }
 .special.sign { display: grid; place-items: center; width: 100%; height: 100%; }
-.special.sign span { display: inline-block; padding: 14px 26px; border: 3px solid var(--c); border-radius: 18px; font-size: 1.5rem; font-weight: 800; letter-spacing: .12em; color: #fff;
+.special.sign h3 { display: inline-block; padding: 14px 26px; border: 3px solid var(--c); border-radius: 18px; font-size: 1.5rem; font-weight: 800; letter-spacing: .12em; color: #fff;
   text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 26px var(--c); box-shadow: 0 0 10px var(--c), 0 0 28px hsl(var(--h) 95% 55% / .7), inset 0 0 14px hsl(var(--h) 95% 55% / .6); animation: flicker 4.2s linear infinite; }
 .special.sign i { font-style: normal; color: var(--c); }
 @keyframes flicker { 0%, 18%, 22%, 62%, 66%, 100% { opacity: 1; } 20%, 64% { opacity: .55; } 21%, 65% { opacity: .9; } }
-@media (max-width: 620px) { .special.sign span { font-size: 1rem; padding: 10px 14px; } .tile.neon-line.w2.h2 h3, .tile.neon.w2.h2 h3 { font-size: 1.4rem; } }
-@media (prefers-reduced-motion: reduce) { .special.sign span { animation: none; } }
+@media (max-width: 620px) { .special.sign h3 { font-size: 1rem; padding: 10px 14px; } .tile.neon-line.w2.h2 h3, .tile.neon.w2.h2 h3 { font-size: 1.4rem; } }
+@media (prefers-reduced-motion: reduce) { .special.sign h3 { animation: none; } }
 /* review mode: add ?numbers to the address to stamp each tile with its number */
 .jumble { counter-reset: tile; }
 .jumble.numbered .tile { counter-increment: tile; }
@@ -279,7 +279,7 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .special.names { display: grid; gap: 1px; justify-items: center; text-transform: none; }
 .special.names span { font-weight: 800; font-size: 1.15rem; letter-spacing: .06em; line-height: 1.15; color: hsl(var(--h) 20% 62%); animation: pickname 3.6s steps(1) infinite; }
 .special.names span:nth-child(2) { animation-delay: -2.4s; } .special.names span:nth-child(3) { animation-delay: -1.2s; }
-.special.names small { margin-top: 6px; font-size: .72rem; letter-spacing: .04em; color: hsl(var(--h) 25% 78%); text-transform: none; }
+.special.names p { margin-top: 6px; font-size: .72rem; letter-spacing: .04em; color: hsl(var(--h) 25% 78%); text-transform: none; }
 @keyframes pickname { 0% { color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 24px var(--c); } 33% { color: hsl(var(--h) 20% 62%); text-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .special.names span { animation: none; color: #fff; } }
 /* a second icon beside the first */
@@ -422,3 +422,9 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .tile.money .rain i { position: absolute; top: 0; font-style: normal; font-weight: 800; font-family: Georgia, "Times New Roman", serif; color: var(--c); opacity: .5; text-shadow: 0 0 8px hsl(var(--h) 90% 55% / .6); animation: money-fall 5.5s linear infinite; }
 @keyframes money-fall { 0% { transform: translateY(-34px) rotate(-14deg); opacity: 0; } 12% { opacity: .75; } 85% { opacity: .75; } 100% { transform: translateY(185px) rotate(18deg); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tile.money .rain i { animation: none !important; } }
+/* the special tiles use real headings and paragraphs (so they can be translated): reset what the plain tile rules add */
+.special h3, .special p { margin: 0; max-width: none; padding: 0; }
+.special.start h3 { margin: 0; line-height: 1.3; } .special.start p { margin-top: 6px; }
+.special.names p { margin-top: 6px; text-align: center; color: hsl(var(--h) 25% 78%); }
+.special.sign h3 { text-align: center; line-height: 1.35; }
+html:lang(ja) .tile h3 { font-size: 1.02rem; }
