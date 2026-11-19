@@ -139,3 +139,14 @@
 /* the position counter sits in the header, beside the platform's logo */
 .bs-theme-xbox360 .bs-bl-hr { display: inline-flex; align-items: center; gap: 1.2em; }
 .bs-theme-xbox360 .bs-bl-head .bs-pos { position: static; font-size: .55em; font-weight: 600; opacity: .95; white-space: nowrap; }
+
+/* the current blade names itself: white on the green, as the dashboard's selected blade does */
+.bs-theme-xbox360 .bs-bl-lab.cur { top: 30%; font-size: 1.5em; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: default; color: #fff; text-shadow: 0 .05em .25em rgba(0, 60, 0, .65); }
+
+/* blades changing: the middle slides in from the side the new blade is on, quick to start and gentle to stop; the edges' curve may reach a little into the middle */
+.bs-theme-xbox360 .bl-svg { overflow: visible; }
+.bs-theme-xbox360 .bs-bl-main.slide-r { animation: bs-slide-r .22s cubic-bezier(.2, .8, .25, 1); }
+.bs-theme-xbox360 .bs-bl-main.slide-l { animation: bs-slide-l .22s cubic-bezier(.2, .8, .25, 1); }
+@keyframes bs-slide-r { from { transform: translateX(6%); opacity: .25; } }
+@keyframes bs-slide-l { from { transform: translateX(-6%); opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .bs-theme-xbox360 .bs-bl-main.slide-r, .bs-theme-xbox360 .bs-bl-main.slide-l { animation: none; } }
