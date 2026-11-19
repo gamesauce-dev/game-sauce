@@ -3468,6 +3468,7 @@ async function loadPlatformAdmin() {
           <label class="btn btn-sm" data-logo-pick title="Choose a logo picture">Choose logo<input type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,.svg" data-logo-file hidden /></label>
           <button type="button" class="btn btn-sm btn-ghost" data-logo-remove ${p.logo_v ? '' : 'hidden'} title="Remove this platform's logo">Remove logo</button>
           <label class="policy-row" style="margin:0" ${p.logo_v ? '' : 'hidden'} data-logo-plate-row title="For a logo drawn in black that vanishes on the dark theme: show it on a light plate when the theme is dark"><input type="checkbox" data-logo-plate ${p.logo_plate ? 'checked' : ''} /> <span>Light backing in dark mode</span></label>
+          <label class="policy-row" style="margin:0" ${p.logo_v ? '' : 'hidden'} data-logo-text-row title="On the Xbox 360 look of Big Screen the blades show this platform's name instead of its logo (for a logo that does not suit a slim band)"><input type="checkbox" data-logo-text ${p.logo_text ? 'checked' : ''} /> <span>Show the name on Big Screen blades</span></label>
         </div>
       </div>
       <div class="field" style="grid-column:1/-1"><span>Icon</span>
@@ -3497,6 +3498,10 @@ async function loadPlatformAdmin() {
     });
     host.querySelector('[data-logo-plate]')?.addEventListener('change', async (e) => {
       try { await api(`/platforms/${encodeURIComponent(slug)}/logo/plate`, { method: 'PUT', body: JSON.stringify({ plate: e.target.checked }) }); list.querySelector(`[data-platform="${CSS.escape(slug)}"] .plat-logo`)?.classList.toggle('on-plate', e.target.checked); toast(e.target.checked ? 'Light backing on in dark mode' : 'Light backing off'); loadPlatforms(); }
+      catch (err) { e.target.checked = !e.target.checked; toast(err.message, true); }
+    });
+    host.querySelector('[data-logo-text]')?.addEventListener('change', async (e) => {
+      try { await api(`/platforms/${encodeURIComponent(slug)}/logo/bladetext`, { method: 'PUT', body: JSON.stringify({ text: e.target.checked }) }); toast(e.target.checked ? 'The blades show the name' : 'The blades show the logo'); loadPlatforms(); }
       catch (err) { e.target.checked = !e.target.checked; toast(err.message, true); }
     });
     logoRm?.addEventListener('click', async () => {

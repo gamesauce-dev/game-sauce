@@ -654,3 +654,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '60') ON CON
 /* ── v61: a game whose file could not be fingerprinted in the background (1: unreadable, 2: a duplicate that was kept, 3: bigger than the size limit the admin set) is not tried again until the file changes. ── */
 if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'hash_failed')) db.exec('ALTER TABLE roms ADD COLUMN hash_failed INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '61') ON CONFLICT(key) DO UPDATE SET value = '61'").run();
+
+/* ── v62: a platform logo can be set to "show the name on the Big Screen blades instead" (an awkward logo does not suit a slim band) */
+if (!db.prepare('PRAGMA table_info(platform_logos)').all().some((c) => c.name === 'blade_text')) db.exec('ALTER TABLE platform_logos ADD COLUMN blade_text INTEGER NOT NULL DEFAULT 0');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '62') ON CONFLICT(key) DO UPDATE SET value = '62'").run();

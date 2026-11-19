@@ -3,6 +3,8 @@ import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
 import { usable, FAMILY_DEFAULTS } from './lib/colours.js';
+import fs from 'node:fs';
+import path from 'node:path';
 import multer from 'multer';
 import { sniffLogo, MAX_LOGO_BYTES, LOGO_HEADERS } from './lib/logos.js';
 import express from 'express';
@@ -258,7 +260,7 @@ export function createApp() {
                COUNT(CASE WHEN ${playableSql()} AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
                COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
         , (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v
-        , COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate
+        , COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate, COALESCE((SELECT blade_text FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_text
         FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
       `).all().map((p) => ({ ...p, short_default: PLATFORM_BY_SLUG.get(p.slug)?.short_name ?? null, multidisc_count: md[p.slug] || 0, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
@@ -319,7 +321,7 @@ export function createApp() {
     const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap();
     res.json({
       store_logos: extraLogos(),
-      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v, COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 })),
+      items: db.prepare('SELECT p.*, (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v, COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate, COALESCE((SELECT blade_text FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_text FROM platforms p ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE').all().map(shapePlatform).map((p) => ({ ...p, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 })),
       defaults: FAMILY_DEFAULTS
     });
   });
@@ -381,6 +383,22 @@ export function createApp() {
       req.auditDetail = { platform: slug, type: kind.type, bytes: req.file.buffer.length };
       res.json({ slug, logo_v: v, type: kind.type });
     });
+  });
+  api.put('/platforms/:slug/logo/bladetext', requireAdmin, (req, res) => {   // Big Screen's blades show the platform's name instead of its logo
+    const slug = String(req.params.slug || '').toLowerCase();
+    if (!db.prepare('SELECT 1 FROM platform_logos WHERE slug = ?').get(slug)) return res.status(404).json({ error: 'That platform has no logo yet' });
+    const text = req.body?.text ? 1 : 0;
+    db.prepare('UPDATE platform_logos SET blade_text = ? WHERE slug = ?').run(text, slug);
+    req.auditDetail = { platform: slug, blade_text: Boolean(text) };
+    res.json({ slug, text });
+  });
+  // The page-turn sounds of the Xbox 360 Big Screen look are the owner's own files, kept in the storage folder (storage/sounds/page-left.mp3 and page-right.mp3); without them the blades whoosh
+  api.get('/bigscreen-sounds/:name', requireAuth, (req, res) => {
+    const name = String(req.params.name || '');
+    if (!['page-left.mp3', 'page-right.mp3'].includes(name)) return res.status(404).end();
+    const file = path.resolve(process.env.GAMESAUCE_STORAGE_DIR || 'storage', 'sounds', name);
+    if (!fs.existsSync(file)) return res.status(404).end();
+    res.set({ 'Content-Type': 'audio/mpeg', 'Cache-Control': 'private, max-age=3600' }).sendFile(file);
   });
   api.put('/platforms/:slug/logo/plate', requireAdmin, (req, res) => {
     const slug = String(req.params.slug || '').toLowerCase();
