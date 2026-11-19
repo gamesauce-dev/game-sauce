@@ -73,5 +73,6 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   for (const c of ['.bs-bl-shot.video video', '.bs-bl-plogo', '.bs-bl-hlogo']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   assert.ok(css.includes(".bs-theme-xbox360 .bs-xbl .bs-xb:first-child { margin-left") && css.includes(".bs-theme-xbox360 .bs-xbr .bs-xb:first-child { margin-right"), "the buttons are staggered");
   // inspired by, not copied: no outside address, no font file, no picture
-  assert.ok(!/url\(|@font-face|https?:/i.test(css), 'plain gradients and system fonts only');
+  const urls = css.match(/url\([^)]*\)/gi) || [];
+  assert.ok(!/https?:/i.test(css) && urls.length === 1 && urls[0].includes('/vendor/fonts/source-sans-3-latin-300-normal.woff2') && css.split('@font-face').length === 2, 'plain gradients, and one bundled open-licence font (Source Sans 3 Light) and nothing else');
 });
