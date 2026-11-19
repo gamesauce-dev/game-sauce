@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-19
+
 ### Added
 - **Start in Big Screen.** Settings > My account > **When you sign in** lets each person land in Big Screen at once (press B to leave it for the normal screen) or in the normal screen. A play-only account starts in Big Screen unless it chooses otherwise, and can now also pick its Big Screen look; its Big Screen menu leaves out Add to Collection, Broken and Hide, which that account cannot do.
 
