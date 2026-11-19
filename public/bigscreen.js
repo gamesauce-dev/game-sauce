@@ -328,11 +328,17 @@ export function openBigScreen(host) {
     });
     return svg + '</svg>';
   };
+  // The words on the blades. Each is centred on its own strip (found from the curve at the height it stands at), and the names are shortened so they fit.
+  const bladeName = (p) => String(p.name).replace(/^microsoft\s+/i, '').replace(/live arcade/i, 'arcade').replace(/series x\|s/i, 'series').toLowerCase();
+  const stripCentre = (d, y) => {   // the middle of sheet d at height y (of 1000), in percent of the blade's width
+    const f = 1 - ((y - 500) / 500) ** 2, xl = d ? EDGE_TOP[d - 1] - 7 + BULGE * f : 0, xr = EDGE_TOP[d] + BULGE * f;
+    return ((xl + xr) / 2 / 120 * 100).toFixed(1);
+  };
   const bladeLabels = (left, bands) => (left ? bands : [...bands].reverse()).map((b, d) => {
     if (!b?.p) return '';
-    const name = esc(String(b.p.name).replace(/^microsoft\s+/i, '').toLowerCase());
-    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${[87, 87, 87][d]}%">${name}</span>`;   // where you are: no tab, nothing to press
-    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${[26.7, 65.3, 87][d]}%">${name}</span>`;
+    const name = esc(bladeName(b.p));
+    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 300)}%">${name}</span>`;   // where you are: no tab, nothing to press
+    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 360)}%">${name}</span>`;
   }).join('');
   const bladesShell = () => {
     const src = st.src || {}, m = bladeModel();
