@@ -131,16 +131,17 @@
 .bs-theme-xbox360 .bs-xbr .bs-xb:first-child { margin-right: 1.5em; }
 
 /* the words on a band that leads to another platform: on a tab (a lighter rounded piece with an outline), the others have none */
-.bs-theme-xbox360 .bs-bl-lab { position: absolute; top: 36%; writing-mode: vertical-rl; white-space: nowrap; font-size: 1.32em; font-weight: 500; letter-spacing: .03em; line-height: 1; padding: .85em .3em; border-radius: 1.1em; cursor: pointer; color: #454d44; background: linear-gradient(90deg, #f7f8f5, #c4c9c1); border: 1px solid rgba(100, 108, 98, .55); box-shadow: inset 0 .08em 0 #fff, .12em .14em .4em rgba(0, 40, 0, .35); text-shadow: 0 .04em 0 rgba(255, 255, 255, .6); }
-.bs-theme-xbox360 .bs-bl-l .bs-bl-lab { transform: translate(-50%, -50%) rotate(180deg); }
-.bs-theme-xbox360 .bs-bl-r .bs-bl-lab { transform: translate(50%, -50%); }
-.bs-theme-xbox360 .bs-bl-lab:hover { filter: brightness(1.06); }
+.bs-theme-xbox360 { --bl-font: 'Segoe UI Light', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif; }
+.bs-theme-xbox360 .bs-bl-lab { position: absolute; top: 18%; writing-mode: vertical-rl; white-space: nowrap; font-family: var(--bl-font); font-size: 1.6em; font-weight: 400; letter-spacing: .04em; line-height: 1; padding: 0; border: 0; background: none; box-shadow: none; cursor: pointer; color: #3b433b; text-shadow: 0 .04em 0 rgba(255, 255, 255, .7); }
+.bs-theme-xbox360 .bs-bl-l .bs-bl-lab { transform: translateX(-50%); }
+.bs-theme-xbox360 .bs-bl-r .bs-bl-lab { transform: translateX(50%); }
+.bs-theme-xbox360 .bs-bl-lab:not(.cur):hover { color: #2f372f; }
 /* the position counter sits in the header, beside the platform's logo */
 .bs-theme-xbox360 .bs-bl-hr { display: inline-flex; align-items: center; gap: 1.2em; }
 .bs-theme-xbox360 .bs-bl-head .bs-pos { position: static; font-size: .55em; font-weight: 600; opacity: .95; white-space: nowrap; }
 
 /* the current blade names itself: white on the green, as the dashboard's selected blade does */
-.bs-theme-xbox360 .bs-bl-lab.cur { top: 30%; font-size: 1.75em; font-weight: 400; letter-spacing: .04em; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; cursor: default; color: #fff; text-shadow: 0 .04em .18em rgba(0, 60, 0, .6); }
+.bs-theme-xbox360 .bs-bl-lab.cur { top: 16%; font-size: 1.85em; letter-spacing: .05em; cursor: default; color: #fff; text-shadow: 0 .04em .18em rgba(0, 60, 0, .6); }
 
 /* blades changing: the middle slides in from the side the new blade is on, quick to start and gentle to stop; the edges' curve may reach a little into the middle */
 .bs-theme-xbox360 .bl-svg { overflow: visible; }

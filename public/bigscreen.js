@@ -337,8 +337,8 @@ export function openBigScreen(host) {
   const bladeLabels = (left, bands) => (left ? bands : [...bands].reverse()).map((b, d) => {
     if (!b?.p) return '';
     const name = esc(bladeName(b.p));
-    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 300)}%">${name}</span>`;   // where you are: no tab, nothing to press
-    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 360)}%">${name}</span>`;
+    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 240)}%">${name}</span>`;   // where you are: no tab, nothing to press
+    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 260)}%">${name}</span>`;
   }).join('');
   const bladesShell = () => {
     const src = st.src || {}, m = bladeModel();
