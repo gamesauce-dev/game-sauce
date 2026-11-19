@@ -275,3 +275,10 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .jumble { counter-reset: tile; }
 .jumble.numbered .tile { counter-increment: tile; }
 .jumble.numbered .tile::after { content: counter(tile); position: absolute; left: 8px; top: 8px; z-index: 5; padding: 3px 7px; border-radius: 7px; background: #fff; color: #000; font: 700 12px/1 ui-monospace, monospace; }
+/* the rename-your-platforms tile */
+.special.names { display: grid; gap: 1px; justify-items: center; text-transform: none; }
+.special.names span { font-weight: 800; font-size: 1.15rem; letter-spacing: .06em; line-height: 1.15; color: hsl(var(--h) 20% 62%); animation: pickname 3.6s steps(1) infinite; }
+.special.names span:nth-child(2) { animation-delay: -2.4s; } .special.names span:nth-child(3) { animation-delay: -1.2s; }
+.special.names small { margin-top: 6px; font-size: .72rem; letter-spacing: .04em; color: hsl(var(--h) 25% 78%); text-transform: none; }
+@keyframes pickname { 0% { color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 24px var(--c); } 33% { color: hsl(var(--h) 20% 62%); text-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .special.names span { animation: none; color: #fff; } }
