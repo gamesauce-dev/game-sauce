@@ -283,15 +283,32 @@ export function openBigScreen(host) {
   const srcSlug = () => (st.src?.kind === 'platform' ? st.src.slug : null);
   const blades = () => root.classList.contains('bs-theme-xbox360');
   const logoImg = (p, cls) => (p?.logo_v ? `<img class="${cls}${plated(p)}" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.alt}))" />` : '');
+  // The blades are a drawing: curved bands whose inner edge swings out toward the screen's edge in the middle (as on the dashboard), a pale rim, the tabs behind the words, and, on the left, the current tab in green. The right blade is the left one mirrored in CSS.
+  const bladeSvg = (left) => `<svg class="bl-svg" viewBox="0 0 120 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><defs>
+    <linearGradient id="bd${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#5d635c"/><stop offset="1" stop-color="#b9beb6"/></linearGradient>
+    <linearGradient id="bm${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#8e948c"/><stop offset=".55" stop-color="#c7cbc4"/><stop offset="1" stop-color="#e9ebe6"/></linearGradient>
+    <linearGradient id="bv${left ? 'L' : 'R'}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
+    <linearGradient id="bt${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#fafbf8"/><stop offset="1" stop-color="#bfc5bc"/></linearGradient>
+    <linearGradient id="bg${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#b9f070"/><stop offset=".35" stop-color="#6cbc2a"/><stop offset="1" stop-color="#5fb324"/></linearGradient></defs>
+    <path d="M0,0 H46 C46,190 20,330 20,500 C20,670 46,810 46,1000 H0 Z" fill="url(#bd${left ? 'L' : 'R'})"/>
+    <path d="M24,0 H92 C92,170 60,320 60,500 C60,680 92,830 92,1000 H24 Z" fill="url(#bm${left ? 'L' : 'R'})"/>
+    <path d="M24,0 H92 C92,170 60,320 60,500 C60,680 92,830 92,1000 H24 Z" fill="url(#bv${left ? 'L' : 'R'})"/>
+    <path d="M97,0 C97,172 66,322 66,500 C66,678 97,828 97,1000" fill="none" stroke="#f6f8f3" stroke-width="6" opacity=".95"/>
+    <path d="M100.5,0 C100.5,172 69.5,322 69.5,500 C69.5,678 100.5,828 100.5,1000" fill="none" stroke="#7c847a" stroke-opacity=".45" stroke-width="1.2"/>
+    ${left
+      ? `<rect x="26" y="165" width="34" height="215" rx="15" fill="url(#btL)" stroke="#6f776e" stroke-opacity=".55" stroke-width="1.2"/>
+         <path d="M74,150 H120 V660 H74 Q62,660 62,648 V162 Q62,150 74,150 Z" fill="url(#bgL)"/><path d="M64.5,165 V645" stroke="#e8ffc8" stroke-opacity=".65" stroke-width="1.6"/>`
+      : `<rect x="52" y="185" width="34" height="205" rx="15" fill="url(#btR)" stroke="#6f776e" stroke-opacity=".55" stroke-width="1.2"/>
+         <rect x="14" y="215" width="34" height="205" rx="15" fill="url(#btR)" stroke="#6f776e" stroke-opacity=".55" stroke-width="1.2"/>`}</svg>`;
   const bladesShell = () => {
     const src = st.src || {}, fam = String(src.plat?.family || 'library').toLowerCase(), now = String(src.name || 'games').toLowerCase();
     const btn = (k, label, right) => `<span class="bs-xb${right ? ' r' : ''}">${right ? `${label}<i data-k="${k}">${k}</i>` : `<i data-k="${k}">${k}</i>${label}`}</span>`;
     return `<div class="bs-bl" id="bs-bl">
-    <aside class="bs-blade bs-bl-l" aria-hidden="true"><i class="bl-dome"></i><i class="bl-mid"></i><i class="bl-rim"></i><span class="bs-tab grey">${esc(fam)}</span><span class="bs-tab on">${esc(now)}</span></aside>
+    <aside class="bs-blade bs-bl-l" aria-hidden="true">${bladeSvg(true)}<span class="bs-tab grey">${esc(fam)}</span><span class="bs-tab on">${esc(now)}</span></aside>
     <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
       <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div>
       <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm"><span><u>LB RB</u> Jump by letter</span><span><u>Select + Start</u> Hold in a game to close it</span></span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
-    <aside class="bs-blade bs-bl-r" aria-hidden="true"><i class="bl-dome"></i><i class="bl-mid"></i><i class="bl-rim"></i><span class="bs-tab grey">game-sauce</span><span class="bs-tab grey">big screen</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
+    <aside class="bs-blade bs-bl-r" aria-hidden="true">${bladeSvg(false)}<span class="bs-tab grey t1">game-sauce</span><span class="bs-tab grey t2">big screen</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
   };
   const BL_ROWS = 6;
   const placeBlades = () => {

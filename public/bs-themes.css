@@ -65,26 +65,20 @@
 
 /* ── Xbox 360: the Blades layout of the games screen ── */
 .bs-theme-xbox360 .bs-bl { position: absolute; inset: 0; display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 9.6em; padding: 1.2em 0 .6em; }
-/* a blade at each side, built like the dashboard's: an outer dome, a lighter blade, a pale rim, then the tabs (the current one in green, joined to the green surface) */
+/* a blade at each side: a drawing (see bladeSvg in bigscreen.js) with the words laid on its tabs. The right blade is the left one mirrored. */
 .bs-theme-xbox360 .bs-blade { position: relative; margin: -1.2em 0 -.6em; }
-.bs-theme-xbox360 .bs-blade i { position: absolute; display: block; }
-.bs-theme-xbox360 .bs-bl-l .bl-dome { left: -3em; width: 6.4em; top: -1em; bottom: -1em; border-radius: 0 4.6em 4.6em 0 / 0 40% 40% 0; background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, 0) 22%, rgba(0, 0, 0, 0) 74%, rgba(0, 0, 0, .3)), linear-gradient(90deg, #6b716a, #9ca299 45%, #bfc4bc); box-shadow: inset -.25em 0 .7em rgba(255, 255, 255, .35), .35em 0 .9em rgba(0, 45, 0, .4); }
-.bs-theme-xbox360 .bs-bl-l .bl-mid { left: 2em; width: 5.2em; top: 2.5%; bottom: 2.5%; border-radius: 0 3.8em 3.8em 0 / 0 30% 30% 0; background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, 0) 22%, rgba(0, 0, 0, 0) 74%, rgba(0, 0, 0, .3)), linear-gradient(90deg, #98a095, #c2c7bf 50%, #dcdfd8); box-shadow: inset -.2em 0 .5em rgba(255, 255, 255, .5), .3em 0 .8em rgba(0, 45, 0, .35); }
-.bs-theme-xbox360 .bs-bl-l .bl-rim { left: 5.9em; width: 1.5em; top: 8%; bottom: 6%; border-radius: 0 2.6em 2.6em 0 / 0 38% 38% 0; background: linear-gradient(180deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, .2)), linear-gradient(90deg, #aeb4ab, #eef0ea); box-shadow: .25em 0 .6em rgba(0, 45, 0, .3); }
-.bs-theme-xbox360 .bs-bl-r .bl-dome { right: -3em; width: 6.4em; top: -1em; bottom: -1em; border-radius: 4.6em 0 0 4.6em / 40% 0 0 40%; background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, 0) 22%, rgba(0, 0, 0, 0) 74%, rgba(0, 0, 0, .3)), linear-gradient(270deg, #6b716a, #9ca299 45%, #bfc4bc); box-shadow: inset .25em 0 .7em rgba(255, 255, 255, .35), -.35em 0 .9em rgba(0, 45, 0, .4); }
-.bs-theme-xbox360 .bs-bl-r .bl-mid { right: 2em; width: 5.2em; top: 2.5%; bottom: 2.5%; border-radius: 3.8em 0 0 3.8em / 30% 0 0 30%; background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, 0) 22%, rgba(0, 0, 0, 0) 74%, rgba(0, 0, 0, .3)), linear-gradient(270deg, #98a095, #c2c7bf 50%, #dcdfd8); box-shadow: inset .2em 0 .5em rgba(255, 255, 255, .5), -.3em 0 .8em rgba(0, 45, 0, .35); }
-.bs-theme-xbox360 .bs-bl-r .bl-rim { right: 5.9em; width: 1.5em; top: 8%; bottom: 6%; border-radius: 2.6em 0 0 2.6em / 38% 0 0 38%; background: linear-gradient(180deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, .2)), linear-gradient(270deg, #aeb4ab, #eef0ea); box-shadow: -.25em 0 .6em rgba(0, 45, 0, .3); }
-.bs-theme-xbox360 .bs-tab { position: absolute; writing-mode: vertical-rl; display: flex; align-items: flex-start; justify-content: center; padding: 1.1em 0; font-size: 1.25em; font-weight: 600; letter-spacing: .02em; white-space: nowrap; color: #6a726a; }
-/* a grey tab: a rounded piece that stands out of the lighter blade */
-.bs-theme-xbox360 .bs-tab.grey { width: 2em; border-radius: 1.3em; background: linear-gradient(90deg, #f6f7f4, #c9cdc6); border: 1px solid rgba(110, 118, 108, .55); box-shadow: inset 0 .08em 0 #fff, .15em .15em .5em rgba(0, 45, 0, .3); }
-.bs-theme-xbox360 .bs-bl-l .bs-tab.grey { left: 2.64em; top: 22%; height: 29%; transform: rotate(180deg); }
-.bs-theme-xbox360 .bs-bl-r .bs-tab.grey:nth-of-type(1) { right: 2.96em; top: 20%; height: 27%; }
-.bs-theme-xbox360 .bs-bl-r .bs-tab.grey:nth-of-type(2) { right: .8em; top: 23%; height: 24%; }
-/* the current tab: tall, bright green, its inner edge running into the main green surface */
-.bs-theme-xbox360 .bs-tab.on { left: 5.2em; width: 2.7em; top: 17%; bottom: 12%; z-index: 2; padding-top: 1.3em; color: #fff; text-shadow: 0 .05em .25em rgba(0, 60, 0, .65); background: linear-gradient(90deg, #a4e65a, #62b523 45%, #5aae20); box-shadow: inset .12em 0 .4em rgba(255, 255, 255, .55); transform: rotate(180deg); }
+.bs-theme-xbox360 .bl-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; filter: drop-shadow(.25em 0 .6em rgba(0, 45, 0, .4)); }
+.bs-theme-xbox360 .bs-bl-r .bl-svg { transform: scaleX(-1); filter: drop-shadow(-.25em 0 .6em rgba(0, 45, 0, .4)); }
+.bs-theme-xbox360 .bs-tab { position: absolute; writing-mode: vertical-rl; white-space: nowrap; font-size: 1.25em; font-weight: 600; letter-spacing: .02em; line-height: 1; }
+.bs-theme-xbox360 .bs-tab.grey { color: #5d655c; text-shadow: 0 .05em 0 rgba(255, 255, 255, .7); }
+.bs-theme-xbox360 .bs-tab.on { color: #fff; text-shadow: 0 .05em .25em rgba(0, 60, 0, .65); }
+.bs-theme-xbox360 .bs-bl-l .bs-tab.grey { left: 36%; top: 27.5%; transform: translate(-50%, -50%) rotate(180deg); }
+.bs-theme-xbox360 .bs-bl-l .bs-tab.on { left: 80%; top: 36%; transform: translate(-50%, -50%) rotate(180deg); }
+.bs-theme-xbox360 .bs-bl-r .bs-tab.t1 { right: 57.5%; top: 29.5%; transform: translate(50%, -50%); }
+.bs-theme-xbox360 .bs-bl-r .bs-tab.t2 { right: 27.5%; top: 32%; transform: translate(50%, -50%); }
 /* the middle: a glossy header, then the list and the preview */
 .bs-theme-xbox360 .bs-bl-main { display: flex; flex-direction: column; min-width: 0; padding: 0 1.2em; }
-.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; padding: .35em 1.2em; border-radius: 1.1em; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .55); font-size: 1.7em; font-weight: 600; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
+.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; min-height: 2.35em; padding: .3em 1.5em; border-radius: .8em; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .55); font-size: 1.7em; font-weight: 600; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
 .bs-theme-xbox360 .bs-bl-head span { font-size: .8em; opacity: .9; text-transform: uppercase; letter-spacing: .03em; }
 .bs-theme-xbox360 .bs-bl-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 1.6em; padding-top: 1em; }
 .bs-theme-xbox360 .bs-bl-list { position: relative; display: flex; flex-direction: column; gap: .35em; min-height: 0; }
@@ -108,7 +102,7 @@
 .bs-theme-xbox360 .bs-bl-shot.cover img { object-fit: contain; padding: .5em; }   /* a game with only a cover is shown whole, not cropped to a wide picture */
 .bs-theme-xbox360 .bs-bl-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 1em; }
 .bs-theme-xbox360 .bs-bl-chips { display: flex; flex-wrap: wrap; gap: .4em; }
-.bs-theme-xbox360 .bs-bl-chips i, .bs-theme-xbox360 .bs-pos { right: auto; left: 8em; }   /* the position counter sits at the bottom left, clear of the preview's details */
+.bs-theme-xbox360 .bs-bl-chips i, .bs-theme-xbox360 .bs-pos { right: auto; left: 11em; bottom: 6.6em; }   /* the position counter sits at the bottom left, clear of the preview's details */
 
 /* a platform's logo in the header and on each row (its name when it has none), and the video that plays over the picture */
 .bs-theme-xbox360 .bs-bl-hlogo { height: 1.05em; max-width: 10em; object-fit: contain; vertical-align: middle; }
@@ -130,7 +124,7 @@
 
 /* the bottom of the screen: a glossy panel with the controller's coloured buttons, replacing the usual bar of hints */
 .bs-theme-xbox360.bs-bl-on .bs-hints { display: none; }
-.bs-theme-xbox360 .bs-bl-btns { flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1em; margin-top: .8em; padding: .55em 1.8em; border-radius: 1.6em; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .06)); border: 1px solid rgba(255, 255, 255, .45); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5), 0 .2em .8em rgba(0, 40, 0, .3); text-shadow: 0 .04em .2em rgba(0, 50, 0, .5); }
+.bs-theme-xbox360 .bs-bl-btns { flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1em; margin-top: .8em; padding: .55em 1.8em; border-radius: .9em; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .06)); border: 1px solid rgba(255, 255, 255, .45); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5), 0 .2em .8em rgba(0, 40, 0, .3); text-shadow: 0 .04em .2em rgba(0, 50, 0, .5); }
 .bs-theme-xbox360 .bs-xbl, .bs-theme-xbox360 .bs-xbr { display: flex; flex-direction: column; gap: .3em; font-weight: 600; font-size: 1.05em; }
 .bs-theme-xbox360 .bs-xbr { align-items: flex-end; }
 .bs-theme-xbox360 .bs-xb { display: inline-flex; align-items: center; gap: .55em; }

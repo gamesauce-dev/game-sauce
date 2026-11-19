@@ -57,7 +57,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
-  assert.ok(js.includes('class="bs-tab on"') && js.includes('class="bs-tab grey">game-sauce') && js.includes('class="bl-dome"'), "layered blades with tabs");
+  assert.ok(js.includes('class="bs-tab on"') && js.includes('class="bs-tab grey t1">game-sauce') && js.includes("bladeSvg(true)") && js.includes("bladeSvg(false)") && js.includes('preserveAspectRatio="none"'), "the blades are a drawing with the words laid on its tabs");
   // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
   assert.ok(js.includes("<i data-k=\"${b}\">${b}</i>") && js.includes("btn('Y', 'Play on this PC')") && js.includes("btn('A', 'Open', true)") && js.includes("root.classList.add('bs-bl-on')"));
   assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && js.includes('class="bs-bl-art"'));
