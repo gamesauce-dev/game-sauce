@@ -95,7 +95,7 @@
 .bs-theme-xbox360 .bs-bl-chips { display: flex; flex-wrap: wrap; gap: .4em; }
 .bs-theme-xbox360 .bs-bl-chips i, 
 /* a platform's logo in the header and on each row (its name when it has none), and the video that plays over the picture */
-.bs-theme-xbox360 .bs-bl-hlogo { height: 1.05em; max-width: 10em; object-fit: contain; vertical-align: middle; }
+.bs-theme-xbox360 .bs-bl-hlogo { height: 1.6em; max-width: 14em; object-fit: contain; vertical-align: middle; }
 .bs-theme-xbox360 .bs-bl-badge.logo { background: none; padding: 0; }
 .bs-theme-xbox360 .bs-bl-plogo { height: 1.5em; max-width: 7.5em; object-fit: contain; display: block; }
 .bs-theme-xbox360 img.bs-bl-hlogo.bs-plate, .bs-theme-xbox360 img.bs-bl-plogo.bs-plate { padding: .12em .5em; border-radius: .35em; }
@@ -141,7 +141,7 @@
 .bs-theme-xbox360 .bs-bl-head .bs-pos { position: static; font-size: .55em; font-weight: 600; opacity: .95; white-space: nowrap; }
 
 /* the current blade names itself: white on the green, as the dashboard's selected blade does */
-.bs-theme-xbox360 .bs-bl-lab.cur { top: 16%; font-size: 1.85em; letter-spacing: .05em; cursor: default; color: #fff; text-shadow: 0 .04em .18em rgba(0, 60, 0, .6); }
+.bs-theme-xbox360 .bs-bl-lab.cur { top: 50%; font-size: 1.85em; letter-spacing: .05em; cursor: default; color: #fff; text-shadow: 0 .04em .18em rgba(0, 60, 0, .6); }
 
 /* blades changing: the middle slides in from the side the new blade is on, quick to start and gentle to stop; the edges' curve may reach a little into the middle */
 .bs-theme-xbox360 .bl-svg { overflow: visible; }
@@ -156,15 +156,17 @@
 .bs-theme-xbox360 .bs-bl-l { left: 0; }
 .bs-theme-xbox360 .bs-bl-r { right: 0; }
 .bs-theme-xbox360 .bs-bl-main { grid-column: 2; }
-.bs-theme-xbox360.bs-bl-on .bs-top { margin: 0 9.6em; }
+.bs-theme-xbox360.bs-bl-on .bs-top { margin: 0 9.6em; background: none; border: 0; box-shadow: none; }
 
 /* a platform's logo on its blade: turned to read down the band, grey and printed into the metal (it blends with the silver); on the green it is a white print */
 .bs-theme-xbox360 img.bs-bl-lab.logo { position: absolute; top: calc(14% + 2em); width: 4em; height: 1.05em; object-fit: contain; padding: 0; border: 0; background: none; box-shadow: none; text-shadow: none; transform-origin: 50% 50%; transform: translate(-50%, -50%) rotate(90deg); mix-blend-mode: multiply; filter: grayscale(1) contrast(.85); opacity: .72; cursor: pointer; }
 .bs-theme-xbox360 .bs-bl-l img.bs-bl-lab.logo, .bs-theme-xbox360 .bs-bl-r img.bs-bl-lab.logo { transform: translate(-50%, -50%) rotate(90deg); }
 .bs-theme-xbox360 img.bs-bl-lab.logo:hover { opacity: .95; }
-.bs-theme-xbox360 img.bs-bl-lab.logo.cur { top: calc(12% + 2.3em); width: 4.6em; height: 1.2em; mix-blend-mode: normal; filter: brightness(0) invert(1) drop-shadow(0 .04em .12em rgba(0, 60, 0, .5)); opacity: .92; cursor: default; transform: translate(-50%, -50%) rotate(90deg); }
+.bs-theme-xbox360 img.bs-bl-lab.logo.cur { top: 50%; width: 4.6em; height: 1.2em; mix-blend-mode: normal; filter: brightness(0) invert(1) drop-shadow(0 .04em .12em rgba(0, 60, 0, .5)); opacity: .92; cursor: default; transform: translate(-50%, -50%) rotate(90deg); }
 
 .bs-theme-xbox360 .bs-bl-lab.alt { display: none; }
 .bs-theme-xbox360 img.bs-bl-lab.logo.sq { display: none; }
 .bs-theme-xbox360 img.bs-bl-lab.logo.sq + .bs-bl-lab.alt { display: block; }
 .bs-theme-xbox360 img.bs-bl-lab.logo.d2, .bs-theme-xbox360 img.bs-bl-lab.logo.d3 { height: .85em; width: 3.4em; }
+
+.bs-theme-xbox360 .bs-bl-l .bs-bl-lab.cur:not(img) { transform: translate(-50%, -50%); }

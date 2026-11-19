@@ -352,11 +352,11 @@ export function openBigScreen(host) {
     if (!b?.p) return '';
     const name = esc(bladeName(b.p));
     // A platform that has a logo shows it, turned to read down the band and printed into the metal; one without shows its name
-    const text = b.cur ? `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 240)}%">${name}</span>`   // where you are: no tab, nothing to press
+    const text = b.cur ? `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 500)}%">${name}</span>`   // where you are: no tab, nothing to press
       : `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 260)}%">${name}</span>`;
     if (!b.p.logo_v || b.p.logo_text) return text;
     // a logo that is nearly square would not fit a slim band when turned, so it gives way to the name (the name waits beside it, hidden)
-    const logo = `<img class="bs-bl-lab logo${b.cur ? ' cur' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" onload="if (this.naturalWidth < this.naturalHeight * 2.6) this.classList.add('sq')" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 240 : 260)}%${left ? '' : ')'}" />`;
+    const logo = `<img class="bs-bl-lab logo${b.cur ? ' cur' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" onload="if (this.naturalWidth < this.naturalHeight * 2.6) this.classList.add('sq')" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 500 : 260)}%${left ? '' : ')'}" />`;
     return logo + text.replace('class="bs-bl-lab', 'class="bs-bl-lab alt');
   }).join('');
   const bladesShell = () => {
