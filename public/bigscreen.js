@@ -338,10 +338,12 @@ export function openBigScreen(host) {
     if (!b?.p) return '';
     const name = esc(bladeName(b.p));
     // A platform that has a logo shows it, turned to read down the band and printed into the metal; one without shows its name
-    const logo = b.p.logo_v ? `<img class="bs-bl-lab logo${b.cur ? ' cur' : ''}${b.cur ? '' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 240 : 260)}%${left ? '' : ')'}" />` : '';
-    if (logo) return logo;
-    if (b.cur) return `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 240)}%">${name}</span>`;   // where you are: no tab, nothing to press
-    return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 260)}%">${name}</span>`;
+    const text = b.cur ? `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 240)}%">${name}</span>`   // where you are: no tab, nothing to press
+      : `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 260)}%">${name}</span>`;
+    if (!b.p.logo_v) return text;
+    // a logo that is nearly square would not fit a slim band when turned, so it gives way to the name (the name waits beside it, hidden)
+    const logo = `<img class="bs-bl-lab logo${b.cur ? ' cur' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" onload="if (this.naturalWidth < this.naturalHeight * 2.6) this.classList.add('sq')" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 240 : 260)}%${left ? '' : ')'}" />`;
+    return logo + text.replace('class="bs-bl-lab', 'class="bs-bl-lab alt');
   }).join('');
   const bladesShell = () => {
     const src = st.src || {}, m = bladeModel();
@@ -350,7 +352,7 @@ export function openBigScreen(host) {
     <aside class="bs-blade bs-bl-l">${bladeSvg(true, m.left)}${bladeLabels(true, m.left)}</aside>
     <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span class="bs-bl-hr"><span class="bs-pos" id="bs-pos"></span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
       <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div>
-      <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm">${m.sib.length > 1 ? '<span><u>◀ ▶</u> Change blade</span>' : ''}<span><u>LB RB</u> Jump by letter</span><span><u>Select + Start</u> Hold in a game to close it</span></span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
+      <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm">${m.sib.length > 1 ? '<span><u>◀ ▶</u> Change blade</span>' : ''}</span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
     <aside class="bs-blade bs-bl-r">${bladeSvg(false, m.right)}${bladeLabels(false, m.right)}</aside></div>`;
   };
   const BL_ROWS = 6;
