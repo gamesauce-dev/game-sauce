@@ -219,3 +219,19 @@ test('codes like &amp; are decoded when a CSV is imported and when a provider ma
   assert.equal(r2.body.publisher, 'A & B');
   assert.equal(r2.body.description, 'Roddy & Cathy go on');
 });
+
+test('a names CSV is remembered for every arcade row, so a game added later is named from it', async () => {
+  const csv = 'rom_name,short_game_name,year,manufacturer\nearlybird.zip,Early Bird,1994,Acme\nlatecomer.zip,Late Comer,1995,Acme\n';
+  const imp = new FormData(); imp.append('csv', new Blob([csv]), 'n.csv'); imp.append('platform', 'neogeo'); imp.append('apply', '1');
+  // only one of the two games exists when the CSV is imported
+  const up1 = new FormData(); up1.append('roms', new Blob(['early-content']), 'earlybird.zip'); up1.append('platform', 'neogeo'); up1.append('enrich', 'false');
+  const first = (await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up1 })).json()).created[0];
+  const r = await (await fetch(`${base}/api/roms/bulk/import-names`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: imp })).json();
+  assert.ok(r.matched >= 1, 'the game that was there matched');
+  const up2 = new FormData(); up2.append('roms', new Blob(['late-content']), 'latecomer.zip'); up2.append('platform', 'neogeo'); up2.append('enrich', 'false');
+  const second = (await (await fetch(`${base}/api/roms/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: up2 })).json()).created[0];
+  const { default: db } = await import('../src/db.js');
+  assert.equal(db.prepare('SELECT title FROM roms WHERE id = ?').get(first.id).title, 'Early Bird', 'the game that was there is renamed');
+  assert.equal(db.prepare('SELECT title FROM roms WHERE id = ?').get(second.id).title, 'Late Comer', 'the game that arrived later is named from the same CSV');
+  assert.equal(db.prepare('SELECT release_year FROM roms WHERE id = ?').get(second.id).release_year, 1995);
+});

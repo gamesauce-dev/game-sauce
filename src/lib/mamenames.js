@@ -85,16 +85,17 @@ export function mameTitleTrusted(platformSlug, filename) {
   const key = String(filename || '').replace(/\.(zip|7z)$/i, '').toLowerCase();
   return !!db.prepare('SELECT 1 FROM mame_names WHERE name = ?').get(key);
 }
-const ARCADE_ROMSET = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
+export const ARCADE_ROMSET = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
 
 /** Title/year/developer from the list for MAME ROMs (all of them, or one id).
  *  Authoritative: a zip name IS the identifier, so this replaces filename-derived
  *  and (mis)matched provider titles. */
 export function applyMameNames(romId = null) {
+  const arcade = [...ARCADE_ROMSET];
   const rows = db.prepare(`
-    SELECT r.id, r.filename FROM roms r JOIN platforms p ON p.id = r.platform_id
-    WHERE p.slug = 'mame' ${romId ? 'AND r.id = ?' : ''}
-  `).all(...(romId ? [romId] : []));
+    SELECT r.id, r.filename, r.meta_source, p.slug FROM roms r JOIN platforms p ON p.id = r.platform_id
+    WHERE p.slug IN (${arcade.map(() => '?').join(',')}) ${romId ? 'AND r.id = ?' : ''}
+  `).all(...arcade, ...(romId ? [romId] : []));
   const find = db.prepare('SELECT * FROM mame_names WHERE name = ?');
   const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
     developer = COALESCE(developer, ?), meta_source = 'mame-list', updated_at = datetime('now') WHERE id = ?`);
@@ -104,6 +105,7 @@ export function applyMameNames(romId = null) {
       const key = String(r.filename).replace(/\.(zip|7z)$/i, '').toLowerCase();
       const n = find.get(key);
       if (!n) continue;
+      if (r.slug !== 'mame' && r.meta_source && r.meta_source !== 'filename' && r.meta_source !== 'mame-list') continue;   // another arcade platform keeps a title a provider or the person gave it
       upd.run(n.title, sortTitle(n.title), n.year, n.manufacturer, r.id);
       matched++;
     }

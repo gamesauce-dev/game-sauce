@@ -10,7 +10,7 @@ import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platfor
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
 import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
-import { applyMameNames, mameTitleTrusted } from '../lib/mamenames.js';
+import { applyMameNames, mameTitleTrusted, ARCADE_ROMSET } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
 import { csvLines, coverEntries, zipChunks, exportCounts } from '../lib/export.js';
 import { listZip, planCovers, planCoversForCsv, applyCovers } from '../lib/coverzip.js';
@@ -1399,7 +1399,7 @@ router.post('/upload', upload.array('roms', 50), async (req, res, next) => {
       );
 
       const romId = Number(info.lastInsertRowid);
-      if (platformSlug === 'mame') applyMameNames(romId);
+      if (ARCADE_ROMSET.has(platformSlug)) applyMameNames(romId);
       if (parsed.tags.length) setTags(romId, parsed.tags);
 
       if (req.body?.enrich !== 'false') {

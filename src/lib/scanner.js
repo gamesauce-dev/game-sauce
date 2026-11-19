@@ -8,7 +8,7 @@ import {
 } from './platforms.js';
 import { hashFile } from './hash.js';
 import { applyDatMatch } from '../dats.js';
-import { applyMameNames, mameTitleTrusted } from './mamenames.js';
+import { applyMameNames, mameTitleTrusted, ARCADE_ROMSET } from './mamenames.js';
 
 /** Files that are part of a disc set but are not the game itself. */
 const SIDECAR_EXT = new Set(['cue', 'gdi', 'ccd', 'm3u', 'dat', 'sbi', 'sub', 'toc']);
@@ -464,7 +464,7 @@ async function scanSourceInner(sourceId, { hash = true, deferHash = false, enric
     );
 
     const romId = Number(info.lastInsertRowid);
-    if (platformRow.slug === 'mame') applyMameNames(romId);
+    if (ARCADE_ROMSET.has(platformRow.slug)) applyMameNames(romId);   // named from the name list (MAME's, or a names CSV) as it is added
     added++;
     touched.add(romId);
     addedRoms.push(romId);

@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+- **A names CSV now names the arcade games a later scan adds.** Importing a game names CSV used to rename only the games that were there at that moment, so a flood of new MAME files arrived with their ROM names until the CSV was imported again. Now every row of the CSV is kept for the arcade platforms (MAME, Neo Geo, CPS, Naomi, Atomiswave, FBNeo, Arcade, Coin-op), and a game a scan or an upload adds is named from it at once, with its year and maker. The name list (MAME's own, or a CSV) now also names new games on the other arcade platforms, not only MAME, and Rematch applies it to them too, leaving a title a provider or you gave a game alone.
+
 ## [0.20.0] - 2026-11-19
 
 ### Added

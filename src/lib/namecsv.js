@@ -79,14 +79,16 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
     // (Hiding is personal now; System entries are hidden for everyone by the System flag above.)
     // MAME: titles from your CSV count as trusted names, so title-based providers are allowed to search them.
     const ARCADE = ['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop'];
+    // Every row of the CSV is kept for the arcade platforms, not only the ones that match a game today: a game a later scan adds is named from it at once.
+    const rows = [...map].map(([k, m]) => ({ ...m, key: k.slice(k.indexOf('|') + 1) })).filter((m) => ARCADE.includes(m.platform));
     {
       const ins = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer) VALUES (?, ?, ?, ?) ON CONFLICT(name) DO NOTHING');
-      db.transaction(() => { for (const h of hits) if (ARCADE.includes(h.platform)) ins.run(keyOf(h.filename), h.title, h.year, h.maker); })();
+      db.transaction(() => { for (const m of rows) ins.run(m.key, m.title, m.year, m.maker); })();
     }
     // Clone information from the CSV (clone_of): lets the duplicate finder group clones under their parent on EVERY arcade platform.
     {
       const up = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer, cloneof) VALUES (?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET cloneof = excluded.cloneof WHERE mame_names.cloneof IS NULL AND excluded.cloneof IS NOT NULL');
-      db.transaction(() => { for (const h of hits) if (h.cloneof) up.run(keyOf(h.filename), h.title, h.year, h.maker, h.cloneof); })();
+      db.transaction(() => { for (const m of rows) if (m.cloneof) up.run(m.key, m.title, m.year, m.maker, m.cloneof); })();
     }
     const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
       developer = COALESCE(developer, ?), updated_at = datetime('now') WHERE id = ?`);
