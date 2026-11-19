@@ -283,18 +283,18 @@ export function openBigScreen(host) {
   const srcSlug = () => (st.src?.kind === 'platform' ? st.src.slug : null);
   const blades = () => root.classList.contains('bs-theme-xbox360');
   const logoImg = (p, cls) => (p?.logo_v ? `<img class="${cls}${plated(p)}" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.alt}))" />` : '');
-  // The blades are a drawing: curved bands whose inner edge swings out toward the screen's edge in the middle (as on the dashboard) and a pale rim. The right blade is the left one mirrored in CSS. (Tabs with words on them can be added to the drawing later.)
+  // The blades are a drawing: curved bands whose inner edge bulges gently toward the middle of the screen and a pale rim. The right blade is the left one mirrored in CSS. (Tabs with words on them can be added to the drawing later.)
   const bladeSvg = (left) => `<svg class="bl-svg" viewBox="0 0 120 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><defs>
     <linearGradient id="bd${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#5d635c"/><stop offset="1" stop-color="#b9beb6"/></linearGradient>
     <linearGradient id="bm${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#8e948c"/><stop offset=".55" stop-color="#c7cbc4"/><stop offset="1" stop-color="#e9ebe6"/></linearGradient>
     <linearGradient id="bv${left ? 'L' : 'R'}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
     <linearGradient id="bt${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#fafbf8"/><stop offset="1" stop-color="#bfc5bc"/></linearGradient>
     <linearGradient id="bg${left ? 'L' : 'R'}" x1="0" x2="1"><stop offset="0" stop-color="#b9f070"/><stop offset=".35" stop-color="#6cbc2a"/><stop offset="1" stop-color="#5fb324"/></linearGradient></defs>
-    <path d="M0,0 H46 C46,190 20,330 20,500 C20,670 46,810 46,1000 H0 Z" fill="url(#bd${left ? 'L' : 'R'})"/>
-    <path d="M24,0 H92 C92,170 60,320 60,500 C60,680 92,830 92,1000 H24 Z" fill="url(#bm${left ? 'L' : 'R'})"/>
-    <path d="M24,0 H92 C92,170 60,320 60,500 C60,680 92,830 92,1000 H24 Z" fill="url(#bv${left ? 'L' : 'R'})"/>
-    <path d="M97,0 C97,172 66,322 66,500 C66,678 97,828 97,1000" fill="none" stroke="#f6f8f3" stroke-width="6" opacity=".95"/>
-    <path d="M100.5,0 C100.5,172 69.5,322 69.5,500 C69.5,678 100.5,828 100.5,1000" fill="none" stroke="#7c847a" stroke-opacity=".45" stroke-width="1.2"/>
+    <path d="M0,0 H38 C38,190 46,330 46,500 C46,670 38,810 38,1000 H0 Z" fill="url(#bd${left ? 'L' : 'R'})"/>
+    <path d="M24,0 H82 C82,170 92,330 92,500 C92,670 82,830 82,1000 H24 Z" fill="url(#bm${left ? 'L' : 'R'})"/>
+    <path d="M24,0 H82 C82,170 92,330 92,500 C92,670 82,830 82,1000 H24 Z" fill="url(#bv${left ? 'L' : 'R'})"/>
+    <path d="M87,0 C87,172 97,328 97,500 C97,672 87,828 87,1000" fill="none" stroke="#f6f8f3" stroke-width="6" opacity=".95"/>
+    <path d="M90.5,0 C90.5,172 100.5,328 100.5,500 C100.5,672 90.5,828 90.5,1000" fill="none" stroke="#7c847a" stroke-opacity=".45" stroke-width="1.2"/>
     </svg>`;
   const bladesShell = () => {
     const src = st.src || {};
