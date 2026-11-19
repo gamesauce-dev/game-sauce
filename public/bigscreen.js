@@ -548,7 +548,7 @@ export function openBigScreen(host) {
     $('#wi-count').innerHTML = `<b>${page + 1}</b>/${pages}`;
     $('#wi-al').classList.toggle('off', page <= 0); $('#wi-ar').classList.toggle('off', page >= pages - 1);
     $('#bs-wii').classList.toggle('plat', st.wiFocus === 'plat');
-    const m = bladeModel(); $('#wi-keys').textContent = st.wiFocus === 'plat' ? (m.sib.length > 1 ? '◀ ▶  Change platform     ▼  Back to the games' : '▼  Back to the games') : '';
+    const m = bladeModel(); $('#wi-keys').textContent = st.wiFocus === 'plat' ? (m.sib.length > 1 ? '◀ ▶  Change platform     ▲ ▼  Back to the games' : '▲ ▼  Back to the games') : '';
     root.style.setProperty('--ac', gameAccent(game()));
     // a game with a video plays it in its tile once the highlight has rested a moment (without sound)
     clearTimeout(st.vidT); $('.wi-tile .wi-vid')?.remove();
@@ -567,13 +567,17 @@ export function openBigScreen(host) {
     const i = st.gi, col = i % WI_COLS, row = Math.floor((i % WI_PER) / WI_COLS), page = Math.floor(i / WI_PER);
     if (st.wiFocus === 'plat') {
       if (a === 'left' || a === 'right') { const m = bladeModel(); if (m.i0 >= 0) { st.wiKeep = true; switchBlade(m.i0 + (a === 'left' ? -1 : 1)); } return true; }
-      if (a === 'down' || a === 'select' || a === 'back') { st.wiFocus = null; placeWii(); return true; }
+      if (a === 'up' || a === 'down' || a === 'select' || a === 'back') { st.wiFocus = null; placeWii(); return true; }   // back to the games, from whichever side it was reached
       return true;
     }
     if (a === 'left') { if (col > 0) wiGo(i - 1); else if (page > 0) wiGo((page - 1) * WI_PER + row * WI_COLS + WI_COLS - 1, true); else sfx('end'); return true; }
     if (a === 'right') { if (col < WI_COLS - 1 && i + 1 < st.games.length) wiGo(i + 1); else if (page < wiPages() - 1) wiGo((page + 1) * WI_PER + row * WI_COLS, true); else sfx('end'); return true; }
     if (a === 'up') { if (row > 0) wiGo(i - WI_COLS); else { st.wiFocus = 'plat'; placeWii(); } return true; }
-    if (a === 'down') { if (row < 2 && i + WI_COLS < st.games.length) wiGo(i + WI_COLS); else if (row < 2) wiGo(st.games.length - 1); return true; }
+    if (a === 'down') {   // a tile below, else the last tile if it sits lower on this page, else the platform button (from the bottom row too)
+      const last = st.games.length - 1, lastLower = Math.floor(last / WI_PER) === page && Math.floor((last % WI_PER) / WI_COLS) > row;
+      if (row < 2 && i + WI_COLS <= last) wiGo(i + WI_COLS); else if (row < 2 && lastLower) wiGo(last); else { st.wiFocus = 'plat'; placeWii(); }
+      return true;
+    }
     if (a === 'prev-family') { wiPage(-1); return true; }
     if (a === 'next-family') { wiPage(1); return true; }
     return false;
