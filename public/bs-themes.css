@@ -69,7 +69,7 @@
 .bs-theme-xbox360 .bs-bl-r .bl-svg { transform: scaleX(-1); filter: drop-shadow(-.25em 0 .6em rgba(0, 45, 0, .4)); }
 /* the middle: a glossy header, then the list and the preview */
 .bs-theme-xbox360 .bs-bl-main { display: flex; flex-direction: column; min-width: 0; padding: 0 1.2em; }
-.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; min-height: 2.35em; padding: .3em 1.5em; margin: 0 -.9em; border-radius: .35em; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .55); font-size: 1.7em; font-weight: 400; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
+.bs-theme-xbox360 .bs-bl-head { display: flex; justify-content: space-between; align-items: center; gap: 1em; min-height: 2.35em; padding: .3em 1.5em; margin: 0 -.9em; border-radius: .35em; background: linear-gradient(180deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, .03)); border: 0; box-shadow: 0 .12em .9em rgba(0, 35, 0, .45), inset 0 0 1.1em rgba(0, 35, 0, .35), inset 0 .05em 0 rgba(255, 255, 255, .22); font-size: 1.7em; font-weight: 400; text-shadow: 0 .05em .25em rgba(0, 60, 0, .55); }
 .bs-theme-xbox360 .bs-bl-head span { font-size: .8em; opacity: .9; text-transform: uppercase; letter-spacing: .03em; }
 .bs-theme-xbox360 .bs-bl-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 1.6em; padding-top: 1em; }
 .bs-theme-xbox360 .bs-bl-list { position: relative; display: flex; flex-direction: column; gap: .35em; min-height: 0; }
