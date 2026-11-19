@@ -282,3 +282,7 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .special.names small { margin-top: 6px; font-size: .72rem; letter-spacing: .04em; color: hsl(var(--h) 25% 78%); text-transform: none; }
 @keyframes pickname { 0% { color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 24px var(--c); } 33% { color: hsl(var(--h) 20% 62%); text-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .special.names span { animation: none; color: #fff; } }
+/* a second icon beside the first */
+.tile .ico2 { right: 56px; opacity: .85; }
+.tile .pxt-x { }
+@media (max-width: 620px) { .tile .ico2 { right: 48px; } }
