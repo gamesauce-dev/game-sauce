@@ -47,7 +47,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   // without a theme nothing changes: each selector in the theme file starts from the theme's class
   const selectors = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((b) => b.split('{')[0].trim()).filter(Boolean).flatMap((s) => s.split(',').map((x) => x.trim()));
   assert.ok(selectors.length > 20);
-  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-xbox360( |$)|^\.bs\.bs-theme-xbox360$/, 'scoped: ' + s);
+  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-xbox360([ .]|$)/, 'scoped: ' + s);
   // a logo set to have a light backing (or every logo, if the person asked) gets a class the look draws a plate with; Favourites and Collections keep their colours
   assert.ok(js.includes("plated = (x) => (x.plate || x.logo_plate || host.plateAll?.()") && js.includes('family_logo_plate') && app.includes("plateAll: () => state.prefs?.chip_plate === 'on'"));
   assert.ok(css.includes('img.bs-plate') && css.includes('.bs-ptile.bs-t-fav') && css.includes('.bs-ptile.bs-t-colls'));
@@ -57,7 +57,12 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
-  assert.ok(js.includes('class="bs-tab on"') && js.includes('class="bs-tab">game-sauce'));
+  assert.ok(js.includes('class="bs-tab on"') && js.includes('class="bs-tab grey">game-sauce') && js.includes('class="bl-dome"'), "layered blades with tabs");
+  // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
+  assert.ok(js.includes("<i data-k=\"${b}\">${b}</i>") && js.includes("btn('Y', 'Play on this PC')") && js.includes("btn('A', 'Open', true)") && js.includes("root.classList.add('bs-bl-on')"));
+  assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && js.includes('class="bs-bl-art"'));
+  for (const k of ['A', 'B', 'X', 'Y']) assert.ok(css.includes(`.bs-xb i[data-k="${k}"]`), k);
+  assert.ok(css.includes('.bs-theme-xbox360.bs-bl-on .bs-hints { display: none; }') && css.includes('.bs-theme-xbox360 .bs-bl-desc { flex: 0 0 auto; height: 5.8em;'));
   assert.ok(js.includes("const logoImg = (p, cls)") && js.includes("logoImg(src.plat, 'bs-bl-hlogo')") && js.includes("logoImg(st.plats.find((p) => p.slug === g.platform), 'bs-bl-plogo')"));
   assert.ok(js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes('v.muted = true') && js.includes('clearTimeout(st.vidT)'), 'the video starts once the highlight rests, is silent, and is cleared on leaving');
   for (const c of ['.bs-tab.on', '.bs-bl-shot.video video', '.bs-bl-plogo', '.bs-bl-hlogo']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);

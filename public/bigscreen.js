@@ -130,7 +130,7 @@ export function openBigScreen(host) {
   const paintSnd = () => { const b = $('#bs-snd'); if (b) { b.textContent = muted() ? '♪ Off' : '♪ On'; b.classList.toggle('off', muted()); } };
   const toggleSound = () => { try { localStorage.setItem(MUTE_KEY, muted() ? '0' : '1'); } catch { /* not kept */ } paintSnd(); say(muted() ? 'Sounds off.' : 'Sounds on.'); sfx('select'); };
   paintSnd();
-  const hint = (b, t) => `<span><i>${b}</i>${t}</span>`;
+  const hint = (b, t) => `<span><i data-k="${b}">${b}</i>${t}</span>`;
   const paintHints = () => {
     const h = {
       platforms: [hint('A', 'Select'), st.level === 1 ? hint('B', 'Back') : (host.kiosk ? '' : hint('B', 'Close'))],
@@ -145,7 +145,7 @@ export function openBigScreen(host) {
     $('#bs-hints').innerHTML = (['pick', 'kbd', 'confirm', 'manual'].includes(st.screen) ? '' : closeGame()) + h.join('');
   };
   let toastTimer = 0;
-  const say = (msg, bad = false) => { const t = $('#bs-toast'); if (!t) return; if (bad) sfx('error'); t.textContent = msg; t.classList.toggle('bad', bad); t.classList.add('on'); clearTimeout(toastTimer); clearTimeout(st.vidT); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); };
+  const say = (msg, bad = false) => { const t = $('#bs-toast'); if (!t) return; if (bad) sfx('error'); t.textContent = msg; t.classList.toggle('bad', bad); t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); };
 
   // ── the backdrop: a blurred picture and the platform's colour, crossfaded ──
   const setBackdrop = (url, colour, art = false) => {   // art: the game's own background picture (shown sharper than a blurred cover)
@@ -276,6 +276,7 @@ export function openBigScreen(host) {
   const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']) };   // the consoles each look is for
   const useTheme = (slug) => {
     const th = String(host.theme?.() || '');
+    root.classList.remove('bs-bl-on');
     for (const c of [...root.classList]) if (c.startsWith('bs-theme-')) root.classList.remove(c);
     if (/^[a-z0-9]+$/.test(th) && THEME_CONSOLES[th]?.has(slug)) root.classList.add('bs-theme-' + th);
   };
@@ -284,14 +285,18 @@ export function openBigScreen(host) {
   const logoImg = (p, cls) => (p?.logo_v ? `<img class="${cls}${plated(p)}" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.alt}))" />` : '');
   const bladesShell = () => {
     const src = st.src || {}, fam = String(src.plat?.family || 'library').toLowerCase(), now = String(src.name || 'games').toLowerCase();
-    return `<div class="bs-bl" id="bs-bl"><aside class="bs-blade bs-bl-l" aria-hidden="true"><span class="bs-tab">${esc(fam)}</span><span class="bs-tab on">${esc(now)}</span></aside>
+    const btn = (k, label, right) => `<span class="bs-xb${right ? ' r' : ''}">${right ? `${label}<i data-k="${k}">${k}</i>` : `<i data-k="${k}">${k}</i>${label}`}</span>`;
+    return `<div class="bs-bl" id="bs-bl">
+    <aside class="bs-blade bs-bl-l" aria-hidden="true"><i class="bl-dome"></i><i class="bl-mid"></i><i class="bl-rim"></i><span class="bs-tab grey">${esc(fam)}</span><span class="bs-tab on">${esc(now)}</span></aside>
     <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
-      <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div></section>
-    <aside class="bs-blade bs-bl-r" aria-hidden="true"><span class="bs-tab">game-sauce</span><span class="bs-tab">big screen</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
+      <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div>
+      <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm"><span><u>LB RB</u> Jump by letter</span><span><u>Select + Start</u> Hold in a game to close it</span></span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
+    <aside class="bs-blade bs-bl-r" aria-hidden="true"><i class="bl-dome"></i><i class="bl-mid"></i><i class="bl-rim"></i><span class="bs-tab grey">game-sauce</span><span class="bs-tab grey">big screen</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
   };
   const BL_ROWS = 6;
   const placeBlades = () => {
     const list = $('#bs-bl-list'); if (!list) return;
+    root.classList.add('bs-bl-on');
     const n = st.games.length, start = Math.max(0, Math.min(n - BL_ROWS, st.gi - 2));
     let rows = '';
     for (let i = start; i < Math.min(n, start + BL_ROWS); i++) {
@@ -302,9 +307,13 @@ export function openBigScreen(host) {
     const g = game(), pic = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : (gameBackdrop(g) || '');
     const chips = [g.genre, g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`].filter(Boolean);
     const extras = [g.has_video && 'Video', g.manual_url && 'Manual'].filter(Boolean);
+    // the artwork the game has besides the picture on show: the box, a screenshot, the background, the logo and the marquee (up to four, as small pictures)
+    const art = [['Box', g.cover_url], ['Screenshot', g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : ''], ['Background', g.backdrop_url || (g.media?.fanart ? `/api/roms/${g.id}/media/fanart` : '')], ['Logo', gameLogo(g)], ['Marquee', gameMarquee(g)]]
+      .filter(([, u]) => u && u !== (pic || g.cover_url)).slice(0, 4);
     $('#bs-bl-prev').innerHTML = `<div class="bs-bl-shot${pic ? '' : ' cover'}">${pic || g.cover_url ? `<img src="${esc(pic || g.cover_url)}" alt="" onerror="this.remove()" />` : ''}</div>
-      <p class="bs-bl-desc">${esc(g.description || 'No description yet.')}</p>
-      <div class="bs-bl-foot"><span class="bs-bl-chips">${chips.map((c) => `<i>${esc(c)}</i>`).join('')}</span>${extras.length ? `<span class="bs-bl-extras"><small>Available Content</small>${extras.map((c) => `<i>${esc(c)}</i>`).join('')}</span>` : ''}</div>`;
+      <div class="bs-bl-desc" id="bs-bl-scroll"><p id="bs-bl-scrollin">${esc(g.description || 'No description yet.')}</p></div>
+      <div class="bs-bl-foot"><span class="bs-bl-chips">${[...chips, ...extras].map((c) => `<i>${esc(c)}</i>`).join('')}</span>${art.length ? `<span class="bs-bl-art"><small>Artwork</small><span>${art.map(([l, u]) => `<img src="${esc(u)}" alt="${esc(l)}" title="${esc(l)}" onerror="this.remove()" />`).join('')}</span></span>` : ''}</div>`;
+    autoScroll('#bs-bl-scroll', '#bs-bl-scrollin');
     $('#bs-pos').textContent = `${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}`;
     root.style.setProperty('--ac', gameAccent(g));
     clearTimeout(st.bgT); st.bgT = setTimeout(() => { const art = gameBackdrop(g); if (root && st.screen === 'games' && game() === g) setBackdrop(art || g.cover_url, gameAccent(g), Boolean(art)); }, 140);
@@ -376,9 +385,9 @@ export function openBigScreen(host) {
   };
   // The description scrolls slowly when it is longer than the space: a pause, a slow glide to the end, a pause, and back to the top.
   let scrollTimer = 0;
-  const autoScroll = () => {
+  const autoScroll = (boxSel = '#bs-scroll', innerSel = '#bs-scrollin') => {
     clearInterval(scrollTimer);
-    const box = $('#bs-scroll'), inner = $('#bs-scrollin'); if (!box || !inner || reduced()) return;
+    const box = $(boxSel), inner = $(innerSel); if (!box || !inner || reduced()) return;
     const max = inner.offsetHeight - box.clientHeight; if (max < 4) return;
     let phase = 'wait', t0 = Date.now();
     scrollTimer = setInterval(() => {
@@ -557,7 +566,7 @@ export function openBigScreen(host) {
   const backToWheel = () => { useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
-    document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer);
+    document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer); clearTimeout(st.vidT);
     root.remove(); root = null; document.body.classList.remove('bs-open');
     try { prevFocus?.focus?.(); } catch { /* the opener is gone */ }
   };
