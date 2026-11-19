@@ -385,6 +385,8 @@ document.addEventListener('click', async (e) => {
 });
 
 // Big Screen: the Library for a TV, played with a gamepad (public/bigscreen.js). Opened from the Library bar and the Modern bar, or at once with #/bigscreen in the address (a kiosk browser, or the desktop app).
+/** Does this account land in Big Screen? Its own choice wins; with none, a play-only account does (a pad-and-sofa screen) and everyone else does not. */
+const startsInBigScreen = () => (state.prefs?.bs_start ? state.prefs.bs_start === 'on' : Boolean(authState.user?.play_only && !authState.user?.previewing));
 async function openBigScreenView(kiosk = false) {
   if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
   bigscreen.openBigScreen({ api, toast, theme: () => state.prefs?.bs_theme || '', plateAll: () => state.prefs?.chip_plate === 'on', platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
@@ -4049,6 +4051,18 @@ function initProfilePanel() {
       paintBs();
     };
   }
+  // Where to land after signing in: Big Screen (the default for a play-only account) or the normal screen.
+  const bsStartBox = $('#bsstart-picker');
+  if (bsStartBox) {
+    const paintStart = () => { const now = startsInBigScreen() ? 'on' : 'off'; bsStartBox.innerHTML = [['on', 'Big Screen', 'starts at once; B leaves it'], ['off', 'The normal screen', 'the Library']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bsstart="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    paintStart();
+    bsStartBox.onclick = async (ev) => {
+      const b = ev.target.closest('[data-bsstart]'); if (!b) return; const v = b.dataset.bsstart;
+      try { await api('/prefs/bs_start', { method: 'PUT', body: JSON.stringify({ value: v }) }); } catch (err) { return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}), bs_start: v };
+      paintStart();
+    };
+  }
   // Platform buttons: chips (text and a count) or logos. Kept with the account; the rows above the games are drawn again at once.
   const csBox = $('#chipstyle-picker');
   if (csBox) {
@@ -4165,7 +4179,7 @@ function showApp(user, { restore = false } = {}) {
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, showToolsModule, user: () => authState.user });
   modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView });
-  api('/prefs').then((p) => { state.prefs = p || {}; applyChipPlate(); syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); }).catch(() => {});
+  api('/prefs').then((p) => { state.prefs = p || {}; applyChipPlate(); syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); else if (startsInBigScreen()) openBigScreenView(); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
   // Settings/sources nav hidden for members (admin-only on server). The cog

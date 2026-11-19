@@ -31,6 +31,9 @@ test('the Big Screen look is a per-person setting: a known theme is kept, anythi
   assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'xbox360' } })).status, 200);
   assert.equal((await call('/api/prefs')).body.bs_theme, 'xbox360');
   assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'nonsense' } })).status, 400);
+  assert.equal((await call('/api/prefs/bs_start', { method: 'PUT', body: { value: 'on' } })).status, 200);
+  assert.equal((await call('/api/prefs')).body.bs_start, 'on');
+  assert.equal((await call('/api/prefs/bs_start', { method: 'PUT', body: { value: 'maybe' } })).status, 400);
   assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: null } })).status, 200);
   assert.equal((await call('/api/prefs')).body.bs_theme, undefined, 'the standard look keeps no setting');
 });

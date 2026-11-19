@@ -73,8 +73,8 @@ export function sfx(kind) {
 }
 
 /** The menu of the game screen. Pure, so it can be tested. */
-export function gameMenu(g) {
-  return [
+export function gameMenu(g, playOnly = false) {   // a play-only account cannot collect, mark or hide games
+  const items = [
     { k: 'play', label: 'Play' },
     { k: 'fav', label: 'Favourite', on: Boolean(g?.favorite) },   // a toggle: the word stays, it turns gold when it is on
     { k: 'coll', label: 'Add to Collection' },
@@ -82,6 +82,7 @@ export function gameMenu(g) {
     { k: 'broken', label: 'Broken', on: Boolean(g?.broken) },   // a toggle too: the word stays, it turns red when it is on
     { k: 'hide', label: 'Hide' }
   ];
+  return playOnly ? items.filter((m) => !['coll', 'broken', 'hide'].includes(m.k)) : items;
 }
 
 /** The on-screen keyboard (to name a collection with the pad), and how the pad moves over it. Pure, so it can be tested. */
@@ -474,12 +475,12 @@ export function openBigScreen(host) {
   };
   const buildMenu = () => {
     const g = game(), menu = $('#bs-menu'); if (!g || !menu) return;
-    menu.innerHTML = '<i class="bs-sel" id="bs-sel" aria-hidden="true"></i>' + gameMenu(g).map((m) => `<button type="button" class="bs-mi" data-k="${m.k}">${esc(m.label)}</button>`).join('');
+    menu.innerHTML = '<i class="bs-sel" id="bs-sel" aria-hidden="true"></i>' + gameMenu(g, host.user()?.play_only).map((m) => `<button type="button" class="bs-mi" data-k="${m.k}">${esc(m.label)}</button>`).join('');
     st.selShown = false; paintMenu();
   };
   const paintMenu = () => {   // the labels and the chosen item change in place, so the bar can move
     const g = game(), menu = $('#bs-menu'), sel = $('#bs-sel'); if (!g || !menu || !sel) return;
-    const items = gameMenu(g), btns = [...menu.querySelectorAll('.bs-mi')];
+    const items = gameMenu(g, host.user()?.play_only), btns = [...menu.querySelectorAll('.bs-mi')];
     btns.forEach((b, i) => { if (b.textContent !== items[i].label) b.textContent = items[i].label; b.classList.toggle('on', i === st.mi); b.classList.toggle('fav-on', items[i].k === 'fav' && Boolean(items[i].on)); b.classList.toggle('broken-on', items[i].k === 'broken' && Boolean(items[i].on)); });
     const b = btns[st.mi]; if (!b) return;
     const moved = st.selShown && sel.style.top !== b.offsetTop + 'px';
@@ -699,8 +700,8 @@ export function openBigScreen(host) {
       else if (a === 'back') leaveGames();
       else if (a === 'browser') openBrowser(game()); else if (a === 'local') playLocal(game());
     } else if (s === 'game') {
-      if (a === 'up' || a === 'down') { st.mi = Math.max(0, Math.min(gameMenu(game()).length - 1, st.mi + (a === 'down' ? 1 : -1))); paintMenu(); }
-      else if (a === 'select') runMenu(gameMenu(game())[st.mi].k);
+      if (a === 'up' || a === 'down') { st.mi = Math.max(0, Math.min(gameMenu(game(), host.user()?.play_only).length - 1, st.mi + (a === 'down' ? 1 : -1))); paintMenu(); }
+      else if (a === 'select') runMenu(gameMenu(game(), host.user()?.play_only)[st.mi].k);
       else if (a === 'back') backToWheel();
       else if (a === 'prev-family' || a === 'next-family' || a === 'left' || a === 'right') { const n = st.gi + (a === 'next-family' || a === 'right' ? 1 : -1); if (n >= 0 && n < st.games.length) { st.gi = n; drawGame(); } else say(n < 0 ? 'This is the first game.' : 'This is the last game.'); }
       else if (a === 'browser') openBrowser(game()); else if (a === 'local') playLocal(game());

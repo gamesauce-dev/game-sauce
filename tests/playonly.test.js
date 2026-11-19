@@ -113,6 +113,17 @@ test('the allow-list itself', async () => {
   assert.equal(playOnlyAllows('GET', '/roms/bulk/enrich-job'), false);
   assert.equal(playOnlyAllows('PATCH', '/auth/users/3'), false);
   assert.equal(playOnlyAllows('POST', '/auth/avatar'), true);
+  assert.equal(playOnlyAllows('PUT', '/prefs/bs_start'), true); assert.equal(playOnlyAllows('PUT', '/prefs/bs_theme'), true);
+  assert.equal(playOnlyAllows('PUT', '/prefs/chip_style'), false, 'only the choices of the play screen');
+});
+
+test('a play-only account lands in Big Screen unless it chose otherwise, and the menu leaves out what it cannot do', async () => {
+  const { gameMenu } = await import('../public/bigscreen.js');
+  assert.deepEqual(gameMenu({}, true).map((m) => m.k), ['play', 'fav']);
+  assert.deepEqual(gameMenu({}).map((m) => m.k), ['play', 'fav', 'coll', 'broken', 'hide']);
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.ok(app.includes("state.prefs?.bs_start ? state.prefs.bs_start === 'on' : Boolean(authState.user?.play_only && !authState.user?.previewing)") && app.includes('else if (startsInBigScreen()) openBigScreenView()') && app.includes('id="bsstart-picker"') === false);
+  assert.ok(fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8').includes('id="bsstart-picker"'));
 });
 
 test('the top bar hands the logo, name row and menu back to the sidebar when a play-only user signs out and an admin signs in', () => {
