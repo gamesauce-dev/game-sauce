@@ -4,6 +4,7 @@ import db from './db.js';
 import { describeDat, looksLikeDat, parseDat } from './lib/dat.js';
 import { PLATFORM_BY_SLUG, PLATFORMS, seedPlatforms } from './lib/platforms.js';
 import { parseFilename, sortTitle } from './lib/metadata.js';
+import { ARCADE_ROMSET } from './lib/mamenames.js';
 
 /* ─────────────────────────── schema ─────────────────────────── */
 
@@ -135,8 +136,11 @@ export async function importDat({ filePath, platform = null, name = null, userId
     VALUES (@datfile_id, @platform_slug, @title, @rom_name, @size, @crc32, @md5, @sha1, @status, @cloneof)
   `);
 
+  const insertSet = db.prepare('INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, status) VALUES (@datfile_id, @platform_slug, @set_name, @title, @cloneof, @status)');
   let inserted = 0;
   let skipped = 0;
+  let sets = 0;
+  let setBuf = [];
   let resolvedSlug = platform;
 
   const writeBatch = db.transaction((rows) => {
@@ -151,10 +155,18 @@ export async function importDat({ filePath, platform = null, name = null, userId
     }
   });
 
+  const slugNow = () => {
+    if (!resolvedSlug) resolvedSlug = guessPlatform({ systemName: header.name || '', fileName: path.basename(filePath) }, platform);
+    return resolvedSlug || 'other';
+  };
+  const writeSets = db.transaction((rows) => { for (const r of rows) insertSet.run({ ...r, set_name: r.name, platform_slug: slugNow(), datfile_id: datfileId }); });
+  const flushSets = () => { if (setBuf.length) { sets += setBuf.length; writeSets(setBuf); setBuf = []; } };
+
   let parsed;
   try {
     parsed = await parseDat(filePath, {
       header,
+      onSet: (set) => { setBuf.push(set); if (setBuf.length >= 2000) flushSets(); },
       onBatch: (batch) => {
         // Resolve the platform from the header as soon as we have it, so every
         // batch lands under the right slug.
@@ -169,6 +181,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
     throw Object.assign(new Error(`Could not parse DAT: ${err.message}`), { status: 400 });
   }
 
+  flushSets();
   const meta = describeDat(parsed.header);
   const finalSlug = resolvedSlug || 'other';
 
@@ -190,6 +203,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
     version: meta.version,
     games: parsed.games,
     entries: inserted,
+    sets,
     duplicates: skipped,
     elapsed_ms: Date.now() - started
   };
@@ -203,7 +217,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
  * SHA1 first (unambiguous), then CRC32 + size (CRC32 alone collides across a big
  * enough library). Returns the best entry or null.
  */
-export function lookupDat({ sha1, crc32, size, platform }) {
+export function lookupDat({ sha1, crc32, size, platform, name = null }) {
   if (sha1) {
     const row = db.prepare(`
       SELECT * FROM dat_entries WHERE sha1 = ?
@@ -223,6 +237,11 @@ export function lookupDat({ sha1, crc32, size, platform }) {
     const rows = db.prepare('SELECT * FROM dat_entries WHERE crc32 = ? LIMIT 5').all(crc32);
     if (rows.length === 1) return rows[0];
   }
+  // An arcade game is a zip named for its set: its checksum is never a chip's, so it is found by that name (pacman.zip is the set "pacman").
+  if (name && ARCADE_ROMSET.has(platform)) {
+    const set = db.prepare('SELECT * FROM dat_sets WHERE set_name = ? ORDER BY (platform_slug = ?) DESC, id LIMIT 1').get(String(name).toLowerCase(), platform);
+    if (set) return { id: null, title: set.title, rom_name: null, status: set.status, cloneof: set.cloneof };
+  }
   return null;
 }
 
@@ -234,16 +253,17 @@ export function lookupDat({ sha1, crc32, size, platform }) {
  */
 export function applyDatMatch(rom, { force = false } = {}) {
   // The caller may pass a slim row (the scanner does); fill in the rest.
-  if (rom.meta_source === undefined || rom.size_bytes === undefined) {
+  if (rom.meta_source === undefined || rom.size_bytes === undefined || rom.filename === undefined) {
     const full = db.prepare(`
-      SELECT r.title, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status, p.slug AS platform
+      SELECT r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status, p.slug AS platform
       FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?
     `).get(rom.id);
     if (full) rom = { ...full, id: rom.id };
   }
 
   const entry = lookupDat({
-    sha1: rom.sha1, crc32: rom.crc32, size: rom.size_bytes, platform: rom.platform
+    sha1: rom.sha1, crc32: rom.crc32, size: rom.size_bytes, platform: rom.platform,
+    name: String(rom.filename || '').replace(/\.(zip|7z|rar)$/i, '')   // the file's own name, which a title never replaces
   });
 
   if (!entry) {
@@ -286,7 +306,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
 /** Re-match a whole library (or one platform). */
 export function rematchAll({ platform = null, force = false } = {}) {
   const rows = db.prepare(`
-    SELECT r.id, r.title, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status,
+    SELECT r.id, r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, r.dat_status,
            p.slug AS platform
     FROM roms r JOIN platforms p ON p.id = r.platform_id
     ${platform ? 'WHERE p.slug = ?' : ''}

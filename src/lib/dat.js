@@ -63,11 +63,12 @@ export function describeDat(header = {}) {
  * @param {string} filePath
  * @param {object} opts
  * @param {(batch: Array) => void} opts.onBatch  receives arrays of entries
+ * @param {(set: {name, title, cloneof, status}) => void} [opts.onSet]  called once for each <game>/<machine>, when it closes (its set name, whatever its chips are)
  * @param {number} [opts.batchSize=2000]
  * @param {object} [opts.header]                 filled in as the header is read
  * @returns {Promise<{games:number, entries:number, header:object}>}
  */
-export function parseDat(filePath, { onBatch, batchSize = 2000, header = {} } = {}) {
+export function parseDat(filePath, { onBatch, onSet, batchSize = 2000, header = {} } = {}) {
   return new Promise((resolve, reject) => {
     const parser = new Parser();
 
@@ -146,7 +147,10 @@ export function parseDat(filePath, { onBatch, batchSize = 2000, header = {} } = 
 
     parser.on('closeTag', (name) => {
       if (name === 'header') { inHeader = false; headerField = null; return; }
-      if (name === 'game' || name === 'machine') { current = null; }
+      if (name === 'game' || name === 'machine') {
+        if (current?.name && onSet) onSet({ name: String(current.name).toLowerCase(), title: current.description || current.name, cloneof: current.cloneof ? String(current.cloneof).toLowerCase() : null, status: statusFromFlags(current.flags) });
+        current = null;
+      }
     });
 
     const done = (err) => {

@@ -473,7 +473,7 @@ async function scanSourceInner(sourceId, { hash = true, deferHash = false, enric
     // any later provider lookup a canonical title to search for.
     if (hashes.sha1 || hashes.crc32) {
       const inserted = db.prepare(`
-        SELECT r.id, r.title, r.sha1, r.crc32, r.size_bytes, r.meta_source, p.slug AS platform
+        SELECT r.id, r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?
       `).get(romId);
       if (inserted) applyDatMatch(inserted);

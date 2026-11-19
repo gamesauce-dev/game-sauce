@@ -658,3 +658,18 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '61') ON CON
 /* ── v62: a platform logo can be set to "show the name on the Big Screen blades instead" (an awkward logo does not suit a slim band) */
 if (!db.prepare('PRAGMA table_info(platform_logos)').all().some((c) => c.name === 'blade_text')) db.exec('ALTER TABLE platform_logos ADD COLUMN blade_text INTEGER NOT NULL DEFAULT 0');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '62') ON CONFLICT(key) DO UPDATE SET value = '62'").run();
+
+/* ── v63: the sets of a DAT by name. An arcade game is a zip named for its set (pacman.zip), and a checksum of the zip never equals the checksums of the chips a DAT lists,
+   so a DAT's machines are also kept by name: one row per <machine>, whatever its chips are shared with. */
+db.exec(`CREATE TABLE IF NOT EXISTS dat_sets (
+  id            INTEGER PRIMARY KEY,
+  datfile_id    INTEGER NOT NULL REFERENCES datfiles(id) ON DELETE CASCADE,
+  platform_slug TEXT NOT NULL,
+  set_name      TEXT NOT NULL,
+  title         TEXT NOT NULL,
+  cloneof       TEXT,
+  status        TEXT NOT NULL DEFAULT 'verified'
+)`);
+db.exec('CREATE INDEX IF NOT EXISTS idx_dat_sets_name ON dat_sets(set_name)');
+db.exec('CREATE INDEX IF NOT EXISTS idx_dat_sets_datfile ON dat_sets(datfile_id)');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '63') ON CONFLICT(key) DO UPDATE SET value = '63'").run();

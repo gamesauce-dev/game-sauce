@@ -94,7 +94,7 @@ async function one(r) {
     return;
   }
   db.prepare("UPDATE roms SET crc32 = ?, md5 = ?, sha1 = ?, updated_at = datetime('now') WHERE id = ?").run(h.crc32, h.md5, h.sha1, r.id);
-  const row = db.prepare('SELECT r.id, r.title, r.sha1, r.crc32, r.size_bytes, r.meta_source, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(r.id);
+  const row = db.prepare('SELECT r.id, r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(r.id);
   try { if (row) applyDatMatch(row); } catch { /* a DAT problem must not stop the fingerprints */ }
 }
 

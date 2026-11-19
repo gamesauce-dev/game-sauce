@@ -2968,7 +2968,7 @@ $('#dat-upload').addEventListener('click', async (e) => {
 
     toast(data.kind === 'mame-names'
       ? `MAME name list: ${data.names.toLocaleString()} names loaded, ${data.matched} of your ${data.mame_roms} MAME ROMs titled`
-      : `${data.entries.toLocaleString()} entries imported (${data.platform_name})`);
+      : `${data.entries.toLocaleString()} entries imported${data.sets ? ` and ${data.sets.toLocaleString()} sets by name` : ''} (${data.platform_name})`);
     $('#dat-file').value = '';
     await loadDats();
     // A MAME name list is applied server-side already; the checksum re-match would
