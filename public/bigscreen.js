@@ -145,7 +145,7 @@ export function openBigScreen(host) {
     $('#bs-hints').innerHTML = (['pick', 'kbd', 'confirm', 'manual'].includes(st.screen) ? '' : closeGame()) + h.join('');
   };
   let toastTimer = 0;
-  const say = (msg, bad = false) => { const t = $('#bs-toast'); if (!t) return; if (bad) sfx('error'); t.textContent = msg; t.classList.toggle('bad', bad); t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); };
+  const say = (msg, bad = false) => { const t = $('#bs-toast'); if (!t) return; if (bad) sfx('error'); t.textContent = msg; t.classList.toggle('bad', bad); t.classList.add('on'); clearTimeout(toastTimer); clearTimeout(st.vidT); toastTimer = setTimeout(() => t.classList.remove('on'), 3200); };
 
   // ── the backdrop: a blurred picture and the platform's colour, crossfaded ──
   const setBackdrop = (url, colour, art = false) => {   // art: the game's own background picture (shown sharper than a blurred cover)
@@ -274,10 +274,14 @@ export function openBigScreen(host) {
   };
   // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
   const blades = () => root.classList.contains('bs-theme-xbox360');
-  const bladesShell = () => `<div class="bs-bl" id="bs-bl"><aside class="bs-blade bs-bl-l" aria-hidden="true"><span>${esc(String(st.src?.name || 'games').toLowerCase())}</span></aside>
-    <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${esc(st.src?.name || '')}</span></header>
+  const logoImg = (p, cls) => (p?.logo_v ? `<img class="${cls}${plated(p)}" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.alt}))" />` : '');
+  const bladesShell = () => {
+    const src = st.src || {}, fam = String(src.plat?.family || 'library').toLowerCase(), now = String(src.name || 'games').toLowerCase();
+    return `<div class="bs-bl" id="bs-bl"><aside class="bs-blade bs-bl-l" aria-hidden="true"><span class="bs-tab">${esc(fam)}</span><span class="bs-tab on">${esc(now)}</span></aside>
+    <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
       <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div></section>
-    <aside class="bs-blade bs-bl-r" aria-hidden="true"><span>game-sauce</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
+    <aside class="bs-blade bs-bl-r" aria-hidden="true"><span class="bs-tab">game-sauce</span><span class="bs-tab">big screen</span></aside></div><div class="bs-pos" id="bs-pos"></div>`;
+  };
   const BL_ROWS = 6;
   const placeBlades = () => {
     const list = $('#bs-bl-list'); if (!list) return;
@@ -285,7 +289,7 @@ export function openBigScreen(host) {
     let rows = '';
     for (let i = start; i < Math.min(n, start + BL_ROWS); i++) {
       const g = st.games[i], sub = g.publisher || g.developer || (g.release_year ? String(g.release_year) : '');
-      rows += `<div class="bs-bl-row${i === st.gi ? ' on' : ''}${g.broken ? ' is-broken' : ''}" role="option" aria-selected="${i === st.gi}" data-i="${i}"><span class="bs-bl-thumb"><em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : ''}</span><span class="bs-bl-text"><b>${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</b><small>${esc(sub)}</small></span><span class="bs-bl-badge">${esc(g.platform_short || g.platform_name || '')}</span></div>`;
+      rows += `<div class="bs-bl-row${i === st.gi ? ' on' : ''}${g.broken ? ' is-broken' : ''}" role="option" aria-selected="${i === st.gi}" data-i="${i}"><span class="bs-bl-thumb"><em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" onerror="this.remove()" />` : ''}</span><span class="bs-bl-text"><b>${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</b><small>${esc(sub)}</small></span><span class="bs-bl-badge${logoImg(st.plats.find((p) => p.slug === g.platform), 'x') ? ' logo' : ''}">${logoImg(st.plats.find((p) => p.slug === g.platform), 'bs-bl-plogo') || esc(g.platform_short || g.platform_name || '')}</span></div>`;
     }
     list.innerHTML = rows; list.classList.toggle('more', start + BL_ROWS < n);
     const g = game(), pic = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : (gameBackdrop(g) || '');
@@ -297,6 +301,14 @@ export function openBigScreen(host) {
     $('#bs-pos').textContent = `${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}`;
     root.style.setProperty('--ac', gameAccent(g));
     clearTimeout(st.bgT); st.bgT = setTimeout(() => { const art = gameBackdrop(g); if (root && st.screen === 'games' && game() === g) setBackdrop(art || g.cover_url, gameAccent(g), Boolean(art)); }, 140);
+    // a game with a video plays it in the picture's place once the highlight has rested a moment (without sound: the list is for browsing); it fades in over the screenshot
+    clearTimeout(st.vidT);
+    if (g.has_video) st.vidT = setTimeout(() => {
+      const box = $('#bs-bl-prev .bs-bl-shot'); if (!box || !root || st.screen !== 'games' || game() !== g) return;
+      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}`;
+      v.addEventListener('playing', () => box.classList.add('video')); v.addEventListener('error', () => v.remove());
+      box.appendChild(v); v.play?.().catch(() => v.remove());
+    }, 700);
   };
   const placeGames = () => (blades() ? placeBlades() : placeWheel());
   const placeWheel = () => {

@@ -52,6 +52,11 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes('const placeGames = () => (blades() ? placeBlades() : placeWheel())') && js.includes("st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames();"), 'moving through the games redraws whichever layout is on');
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
+  // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
+  assert.ok(js.includes('class="bs-tab on"') && js.includes('class="bs-tab">game-sauce'));
+  assert.ok(js.includes("const logoImg = (p, cls)") && js.includes("logoImg(src.plat, 'bs-bl-hlogo')") && js.includes("logoImg(st.plats.find((p) => p.slug === g.platform), 'bs-bl-plogo')"));
+  assert.ok(js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes('v.muted = true') && js.includes('clearTimeout(st.vidT)'), 'the video starts once the highlight rests, is silent, and is cleared on leaving');
+  for (const c of ['.bs-tab.on', '.bs-bl-shot.video video', '.bs-bl-plogo', '.bs-bl-hlogo']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // inspired by, not copied: no outside address, no font file, no picture
   assert.ok(!/url\(|@font-face|https?:/i.test(css), 'plain gradients and system fonts only');
 });
