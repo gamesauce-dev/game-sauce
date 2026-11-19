@@ -57,7 +57,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
-  assert.ok(js.includes('class="bs-tab on"') && js.includes('class="bs-tab grey t1">game-sauce') && js.includes("bladeSvg(true)") && js.includes("bladeSvg(false)") && js.includes('preserveAspectRatio="none"'), "the blades are a drawing with the words laid on its tabs");
+  assert.ok(js.includes("bladeSvg(true)") && js.includes("bladeSvg(false)") && js.includes('preserveAspectRatio="none"') && !js.includes("bs-tab"), "the blades are a drawing, with no tabs or words on them yet");
   // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
   assert.ok(js.includes("<i data-k=\"${b}\">${b}</i>") && js.includes("btn('Y', 'Play on this PC')") && js.includes("btn('A', 'Open', true)") && js.includes("root.classList.add('bs-bl-on')"));
   assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && js.includes('class="bs-bl-art"'));
@@ -65,7 +65,8 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(css.includes('.bs-theme-xbox360.bs-bl-on .bs-hints { display: none; }') && css.includes('.bs-theme-xbox360 .bs-bl-desc { flex: 0 0 auto; height: 5.8em;'));
   assert.ok(js.includes("const logoImg = (p, cls)") && js.includes("logoImg(src.plat, 'bs-bl-hlogo')") && js.includes("logoImg(st.plats.find((p) => p.slug === g.platform), 'bs-bl-plogo')"));
   assert.ok(js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes('v.muted = true') && js.includes('clearTimeout(st.vidT)'), 'the video starts once the highlight rests, is silent, and is cleared on leaving');
-  for (const c of ['.bs-tab.on', '.bs-bl-shot.video video', '.bs-bl-plogo', '.bs-bl-hlogo']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
+  for (const c of ['.bs-bl-shot.video video', '.bs-bl-plogo', '.bs-bl-hlogo']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
+  assert.ok(css.includes(".bs-theme-xbox360 .bs-xbl .bs-xb:first-child { margin-left") && css.includes(".bs-theme-xbox360 .bs-xbr .bs-xb:first-child { margin-right"), "the buttons are staggered");
   // inspired by, not copied: no outside address, no font file, no picture
   assert.ok(!/url\(|@font-face|https?:/i.test(css), 'plain gradients and system fonts only');
 });
