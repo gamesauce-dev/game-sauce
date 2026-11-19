@@ -286,3 +286,9 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .tile .ico2 { right: 56px; opacity: .85; }
 .tile .pxt-x { }
 @media (max-width: 620px) { .tile .ico2 { right: 48px; } }
+/* the cluster of things around the big picture tile */
+.tile.w2.h2 .ico3 { width: 74px; height: 74px; right: auto; opacity: .7; }
+.tile.w2.h2 .ico3.e1 { left: 24px; top: 20px; transform: rotate(-9deg); }
+.tile.w2.h2 .ico3.e2 { left: 118px; top: 96px; transform: rotate(7deg); width: 66px; height: 66px; }
+.tile.w2.h2 .ico3.e3 { left: 30px; top: 112px; transform: rotate(-5deg); width: 60px; height: 60px; }
+@media (max-width: 620px) { .tile.w2.h2 .ico3 { width: 46px; height: 46px; } .tile.w2.h2 .ico3.e1 { left: 14px; top: 14px; } .tile.w2.h2 .ico3.e2 { left: 70px; top: 70px; width: 42px; height: 42px; } .tile.w2.h2 .ico3.e3 { left: 18px; top: 72px; width: 38px; height: 38px; } }
