@@ -48,18 +48,18 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(html.includes('/bs-themes.css'));
   // the look is for its own consoles only: it is put on and taken off as the screens change
   assert.ok(js.includes("THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries'])"));
-  for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); root.classList.remove('bs-theme-ps3'); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
+  for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); root.classList.remove('bs-theme-ps3', 'bs-theme-wii'); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
   assert.ok(!js.includes("root.classList.add('bs-theme-' + th); }"), 'no theme class is put on when Big Screen opens');
   // without a theme nothing changes: each selector in the theme file starts from the theme's class
   const selectors = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((b) => b.split('{')[0].trim()).filter(Boolean).flatMap((s) => s.split(',').map((x) => x.trim())).filter((x) => !/^@|^(from|to)$/.test(x));
   assert.ok(selectors.length > 20);
-  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-(xbox360|ps3)([ .]|$)/, 'scoped: ' + s);
+  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-(xbox360|ps3|wii)([ .]|$)/, 'scoped: ' + s);
   // a logo set to have a light backing (or every logo, if the person asked) gets a class the look draws a plate with; Favourites and Collections keep their colours
   assert.ok(js.includes("plated = (x) => (x.plate || x.logo_plate || host.plateAll?.()") && js.includes('family_logo_plate') && app.includes("plateAll: () => state.prefs?.chip_plate === 'on'"));
   assert.ok(css.includes('img.bs-plate') && css.includes('.bs-ptile.bs-t-fav') && css.includes('.bs-ptile.bs-t-colls'));
   // the Blades layout of the games screen: drawn only with the Xbox 360 look, and the standard wheel is still what every other look gets
   assert.ok(js.includes("const blades = () => root.classList.contains('bs-theme-xbox360')") && js.includes("if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; }"));
-  assert.ok(js.includes('const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : placeWheel())') && js.includes("st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames();"), 'moving through the games redraws whichever layout is on');
+  assert.ok(js.includes('const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : wii() ? placeWii() : placeWheel())') && js.includes("st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames();"), 'moving through the games redraws whichever layout is on');
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
@@ -86,7 +86,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
 test('the PlayStation 3 look: a cross bar of platforms with the games in a column, drawn waves, a month colour', () => {
   const js = read('public/bigscreen.js'), css = read('public/bs-themes.css'), app = read('public/app.js'), html = read('public/index.html');
   assert.ok(js.includes("ps3: new Set(['ps1', 'ps2', 'ps3', 'psp'])"), 'PS1, PS2, PS3 and PSP');
-  assert.ok(js.includes('const xmbShell') && js.includes('const placeXmb') && js.includes("if (xmb()) { st.els = new Map();") && js.includes("root.classList.remove('bs-theme-ps3'); st.screen = 'game'"), 'the games screen is the cross bar, the game page keeps the standard look');
+  assert.ok(js.includes('const xmbShell') && js.includes('const placeXmb') && js.includes("if (xmb()) { st.els = new Map();") && js.includes("root.classList.remove('bs-theme-ps3', 'bs-theme-wii'); st.screen = 'game'"), 'the games screen is the cross bar, the game page keeps the standard look');
   assert.ok(js.includes("const XM_MONTH") && js.includes("host.xmbColour?.()") && js.includes('createLinearGradient') && js.includes('prefers-reduced-motion'), 'waves, specks and a colour that follows the month');
   assert.ok(css.includes('.bs-theme-ps3 .xm-cat') && css.includes('.bs-theme-ps3 .xm-item.on') && css.includes('.bs-theme-ps3 .xm-clock'));
   assert.ok(app.includes("['ps3', 'PlayStation 3'") && app.includes("xmbColour: () => state.prefs?.bs_xmb_colour") && html.includes('id="bsxmb-picker"'));
@@ -106,4 +106,20 @@ test('the cross bar picks the best picture a game has, or the kind the person ch
 test('the cross bar plays the video of a game beside its picture once the highlight rests', () => {
   const js = read('public/bigscreen.js'), css = read('public/bs-themes.css');
   assert.ok(js.includes('id="xm-vid"') && js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes("const box = $('#xm-vid')") && css.includes('.bs-theme-ps3 .xm-vid.on'));
+});
+
+test('the Wii look: a grid of channel tiles twelve to a page over a curved bar, paging arrows, any looks together', async () => {
+  const js = read('public/bigscreen.js'), css = read('public/bs-themes.css'), app = read('public/app.js'), srv = read('src/app.js');
+  assert.ok(js.includes("wii: new Set(['gamecube', 'wii', 'wiiu'])") && js.includes('const wiShell') && js.includes('const placeWii') && js.includes('const WI_COLS = 4, WI_PER = 12') && js.includes('if (wii()) { st.els = new Map();'), 'the three Nintendo home consoles, a 4 by 3 grid');
+  assert.ok(js.includes('const wiNav') && js.includes("wii() && wiNav(a)") && js.includes("e.target.closest('.wi-arrow')") && js.includes("e.target.closest('#wi-plat')"), 'the pad, the arrows and the platform button');
+  assert.ok(css.includes('.bs-theme-wii .wi-tile.on') && css.includes('@keyframes wi-bounce-r') && css.includes('.bs-theme-wii .wi-arrow:hover i') && css.includes('.bs-theme-wii .wi-bar'));
+  assert.ok(app.includes("['wii', 'Wii'") && app.includes("['xbox360', 'ps3', 'wii'].filter") && srv.includes('okLooks'));
+});
+
+test('any of the looks can be on together, and only the looks that exist', async () => {
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'xbox360,ps3,wii' } })).status, 200);
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'ps3,wii' } })).status, 200);
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'wii,wii' } })).status, 400, 'once each');
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: 'wii,dreamcast' } })).status, 400);
+  assert.equal((await call('/api/prefs/bs_theme', { method: 'PUT', body: { value: null } })).status, 200);
 });

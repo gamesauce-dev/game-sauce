@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **A Big Screen look: Wii.** Settings > My account > **Big Screen look** now also offers **Wii**, used on the Wii, GameCube and Wii U (any of the looks can be on together). The games screen becomes a grid of pale landscape tiles, twelve to a page, with the next and previous pages peeking in at the edges, a glowing blue outline and a name bubble on the highlighted tile (it tilts slightly, as the GameCube's cubes did), and empty grey slots at the end of a page. A blue arrow at the edge bounces gently and turns into a plus in a circle under the mouse; it, or LB and RB, turns the page. Along the bottom is a curved bar with a blue edge, the page count, the date and time, a round button for the platform (up from the top row, then left and right, or a click) and a round help button. A game's video plays in its own tile a moment after you stop on it, and the pictures follow the same **Pictures** choice as the PlayStation 3 look. It is drawn for game-sauce; nothing comes from Nintendo. A game's own page keeps the standard look.
+
 ## [0.19.0] - 2026-11-19
 
 ### Added

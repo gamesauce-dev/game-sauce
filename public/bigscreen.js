@@ -158,6 +158,7 @@ export function openBigScreen(host) {
   // ── the top bar and the hints ──
   const tick = () => {
     const el = $('#bs-clock'), d = new Date(); if (el) el.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const wc = $('#wi-clock'); if (wc) wc.textContent = `${d.toLocaleDateString([], { weekday: 'short', month: 'numeric', day: 'numeric' }).replace(',', '')}   ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
     const xc = $('#xm-clock'); if (xc) xc.innerHTML = `${esc(d.toLocaleDateString([], { day: '2-digit', month: '2-digit' }))} ${esc(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))}<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 6.5V12l4 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
   };
   tick(); const clock = setInterval(tick, 15000);
@@ -297,6 +298,7 @@ export function openBigScreen(host) {
     if (tok !== st.tok || st.screen !== 'games') return;
     if (!st.games.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games here yet.</div>'; return; }
     st.gi = Math.min(st.gi, st.games.length - 1);
+    if (wii()) { st.els = new Map(); st.wiFocus = st.wiKeep ? 'plat' : null; st.wiKeep = false; $('#bs-main').innerHTML = wiShell(); placeWii(); if (st.slide) { $('.bs-wii')?.classList.add(st.slide > 0 ? 'slide-r' : 'slide-l'); st.slide = 0; } return; }
     if (xmb()) { st.els = new Map(); $('#bs-main').innerHTML = xmbShell(); placeXmb(); if (st.slide) { $('.bs-xm')?.classList.add(st.slide > 0 ? 'slide-r' : 'slide-l'); st.slide = 0; } return; }
     if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); if (st.slide) { $('.bs-bl-main')?.classList.add(st.slide > 0 ? 'slide-r' : 'slide-l'); st.slide = 0; } return; }
     st.az = new Map(); st.games.forEach((g, i) => { const l = letter(g); if (!st.az.has(l)) st.az.set(l, i); });   // the first game of each letter
@@ -308,7 +310,7 @@ export function openBigScreen(host) {
     return `<div class="bs-title">${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark" aria-label="Favourite">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
   // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
-  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']), ps3: new Set(['ps1', 'ps2', 'ps3', 'psp']) };   // the consoles each look is for
+  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']), ps3: new Set(['ps1', 'ps2', 'ps3', 'psp']), wii: new Set(['gamecube', 'wii', 'wiiu']) };   // the consoles each look is for
   const useTheme = (slug) => {
     const looks = String(host.theme?.() || '').split(',');   // several looks can be on at once: each is used on its own consoles only
     root.classList.remove('bs-bl-on');
@@ -330,7 +332,7 @@ export function openBigScreen(host) {
     const next = sib.slice(i0 + 1, i0 + 4).map((p, k) => ({ p, i: i0 + 1 + k }));
     return { sib, i0, left: [...pad(prev, 2, true), { cur: true, p: sib[i0], i: i0 }], right: pad(next, 3, false) };   // left: outermost first; right: nearest the middle first
   };
-  const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('end'); const el = $('.bs-bl-main, .bs-xm'); if (el) { const c = to > m.i0 ? 'nudge-r' : 'nudge-l'; el.classList.remove('nudge-r', 'nudge-l'); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), 260); } return; } st.slide = to > m.i0 ? 1 : -1; sfx(st.slide > 0 ? 'pageright' : 'pageleft'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
+  const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('end'); const el = $('.bs-bl-main, .bs-xm, .bs-wii'); if (el) { const c = to > m.i0 ? 'nudge-r' : 'nudge-l'; el.classList.remove('nudge-r', 'nudge-l'); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), 260); } return; } st.slide = to > m.i0 ? 1 : -1; sfx(st.slide > 0 ? 'pageright' : 'pageleft'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
   // The blades run the whole height of the screen and off both edges, with no end to see. Each is a sheet from the edge of the previous one to its own inner edge, which is one gentle curve
   // (a quadratic) bulging toward the middle of the screen. The outermost sheet is the widest and they get narrower toward the middle; the current blade (left, innermost) is the slimmest, in green.
   // The right blade is the left one mirrored in CSS.
@@ -501,7 +503,80 @@ export function openBigScreen(host) {
       box.appendChild(v); v.play?.().catch(() => v.remove());
     }, 700);
   };
-  const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : placeWheel());
+  // ── the channel grid (the Wii look): landscape tiles, twelve to a page, with the page count and the clock in a curved bar along the bottom ──
+  const wii = () => root.classList.contains('bs-theme-wii');
+  const WI_COLS = 4, WI_PER = 12;
+  const WI_PX = 16.8, WI_PY = 9.5, WI_X0 = 5.6, WI_Y0 = 3.7;   // em: the distance from one tile to the next, and where the first one sits
+  const wiPages = () => Math.max(1, Math.ceil(st.games.length / WI_PER));
+  const wiArt = (g) => {
+    const a = xmbArt(g, host.xmbArt?.() || 'auto');
+    if (!a) return `<span class="wi-name">${esc(g.title)}</span>`;
+    return `<img class="k-${a.kind}" src="${esc(a.src)}" alt="" draggable="false" onerror="this.remove()" />`;
+  };
+  const wiShell = () => {
+    const m = bladeModel(), p = m.sib[m.i0] || st.src?.plat || {};
+    return `<div class="bs-wii" id="bs-wii"><div class="wi-grid" id="wi-grid" role="listbox" aria-label="Games"></div>
+      <button type="button" class="wi-arrow l" id="wi-al" data-d="-1" aria-label="Previous page"><svg viewBox="0 0 60 90" aria-hidden="true"><path d="M52 6 8 45l44 39z" /></svg><i><b>+</b></i></button>
+      <button type="button" class="wi-arrow r" id="wi-ar" data-d="1" aria-label="Next page"><svg viewBox="0 0 60 90" aria-hidden="true"><path d="M8 6l44 39L8 84z" /></svg><i><b>+</b></i></button>
+      <div class="wi-bar" id="wi-bar"><svg viewBox="0 0 2000 310" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfcfd"/><stop offset="1" stop-color="#dde2e8"/></linearGradient></defs><path d="M0 8H430C560 8 560 125 700 125H1300C1440 125 1440 8 1570 8H2000V310H0Z" fill="url(#wig)"/><path d="M0 8H430C560 8 560 125 700 125H1300C1440 125 1440 8 1570 8H2000" fill="none" stroke="#49b9e8" stroke-width="5"/></svg>
+        <button type="button" class="wi-round l" id="wi-plat" aria-label="Platform"><span>${esc(p.short_name || p.name || 'Wii')}</span></button>
+        <div class="wi-count" id="wi-count"></div><div class="wi-clock" id="wi-clock"></div><div class="wi-keys" id="wi-keys"></div>
+        <button type="button" class="wi-round r" id="wi-help" aria-label="Controls"><span>?</span></button></div></div>`;
+  };
+  const placeWii = () => {
+    if (!$('#bs-wii')) return;
+    tick();
+    const grid = $('#wi-grid'), n = st.games.length, pages = wiPages(), page = Math.floor(st.gi / WI_PER);
+    const lo = Math.max(0, (page - 1) * WI_PER), hi = Math.min(pages * WI_PER - 1, (page + 2) * WI_PER - 1);
+    for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
+    for (let i = lo; i <= hi; i++) {
+      const g = st.games[i], on = i === st.gi;
+      let el = st.els.get(i);
+      if (!el) {
+        el = document.createElement('div'); el.className = 'wi-tile bs-bl-row' + (g ? '' : ' empty'); el.dataset.i = i; el.setAttribute('role', 'option');
+        if (g) { el.innerHTML = `<div class="wi-art">${wiArt(g)}</div>`; el.dataset.k = el.querySelector('img')?.className.slice(2) || 'none'; } else el.innerHTML = '<div class="wi-art"></div>';
+        grid.appendChild(el); st.els.set(i, el);
+      }
+      const col = i % WI_COLS, row = Math.floor((i % WI_PER) / WI_COLS), po = Math.floor(i / WI_PER) - page;
+      el.style.transform = `translate(${WI_X0 + (po * WI_COLS + col) * WI_PX}em, ${WI_Y0 + row * WI_PY}em)`;
+      el.classList.toggle('on', on && !!g); el.setAttribute('aria-selected', String(on));
+      el.querySelector('.wi-bubble')?.remove();
+      if (on && g) el.insertAdjacentHTML('beforeend', `<span class="wi-bubble">${esc(g.title)}</span>`);
+    }
+    $('#wi-count').innerHTML = `<b>${page + 1}</b>/${pages}`;
+    $('#wi-al').classList.toggle('off', page <= 0); $('#wi-ar').classList.toggle('off', page >= pages - 1);
+    $('#bs-wii').classList.toggle('plat', st.wiFocus === 'plat');
+    const m = bladeModel(); $('#wi-keys').textContent = st.wiFocus === 'plat' ? (m.sib.length > 1 ? '◀ ▶  Change platform     ▼  Back to the games' : '▼  Back to the games') : '';
+    root.style.setProperty('--ac', gameAccent(game()));
+    // a game with a video plays it in its tile once the highlight has rested a moment (without sound)
+    clearTimeout(st.vidT); $('.wi-tile .wi-vid')?.remove();
+    const g = game();
+    if (g?.has_video) st.vidT = setTimeout(() => {
+      const t = st.els.get(st.gi); if (!t || !root || !wii() || st.screen !== 'games' || game() !== g) return;
+      const v = document.createElement('video'); v.className = 'wi-vid'; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}`;
+      v.addEventListener('playing', () => v.classList.add('on')); v.addEventListener('error', () => v.remove());
+      t.querySelector('.wi-art').appendChild(v); v.play?.().catch(() => v.remove());
+    }, 700);
+  };
+  // The pad: left and right move along a row and over to the next page, up and down along a column; LB and RB turn the page. Up from the top row reaches the platform button, where left and right change platform.
+  const wiGo = (i, sound) => { const n = st.games.length, to = Math.max(0, Math.min(n - 1, i)); if (to === st.gi) return; const turned = Math.floor(to / WI_PER) !== Math.floor(st.gi / WI_PER); if (turned && sound) sfx(to > st.gi ? 'select' : 'back'); st.gi = to; placeGames(); };
+  const wiPage = (d) => { const page = Math.floor(st.gi / WI_PER), to = Math.max(0, Math.min(wiPages() - 1, page + d)); if (to === page) { sfx('end'); return; } wiGo(to * WI_PER + (st.gi % WI_PER), true); };
+  const wiNav = (a) => {
+    const i = st.gi, col = i % WI_COLS, row = Math.floor((i % WI_PER) / WI_COLS), page = Math.floor(i / WI_PER);
+    if (st.wiFocus === 'plat') {
+      if (a === 'left' || a === 'right') { const m = bladeModel(); if (m.i0 >= 0) { st.wiKeep = true; switchBlade(m.i0 + (a === 'left' ? -1 : 1)); } return true; }
+      if (a === 'down' || a === 'select' || a === 'back') { st.wiFocus = null; placeWii(); return true; }
+      return true;
+    }
+    if (a === 'left') { if (col > 0) wiGo(i - 1); else if (page > 0) wiGo((page - 1) * WI_PER + row * WI_COLS + WI_COLS - 1, true); else sfx('end'); return true; }
+    if (a === 'right') { if (col < WI_COLS - 1 && i + 1 < st.games.length) wiGo(i + 1); else if (page < wiPages() - 1) wiGo((page + 1) * WI_PER + row * WI_COLS, true); else sfx('end'); return true; }
+    if (a === 'up') { if (row > 0) wiGo(i - WI_COLS); else { st.wiFocus = 'plat'; placeWii(); } return true; }
+    if (a === 'down') { if (row < 2 && i + WI_COLS < st.games.length) wiGo(i + WI_COLS); else if (row < 2) wiGo(st.games.length - 1); return true; }
+    if (a === 'prev-family') { wiPage(-1); return true; }
+    if (a === 'next-family') { wiPage(1); return true; }
+    return false;
+  };
+  const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : wii() ? placeWii() : placeWheel());
   const placeWheel = () => {
     const wheel = $('#bs-wheel'); if (!wheel) return;
     const n = st.games.length, reach = root.classList.contains('bs-lite') ? 3 : 4;
@@ -531,7 +606,7 @@ export function openBigScreen(host) {
   // ── screen 3: one game ──
   const drawGame = () => {
     const g = game(); if (!g) return;
-    useTheme(g.platform); root.classList.remove('bs-theme-ps3'); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
+    useTheme(g.platform); root.classList.remove('bs-theme-ps3', 'bs-theme-wii'); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
     const art = gameBackdrop(g); setBackdrop(art || null, gameAccent(g), Boolean(art));
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);
@@ -738,7 +813,7 @@ export function openBigScreen(host) {
   };
 
   // ── moving between screens ──
-  const backToWheel = () => { useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (xmb()) { st.els = new Map(); $('#bs-main').innerHTML = xmbShell(); placeXmb(); return; } if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
+  const backToWheel = () => { useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (wii()) { st.els = new Map(); st.wiFocus = null; $('#bs-main').innerHTML = wiShell(); placeWii(); return; } if (xmb()) { st.els = new Map(); $('#bs-main').innerHTML = xmbShell(); placeXmb(); return; } if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
     document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer); clearTimeout(st.vidT);
@@ -794,7 +869,8 @@ export function openBigScreen(host) {
       }
       else if (a === 'back') { if (st.level === 1) { const wasColls = st.sub === 'colls', k = wasColls ? extraItems().findIndex((f) => f.kind === 'colls') : families().findIndex((f) => f.name === st.fam); st.level = 0; st.sub = null; st.fam = null; st.row = wasColls ? 1 : 0; st.pi = Math.max(0, k); drawPlatforms(); } else if (!host.kiosk) close(); }
     } else if (s === 'games') {
-      if ((blades() || xmb()) && (a === 'left' || a === 'right')) { const m = bladeModel(); if (m.i0 >= 0) switchBlade(m.i0 + (a === 'left' ? -1 : 1)); }   // in the Blades look left and right change blade, as on the dashboard
+      if (wii() && wiNav(a)) { /* handled by the grid */ }
+      else if ((blades() || xmb()) && (a === 'left' || a === 'right')) { const m = bladeModel(); if (m.i0 >= 0) switchBlade(m.i0 + (a === 'left' ? -1 : 1)); }   // in the Blades look left and right change blade, as on the dashboard
       else if (a === 'up' || a === 'left') goGame(st.gi - (a === 'left' ? 10 : 1)); else if (a === 'down' || a === 'right') goGame(st.gi + (a === 'right' ? 10 : 1));
       else if (a === 'prev-family') jumpLetter(-1); else if (a === 'next-family') jumpLetter(1);
       else if (a === 'select') drawGame();
@@ -827,6 +903,9 @@ export function openBigScreen(host) {
     if (e.target.closest('#bs-snd')) { toggleSound(); return; }
     const t = e.target.closest('.bs-ptile'); if (t && st.screen === 'platforms') { const i = Number(t.dataset.i), r = Number(t.dataset.r || 0); if (st.level === 0 && r !== st.row) { switchRow(r); focusPlatform(i); return; } if (i === st.pi) act('select'); else focusPlatform(i); return; }
     const az = e.target.closest('#bs-az button[data-l]'); if (az && st.screen === 'games') { if (st.az?.has(az.dataset.l)) goGame(st.az.get(az.dataset.l)); return; }   // the A-Z rail: straight to that letter
+    const wa = e.target.closest('.wi-arrow'); if (wa && st.screen === 'games' && wii()) { wiPage(Number(wa.dataset.d)); return; }
+    if (e.target.closest('#wi-plat') && st.screen === 'games' && wii()) { const m = bladeModel(); if (m.sib.length > 1) switchBlade((m.i0 + 1) % m.sib.length); return; }
+    if (e.target.closest('#wi-help') && st.screen === 'games' && wii()) { say('A open · B back · LB RB turn the page · up, then left or right, changes platform'); return; }
     const bl = e.target.closest('.bs-bl-lab'); if (bl && st.screen === 'games') { switchBlade(Number(bl.dataset.bi)); return; }
     const r = e.target.closest('.bs-row, .bs-bl-row'); if (r && st.screen === 'games') { const i = Number(r.dataset.i); if (i === st.gi) act('select'); else goGame(i); return; }
     const m = e.target.closest('.bs-mi[data-k]'); if (m && st.screen === 'game') { st.mi = [...m.parentElement.querySelectorAll('.bs-mi')].indexOf(m); paintMenu(); runMenu(m.dataset.k); return; }

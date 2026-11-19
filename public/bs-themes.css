@@ -227,3 +227,58 @@
 .bs-theme-ps3 .xm-vid.on { opacity: 1; }
 .bs-theme-ps3 .xm-vid video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bs-theme-ps3 .xm-item.on span { font-size: 1.25em; line-height: 1.2; -webkit-line-clamp: 4; text-shadow: 0 .05em .3em rgba(0, 0, 0, .4); }
+
+/* ── Wii: a grid of channel tiles over a curved bar ── */
+.bs.bs-theme-wii { background: linear-gradient(180deg, #f3f5f7, #e4e8ec); color: #5b6168; font-family: 'Source Sans 3', 'Segoe UI', 'Helvetica Neue', Arial, system-ui, sans-serif; }
+.bs-theme-wii .bs-bg { display: none; }
+.bs-theme-wii .bs-top { position: absolute; top: 0; left: 0; right: auto; background: none; padding: .8em 1.2em; min-height: 0; z-index: 4; }
+.bs-theme-wii .bs-crumb, .bs-theme-wii .bs-clock { display: none; }
+.bs-theme-wii .bs-snd { color: #6b7279; background: rgba(255, 255, 255, .7); opacity: .8; }
+.bs-theme-wii .bs-main { position: absolute; inset: 0; z-index: 1; }
+.bs-theme-wii .bs-hints { display: none; }
+.bs-theme-wii .bs-wii { position: absolute; inset: 0; overflow: hidden; }
+.bs-theme-wii .wi-grid { position: absolute; inset: 0; }
+.bs-theme-wii .wi-tile { position: absolute; left: 0; top: 0; width: 15.8em; height: 8.5em; transition: transform .45s cubic-bezier(.2, .8, .25, 1); cursor: pointer; }
+.bs-theme-wii .wi-art { position: absolute; inset: 0; border-radius: 1.2em; overflow: hidden; background: linear-gradient(180deg, #fff, #eceff2); box-shadow: inset 0 0 0 .1em rgba(120, 135, 150, .28), 0 .15em .5em rgba(60, 80, 100, .18); display: grid; place-items: center; transition: transform .25s ease, box-shadow .25s ease; }
+.bs-theme-wii .wi-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 45%); pointer-events: none; }
+.bs-theme-wii .wi-tile img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bs-theme-wii .wi-tile img.k-logo, .bs-theme-wii .wi-tile img.k-box { object-fit: contain; padding: .9em; }
+.bs-theme-wii .wi-tile img.k-shot { object-fit: cover; }
+.bs-theme-wii .wi-tile .wi-name { padding: 0 1em; text-align: center; font-size: 1.15em; line-height: 1.2; color: #5b6168; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.bs-theme-wii .wi-tile.empty .wi-art { background: repeating-linear-gradient(0deg, #b9bdc2 0 .12em, #c4c8cc .12em .24em); box-shadow: inset 0 0 0 .1em rgba(90, 100, 110, .3); }
+.bs-theme-wii .wi-tile.empty .wi-art::after { opacity: .5; }
+.bs-theme-wii .wi-tile.on { z-index: 3; }
+.bs-theme-wii .wi-tile.on .wi-art { transform: perspective(60em) rotateX(3deg) rotateY(-4deg) scale(1.05); box-shadow: 0 0 0 .22em #5bc8f2, 0 0 1.5em .2em rgba(91, 200, 242, .55), 0 .4em 1em rgba(40, 70, 100, .3); }
+.bs-theme-wii .wi-vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .4s ease; }
+.bs-theme-wii .wi-vid.on { opacity: 1; }
+.bs-theme-wii .wi-bubble { position: absolute; left: 62%; bottom: -1.2em; max-width: 22em; padding: .35em 1.3em; border-radius: 2em; background: #fff; box-shadow: 0 .1em .5em rgba(40, 70, 100, .25), inset 0 0 0 .08em rgba(120, 135, 150, .25); color: #5e656c; font-size: 1.35em; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 5; }
+.bs-theme-wii .wi-arrow { position: absolute; top: 17em; width: 4em; height: 6em; padding: 0; border: 0; background: none; cursor: pointer; z-index: 3; transform: translateY(-50%); }
+.bs-theme-wii .wi-arrow.l { left: 1em; animation: wi-bounce-l 1.1s ease-in-out infinite alternate; }
+.bs-theme-wii .wi-arrow.r { right: 1em; animation: wi-bounce-r 1.1s ease-in-out infinite alternate; }
+.bs-theme-wii .wi-arrow svg { width: 100%; height: 100%; }
+.bs-theme-wii .wi-arrow svg path { fill: #8fd8f5; stroke: #5bbbe6; stroke-width: 3; stroke-linejoin: round; }
+.bs-theme-wii .wi-arrow i { position: absolute; inset: 0; margin: auto; width: 4.6em; height: 4.6em; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: #fff; box-shadow: 0 0 0 .18em #5bc8f2, 0 .1em .6em rgba(40, 70, 100, .3); display: none; place-items: center; font-style: normal; }
+.bs-theme-wii .wi-arrow i b { font-size: 3.4em; line-height: 1; font-weight: 300; color: #9aa3ab; }
+.bs-theme-wii .wi-arrow:hover i { display: grid; }
+.bs-theme-wii .wi-arrow:hover svg { opacity: 0; }
+.bs-theme-wii .wi-arrow.off { visibility: hidden; }
+@keyframes wi-bounce-l { to { transform: translate(-.7em, -50%); } }
+@keyframes wi-bounce-r { to { transform: translate(.7em, -50%); } }
+.bs-theme-wii .wi-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 12.2em; z-index: 2; }
+.bs-theme-wii .wi-bar > svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 -.1em .4em rgba(40, 70, 100, .15)); }
+.bs-theme-wii .wi-count { position: absolute; left: 0; right: 0; top: 2.6em; text-align: center; font-size: 2.6em; line-height: 1; color: #4a4f55; letter-spacing: .02em; }
+.bs-theme-wii .wi-count b { font-weight: 400; }
+.bs-theme-wii .wi-clock { position: absolute; left: 0; right: 0; top: 5em; text-align: center; font-size: 1.9em; line-height: 1; color: #8a9097; letter-spacing: .12em; word-spacing: .2em; }
+.bs-theme-wii .wi-keys { display: none; position: absolute; left: 0; right: 0; top: 12em; text-align: center; font-size: .9em; letter-spacing: .08em; color: #9aa1a8; white-space: pre; }
+.bs-theme-wii .wi-round { position: absolute; bottom: 1.4em; width: 7.2em; height: 7.2em; padding: 0; border-radius: 50%; border: .2em solid #61c6ee; background: radial-gradient(circle at 50% 30%, #fff, #e3e8ed); box-shadow: 0 .15em .6em rgba(40, 70, 100, .22), inset 0 -.2em .6em rgba(160, 175, 190, .35); color: #9aa1a8; font: inherit; cursor: pointer; display: grid; place-items: center; z-index: 2; }
+.bs-theme-wii .wi-round.l { left: 3.4em; }
+.bs-theme-wii .wi-round.r { right: 3.4em; }
+.bs-theme-wii .wi-round span { font-size: 1.8em; font-weight: 600; letter-spacing: .02em; text-shadow: 0 .06em 0 rgba(255, 255, 255, .8); }
+.bs-theme-wii .bs-wii.plat .wi-round.l { box-shadow: 0 0 0 .3em rgba(91, 200, 242, .6), 0 0 1.4em .3em rgba(91, 200, 242, .5); }
+.bs-theme-wii .bs-wii.slide-r { animation: bs-slide-r .25s cubic-bezier(.2, .8, .25, 1); }
+.bs-theme-wii .bs-wii.slide-l { animation: bs-slide-l .25s cubic-bezier(.2, .8, .25, 1); }
+.bs-theme-wii .bs-wii.nudge-r { animation: bs-nudge-r .24s ease-out; }
+.bs-theme-wii .bs-wii.nudge-l { animation: bs-nudge-l .24s ease-out; }
+@media (prefers-reduced-motion: reduce) { .bs-theme-wii .wi-tile, .bs-theme-wii .wi-art { transition: none; } .bs-theme-wii .wi-arrow { animation: none; } .bs-theme-wii .bs-wii.slide-r, .bs-theme-wii .bs-wii.slide-l, .bs-theme-wii .bs-wii.nudge-r, .bs-theme-wii .bs-wii.nudge-l { animation: none; } }
+.bs-theme-wii .bs-wii.plat .wi-keys { display: block; }
+.bs-theme-wii .bs-wii.plat .wi-clock { display: none; }

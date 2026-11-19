@@ -583,7 +583,7 @@ export function createApp() {
   });
 
   // Per-user preferences (whitelisted keys only). Scoped to the signed-in user.
-  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'], ui_mode: ['classic', 'modern'], chip_style: ['chips', 'logos'], bs_theme: ['xbox360', 'ps3', 'xbox360,ps3'], bs_xmb_art: ['logo', 'screenshot', 'box'], bs_xmb_colour: ['blue', 'brown', 'green', 'violet', 'red', 'teal', 'gold'], bs_start: ['on', 'off'], chip_plate: ['on'], lang: ['auto', ...LANGS.map((l) => l.code)], price_currency: CURRENCIES };
+  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'], ui_mode: ['classic', 'modern'], chip_style: ['chips', 'logos'], bs_theme: ['xbox360', 'ps3', 'wii'], bs_xmb_art: ['logo', 'screenshot', 'box'], bs_xmb_colour: ['blue', 'brown', 'green', 'violet', 'red', 'teal', 'gold'], bs_start: ['on', 'off'], chip_plate: ['on'], lang: ['auto', ...LANGS.map((l) => l.code)], price_currency: CURRENCIES };
   api.get('/prefs', (req, res) => {
     const out = {};
     for (const r of db.prepare('SELECT key, value FROM user_prefs WHERE user_id = ?').all(req.user.id)) out[r.key] = r.value;
@@ -597,7 +597,8 @@ export function createApp() {
       db.prepare('DELETE FROM user_prefs WHERE user_id = ? AND key = ?').run(req.user.id, req.params.key);
       return res.json({ key: req.params.key, value: null });
     }
-    if (!allowed.includes(value)) return res.status(400).json({ error: 'Invalid value' });
+    const okLooks = (v) => typeof v === 'string' && v.split(',').every((t, i, a) => allowed.includes(t) && a.indexOf(t) === i);   // Big Screen looks: any of them together, e.g. xbox360,ps3
+    if (req.params.key === 'bs_theme' ? !okLooks(value) : !allowed.includes(value)) return res.status(400).json({ error: 'Invalid value' });
     db.prepare('INSERT INTO user_prefs (user_id, key, value) VALUES (?, ?, ?) ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value')
       .run(req.user.id, req.params.key, value);
     res.json({ key: req.params.key, value });
