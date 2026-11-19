@@ -343,7 +343,7 @@ export function openBigScreen(host) {
     return svg + '</svg>';
   };
   // The words on the blades. Each is centred on its own strip (found from the curve at the height it stands at), and the names are shortened so they fit.
-  const bladeName = (p) => String(p.name).replace(/^microsoft\s+/i, '').replace(/live arcade/i, 'arcade').replace(/series x\|s/i, 'series').toLowerCase();
+  const bladeName = (p) => String(p.name).replace(/^microsoft\s+/i, '').replace(/series x\|s/i, 'series').toLowerCase();
   const stripCentre = (d, y) => {   // the middle of sheet d at height y (of 1000), in percent of the blade's width
     const f = 1 - ((y - 500) / 500) ** 2, xl = d ? EDGE_TOP[d - 1] - 7 + BULGE * f : 0, xr = EDGE_TOP[d] + BULGE * f;
     return ((xl + xr) / 2 / 120 * 100).toFixed(1);
