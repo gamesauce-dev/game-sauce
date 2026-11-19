@@ -155,7 +155,7 @@ test('the light-backing checkbox keeps its natural size (a general input rule mu
   assert.match(fs.readFileSync(new URL('../public/modern.css', import.meta.url), 'utf8'), /\.fam-plate input \{ margin: 0; flex: 0 0 auto; width: 1rem; height: 1rem; padding: 0; \}/);
 });
 
-test('blade name flag: off by default, admin only, listed with the platforms; the page sounds are a 404 until the owner adds them', async () => {
+test('blade name flag: off by default, admin only, listed with the platforms', async () => {
   const put = (p, body, token) => call(p, { method: 'PUT', body, token });
   await post('/api/platforms/gb/logo', PNG);
   assert.equal((await call('/api/platforms')).body.items.find((p) => p.slug === 'gb').logo_text, 0);
@@ -163,6 +163,4 @@ test('blade name flag: off by default, admin only, listed with the platforms; th
   assert.equal((await put('/api/platforms/gb/logo/bladetext', { text: true })).status, 200);
   assert.equal((await call('/api/platforms', { token: memberTok })).body.items.find((p) => p.slug === 'gb').logo_text, 1);
   assert.equal((await put('/api/platforms/nes/logo/bladetext', { text: true })).status, 404, 'no logo, nothing to switch');
-  assert.equal((await call('/api/bigscreen-sounds/page-left.mp3')).status, 404);
-  assert.equal((await call('/api/bigscreen-sounds/anything.mp3')).status, 404);
 });

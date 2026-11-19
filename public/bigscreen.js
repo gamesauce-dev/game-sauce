@@ -35,24 +35,26 @@ const MUTE_KEY = 'gamesauce_bs_muted';
 const muted = () => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; } };
 let audio = null;
 const TONES = { move: [[760, 0.05, 0.3]], select: [[620, 0.07, 0.38], [930, 0.1, 0.38]], back: [[560, 0.07, 0.34], [380, 0.1, 0.34]], error: [[180, 0.2, 0.34]], key: [[1000, 0.04, 0.24]] };   // [pitch in Hz, length in s, volume 0 to 1]
-const PAGE_SND = {};   // the owner's page-turn sounds (storage/sounds on the server), fetched once; a missing file means the whoosh is used
-const pageSound = (name) => (PAGE_SND[name] ??= fetch(`/api/bigscreen-sounds/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? audio.decodeAudioData(b) : null)).catch(() => null));
 export function sfx(kind) {
   if (muted() || !(TONES[kind] || kind === 'whoosh' || kind === 'pageleft' || kind === 'pageright')) return;
   try {
-    if (kind === 'pageleft' || kind === 'pageright') {   // a blade changing: the page turns (the owner's own file) or, without one, the whoosh
-      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      if (audio.state === 'suspended') audio.resume?.().catch(() => {});
-      pageSound(kind === 'pageleft' ? 'page-left' : 'page-right').then((buf) => {
-        if (!buf) { sfx('whoosh'); return; }
-        const src = audio.createBufferSource(), g = audio.createGain();
-        src.buffer = buf; g.gain.value = 0.7; src.connect(g); g.connect(audio.destination); src.start();
-      });
-      return;
-    }
     audio = audio || new (window.AudioContext || window.webkitAudioContext)();
     if (audio.state === 'suspended') audio.resume?.().catch(() => {});
     let t = audio.currentTime;
+    if (kind === 'pageleft' || kind === 'pageright') {   // a blade changing: a page turning, made of two soft strokes of paper-like noise that sweep up (right) or down (left), with a faint low thump at the start
+      const up = kind === 'pageright', len = 0.3, n = Math.floor(audio.sampleRate * len), buf = audio.createBuffer(1, n, audio.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) { const x = i / n; d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * x) ** 2 * (0.6 + 0.4 * Math.sin(x * 38)); }
+      const src = audio.createBufferSource(), hp = audio.createBiquadFilter(), bp = audio.createBiquadFilter(), g = audio.createGain();
+      src.buffer = buf; hp.type = 'highpass'; hp.frequency.value = 900; bp.type = 'bandpass'; bp.Q.value = 0.7;
+      bp.frequency.setValueAtTime(up ? 2200 : 5200, t); bp.frequency.exponentialRampToValueAtTime(up ? 5200 : 2200, t + len);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      src.connect(hp); hp.connect(bp); bp.connect(g); g.connect(audio.destination); src.start(t);
+      const o = audio.createOscillator(), og = audio.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(up ? 150 : 190, t); o.frequency.exponentialRampToValueAtTime(up ? 190 : 150, t + 0.1);
+      og.gain.setValueAtTime(0.12, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      o.connect(og); og.connect(audio.destination); o.start(t); o.stop(t + 0.12);
+      return;
+    }
     if (kind === 'whoosh') {   // a blade changing: a short rush of filtered noise that rises and fades
       const len = 0.22, n = Math.floor(audio.sampleRate * len), buf = audio.createBuffer(1, n, audio.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);

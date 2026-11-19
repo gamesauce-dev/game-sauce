@@ -3,8 +3,6 @@ import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
 import { usable, FAMILY_DEFAULTS } from './lib/colours.js';
-import fs from 'node:fs';
-import path from 'node:path';
 import multer from 'multer';
 import { sniffLogo, MAX_LOGO_BYTES, LOGO_HEADERS } from './lib/logos.js';
 import express from 'express';
@@ -391,14 +389,6 @@ export function createApp() {
     db.prepare('UPDATE platform_logos SET blade_text = ? WHERE slug = ?').run(text, slug);
     req.auditDetail = { platform: slug, blade_text: Boolean(text) };
     res.json({ slug, text });
-  });
-  // The page-turn sounds of the Xbox 360 Big Screen look are the owner's own files, kept in the storage folder (storage/sounds/page-left.mp3 and page-right.mp3); without them the blades whoosh
-  api.get('/bigscreen-sounds/:name', requireAuth, (req, res) => {
-    const name = String(req.params.name || '');
-    if (!['page-left.mp3', 'page-right.mp3'].includes(name)) return res.status(404).end();
-    const file = path.resolve(process.env.GAMESAUCE_STORAGE_DIR || 'storage', 'sounds', name);
-    if (!fs.existsSync(file)) return res.status(404).end();
-    res.set({ 'Content-Type': 'audio/mpeg', 'Cache-Control': 'private, max-age=3600' }).sendFile(file);
   });
   api.put('/platforms/:slug/logo/plate', requireAdmin, (req, res) => {
     const slug = String(req.params.slug || '').toLowerCase();

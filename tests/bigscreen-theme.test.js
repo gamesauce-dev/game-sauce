@@ -62,7 +62,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(js.includes("THEME_CONSOLES.xbox360.has(p.slug)") && js.includes("const switchBlade = (to)") && js.includes("enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t })"));
   assert.ok(js.includes("if (blades() && (a === 'left' || a === 'right'))") && js.includes("switchBlade(m.i0 + (a === 'left' ? -1 : 1))") && js.includes("e.target.closest('.bs-bl-lab')"));
   assert.ok(js.includes("if (!b?.p) return '';") && js.includes("bs-bl-lab cur") && js.includes('data-bi="${b.i}"') && css.includes(".bs-theme-xbox360 .bs-bl-lab"), "a band with no platform has no words; the current one names itself; the others lead somewhere");
-  assert.ok(js.includes("sfx('whoosh')") && js.includes("kind === 'whoosh'") && css.includes("@keyframes bs-slide-r") && css.includes("prefers-reduced-motion"), "changing blade slides the middle in and whooshes, and stays still for reduced motion");
+  assert.ok(js.includes("'pageright' : 'pageleft'") && js.includes("kind === 'pageleft'") && css.includes("@keyframes bs-slide-r") && css.includes("prefers-reduced-motion"), "changing blade slides the middle in and turns a page, and stays still for reduced motion");
   // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
   assert.ok(js.includes("<i data-k=\"${b}\">${b}</i>") && js.includes("btn('Y', 'Play on this PC')") && js.includes("btn('A', 'Open', true)") && js.includes("root.classList.add('bs-bl-on')"));
   assert.ok(js.includes("autoScroll('#bs-bl-scroll', '#bs-bl-scrollin')") && !js.includes('class="bs-bl-art"'));
