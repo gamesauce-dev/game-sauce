@@ -101,7 +101,7 @@ export function openBigScreen(host) {
   const famColour = (p) => (HEX.test(p?.family_colour || '') ? p.family_colour : '#6b7280');
   const gameAccent = (g) => (HEX.test(g?.platform_accent || '') ? g.platform_accent : accent(st.plats.find((p) => p.slug === g?.platform)));
   // the first row: Favourites and Collections (when there are any), then the families; then the platforms of one family, or the collections
-  const families = () => { const m = new Map(); for (const p of st.plats) { const k = p.family || 'Others'; if (!m.has(k)) m.set(k, { kind: 'family', name: k, colour: famColour(p), logo_v: p.family_logo_v, plats: [], games: 0 }); const f = m.get(k); f.plats.push(p); f.games += count(p); } return [...m.values()]; };
+  const families = () => { const m = new Map(); for (const p of st.plats) { const k = p.family || 'Others'; if (!m.has(k)) m.set(k, { kind: 'family', name: k, colour: famColour(p), logo_v: p.family_logo_v, plate: p.family_logo_plate, plats: [], games: 0 }); const f = m.get(k); f.plats.push(p); f.games += count(p); } return [...m.values()]; };
   const extraItems = () => [...(st.favCount > 0 ? [{ kind: 'fav', name: 'Favourites', colour: '#e11d48', games: st.favCount }] : []), ...(st.colls.length ? [{ kind: 'colls', name: 'Collections', colour: '#7c3aed', n: st.colls.length, covers: st.colls.flatMap((c) => (c.covers || []).slice(0, 1)).slice(0, 4) }] : [])];   // the row of their own below the families
   const collItems = () => st.colls.map((c) => ({ kind: 'collection', id: c.id, name: c.name, games: Number(c.count || 0), covers: (c.covers || []).slice(0, 4), colour: '#7c3aed' }));
   const switchRow = (r) => { if (r === st.row || (r === 1 && !extraItems().length)) return false; st.pis[st.row] = st.pi; st.row = r; st.pi = st.pis[r] || 0; return true; };
@@ -188,11 +188,13 @@ export function openBigScreen(host) {
   const HEART = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
   const STACK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="2.5" width="14" height="9" rx="2" opacity=".35"/><rect x="3.5" y="5.5" width="17" height="10" rx="2" opacity=".6"/><rect x="2" y="9" width="20" height="12.5" rx="2.5"/></svg>';
   const mosaic = (covers) => `<span class="bs-mosaic" aria-hidden="true">${[0, 1, 2, 3].map((n) => `<i${covers?.[n] ? ` style="background-image:url('${esc(covers[n])}')"` : ''}></i>`).join('')}</span>`;
+  // A logo set to have a light backing (Settings > Platforms), or every logo when the person asked for it, gets the class a look can draw a plate with.
+  const plated = (x) => (x.plate || x.logo_plate || host.plateAll?.() ? ' bs-plate' : '');
   const tileHtml = (x, i, r = 0) => {
     const k = x.kind || 'platform';
     let colour = x.colour, inner, cls = '';
-    if (k === 'family') inner = x.logo_v ? `<img src="/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}" alt="" draggable="false" />` : `<b>${esc(x.name)}</b>`;
-    else if (k === 'platform') { colour = accent(x); inner = x.logo_v ? `<img src="/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}" alt="" draggable="false" />` : `<span class="bs-pico">${pico(x)}</span><b>${esc(x.name)}</b>`; }
+    if (k === 'family') inner = x.logo_v ? `<img${plated(x) ? ' class="bs-plate"' : ''} src="/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}" alt="" draggable="false" />` : `<b>${esc(x.name)}</b>`;
+    else if (k === 'platform') { colour = accent(x); inner = x.logo_v ? `<img${plated(x) ? ' class="bs-plate"' : ''} src="/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}" alt="" draggable="false" />` : `<span class="bs-pico">${pico(x)}</span><b>${esc(x.name)}</b>`; }
     else if (k === 'fav') { cls = ' bs-t-fav'; inner = `<span data-mos="fav">${mosaic([])}</span><span class="bs-ticon">${HEART}</span><span class="bs-ttxt"><b>Favourites</b><small>${plural(x.games, 'game')}</small></span>`; }
     else if (k === 'colls') { cls = ' bs-t-colls'; inner = `${mosaic(x.covers)}<span class="bs-ticon">${STACK}</span><span class="bs-ttxt"><b>Collections</b><small>${plural(x.n, 'collection')}</small></span>`; }
     else { cls = ' bs-t-coll'; inner = `${mosaic(x.covers)}<span class="bs-ticon">${STACK}</span><span class="bs-ttxt"><b>${esc(x.name)}</b><small>${plural(x.games, 'game')}</small></span>`; }
@@ -230,7 +232,7 @@ export function openBigScreen(host) {
       : k === 'platform' ? `${x.manufacturer ? `<span class="bs-pill">${esc(x.manufacturer)}</span>` : ''}<span class="bs-pill dim">${plural(count(x), 'game')}</span>`
       : k === 'fav' ? `<span class="bs-pill dim">${plural(x.games, 'game')}</span>` : k === 'colls' ? `<span class="bs-pill dim">${plural(x.n, 'collection')}</span>` : `<span class="bs-pill dim">${plural(x.games, 'game')}</span>`;
     const art = k === 'fav' ? HEART : k === 'colls' || k === 'collection' ? STACK : '';
-    $('#bs-hero').innerHTML = `${art ? `<div class="bs-heroart bs-ha-${k}" style="--pc:${esc(x.colour)}"><span class="bs-heroicon">${art}</span><div class="bs-heroname">${esc(x.name)}</div></div>` : logo ? `<img class="bs-herologo" src="${logo}" alt="" />` : `<div class="bs-heroname">${esc(x.name)}</div>`}<div class="bs-facts">${pills}</div>`;
+    $('#bs-hero').innerHTML = `${art ? `<div class="bs-heroart bs-ha-${k}" style="--pc:${esc(x.colour)}"><span class="bs-heroicon">${art}</span><div class="bs-heroname">${esc(x.name)}</div></div>` : logo ? `<img class="bs-herologo${plated(x)}" src="${logo}" alt="" />` : `<div class="bs-heroname">${esc(x.name)}</div>`}<div class="bs-facts">${pills}</div>`;
     setBackdrop(null, ac);
     clearTimeout(heroTimer);
     const s = k === 'family' ? { kind: 'platform', slug: x.plats[0].slug } : k === 'platform' ? { kind: 'platform', slug: x.slug } : k === 'fav' ? { kind: 'fav' } : k === 'collection' ? { kind: 'coll', id: x.id } : null;

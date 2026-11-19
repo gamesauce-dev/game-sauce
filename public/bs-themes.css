@@ -24,7 +24,18 @@
 .bs-theme-xbox360 .bs-ptile { border-radius: 1em; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .08)); border-color: rgba(255, 255, 255, .42); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5); }
 .bs-theme-xbox360 .bs-ptile.on { background: linear-gradient(180deg, #b8f06a, #4aa01a 62%, #3b8a14); border-color: #fff; box-shadow: 0 0 1.6em rgba(255, 255, 255, .6), inset 0 .1em 0 rgba(255, 255, 255, .7); }
 
-/* screen 2: the games wheel */
+/* a logo that needs a light backing (the setting under Settings > Platforms, or "every logo on a light plate" in My account) sits on a glossy white plate: dark logos stay readable on the green */
+.bs-theme-xbox360 img.bs-plate { background: linear-gradient(180deg, #fff, #e6f3d8); border-radius: .5em; padding: .3em .7em; box-shadow: 0 .1em .45em rgba(0, 50, 0, .4), inset 0 .06em 0 #fff; }
+/* Favourites and Collections keep their own colours (the glass above would wash them out), with a little gloss and readable text */
+.bs-theme-xbox360 .bs-ptile.bs-t-fav { background: linear-gradient(135deg, #9f1239, #e11d48 55%, #fb7185); }
+.bs-theme-xbox360 .bs-ptile.bs-t-colls, .bs-theme-xbox360 .bs-ptile.bs-t-coll { background: linear-gradient(135deg, #4c1d95, #7c3aed 55%, #a78bfa); }
+.bs-theme-xbox360 .bs-ptile.bs-t-fav.on { background: linear-gradient(135deg, #be123c, #f43f5e 55%, #fda4af); }
+.bs-theme-xbox360 .bs-ptile.bs-t-colls.on, .bs-theme-xbox360 .bs-ptile.bs-t-coll.on { background: linear-gradient(135deg, #6d28d9, #8b5cf6 55%, #c4b5fd); }
+.bs-theme-xbox360 .bs-ttxt { text-shadow: 0 .06em .3em rgba(0, 0, 0, .65); }
+.bs-theme-xbox360 .bs-mosaic { opacity: .3; }
+.bs-theme-xbox360 .bs-railwrap.dim { opacity: .85; }   /* the row you are not on is only dimmed a little: at the standard .55 the glass looked murky */
+
+/* screen 2: the games wheel *//* screen 2: the games wheel */
 .bs-theme-xbox360 .bs-title, .bs-theme-xbox360 .bs-year { text-shadow: 0 .05em .3em rgba(0, 60, 0, .65); }
 .bs-theme-xbox360 .bs-year, .bs-theme-xbox360 .bs-pos { color: #eaf9d6; }
 .bs-theme-xbox360 .bs-row.on .bs-cov:not(.has-img), .bs-theme-xbox360 .bs-row.on .bs-cov.has-img img { box-shadow: 0 0 0 .14em #fff, 0 0 1.4em rgba(255, 255, 255, .55), 0 .8em 2em rgba(0, 40, 0, .55); }

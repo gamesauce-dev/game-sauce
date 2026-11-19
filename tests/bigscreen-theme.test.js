@@ -44,6 +44,9 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   const selectors = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((b) => b.split('{')[0].trim()).filter(Boolean).flatMap((s) => s.split(',').map((x) => x.trim()));
   assert.ok(selectors.length > 20);
   for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-xbox360( |$)|^\.bs\.bs-theme-xbox360$/, 'scoped: ' + s);
+  // a logo set to have a light backing (or every logo, if the person asked) gets a class the look draws a plate with; Favourites and Collections keep their colours
+  assert.ok(js.includes("plated = (x) => (x.plate || x.logo_plate || host.plateAll?.()") && js.includes('family_logo_plate') && app.includes("plateAll: () => state.prefs?.chip_plate === 'on'"));
+  assert.ok(css.includes('img.bs-plate') && css.includes('.bs-ptile.bs-t-fav') && css.includes('.bs-ptile.bs-t-colls'));
   // inspired by, not copied: no outside address, no font file, no picture
   assert.ok(!/url\(|@font-face|https?:/i.test(css), 'plain gradients and system fonts only');
 });
