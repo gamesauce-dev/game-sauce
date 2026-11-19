@@ -273,7 +273,7 @@
 .bs-theme-wii .wi-round { position: absolute; bottom: 1.4em; width: 7.2em; height: 7.2em; padding: 0; border-radius: 50%; border: .2em solid #61c6ee; background: radial-gradient(circle at 50% 30%, #fff, #e3e8ed); box-shadow: 0 .15em .6em rgba(40, 70, 100, .22), inset 0 -.2em .6em rgba(160, 175, 190, .35); color: #9aa1a8; font: inherit; cursor: pointer; display: grid; place-items: center; z-index: 2; }
 .bs-theme-wii .wi-round.l { left: 3.4em; }
 .bs-theme-wii .wi-round.r { right: 3.4em; }
-.bs-theme-wii .wi-round span { font-size: 1.8em; font-weight: 600; letter-spacing: .02em; text-shadow: 0 .06em 0 rgba(255, 255, 255, .8); }
+.bs-theme-wii .wi-round span { font-size: 1.8em; font-weight: 600; letter-spacing: normal; text-transform: none; white-space: nowrap; max-width: 6.4em; overflow: hidden; text-shadow: 0 .06em 0 rgba(255, 255, 255, .8); }
 .bs-theme-wii .bs-wii.plat .wi-round.l { box-shadow: 0 0 0 .3em rgba(91, 200, 242, .6), 0 0 1.4em .3em rgba(91, 200, 242, .5); }
 .bs-theme-wii .bs-wii.slide-r { animation: bs-slide-r .25s cubic-bezier(.2, .8, .25, 1); }
 .bs-theme-wii .bs-wii.slide-l { animation: bs-slide-l .25s cubic-bezier(.2, .8, .25, 1); }

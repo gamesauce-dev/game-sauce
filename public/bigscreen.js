@@ -511,7 +511,7 @@ export function openBigScreen(host) {
   const wiArt = (g) => {
     const a = xmbArt(g, host.xmbArt?.() || 'auto');
     if (!a) return `<span class="wi-name">${esc(g.title)}</span>`;
-    return `<img class="k-${a.kind}" src="${esc(a.src)}" alt="" draggable="false" onerror="this.remove()" />`;
+    return `<img class="k-${a.kind}" src="${esc(a.src)}" alt="" draggable="false" decoding="async" onerror="this.remove()" />`;
   };
   const wiShell = () => {
     const m = bladeModel(), p = m.sib[m.i0] || st.src?.plat || {};
@@ -519,7 +519,7 @@ export function openBigScreen(host) {
       <button type="button" class="wi-arrow l" id="wi-al" data-d="-1" aria-label="Previous page"><svg viewBox="0 0 60 90" aria-hidden="true"><path d="M52 6 8 45l44 39z" /></svg><i><b>+</b></i></button>
       <button type="button" class="wi-arrow r" id="wi-ar" data-d="1" aria-label="Next page"><svg viewBox="0 0 60 90" aria-hidden="true"><path d="M8 6l44 39L8 84z" /></svg><i><b>+</b></i></button>
       <div class="wi-bar" id="wi-bar"><svg viewBox="0 0 2000 310" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfcfd"/><stop offset="1" stop-color="#dde2e8"/></linearGradient></defs><path d="M0 8H430C560 8 560 125 700 125H1300C1440 125 1440 8 1570 8H2000V310H0Z" fill="url(#wig)"/><path d="M0 8H430C560 8 560 125 700 125H1300C1440 125 1440 8 1570 8H2000" fill="none" stroke="#49b9e8" stroke-width="5"/></svg>
-        <button type="button" class="wi-round l" id="wi-plat" aria-label="Platform"><span>${esc(p.short_name || p.name || 'Wii')}</span></button>
+        <button type="button" class="wi-round l" id="wi-plat" aria-label="Platform"><span style="font-size: ${Math.min(1.8, 8.6 / Math.max(5, String(p.short_name || p.name || 'Wii').length))}em">${esc(p.short_name || p.name || 'Wii')}</span></button>
         <div class="wi-count" id="wi-count"></div><div class="wi-clock" id="wi-clock"></div><div class="wi-keys" id="wi-keys"></div>
         <button type="button" class="wi-round r" id="wi-help" aria-label="Controls"><span>?</span></button></div></div>`;
   };
@@ -527,7 +527,7 @@ export function openBigScreen(host) {
     if (!$('#bs-wii')) return;
     tick();
     const grid = $('#wi-grid'), n = st.games.length, pages = wiPages(), page = Math.floor(st.gi / WI_PER);
-    const lo = Math.max(0, (page - 1) * WI_PER), hi = Math.min(pages * WI_PER - 1, (page + 2) * WI_PER - 1);
+    const lo = Math.max(0, (page - 2) * WI_PER), hi = Math.min(pages * WI_PER - 1, (page + 3) * WI_PER - 1);   // two pages ready on each side: the next one slides in from off the screen with the rest
     for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
     for (let i = lo; i <= hi; i++) {
       const g = st.games[i], on = i === st.gi;
