@@ -25,6 +25,7 @@
 <meta property="og:image" content="https://gamesauce.app/img/social-preview.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0b0c10">
+<link rel="preload" as="image" href="../img/poster-intro.webp" fetchpriority="high">
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -73,47 +74,47 @@
         <a class="slide-hit" href="#intro" aria-label="观看介绍片"></a>
       </div>
       <div class="slide" data-seconds="10">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="游戏库：搜索一个游戏并打开它的详情"><source src="../video/library.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-library.webp" width="1280" height="720" aria-label="游戏库：搜索一个游戏并打开它的详情"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">为你现有的收藏准备的一切</p><p class="slide-sub">全家的游戏库集中在一处，运行在你自己掌控的机器上。</p></div>
         <a class="slide-hit" href="#features" aria-label="为你现有的收藏准备的一切"></a>
       </div>
       <div class="slide" data-seconds="14">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="大屏幕：滚动游戏转盘、按字母跳转、打开游戏并返回"><source src="../video/bigscreen.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="大屏幕：滚动游戏转盘、按字母跳转、打开游戏并返回"><source src="../video/bigscreen.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">大屏幕：把你的游戏库搬到电视上</p><p class="slide-sub">完全用手柄操作，屏幕上有按键提示。</p></div>
         <a class="slide-hit" href="#bigscreen" aria-label="大屏幕：把你的游戏库搬到电视上"></a>
       </div>
       <div class="slide" data-seconds="15">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="封面轮播：滚动封面、按字母跳转到某个游戏，并给收藏加星"><source src="../video/carousel.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="封面轮播：滚动封面、按字母跳转到某个游戏，并给收藏加星"><source src="../video/carousel.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">封面轮播：挑一个游戏就开玩</p><p class="slide-sub">全屏的封面架，排成柔和的弧形。选择一个系列和平台，用方向键、鼠标滚轮、滑动或手柄滚动，然后按下开始游戏。</p></div>
         <a class="slide-hit" href="#carousel" aria-label="封面轮播：挑一个游戏就开玩"></a>
       </div>
       <div class="slide" data-seconds="14">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="在封面轮播中滚动到一个 Game Boy Color 游戏，点击“在浏览器中游玩”，游戏随即在页面中运行"><source src="../video/play.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-play.webp" width="1280" height="720" aria-label="在封面轮播中滚动到一个 Game Boy Color 游戏，点击“在浏览器中游玩”，游戏随即在页面中运行"><source src="../video/play.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">在浏览器中游玩</p><p class="slide-sub">许多较老的主机可以直接在网页中运行，即时存档和游戏内存档按人保存在你的服务器上。“继续游玩”一栏会记住你玩到了哪里。</p></div>
         <a class="slide-hit" href="#carousel" aria-label="在浏览器中游玩"></a>
       </div>
       <div class="slide" data-seconds="15">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="实体游戏架：切换到书脊游戏架，抽出一个，把盒子转到前面、翻转、打开查看说明书和光盘，并阅读说明书"><source src="../video/shelf.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="实体游戏架：切换到书脊游戏架，抽出一个，把盒子转到前面、翻转、打开查看说明书和光盘，并阅读说明书"><source src="../video/shelf.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">你的游戏架：你拥有的光盘和卡带</p><p class="slide-sub">把你真实游戏架上的盒装游戏记录下来，可以手动添加或从列表导入，与你的数字收藏放在一起。每个人都有自己的游戏架。</p></div>
         <a class="slide-hit" href="#shelf" aria-label="你的游戏架：你拥有的光盘和卡带"></a>
       </div>
       <div class="slide fit">
-        <img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页">
+        <img data-src="../img/digital-library.webp" loading="lazy" width="1600" height="736" alt="数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页">
         <div class="slide-cap"><p class="slide-title">还有你的游戏架和 Steam</p><p class="slide-sub">导入你的 Steam 游戏库及游玩时长，并通过列表导入你的 PlayStation、任天堂和 Xbox 游戏。你实际拥有的光盘和卡带也可以记录，全都与你的 ROM 放在一起。</p></div>
         <a class="slide-hit" href="#features" aria-label="还有你的游戏架和 Steam"></a>
       </div>
       <div class="slide fit">
-        <img src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="“消息”面板：对话列表上方是管理员的通知，下方是两个人之间的私密对话，各有自己的颜色">
+        <img data-src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="“消息”面板：对话列表上方是管理员的通知，下方是两个人之间的私密对话，各有自己的颜色">
         <div class="slide-cap"><p class="slide-title">聊天：与家人保持联系</p><p class="slide-sub">服务器上的用户之间可以互发私信，管理员也可以发布通知。一切都不会离开你自己的机器。</p></div>
         <a class="slide-hit" href="#chat" aria-label="聊天：与家人保持联系"></a>
       </div>
       <div class="slide fit">
-        <img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="启动器设置页面：每个平台一行，显示其模拟器程序和参数，另有 RetroArch 核心按钮">
+        <img data-src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="启动器设置页面：每个平台一行，显示其模拟器程序和参数，另有 RetroArch 核心按钮">
         <div class="slide-cap"><p class="slide-title">在你的电脑上游玩</p><p class="slide-sub">只需一次点击，就能在你自己电脑上安装的模拟器（如 RetroArch、MAME 或 Dolphin）中启动游戏。游戏可以保留以便快速重新启动，还有一个设置页面来配置每个模拟器。</p></div>
         <a class="slide-hit" href="#features" aria-label="在你的电脑上游玩"></a>
       </div>
       <div class="slide">
-        <img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="固定在游戏库旁边的游戏详情，包含即时存档和元数据匹配">
+        <img data-src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="固定在游戏库旁边的游戏详情，包含即时存档和元数据匹配">
         <div class="slide-cap"><p class="slide-title">游戏库旁边的游戏详情</p><p class="slide-sub">经典和现代两种外观，浅色和深色两种主题。同一个游戏库，由你选择。</p></div>
         <a class="slide-hit" href="#screens" aria-label="游戏库旁边的游戏详情"></a>
       </div>
@@ -265,7 +266,7 @@
       <figure class="shot"><img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="实体游戏架上打开的 PlayStation 2 盒子，里面是说明书和光盘"><figcaption>游戏架上打开的盒子</figcaption></figure>
       <figure class="shot"><img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="封面轮播：扇形排开的封面，下方是“在浏览器中游玩”和“在此电脑上游玩”"><figcaption>封面轮播</figcaption></figure>
       <figure class="shot"><img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="启动器设置页面：每个平台一行，显示其模拟器程序和参数，另有 RetroArch 核心按钮"><figcaption>在你的电脑上设置模拟器，带有 RetroArch 核心选择器</figcaption></figure>
-      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页"><figcaption>数字游戏库：你的 Steam 游戏和你拥有的主机游戏</figcaption></figure>
+      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="1600" height="736" alt="数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页"><figcaption>数字游戏库：你的 Steam 游戏和你拥有的主机游戏</figcaption></figure>
       <figure class="shot"><img src="../img/emulators.webp" loading="lazy" width="1500" height="900" alt="“模拟器”页面，每个平台一张卡片"><figcaption>模拟器</figcaption></figure>
     </div>
   </div>
@@ -377,13 +378,21 @@ if (/[?&]numbers/.test(location.search)) { var jb = document.querySelector('.jum
   // The picture changes when the progress line of the current one has filled (an animation end), so holding the pointer on it, a keyboard focus,
   // the pause button, a hidden tab and reduced motion all stop it by pausing that animation.
   var vids = slides.map(function (sl) { return sl.querySelector('video'); });
+  var ready = document.readyState === 'complete';   // the first clip waits for the page to finish loading, so it never competes with the first picture
+  if (!ready) window.addEventListener('load', function () { ready = true; hold(); });
+  function fetchSlide(i) {   // pictures of the other slides load when their turn is near
+    var sl = slides[(i + slides.length) % slides.length]; if (!sl) return;
+    var im = sl.querySelector('img[data-src]'); if (im) { im.src = im.getAttribute('data-src'); im.removeAttribute('data-src'); }
+    var v = sl.querySelector('video[data-poster]'); if (v) { v.poster = v.getAttribute('data-poster'); v.removeAttribute('data-poster'); }
+  }
   function hold() {
-    var stop = userPaused || hover || focus || document.hidden;
+    var stop = userPaused || hover || focus || document.hidden || !ready;
     box.classList.toggle('is-held', stop);
     vids.forEach(function (v, i) { if (!v) return; if (i === cur && !stop) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else v.pause(); });   // only the showing clip plays, and it stops when the slideshow is held
   }
   function go(n) {
     cur = (n + slides.length) % slides.length;
+    fetchSlide(cur); fetchSlide(cur + 1);
     slides.forEach(function (sl, i) { sl.classList.toggle('is-on', i === cur); });
     segs.forEach(function (sg, i) { sg.classList.remove('is-on'); sg.classList.toggle('is-done', i < cur); if (i === cur) sg.setAttribute('aria-current', 'true'); else sg.removeAttribute('aria-current'); });
     segs[cur].style.setProperty('--dur', (Number(slides[cur].dataset.seconds) || 6) + 's');   // a clip's slide lasts as long as the clip

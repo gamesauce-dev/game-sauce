@@ -25,6 +25,7 @@
 <meta property="og:image" content="https://gamesauce.app/img/social-preview.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0b0c10">
+<link rel="preload" as="image" href="../img/poster-intro.webp" fetchpriority="high">
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -73,47 +74,47 @@
         <a class="slide-hit" href="#intro" aria-label="Assistir à introdução"></a>
       </div>
       <div class="slide" data-seconds="10">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-library.webp" width="1280" height="720" aria-label="A Biblioteca: pesquisando um jogo e abrindo seus detalhes"><source src="../video/library.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-library.webp" width="1280" height="720" aria-label="A Biblioteca: pesquisando um jogo e abrindo seus detalhes"><source src="../video/library.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Tudo para uma coleção que você já tem</p><p class="slide-sub">Um só lugar para a biblioteca da casa inteira, rodando em uma máquina que você controla.</p></div>
         <a class="slide-hit" href="#features" aria-label="Tudo para uma coleção que você já tem"></a>
       </div>
       <div class="slide" data-seconds="14">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="Tela grande: rolando a roda de jogos, pulando por letra, abrindo um jogo e voltando"><source src="../video/bigscreen.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-bigscreen.webp" width="1280" height="720" aria-label="Tela grande: rolando a roda de jogos, pulando por letra, abrindo um jogo e voltando"><source src="../video/bigscreen.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Tela grande: sua biblioteca na TV</p><p class="slide-sub">Funciona inteiramente com um gamepad, com as dicas dos botões na tela.</p></div>
         <a class="slide-hit" href="#bigscreen" aria-label="Tela grande: sua biblioteca na TV"></a>
       </div>
       <div class="slide" data-seconds="15">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="O Carrossel: rolando pelas capas, pulando para um título por letra e marcando um favorito com estrela"><source src="../video/carousel.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-carousel.webp" width="1280" height="720" aria-label="O Carrossel: rolando pelas capas, pulando para um título por letra e marcando um favorito com estrela"><source src="../video/carousel.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">O Carrossel: escolha um jogo e jogue</p><p class="slide-sub">Uma estante de capas em tela cheia em um arco suave. Escolha uma família e uma plataforma, role com as setas, a roda do mouse, um deslize ou um gamepad, e pressione jogar.</p></div>
         <a class="slide-hit" href="#carousel" aria-label="O Carrossel: escolha um jogo e jogue"></a>
       </div>
       <div class="slide" data-seconds="14">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-play.webp" width="1280" height="720" aria-label="Rolando o Carrossel até um jogo de Game Boy Color, pressionando Jogar no navegador, e o jogo rodando na página"><source src="../video/play.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-play.webp" width="1280" height="720" aria-label="Rolando o Carrossel até um jogo de Game Boy Color, pressionando Jogar no navegador, e o jogo rodando na página"><source src="../video/play.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Jogue no navegador</p><p class="slide-sub">Muitos consoles antigos rodam direto de uma página da web, com save states e saves do jogo guardados por pessoa no seu servidor. Uma linha "Continuar jogando" lembra onde você parou.</p></div>
         <a class="slide-hit" href="#carousel" aria-label="Jogue no navegador"></a>
       </div>
       <div class="slide" data-seconds="15">
-        <video class="slide-video" muted loop playsinline preload="none" poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="A estante Física: mudando para a estante de lombadas, puxando uma, trazendo a caixa para a frente, virando, abrindo para ver o manual e o disco, e lendo o manual"><source src="../video/shelf.mp4" type="video/mp4"></video>
+        <video class="slide-video" muted loop playsinline preload="none" data-poster="../img/poster-shelf.webp" width="1280" height="720" aria-label="A estante Física: mudando para a estante de lombadas, puxando uma, trazendo a caixa para a frente, virando, abrindo para ver o manual e o disco, e lendo o manual"><source src="../video/shelf.mp4" type="video/mp4"></video>
         <div class="slide-cap"><p class="slide-title">Sua estante: discos e cartuchos que você tem</p><p class="slide-sub">Catalogue os jogos em caixa da sua estante de verdade, manualmente ou de uma lista, ao lado da sua coleção digital. Cada pessoa tem a sua própria estante.</p></div>
         <a class="slide-hit" href="#shelf" aria-label="Sua estante: discos e cartuchos que você tem"></a>
       </div>
       <div class="slide fit">
-        <img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="A biblioteca Digital: uma grade de jogos do Steam com horas jogadas, e abas de Steam, PlayStation, Nintendo e Xbox">
+        <img data-src="../img/digital-library.webp" loading="lazy" width="1600" height="736" alt="A biblioteca Digital: uma grade de jogos do Steam com horas jogadas, e abas de Steam, PlayStation, Nintendo e Xbox">
         <div class="slide-cap"><p class="slide-title">Sua estante e seu Steam também</p><p class="slide-sub">Traga sua biblioteca do Steam com as horas que você jogou, e seus jogos de PlayStation, Nintendo e Xbox de uma lista. Registre também os discos e cartuchos que você tem fisicamente, tudo ao lado das suas ROMs.</p></div>
         <a class="slide-hit" href="#features" aria-label="Sua estante e seu Steam também"></a>
       </div>
       <div class="slide fit">
-        <img src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="O painel Mensagens: um aviso do administrador acima da lista de conversas e uma conversa privada entre duas pessoas, cada uma com a sua cor">
+        <img data-src="../img/chat.webp" loading="lazy" width="2400" height="1070" alt="O painel Mensagens: um aviso do administrador acima da lista de conversas e uma conversa privada entre duas pessoas, cada uma com a sua cor">
         <div class="slide-cap"><p class="slide-title">Chat: fique em contato com a casa toda</p><p class="slide-sub">Mensagens privadas entre as pessoas do seu servidor e avisos do administrador. Nada sai da sua própria máquina.</p></div>
         <a class="slide-hit" href="#chat" aria-label="Chat: fique em contato com a casa toda"></a>
       </div>
       <div class="slide fit">
-        <img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="A página de configuração do iniciador: uma linha por plataforma com o programa emulador e os argumentos, e um botão de core do RetroArch">
+        <img data-src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="A página de configuração do iniciador: uma linha por plataforma com o programa emulador e os argumentos, e um botão de core do RetroArch">
         <div class="slide-cap"><p class="slide-title">Jogue no seu PC</p><p class="slide-sub">Um clique inicia um jogo no emulador instalado no seu próprio computador, como RetroArch, MAME ou Dolphin. Os jogos podem ser mantidos para reabrir rápido, e uma página de configuração ajusta cada emulador.</p></div>
         <a class="slide-hit" href="#features" aria-label="Jogue no seu PC"></a>
       </div>
       <div class="slide">
-        <img src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="Os detalhes de um jogo fixados ao lado da biblioteca, com save states e associação de metadados">
+        <img data-src="../img/detail.webp" loading="lazy" width="1500" height="900" alt="Os detalhes de um jogo fixados ao lado da biblioteca, com save states e associação de metadados">
         <div class="slide-cap"><p class="slide-title">Detalhes do jogo ao lado da biblioteca</p><p class="slide-sub">Visuais Clássico e Moderno, claro e escuro. A mesma biblioteca, à sua escolha.</p></div>
         <a class="slide-hit" href="#screens" aria-label="Detalhes do jogo ao lado da biblioteca"></a>
       </div>
@@ -265,7 +266,7 @@
       <figure class="shot"><img src="../img/shelf-open.webp" loading="lazy" width="2560" height="1440" alt="A estante Física com uma caixa de PlayStation 2 aberta, mostrando o manual e o disco"><figcaption>Uma caixa aberta na estante</figcaption></figure>
       <figure class="shot"><img src="../img/carousel.webp" loading="lazy" width="1920" height="1080" alt="O Carrossel: um leque de capas com Jogar no navegador e Jogar neste PC embaixo"><figcaption>O Carrossel</figcaption></figure>
       <figure class="shot"><img src="../img/launcher-setup.webp" loading="lazy" width="1500" height="1000" alt="A página de configuração do iniciador: uma linha por plataforma com o programa emulador e os argumentos, e um botão de core do RetroArch"><figcaption>Configurando emuladores no seu PC, com um seletor de core do RetroArch</figcaption></figure>
-      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="2560" height="1178" alt="A biblioteca Digital: uma grade de jogos do Steam com horas jogadas, e abas de Steam, PlayStation, Nintendo e Xbox"><figcaption>A biblioteca Digital: seus jogos do Steam e os jogos de console que você tem</figcaption></figure>
+      <figure class="shot"><img src="../img/digital-library.webp" loading="lazy" width="1600" height="736" alt="A biblioteca Digital: uma grade de jogos do Steam com horas jogadas, e abas de Steam, PlayStation, Nintendo e Xbox"><figcaption>A biblioteca Digital: seus jogos do Steam e os jogos de console que você tem</figcaption></figure>
       <figure class="shot"><img src="../img/emulators.webp" loading="lazy" width="1500" height="900" alt="A página de emuladores, com um cartão para cada plataforma"><figcaption>Emuladores</figcaption></figure>
     </div>
   </div>
@@ -377,13 +378,21 @@ if (/[?&]numbers/.test(location.search)) { var jb = document.querySelector('.jum
   // The picture changes when the progress line of the current one has filled (an animation end), so holding the pointer on it, a keyboard focus,
   // the pause button, a hidden tab and reduced motion all stop it by pausing that animation.
   var vids = slides.map(function (sl) { return sl.querySelector('video'); });
+  var ready = document.readyState === 'complete';   // the first clip waits for the page to finish loading, so it never competes with the first picture
+  if (!ready) window.addEventListener('load', function () { ready = true; hold(); });
+  function fetchSlide(i) {   // pictures of the other slides load when their turn is near
+    var sl = slides[(i + slides.length) % slides.length]; if (!sl) return;
+    var im = sl.querySelector('img[data-src]'); if (im) { im.src = im.getAttribute('data-src'); im.removeAttribute('data-src'); }
+    var v = sl.querySelector('video[data-poster]'); if (v) { v.poster = v.getAttribute('data-poster'); v.removeAttribute('data-poster'); }
+  }
   function hold() {
-    var stop = userPaused || hover || focus || document.hidden;
+    var stop = userPaused || hover || focus || document.hidden || !ready;
     box.classList.toggle('is-held', stop);
     vids.forEach(function (v, i) { if (!v) return; if (i === cur && !stop) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else v.pause(); });   // only the showing clip plays, and it stops when the slideshow is held
   }
   function go(n) {
     cur = (n + slides.length) % slides.length;
+    fetchSlide(cur); fetchSlide(cur + 1);
     slides.forEach(function (sl, i) { sl.classList.toggle('is-on', i === cur); });
     segs.forEach(function (sg, i) { sg.classList.remove('is-on'); sg.classList.toggle('is-done', i < cur); if (i === cur) sg.setAttribute('aria-current', 'true'); else sg.removeAttribute('aria-current'); });
     segs[cur].style.setProperty('--dur', (Number(slides[cur].dataset.seconds) || 6) + 's');   // a clip's slide lasts as long as the clip
