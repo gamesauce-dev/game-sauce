@@ -34,7 +34,7 @@ export const gameBackdrop = (g) => g?.backdrop_url || (g?.media?.fanart ? `/api/
 const MUTE_KEY = 'gamesauce_bs_muted';
 const muted = () => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch { return false; } };
 let audio = null;
-const TONES = { move: [[760, 0.05, 0.3]], select: [[620, 0.07, 0.38], [930, 0.1, 0.38]], back: [[560, 0.07, 0.34], [380, 0.1, 0.34]], error: [[180, 0.2, 0.34]], key: [[1000, 0.04, 0.24]] };   // [pitch in Hz, length in s, volume 0 to 1]
+const TONES = { move: [[760, 0.05, 0.3]], select: [[620, 0.07, 0.38], [930, 0.1, 0.38]], back: [[560, 0.07, 0.34], [380, 0.1, 0.34]], error: [[180, 0.2, 0.34]], end: [[440, 0.05, 0.09], [350, 0.09, 0.07]], key: [[1000, 0.04, 0.24]] };   // [pitch in Hz, length in s, volume 0 to 1]
 export function sfx(kind) {
   if (muted() || !(TONES[kind] || kind === 'whoosh' || kind === 'pageleft' || kind === 'pageright')) return;
   try {
@@ -316,7 +316,7 @@ export function openBigScreen(host) {
     const next = sib.slice(i0 + 1, i0 + 4).map((p, k) => ({ p, i: i0 + 1 + k }));
     return { sib, i0, left: [...pad(prev, 2, true), { cur: true, p: sib[i0], i: i0 }], right: pad(next, 3, false) };   // left: outermost first; right: nearest the middle first
   };
-  const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('error'); return; } st.slide = to > m.i0 ? 1 : -1; sfx(st.slide > 0 ? 'pageright' : 'pageleft'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
+  const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('end'); const el = $('.bs-bl-main'); if (el) { const c = to > m.i0 ? 'nudge-r' : 'nudge-l'; el.classList.remove('nudge-r', 'nudge-l'); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), 260); } return; } st.slide = to > m.i0 ? 1 : -1; sfx(st.slide > 0 ? 'pageright' : 'pageleft'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
   // The blades run the whole height of the screen and off both edges, with no end to see. Each is a sheet from the edge of the previous one to its own inner edge, which is one gentle curve
   // (a quadratic) bulging toward the middle of the screen. The outermost sheet is the widest and they get narrower toward the middle; the current blade (left, innermost) is the slimmest, in green.
   // The right blade is the left one mirrored in CSS.

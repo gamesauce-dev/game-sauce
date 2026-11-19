@@ -170,3 +170,10 @@
 .bs-theme-xbox360 img.bs-bl-lab.logo.d2, .bs-theme-xbox360 img.bs-bl-lab.logo.d3 { height: .85em; width: 3.4em; }
 
 .bs-theme-xbox360 .bs-bl-l .bs-bl-lab.cur:not(img) { transform: translate(-50%, -50%); }
+
+/* at the last blade: the middle gives a small nudge towards the way you pushed, then settles */
+@keyframes bs-nudge-r { 40% { transform: translateX(1.1%); } }
+@keyframes bs-nudge-l { 40% { transform: translateX(-1.1%); } }
+.bs-theme-xbox360 .bs-bl-main.nudge-r { animation: bs-nudge-r .24s ease-out; }
+.bs-theme-xbox360 .bs-bl-main.nudge-l { animation: bs-nudge-l .24s ease-out; }
+@media (prefers-reduced-motion: reduce) { .bs-theme-xbox360 .bs-bl-main.nudge-r, .bs-theme-xbox360 .bs-bl-main.nudge-l { animation: none; } }
