@@ -324,7 +324,6 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 /* the video's play arrow slides, the manual breathes */
 .i-video .ico path:last-child { animation: im-nudge 1.8s ease-in-out infinite alternate; }
 @keyframes im-nudge { to { transform: translateX(3px); } }
-.i-manual .ico { animation: im-breathe 3s ease-in-out infinite; }
 @keyframes im-breathe { 50% { transform: scale(1.1); } }
 /* the people bob, one after the other */
 .i-people .ico circle:first-of-type { animation: im-bob 1.8s ease-in-out infinite; } .i-people .ico circle:last-of-type { animation: im-bob 1.8s ease-in-out -.9s infinite; }
@@ -364,3 +363,7 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 .px-chest { animation: px-twinkle 2.4s steps(1) infinite; } .px-hp { animation: px-blink 1.2s steps(1) infinite; } @keyframes px-blink { 50% { opacity: .55; } }
 .tile .px.px-coin, .tile .px.px-star { transform-box: fill-box; }
 @media (prefers-reduced-motion: reduce) { .tile .ico *, .tile .px, .tile .px *, .tile .ico, .tile .mock * { animation: none !important; } }
+/* a page of the book turns over, then the next is there to turn */
+.ico .pg { transform-box: view-box; transform-origin: 32px 32px; animation: im-page 3.6s ease-in-out infinite; }
+@keyframes im-page { 0%, 12% { transform: scaleX(1); opacity: 1; } 46% { transform: scaleX(-1); opacity: 1; } 56% { transform: scaleX(-1); opacity: 0; } 57% { transform: scaleX(1); opacity: 0; } 72%, 100% { transform: scaleX(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ico .pg { animation: none !important; } }
