@@ -380,3 +380,6 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 @keyframes cd-wave { 50% { transform: translateY(-9px); } }
 /* an italic word play in a title ("control-ler") stands out in the tile's colour */
 .tile h3 i { font-style: italic; color: var(--c); letter-spacing: .02em; text-shadow: 0 0 6px var(--c), 0 0 16px hsl(var(--h) 95% 60%); }
+/* a tile whose whole text is neon, at one size */
+.tile.neon-all h3, .tile.neon-all p { font-size: 1.2rem; font-weight: 700; line-height: 1.25; letter-spacing: .035em; color: #fff; max-width: none; text-shadow: 0 0 3px #fff, 0 0 9px var(--c), 0 0 20px var(--c), 0 0 38px hsl(var(--h) 95% 55%); }
+.tile.neon-all p { margin-top: 6px; }
