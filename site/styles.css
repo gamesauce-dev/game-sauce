@@ -417,3 +417,8 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 @keyframes eye-look { 0%, 20% { transform: translateX(0); } 35%, 55% { transform: translateX(-3px); } 70%, 85% { transform: translateX(3px); } 100% { transform: translateX(0); } }
 @media (max-width: 620px) { .tile.w2:not(.h2).i-scan .ico:not(.ico3) { left: 12px; width: 34px; height: 34px; } .tile.w2:not(.h2) .ico3 { width: 34px; height: 34px; } .tile.w2:not(.h2) .ico3.e1 { left: 54px; } .tile.w2:not(.h2) .ico3.e2 { left: 96px; } .tile.w2:not(.h2) .ico3.e3 { left: 138px; } }
 @media (prefers-reduced-motion: reduce) { .x-disc, .eye, .eye .pupil { animation: none !important; } }
+/* tile 13: money falling past the worried face */
+.tile.money .rain { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.tile.money .rain i { position: absolute; top: 0; font-style: normal; font-weight: 800; font-family: Georgia, "Times New Roman", serif; color: var(--c); opacity: .5; text-shadow: 0 0 8px hsl(var(--h) 90% 55% / .6); animation: money-fall 5.5s linear infinite; }
+@keyframes money-fall { 0% { transform: translateY(-34px) rotate(-14deg); opacity: 0; } 12% { opacity: .75; } 85% { opacity: .75; } 100% { transform: translateY(185px) rotate(18deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tile.money .rain i { animation: none !important; } }
