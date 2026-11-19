@@ -271,3 +271,7 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 @keyframes flicker { 0%, 18%, 22%, 62%, 66%, 100% { opacity: 1; } 20%, 64% { opacity: .55; } 21%, 65% { opacity: .9; } }
 @media (max-width: 620px) { .special.sign span { font-size: 1rem; padding: 10px 14px; } .tile.neon-line.w2.h2 h3, .tile.neon.w2.h2 h3 { font-size: 1.4rem; } }
 @media (prefers-reduced-motion: reduce) { .special.sign span { animation: none; } }
+/* review mode: add ?numbers to the address to stamp each tile with its number */
+.jumble { counter-reset: tile; }
+.jumble.numbered .tile { counter-increment: tile; }
+.jumble.numbered .tile::after { content: counter(tile); position: absolute; left: 8px; top: 8px; z-index: 5; padding: 3px 7px; border-radius: 7px; background: #fff; color: #000; font: 700 12px/1 ui-monospace, monospace; }

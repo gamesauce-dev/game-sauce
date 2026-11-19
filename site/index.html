@@ -349,6 +349,7 @@
 </footer>
 
 <script>
+if (/[?&]numbers/.test(location.search)) { var jb = document.querySelector('.jumble'); if (jb) jb.classList.add('numbered'); }
 // Remember a language choice, and on the first visit to the English page follow the browser (to a language the site has) once.
 (function () {
   var K = 'gamesauce_site_lang', here = document.documentElement.lang.slice(0, 2), saved = null;
