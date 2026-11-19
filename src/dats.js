@@ -23,6 +23,9 @@ for (const [name, ddl] of [
 ]) {
   if (!romCols.has(name)) db.exec(`ALTER TABLE roms ADD COLUMN ${name} ${ddl}`);
 }
+// Which DAT entry or set a game matched: the DAT cards count these for every DAT, so without an index each count read the whole library once per entry.
+db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
+db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_set ON roms(dat_set_id)');
 db.exec('CREATE INDEX IF NOT EXISTS idx_roms_dat_entry ON roms(dat_entry_id)');
 
 /* ─────────────────────────── import ─────────────────────────── */
