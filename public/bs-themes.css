@@ -42,8 +42,7 @@
 
 /* screen 2: the games wheel *//* screen 2: the games wheel */
 .bs-theme-xbox360 .bs-title, .bs-theme-xbox360 .bs-year { text-shadow: 0 .05em .3em rgba(0, 60, 0, .65); }
-.bs-theme-xbox360 .bs-year, .bs-theme-xbox360 .bs-pos { color: #eaf9d6; }
-.bs-theme-xbox360 .bs-row.on .bs-cov:not(.has-img), .bs-theme-xbox360 .bs-row.on .bs-cov.has-img img { box-shadow: 0 0 0 .14em #fff, 0 0 1.4em rgba(255, 255, 255, .55), 0 .8em 2em rgba(0, 40, 0, .55); }
+.bs-theme-xbox360 .bs-year, .bs-theme-xbox360 .bs-row.on .bs-cov:not(.has-img), .bs-theme-xbox360 .bs-row.on .bs-cov.has-img img { box-shadow: 0 0 0 .14em #fff, 0 0 1.4em rgba(255, 255, 255, .55), 0 .8em 2em rgba(0, 40, 0, .55); }
 
 /* screen 3: a game */
 .bs-theme-xbox360 .bs-info { background: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(14, 74, 6, .6)); border-left: 1px solid rgba(255, 255, 255, .35); }
@@ -95,8 +94,7 @@
 .bs-theme-xbox360 .bs-bl-shot.cover img { object-fit: contain; padding: .5em; }   /* a game with only a cover is shown whole, not cropped to a wide picture */
 .bs-theme-xbox360 .bs-bl-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 1em; }
 .bs-theme-xbox360 .bs-bl-chips { display: flex; flex-wrap: wrap; gap: .4em; }
-.bs-theme-xbox360 .bs-bl-chips i, .bs-theme-xbox360 .bs-pos { right: auto; left: 11em; bottom: 6.6em; }   /* the position counter sits at the bottom left, clear of the preview's details */
-
+.bs-theme-xbox360 .bs-bl-chips i, 
 /* a platform's logo in the header and on each row (its name when it has none), and the video that plays over the picture */
 .bs-theme-xbox360 .bs-bl-hlogo { height: 1.05em; max-width: 10em; object-fit: contain; vertical-align: middle; }
 .bs-theme-xbox360 .bs-bl-badge.logo { background: none; padding: 0; }
@@ -133,10 +131,11 @@
 .bs-theme-xbox360 .bs-xbl .bs-xb:first-child { margin-left: 1.5em; }
 .bs-theme-xbox360 .bs-xbr .bs-xb:first-child { margin-right: 1.5em; }
 
-/* the words on a band that leads to another platform (the others have none) */
-.bs-theme-xbox360 .bs-bl-lab { position: absolute; top: 40%; writing-mode: vertical-rl; white-space: nowrap; font-size: 1.15em; font-weight: 600; letter-spacing: .02em; line-height: 1; cursor: pointer; }
+/* the words on a band that leads to another platform: on a tab (a lighter rounded piece with an outline), the others have none */
+.bs-theme-xbox360 .bs-bl-lab { position: absolute; top: 36%; writing-mode: vertical-rl; white-space: nowrap; font-size: 1.12em; font-weight: 600; letter-spacing: .02em; line-height: 1; padding: .95em .38em; border-radius: 1.2em; cursor: pointer; color: #3f473e; background: linear-gradient(90deg, #f7f8f5, #c4c9c1); border: 1px solid rgba(100, 108, 98, .55); box-shadow: inset 0 .08em 0 #fff, .12em .14em .4em rgba(0, 40, 0, .35); text-shadow: 0 .04em 0 rgba(255, 255, 255, .6); }
 .bs-theme-xbox360 .bs-bl-l .bs-bl-lab { transform: translate(-50%, -50%) rotate(180deg); }
 .bs-theme-xbox360 .bs-bl-r .bs-bl-lab { transform: translate(50%, -50%); }
-.bs-theme-xbox360 .bs-bl-lab.d0, .bs-theme-xbox360 .bs-bl-lab.d1 { color: #eef1ea; text-shadow: 0 .05em .2em rgba(0, 0, 0, .45); }
-.bs-theme-xbox360 .bs-bl-lab.d2 { color: #454d44; text-shadow: 0 .05em 0 rgba(255, 255, 255, .5); }
-.bs-theme-xbox360 .bs-bl-lab:hover { filter: brightness(1.25); }
+.bs-theme-xbox360 .bs-bl-lab:hover { filter: brightness(1.06); }
+/* the position counter sits in the header, beside the platform's logo */
+.bs-theme-xbox360 .bs-bl-hr { display: inline-flex; align-items: center; gap: 1.2em; }
+.bs-theme-xbox360 .bs-bl-head .bs-pos { position: static; font-size: .55em; font-weight: 600; opacity: .95; white-space: nowrap; }

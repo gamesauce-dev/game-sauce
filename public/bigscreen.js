@@ -304,9 +304,10 @@ export function openBigScreen(host) {
       <linearGradient id="bg${id}" x1="0" x2="1"><stop offset="0" stop-color="#b9f070"/><stop offset=".3" stop-color="#6cbc2a"/><stop offset="1" stop-color="#5fb324"/></linearGradient>
       ${SHEET.map((c, d) => `<linearGradient id="bs${id}${d}" x1="0" x2="1"><stop offset="0" stop-color="${c.split(',')[0]}"/><stop offset="1" stop-color="${c.split(',')[1]}"/></linearGradient>`).join('')}</defs>`;
     draw.forEach((b, d) => {
-      const L = d * 28, R = b?.cur ? 120 : L + 40, fill = b?.cur ? `url(#bg${id})` : `url(#bs${id}${d})`;
-      const path = `M${L},10 L${L + 12},0 H${R} V1000 H${L + 12} L${L},990 Z`;
-      svg += `<path d="${path}" fill="${fill}"/>${b?.cur ? '' : `<path d="${path}" fill="url(#bv${id})"/>`}<path d="M${L},10 V990" stroke="#fff" stroke-opacity=".4" stroke-width="1.4" fill="none"/>`;
+      const L = d * 28, R = L + 40, fill = b?.cur ? `url(#bg${id})` : `url(#bs${id}${d})`;
+      // the outer edge is straight with cut corners; the inner edge bulges gently toward the middle of the screen
+      const path = `M${L},10 L${L + 12},0 H${R - 6} C${R - 6},200 ${R + 4},330 ${R + 4},500 C${R + 4},670 ${R - 6},800 ${R - 6},1000 H${L + 12} L${L},990 Z`;
+      svg += `<path d="${path}" fill="${fill}"/>${b?.cur ? '' : `<path d="${path}" fill="url(#bv${id})"/>`}<path d="M${L},10 V990" stroke="#fff" stroke-opacity="${b?.cur ? '.65' : '.4'}" stroke-width="1.4" fill="none"/>`;
     });
     return svg + '</svg>';
   };
@@ -318,10 +319,10 @@ export function openBigScreen(host) {
     const btn = (k, label, right) => `<span class="bs-xb${right ? ' r' : ''}">${right ? `${label}<i data-k="${k}">${k}</i>` : `<i data-k="${k}">${k}</i>${label}`}</span>`;
     return `<div class="bs-bl" id="bs-bl">
     <aside class="bs-blade bs-bl-l">${bladeSvg(true, m.left)}${bladeLabels(true, m.left)}</aside>
-    <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
+    <section class="bs-bl-main"><header class="bs-bl-head"><b>Select a Game</b><span class="bs-bl-hr"><span class="bs-pos" id="bs-pos"></span>${(src.kind === 'platform' && logoImg(src.plat, 'bs-bl-hlogo')) || esc(src.name || '')}</span></header>
       <div class="bs-bl-cols"><div class="bs-bl-list" id="bs-bl-list" role="listbox" aria-label="Games"></div><div class="bs-bl-prev" id="bs-bl-prev"></div></div>
       <footer class="bs-bl-btns"><span class="bs-xbl">${btn('Y', 'Play on this PC')}${btn('X', 'Play in browser')}</span><span class="bs-xbm">${m.sib.length > 1 ? '<span><u>◀ ▶</u> Change blade</span>' : ''}<span><u>LB RB</u> Jump by letter</span><span><u>Select + Start</u> Hold in a game to close it</span></span><span class="bs-xbr">${btn('B', 'Back', true)}${btn('A', 'Open', true)}</span></footer></section>
-    <aside class="bs-blade bs-bl-r">${bladeSvg(false, m.right)}${bladeLabels(false, m.right)}</aside></div><div class="bs-pos" id="bs-pos"></div>`;
+    <aside class="bs-blade bs-bl-r">${bladeSvg(false, m.right)}${bladeLabels(false, m.right)}</aside></div>`;
   };
   const BL_ROWS = 6;
   const placeBlades = () => {
