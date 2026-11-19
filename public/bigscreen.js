@@ -337,6 +337,9 @@ export function openBigScreen(host) {
   const bladeLabels = (left, bands) => (left ? bands : [...bands].reverse()).map((b, d) => {
     if (!b?.p) return '';
     const name = esc(bladeName(b.p));
+    // A platform that has a logo shows it, turned to read down the band and printed into the metal; one without shows its name
+    const logo = b.p.logo_v ? `<img class="bs-bl-lab logo${b.cur ? ' cur' : ''}${b.cur ? '' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 240 : 260)}%${left ? '' : ')'}" />` : '';
+    if (logo) return logo;
     if (b.cur) return `<span class="bs-bl-lab cur" style="left:${stripCentre(d, 240)}%">${name}</span>`;   // where you are: no tab, nothing to press
     return `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 260)}%">${name}</span>`;
   }).join('');
