@@ -282,3 +282,4 @@
 @media (prefers-reduced-motion: reduce) { .bs-theme-wii .wi-tile, .bs-theme-wii .wi-art { transition: none; } .bs-theme-wii .wi-arrow { animation: none; } .bs-theme-wii .bs-wii.slide-r, .bs-theme-wii .bs-wii.slide-l, .bs-theme-wii .bs-wii.nudge-r, .bs-theme-wii .bs-wii.nudge-l { animation: none; } }
 .bs-theme-wii .bs-wii.plat .wi-keys { display: block; }
 .bs-theme-wii .bs-wii.plat .wi-clock { display: none; }
+.bs-theme-wii .wi-round img { position: absolute; inset: .3em; width: calc(100% - .6em); height: calc(100% - .6em); border-radius: 50%; object-fit: cover; display: block; }

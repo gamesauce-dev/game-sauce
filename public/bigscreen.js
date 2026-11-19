@@ -515,13 +515,15 @@ export function openBigScreen(host) {
   };
   const wiShell = () => {
     const m = bladeModel(), p = m.sib[m.i0] || st.src?.plat || {};
+    const u = host.user?.() || {}, who = u.display_name || u.username || '';   // the round button at the right is the person: their picture, or their initial
+    const face = u.avatar_v ? `<img src="/api/auth/avatar/${u.id}?v=${u.avatar_v}" alt="" draggable="false" />` : `<span>${esc(String(who).slice(0, 1).toUpperCase() || '?')}</span>`;
     return `<div class="bs-wii" id="bs-wii"><div class="wi-grid" id="wi-grid" role="listbox" aria-label="Games"></div>
       <button type="button" class="wi-arrow l" id="wi-al" data-d="-1" aria-label="Previous page"><svg viewBox="0 0 60 90" aria-hidden="true"><path d="M52 6 8 45l44 39z" /></svg><i><b>+</b></i></button>
       <button type="button" class="wi-arrow r" id="wi-ar" data-d="1" aria-label="Next page"><svg viewBox="0 0 60 90" aria-hidden="true"><path d="M8 6l44 39L8 84z" /></svg><i><b>+</b></i></button>
       <div class="wi-bar" id="wi-bar"><svg viewBox="0 0 2000 310" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="wig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfcfd"/><stop offset="1" stop-color="#dde2e8"/></linearGradient></defs><path d="M0 8H430C560 8 560 125 700 125H1300C1440 125 1440 8 1570 8H2000V310H0Z" fill="url(#wig)"/><path d="M0 8H430C560 8 560 125 700 125H1300C1440 125 1440 8 1570 8H2000" fill="none" stroke="#49b9e8" stroke-width="5"/></svg>
         <button type="button" class="wi-round l" id="wi-plat" aria-label="Platform"><span style="font-size: ${Math.min(1.8, 8.6 / Math.max(5, String(p.short_name || p.name || 'Wii').length))}em">${esc(p.short_name || p.name || 'Wii')}</span></button>
         <div class="wi-count" id="wi-count"></div><div class="wi-clock" id="wi-clock"></div><div class="wi-keys" id="wi-keys"></div>
-        <button type="button" class="wi-round r" id="wi-help" aria-label="Controls"><span>?</span></button></div></div>`;
+        <button type="button" class="wi-round r" id="wi-help" aria-label="${esc(who)} (show the controls)" title="${esc(who)}">${face}</button></div></div>`;
   };
   const placeWii = () => {
     if (!$('#bs-wii')) return;
