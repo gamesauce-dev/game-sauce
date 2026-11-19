@@ -1280,6 +1280,9 @@
  "Big Screen": {
   "files": 2
  },
+ "Big Screen look": {
+  "files": 1
+ },
  "Big Screen: the Library for a TV, played with a gamepad": {
   "files": 2
  },
@@ -2655,6 +2658,9 @@
   "files": 1
  },
  "goes to the SNES game whose file is": {
+  "files": 1
+ },
+ "green and glossy, like the 2005 dashboard": {
   "files": 1
  },
  "Green outline = suggested copy &nbsp;·&nbsp; 👁 button = hide that copy (members will not see it either) &nbsp;·&nbsp; ⚖ = a tie, check both": {
@@ -5732,6 +5738,12 @@
  "The link is taken off the game.": {
   "files": 1
  },
+ "the look Big Screen has always had": {
+  "files": 1
+ },
+ "The look of Big Screen. Your choice is kept with your account.": {
+  "files": 1
+ },
  "The manual could not be shown.": {
   "files": 1
  },
@@ -6387,7 +6399,7 @@
   "files": 2
  },
  "Xbox 360": {
-  "files": 2
+  "files": 3
  },
  "XBOX 360": {
   "files": 2

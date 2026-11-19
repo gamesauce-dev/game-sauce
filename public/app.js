@@ -387,7 +387,7 @@ document.addEventListener('click', async (e) => {
 // Big Screen: the Library for a TV, played with a gamepad (public/bigscreen.js). Opened from the Library bar and the Modern bar, or at once with #/bigscreen in the address (a kiosk browser, or the desktop app).
 async function openBigScreenView(kiosk = false) {
   if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
-  bigscreen.openBigScreen({ api, toast, platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
+  bigscreen.openBigScreen({ api, toast, theme: () => state.prefs?.bs_theme || '', platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#open-bigscreen')) return;
@@ -4030,6 +4030,19 @@ function initProfilePanel() {
     langBox.innerHTML = `<button type="button" class="lang-opt" data-lang="auto" aria-pressed="${now === 'auto'}"><span class="lang-globe" aria-hidden="true">🌐</span><span>Automatic (the browser's language)</span></button>`
       + LANGS.map((l) => `<button type="button" class="lang-opt" data-lang="${l.code}" aria-pressed="${now === l.code}"><img src="/flags/${l.flag}.svg" alt="" width="24" height="16"><span class="notranslate">${esc(l.name)}</span></button>`).join('');
     langBox.onclick = (ev) => { const b = ev.target.closest('.lang-opt'); if (!b) return; const v = b.dataset.lang; api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: v }) }).catch(() => {}).finally(() => setLanguage(v)); };
+  }
+  // Big Screen look: the standard one, or a theme (Xbox 360). Kept with the account; Big Screen reads it when it opens.
+  const bsBox = $('#bstheme-picker');
+  if (bsBox) {
+    const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy, like the 2005 dashboard']];
+    const paintBs = () => { const now = state.prefs?.bs_theme || ''; bsBox.innerHTML = BS_LOOKS.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bstheme="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    paintBs();
+    bsBox.onclick = async (ev) => {
+      const b = ev.target.closest('[data-bstheme]'); if (!b) return; const v = b.dataset.bstheme;
+      try { await api('/prefs/bs_theme', { method: 'PUT', body: JSON.stringify({ value: v || null }) }); } catch (err) { return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}) }; if (v) state.prefs.bs_theme = v; else delete state.prefs.bs_theme;
+      paintBs();
+    };
   }
   // Platform buttons: chips (text and a count) or logos. Kept with the account; the rows above the games are drawn again at once.
   const csBox = $('#chipstyle-picker');

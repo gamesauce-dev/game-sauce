@@ -2098,5 +2098,10 @@
  "The size limit is a number of gigabytes, or 0 for no limit.": "大小限制为以 GB 为单位的数字，0 表示不限制。",
  "Server time now": "服务器当前时间",
  "Paused": "已暂停",
- "games are waiting. Press Run now to continue.": "个游戏正在等待。点击“立即运行”继续。"
+ "games are waiting. Press Run now to continue.": "个游戏正在等待。点击“立即运行”继续。",
+ "Big Screen look": "大屏幕外观",
+ "The look of Big Screen. Your choice is kept with your account.": "大屏幕的外观。你的选择会保存在你的账户中。",
+ "Standard": "标准",
+ "the look Big Screen has always had": "大屏幕一直以来的外观",
+ "green and glossy, like the 2005 dashboard": "绿色光泽，仿 2005 年的主界面"
 }

@@ -1,0 +1,48 @@
+/* Big Screen looks, chosen in My account (a class bs-theme-<name> on the .bs root). Each one only restyles what bigscreen.css draws: the standard look is untouched without one.
+   These are "inspired by" looks, drawn here with plain gradients and system fonts: no logo, font or picture of any console maker is used. */
+
+/* ── Xbox 360: the glossy green of the 2005 dashboard ── */
+.bs.bs-theme-xbox360 { --ac: #62b523 !important; --x-hi: #b8f06a; --x-mid: #62b523; --x-deep: #1d5a0b; --x-ink: #123d06; color: #fff; background: var(--x-deep); font-family: 'Segoe UI', 'Frutiger', 'Helvetica Neue', system-ui, sans-serif; }
+.bs-theme-xbox360 .bs-bg { background: radial-gradient(130% 90% at 50% -12%, #a6e653 0%, #62b523 36%, #2f8014 68%, #164d09 100%); }
+.bs-theme-xbox360 .bs-bg::before { content: ''; position: absolute; inset: 0; background: radial-gradient(60% 38% at 18% 26%, rgba(255, 255, 255, .24), transparent 72%), radial-gradient(48% 34% at 84% 74%, rgba(255, 255, 255, .13), transparent 72%), radial-gradient(90% 26% at 50% 104%, rgba(0, 0, 0, .35), transparent 70%); }
+.bs-theme-xbox360 .bs-bgl.on { opacity: .14; }
+.bs-theme-xbox360 .bs-bgl.on.art { opacity: .3; }
+.bs-theme-xbox360 .bs-shade { background: linear-gradient(180deg, rgba(8, 52, 3, .45), rgba(8, 52, 3, .08) 40%, rgba(8, 52, 3, .55)); }
+
+/* the bars along the top and bottom: glass with a bright edge, rounded on the inside */
+.bs-theme-xbox360 .bs-top, .bs-theme-xbox360 .bs-hints { margin: 0 2em; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .08)); border: 1px solid rgba(255, 255, 255, .45); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5), 0 .2em .8em rgba(0, 40, 0, .35); text-shadow: 0 .05em .2em rgba(0, 50, 0, .5); }
+.bs-theme-xbox360 .bs-top { border-top: 0; border-radius: 0 0 1.3em 1.3em; }
+.bs-theme-xbox360 .bs-hints { border-bottom: 0; border-radius: 1.3em 1.3em 0 0; }
+.bs-theme-xbox360 .bs-hints i { background: #fff; color: var(--x-ink); box-shadow: 0 .05em .2em rgba(0, 50, 0, .4); }
+.bs-theme-xbox360 .bs-snd { background: rgba(255, 255, 255, .25); }
+.bs-theme-xbox360 .bs-toast { background: rgba(14, 70, 6, .95); border-color: rgba(255, 255, 255, .5); }
+
+/* screen 1: the platforms and families */
+.bs-theme-xbox360 .bs-heroname { text-shadow: 0 .05em .35em rgba(0, 60, 0, .7); }
+.bs-theme-xbox360 .bs-pill { background: rgba(255, 255, 255, .3); }
+.bs-theme-xbox360 .bs-pill.dim { background: rgba(255, 255, 255, .16); color: #eaf9d6; }
+.bs-theme-xbox360 .bs-ptile { border-radius: 1em; background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .08)); border-color: rgba(255, 255, 255, .42); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .5); }
+.bs-theme-xbox360 .bs-ptile.on { background: linear-gradient(180deg, #b8f06a, #4aa01a 62%, #3b8a14); border-color: #fff; box-shadow: 0 0 1.6em rgba(255, 255, 255, .6), inset 0 .1em 0 rgba(255, 255, 255, .7); }
+
+/* screen 2: the games wheel */
+.bs-theme-xbox360 .bs-title, .bs-theme-xbox360 .bs-year { text-shadow: 0 .05em .3em rgba(0, 60, 0, .65); }
+.bs-theme-xbox360 .bs-year, .bs-theme-xbox360 .bs-pos { color: #eaf9d6; }
+.bs-theme-xbox360 .bs-row.on .bs-cov:not(.has-img), .bs-theme-xbox360 .bs-row.on .bs-cov.has-img img { box-shadow: 0 0 0 .14em #fff, 0 0 1.4em rgba(255, 255, 255, .55), 0 .8em 2em rgba(0, 40, 0, .55); }
+
+/* screen 3: a game */
+.bs-theme-xbox360 .bs-info { background: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(14, 74, 6, .6)); border-left: 1px solid rgba(255, 255, 255, .35); }
+.bs-theme-xbox360 .bs-sel { background: linear-gradient(180deg, #fff, #cdf3a4); box-shadow: 0 0 1.2em rgba(255, 255, 255, .45); }
+.bs-theme-xbox360 .bs-mi.on { color: var(--x-ink); }
+.bs-theme-xbox360 .bs-genre, .bs-theme-xbox360 .bs-factline span:first-child { color: #d9ff9e; }
+.bs-theme-xbox360 .bs-factline { color: #e1f5cc; }
+.bs-theme-xbox360 .bs-desc { color: #f1fbe4; }
+.bs-theme-xbox360 .bs-manpane { background: rgba(10, 58, 4, .94); }
+.bs-theme-xbox360 .bs-manscroll { background: #2c6a14; }
+
+/* the questions on top: the collection chooser, the keyboard, a yes or no */
+.bs-theme-xbox360 .bs-ov { background: rgba(6, 44, 2, .78); }
+.bs-theme-xbox360 .bs-pickcard, .bs-theme-xbox360 .bs-kbcard, .bs-theme-xbox360 .bs-cfcard { background: linear-gradient(180deg, #4fa91f, #226a0d); border-color: rgba(255, 255, 255, .5); box-shadow: inset 0 .08em 0 rgba(255, 255, 255, .45), 0 1em 3em rgba(0, 40, 0, .55); }
+.bs-theme-xbox360 .bs-pi.on { background: linear-gradient(180deg, #fff, #cdf3a4); color: var(--x-ink); }
+.bs-theme-xbox360 .bs-cfb.on, .bs-theme-xbox360 .bs-key.on { background: linear-gradient(180deg, #fff, #cdf3a4); color: var(--x-ink); }
+.bs-theme-xbox360 .bs-kbfield { background: rgba(6, 44, 2, .7); border-color: rgba(255, 255, 255, .45); }
+.bs-theme-xbox360 .bs-az button.on { background: #fff; color: var(--x-ink); }

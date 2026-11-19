@@ -110,7 +110,8 @@ export function openBigScreen(host) {
   const game = () => st.games[st.gi];
 
   root = document.createElement('div');
-  root.className = 'bs' + (/Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent) ? ' bs-lite' : '');   // Linux web views draw in software: no blur or crossfades
+  root.className = 'bs' + (/Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent) ? ' bs-lite' : '');
+  { const th = String(host.theme?.() || ''); if (/^[a-z0-9]+$/.test(th)) root.classList.add('bs-theme-' + th); }   // a look chosen in My account (public/bs-themes.css); none is the standard one   // Linux web views draw in software: no blur or crossfades
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Big Screen');
   root.innerHTML = `
     <div class="bs-bg" aria-hidden="true"><i class="bs-bgl a"></i><i class="bs-bgl b"></i><i class="bs-shade"></i></div>

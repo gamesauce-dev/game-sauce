@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **A Big Screen look: Xbox 360.** Settings > My account > **Big Screen look** lets each person choose how Big Screen looks: Standard (as always) or **Xbox 360**, a glossy green look inspired by the 2005 Xbox 360 dashboard, on all three Big Screen screens (the platforms, the games wheel and a game's page). It is a first step: the colours, gloss and glass-edged bars are there, and the blades, the list-and-preview layout and looks for other consoles are planned. It uses plain gradients and system fonts, with no logo, font or picture from any console maker.
+
 ## [0.16.0] - 2026-11-19
 
 ### Added

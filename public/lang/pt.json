@@ -2100,5 +2100,10 @@
  "The size limit is a number of gigabytes, or 0 for no limit.": "O limite de tamanho é um número de gigabytes, ou 0 para nenhum limite.",
  "Server time now": "Hora atual do servidor",
  "Paused": "Em pausa",
- "games are waiting. Press Run now to continue.": "jogos aguardam. Toque em “Executar agora” para continuar."
+ "games are waiting. Press Run now to continue.": "jogos aguardam. Toque em “Executar agora” para continuar.",
+ "Big Screen look": "Aparência da Tela grande",
+ "The look of Big Screen. Your choice is kept with your account.": "A aparência da Tela grande. Sua escolha é guardada com sua conta.",
+ "Standard": "Padrão",
+ "the look Big Screen has always had": "a aparência que a Tela grande sempre teve",
+ "green and glossy, like the 2005 dashboard": "verde e brilhante, como o painel de 2005"
 }
