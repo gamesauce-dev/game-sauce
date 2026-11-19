@@ -4034,7 +4034,7 @@ function initProfilePanel() {
   // Big Screen look: the standard one, or a theme (Xbox 360). Kept with the account; Big Screen reads it when it opens.
   const bsBox = $('#bstheme-picker');
   if (bsBox) {
-    const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy, like the 2005 dashboard']];
+    const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy like the 2005 dashboard, on Xbox consoles']];
     const paintBs = () => { const now = state.prefs?.bs_theme || ''; bsBox.innerHTML = BS_LOOKS.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bstheme="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintBs();
     bsBox.onclick = async (ev) => {

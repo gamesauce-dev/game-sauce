@@ -1280,6 +1280,9 @@
  "beta installer, tested": {
   "files": 1
  },
+ "big screen": {
+  "files": 1
+ },
  "Big Screen": {
   "files": 2
  },
@@ -2666,7 +2669,7 @@
  "goes to the SNES game whose file is": {
   "files": 1
  },
- "green and glossy, like the 2005 dashboard": {
+ "green and glossy like the 2005 dashboard, on Xbox consoles": {
   "files": 1
  },
  "Green outline = suggested copy &nbsp;·&nbsp; 👁 button = hide that copy (members will not see it either) &nbsp;·&nbsp; ⚖ = a tie, check both": {

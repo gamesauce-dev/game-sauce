@@ -111,7 +111,7 @@ export function openBigScreen(host) {
 
   root = document.createElement('div');
   root.className = 'bs' + (/Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent) ? ' bs-lite' : '');
-  { const th = String(host.theme?.() || ''); if (/^[a-z0-9]+$/.test(th)) root.classList.add('bs-theme-' + th); }   // a look chosen in My account (public/bs-themes.css); none is the standard one   // Linux web views draw in software: no blur or crossfades
+  // The look chosen in My account (public/bs-themes.css) applies on its own consoles only: useTheme(slug) puts the class on, or takes it off, as the screens change.
   root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Big Screen');
   root.innerHTML = `
     <div class="bs-bg" aria-hidden="true"><i class="bs-bgl a"></i><i class="bs-bgl b"></i><i class="bs-shade"></i></div>
@@ -201,7 +201,7 @@ export function openBigScreen(host) {
     return `<div class="bs-ptile${cls}" data-i="${i}" data-r="${r}" style="--pc:${esc(colour)}">${inner}</div>`;
   };
   const drawPlatforms = () => {
-    st.screen = 'platforms'; $('#bs-crumb').textContent = st.level === 0 ? 'Platforms' : st.sub === 'colls' ? 'Collections' : st.fam; paintHints();
+    useTheme(null); st.screen = 'platforms'; $('#bs-crumb').textContent = st.level === 0 ? 'Platforms' : st.sub === 'colls' ? 'Collections' : st.fam; paintHints();
     const items = railItems(), extras = st.level === 0 ? extraItems() : [];
     if (!items.length && !extras.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games in the Library yet.</div>'; return; }
     const two = extras.length > 0;
@@ -255,7 +255,7 @@ export function openBigScreen(host) {
 
   // ── screen 2: the wheel ──
   const drawGames = async () => {
-    st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints();
+    useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints();
     if (st.dirty) { forget(); st.dirty = false; }
     $('#bs-main').innerHTML = '<div class="bs-empty">Loading…</div>';
     const tok = ++st.tok;
@@ -273,6 +273,13 @@ export function openBigScreen(host) {
     return `<div class="bs-title">${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark" aria-label="Favourite">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
   // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
+  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']) };   // the consoles each look is for
+  const useTheme = (slug) => {
+    const th = String(host.theme?.() || '');
+    for (const c of [...root.classList]) if (c.startsWith('bs-theme-')) root.classList.remove(c);
+    if (/^[a-z0-9]+$/.test(th) && THEME_CONSOLES[th]?.has(slug)) root.classList.add('bs-theme-' + th);
+  };
+  const srcSlug = () => (st.src?.kind === 'platform' ? st.src.slug : null);
   const blades = () => root.classList.contains('bs-theme-xbox360');
   const logoImg = (p, cls) => (p?.logo_v ? `<img class="${cls}${plated(p)}" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.alt}))" />` : '');
   const bladesShell = () => {
@@ -340,7 +347,7 @@ export function openBigScreen(host) {
   // ── screen 3: one game ──
   const drawGame = () => {
     const g = game(); if (!g) return;
-    st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
+    useTheme(g.platform); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
     const art = gameBackdrop(g); setBackdrop(art || null, gameAccent(g), Boolean(art));
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);
@@ -547,7 +554,7 @@ export function openBigScreen(host) {
   };
 
   // ── moving between screens ──
-  const backToWheel = () => { st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
+  const backToWheel = () => { useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
     document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer);
