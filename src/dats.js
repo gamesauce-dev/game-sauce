@@ -17,6 +17,7 @@ for (const [name, ddl] of [
   // verified | bad | variant | not-in-dat | (null = never checked)
   ['dat_status', 'TEXT'],
   ['dat_entry_id', 'INTEGER'],
+  ['dat_set_id', 'INTEGER'],   // the set of a DAT an arcade game was matched to by name (dat_entry_id is for a match by checksum)
   ['dat_title', 'TEXT'],
   ['dat_checked_at', 'TEXT']
 ]) {
@@ -141,6 +142,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
   let skipped = 0;
   let sets = 0;
   let setBuf = [];
+  let keepSets = null;
   let resolvedSlug = platform;
 
   const writeBatch = db.transaction((rows) => {
@@ -166,7 +168,11 @@ export async function importDat({ filePath, platform = null, name = null, userId
   try {
     parsed = await parseDat(filePath, {
       header,
-      onSet: (set) => { setBuf.push(set); if (setBuf.length >= 2000) flushSets(); },
+      onSet: (set) => {   // only an arcade DAT is kept by game name: a console game is matched by its checksum
+        if (keepSets === null) keepSets = ARCADE_ROMSET.has(slugNow());
+        if (!keepSets) return;
+        setBuf.push(set); if (setBuf.length >= 2000) flushSets();
+      },
       onBatch: (batch) => {
         // Resolve the platform from the header as soon as we have it, so every
         // batch lands under the right slug.
@@ -240,7 +246,7 @@ export function lookupDat({ sha1, crc32, size, platform, name = null }) {
   // An arcade game is a zip named for its set: its checksum is never a chip's, so it is found by that name (pacman.zip is the set "pacman").
   if (name && ARCADE_ROMSET.has(platform)) {
     const set = db.prepare('SELECT * FROM dat_sets WHERE set_name = ? ORDER BY (platform_slug = ?) DESC, id LIMIT 1').get(String(name).toLowerCase(), platform);
-    if (set) return { id: null, title: set.title, rom_name: null, status: set.status, cloneof: set.cloneof };
+    if (set) return { id: null, set_id: set.id, title: set.title, rom_name: null, status: set.status, cloneof: set.cloneof };
   }
   return null;
 }
@@ -268,7 +274,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
 
   if (!entry) {
     db.prepare(`
-      UPDATE roms SET dat_status = 'not-in-dat', dat_entry_id = NULL, dat_title = NULL,
+      UPDATE roms SET dat_status = 'not-in-dat', dat_entry_id = NULL, dat_set_id = NULL, dat_title = NULL,
         dat_checked_at = datetime('now') WHERE id = ?
     `).run(rom.id);
     return { id: rom.id, matched: false };
@@ -282,7 +288,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
 
   db.prepare(`
     UPDATE roms SET
-      dat_status = ?, dat_entry_id = ?, dat_title = ?, dat_checked_at = datetime('now'),
+      dat_status = ?, dat_entry_id = ?, dat_set_id = ?, dat_title = ?, dat_checked_at = datetime('now'),
       title = CASE WHEN ? THEN ? ELSE title END,
       sort_title = CASE WHEN ? THEN ? ELSE sort_title END,
       meta_source = CASE WHEN ? THEN 'dat' ELSE meta_source END,
@@ -292,7 +298,7 @@ export function applyDatMatch(rom, { force = false } = {}) {
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
-    entry.status, entry.id, entry.title,
+    entry.status, entry.id, entry.set_id ?? null, entry.title,
     rename ? 1 : 0, entry.title,
     rename ? 1 : 0, sortTitle(entry.title),
     rename ? 1 : 0,
@@ -336,11 +342,13 @@ export function rematchAll({ platform = null, force = false } = {}) {
 export function listDatfiles() {
   return db.prepare(`
     SELECT d.*, p.name AS platform_name, p.short_name AS platform_short,
-           (SELECT COUNT(*) FROM roms r WHERE r.dat_entry_id IN
-              (SELECT id FROM dat_entries WHERE datfile_id = d.id)) AS roms_matched,
-           (SELECT COUNT(*) FROM dat_entries e
-              WHERE e.datfile_id = d.id
-              AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_entry_id = e.id)) AS missing_count
+           (SELECT COUNT(*) FROM dat_sets s WHERE s.datfile_id = d.id) AS sets,
+           CASE WHEN EXISTS (SELECT 1 FROM dat_sets s WHERE s.datfile_id = d.id)
+             THEN (SELECT COUNT(*) FROM roms r WHERE r.dat_set_id IN (SELECT id FROM dat_sets WHERE datfile_id = d.id))
+             ELSE (SELECT COUNT(*) FROM roms r WHERE r.dat_entry_id IN (SELECT id FROM dat_entries WHERE datfile_id = d.id)) END AS roms_matched,
+           CASE WHEN EXISTS (SELECT 1 FROM dat_sets s WHERE s.datfile_id = d.id)
+             THEN (SELECT COUNT(*) FROM dat_sets s WHERE s.datfile_id = d.id AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_set_id = s.id))
+             ELSE (SELECT COUNT(*) FROM dat_entries e WHERE e.datfile_id = d.id AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_entry_id = e.id)) END AS missing_count
     FROM datfiles d LEFT JOIN platforms p ON p.slug = d.platform_slug
     ORDER BY d.imported_at DESC, d.id DESC
   `).all();
@@ -372,9 +380,10 @@ export function deleteDatfile(id) {
     // Clear the verification this DAT gave before removing the entries it owns,
     // so no ROM is left pointing at a row that no longer exists.
     db.prepare(`
-      UPDATE roms SET dat_status = NULL, dat_entry_id = NULL, dat_title = NULL, dat_checked_at = NULL
+      UPDATE roms SET dat_status = NULL, dat_entry_id = NULL, dat_set_id = NULL, dat_title = NULL, dat_checked_at = NULL
       WHERE dat_entry_id IN (SELECT id FROM dat_entries WHERE datfile_id = ?)
-    `).run(id);
+         OR dat_set_id IN (SELECT id FROM dat_sets WHERE datfile_id = ?)
+    `).run(id, id);
     db.prepare('DELETE FROM dat_entries WHERE datfile_id = ?').run(id);
     db.prepare('DELETE FROM datfiles WHERE id = ?').run(id);
   })();

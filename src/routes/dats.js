@@ -8,7 +8,7 @@ import {
 } from '../dats.js';
 import db from '../db.js';
 import { storageDir } from '../lib/storage.js';
-import { importMameNames, applyMameNames } from '../lib/mamenames.js';
+import { importMameNames, applyMameNames, ARCADE_ROMSET } from '../lib/mamenames.js';
 
 /** True for a MAME `-listxml` file (UTF-8 or UTF-16): <!DOCTYPE mame / <mame build=. */
 function isMameListXml(file) {
@@ -56,9 +56,11 @@ router.post('/', upload.single('dat'), async (req, res, next) => {
     // MAME -listxml is a name list, not a checksum DAT: route it to the name table.
     if (isMameListXml(sourcePath)) {
       const out = await importMameNames(sourcePath);
+      let datMatched = 0;
+      for (const slug of ARCADE_ROMSET) datMatched += rematchAll({ platform: slug }).matched;   // the machines it listed are now sets: match the arcade games on them
       if (uploadedPath) { try { fs.unlinkSync(uploadedPath); } catch { /* best effort */ } }
       uploadedPath = null;
-      return res.status(201).json({ kind: 'mame-names', platform: 'mame', platform_name: 'MAME', entries: out.names, ...out, coverage: datCoverage() });
+      return res.status(201).json({ kind: 'mame-names', platform: 'mame', platform_name: 'MAME', entries: out.names, ...out, dat_matched: datMatched, coverage: datCoverage() });
     }
 
     const result = await importDat({
@@ -105,10 +107,7 @@ router.get('/:id/coverage', (req, res) => {
   const datfile = listDatfiles().find((d) => d.id === id);
   if (!datfile) return res.status(404).json({ error: 'DAT not found' });
 
-  const matched = db.prepare(`
-    SELECT COUNT(*) AS n FROM roms
-    WHERE dat_entry_id IN (SELECT id FROM dat_entries WHERE datfile_id = ?)
-  `).get(id).n;
+  const matched = datfile.roms_matched;   // by checksum, or by set name for an arcade DAT
 
   const statuses = db.prepare(`
     SELECT COALESCE(r.dat_status,'unchecked') AS status, COUNT(*) AS count
@@ -138,6 +137,22 @@ router.get('/:id/have-want', (req, res) => {
   const q = String(req.query.q || '').trim();
   const limit = Math.min(Number(req.query.limit) || 200, 500);
   const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+  // An arcade DAT is kept by game (set), so its report is one row per game, not one per chip.
+  if (datfile.sets > 0) {
+    const w = ['s.datfile_id = @datfile'], p = { datfile: id };
+    if (want === 'missing') w.push('NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_set_id = s.id)');
+    else if (want === 'have') w.push('EXISTS (SELECT 1 FROM roms r WHERE r.dat_set_id = s.id)');
+    if (q) { w.push('(instr(lower(s.title), lower(@q)) > 0 OR instr(s.set_name, lower(@q)) > 0)'); p.q = q; }
+    const total = db.prepare(`SELECT COUNT(*) AS n FROM dat_sets s WHERE ${w.join(' AND ')}`).get(p).n;
+    const items = db.prepare(`
+      SELECT s.id, s.title, s.set_name AS rom_name, NULL AS size, NULL AS crc32, NULL AS md5, NULL AS sha1, s.status, s.cloneof,
+             (SELECT r.id FROM roms r WHERE r.dat_set_id = s.id LIMIT 1) AS have_rom_id,
+             EXISTS (SELECT 1 FROM roms r WHERE r.dat_set_id = s.id) AS have
+      FROM dat_sets s WHERE ${w.join(' AND ')} ORDER BY s.title LIMIT ${limit} OFFSET ${offset}
+    `).all(p).map((e) => ({ ...e, have: Boolean(e.have) }));
+    return res.json({ datfile, want, total, limit, offset, items });
+  }
 
   const where = ['e.datfile_id = @datfile'];
   const params = { datfile: id };

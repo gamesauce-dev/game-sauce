@@ -14,7 +14,8 @@ const { prepareApp } = await import('../src/app.js');
 await prepareApp();   // every table, as the app has them
 const { default: db } = await import('../src/db.js');
 const { seedPlatforms } = await import('../src/lib/platforms.js');
-const { importDat, rematchAll } = await import('../src/dats.js');
+const { importDat, rematchAll, listDatfiles, deleteDatfile } = await import('../src/dats.js');
+const { importMameNames } = await import('../src/lib/mamenames.js');
 seedPlatforms(db);
 
 after(() => { try { db.close(); } catch { /* shared */ } try { fs.rmSync(TMP, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }); } catch { /* best effort */ } });
@@ -59,4 +60,27 @@ test('the match uses the original file name, upper or lower case, with or withou
   rematchAll({ platform: 'mame' });
   assert.equal(row(upper).dat_status, 'verified');
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM dat_sets").get().n, 3);
+});
+
+test('a -listxml file is also a DAT: its machines are kept as sets, the arcade games match on them at once, and a newer file replaces it', async () => {
+  const xml = `<?xml version="1.0"?><mame build="0.233">
+<machine name="dkong" sourcefile="dkong.cpp"><description>Donkey Kong (US set 1)</description><year>1981</year><manufacturer>Namco</manufacturer></machine>
+<machine name="dkongjr" cloneof="dkong"><description>Donkey Kong Junior (US set F-2)</description><year>1982</year><manufacturer>Nintendo</manufacturer></machine>
+<machine name="speaker" isdevice="yes" runnable="no"><description>Speaker</description></machine>
+</mame>`;
+  const file = path.join(TMP, 'listxml.dat'); fs.writeFileSync(file, xml);
+  const out = await importMameNames(file);
+  assert.equal(out.sets, 2, 'the device is not a game you keep');
+  const a = rom('mame', 'dkong.zip', 'something', 'filename'), b = rom('neogeo', 'dkongjr.zip', 'else', 'filename');
+  rematchAll({ platform: 'mame' }); rematchAll({ platform: 'neogeo' });
+  assert.equal(row(a).dat_status, 'verified'); assert.equal(row(b).dat_status, 'verified');
+  const card = listDatfiles().find((d) => d.filename === 'mame -listxml');
+  assert.equal(card.sets, 2); assert.equal(card.roms_matched, 2, 'matches by set name are counted on the DAT card');
+  assert.equal(card.missing_count, 0);
+  await importMameNames(file);   // a newer list replaces the old one
+  assert.equal(listDatfiles().filter((d) => d.filename === 'mame -listxml').length, 1);
+  rematchAll({ platform: 'mame' });
+  assert.equal(listDatfiles().find((d) => d.filename === 'mame -listxml').roms_matched >= 1, true);
+  deleteDatfile(listDatfiles().find((d) => d.filename === 'mame -listxml').id);
+  assert.equal(row(a).dat_status, null, 'removing the DAT clears what it verified');
 });

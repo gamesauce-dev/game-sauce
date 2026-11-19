@@ -2967,7 +2967,7 @@ $('#dat-upload').addEventListener('click', async (e) => {
     if (!res.ok) throw new Error(data.error || 'Import failed');
 
     toast(data.kind === 'mame-names'
-      ? `MAME name list: ${data.names.toLocaleString()} names loaded, ${data.matched} of your ${data.mame_roms} MAME ROMs titled`
+      ? `MAME name list: ${data.names.toLocaleString()} names loaded, ${data.matched} of your ${data.mame_roms} MAME ROMs titled${data.dat_matched !== undefined ? `, ${data.dat_matched.toLocaleString()} arcade games matched` : ''}`
       : `${data.entries.toLocaleString()} entries imported${data.sets ? ` and ${data.sets.toLocaleString()} sets by name` : ''} (${data.platform_name})`);
     $('#dat-file').value = '';
     await loadDats();

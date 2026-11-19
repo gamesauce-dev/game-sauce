@@ -41,7 +41,13 @@ export async function importMameNames(filePath) {
     VALUES (@name, @title, @year, @manufacturer, @cloneof, @isbios, @isdevice)
     ON CONFLICT(name) DO UPDATE SET title = excluded.title, year = excluded.year, manufacturer = excluded.manufacturer,
       cloneof = excluded.cloneof, isbios = excluded.isbios, isdevice = excluded.isdevice`);
-  const write = db.transaction((rows) => { for (const r of rows) ins.run(r); });
+  // The machines of the list are also kept as the sets of a DAT ("MAME (-listxml)"), so an arcade game can be matched on its file name: a newer list replaces an older one.
+  db.prepare("UPDATE roms SET dat_status = NULL, dat_entry_id = NULL, dat_set_id = NULL, dat_title = NULL, dat_checked_at = NULL WHERE dat_set_id IN (SELECT id FROM dat_sets WHERE datfile_id IN (SELECT id FROM datfiles WHERE filename = 'mame -listxml'))").run();
+  db.prepare("DELETE FROM datfiles WHERE filename = 'mame -listxml'").run();
+  const datfileId = Number(db.prepare("INSERT INTO datfiles (name, filename, source, system_name, platform_slug) VALUES ('MAME (-listxml)', 'mame -listxml', 'mame -listxml', 'MAME', 'mame')").run().lastInsertRowid);
+  const insSet = db.prepare("INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, status) VALUES (?, 'mame', ?, ?, ?, 'verified')");
+  let sets = 0;
+  const write = db.transaction((rows) => { for (const r of rows) { ins.run(r); if (!r.isdevice) { insSet.run(datfileId, r.name, r.title, r.cloneof ? String(r.cloneof).toLowerCase() : null); sets++; } } });   // a device is not a game you keep
 
   const decoder = new TextDecoder(enc);
   let buf = '', count = 0, sawMachine = false, batch = [];
@@ -72,8 +78,9 @@ export async function importMameNames(filePath) {
   flush();
   if (!sawMachine) throw Object.assign(new Error('That does not look like a MAME -listxml file (no <machine> entries)'), { status: 400 });
 
+  db.prepare('UPDATE datfiles SET entries = ? WHERE id = ?').run(sets, datfileId);
   const applied = applyMameNames();
-  return { names: db.prepare('SELECT COUNT(*) n FROM mame_names').get().n, imported: count, ...applied };
+  return { sets, names: db.prepare('SELECT COUNT(*) n FROM mame_names').get().n, imported: count, ...applied };
 }
 
 /** True when this MAME zip has a real title from the name list, so title-based
