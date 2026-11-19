@@ -45,25 +45,25 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(html.includes('/bs-themes.css'));
   // the look is for its own consoles only: it is put on and taken off as the screens change
   assert.ok(js.includes("THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries'])"));
-  for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
+  for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); root.classList.remove('bs-theme-ps3'); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
   assert.ok(!js.includes("root.classList.add('bs-theme-' + th); }"), 'no theme class is put on when Big Screen opens');
   // without a theme nothing changes: each selector in the theme file starts from the theme's class
   const selectors = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((b) => b.split('{')[0].trim()).filter(Boolean).flatMap((s) => s.split(',').map((x) => x.trim())).filter((x) => !/^@|^(from|to)$/.test(x));
   assert.ok(selectors.length > 20);
-  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-xbox360([ .]|$)/, 'scoped: ' + s);
+  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-(xbox360|ps3)([ .]|$)/, 'scoped: ' + s);
   // a logo set to have a light backing (or every logo, if the person asked) gets a class the look draws a plate with; Favourites and Collections keep their colours
   assert.ok(js.includes("plated = (x) => (x.plate || x.logo_plate || host.plateAll?.()") && js.includes('family_logo_plate') && app.includes("plateAll: () => state.prefs?.chip_plate === 'on'"));
   assert.ok(css.includes('img.bs-plate') && css.includes('.bs-ptile.bs-t-fav') && css.includes('.bs-ptile.bs-t-colls'));
   // the Blades layout of the games screen: drawn only with the Xbox 360 look, and the standard wheel is still what every other look gets
   assert.ok(js.includes("const blades = () => root.classList.contains('bs-theme-xbox360')") && js.includes("if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; }"));
-  assert.ok(js.includes('const placeGames = () => (blades() ? placeBlades() : placeWheel())') && js.includes("st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames();"), 'moving through the games redraws whichever layout is on');
+  assert.ok(js.includes('const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : placeWheel())') && js.includes("st.gi = Math.max(0, Math.min(st.games.length - 1, i)); placeGames();"), 'moving through the games redraws whichever layout is on');
   assert.ok(js.includes(".bs-row, .bs-bl-row"), 'a click on a row works in both layouts');
   for (const c of ['.bs-bl-row.on', '.bs-bl-l', '.bs-bl-r', '.bs-bl-shot.cover']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   // the Blades details: two tabs on each blade, the platform's logo (or its name) in the header and on every row, and a game's video playing without sound in the picture's place
   assert.ok(js.includes("bladeSvg(true, m.left)") && js.includes("bladeSvg(false, m.right)") && js.includes('preserveAspectRatio="none"') && !js.includes("bs-tab"), "the blades are a drawing of stacked bands");
   // the blades lead somewhere: the Xbox platforms in order, with left and right changing blade; a band with no platform has no words
-  assert.ok(js.includes("THEME_CONSOLES.xbox360.has(p.slug)") && js.includes("const switchBlade = (to)") && js.includes("enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t })"));
-  assert.ok(js.includes("if (blades() && (a === 'left' || a === 'right'))") && js.includes("switchBlade(m.i0 + (a === 'left' ? -1 : 1))") && js.includes("e.target.closest('.bs-bl-lab')"));
+  assert.ok(js.includes("THEME_CONSOLES[themeName]?.has(p.slug)") && js.includes("const switchBlade = (to)") && js.includes("enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t })"));
+  assert.ok(js.includes("if ((blades() || xmb()) && (a === 'left' || a === 'right'))") && js.includes("switchBlade(m.i0 + (a === 'left' ? -1 : 1))") && js.includes("e.target.closest('.bs-bl-lab')"));
   assert.ok(js.includes("if (!b?.p) return '';") && js.includes("bs-bl-lab cur") && js.includes('data-bi="${b.i}"') && css.includes(".bs-theme-xbox360 .bs-bl-lab"), "a band with no platform has no words; the current one names itself; the others lead somewhere");
   assert.ok(js.includes("'pageright' : 'pageleft'") && js.includes("kind === 'pageleft'") && css.includes("@keyframes bs-slide-r") && css.includes("prefers-reduced-motion"), "changing blade slides the middle in and turns a page, and stays still for reduced motion");
   // the coloured controller buttons on the screen (A green, B red, X blue, Y yellow) replace the bottom bar of hints, the artwork box holds the game's other pictures, and the description has a fixed height that glides
@@ -78,4 +78,13 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   // inspired by, not copied: no outside address, no font file, no picture
   const urls = css.match(/url\([^)]*\)/gi) || [];
   assert.ok(!/https?:/i.test(css) && urls.length === 1 && urls[0].includes('/vendor/fonts/source-sans-3-latin-300-normal.woff2') && css.split('@font-face').length === 2, 'plain gradients, and one bundled open-licence font (Source Sans 3 Light) and nothing else');
+});
+
+test('the PlayStation 3 look: a cross bar of platforms with the games in a column, drawn waves, a month colour', () => {
+  const js = read('public/bigscreen.js'), css = read('public/bs-themes.css'), app = read('public/app.js'), html = read('public/index.html');
+  assert.ok(js.includes("ps3: new Set(['ps1', 'ps2', 'ps3', 'psp'])"), 'PS1, PS2, PS3 and PSP');
+  assert.ok(js.includes('const xmbShell') && js.includes('const placeXmb') && js.includes("if (xmb()) { st.els = new Map();") && js.includes("root.classList.remove('bs-theme-ps3'); st.screen = 'game'"), 'the games screen is the cross bar, the game page keeps the standard look');
+  assert.ok(js.includes("const XM_MONTH") && js.includes("host.xmbColour?.()") && js.includes('createLinearGradient') && js.includes('prefers-reduced-motion'), 'waves, specks and a colour that follows the month');
+  assert.ok(css.includes('.bs-theme-ps3 .xm-cat') && css.includes('.bs-theme-ps3 .xm-item.on') && css.includes('.bs-theme-ps3 .xm-clock'));
+  assert.ok(app.includes("['ps3', 'PlayStation 3'") && app.includes("xmbColour: () => state.prefs?.bs_xmb_colour") && html.includes('id="bsxmb-picker"'));
 });

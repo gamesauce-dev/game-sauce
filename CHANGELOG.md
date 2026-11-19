@@ -4,6 +4,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+- **A Big Screen look: PlayStation 3.** Settings > My account > **Big Screen look** now also offers **PlayStation 3**, used on PS1, PS2, PS3 and PSP. The games screen becomes a cross bar: the platforms are a row of icons across the screen (left and right change platform, with the same page-turn sound as the Xbox look), and the games run down from the current one, the highlighted game big with its title, year and platform beside it and the others small above and below. Behind it a slow wave of light drifts over a soft gradient with tiny specks, and a date and time panel sits at the top right. Its colour follows the month, as the console's did, or you pick one under **PlayStation 3 colour** in My account. The icons and the waves are drawn for game-sauce; nothing comes from Sony. A game's own page keeps the standard look.
+
 ## [0.18.0] - 2026-11-19
 
 ### Added

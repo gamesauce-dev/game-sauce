@@ -389,7 +389,7 @@ document.addEventListener('click', async (e) => {
 const startsInBigScreen = () => (state.prefs?.bs_start ? state.prefs.bs_start === 'on' : Boolean(authState.user?.play_only && !authState.user?.previewing));
 async function openBigScreenView(kiosk = false) {
   if (!(window.__platformsCache || []).length) { try { await loadPlatforms(); } catch { /* the page shows what it can */ } }   // opened straight at start-up: the platforms may not be here yet
-  bigscreen.openBigScreen({ api, toast, theme: () => state.prefs?.bs_theme || '', plateAll: () => state.prefs?.chip_plate === 'on', platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
+  bigscreen.openBigScreen({ api, toast, theme: () => state.prefs?.bs_theme || '', xmbColour: () => state.prefs?.bs_xmb_colour || 'month', plateAll: () => state.prefs?.chip_plate === 'on', platforms: () => window.__platformsCache || [], user: () => authState.user, openPlayer, platformIcon: platformIconSvg, kiosk, start: { platform: state.platform !== 'all' ? state.platform : null } });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#open-bigscreen')) return;
@@ -4041,7 +4041,7 @@ function initProfilePanel() {
   // Big Screen look: the standard one, or a theme (Xbox 360). Kept with the account; Big Screen reads it when it opens.
   const bsBox = $('#bstheme-picker');
   if (bsBox) {
-    const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy like the 2005 dashboard, on Xbox consoles']];
+    const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy like the 2005 dashboard, on Xbox consoles'], ['ps3', 'PlayStation 3', 'a slow wave of light and a cross bar of platforms, on PlayStation consoles']];
     const paintBs = () => { const now = state.prefs?.bs_theme || ''; bsBox.innerHTML = BS_LOOKS.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bstheme="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintBs();
     bsBox.onclick = async (ev) => {
@@ -4049,6 +4049,19 @@ function initProfilePanel() {
       try { await api('/prefs/bs_theme', { method: 'PUT', body: JSON.stringify({ value: v || null }) }); } catch (err) { return toast(err.message, true); }
       state.prefs = { ...(state.prefs || {}) }; if (v) state.prefs.bs_theme = v; else delete state.prefs.bs_theme;
       paintBs();
+    };
+  }
+  // The colour of the PlayStation 3 look: it follows the month (as the console did) unless one is chosen.
+  const xmBox = $('#bsxmb-picker');
+  if (xmBox) {
+    const XM = [['month', 'Follows the month'], ['blue', 'Blue'], ['brown', 'Brown'], ['green', 'Green'], ['violet', 'Violet'], ['red', 'Red'], ['teal', 'Teal'], ['gold', 'Gold']];
+    const paintXm = () => { const now = state.prefs?.bs_xmb_colour || 'month'; xmBox.innerHTML = XM.map(([k, label]) => `<button type="button" class="lang-opt" data-xmc="${k}" aria-pressed="${now === k}"><span>${esc(label)}</span></button>`).join(''); };
+    paintXm();
+    xmBox.onclick = async (ev) => {
+      const b = ev.target.closest('[data-xmc]'); if (!b) return; const v = b.dataset.xmc;
+      try { await api('/prefs/bs_xmb_colour', { method: 'PUT', body: JSON.stringify({ value: v === 'month' ? null : v }) }); } catch (err) { return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}) }; if (v === 'month') delete state.prefs.bs_xmb_colour; else state.prefs.bs_xmb_colour = v;
+      paintXm();
     };
   }
   // Where to land after signing in: Big Screen (the default for a play-only account) or the normal screen.

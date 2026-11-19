@@ -18,7 +18,7 @@ const ALLOW = [
   ['GET', /^\/health$/],
   ['GET', /^\/platforms$/],
   ['GET', /^\/stats$/],
-  ['GET', /^\/prefs$/], ['PUT', /^\/prefs\/(ui_mode|bs_theme|bs_start)$/],
+  ['GET', /^\/prefs$/], ['PUT', /^\/prefs\/(ui_mode|bs_theme|bs_start|bs_xmb_colour)$/],
   ['GET', /^\/roms\/?$/],
   ['GET', /^\/roms\/facets$/],
   ['GET', /^\/roms\/recently-played$/],

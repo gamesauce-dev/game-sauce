@@ -148,7 +148,10 @@ export function openBigScreen(host) {
   const prevFocus = document.activeElement;
 
   // ── the top bar and the hints ──
-  const tick = () => { const el = $('#bs-clock'); if (el) el.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
+  const tick = () => {
+    const el = $('#bs-clock'), d = new Date(); if (el) el.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const xc = $('#xm-clock'); if (xc) xc.innerHTML = `${esc(d.toLocaleDateString([], { day: '2-digit', month: '2-digit' }))} ${esc(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))}<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 6.5V12l4 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  };
   tick(); const clock = setInterval(tick, 15000);
   const paintSnd = () => { const b = $('#bs-snd'); if (b) { b.textContent = muted() ? '♪ Off' : '♪ On'; b.classList.toggle('off', muted()); } };
   const toggleSound = () => { try { localStorage.setItem(MUTE_KEY, muted() ? '0' : '1'); } catch { /* not kept */ } paintSnd(); say(muted() ? 'Sounds off.' : 'Sounds on.'); sfx('select'); };
@@ -286,6 +289,7 @@ export function openBigScreen(host) {
     if (tok !== st.tok || st.screen !== 'games') return;
     if (!st.games.length) { $('#bs-main').innerHTML = '<div class="bs-empty">No games here yet.</div>'; return; }
     st.gi = Math.min(st.gi, st.games.length - 1);
+    if (xmb()) { st.els = new Map(); $('#bs-main').innerHTML = xmbShell(); placeXmb(); if (st.slide) { $('.bs-xm')?.classList.add(st.slide > 0 ? 'slide-r' : 'slide-l'); st.slide = 0; } return; }
     if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); if (st.slide) { $('.bs-bl-main')?.classList.add(st.slide > 0 ? 'slide-r' : 'slide-l'); st.slide = 0; } return; }
     st.az = new Map(); st.games.forEach((g, i) => { const l = letter(g); if (!st.az.has(l)) st.az.set(l, i); });   // the first game of each letter
     $('#bs-main').innerHTML = `<div class="bs-wheel" id="bs-wheel"></div><nav class="bs-az" id="bs-az" aria-label="Jump to letter">${AZ.map((l) => `<button type="button" tabindex="-1" data-l="${l}" class="${st.az.has(l) ? 'has' : ''}">${l}</button>`).join('')}</nav><div class="bs-pos" id="bs-pos"></div>`;
@@ -296,7 +300,7 @@ export function openBigScreen(host) {
     return `<div class="bs-title">${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark" aria-label="Favourite">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
   // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
-  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']) };   // the consoles each look is for
+  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']), ps3: new Set(['ps1', 'ps2', 'ps3', 'psp']) };   // the consoles each look is for
   const useTheme = (slug) => {
     const th = String(host.theme?.() || '');
     root.classList.remove('bs-bl-on');
@@ -309,7 +313,7 @@ export function openBigScreen(host) {
   // The blades are the Xbox platforms in order (Xbox, Xbox 360, Xbox Live Arcade, Xbox One, Series): the current one on the left, joined to the green, the ones before it beside it, the ones after it on the right.
   // Left and right on the controller (or the stick) change blade, as on the dashboard. A band with no platform is only decoration and has no words.
   const bladeModel = () => {
-    const sib = st.plats.filter((p) => THEME_CONSOLES.xbox360.has(p.slug)).sort((a, b) => (a.generation || 99) - (b.generation || 99) || String(a.name).localeCompare(b.name));
+    const themeName = [...root.classList].map((c) => /^bs-theme-(.+)$/.exec(c)?.[1]).find(Boolean) || 'xbox360', sib = st.plats.filter((p) => THEME_CONSOLES[themeName]?.has(p.slug)).sort((a, b) => (a.generation || 99) - (b.generation || 99) || String(a.name).localeCompare(b.name));
     const i0 = sib.findIndex((p) => p.slug === st.src?.slug);
     const pad = (arr, n, front) => (front ? [...Array(Math.max(0, n - arr.length)).fill(null), ...arr] : [...arr, ...Array(Math.max(0, n - arr.length)).fill(null)]);
     if (i0 < 0) return { sib, i0, left: [null, null, { cur: true }], right: [null, null, null] };
@@ -317,7 +321,7 @@ export function openBigScreen(host) {
     const next = sib.slice(i0 + 1, i0 + 4).map((p, k) => ({ p, i: i0 + 1 + k }));
     return { sib, i0, left: [...pad(prev, 2, true), { cur: true, p: sib[i0], i: i0 }], right: pad(next, 3, false) };   // left: outermost first; right: nearest the middle first
   };
-  const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('end'); const el = $('.bs-bl-main'); if (el) { const c = to > m.i0 ? 'nudge-r' : 'nudge-l'; el.classList.remove('nudge-r', 'nudge-l'); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), 260); } return; } st.slide = to > m.i0 ? 1 : -1; sfx(st.slide > 0 ? 'pageright' : 'pageleft'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
+  const switchBlade = (to) => { const m = bladeModel(), t = m.sib[to]; if (!t) { sfx('end'); const el = $('.bs-bl-main, .bs-xm'); if (el) { const c = to > m.i0 ? 'nudge-r' : 'nudge-l'; el.classList.remove('nudge-r', 'nudge-l'); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), 260); } return; } st.slide = to > m.i0 ? 1 : -1; sfx(st.slide > 0 ? 'pageright' : 'pageleft'); enterSource({ kind: 'platform', slug: t.slug, name: t.name, plat: t }); };
   // The blades run the whole height of the screen and off both edges, with no end to see. Each is a sheet from the edge of the previous one to its own inner edge, which is one gentle curve
   // (a quadratic) bulging toward the middle of the screen. The outermost sheet is the widest and they get narrower toward the middle; the current blade (left, innermost) is the slimmest, in green.
   // The right blade is the left one mirrored in CSS.
@@ -400,7 +404,86 @@ export function openBigScreen(host) {
       box.appendChild(v); v.play?.().catch(() => v.remove());
     }, 700);
   };
-  const placeGames = () => (blades() ? placeBlades() : placeWheel());
+  // ── the cross bar (the PlayStation 3 look): the platforms are a row of icons across the screen and the games are a column under the current one ──
+  const xmb = () => root.classList.contains('bs-theme-ps3');
+  const XM_COLOURS = { blue: [215, 72, 34], brown: [18, 42, 28], green: [145, 52, 26], violet: [268, 50, 31], red: [352, 58, 30], teal: [185, 62, 27], gold: [38, 62, 29] };
+  const XM_MONTH = ['violet', 'red', 'gold', 'green', 'teal', 'blue', 'blue', 'teal', 'green', 'brown', 'brown', 'violet'];   // January to December
+  const xmColour = () => { const k = String(host.xmbColour?.() || 'month'); return XM_COLOURS[k] || XM_COLOURS[XM_MONTH[new Date().getMonth()]]; };
+  // The backdrop: a few translucent ribbons of light that drift slowly, and tiny specks. Drawn on a canvas that stays while the look is on.
+  const xmWaves = () => {
+    let cv = root.querySelector('.xm-waves');
+    if (!cv) { cv = document.createElement('canvas'); cv.className = 'xm-waves'; cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:0;display:none'; cv.setAttribute('aria-hidden', 'true'); $('.bs-bg').after(cv); }
+    if (cv.dataset.on) return;
+    cv.dataset.on = '1';
+    const x = cv.getContext('2d'), calm = matchMedia('(prefers-reduced-motion: reduce)').matches, lite = root.classList.contains('bs-lite');
+    let W = 0, H = 0;
+    const fit = () => { const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 1.5); W = r.width; H = r.height; cv.width = W * d; cv.height = H * d; x.setTransform(d, 0, 0, d, 0, 0); };
+    fit(); const ro = new ResizeObserver(fit); ro.observe(cv);
+    const rib = Array.from({ length: lite ? 3 : 5 }, (_, i) => ({ a: 22 + Math.random() * 30, f: 0.55 + Math.random() * 0.7, s: 0.07 + Math.random() * 0.1, p: Math.random() * 6.28, y: 0.5 + i * 0.045 + Math.random() * 0.05, t: 14 + Math.random() * 26, o: 0.05 + Math.random() * 0.05 }));
+    const dust = Array.from({ length: lite ? 40 : 120 }, () => ({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.2, s: 0.004 + Math.random() * 0.012, p: Math.random() * 6.28 }));
+    const frame = (ms) => {
+      if (!root.isConnected || !xmb()) { delete cv.dataset.on; ro.disconnect(); return; }
+      const t = calm ? 0 : ms / 1000, [h, s, l] = xmColour();
+      const g = x.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, `hsl(${h}, ${s}%, ${l * 0.8}%)`); g.addColorStop(0.55, `hsl(${h}, ${s}%, ${l * 0.55}%)`); g.addColorStop(1, `hsl(${h}, ${s * 0.9}%, ${l * 0.3}%)`);
+      x.globalCompositeOperation = 'source-over'; x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.globalCompositeOperation = 'lighter';
+      for (const r of rib) {
+        const top = [], bot = [];
+        for (let px = 0; px <= W + 8; px += 8) {
+          const u = px / W, env = Math.sin(Math.PI * Math.min(1, Math.max(0, u)));
+          const y = H * r.y + Math.sin(u * Math.PI * 2 * r.f + t * r.s * 2 + r.p) * r.a * env + Math.sin(u * Math.PI * 5 * r.f - t * r.s * 3 + r.p * 2) * r.a * 0.25 * env;
+          const w = (Math.sin(u * Math.PI * 3 + t * r.s + r.p) * 0.5 + 0.5) * r.t * env + 1;
+          top.push([px, y - w]); bot.push([px, y + w]);
+        }
+        const path = () => { x.beginPath(); top.forEach(([a, b], i) => (i ? x.lineTo(a, b) : x.moveTo(a, b))); for (let i = bot.length - 1; i >= 0; i--) x.lineTo(bot[i][0], bot[i][1]); x.closePath(); };
+        path(); x.fillStyle = `hsla(${h + 10}, 70%, 78%, ${r.o})`; x.fill();
+        x.save(); x.translate(0, -r.t * 0.25); path(); x.fillStyle = `hsla(${h + 14}, 75%, 86%, ${r.o * 0.8})`; x.fill(); x.restore();
+        x.beginPath(); top.forEach(([a, b], i) => (i ? x.lineTo(a, b) : x.moveTo(a, b))); x.strokeStyle = `hsla(${h + 20}, 80%, 92%, ${r.o * 2.6})`; x.lineWidth = 1.2; x.stroke();
+      }
+      for (const d of dust) { const px = ((d.x + t * d.s) % 1) * W, py = (d.y + Math.sin(t * 0.2 + d.p) * 0.01) * H; x.fillStyle = `rgba(255, 255, 255, ${0.25 + 0.35 * Math.sin(t * 0.7 + d.p) ** 2})`; x.beginPath(); x.arc(px, py, d.r, 0, 6.283); x.fill(); }
+      if (!calm) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  };
+  const XM_NUM = (n) => `<circle cx="24" cy="24" r="19" fill="none" stroke="currentColor" stroke-width="3.5"/><text x="24" y="31" text-anchor="middle" font-size="19" font-weight="700" fill="currentColor" font-family="sans-serif">${n}</text>`;
+  const XM_GLYPH = {
+    ps1: XM_NUM(1), ps2: XM_NUM(2), ps3: XM_NUM(3),
+    psp: '<rect x="3" y="12" width="42" height="24" rx="7" fill="none" stroke="currentColor" stroke-width="3.5"/><rect x="14" y="16" width="20" height="16" rx="2" fill="currentColor" opacity=".55"/><circle cx="8.5" cy="24" r="2.2" fill="currentColor"/><circle cx="39.5" cy="24" r="2.2" fill="currentColor"/>'
+  };
+  const xmIcon = (p) => (p.logo_v && !p.logo_text
+    ? `<img class="xm-logo" src="/api/platforms/${encodeURIComponent(p.slug)}/logo?v=${p.logo_v}" alt="${esc(p.name)}" draggable="false" />`
+    : `<svg viewBox="0 0 48 48" aria-hidden="true">${XM_GLYPH[p.slug] || XM_GLYPH.ps3}</svg>`);
+  const xmbShell = () => `<div class="bs-xm" id="bs-xm"><div class="xm-clock" id="xm-clock"></div><nav class="xm-cats" id="xm-cats" aria-label="Platforms"></nav><div class="xm-col" id="xm-col" role="listbox" aria-label="Games"></div><div class="xm-info" id="xm-info"></div></div>`;
+  const XM_STEP = 8.4;   // em between the icons of the row
+  const xmY = (d) => (d === 0 ? 0 : d < 0 ? -16 + (d + 1) * 3.5 : 7.6 + (d - 1) * 3.5);   // em from the middle: the ones above sit over the icon row
+  const xmArt = (g, on) => {
+    const src = on ? (wheelArt(g) || g.cover_url) : g.cover_url;
+    return src ? `<img src="${esc(src)}" alt="" draggable="false" onerror="this.remove()" />` : `<em>${esc(String(g.title || '?').slice(0, 1).toUpperCase())}</em>`;
+  };
+  const placeXmb = () => {
+    if (!$('#bs-xm')) return;
+    xmWaves(); tick();
+    const m = bladeModel(), cats = $('#xm-cats');
+    if (cats.dataset.at !== String(m.i0)) {
+      cats.dataset.at = String(m.i0);
+      cats.innerHTML = m.sib.map((p, j) => { const d = j - m.i0, tag = d ? 'button type="button"' : 'div'; return `<${tag} class="xm-cat${d ? ' bs-bl-lab' : ' on'}" ${d ? `data-bi="${j}" ` : ''}style="left: calc(29% + ${d * XM_STEP}em)">${xmIcon(p)}${d ? '' : `<span>${esc(String(p.name).replace(/^sony\s+/i, ''))}</span>`}</${d ? 'button' : 'div'}>`; }).join('');
+    }
+    const col = $('#xm-col'), n = st.games.length, lo = Math.max(0, st.gi - 2), hi = Math.min(n - 1, st.gi + 5);
+    for (const [i, el] of st.els) if (i < lo || i > hi) { el.remove(); st.els.delete(i); }
+    for (let i = lo; i <= hi; i++) {
+      const g = st.games[i], d = i - st.gi, on = d === 0;
+      let el = st.els.get(i);
+      if (!el) { el = document.createElement('div'); el.className = 'xm-item bs-bl-row'; el.dataset.i = i; el.setAttribute('role', 'option'); col.appendChild(el); st.els.set(i, el); }
+      if (el.dataset.on !== String(on)) { el.dataset.on = String(on); el.innerHTML = xmArt(g, on); }
+      el.classList.toggle('on', on); el.setAttribute('aria-selected', String(on));
+      el.style.transform = `translate(-50%, calc(-50% + ${xmY(d)}em))`; el.style.opacity = on ? 1 : String(Math.max(0.3, d < 0 ? 0.85 : 0.9 - (d - 1) * 0.13));
+    }
+    const g = game(), plat = st.plats.find((p) => p.slug === g.platform), sub = [g.release_year, g.publisher || g.developer].filter(Boolean).join('  ·  ');
+    $('#xm-info').innerHTML = `<b>${esc(g.title)}${g.broken ? ' <em class="xm-flag">Issues</em>' : ''}</b><small>${esc(sub)}</small><small>${(st.gi + 1).toLocaleString()} of ${n.toLocaleString()}</small><i class="xm-badge">${esc(plat?.short_name || g.platform_name || '')}</i>`;
+    root.style.setProperty('--ac', gameAccent(g));
+  };
+  const placeGames = () => (blades() ? placeBlades() : xmb() ? placeXmb() : placeWheel());
   const placeWheel = () => {
     const wheel = $('#bs-wheel'); if (!wheel) return;
     const n = st.games.length, reach = root.classList.contains('bs-lite') ? 3 : 4;
@@ -430,7 +513,7 @@ export function openBigScreen(host) {
   // ── screen 3: one game ──
   const drawGame = () => {
     const g = game(); if (!g) return;
-    useTheme(g.platform); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
+    useTheme(g.platform); root.classList.remove('bs-theme-ps3'); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
     const art = gameBackdrop(g); setBackdrop(art || null, gameAccent(g), Boolean(art));
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);
@@ -637,7 +720,7 @@ export function openBigScreen(host) {
   };
 
   // ── moving between screens ──
-  const backToWheel = () => { useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
+  const backToWheel = () => { useTheme(srcSlug()); st.screen = 'games'; $('#bs-crumb').textContent = st.src?.name || 'Games'; paintHints(); if (xmb()) { st.els = new Map(); $('#bs-main').innerHTML = xmbShell(); placeXmb(); return; } if (blades()) { $('#bs-main').innerHTML = bladesShell(); placeBlades(); return; } $('#bs-main').innerHTML = '<div class="bs-wheel" id="bs-wheel"></div><div class="bs-pos" id="bs-pos"></div>'; st.els = new Map(); placeWheel(); };
   const close = () => {
     if (!root) return;
     document.removeEventListener('keydown', onKey); window.removeEventListener('blur', pauseVideo); window.removeEventListener('focus', resumeVideo); clearInterval(clock); clearInterval(scrollTimer); clearTimeout(heroTimer); clearTimeout(toastTimer); clearTimeout(st.vidT);
@@ -693,7 +776,7 @@ export function openBigScreen(host) {
       }
       else if (a === 'back') { if (st.level === 1) { const wasColls = st.sub === 'colls', k = wasColls ? extraItems().findIndex((f) => f.kind === 'colls') : families().findIndex((f) => f.name === st.fam); st.level = 0; st.sub = null; st.fam = null; st.row = wasColls ? 1 : 0; st.pi = Math.max(0, k); drawPlatforms(); } else if (!host.kiosk) close(); }
     } else if (s === 'games') {
-      if (blades() && (a === 'left' || a === 'right')) { const m = bladeModel(); if (m.i0 >= 0) switchBlade(m.i0 + (a === 'left' ? -1 : 1)); }   // in the Blades look left and right change blade, as on the dashboard
+      if ((blades() || xmb()) && (a === 'left' || a === 'right')) { const m = bladeModel(); if (m.i0 >= 0) switchBlade(m.i0 + (a === 'left' ? -1 : 1)); }   // in the Blades look left and right change blade, as on the dashboard
       else if (a === 'up' || a === 'left') goGame(st.gi - (a === 'left' ? 10 : 1)); else if (a === 'down' || a === 'right') goGame(st.gi + (a === 'right' ? 10 : 1));
       else if (a === 'prev-family') jumpLetter(-1); else if (a === 'next-family') jumpLetter(1);
       else if (a === 'select') drawGame();

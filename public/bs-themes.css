@@ -179,3 +179,40 @@
 .bs-theme-xbox360 .bs-bl-main.nudge-r { animation: bs-nudge-r .24s ease-out; }
 .bs-theme-xbox360 .bs-bl-main.nudge-l { animation: bs-nudge-l .24s ease-out; }
 @media (prefers-reduced-motion: reduce) { .bs-theme-xbox360 .bs-bl-main.nudge-r, .bs-theme-xbox360 .bs-bl-main.nudge-l { animation: none; } }
+
+/* ── PlayStation 3: a wave of light behind a cross bar. The platforms run across the screen, the games run down from the current one ── */
+.bs.bs-theme-ps3 { background: #0b1230; font-family: 'Source Sans 3', 'Segoe UI', 'Helvetica Neue', Arial, system-ui, sans-serif; font-weight: 300; }
+.bs-theme-ps3 .bs-bg { display: none; }
+.bs-theme-ps3 .xm-waves { display: block !important; }
+.bs-theme-ps3 .bs-top { position: absolute; top: 0; left: 0; right: auto; background: none; padding: .9em 1.3em; min-height: 0; z-index: 3; }
+.bs-theme-ps3 .bs-crumb, .bs-theme-ps3 .bs-clock { display: none; }
+.bs-theme-ps3 .bs-snd { opacity: .55; }
+.bs-theme-ps3 .bs-main { position: absolute; inset: 0; z-index: 1; }
+.bs-theme-ps3 .bs-hints { position: absolute; left: 0; right: 0; bottom: 0; background: none; z-index: 3; text-shadow: 0 .05em .3em rgba(0, 0, 0, .45); opacity: .8; }
+.bs-theme-ps3 .bs-xm { position: absolute; inset: 0; color: #fff; text-shadow: 0 .05em .3em rgba(0, 0, 0, .35); }
+.bs-theme-ps3 .xm-clock { position: absolute; top: 6.3%; right: 0; width: 30%; height: 5.5%; display: flex; align-items: center; justify-content: flex-end; gap: .55em; padding: 0 3.2em 0 1em; border: 1px solid rgba(255, 255, 255, .3); border-right: 0; border-radius: .2em 0 0 .2em; background: rgba(0, 0, 0, .14); font-size: 1.3em; letter-spacing: .04em; }
+.bs-theme-ps3 .xm-clock svg { width: 1.15em; height: 1.15em; }
+.bs-theme-ps3 .xm-cats { position: absolute; left: 0; right: 0; top: 27%; height: 0; }
+.bs-theme-ps3 .xm-cat { position: absolute; top: 0; width: 3.4em; height: 3.4em; transform: translate(-50%, -50%); display: grid; place-items: center; padding: 0; border: 0; background: none; color: rgba(255, 255, 255, .5); font: inherit; cursor: pointer; transition: color .2s, transform .25s; }
+.bs-theme-ps3 .xm-cat svg { width: 100%; height: 100%; filter: drop-shadow(0 .08em .2em rgba(0, 0, 0, .3)); }
+.bs-theme-ps3 .xm-cat.on { color: #fff; transform: translate(-50%, -50%) scale(1.22); cursor: default; }
+.bs-theme-ps3 .xm-cat:not(.on):hover { color: rgba(255, 255, 255, .85); }
+.bs-theme-ps3 .xm-cat span { position: absolute; top: 118%; left: 50%; transform: translateX(-50%) scale(.82); white-space: nowrap; font-size: 1em; text-shadow: 0 .05em .3em rgba(0, 0, 0, .45); }
+.bs-theme-ps3 .xm-logo { width: 6em; height: 2.4em; object-fit: contain; filter: brightness(0) invert(1) drop-shadow(0 .08em .2em rgba(0, 0, 0, .3)); opacity: .6; }
+.bs-theme-ps3 .xm-cat.on .xm-logo { opacity: 1; }
+.bs-theme-ps3 .xm-col { position: absolute; left: 29%; top: 47.3%; width: 0; height: 0; }
+.bs-theme-ps3 .xm-item { position: absolute; left: 0; top: 0; width: 6.1em; height: 3.4em; overflow: hidden; border-radius: .15em; background: rgba(255, 255, 255, .1); display: grid; place-items: center; cursor: pointer; transition: transform .28s cubic-bezier(.2, .8, .25, 1), opacity .28s, width .28s, height .28s; }
+.bs-theme-ps3 .xm-item img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; }
+.bs-theme-ps3 .xm-item em { font-style: normal; font-size: 1.4em; opacity: .6; }
+.bs-theme-ps3 .xm-item.on { width: 12em; height: 8em; overflow: visible; background: none; }
+.bs-theme-ps3 .xm-item.on img { object-fit: contain; object-position: 50% 50%; filter: drop-shadow(0 .2em .6em rgba(0, 0, 0, .4)); }
+.bs-theme-ps3 .xm-info { position: absolute; left: calc(29% + 8.6em); top: 47.3%; width: 20em; transform: translateY(-50%); display: grid; gap: .12em; }
+.bs-theme-ps3 .xm-info b { font-size: 1.55em; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-theme-ps3 .xm-info small { font-size: .74em; opacity: .82; letter-spacing: .02em; }
+.bs-theme-ps3 .xm-badge { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 1em; padding: .12em .7em; font-style: normal; font-size: .62em; letter-spacing: .1em; text-transform: uppercase; background: rgba(255, 255, 255, .4); color: #1a2036; border-radius: .15em; text-shadow: none; }
+.bs-theme-ps3 .xm-flag { font-style: normal; font-size: .55em; padding: .1em .5em; border-radius: .6em; background: rgba(255, 90, 60, .75); }
+.bs-theme-ps3 .bs-xm.slide-r { animation: bs-slide-r .25s cubic-bezier(.2, .8, .25, 1); }
+.bs-theme-ps3 .bs-xm.slide-l { animation: bs-slide-l .25s cubic-bezier(.2, .8, .25, 1); }
+.bs-theme-ps3 .bs-xm.nudge-r { animation: bs-nudge-r .24s ease-out; }
+.bs-theme-ps3 .bs-xm.nudge-l { animation: bs-nudge-l .24s ease-out; }
+@media (prefers-reduced-motion: reduce) { .bs-theme-ps3 .xm-item, .bs-theme-ps3 .xm-cat { transition: none; } .bs-theme-ps3 .bs-xm.slide-r, .bs-theme-ps3 .bs-xm.slide-l, .bs-theme-ps3 .bs-xm.nudge-r, .bs-theme-ps3 .bs-xm.nudge-l { animation: none; } }

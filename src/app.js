@@ -583,7 +583,7 @@ export function createApp() {
   });
 
   // Per-user preferences (whitelisted keys only). Scoped to the signed-in user.
-  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'], ui_mode: ['classic', 'modern'], chip_style: ['chips', 'logos'], bs_theme: ['xbox360'], bs_start: ['on', 'off'], chip_plate: ['on'], lang: ['auto', ...LANGS.map((l) => l.code)], price_currency: CURRENCIES };
+  const PREF_KEYS = { identify_provider: ['thegamesdb', 'igdb', 'launchbox'], ui_mode: ['classic', 'modern'], chip_style: ['chips', 'logos'], bs_theme: ['xbox360', 'ps3'], bs_xmb_colour: ['blue', 'brown', 'green', 'violet', 'red', 'teal', 'gold'], bs_start: ['on', 'off'], chip_plate: ['on'], lang: ['auto', ...LANGS.map((l) => l.code)], price_currency: CURRENCIES };
   api.get('/prefs', (req, res) => {
     const out = {};
     for (const r of db.prepare('SELECT key, value FROM user_prefs WHERE user_id = ?').all(req.user.id)) out[r.key] = r.value;
