@@ -109,7 +109,15 @@ jobs:
               security create-keychain -p "$KCPW" "$KC"
               security set-keychain-settings -lut 21600 "$KC"
               security unlock-keychain -p "$KCPW" "$KC"
-              security import "$RUNNER_TEMP/gs-cert.p12" -k "$KC" -P "$GS_APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+              if ! security import "$RUNNER_TEMP/gs-cert.p12" -k "$KC" -P "$GS_APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign; then
+                # A certificate file made with OpenSSL 3 uses a newer seal that the Mac's own tool can fail to read: write it again in the older form and import that.
+                echo "Mac: the certificate did not import as it is, converting it to the older file format"
+                SSL="$(brew --prefix openssl@3 2>/dev/null)/bin/openssl"; [ -x "$SSL" ] || SSL=openssl
+                "$SSL" pkcs12 -in "$RUNNER_TEMP/gs-cert.p12" -nodes -passin env:GS_APPLE_CERTIFICATE_PASSWORD -out "$RUNNER_TEMP/gs-cert.pem"
+                "$SSL" pkcs12 -export -in "$RUNNER_TEMP/gs-cert.pem" -out "$RUNNER_TEMP/gs-cert-old.p12" -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 -passout pass:gs-temp-pass
+                security import "$RUNNER_TEMP/gs-cert-old.p12" -k "$KC" -P gs-temp-pass -T /usr/bin/codesign
+                rm -f "$RUNNER_TEMP/gs-cert.pem" "$RUNNER_TEMP/gs-cert-old.p12"
+              fi
               security set-key-partition-list -S apple-tool:,apple: -k "$KCPW" "$KC" > /dev/null
               security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
               rm -f "$RUNNER_TEMP/gs-cert.p12"
