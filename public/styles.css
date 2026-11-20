@@ -1924,3 +1924,12 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--chip-c) 75%, transparent)); }
 .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img, .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img { filter: drop-shadow(0 0 3px var(--chip-c)) drop-shadow(0 0 9px var(--chip-c)); }
 .ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--chip-c) 80%, transparent)); }
+
+/* DAT completeness: one horizontal bar per DAT, games held against games listed */
+.hbars { display: grid; gap: 8px; }
+.hbar { display: grid; grid-template-columns: 5.5rem 1fr auto; gap: 10px; align-items: center; font-size: 0.9rem; }
+.hbar-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar-track { height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; }
+.hbar-track i { display: block; height: 100%; background: var(--good); border-radius: 7px; min-width: 2px; }
+.hbar-num small { color: var(--muted, #8b93a7); margin-left: 4px; }
+@media (max-width: 560px) { .hbar { grid-template-columns: 4rem 1fr; } .hbar-num { grid-column: 1 / -1; } }

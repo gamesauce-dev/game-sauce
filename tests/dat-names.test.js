@@ -59,7 +59,9 @@ test('a console game no checksum finds is matched by its name, and the report li
   const express = (await import('express')).default;
   const app = express(); app.use('/api/dats', router);
   const srv = app.listen(0); const port = srv.address().port;
-  const id = listDatfiles()[0].id;
+  const card = listDatfiles()[0];
+  assert.equal(card.games, 3); assert.equal(card.games_have, 2); assert.equal(card.entries, 4, 'the card can say games as well as releases');
+  const id = card.id;
   try {
     const all = await (await fetch(`http://localhost:${port}/api/dats/${id}/have-want?group=game&want=all`)).json();
     assert.equal(all.games, 3, 'Halo 3 is one game though two regions are listed'); assert.equal(all.games_have, 2);

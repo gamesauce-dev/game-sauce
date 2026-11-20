@@ -388,7 +388,13 @@ export function listDatfiles() {
              ELSE (SELECT COUNT(*) FROM roms r WHERE r.dat_entry_id IN (SELECT id FROM dat_entries WHERE datfile_id = d.id)) END AS roms_matched,
            CASE WHEN EXISTS (SELECT 1 FROM dat_sets s WHERE s.datfile_id = d.id)
              THEN (SELECT COUNT(*) FROM dat_sets s WHERE s.datfile_id = d.id AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_set_id = s.id))
-             ELSE (SELECT COUNT(*) FROM dat_entries e WHERE e.datfile_id = d.id AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_entry_id = e.id)) END AS missing_count
+             ELSE (SELECT COUNT(*) FROM dat_entries e WHERE e.datfile_id = d.id AND NOT EXISTS (SELECT 1 FROM roms r WHERE r.dat_entry_id = e.id)) END AS missing_count,
+           CASE WHEN EXISTS (SELECT 1 FROM dat_sets s WHERE s.datfile_id = d.id)
+             THEN (SELECT COUNT(*) FROM dat_sets s WHERE s.datfile_id = d.id)
+             ELSE (SELECT COUNT(DISTINCT e.norm) FROM dat_entries e WHERE e.datfile_id = d.id AND e.norm <> '') END AS games,
+           CASE WHEN EXISTS (SELECT 1 FROM dat_sets s WHERE s.datfile_id = d.id)
+             THEN (SELECT COUNT(*) FROM dat_sets s WHERE s.datfile_id = d.id AND EXISTS (SELECT 1 FROM roms r WHERE r.dat_set_id = s.id))
+             ELSE (SELECT COUNT(DISTINCT e.norm) FROM dat_entries e JOIN roms r ON r.dat_entry_id = e.id WHERE e.datfile_id = d.id AND e.norm <> '') END AS games_have
     FROM datfiles d LEFT JOIN platforms p ON p.slug = d.platform_slug
     ORDER BY d.imported_at DESC, d.id DESC
   `).all();

@@ -2811,6 +2811,18 @@ async function loadDats() {
     </div>
   ` : '<div class="side-empty">No ROMs yet.</div>';
 
+  // Completeness: for each DAT, the games it lists (the total possible) against the games held (achieved), a game counting once whatever its region.
+  const bars = data.items.filter((d) => d.games > 0).sort((a, b) => (b.games_have / b.games) - (a.games_have / a.games));
+  $('#dat-chart').innerHTML = bars.length ? `<h3 style="margin:14px 0 8px">Collection completeness</h3>
+    <div class="hbars">${bars.map((d) => {
+      const pct = d.games ? Math.round((d.games_have / d.games) * 1000) / 10 : 0;
+      return `<div class="hbar" title="${esc(d.name)}: ${d.games_have} of ${d.games} games">
+        <span class="hbar-name">${esc(d.platform_short || d.name)}</span>
+        <span class="hbar-track"><i style="width:${pct}%"></i></span>
+        <span class="hbar-num"><b>${d.games_have.toLocaleString()}</b> of ${d.games.toLocaleString()} <small>${pct}%</small></span>
+      </div>`;
+    }).join('')}</div>` : '';
+
   $('#dat-list').innerHTML = data.items.length ? data.items.map((d) => {
     const have = d.roms_matched || 0;
     const want = d.missing_count ?? Math.max(0, (d.entries || 0) - have);
@@ -2826,9 +2838,12 @@ async function loadDats() {
         </div>
       </div>
       <div class="source-stats">
-        <span><b>${d.entries.toLocaleString()}</b> entries</span>
+        ${d.games > 0 && !d.sets ? `<span><b>${d.games.toLocaleString()}</b> games</span>
+        <span><b style="color:var(--good)">${d.games_have.toLocaleString()}</b> have</span>
+        <span><b style="color:var(--warn)">${(d.games - d.games_have).toLocaleString()}</b> missing</span>
+        <span class="note">${d.entries.toLocaleString()} releases</span>` : `<span><b>${d.entries.toLocaleString()}</b> entries</span>
         <span><b style="color:var(--good)">${have.toLocaleString()}</b> have</span>
-        <span><b style="color:var(--warn)">${want.toLocaleString()}</b> missing</span>
+        <span><b style="color:var(--warn)">${want.toLocaleString()}</b> missing</span>`}
         ${d.version ? `<span>version ${esc(d.version)}</span>` : ''}
         <span>imported ${esc(d.imported_at)} UTC</span>
       </div>
