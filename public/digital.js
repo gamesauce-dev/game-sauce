@@ -546,7 +546,8 @@ function renderConsoleDetail(g, d, store, appId, custom) {
 
 /* ───────────── add a game by hand / import a CSV (both in the details window) ───────────── */
 
-const consoleOptions = () => ['playstation', 'nintendo', 'xbox'].flatMap((s) => Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => ({ value: id, label: p.label, hint: DG_STORE[s].label })));
+// the families A to Z (as in every platform picker), the consoles in each A to Z
+const consoleOptions = () => ['nintendo', 'playstation', 'xbox'].flatMap((s) => Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => ({ value: id, label: p.label, hint: DG_STORE[s].label })).sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true })));
 
 let lastAdd = { platform: '', country: '' };   // kept while the form stays open (pinned, or "Add and another"), forgotten when it closes
 

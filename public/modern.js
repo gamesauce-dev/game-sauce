@@ -1,6 +1,7 @@
 // "Modern" interface, a second front end on the same library and the same server. It does not replace anything: Classic is
 // still the default and is untouched. This file adds an icon-driven top bar, a Home page (ticker, Continue playing, Recently
 // added) and light/dark, all switched on by the body class `ui-modern`. The choice is stored per person (prefs: ui_mode).
+import { groupedOptions } from './platform-order.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 import { landChips } from './chip-motion.js';
@@ -219,11 +220,7 @@ async function fillHomePlatforms() {
   const sel = $('#mh-plat'); if (!sel) return;
   try {
     const items = (await api('/platforms')).items.filter((p) => p.count > 0);
-    const by = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
-    items.sort((a, b) => by(a.family || '', b.family || '') || by(a.name, b.name));
-    const fams = [...new Set(items.map((p) => p.family || 'Others'))];
-    const esc2 = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-    sel.innerHTML = '<option value="all">All platforms</option>' + fams.map((f) => `<optgroup label="${esc2(f)}">${items.filter((p) => (p.family || 'Others') === f).map((p) => `<option value="${esc2(p.slug)}">${esc2(p.name)} (${p.count.toLocaleString()})</option>`).join('')}</optgroup>`).join('');
+    sel.innerHTML = '<option value="all">All platforms</option>' + groupedOptions(items, { label: (p) => `${p.name} (${p.count.toLocaleString()})` });
   } catch { /* the box still searches everything */ }
 }
 

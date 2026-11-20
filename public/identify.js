@@ -1,6 +1,7 @@
 // "Identify this game": the Library's manual match, shared by the pages that keep games with no ROM behind them (Physical and Digital).
 // Search TheGamesDB, IGDB or LaunchBox by title (and platform), pick the right entry, and the page puts its details and cover on the game.
 // The search itself is the Library's own (POST /metadata/search); what picking an entry does is up to the page (onPick).
+import { groupedOptions, orderPlatforms, familyOf } from './platform-order.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -8,17 +9,14 @@ const sorter = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true
 
 /** <option>s for every Library platform, grouped by family. any: adds "Any platform" first. */
 export function platformSelect(selected, { any = false } = {}) {
-  const groups = new Map();
-  for (const p of (window.__platformsCache || []).filter((x) => x.slug !== 'other')) { const f = p.family || 'Others'; if (!groups.has(f)) groups.set(f, []); groups.get(f).push(p); }
-  return (any ? '<option value="all">Any platform</option>' : '') + [...groups.keys()].sort(sorter).map((f) => `<optgroup label="${esc(f)}">${groups.get(f).sort((a, b) => sorter(a.name, b.name)).map((p) => `<option value="${esc(p.slug)}"${p.slug === selected ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>`).join('');
+  return (any ? '<option value="all">Any platform</option>' : '') + groupedOptions((window.__platformsCache || []).filter((x) => x.slug !== 'other'), { selected });
 }
 
 /* A type-to-find box in place of a long <select> (which can only jump by first letter): type any part of a name and the list narrows, pick one, or type it in full.
    The visible box has no name; the hidden one carries the value (the slug / id) that the form sends, and is empty until what was typed is one of the options. */
 let comboN = 0;
 export function platformOptions() {
-  const sorted = (window.__platformsCache || []).filter((x) => x.slug !== 'other').map((p) => ({ value: p.slug, label: p.name, hint: p.family || 'Others' }));
-  return sorted.sort((a, b) => sorter(a.hint, b.hint) || sorter(a.label, b.label));
+  return orderPlatforms((window.__platformsCache || []).filter((x) => x.slug !== 'other')).map((p) => ({ value: p.slug, label: p.name, hint: familyOf(p) }));
 }
 export function comboHtml({ name = 'platform', options, selected = '', placeholder = 'Type to find…', required = true }) {
   const id = `combo-${name}-${++comboN}`, cur = options.find((o) => o.value === selected);

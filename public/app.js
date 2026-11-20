@@ -1,4 +1,5 @@
 import { platformIconSvg, PLATFORM_ICON_TYPES, iconTypeFor } from './platform-icons.js';
+import { groupedOptions } from './platform-order.js';   // the one order of every platform picker: families A to Z, Others last, the platforms in each A to Z
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -339,7 +340,7 @@ document.addEventListener('click', (e) => {
 // Settings > Platforms > Platform art: logos for the platform tiles, fetched from ScreenScraper or read from a folder called Platforms in an artwork folder.
 async function fillPlatArtFolders() {
   const sel = $('#plat-art-folder'); if (!sel) return;
-  try { const p = await api('/art/platforms'); const fs = $('#plat-fill-platform'); if (fs && !fs.options.length) fs.innerHTML = (p.items || []).map((x) => `<option value="${esc(x.slug)}">${esc(x.name)}</option>`).join(''); } catch { /* the button says what went wrong */ }
+  try { const p = await api('/art/platforms'); const fs = $('#plat-fill-platform'); if (fs && !fs.options.length) fs.innerHTML = groupedOptions((p.items || []).map((x) => ({ ...x, family: x.family || (window.__platformsCache || []).find((c) => c.slug === x.slug)?.family }))); } catch { /* the button says what went wrong */ }
   try { paintFill(await api('/art/fill-job')); } catch { /* none running */ }
   try { const r = await api('/art/folders'); sel.innerHTML = (r.folders || []).map((f) => `<option value="${esc(f.path)}">${esc(f.path)}</option>`).join('') || '<option value="">(no artwork folder yet: add one under Artwork folders)</option>'; } catch { /* the buttons say what went wrong */ }
 }
@@ -2043,29 +2044,9 @@ document.addEventListener('keydown', (e) => {
  * family then name, but the UI re-sorts defensively so seed order or a future
  * API change can never resurrect the "Nintendo before Microsoft" jumble.
  * Group headers render as <optgroup> (family) + flat options (name). */
-function platformOptions({ selected = null, excludeOther = false, flatten = false } = {}) {
-  const list = (window.__platformsCache || []).filter((p) => !(excludeOther && p.slug === 'other'));
-  const sorter = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
-  const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
-  if (flatten) {
-    return [...list]
-      .sort((a, b) => sorter(a.name, b.name))
-      .map((p) => `<option value="${escAttr(p.slug)}" ${p.slug === selected ? 'selected' : ''}>${esc(p.name)}</option>`)
-      .join('');
-  }
-  const famOf = (p) => p.family || 'Others';
-  const ordered = [...list].sort((a, b) =>
-    ((famOf(a) === 'Others') - (famOf(b) === 'Others')) || sorter(famOf(a), famOf(b)) || sorter(a.name, b.name));   // families A to Z with Others last, then the platforms in each A to Z
-  const groups = new Map();
-  for (const p of ordered) {
-    const fam = p.family || 'Others';
-    if (!groups.has(fam)) groups.set(fam, []);
-    groups.get(fam).push(p);
-  }
-  return [...groups.entries()].map(([fam, plats]) => `
-    <optgroup label="${escAttr(fam)}">
-      ${plats.map((p) => `<option value="${escAttr(p.slug)}" ${p.slug === selected ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-    </optgroup>`).join('');
+function platformOptions({ selected = null, excludeOther = false, only = null, label = undefined } = {}) {
+  const list = (window.__platformsCache || []).filter((p) => !(excludeOther && p.slug === 'other') && (!only || only(p)));
+  return groupedOptions(list, { selected, label });   // a heading for each family, families A to Z with Others last, the platforms in each A to Z (platform-order.js)
 }
 
 /** Rebuild the Sources platform picker when the platform list changed (a platform was added, renamed or removed),
@@ -2780,17 +2761,7 @@ async function loadDats() {
   // Platform picker, grouped by family.
   const sel = $('#dat-platform');
   if (sel.options.length <= 1) {
-    const groups = new Map();
-    for (const p of data.platforms) {
-      const fam = p.family || 'Others';
-      if (!groups.has(fam)) groups.set(fam, []);
-      groups.get(fam).push(p);
-    }
-    sel.innerHTML = '<option value="auto">Detect platform from the DAT name</option>' +
-      [...groups.entries()].map(([fam, plats]) => `
-        <optgroup label="${esc(fam)}">
-          ${plats.map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join('')}
-        </optgroup>`).join('');
+    sel.innerHTML = '<option value="auto">Detect platform from the DAT name</option>' + groupedOptions(data.platforms);
   }
 
   const total = coverage.total || 0;
@@ -4685,7 +4656,7 @@ function waitForServerThenReload() {
 function initExportBox() {
   const sel = $('#export-platform'), hid = $('#export-hidden'), sum = $('#export-summary');
   if (!sel || sel.dataset.ready) return; sel.dataset.ready = '1';
-  sel.innerHTML = '<option value="">All platforms</option>' + (window.__platformsCache || []).filter((p) => p.count).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)} (${p.count})</option>`).join('');
+  sel.innerHTML = '<option value="">All platforms</option>' + platformOptions({ only: (p) => p.count, label: (p) => `${p.name} (${p.count})` });
   const qs = () => new URLSearchParams({ ...(sel.value ? { platform: sel.value } : {}), ...(hid.checked ? { hidden: '1' } : {}) }).toString();
   const refresh = async () => { try { const c = await api('/roms/export/summary?' + qs()); sum.textContent = `${c.games.toLocaleString()} game${c.games === 1 ? '' : 's'}, ${c.covers.toLocaleString()} with a cover.`; } catch { sum.textContent = ''; } };
   sel.onchange = refresh; hid.onchange = refresh; refresh();
@@ -4698,7 +4669,7 @@ function initCoverImport() {
   const zip = $('#covers-zip'), out = $('#covers-result'), applyBtn = $('#covers-apply');
   if (!zip || zip.dataset.ready) return; zip.dataset.ready = '1';
   const cp = $('#covers-platform');
-  if (cp.options.length <= 1) cp.innerHTML += (window.__platformsCache || []).filter((p) => p.count).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)} (${p.count})</option>`).join('');
+  if (cp.options.length <= 1) cp.innerHTML += platformOptions({ only: (p) => p.count, label: (p) => `${p.name} (${p.count})` });
   cp.onchange = () => { applyBtn.disabled = true; };
   const run = async (apply) => {
     const f = zip.files?.[0];
@@ -4779,7 +4750,7 @@ function initNamesPanel() {
   initExportBox();
   initCoverImport();
   const sel = $('#names-platform');
-  if (!sel.options.length) sel.innerHTML = '<option value="">From the CSV\'s platform column</option>' + (window.__platformsCache || []).map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}${p.count ? ` (${p.count})` : ''}</option>`).join('');
+  if (!sel.options.length) sel.innerHTML = '<option value="">From the CSV\'s platform column</option>' + platformOptions({ label: (p) => `${p.name}${p.count ? ` (${p.count})` : ''}` });
   const out = $('#names-result'); const applyBtn = $('#names-apply');
   const run = async (apply) => {
     const f = $('#names-file').files?.[0];
@@ -4846,7 +4817,8 @@ async function loadDuplicates(reset = true, keepPlace = false) {
     if (!dupState.platformsLoaded) {
       const plats = await api('/platforms');
       const sel = $('#dup-platform');
-      (plats.items || plats).filter((p) => (p.count ?? 0) > 0).forEach((p) => sel.insertAdjacentHTML('beforeend', `<option value="${esc(p.slug)}">${esc(p.name)}</option>`));
+      if (!(window.__platformsCache || []).length) window.__platformsCache = plats.items || plats;
+      sel.insertAdjacentHTML('beforeend', platformOptions({ only: (p) => (p.count ?? 0) > 0 }));
       dupState.platformsLoaded = true;
     }
     if (keepPlace) dupState.offset = 0;
