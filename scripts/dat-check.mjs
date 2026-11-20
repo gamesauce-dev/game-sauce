@@ -54,3 +54,11 @@ if (cols.includes('norm')) {
   }
   console.log('  sample DAT name keys:', all("SELECT norm FROM dat_entries WHERE norm <> '' ORDER BY id LIMIT 6").map((x) => x.norm).join(' | '));
 }
+
+console.log('\nevery platform with games whose slug or name mentions xbox:');
+for (const p of all("SELECT p.slug, p.name, COUNT(r.id) AS n FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id WHERE p.slug LIKE '%xb%' OR lower(p.name) LIKE '%xbox%' GROUP BY p.id ORDER BY p.slug")) {
+  console.log(`  ${p.slug} (${p.name}): ${p.n} games`);
+  for (const r of all('SELECT r.filename, r.title, r.dat_status FROM roms r JOIN platforms q ON q.id = r.platform_id WHERE q.slug = ? ORDER BY r.id LIMIT 5', p.slug)) console.log(`     file "${r.filename}"  title "${r.title}"  dat=${r.dat_status || 'unchecked'}`);
+}
+console.log('games matched to an Xbox 360 DAT entry, by the platform they are filed under:');
+for (const m of all("SELECT p.slug, COUNT(*) AS n FROM roms r JOIN platforms p ON p.id = r.platform_id JOIN dat_entries e ON e.id = r.dat_entry_id WHERE e.platform_slug = 'xbox360' GROUP BY 1")) console.log(`  ${m.slug}: ${m.n}`);
