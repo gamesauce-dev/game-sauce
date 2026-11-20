@@ -2053,8 +2053,9 @@ function platformOptions({ selected = null, excludeOther = false, flatten = fals
       .map((p) => `<option value="${escAttr(p.slug)}" ${p.slug === selected ? 'selected' : ''}>${esc(p.name)}</option>`)
       .join('');
   }
+  const famOf = (p) => p.family || 'Others';
   const ordered = [...list].sort((a, b) =>
-    sorter(a.family || 'Others', b.family || 'Others') || sorter(a.name, b.name));
+    ((famOf(a) === 'Others') - (famOf(b) === 'Others')) || sorter(famOf(a), famOf(b)) || sorter(a.name, b.name));   // families A to Z with Others last, then the platforms in each A to Z
   const groups = new Map();
   for (const p of ordered) {
     const fam = p.family || 'Others';
@@ -3866,7 +3867,7 @@ async function loadUploadPlatforms() {
   if (sel.options.length > 1) return;
   // No "Detect from extension": platform choice is MANDATORY for Add ROMs.
   sel.innerHTML = '<option value="">— pick a platform —</option>' +
-    platformOptions({ flatten: true });
+    platformOptions();   // grouped by family (a divider and a heading for each), the families and the platforms in each in alphabetical order
 }
 
 async function uploadFiles(files) {
@@ -5327,16 +5328,8 @@ async function loadEmulators() {
         const { items } = await api('/platforms');
         window.__platformsCache = items;
       }
-      const sorter = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
-      const flat = [...window.__platformsCache].sort((a, b) => sorter(a.name, b.name));
-      if (platSel && platSel.options.length <= 1) {
-        platSel.innerHTML = '<option value="">— pick one —</option>' +
-          flat.map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join('');
-      }
-      if (upSel && upSel.options.length <= 1) {
-        upSel.innerHTML = '<option value="auto">Detect from extension</option>' +
-          flat.map((p) => `<option value="${esc(p.slug)}">${esc(p.name)}</option>`).join('');
-      }
+      if (platSel && platSel.options.length <= 1) platSel.innerHTML = '<option value="">— pick one —</option>' + platformOptions();
+      if (upSel && upSel.options.length <= 1) upSel.innerHTML = '<option value="auto">Detect from extension</option>' + platformOptions();
     } catch { /* pickers are a nicety */ }
   }
 
