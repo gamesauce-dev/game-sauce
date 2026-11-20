@@ -170,6 +170,10 @@
 .bs-theme-xbox360 img.bs-bl-lab.logo.sq { display: none; }
 .bs-theme-xbox360 img.bs-bl-lab.logo.sq + .bs-bl-lab.alt { display: block; }
 .bs-theme-xbox360 img.bs-bl-lab.logo.d2, .bs-theme-xbox360 img.bs-bl-lab.logo.d3 { height: .85em; width: 3.4em; }
+/* A logo about twice as wide as it is tall (a stacked lockup such as Xbox Live Arcade): too short to read in the single line of a slim band, so it gets a taller box across the band. */
+.bs-theme-xbox360 img.bs-bl-lab.logo.stk { width: 4.4em; height: 2.1em; }
+.bs-theme-xbox360 img.bs-bl-lab.logo.stk.cur { width: 4.8em; height: 2.3em; }
+.bs-theme-xbox360 img.bs-bl-lab.logo.stk.d2, .bs-theme-xbox360 img.bs-bl-lab.logo.stk.d3 { width: 3.4em; height: 1.65em; }
 
 .bs-theme-xbox360 .bs-bl-l .bs-bl-lab.cur:not(img) { transform: translate(-50%, -50%); }
 
