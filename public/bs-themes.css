@@ -324,3 +324,9 @@
 .bs-theme-wii .bs-media video, .bs-theme-wii .bs-media img { box-shadow: 0 .3em 1em rgba(60, 80, 100, .3); }
 .bs-theme-wii .bs-manpane { background: #f1f4f7; color: #444c54; }
 .bs-theme-wii:has(.bs-game) .bs-hints { display: flex; position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: rgba(255, 255, 255, .85); color: #6b7279; box-shadow: 0 -.1em .5em rgba(60, 80, 100, .15); }
+
+/* Xbox 360, a game's page: no bar along the top (no name, no time, no frame), as in the other looks; the sound button stays in the corner */
+.bs-theme-xbox360:has(.bs-game) .bs-top { position: absolute; top: 0; left: 0; right: auto; margin: 0; padding: .9em 1.3em; min-height: 0; background: none; border: 0; box-shadow: none; z-index: 3; }
+.bs-theme-xbox360:has(.bs-game) .bs-crumb, .bs-theme-xbox360:has(.bs-game) .bs-clock { display: none; }
+.bs-theme-xbox360:has(.bs-game) .bs-menu { padding-top: 3.4em; }
+.bs-theme-xbox360:has(.bs-game) .bs-info { padding-top: 2.4em; }
