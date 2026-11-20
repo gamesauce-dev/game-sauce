@@ -881,6 +881,10 @@ button.result-row:hover { border-color: var(--accent); }
 .badge-dat.bad { background: rgba(248, 113, 113, .18); color: #fca5a5; border-color: rgba(248, 113, 113, .4); }
 .badge-dat.variant { background: rgba(251, 191, 36, .16); color: #fcd34d; border-color: rgba(251, 191, 36, .35); }
 .badge-dat.not-in-dat { background: rgba(148, 163, 184, .14); color: var(--dim); border-color: var(--line-2); }
+/* The case button takes the badge's corner: the badge steps aside while the tile is hovered or focused, and on a touch screen (where the case button is always there) it is not drawn on a tile that has one. */
+.card .badge-dat { transition: opacity .12s; }
+.card:hover .badge-dat, .card:focus-within .badge-dat { opacity: 0; }
+@media (hover: none) { .card:has(.card-casebtn) .badge-dat { display: none; } }
 
 /* ───────────────────────── scan progress ───────────────────────── */
 .scan-progress { margin: 0.7143rem 0 0.2857rem; }
