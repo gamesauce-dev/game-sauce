@@ -40,3 +40,17 @@ for (const slug of ARCADE) {
 }
 const names = all('SELECT set_name FROM dat_sets ORDER BY id LIMIT 6').map((x) => x.set_name);
 if (names.length) console.log('\nthe first sets in the DAT:', names.join(', '));
+
+// Console DATs are matched by name when no checksum finds a game: show what that sees (needs the dat_entries.norm column).
+const cols = all('PRAGMA table_info(dat_entries)').map((c) => c.name);
+console.log('\nname matching: dat_entries.norm column', cols.includes('norm') ? 'present' : 'MISSING (the app has not been updated to the version that matches by name)');
+if (cols.includes('norm')) {
+  console.log('  entries with a name key:', one("SELECT COUNT(*) AS n FROM dat_entries WHERE norm IS NOT NULL AND norm <> ''").n, 'of', one('SELECT COUNT(*) AS n FROM dat_entries').n);
+  for (const d of all("SELECT platform_slug AS s, COUNT(*) AS n FROM dat_entries GROUP BY 1")) console.log(`  DAT entries under platform "${d.s}": ${d.n}`);
+  for (const p of all("SELECT p.slug, COUNT(*) AS n FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE p.slug IN (SELECT DISTINCT platform_slug FROM dat_entries) GROUP BY 1")) {
+    const st = all("SELECT COALESCE(r.dat_status, 'unchecked') AS s, COUNT(*) AS n FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE p.slug = ? GROUP BY 1", p.slug).map((x) => `${x.s}=${x.n}`).join(', ');
+    console.log(`  your "${p.slug}" games: ${p.n} (${st})`);
+    for (const r of all('SELECT r.filename, r.title, r.region, r.dat_status FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE p.slug = ? ORDER BY r.id LIMIT 8', p.slug)) console.log(`     file "${r.filename}"  title "${r.title}"  region ${r.region || '-'}  dat=${r.dat_status || 'unchecked'}`);
+  }
+  console.log('  sample DAT name keys:', all("SELECT norm FROM dat_entries WHERE norm <> '' ORDER BY id LIMIT 6").map((x) => x.norm).join(' | '));
+}
