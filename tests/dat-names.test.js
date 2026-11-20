@@ -22,10 +22,10 @@ after(() => { try { db.close(); } catch { /* shared */ } try { fs.rmSync(TMP, { 
 
 const DAT = `<?xml version="1.0"?>
 <datafile><header><name>Microsoft - Xbox 360</name><description>Redump test</description><version>1</version></header>
-<game name="Halo 3 (USA) (En,Fr)"><rom name="Halo 3 (USA) (En,Fr).iso" size="7000000000" crc="aaaa0001" md5="a1" sha1="aaaa000000000000000000000000000000000001"/></game>
+<game name="Halo 3 (USA) (En,Fr)"><category>Games</category><description>Halo 3 (USA) (En,Fr)</description><rom name="Halo 3 (USA) (En,Fr).iso" size="7000000000" crc="aaaa0001" md5="a1" sha1="aaaa000000000000000000000000000000000001"/></game>
 <game name="Halo 3 (Europe) (En,Fr,De)"><rom name="Halo 3 (Europe) (En,Fr,De).iso" size="7000000000" crc="aaaa0002" md5="a2" sha1="aaaa000000000000000000000000000000000002"/></game>
 <game name="Legend of the Test, The (USA)"><rom name="Legend of the Test, The (USA).iso" size="5000000000" crc="bbbb0001" md5="b1" sha1="bbbb000000000000000000000000000000000001"/></game>
-<game name="Gears of Nothing (USA)"><rom name="Gears of Nothing (USA).iso" size="6000000000" crc="cccc0001" md5="c1" sha1="cccc000000000000000000000000000000000001"/></game>
+<game name="Gears of Nothing (USA)"><category>Games</category><description>Gears of Nothing (USA)</description><rom name="Gears of Nothing (USA).iso" size="6000000000" crc="cccc0001" md5="c1" sha1="cccc000000000000000000000000000000000001"/></game>
 </datafile>`;
 
 const platformId = (slug) => db.prepare('SELECT id FROM platforms WHERE slug = ?').get(slug).id;
@@ -46,6 +46,7 @@ test('a console game no checksum finds is matched by its name, and the report li
   const file = path.join(TMP, 'x360.dat'); fs.writeFileSync(file, DAT);
   const r = await importDat({ filePath: file, name: 'Xbox 360 test' });
   assert.equal(r.platform, 'xbox360'); assert.equal(r.entries, 4);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM dat_entries WHERE title = 'Games'").get().n, 0, 'a <category> is not the name of the game');
   const halo = rom('xbox360', '4D5307E6', 'Halo 3', 'Europe');   // a Games on Demand package: its file name is a hex id
   const zelda = rom('xbox360', 'The Legend of the Test.iso', 'The Legend of the Test');
   const other = rom('ps3', 'Gears of Nothing.iso', 'Gears of Nothing');   // another platform is never matched against this DAT

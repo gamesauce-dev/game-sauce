@@ -87,6 +87,7 @@ export function parseDat(filePath, { onBatch, onSet, batchSize = 2000, header = 
       }
     };
 
+    let inDesc = false;   // only the text of <description> names a game: a Redump DAT also has <category>Games</category> in each one
     parser.on('openTag', (name, attrGetter) => {
       const attrs = attrGetter() || {};
 
@@ -108,7 +109,7 @@ export function parseDat(filePath, { onBatch, onSet, batchSize = 2000, header = 
       }
 
       if ((name === 'description' || name === 'title') && current && !attrs.text) {
-        // <description> may be a child element with text; handled in onText.
+        inDesc = true;   // its text is handled in onText
         return;
       }
 
@@ -139,13 +140,14 @@ export function parseDat(filePath, { onBatch, onSet, batchSize = 2000, header = 
     parser.on('text', (text) => {
       if (inHeader && headerField) {
         header[headerField] = (header[headerField] ? `${header[headerField]}${text}` : text).trim();
-      } else if (current && !current.description) {
+      } else if (current && inDesc && !current.description) {
         const t = text.trim();
         if (t) current.description = t;
       }
     });
 
     parser.on('closeTag', (name) => {
+      if (name === 'description' || name === 'title') inDesc = false;
       if (name === 'header') { inHeader = false; headerField = null; return; }
       if (name === 'game' || name === 'machine') {
         if (current?.name && onSet) onSet({ name: String(current.name).toLowerCase(), title: current.description || current.name, cloneof: current.cloneof ? String(current.cloneof).toLowerCase() : null, status: statusFromFlags(current.flags) });
