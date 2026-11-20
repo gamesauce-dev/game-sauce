@@ -4,6 +4,16 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-20
+
+### Added
+- **A Collection completeness report on the DAT page.** For each DAT (say Xbox 360) a horizontal bar chart shows the games the DAT lists against the games you hold, in four bars: the whole, and the ROM library, the Physical shelf and Digital each on their own. The whole bar is colour coded by where a game is held (green ROM, blue Physical shelf, purple Digital; a game counts under the first that holds it). A game counts once whatever its region, and the report looks across everyone on the server. The DAT cards now say games (have and missing) with the releases count beside them, and Have/want lists one line per game, tagged with the libraries holding it (untick "One line per game, any region" for every release).
+- **A game no checksum finds is matched by its name.** For a console DAT (Redump, No-Intro), a game whose checksum matches nothing, such as an Xbox 360 Games on Demand package or a folder, is matched by its name with the region, language and revision tags taken off, on its own platform, preferring its own region and then USA, Europe and World. It shows as "Matched by name" instead of Verified, since the file itself is not proven. A DAT imported before is indexed for this on the first start; press Rematch.
+
+### Fixed
+- **A Redump DAT called every game "Games".** The importer took the first text inside a game (a `<category>Games</category>`) as its name; it now uses the game's description. **A DAT imported before needs importing again** (remove it on the DAT page first), then Rematch.
+- **The Mac app is signed and notarised** when the Apple certificate secrets are set on the repository (this is the first release built that way), so macOS opens it with no warning.
+
 ## [0.21.0] - 2026-11-20
 
 ### Fixed
