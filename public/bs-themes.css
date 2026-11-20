@@ -287,3 +287,50 @@
 .bs-theme-wii .bs-wii.plat .wi-keys { display: block; }
 .bs-theme-wii .bs-wii.plat .wi-clock { display: none; }
 .bs-theme-wii .wi-round img { position: absolute; inset: .3em; width: calc(100% - .6em); height: calc(100% - .6em); border-radius: 50%; object-fit: cover; display: block; }
+
+/* ── A game's own page in each look (screen 3): the same pieces (the menu, the cover, the facts and the description), dressed for the look ── */
+/* Xbox 360: a glass frame round the cover, and the menu bar lit from the top like the blades */
+.bs-theme-xbox360 .bs-boxcover.has-img img, .bs-theme-xbox360 .bs-boxcover:not(.has-img) { box-shadow: 0 0 0 .1em rgba(255, 255, 255, .8), 0 0 1.6em rgba(255, 255, 255, .3), 0 1em 2.4em rgba(0, 40, 0, .6); }
+.bs-theme-xbox360 .bs-name { text-shadow: 0 .05em .3em rgba(0, 60, 0, .55); }
+.bs-theme-xbox360 .bs-mi { text-shadow: 0 .05em .2em rgba(0, 60, 0, .5); }
+.bs-theme-xbox360 .bs-mi.on { text-shadow: none; }
+
+/* PlayStation 3: no solid bars; light type on the waves, the chosen item brighter with a line of light beside it, and the cover on a shiny floor */
+.bs-theme-ps3 .bs-leftbg { opacity: .38; width: 100%; }
+.bs-theme-ps3 .bs-info { background: linear-gradient(90deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, 0) 70%); border-left: 1px solid rgba(255, 255, 255, .22); }
+.bs-theme-ps3 .bs-menu { padding-top: 3.4em; }
+.bs-theme-ps3 .bs-mi { color: rgba(255, 255, 255, .72); font-weight: 300; letter-spacing: .03em; font-size: 1.12em; }
+.bs-theme-ps3 .bs-mi.on { color: #fff; font-weight: 400; text-shadow: 0 0 .7em rgba(255, 255, 255, .65); }
+.bs-theme-ps3 .bs-sel { border-radius: 0; background: linear-gradient(90deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, 0)); border-left: .18em solid #fff; box-shadow: 0 0 1.1em rgba(255, 255, 255, .3); }
+.bs-theme-ps3 .bs-boxcover.has-img img { box-shadow: 0 0 0 1px rgba(255, 255, 255, .4), 0 .8em 2.2em rgba(0, 0, 0, .55); }
+.bs-theme-ps3 .bs-name { font-weight: 300; letter-spacing: .01em; text-shadow: 0 0 .8em rgba(255, 255, 255, .25); }
+.bs-theme-ps3 .bs-genre { color: rgba(255, 255, 255, .7); font-weight: 400; letter-spacing: .08em; text-transform: uppercase; font-size: .9em; }
+.bs-theme-ps3 .bs-factline { color: rgba(255, 255, 255, .72); }
+.bs-theme-ps3 .bs-factline span:first-child { color: #fff; font-weight: 400; }
+.bs-theme-ps3 .bs-desc { color: rgba(255, 255, 255, .82); }
+.bs-theme-ps3 .bs-manpane { background: rgba(8, 14, 40, .94); }
+
+/* Wii: a pale page, white rounded buttons that glow blue when chosen, and a white card for the facts */
+.bs-theme-wii .bs-leftbg { display: none; }
+.bs-theme-wii .bs-menu { padding: 3.4em 1.2em 0 1.4em; gap: .55em; }
+.bs-theme-wii .bs-box { padding-bottom: 4.6em; }
+.bs-theme-wii .bs-sel { display: none; }
+.bs-theme-wii .bs-mi { border-radius: 2em; padding: .6em 1.5em; color: #6b7279; font-weight: 600; background: linear-gradient(180deg, #fff, #eef2f5); box-shadow: inset 0 0 0 .12em #d5dce2, 0 .12em .4em rgba(60, 80, 100, .15); transition: box-shadow .15s, color .15s; }
+.bs-theme-wii .bs-mi.on { color: #1c86c8; box-shadow: inset 0 0 0 .16em #35a7ee, 0 0 0 .22em rgba(53, 167, 238, .3), 0 .15em .6em rgba(53, 167, 238, .35); }
+.bs-theme-wii .bs-mi.fav-on { color: #d97706; }
+.bs-theme-wii .bs-boxcover.has-img img, .bs-theme-wii .bs-boxcover:not(.has-img) { box-shadow: 0 .5em 1.6em rgba(60, 80, 100, .35); border-radius: .3em; }
+.bs-theme-wii .bs-info { margin: 3em 2em 4.2em .5em; padding: 1.6em 2em 1.2em; background: linear-gradient(180deg, #fff, #f1f4f7); border-radius: 1.4em; box-shadow: inset 0 0 0 .12em #d5dce2, 0 .2em .8em rgba(60, 80, 100, .18); }
+.bs-theme-wii .bs-genre { color: #2b9bd8; }
+.bs-theme-wii .bs-name { color: #444c54; font-weight: 700; }
+.bs-theme-wii .bs-factline { color: #6b7279; }
+.bs-theme-wii .bs-factline span:first-child { color: #2b9bd8; }
+.bs-theme-wii .bs-desc { color: #596068; }
+.bs-theme-wii .bs-media video, .bs-theme-wii .bs-media img { box-shadow: 0 .3em 1em rgba(60, 80, 100, .3); }
+.bs-theme-wii .bs-manpane { background: #f1f4f7; color: #444c54; }
+.bs-theme-wii:has(.bs-game) .bs-hints { display: flex; position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: rgba(255, 255, 255, .85); color: #6b7279; box-shadow: 0 -.1em .5em rgba(60, 80, 100, .15); }
+
+/* Xbox 360, a game's page: no bar along the top (no name, no time, no frame), as in the other looks; the sound button stays in the corner */
+.bs-theme-xbox360:has(.bs-game) .bs-top { position: absolute; top: 0; left: 0; right: auto; margin: 0; padding: .9em 1.3em; min-height: 0; background: none; border: 0; box-shadow: none; z-index: 3; }
+.bs-theme-xbox360:has(.bs-game) .bs-crumb, .bs-theme-xbox360:has(.bs-game) .bs-clock { display: none; }
+.bs-theme-xbox360:has(.bs-game) .bs-menu { padding-top: 3.4em; }
+.bs-theme-xbox360:has(.bs-game) .bs-info { padding-top: 2.4em; }

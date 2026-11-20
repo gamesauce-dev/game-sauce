@@ -612,7 +612,7 @@ export function openBigScreen(host) {
   // ── screen 3: one game ──
   const drawGame = () => {
     const g = game(); if (!g) return;
-    useTheme(g.platform); root.classList.remove('bs-theme-ps3', 'bs-theme-wii'); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
+    useTheme(g.platform); st.screen = 'game'; st.mi = 0; st.vPaused = false; $('#bs-crumb').textContent = st.src?.kind === 'platform' ? (st.src.name || '') : `${st.src?.name || ''} · ${g.platform_name || ''}`; paintHints();
     const art = gameBackdrop(g); setBackdrop(art || null, gameAccent(g), Boolean(art));
     const shot = g.media?.screenshot ? `/api/roms/${g.id}/media/screenshot` : '';
     const facts = [g.release_year && String(g.release_year), g.players && `${g.players} player${String(g.players) === '1' ? '' : 's'}`, g.rating && `Rated ${g.rating}`, g.developer, g.publisher && g.publisher !== g.developer ? g.publisher : '', g.region].filter(Boolean);

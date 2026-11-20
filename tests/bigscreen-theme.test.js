@@ -48,12 +48,12 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(html.includes('/bs-themes.css'));
   // the look is for its own consoles only: it is put on and taken off as the screens change
   assert.ok(js.includes("THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries'])"));
-  for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); root.classList.remove('bs-theme-ps3', 'bs-theme-wii'); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
+  for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
   assert.ok(!js.includes("root.classList.add('bs-theme-' + th); }"), 'no theme class is put on when Big Screen opens');
   // without a theme nothing changes: each selector in the theme file starts from the theme's class
   const selectors = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((b) => b.split('{')[0].trim()).filter(Boolean).flatMap((s) => s.split(',').map((x) => x.trim())).filter((x) => !/^@|^(from|to)$/.test(x));
   assert.ok(selectors.length > 20);
-  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-(xbox360|ps3|wii)([ .]|$)/, 'scoped: ' + s);
+  for (const s of selectors) assert.match(s, /^\.bs(\.bs)?-theme-(xbox360|ps3|wii)([ .:]|$)/, 'scoped: ' + s);
   // a logo set to have a light backing (or every logo, if the person asked) gets a class the look draws a plate with; Favourites and Collections keep their colours
   assert.ok(js.includes("plated = (x) => (x.plate || x.logo_plate || host.plateAll?.()") && js.includes('family_logo_plate') && app.includes("plateAll: () => state.prefs?.chip_plate === 'on'"));
   assert.ok(css.includes('img.bs-plate') && css.includes('.bs-ptile.bs-t-fav') && css.includes('.bs-ptile.bs-t-colls'));
@@ -86,7 +86,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
 test('the PlayStation 3 look: a cross bar of platforms with the games in a column, drawn waves, a month colour', () => {
   const js = read('public/bigscreen.js'), css = read('public/bs-themes.css'), app = read('public/app.js'), html = read('public/index.html');
   assert.ok(js.includes("ps3: new Set(['ps1', 'ps2', 'ps3', 'psp'])"), 'PS1, PS2, PS3 and PSP');
-  assert.ok(js.includes('const xmbShell') && js.includes('const placeXmb') && js.includes("if (xmb()) { st.els = new Map();") && js.includes("root.classList.remove('bs-theme-ps3', 'bs-theme-wii'); st.screen = 'game'"), 'the games screen is the cross bar, the game page keeps the standard look');
+  assert.ok(js.includes('const xmbShell') && js.includes('const placeXmb') && js.includes("if (xmb()) { st.els = new Map();") && js.includes("useTheme(g.platform); st.screen = 'game'"), 'the games screen is the cross bar, and the game page is dressed in the look too (its own rules in bs-themes.css)');
   assert.ok(js.includes("const XM_MONTH") && js.includes("host.xmbColour?.()") && js.includes('createLinearGradient') && js.includes('prefers-reduced-motion'), 'waves, specks and a colour that follows the month');
   assert.ok(css.includes('.bs-theme-ps3 .xm-cat') && css.includes('.bs-theme-ps3 .xm-item.on') && css.includes('.bs-theme-ps3 .xm-clock'));
   assert.ok(app.includes("['ps3', 'PlayStation 3'") && app.includes("xmbColour: () => state.prefs?.bs_xmb_colour") && html.includes('id="bsxmb-picker"'));
