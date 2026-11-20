@@ -229,6 +229,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          note="**Mac:** if macOS says game-sauce can't be opened or is damaged, it is not a bad download: the app is not signed with an Apple developer certificate yet. Run \`xattr -dr com.apple.quarantine /Applications/game-sauce.app\` in Terminal once (or use System Settings, Privacy & Security, Open Anyway), then open it. Details in the README."
+          note="**Mac:** the .dmg installer is signed and notarised by Apple, so it opens with only the usual \"downloaded from the internet\" question. The portable .tar.gz is not: if macOS refuses to open **Start game-sauce.command**, run \`xattr -dr com.apple.quarantine\` on the unpacked folder once. Details in the README."
           gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --notes "$note" --generate-notes --notes-start-tag "$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)" \
             || gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --notes "$note" --generate-notes
