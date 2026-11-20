@@ -521,6 +521,8 @@ fn main() {
             let main = win
                 .title("game-sauce")
                 .initialization_script(ZOOM_SCRIPT)
+                // Without this the window takes a dropped file for itself (the pointer shows a plus) and the page never gets it, so dropping ROMs on Add ROMs did nothing.
+                .disable_drag_drop_handler()
                 .on_navigation(move |url| !handle_app_link(&nav_handle, url))
                 .inner_size(1320.0, 860.0)
                 .min_inner_size(820.0, 560.0)
