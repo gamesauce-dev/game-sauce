@@ -39,15 +39,21 @@ export function normTitle(s) {
   t = t.replace(/&/g, ' and ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   return t;
 }
-if (!new Set(db.prepare('PRAGMA table_info(dat_entries)').all().map((c) => c.name)).has('norm')) db.exec('ALTER TABLE dat_entries ADD COLUMN norm TEXT');
-db.exec('CREATE INDEX IF NOT EXISTS idx_dat_norm ON dat_entries(platform_slug, norm)');
-{
+let normReady = false;
+/** The name key on dat_entries (and its index), made once the table exists: the table is created by migrations, which may run after this file is first imported. */
+function ensureNorm() {
+  if (normReady) return;
+  if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dat_entries'").get()) return;
+  if (!new Set(db.prepare('PRAGMA table_info(dat_entries)').all().map((c) => c.name)).has('norm')) db.exec('ALTER TABLE dat_entries ADD COLUMN norm TEXT');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_dat_norm ON dat_entries(platform_slug, norm)');
   const rows = db.prepare('SELECT id, title FROM dat_entries WHERE norm IS NULL').all();   // entries imported before names were matched
   if (rows.length) {
     const up = db.prepare('UPDATE dat_entries SET norm = ? WHERE id = ?');
     db.transaction(() => { for (const r of rows) up.run(normTitle(r.title), r.id); })();
   }
+  normReady = true;
 }
+ensureNorm();
 
 /* ─────────────────────────── import ─────────────────────────── */
 
@@ -124,6 +130,7 @@ export function guessPlatform({ systemName = '', fileName = '' }, explicit = nul
 
 /** Import a DAT file into the database. Returns a summary. */
 export async function importDat({ filePath, platform = null, name = null, userId = null }) {
+  ensureNorm();
   // The platform catalogue must exist before a DAT can point at one.
   seedPlatforms(db);
   if (!fs.existsSync(filePath)) {
@@ -248,6 +255,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
  * enough library). Returns the best entry or null.
  */
 export function lookupDat({ sha1, crc32, size, platform, name = null, title = null, region = null }) {
+  ensureNorm();
   if (sha1) {
     const row = db.prepare(`
       SELECT * FROM dat_entries WHERE sha1 = ?
@@ -394,6 +402,7 @@ export function heldElsewhere(platformSlug) {
 
 /** What a console DAT lists, game by game (a game once, whatever its region), and how each one is held: as a ROM, else on a disc, else digitally, else not at all. */
 export function datHolding(datfileId, platformSlug) {
+  ensureNorm();
   const names = new Map(db.prepare("SELECT norm, MIN(title) AS title, COUNT(*) AS releases FROM dat_entries WHERE datfile_id = ? AND norm <> '' GROUP BY norm").all(datfileId).map((r) => [r.norm, r]));
   const rom = new Set(db.prepare("SELECT DISTINCT x.norm AS norm FROM dat_entries x JOIN roms r ON r.dat_entry_id = x.id WHERE x.datfile_id = ? AND x.norm <> ''").all(datfileId).map((r) => r.norm));
   const extra = heldElsewhere(platformSlug);
@@ -406,6 +415,7 @@ export function datHolding(datfileId, platformSlug) {
 }
 
 export function listDatfiles() {
+  ensureNorm();
   const rows = listDatfileRows();
   for (const d of rows) {
     if (d.sets > 0) { d.games_rom = d.games_have; d.games_physical = 0; d.games_digital = 0; d.in_rom = d.games_have; d.in_physical = 0; d.in_digital = 0; continue; }
