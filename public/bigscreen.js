@@ -372,7 +372,7 @@ export function openBigScreen(host) {
       : `<span class="bs-bl-lab d${d}" role="button" data-bi="${b.i}" style="${left ? 'left' : 'right'}:${stripCentre(d, 260)}%">${name}</span>`;
     if (!b.p.logo_v || b.p.logo_text) return text;
     // a logo that is nearly square would not fit a slim band when turned, so it gives way to the name (the name waits beside it, hidden)
-    const logo = `<img class="bs-bl-lab logo${b.cur ? ' cur' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" onload="if (this.naturalWidth < this.naturalHeight * 2.6) this.classList.add('sq')" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 500 : 260)}%${left ? '' : ')'}" />`;
+    const logo = `<img class="bs-bl-lab logo${b.cur ? ' cur' : ` d${d}`}" ${b.cur ? '' : `role="button" data-bi="${b.i}" `}src="/api/platforms/${encodeURIComponent(b.p.slug)}/logo?v=${b.p.logo_v}" alt="${name}" draggable="false" onload="var r = this.naturalWidth / this.naturalHeight; if (r < 1.6) this.classList.add('sq'); else if (r < 2.6) this.classList.add('stk')" style="left:${left ? '' : 'calc(100% - '}${stripCentre(d, b.cur ? 500 : 260)}%${left ? '' : ')'}" />`;
     return logo + text.replace('class="bs-bl-lab', 'class="bs-bl-lab alt');
   }).join('');
   const bladesShell = () => {
