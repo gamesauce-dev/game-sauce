@@ -1927,9 +1927,24 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 
 /* DAT completeness: one horizontal bar per DAT, games held against games listed */
 .hbars { display: grid; gap: 8px; }
-.hbar { display: grid; grid-template-columns: 5.5rem 1fr auto; gap: 10px; align-items: center; font-size: 0.9rem; }
+.hbar { display: grid; grid-template-columns: 5.5rem 1fr 9.5rem; gap: 10px; align-items: center; font-size: 0.9rem; }
 .hbar-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hbar-track { height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; }
-.hbar-track i { display: block; height: 100%; background: var(--good); border-radius: 7px; min-width: 2px; }
+.hbar-track { display: flex; }
+.hbar-track i { display: block; height: 100%; background: var(--good); }
+.hbar-track i.k-phys, .hbar-legend b.k-phys { background: #38bdf8; }
+.hbar-track i.k-dig, .hbar-legend b.k-dig { background: #a78bfa; }
+.hbar-legend b.k-rom { background: var(--good); }
+.hbar-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: 0.8rem; color: var(--muted, #8b93a7); }
+.hbar-legend b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
+.hbar-num { text-align: right; white-space: nowrap; }
 .hbar-num small { color: var(--muted, #8b93a7); margin-left: 4px; }
 @media (max-width: 560px) { .hbar { grid-template-columns: 4rem 1fr; } .hbar-num { grid-column: 1 / -1; } }
+
+.hbar-group { margin-bottom: 14px; }
+.hbar-title { font-weight: 700; margin-bottom: 4px; }
+.hbar-group .hbar { margin: 3px 0; }
+.hbar-group .hbar:first-of-type .hbar-track { height: 18px; }
+.lib-chip { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 0.72rem; color: #0b1020; background: var(--good); }
+.lib-chip.k-phys { background: #38bdf8; }
+.lib-chip.k-dig { background: #a78bfa; }

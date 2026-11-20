@@ -5,6 +5,7 @@ import { describeDat, looksLikeDat, parseDat } from './lib/dat.js';
 import { PLATFORM_BY_SLUG, PLATFORMS, seedPlatforms } from './lib/platforms.js';
 import { parseFilename, sortTitle } from './lib/metadata.js';
 import { ARCADE_ROMSET } from './lib/mamenames.js';
+import { libSlug } from './lib/consoles.js';
 
 /* ─────────────────────────── schema ─────────────────────────── */
 
@@ -379,7 +380,43 @@ export function rematchAll({ platform = null, force = false } = {}) {
 
 /* ─────────────────────────── queries ─────────────────────────── */
 
+/**
+ * The games of a platform held other than as a ROM: on a physical disc or cartridge (the Physical shelf) or as a digital purchase (Digital), by anyone on the server.
+ * Keyed by the game's name key (normTitle), so they are found in a DAT the way a ROM matched by name is.
+ */
+export function heldElsewhere(platformSlug) {
+  const out = new Map();
+  const put = (name, kind) => { const k = normTitle(name); if (!k) return; const e = out.get(k) || {}; e[kind] = true; out.set(k, e); };
+  for (const r of db.prepare('SELECT title FROM physical_games WHERE platform = ?').all(platformSlug)) put(r.title, 'physical');
+  for (const r of db.prepare('SELECT DISTINCT name, platform FROM digital_games WHERE platform IS NOT NULL').all()) if (libSlug(r.platform) === platformSlug) put(r.name, 'digital');
+  return out;
+}
+
+/** What a console DAT lists, game by game (a game once, whatever its region), and how each one is held: as a ROM, else on a disc, else digitally, else not at all. */
+export function datHolding(datfileId, platformSlug) {
+  const names = new Map(db.prepare("SELECT norm, MIN(title) AS title, COUNT(*) AS releases FROM dat_entries WHERE datfile_id = ? AND norm <> '' GROUP BY norm").all(datfileId).map((r) => [r.norm, r]));
+  const rom = new Set(db.prepare("SELECT DISTINCT x.norm AS norm FROM dat_entries x JOIN roms r ON r.dat_entry_id = x.id WHERE x.datfile_id = ? AND x.norm <> ''").all(datfileId).map((r) => r.norm));
+  const extra = heldElsewhere(platformSlug);
+  const heldAs = (norm) => (rom.has(norm) ? 'rom' : extra.get(norm)?.physical ? 'physical' : extra.get(norm)?.digital ? 'digital' : null);
+  const libsOf = (norm) => [rom.has(norm) && 'rom', extra.get(norm)?.physical && 'physical', extra.get(norm)?.digital && 'digital'].filter(Boolean);
+  const count = { rom: 0, physical: 0, digital: 0 };   // each game under the first library that holds it: the sections of the whole
+  const inLib = { rom: 0, physical: 0, digital: 0 };   // each game under every library that holds it: the three libraries on their own
+  for (const norm of names.keys()) { const h = heldAs(norm); if (h) count[h]++; for (const l of libsOf(norm)) inLib[l]++; }
+  return { names, heldAs, libsOf, count, inLib, games: names.size, games_have: count.rom + count.physical + count.digital };
+}
+
 export function listDatfiles() {
+  const rows = listDatfileRows();
+  for (const d of rows) {
+    if (d.sets > 0) { d.games_rom = d.games_have; d.games_physical = 0; d.games_digital = 0; d.in_rom = d.games_have; d.in_physical = 0; d.in_digital = 0; continue; }
+    const h = datHolding(d.id, d.platform_slug);
+    d.games = h.games; d.games_have = h.games_have; d.games_rom = h.count.rom; d.games_physical = h.count.physical; d.games_digital = h.count.digital;
+    d.in_rom = h.inLib.rom; d.in_physical = h.inLib.physical; d.in_digital = h.inLib.digital;
+  }
+  return rows;
+}
+
+function listDatfileRows() {
   return db.prepare(`
     SELECT d.*, p.name AS platform_name, p.short_name AS platform_short,
            (SELECT COUNT(*) FROM dat_sets s WHERE s.datfile_id = d.id) AS sets,

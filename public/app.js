@@ -2813,15 +2813,19 @@ async function loadDats() {
 
   // Completeness: for each DAT, the games it lists (the total possible) against the games held (achieved), a game counting once whatever its region.
   const bars = data.items.filter((d) => d.games > 0).sort((a, b) => (b.games_have / b.games) - (a.games_have / a.games));
+  const row = (label, segs, text) => `<div class="hbar">
+      <span class="hbar-name">${label}</span>
+      <span class="hbar-track">${segs.map(([k, n, tot]) => `<i class="${k}" style="width:${(n / tot) * 100}%"></i>`).join('')}</span>
+      <span class="hbar-num">${text}</span>
+    </div>`;
+  const num = (n, tot) => `<b>${n.toLocaleString()}</b> of ${tot.toLocaleString()} <small>${tot ? Math.round((n / tot) * 1000) / 10 : 0}%</small>`;
   $('#dat-chart').innerHTML = bars.length ? `<h3 style="margin:14px 0 8px">Collection completeness</h3>
-    <div class="hbars">${bars.map((d) => {
-      const pct = d.games ? Math.round((d.games_have / d.games) * 1000) / 10 : 0;
-      return `<div class="hbar" title="${esc(d.name)}: ${d.games_have} of ${d.games} games">
-        <span class="hbar-name">${esc(d.platform_short || d.name)}</span>
-        <span class="hbar-track"><i style="width:${pct}%"></i></span>
-        <span class="hbar-num"><b>${d.games_have.toLocaleString()}</b> of ${d.games.toLocaleString()} <small>${pct}%</small></span>
-      </div>`;
-    }).join('')}</div>` : '';
+    ${bars.map((d) => `<div class="hbar-group" title="${esc(d.name)}">
+      <div class="hbar-title">${esc(d.name)}</div>
+      ${row('Whole', [['k-rom', d.games_rom, d.games], ['k-phys', d.games_physical, d.games], ['k-dig', d.games_digital, d.games]], num(d.games_have, d.games))}
+      ${d.sets > 0 ? '' : row('ROMs', [['k-rom', d.in_rom, d.games]], num(d.in_rom, d.games)) + row('Physical', [['k-phys', d.in_physical, d.games]], num(d.in_physical, d.games)) + row('Digital', [['k-dig', d.in_digital, d.games]], num(d.in_digital, d.games))}
+    </div>`).join('')}
+    <div class="hbar-legend"><span><b class="k-rom"></b>ROM library</span><span><b class="k-phys"></b>Physical shelf</span><span><b class="k-dig"></b>Digital</span><span>The whole bar counts a game under the first of these that holds it. A game counts once whatever its region, across everyone on this server.</span></div>` : '';
 
   $('#dat-list').innerHTML = data.items.length ? data.items.map((d) => {
     const have = d.roms_matched || 0;
@@ -2841,6 +2845,7 @@ async function loadDats() {
         ${d.games > 0 && !d.sets ? `<span><b>${d.games.toLocaleString()}</b> games</span>
         <span><b style="color:var(--good)">${d.games_have.toLocaleString()}</b> have</span>
         <span><b style="color:var(--warn)">${(d.games - d.games_have).toLocaleString()}</b> missing</span>
+        ${d.games_physical || d.games_digital ? `<span class="note">${d.games_rom.toLocaleString()} ROM${d.games_physical ? `, ${d.games_physical.toLocaleString()} on the shelf` : ''}${d.games_digital ? `, ${d.games_digital.toLocaleString()} digital` : ''}</span>` : ''}
         <span class="note">${d.entries.toLocaleString()} releases</span>` : `<span><b>${d.entries.toLocaleString()}</b> entries</span>
         <span><b style="color:var(--good)">${have.toLocaleString()}</b> have</span>
         <span><b style="color:var(--warn)">${want.toLocaleString()}</b> missing</span>`}
@@ -2918,13 +2923,13 @@ async function loadHaveWant(reset = false) {
         : 'Everything this DAT lists, flagged by whether you hold it.');
 
   if (data.group === 'game') {
-    $('#hw-summary').textContent = `${data.games.toLocaleString()} games in DAT · ${data.games_have.toLocaleString()} have · ${(data.games - data.games_have).toLocaleString()} missing. A game counts once whatever its region, and is held if any release of it matched a game in your library.`;
+    $('#hw-summary').textContent = `${data.games.toLocaleString()} games in DAT · ${data.games_have.toLocaleString()} have · ${(data.games - data.games_have).toLocaleString()} missing. A game counts once whatever its region, and is held as a ROM, on the Physical shelf or in Digital (anyone on this server).`;
   }
   const items = data.items.map((e) => `
     <div class="result-row ${e.have ? 'ok' : 'err'}">
       <span class="status"></span>
       <span class="name">${esc(e.title)}${e.releases > 1 ? ` <span class="note">(${e.releases} releases)</span>` : ''}${e.rom_name && e.rom_name !== e.title ? ` <span class="note">(${esc(e.rom_name)})</span>` : ''}</span>
-      <span class="note">${e.have ? 'have' : 'missing'}</span>
+      <span class="note">${e.have ? (e.libs || ['rom']).map((l) => `<span class="lib-chip k-${l === 'rom' ? 'rom' : l === 'physical' ? 'phys' : 'dig'}">${l === 'rom' ? 'ROM' : l === 'physical' ? 'Physical' : 'Digital'}</span>`).join(' ') : 'missing'}</span>
     </div>
   `).join('');
 

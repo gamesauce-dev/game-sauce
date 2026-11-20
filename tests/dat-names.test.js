@@ -61,12 +61,18 @@ test('a console game no checksum finds is matched by its name, and the report li
   const srv = app.listen(0); const port = srv.address().port;
   const card = listDatfiles()[0];
   assert.equal(card.games, 3); assert.equal(card.games_have, 2); assert.equal(card.entries, 4, 'the card can say games as well as releases');
+  // a game held only on the Physical shelf, and another only in Digital, count too: the report looks across the whole platform
+  const uid = Number(db.prepare("INSERT INTO users (username, password_hash, role) VALUES ('shelf', 'x', 'user')").run().lastInsertRowid);
+  db.prepare("INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key) VALUES (?, 'xbox360', 'Gears of Nothing', 'gears of nothing', 'gon')").run(uid);
+  db.prepare("INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key) VALUES (?, 'ps3', 'Legend of Nothing', 'legend of nothing', 'lon')").run(uid);
+  const withShelf = listDatfiles()[0];
+  assert.equal(withShelf.games_have, 3); assert.equal(withShelf.games_rom, 2); assert.equal(withShelf.games_physical, 1, 'Gears of Nothing is on the shelf');
   const id = card.id;
   try {
     const all = await (await fetch(`http://localhost:${port}/api/dats/${id}/have-want?group=game&want=all`)).json();
-    assert.equal(all.games, 3, 'Halo 3 is one game though two regions are listed'); assert.equal(all.games_have, 2);
-    assert.deepEqual(all.items.map((i) => `${i.title}:${i.have ? 'have' : 'missing'}`), ['Gears of Nothing:missing', 'Halo 3:have', 'Legend of the Test, The:have']);
+    assert.equal(all.games, 3, 'Halo 3 is one game though two regions are listed'); assert.equal(all.games_have, 3, 'two as ROMs, one on the shelf');
+    assert.deepEqual(all.items.map((i) => `${i.title}:${i.have ? 'have' : 'missing'}`), ['Gears of Nothing:have', 'Halo 3:have', 'Legend of the Test, The:have']);
     const missing = await (await fetch(`http://localhost:${port}/api/dats/${id}/have-want?group=game&want=missing`)).json();
-    assert.deepEqual(missing.items.map((i) => i.title), ['Gears of Nothing']);
+    assert.deepEqual(missing.items, [], 'nothing is missing once the shelf counts');
   } finally { srv.close(); }
 });

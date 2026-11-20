@@ -3,7 +3,7 @@ import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  datCoverage, deleteDatfile, importDat, listDatfiles, rematchAll,
+  datCoverage, datHolding, deleteDatfile, importDat, listDatfiles, rematchAll,
   SUPPORTED_DAT_PLATFORMS
 } from '../dats.js';
 import db from '../db.js';
@@ -154,21 +154,17 @@ router.get('/:id/have-want', (req, res) => {
     return res.json({ datfile, want, total, limit, offset, items });
   }
 
-  // One line per game, whatever the region: "Halo 3 (USA)", "Halo 3 (Europe)" and "Halo 3 (Japan)" are one game, held if any of them is.
+  // One line per game, whatever the region: "Halo 3 (USA)", "Halo 3 (Europe)" and "Halo 3 (Japan)" are one game. It is held if a ROM matched any of them, or
+  // the same game is on the Physical shelf or in Digital (by anyone on the server), so the report looks across the whole platform, not only the ROMs.
   if (String(req.query.group || '') === 'game') {
     const baseTitle = (t) => String(t).replace(/\s*[(\[][^)\]]*[)\]]/g, '').trim() || t;
-    const w = ['e.datfile_id = @datfile', "e.norm IS NOT NULL AND e.norm <> ''"], p = { datfile: id };
-    const haveNorms = 'e.norm IN (SELECT x.norm FROM dat_entries x JOIN roms r ON r.dat_entry_id = x.id WHERE x.datfile_id = @datfile)';
-    const games = db.prepare("SELECT COUNT(DISTINCT norm) AS n FROM dat_entries WHERE datfile_id = ? AND norm <> ''").get(id).n;
-    const gamesHave = db.prepare("SELECT COUNT(DISTINCT x.norm) AS n FROM dat_entries x JOIN roms r ON r.dat_entry_id = x.id WHERE x.datfile_id = ? AND x.norm <> ''").get(id).n;
-    if (want === 'missing') w.push('NOT ' + haveNorms); else if (want === 'have') w.push(haveNorms);
-    if (q) { w.push('instr(lower(e.title), lower(@q)) > 0'); p.q = q; }
-    const total = db.prepare(`SELECT COUNT(DISTINCT e.norm) AS n FROM dat_entries e WHERE ${w.join(' AND ')}`).get(p).n;
-    const items = db.prepare(`
-      SELECT MIN(e.id) AS id, MIN(e.title) AS title, e.norm, COUNT(*) AS releases, ${haveNorms} AS have
-      FROM dat_entries e WHERE ${w.join(' AND ')} GROUP BY e.norm ORDER BY e.norm LIMIT ${limit} OFFSET ${offset}
-    `).all(p).map((e) => ({ id: e.id, title: baseTitle(e.title), rom_name: null, releases: e.releases, have: Boolean(e.have) }));
-    return res.json({ datfile, want, group: 'game', games, games_have: gamesHave, total, limit, offset, items });
+    const h = datHolding(id, datfile.platform_slug);
+    const ql = q.toLowerCase();
+    let list = [...h.names.entries()].filter(([, e]) => !ql || e.title.toLowerCase().includes(ql)).sort((x, y) => (x[0] < y[0] ? -1 : 1))
+      .map(([norm, e]) => ({ id: null, title: baseTitle(e.title), rom_name: null, releases: e.releases, held: h.heldAs(norm), libs: h.libsOf(norm) }));
+    list = list.map((e) => ({ ...e, have: Boolean(e.held) }));
+    if (want === 'missing') list = list.filter((e) => !e.have); else if (want === 'have') list = list.filter((e) => e.have);
+    return res.json({ datfile, want, group: 'game', games: h.games, games_have: h.games_have, held: h.count, in_libs: h.inLib, total: list.length, limit, offset, items: list.slice(offset, offset + limit) });
   }
 
   const where = ['e.datfile_id = @datfile'];
