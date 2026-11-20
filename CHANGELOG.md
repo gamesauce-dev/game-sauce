@@ -4,6 +4,14 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-11-20
+
+### Fixed
+- **Dropping ROMs on Add ROMs works in the desktop app.** The app's window took a dropped file for itself (the pointer showed a plus) and never passed it to the page, so nothing was added; Browse worked. The window now leaves drops to the page (checked on a Mac; Windows and Linux use the same setting).
+
+### Changed
+- **Every platform picker has one order.** Add ROMs, Sources, the emulator vault, the DAT page, Export, Covers & platform ids, CSV tools, Duplicate finder, Clear covers, Home search, Identify, and the Physical and Digital type-to-find lists now show a heading and divider for each family, the families A to Z with Others last, and the platforms in each family A to Z.
+
 ## [0.22.0] - 2026-11-20
 
 ### Added
