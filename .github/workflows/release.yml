@@ -102,6 +102,20 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then
             if [ -n "$GS_APPLE_CERTIFICATE" ] && [ -n "$GS_APPLE_SIGNING_IDENTITY" ]; then
               export APPLE_CERTIFICATE="$GS_APPLE_CERTIFICATE" APPLE_CERTIFICATE_PASSWORD="$GS_APPLE_CERTIFICATE_PASSWORD" APPLE_SIGNING_IDENTITY="$GS_APPLE_SIGNING_IDENTITY"
+              # Tauri signs the app's own program, but Apple's notary also wants every native file inside it signed with the same certificate and a secure timestamp
+              # (better-sqlite3's .node file is one), so sign those first, with a temporary keychain that holds the certificate.
+              KC="$RUNNER_TEMP/gs-sign.keychain-db"; KCPW="$(uuidgen)"
+              echo "$GS_APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/gs-cert.p12"
+              security create-keychain -p "$KCPW" "$KC"
+              security set-keychain-settings -lut 21600 "$KC"
+              security unlock-keychain -p "$KCPW" "$KC"
+              security import "$RUNNER_TEMP/gs-cert.p12" -k "$KC" -P "$GS_APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+              security set-key-partition-list -S apple-tool:,apple: -k "$KCPW" "$KC" > /dev/null
+              security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+              rm -f "$RUNNER_TEMP/gs-cert.p12"
+              find server-stage/server/app -name '*.node' | while read -r f; do
+                if file "$f" | grep -q Mach-O; then echo "Mac: signing $f"; codesign --force --timestamp --options runtime --sign "$GS_APPLE_SIGNING_IDENTITY" "$f"; fi
+              done
               if [ -n "$GS_APPLE_ID" ] && [ -n "$GS_APPLE_PASSWORD" ] && [ -n "$GS_APPLE_TEAM_ID" ]; then
                 export APPLE_ID="$GS_APPLE_ID" APPLE_PASSWORD="$GS_APPLE_PASSWORD" APPLE_TEAM_ID="$GS_APPLE_TEAM_ID"
                 echo "Mac: signing with the Developer ID and notarising"
