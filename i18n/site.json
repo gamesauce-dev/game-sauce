@@ -2536,5 +2536,23 @@
   "de": "Alles sichern und bei Bedarf einfach wiederherstellen.",
   "ja": "すべてをバックアップし、必要なときにかんたんに復元できます。",
   "it": "Fai il backup di tutto e ripristina con semplicità quando serve."
+ },
+ "Import game assets": {
+  "fr": "Importez des ressources de jeu",
+  "zh": "导入游戏素材",
+  "es": "Importa recursos de juego",
+  "pt": "Importe recursos de jogos",
+  "de": "Spiel-Assets importieren",
+  "ja": "ゲーム素材のインポート",
+  "it": "Importa risorse di gioco"
+ },
+ "Import game assets from folders and zip files.": {
+  "fr": "Importez des ressources de jeu depuis des dossiers et des fichiers zip.",
+  "zh": "从文件夹和 zip 压缩包导入游戏素材。",
+  "es": "Importa recursos de juego desde carpetas y archivos zip.",
+  "pt": "Importe recursos de jogos a partir de pastas e arquivos zip.",
+  "de": "Importiere Spiel-Assets aus Ordnern und Zip-Dateien.",
+  "ja": "フォルダーやzipファイルからゲーム素材を取り込めます。",
+  "it": "Importa risorse di gioco da cartelle e file zip."
  }
 }
