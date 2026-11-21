@@ -1133,14 +1133,14 @@
   "ja": "デジタルライブラリ：プレイ時間つきの Steam ゲームの一覧と、Steam およびコンソールストアのタブ",
   "it": "La libreria digitale: una griglia di giochi Steam con le ore giocate e le schede per Steam e per gli store delle console"
  },
- "The emulators page, with a card for each platform": {
-  "fr": "La page Émulateurs, avec une carte par plateforme",
-  "zh": "“模拟器”页面，每个平台一张卡片",
-  "es": "La página de emuladores, con una tarjeta por plataforma",
-  "pt": "A página de emuladores, com um cartão para cada plataforma",
-  "de": "Die Emulatoren-Seite, mit einer Karte für jede Plattform",
-  "ja": "プラットフォームごとにカードがあるエミュレーターのページ",
-  "it": "La pagina degli emulatori, con una scheda per ogni piattaforma"
+ "The emulators page: a card for each emulator with its official site, download page and latest version": {
+  "fr": "La page des émulateurs : une carte par émulateur avec son site officiel, sa page de téléchargement et sa dernière version",
+  "zh": "模拟器页面：每个模拟器一张卡片，附有官方网站、下载页面和最新版本",
+  "es": "La página de emuladores: una tarjeta por emulador con su sitio oficial, su página de descarga y su última versión",
+  "pt": "A página de emuladores: um cartão para cada emulador, com o site oficial, a página de download e a versão mais recente",
+  "de": "Die Emulator-Seite: eine Karte je Emulator mit offizieller Website, Download-Seite und neuester Version",
+  "ja": "エミュレーターのページ。エミュレーターごとのカードに、公式サイト、ダウンロードページ、最新バージョンが載っている",
+  "it": "La pagina degli emulatori: una scheda per ogni emulatore con il sito ufficiale, la pagina di download e l'ultima versione"
  },
  "game-sauce is a free, self-hosted ROM manager for your own collection: scan your folders, fetch artwork, play in the browser or on your PC, and browse from the sofa with Big Screen.": {
   "fr": "game-sauce est un gestionnaire de ROM gratuit et auto-hébergé pour votre propre collection : analysez vos dossiers, récupérez les jaquettes, jouez dans le navigateur ou sur votre PC, et parcourez depuis le canapé avec le Grand écran.",
