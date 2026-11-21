@@ -1838,9 +1838,9 @@
  "Health check": {
   "fr": "Bilan de santé",
   "zh": "健康检查",
-  "es": "Revisión de salud",
+  "es": "Revisión de estado",
   "pt": "Verificação de saúde",
-  "de": "Check-up",
+  "de": "Gesundheitscheck",
   "ja": "ヘルスチェック",
   "it": "Controllo di salute"
  },
@@ -1872,13 +1872,13 @@
   "it": "English, Français, 日本語 e altre. Merci, 谢谢."
  },
  "Controller first": {
-  "fr": "La manette d'abord",
+  "fr": "Manette d'abord",
   "zh": "手柄优先",
   "es": "El mando primero",
   "pt": "Controle em primeiro lugar",
   "de": "Controller zuerst",
   "ja": "コントローラー優先",
-  "it": "Prima il controller"
+  "it": "Prima di tutto il controller"
  },
  "The whole app. Mouse optional.": {
   "fr": "Toute l'application. Souris facultative.",
@@ -1908,13 +1908,13 @@
   "it": "Niente tracciamento. Nessuna fregatura. Giuro."
  },
  "Runs anywhere": {
-  "fr": "Tourne partout",
+  "fr": "Fonctionne partout",
   "zh": "随处运行",
-  "es": "Funciona en todas partes",
+  "es": "Funciona en cualquier sitio",
   "pt": "Roda em qualquer lugar",
   "de": "Läuft überall",
   "ja": "どこでも動く",
-  "it": "Gira ovunque"
+  "it": "Funziona ovunque"
  },
  "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.": {
   "fr": "Windows, Mac, Linux, Docker, Pi, Proxmox, Unraid.",
@@ -2023,5 +2023,374 @@
   "de": "Für Sammler",
   "ja": "コレクターのために",
   "it": "Per i collezionisti"
+ },
+ "Built for the way you play, share and collect": {
+  "fr": "Pensé pour jouer, partager et collectionner",
+  "zh": "为游玩、分享与收藏而生",
+  "es": "Pensado para jugar, compartir y coleccionar",
+  "pt": "Feito para jogar, compartilhar e colecionar",
+  "de": "Gemacht zum Spielen, Teilen und Sammeln",
+  "ja": "遊ぶ、共有する、集めるために作りました",
+  "it": "Pensato per giocare, condividere e collezionare"
+ },
+ "One library for the whole household, running on a machine you control.": {
+  "fr": "Une seule bibliothèque pour tout le foyer, sur une machine que vous contrôlez.",
+  "zh": "全家共用一个游戏库，运行在你自己掌控的机器上。",
+  "es": "Una sola biblioteca para todo el hogar, en una máquina que tú controlas.",
+  "pt": "Uma só biblioteca para toda a casa, rodando em uma máquina sua.",
+  "de": "Eine Bibliothek für den ganzen Haushalt, auf einem Rechner, den du selbst kontrollierst.",
+  "ja": "家族みんなで使える一つのライブラリを、自分で管理するマシンで動かせます。",
+  "it": "Un'unica libreria per tutta la famiglia, su una macchina che controlli tu."
+ },
+ "One click to play": {
+  "fr": "Jouez en un clic",
+  "zh": "一键开玩",
+  "es": "Juega con un clic",
+  "pt": "Jogue com um clique",
+  "de": "Ein Klick zum Spielen",
+  "ja": "ワンクリックで遊べる",
+  "it": "Gioca con un clic"
+ },
+ "Pick a game and play it on your PC. No setup, no fuss.": {
+  "fr": "Choisissez un jeu et lancez-le sur votre PC. Sans réglages, sans complications.",
+  "zh": "选一款游戏，直接在电脑上玩。无需设置，毫不费事。",
+  "es": "Elige un juego y juégalo en tu PC. Sin configurar nada, sin complicaciones.",
+  "pt": "Escolha um jogo e jogue no seu PC. Sem configuração, sem complicação.",
+  "de": "Spiel auswählen und am PC starten. Ohne Einrichtung, ohne Umstände.",
+  "ja": "ゲームを選んで、そのままPCで遊べます。設定も手間も不要です。",
+  "it": "Scegli un gioco e giocalo sul tuo PC. Nessuna configurazione, nessuna complicazione."
+ },
+ "Browse, search and play without touching a mouse.": {
+  "fr": "Parcourez, cherchez et jouez sans toucher à la souris.",
+  "zh": "浏览、搜索、游玩，全程无需碰鼠标。",
+  "es": "Explora, busca y juega sin tocar el ratón.",
+  "pt": "Navegue, pesquise e jogue sem tocar no mouse.",
+  "de": "Stöbern, suchen und spielen, ganz ohne Maus.",
+  "ja": "閲覧も検索もプレイも、マウスなしで。",
+  "it": "Sfoglia, cerca e gioca senza toccare il mouse."
+ },
+ "Classic or Modern": {
+  "fr": "Classique ou Moderne",
+  "zh": "经典或现代",
+  "es": "Clásico o Moderno",
+  "pt": "Clássico ou Moderno",
+  "de": "Klassisch oder Modern",
+  "ja": "クラシックかモダンか",
+  "it": "Classico o Moderno"
+ },
+ "Two looks, each in light or dark. Switch whenever you like.": {
+  "fr": "Deux styles, chacun en clair ou en sombre. Changez quand vous voulez.",
+  "zh": "两种外观，各有浅色和深色。随时切换。",
+  "es": "Dos estilos, cada uno en claro u oscuro. Cambia cuando quieras.",
+  "pt": "Dois visuais, cada um em claro ou escuro. Troque quando quiser.",
+  "de": "Zwei Looks, jeweils hell oder dunkel. Wechseln, wann du willst.",
+  "ja": "2つの外観に、それぞれライトとダーク。いつでも切り替えられます。",
+  "it": "Due look, ciascuno chiaro o scuro. Cambia quando vuoi."
+ },
+ "Favourites and collections": {
+  "fr": "Favoris et collections",
+  "zh": "收藏夹与合集",
+  "es": "Favoritos y colecciones",
+  "pt": "Favoritos e coleções",
+  "de": "Favoriten und Sammlungen",
+  "ja": "お気に入りとコレクション",
+  "it": "Preferiti e raccolte"
+ },
+ "Star the best, group the rest.": {
+  "fr": "Une étoile pour les meilleurs, des collections pour le reste.",
+  "zh": "给最爱加星标，其余的分组整理。",
+  "es": "Una estrella para los mejores, el resto en colecciones.",
+  "pt": "Estrela nos melhores, o resto em coleções.",
+  "de": "Sterne für die besten, Sammlungen für den Rest.",
+  "ja": "お気に入りには星、ほかはコレクションにまとめて。",
+  "it": "Una stella per i migliori, il resto in raccolte."
+ },
+ "Manuals at hand": {
+  "fr": "Les manuels sous la main",
+  "zh": "说明书随手可查",
+  "es": "Manuales a mano",
+  "pt": "Manuais à mão",
+  "de": "Anleitungen griffbereit",
+  "ja": "マニュアルをすぐ手元に",
+  "it": "Manuali a portata di mano"
+ },
+ "Read the manual without leaving the game page.": {
+  "fr": "Lisez le manuel sans quitter la page du jeu.",
+  "zh": "无需离开游戏页面，就能阅读说明书。",
+  "es": "Lee el manual sin salir de la página del juego.",
+  "pt": "Leia o manual sem sair da página do jogo.",
+  "de": "Die Anleitung lesen, ohne die Spieleseite zu verlassen.",
+  "ja": "ゲームのページを離れずにマニュアルを読めます。",
+  "it": "Leggi il manuale senza lasciare la pagina del gioco."
+ },
+ "Windows, Mac, Linux, Docker, Raspberry Pi, Proxmox and Unraid.": {
+  "fr": "Windows, Mac, Linux, Docker, Raspberry Pi, Proxmox et Unraid.",
+  "zh": "Windows、Mac、Linux、Docker、Raspberry Pi、Proxmox 和 Unraid。",
+  "es": "Windows, Mac, Linux, Docker, Raspberry Pi, Proxmox y Unraid.",
+  "pt": "Windows, Mac, Linux, Docker, Raspberry Pi, Proxmox e Unraid.",
+  "de": "Windows, Mac, Linux, Docker, Raspberry Pi, Proxmox und Unraid.",
+  "ja": "Windows、Mac、Linux、Docker、Raspberry Pi、Proxmox、Unraid に対応。",
+  "it": "Windows, Mac, Linux, Docker, Raspberry Pi, Proxmox e Unraid."
+ },
+ "Accounts for everyone": {
+  "fr": "Un compte pour chacun",
+  "zh": "人人都有账号",
+  "es": "Una cuenta para cada uno",
+  "pt": "Uma conta para cada pessoa",
+  "de": "Ein Konto für jeden",
+  "ja": "全員にアカウントを",
+  "it": "Un account per ciascuno"
+ },
+ "A login for each person, with roles, and play-only access for the kids.": {
+  "fr": "Un identifiant par personne, avec des rôles, et un accès jeu seul pour les enfants.",
+  "zh": "每人一个登录账号，可设置角色，孩子只能玩、不能改。",
+  "es": "Un acceso para cada persona, con roles y acceso solo para jugar para los niños.",
+  "pt": "Um login para cada pessoa, com papéis e acesso somente para jogar para as crianças.",
+  "de": "Ein Login pro Person, mit Rollen und reinem Spielzugang für die Kinder.",
+  "ja": "一人ごとにログイン、役割の設定、子ども向けのプレイ専用アクセスも。",
+  "it": "Un accesso per ogni persona, con ruoli e accesso solo gioco per i bambini."
+ },
+ "In your language": {
+  "fr": "Dans votre langue",
+  "zh": "使用你的语言",
+  "es": "En tu idioma",
+  "pt": "No seu idioma",
+  "de": "In deiner Sprache",
+  "ja": "あなたの言語で",
+  "it": "Nella tua lingua"
+ },
+ "English, French, Chinese, Spanish, Portuguese, German, Japanese and Italian.": {
+  "fr": "Anglais, français, chinois, espagnol, portugais, allemand, japonais et italien.",
+  "zh": "支持英语、法语、中文、西班牙语、葡萄牙语、德语、日语和意大利语。",
+  "es": "Inglés, francés, chino, español, portugués, alemán, japonés e italiano.",
+  "pt": "Inglês, francês, chinês, espanhol, português, alemão, japonês e italiano.",
+  "de": "Englisch, Französisch, Chinesisch, Spanisch, Portugiesisch, Deutsch, Japanisch und Italienisch.",
+  "ja": "英語、フランス語、中国語、スペイン語、ポルトガル語、ドイツ語、日本語、イタリア語。",
+  "it": "Inglese, francese, cinese, spagnolo, portoghese, tedesco, giapponese e italiano."
+ },
+ "Backups": {
+  "fr": "Sauvegardes",
+  "zh": "备份",
+  "es": "Copias de seguridad",
+  "pt": "Backups",
+  "de": "Backups",
+  "ja": "バックアップ",
+  "it": "Backup"
+ },
+ "Scheduled backups, with simple restore.": {
+  "fr": "Sauvegardes planifiées, restauration simple.",
+  "zh": "定时备份，恢复也很简单。",
+  "es": "Copias programadas y restauración sencilla.",
+  "pt": "Backups agendados, com restauração simples.",
+  "de": "Geplante Backups, einfach wiederherzustellen.",
+  "ja": "スケジュールバックアップと、かんたんな復元。",
+  "it": "Backup programmati, con ripristino semplice."
+ },
+ "See at a glance that everything is working.": {
+  "fr": "Voyez d'un coup d'œil que tout fonctionne.",
+  "zh": "一眼看出一切是否正常。",
+  "es": "Comprueba de un vistazo que todo funciona.",
+  "pt": "Veja de relance que tudo está funcionando.",
+  "de": "Auf einen Blick sehen, dass alles läuft.",
+  "ja": "すべて正常に動いているか、ひと目でわかります。",
+  "it": "Vedi a colpo d'occhio che tutto funziona."
+ },
+ "Works overnight": {
+  "fr": "Travaille la nuit",
+  "zh": "夜间也在工作",
+  "es": "Trabaja de noche",
+  "pt": "Trabalha de madrugada",
+  "de": "Arbeitet über Nacht",
+  "ja": "夜のあいだも働く",
+  "it": "Lavora di notte"
+ },
+ "Slow jobs, like fingerprinting your games, run while you sleep.": {
+  "fr": "Les tâches longues, comme l'empreinte de vos jeux, tournent pendant votre sommeil.",
+  "zh": "耗时的任务，比如为游戏生成指纹，趁你睡觉时完成。",
+  "es": "Las tareas lentas, como la huella de tus juegos, se hacen mientras duermes.",
+  "pt": "As tarefas demoradas, como gerar a impressão digital dos jogos, rodam enquanto você dorme.",
+  "de": "Langsame Aufgaben, etwa die Fingerabdrücke deiner Spiele, laufen, während du schläfst.",
+  "ja": "ゲームの指紋作成のような時間のかかる作業は、寝ている間に済ませます。",
+  "it": "Le operazioni lente, come le impronte dei tuoi giochi, vengono eseguite mentre dormi."
+ },
+ "Update alerts": {
+  "fr": "Alertes de mise à jour",
+  "zh": "更新提醒",
+  "es": "Avisos de actualización",
+  "pt": "Avisos de atualização",
+  "de": "Update-Hinweise",
+  "ja": "アップデート通知",
+  "it": "Avvisi di aggiornamento"
+ },
+ "Administrators are told in chat when a new version is out.": {
+  "fr": "Les administrateurs sont prévenus dans le chat dès qu'une nouvelle version sort.",
+  "zh": "新版本发布时，管理员会在聊天中收到通知。",
+  "es": "Los administradores reciben un aviso en el chat cuando sale una versión nueva.",
+  "pt": "Os administradores são avisados no chat quando sai uma nova versão.",
+  "de": "Administratoren erfahren im Chat, wenn eine neue Version erscheint.",
+  "ja": "新しいバージョンが出ると、管理者にチャットでお知らせします。",
+  "it": "Gli amministratori vengono avvisati in chat quando esce una nuova versione."
+ },
+ "Private by design": {
+  "fr": "Privé par conception",
+  "zh": "天生注重隐私",
+  "es": "Privado por diseño",
+  "pt": "Privado por princípio",
+  "de": "Privat von Grund auf",
+  "ja": "設計から非公開",
+  "it": "Privato per scelta"
+ },
+ "No tracking, no catch. Free, and yours.": {
+  "fr": "Aucun pistage, aucun piège. Gratuit, et à vous.",
+  "zh": "不追踪、没有套路。免费，并且属于你。",
+  "es": "Sin rastreo y sin trampa. Gratis, y tuyo.",
+  "pt": "Sem rastreamento e sem pegadinha. Grátis, e seu.",
+  "de": "Kein Tracking, kein Haken. Kostenlos, und deins.",
+  "ja": "追跡なし、裏もなし。無料で、あなたのもの。",
+  "it": "Nessun tracciamento, nessuna trappola. Gratis, e tuo."
+ },
+ "Every platform": {
+  "fr": "Toutes les plateformes",
+  "zh": "所有平台",
+  "es": "Todas las plataformas",
+  "pt": "Todas as plataformas",
+  "de": "Jede Plattform",
+  "ja": "あらゆるプラットフォーム",
+  "it": "Ogni piattaforma"
+ },
+ "Consoles, handhelds, computers and arcade, side by side.": {
+  "fr": "Consoles, portables, ordinateurs et arcade, côte à côte.",
+  "zh": "主机、掌机、电脑和街机，并排收纳。",
+  "es": "Consolas, portátiles, ordenadores y arcade, codo con codo.",
+  "pt": "Consoles, portáteis, computadores e arcade, lado a lado.",
+  "de": "Konsolen, Handhelds, Computer und Arcade, Seite an Seite.",
+  "ja": "据え置き機、携帯機、パソコン、アーケードを並べて管理。",
+  "it": "Console, portatili, computer e arcade, uno accanto all'altro."
+ },
+ "Verified dumps": {
+  "fr": "Dumps vérifiés",
+  "zh": "已验证的转储",
+  "es": "Volcados verificados",
+  "pt": "Dumps verificados",
+  "de": "Geprüfte Dumps",
+  "ja": "検証済みダンプ",
+  "it": "Dump verificati"
+ },
+ "Checked against No-Intro and Redump, so you know a dump is good.": {
+  "fr": "Comparés à No-Intro et Redump, pour savoir qu'un dump est bon.",
+  "zh": "与 No-Intro 和 Redump 比对，确认转储完好无误。",
+  "es": "Comprobados con No-Intro y Redump, para saber que un volcado es bueno.",
+  "pt": "Conferidos com No-Intro e Redump, para saber que um dump está bom.",
+  "de": "Mit No-Intro und Redump abgeglichen, damit du weißt, dass ein Dump in Ordnung ist.",
+  "ja": "No-Intro と Redump で照合し、ダンプが正しいか確かめます。",
+  "it": "Confrontati con No-Intro e Redump, così sai che un dump è buono."
+ },
+ "Duplicates found": {
+  "fr": "Doublons repérés",
+  "zh": "找出重复项",
+  "es": "Duplicados localizados",
+  "pt": "Duplicatas encontradas",
+  "de": "Duplikate aufgespürt",
+  "ja": "重複を見つける",
+  "it": "Duplicati trovati"
+ },
+ "Spots extra copies and suggests which to keep.": {
+  "fr": "Repère les copies en trop et suggère laquelle garder.",
+  "zh": "找出多余的副本，并建议保留哪一个。",
+  "es": "Detecta copias de más y sugiere cuál conservar.",
+  "pt": "Encontra cópias extras e sugere qual manter.",
+  "de": "Findet überzählige Kopien und schlägt vor, welche bleibt.",
+  "ja": "余分なコピーを見つけ、残すべきものを提案します。",
+  "it": "Individua le copie in più e suggerisce quale tenere."
+ },
+ "Arcade names": {
+  "fr": "Noms d'arcade",
+  "zh": "街机名称",
+  "es": "Nombres de arcade",
+  "pt": "Nomes de arcade",
+  "de": "Arcade-Namen",
+  "ja": "アーケードの名前",
+  "it": "Nomi arcade"
+ },
+ "Turns file names like sf2 into Street Fighter II.": {
+  "fr": "Transforme des noms de fichier comme sf2 en Street Fighter II.",
+  "zh": "把 sf2 这样的文件名变成 Street Fighter II。",
+  "es": "Convierte nombres de archivo como sf2 en Street Fighter II.",
+  "pt": "Transforma nomes de arquivo como sf2 em Street Fighter II.",
+  "de": "Macht aus Dateinamen wie sf2 Street Fighter II.",
+  "ja": "sf2 のようなファイル名を Street Fighter II に変換します。",
+  "it": "Trasforma nomi di file come sf2 in Street Fighter II."
+ },
+ "Completeness reports": {
+  "fr": "Rapports de complétude",
+  "zh": "完整度报告",
+  "es": "Informes de completitud",
+  "pt": "Relatórios de completude",
+  "de": "Vollständigkeitsberichte",
+  "ja": "コンプリート率レポート",
+  "it": "Report di completezza"
+ },
+ "See how much of each platform&#x27;s official list you own, across ROMs, physical and digital.": {
+  "fr": "Voyez quelle part de la liste officielle de chaque plateforme vous possédez, en ROM, physique et numérique.",
+  "zh": "查看你拥有每个平台官方列表的多少，涵盖 ROM、实体版和数字版。",
+  "es": "Mira cuánto de la lista oficial de cada plataforma tienes, entre ROM, físico y digital.",
+  "pt": "Veja quanto da lista oficial de cada plataforma você tem, entre ROMs, físico e digital.",
+  "de": "Sieh, wie viel der offiziellen Liste jeder Plattform du besitzt, ob ROM, physisch oder digital.",
+  "ja": "各プラットフォームの公式リストのうち、ROM・物理・デジタルでどれだけ持っているかがわかります。",
+  "it": "Scopri quanto della lista ufficiale di ogni piattaforma possiedi, tra ROM, fisico e digitale."
+ },
+ "Spreadsheets": {
+  "fr": "Tableurs",
+  "zh": "电子表格",
+  "es": "Hojas de cálculo",
+  "pt": "Planilhas",
+  "de": "Tabellen",
+  "ja": "スプレッドシート",
+  "it": "Fogli di calcolo"
+ },
+ "Import and export your catalogue as CSV.": {
+  "fr": "Importez et exportez votre catalogue en CSV.",
+  "zh": "以 CSV 导入和导出你的游戏目录。",
+  "es": "Importa y exporta tu catálogo en CSV.",
+  "pt": "Importe e exporte seu catálogo em CSV.",
+  "de": "Importiere und exportiere deinen Katalog als CSV.",
+  "ja": "カタログをCSVで読み込み・書き出しできます。",
+  "it": "Importa ed esporta il tuo catalogo in CSV."
+ },
+ "Charts and reports": {
+  "fr": "Graphiques et rapports",
+  "zh": "图表与报告",
+  "es": "Gráficos e informes",
+  "pt": "Gráficos e relatórios",
+  "de": "Diagramme und Berichte",
+  "ja": "グラフとレポート",
+  "it": "Grafici e report"
+ },
+ "The numbers behind your library, for those who like numbers.": {
+  "fr": "Les chiffres de votre bibliothèque, pour ceux qui les aiment.",
+  "zh": "你的游戏库背后的数据，献给爱看数字的人。",
+  "es": "Las cifras de tu biblioteca, para quienes aman los números.",
+  "pt": "Os números da sua biblioteca, para quem gosta de números.",
+  "de": "Die Zahlen hinter deiner Bibliothek, für alle, die Zahlen lieben.",
+  "ja": "ライブラリの数字を、数字好きのために。",
+  "it": "I numeri della tua libreria, per chi ama i numeri."
+ },
+ "Your artwork sources": {
+  "fr": "Vos sources d'illustrations",
+  "zh": "自选图片来源",
+  "es": "Tus fuentes de imágenes",
+  "pt": "Suas fontes de imagens",
+  "de": "Deine Bildquellen",
+  "ja": "画像の取得元を選べる",
+  "it": "Le tue fonti di immagini"
+ },
+ "Fetch covers, logos and videos from ScreenScraper, SteamGridDB, IGDB or TheGamesDB, or use your own.": {
+  "fr": "Récupérez jaquettes, logos et vidéos depuis ScreenScraper, SteamGridDB, IGDB ou TheGamesDB, ou utilisez les vôtres.",
+  "zh": "可从 ScreenScraper、SteamGridDB、IGDB 或 TheGamesDB 获取封面、徽标和视频，也可使用自己的素材。",
+  "es": "Descarga carátulas, logos y vídeos de ScreenScraper, SteamGridDB, IGDB o TheGamesDB, o usa los tuyos.",
+  "pt": "Busque capas, logos e vídeos no ScreenScraper, SteamGridDB, IGDB ou TheGamesDB, ou use os seus.",
+  "de": "Hol Cover, Logos und Videos von ScreenScraper, SteamGridDB, IGDB oder TheGamesDB, oder nimm deine eigenen.",
+  "ja": "ScreenScraper、SteamGridDB、IGDB、TheGamesDB からカバーやロゴ、動画を取得でき、自前の素材も使えます。",
+  "it": "Scarica copertine, loghi e video da ScreenScraper, SteamGridDB, IGDB o TheGamesDB, oppure usa i tuoi."
  }
 }
