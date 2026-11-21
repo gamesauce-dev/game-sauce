@@ -557,7 +557,7 @@ export function popCase(g, from, opts = {}) {
   const h = Math.round(Math.max(200, Math.min((bottom - top) * 0.8, 480, ((right - left) * 0.9) / (2 * ar))));   // opened, the case is two covers wide
   const w = Math.round(h * ar), cx = (left + right) / 2, cy = (top + bottom) / 2;
   const el = document.createElement('div');
-  el.id = 'ph-case'; el.className = 'ph-case'; el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${g.title}: open the case`);
+  el.id = 'ph-case'; el.className = 'ph-case'; el.dataset.plat = g.platform || ''; el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-label', `${g.title}: open the case`);
   el.style.cssText = `--cw:${w}px;--ch:${h}px;left:${Math.round(cx - w / 2)}px;top:${Math.round(cy - h / 2)}px`;
   el.innerHTML = caseHtml(g);
   el.addEventListener('click', onCaseClick);
