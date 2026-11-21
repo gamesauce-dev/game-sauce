@@ -37,9 +37,10 @@ function take(file) {
 }
 
 const VIDEOS_ONLY = process.argv[5] === 'videos';
+const WANT = String(process.argv[6] || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);   // with 'videos': only games whose name has one of these words, e.g. "mario kart wii"
 const keyOf = (title) => String(title || '').toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, ' ').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();   // the same key the video store uses
 const videoStore = new Map(has('game_videos') ? db.prepare('SELECT platform, title_key, path, bytes FROM game_videos WHERE path IS NOT NULL').all().map((v) => [v.platform + '|' + v.title_key, v]) : []);
-const videoOf = (slug, title) => { const v = videoStore.get(slug + '|' + keyOf(title)); return v && v.bytes && v.bytes <= 8 * 1048576 && fs.existsSync(v.path) ? v : null; };
+const videoOf = (slug, title, max = 8 * 1048576) => { const v = videoStore.get(slug + '|' + keyOf(title)); return v && v.bytes && v.bytes <= max && fs.existsSync(v.path) ? v : null; };
 let videos = 0, manuals = 0;
 const out = { made: new Date().toISOString().slice(0, 10), roms: [], physical: [], digital: [] };
 
@@ -51,7 +52,7 @@ for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()
     FROM roms WHERE platform_id = ? AND cover_path IS NOT NULL AND cover_path <> '' AND hidden = 0 AND hidden_all = 0 AND source_hidden = 0 AND missing = 0 AND is_system = 0   -- a game hidden from everyone, or in a source that is switched off, is never taken
     ORDER BY EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'logo') DESC,
       (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, VIDEOS_ONLY ? 600 : PER * 3);
-  if (VIDEOS_ONLY) { const withVideo = rows.filter((r) => videoOf(p.slug, r.title)).slice(0, 2); rows.length = 0; rows.push(...withVideo); }
+  if (VIDEOS_ONLY) { const withVideo = WANT.length ? rows.filter((r) => WANT.some((w) => r.title.toLowerCase().includes(w)) && videoOf(p.slug, r.title, 14 * 1048576)) : rows.filter((r) => videoOf(p.slug, r.title)).slice(0, 2); rows.length = 0; rows.push(...withVideo); }
   let n = 0;
   for (const r of rows) {
     if (n >= PER) break;
@@ -66,8 +67,8 @@ for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()
       const got = take(f.path); if (!got) continue;
       extra[f.kind] = got; if (f.kind === 'video') videos++; if (f.kind === 'manual') manuals++;
     }
-    const vid = videoOf(p.slug, r.title);
-    if (vid && videos < 24) { const got = take(vid.path); if (got) { extra.video = got; videos++; } }
+    const vid = videoOf(p.slug, r.title, WANT.length ? 14 * 1048576 : undefined);
+    if (vid && (videos < 24 || WANT.length)) { const got = take(vid.path); if (got) { extra.video = got; videos++; } }
     if (VIDEOS_ONLY && !extra.video) continue;
     out.roms.push({ extra, platform: p.slug, platform_name: p.name, family: p.family, title: r.title, region: r.region, year: r.release_year, developer: r.developer, publisher: r.publisher, genre: r.genre, players: r.players, rating: r.rating, description: r.description, favorite: r.favorite ? 1 : 0, cover });
     n++;
