@@ -2060,15 +2060,6 @@
   "ja": "ゲームを選んで、そのままPCで遊べます。設定も手間も不要です。",
   "it": "Scegli un gioco e giocalo sul tuo PC. Nessuna configurazione, nessuna complicazione."
  },
- "Browse, search and play without touching a mouse.": {
-  "fr": "Parcourez, cherchez et jouez sans toucher à la souris.",
-  "zh": "浏览、搜索、游玩，全程无需碰鼠标。",
-  "es": "Explora, busca y juega sin tocar el ratón.",
-  "pt": "Navegue, pesquise e jogue sem tocar no mouse.",
-  "de": "Stöbern, suchen und spielen, ganz ohne Maus.",
-  "ja": "閲覧も検索もプレイも、マウスなしで。",
-  "it": "Sfoglia, cerca e gioca senza toccare il mouse."
- },
  "Classic or Modern": {
   "fr": "Classique ou Moderne",
   "zh": "经典或现代",
@@ -2536,5 +2527,14 @@
   "de": "Zwei Looks, jeweils hell oder dunkel. Modern bietet zusätzlich einen extradunklen Modus und eine Retro-Schrift.",
   "ja": "2つの外観に、それぞれライトとダーク。モダンにはさらに、より暗いダークモードとレトロなフォントがあります。",
   "it": "Due look, ciascuno chiaro o scuro. Moderno aggiunge una modalità extra scura e un carattere retrò."
+ },
+ "Browse, search and play with just your controller.": {
+  "fr": "Parcourez, cherchez et jouez avec votre seule manette.",
+  "zh": "只用手柄就能浏览、搜索和游玩。",
+  "es": "Explora, busca y juega solo con el mando.",
+  "pt": "Navegue, pesquise e jogue só com o controle.",
+  "de": "Stöbern, suchen und spielen, nur mit dem Controller.",
+  "ja": "閲覧も検索もプレイも、コントローラーだけで。",
+  "it": "Sfoglia, cerca e gioca solo con il controller."
  }
 }
