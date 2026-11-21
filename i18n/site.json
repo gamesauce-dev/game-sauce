@@ -2518,5 +2518,23 @@
   "de": "Ein Gesamtbericht über den Zustand deines ganzen Systems.",
   "ja": "システム全体の状態をまとめたレポート。",
   "it": "Un report completo sulla salute di tutto il sistema."
+ },
+ "Play in your browser": {
+  "fr": "Jouez dans votre navigateur",
+  "zh": "在浏览器中游玩",
+  "es": "Juega en tu navegador",
+  "pt": "Jogue no seu navegador",
+  "de": "Im Browser spielen",
+  "ja": "ブラウザで遊ぶ",
+  "it": "Gioca nel browser"
+ },
+ "Play supported games in the browser, even on your phone.": {
+  "fr": "Jouez aux jeux compatibles dans le navigateur, même sur votre téléphone.",
+  "zh": "支持的游戏可直接在浏览器中游玩，手机上也行。",
+  "es": "Juega los juegos compatibles en el navegador, incluso desde el móvil.",
+  "pt": "Jogue os jogos compatíveis no navegador, até no celular.",
+  "de": "Unterstützte Spiele laufen im Browser, sogar auf dem Smartphone.",
+  "ja": "対応ゲームはブラウザで遊べます。スマートフォンでも。",
+  "it": "Gioca i giochi supportati nel browser, anche dallo smartphone."
  }
 }
