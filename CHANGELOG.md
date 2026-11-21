@@ -4,6 +4,20 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.22.2] - 2026-11-21
+
+### Added
+- **Steam in Big Screen.** A **Steam** tile (beside Favourites and Collections) lists the Steam games you switched the play button on for in the Digital Library, on the usual wheel with your hours played. A game's page has **Play** (starts it in Steam on this PC) and **Favourite** (the same mark as the Digital Library's). It appears only when you have such games.
+- **A game's own page is dressed in each Big Screen look.** The Xbox 360 look gets a glass frame round the cover and no bar along the top; the PlayStation 3 look light type on the waves with a line of light beside the chosen item; the Wii look white rounded buttons that glow blue and a white card for the facts, with its button hints shown. Before, only the Xbox look had a little of this.
+- **A logo about twice as wide as it is tall** (a stacked lockup such as Xbox Live Arcade) is now shown on its Xbox 360 blade, in a taller box across the band, instead of falling back to the name.
+
+### Changed
+- **A new sign-in background.** A pixel-arcade night sky (square stars scrolling down in three layers, little pixel coins, hearts and gems drifting up, faint scanlines) replaces the synthwave horizon.
+- **A picked or hovered logo button has a crisp ring** in its platform colour, in both the light and the dark theme, in place of the blurred glow round it (which went muddy on a pale bar and smeared the light plate under a logo in the dark one). Also on the Physical shelf's chip rows.
+
+### Fixed
+- **The DAT badge on a Library tile** (Named, Verified...) no longer sits under the case button that shows when the tile is hovered: it steps aside while the tile is hovered or focused, and on a touch screen it is not drawn on a tile that has a case button.
+
 ## [0.22.1] - 2026-11-20
 
 ### Fixed
