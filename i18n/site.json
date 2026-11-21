@@ -2159,15 +2159,6 @@
   "ja": "バックアップ",
   "it": "Backup"
  },
- "Scheduled backups, with simple restore.": {
-  "fr": "Sauvegardes planifiées, restauration simple.",
-  "zh": "定时备份，恢复也很简单。",
-  "es": "Copias programadas y restauración sencilla.",
-  "pt": "Backups agendados, com restauração simples.",
-  "de": "Geplante Backups, einfach wiederherzustellen.",
-  "ja": "スケジュールバックアップと、かんたんな復元。",
-  "it": "Backup programmati, con ripristino semplice."
- },
  "See at a glance that everything is working.": {
   "fr": "Voyez d'un coup d'œil que tout fonctionne.",
   "zh": "一眼看出一切是否正常。",
@@ -2536,5 +2527,14 @@
   "de": "Stöbern, suchen und spielen, nur mit dem Controller.",
   "ja": "閲覧も検索もプレイも、コントローラーだけで。",
   "it": "Sfoglia, cerca e gioca solo con il controller."
+ },
+ "Back up everything, and restore it simply when you need to.": {
+  "fr": "Sauvegardez tout, et restaurez simplement quand il le faut.",
+  "zh": "备份一切，需要时轻松恢复。",
+  "es": "Haz copia de todo y restaura con sencillez cuando lo necesites.",
+  "pt": "Faça backup de tudo e restaure com facilidade quando precisar.",
+  "de": "Alles sichern und bei Bedarf einfach wiederherstellen.",
+  "ja": "すべてをバックアップし、必要なときにかんたんに復元できます。",
+  "it": "Fai il backup di tutto e ripristina con semplicità quando serve."
  }
 }
