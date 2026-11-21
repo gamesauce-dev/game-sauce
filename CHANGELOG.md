@@ -4,6 +4,11 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.22.4] - 2026-11-21
+
+### Changed
+- **An opened case takes the colour of that platform's real cases.** On the Physical shelf and from a Library tile, the plastic of an opened case is green for Xbox and Xbox 360, black with a green edge for Xbox One and Series, blue for PlayStation 4, white for PlayStation 5, Wii and Wii U, and red for Switch; every other platform keeps the dark case.
+
 ## [0.22.3] - 2026-11-21
 
 ### Changed
