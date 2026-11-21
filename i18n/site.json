@@ -2078,15 +2078,6 @@
   "ja": "クラシックかモダンか",
   "it": "Classico o Moderno"
  },
- "Two looks, each in light or dark. Switch whenever you like.": {
-  "fr": "Deux styles, chacun en clair ou en sombre. Changez quand vous voulez.",
-  "zh": "两种外观，各有浅色和深色。随时切换。",
-  "es": "Dos estilos, cada uno en claro u oscuro. Cambia cuando quieras.",
-  "pt": "Dois visuais, cada um em claro ou escuro. Troque quando quiser.",
-  "de": "Zwei Looks, jeweils hell oder dunkel. Wechseln, wann du willst.",
-  "ja": "2つの外観に、それぞれライトとダーク。いつでも切り替えられます。",
-  "it": "Due look, ciascuno chiaro o scuro. Cambia quando vuoi."
- },
  "Favourites and collections": {
   "fr": "Favoris et collections",
   "zh": "收藏夹与合集",
@@ -2536,5 +2527,14 @@
   "de": "Exportiere deine Sammlung als CSV, bearbeite sie in einer Tabelle und importiere sie wieder.",
   "ja": "コレクションをCSVに書き出し、スプレッドシートで編集して、また取り込めます。",
   "it": "Esporta la tua collezione in CSV, modificala in un foglio di calcolo e importala di nuovo."
+ },
+ "Two looks, each in light or dark. Modern adds an extra-dark mode and a retro font.": {
+  "fr": "Deux styles, chacun en clair ou en sombre. Moderne ajoute un mode très sombre et une police rétro.",
+  "zh": "两种外观，各有浅色和深色。现代外观还提供更深的深色模式和复古字体。",
+  "es": "Dos estilos, cada uno en claro u oscuro. Moderno añade un modo extraoscuro y una fuente retro.",
+  "pt": "Dois visuais, cada um em claro ou escuro. O Moderno acrescenta um modo extraescuro e uma fonte retrô.",
+  "de": "Zwei Looks, jeweils hell oder dunkel. Modern bietet zusätzlich einen extradunklen Modus und eine Retro-Schrift.",
+  "ja": "2つの外観に、それぞれライトとダーク。モダンにはさらに、より暗いダークモードとレトロなフォントがあります。",
+  "it": "Due look, ciascuno chiaro o scuro. Moderno aggiunge una modalità extra scura e un carattere retrò."
  }
 }
