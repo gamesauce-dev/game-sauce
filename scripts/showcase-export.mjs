@@ -65,7 +65,14 @@ for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()
     FROM roms WHERE platform_id = ? AND cover_path IS NOT NULL AND cover_path <> '' AND hidden = 0 AND hidden_all = 0 AND source_hidden = 0 AND missing = 0 AND is_system = 0   -- a game hidden from everyone, or in a source that is switched off, is never taken
     ORDER BY EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'logo') DESC,
       (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, VIDEOS_ONLY ? 600 : PER * 3);
-  if (VIDEOS_ONLY) { const withVideo = WANT.length ? rows.filter((r) => WANT.some((w) => r.title.toLowerCase().includes(w)) && videoOf(p.slug, r.title, 14 * 1048576)) : rows.filter((r) => videoOf(p.slug, r.title)).slice(0, 2); rows.length = 0; rows.push(...withVideo); }
+  if (VIDEOS_ONLY) {
+    // A word list picks games by name; 'platform:wii' picks up to 20 games on that platform that have a video.
+    const byPlatform = WANT.includes('platform:' + p.slug), byName = WANT.filter((w) => !w.startsWith('platform:'));
+    let withVideo;
+    if (WANT.length) withVideo = rows.filter((r) => (byPlatform || byName.some((w) => r.title.toLowerCase().includes(w))) && videoOf(p.slug, r.title, 10 * 1048576)).slice(0, byPlatform ? 20 : 99);
+    else withVideo = rows.filter((r) => videoOf(p.slug, r.title)).slice(0, 2);
+    rows.length = 0; rows.push(...withVideo);
+  }
   let n = 0;
   for (const r of rows) {
     if (n >= PER) break;
@@ -80,7 +87,7 @@ for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()
       const got = take(f.path); if (!got) continue;
       extra[f.kind] = got; if (f.kind === 'video') videos++; if (f.kind === 'manual') manuals++;
     }
-    const vid = videoOf(p.slug, r.title, WANT.length ? 14 * 1048576 : undefined);
+    const vid = videoOf(p.slug, r.title, WANT.length ? 10 * 1048576 : undefined);
     if (vid && (videos < 24 || WANT.length)) { const got = take(vid.path); if (got) { extra.video = got; videos++; } }
     if (VIDEOS_ONLY && !extra.video) continue;
     out.roms.push({ extra, platform: p.slug, platform_name: p.name, family: p.family, title: r.title, region: r.region, year: r.release_year, developer: r.developer, publisher: r.publisher, genre: r.genre, players: r.players, rating: r.rating, description: r.description, favorite: r.favorite ? 1 : 0, cover });
