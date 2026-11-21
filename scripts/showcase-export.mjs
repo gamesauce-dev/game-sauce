@@ -1,7 +1,8 @@
 // Read-only: picks a spread of games that have a cover (a few from every platform, plus some of the Physical shelf and Digital) and copies their
 // details and cover pictures into one folder, so they can be used to take screenshots and videos for the website.
 // Nothing about people is copied: no accounts, passwords, keys, file paths on the server, or ROM files. The database is opened read-only.
-//   node showcase-export.mjs [out-folder] [games-per-platform] [platforms-to-leave-out, e.g. switch,switch2]
+//   node showcase-export.mjs [out-folder] [games-per-platform] [platforms-to-leave-out, e.g. switch,switch2] [videos]
+//   The last word 'videos' keeps only a few games that have a video (and a cover), for a second, small folder: the videos are not in the Library's asset records but in the video store.
 //   On the Proxmox host:  pct exec 100 -- runuser -u gamesauce -- env GAMESAUCE_DATA_DIR=/var/lib/game-sauce/data node /opt/game-sauce/showcase-export.mjs /tmp/showcase 14
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
@@ -35,6 +36,10 @@ function take(file) {
   return name;
 }
 
+const VIDEOS_ONLY = process.argv[5] === 'videos';
+const keyOf = (title) => String(title || '').toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, ' ').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();   // the same key the video store uses
+const videoStore = new Map(has('game_videos') ? db.prepare('SELECT platform, title_key, path, bytes FROM game_videos WHERE path IS NOT NULL').all().map((v) => [v.platform + '|' + v.title_key, v]) : []);
+const videoOf = (slug, title) => { const v = videoStore.get(slug + '|' + keyOf(title)); return v && v.bytes && v.bytes <= 8 * 1048576 && fs.existsSync(v.path) ? v : null; };
 let videos = 0, manuals = 0;
 const out = { made: new Date().toISOString().slice(0, 10), roms: [], physical: [], digital: [] };
 
@@ -44,8 +49,9 @@ for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()
   // Games with a video and a logo come first (they film best), then the best described ones.
   const rows = db.prepare(`SELECT id, title, region, release_year, developer, publisher, genre, players, rating, description, cover_path, favorite
     FROM roms WHERE platform_id = ? AND cover_path IS NOT NULL AND cover_path <> '' AND hidden = 0 AND hidden_all = 0 AND source_hidden = 0 AND missing = 0 AND is_system = 0   -- a game hidden from everyone, or in a source that is switched off, is never taken
-    ORDER BY EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'video') DESC, EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'logo') DESC,
-      (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, PER * 3);
+    ORDER BY EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'logo') DESC,
+      (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, VIDEOS_ONLY ? 600 : PER * 3);
+  if (VIDEOS_ONLY) { const withVideo = rows.filter((r) => videoOf(p.slug, r.title)).slice(0, 2); rows.length = 0; rows.push(...withVideo); }
   let n = 0;
   for (const r of rows) {
     if (n >= PER) break;
@@ -54,19 +60,22 @@ for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()
     const extra = {};
     if (has('rom_files')) for (const f of db.prepare("SELECT kind, path, bytes FROM rom_files WHERE rom_id = ? AND kind IN ('logo', 'screenshot', 'marquee', 'video', 'manual')").all(r.id)) {
       const cap = { video: 14 * 1048576, manual: 6 * 1048576 }[f.kind] || 3 * 1048576;
-      if (f.kind === 'video' && videos >= 40) continue;
+      if (f.kind === 'video') continue;   // videos come from the video store (below), not the asset records
       if (f.kind === 'manual' && manuals >= 6) continue;
       if (f.bytes && f.bytes > cap) continue;
       const got = take(f.path); if (!got) continue;
       extra[f.kind] = got; if (f.kind === 'video') videos++; if (f.kind === 'manual') manuals++;
     }
+    const vid = videoOf(p.slug, r.title);
+    if (vid && videos < 24) { const got = take(vid.path); if (got) { extra.video = got; videos++; } }
+    if (VIDEOS_ONLY && !extra.video) continue;
     out.roms.push({ extra, platform: p.slug, platform_name: p.name, family: p.family, title: r.title, region: r.region, year: r.release_year, developer: r.developer, publisher: r.publisher, genre: r.genre, players: r.players, rating: r.rating, description: r.description, favorite: r.favorite ? 1 : 0, cover });
     n++;
   }
 }
 
 // The Physical shelf: games with a cover, and the spine picture where there is one (from every person's shelf, without saying whose).
-if (has('physical_games')) {
+if (!VIDEOS_ONLY && has('physical_games')) {
   for (const r of db.prepare(`SELECT platform, title, region, release_year, cover_path, spine_path FROM physical_games WHERE cover_path IS NOT NULL AND cover_path <> '' ORDER BY (spine_path IS NOT NULL AND spine_path <> '') DESC, title LIMIT ?`).all(PER * 5)) {
     const cover = take(r.cover_path); if (!cover) continue;
     out.physical.push({ platform: r.platform, title: r.title, region: r.region, year: r.release_year, cover, spine: take(r.spine_path) });
@@ -74,7 +83,7 @@ if (has('physical_games')) {
 }
 
 // Digital: Steam and console games with a cover picture.
-if (has('digital_games') && has('digital_details')) {
+if (!VIDEOS_ONLY && has('digital_games') && has('digital_details')) {
   for (const r of db.prepare(`SELECT g.store, g.platform, g.name, g.minutes, d.cover_path FROM digital_games g JOIN digital_details d ON d.store = g.store AND d.app_id = g.app_id
     WHERE d.cover_path IS NOT NULL AND d.cover_path <> '' ORDER BY g.minutes DESC LIMIT ?`).all(PER * 3)) {
     const cover = take(r.cover_path); if (!cover) continue;
