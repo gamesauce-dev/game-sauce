@@ -2276,15 +2276,6 @@
   "ja": "検証済みダンプ",
   "it": "Dump verificati"
  },
- "Checked against No-Intro and Redump, so you know a dump is good.": {
-  "fr": "Comparés à No-Intro et Redump, pour savoir qu'un dump est bon.",
-  "zh": "与 No-Intro 和 Redump 比对，确认转储完好无误。",
-  "es": "Comprobados con No-Intro y Redump, para saber que un volcado es bueno.",
-  "pt": "Conferidos com No-Intro e Redump, para saber que um dump está bom.",
-  "de": "Mit No-Intro und Redump abgeglichen, damit du weißt, dass ein Dump in Ordnung ist.",
-  "ja": "No-Intro と Redump で照合し、ダンプが正しいか確かめます。",
-  "it": "Confrontati con No-Intro e Redump, così sai che un dump è buono."
- },
  "Duplicates found": {
   "fr": "Doublons repérés",
   "zh": "找出重复项",
@@ -2536,5 +2527,14 @@
   "de": "Unterstützte Spiele laufen im Browser, sogar auf dem Smartphone.",
   "ja": "対応ゲームはブラウザで遊べます。スマートフォンでも。",
   "it": "Gioca i giochi supportati nel browser, anche dallo smartphone."
+ },
+ "Checked against No-Intro and Redump, so you know your ROMs are good.": {
+  "fr": "Comparées à No-Intro et Redump, pour savoir que vos ROM sont bonnes.",
+  "zh": "与 No-Intro 和 Redump 比对，确认你的 ROM 完好无误。",
+  "es": "Comprobadas con No-Intro y Redump, para saber que tus ROM están bien.",
+  "pt": "Conferidas com No-Intro e Redump, para saber que suas ROMs estão boas.",
+  "de": "Mit No-Intro und Redump abgeglichen, damit du weißt, dass deine ROMs in Ordnung sind.",
+  "ja": "No-Intro と Redump で照合し、お持ちのROMが正しいか確かめます。",
+  "it": "Confrontate con No-Intro e Redump, così sai che le tue ROM sono buone."
  }
 }
