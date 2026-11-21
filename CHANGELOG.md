@@ -4,6 +4,11 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.22.3] - 2026-11-21
+
+### Changed
+- **New branding: a sauce-bottle mascot.** The gamepad-and-joystick logo is replaced by a friendly red sauce bottle with a pixel "GS" label on a cream badge. The small badge is the header mark, the browser tab icon and the website's logo. The sign-in card shows it above a pixel "GAME-SAUCE" in rainbow letters, with a pixel coin, heart, gem and sparkles round the badge, centred on the card. The desktop app's icons (Windows, Mac and Linux installers) are the same mascot on a rounded square, and the website's social preview image is new.
+
 ## [0.22.2] - 2026-11-21
 
 ### Added
