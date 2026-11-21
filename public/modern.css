@@ -645,3 +645,18 @@ html body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img):foc
 html body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--chip-c) 75%, transparent)); }
 html body.ui-modern .chip-row .chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img, html body.ui-modern .chip-row .chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img { filter: drop-shadow(0 0 3px var(--chip-c)) drop-shadow(0 0 9px var(--chip-c)); }
 html body.ui-modern .chip-row .chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--chip-c) 80%, transparent)); }
+
+/* Light theme: a glow behind a logo goes muddy on a pale bar, so a picked or hovered logo button gets a crisp ring and a pale wash of its colour instead, and the logo itself stays sharp. */
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img) { border-radius: 0.7rem; }
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img,
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img,
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img,
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: none; }
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img):hover { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--chip-c) 55%, transparent); }
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on:has(> .chip-logo-img), html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].open:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 14%, #ffffff); box-shadow: inset 0 0 0 2px var(--chip-c); }
+html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on.part:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 8%, #ffffff); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--chip-c) 55%, transparent); }
+html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img,
+html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img,
+html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img,
+html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: none; }
+html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img), html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 14%, #ffffff); box-shadow: inset 0 0 0 2px var(--chip-c); }
