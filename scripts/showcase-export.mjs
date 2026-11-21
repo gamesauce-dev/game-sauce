@@ -44,6 +44,19 @@ const videoOf = (slug, title, max = 8 * 1048576) => { const v = videoStore.get(s
 let videos = 0, manuals = 0;
 const out = { made: new Date().toISOString().slice(0, 10), roms: [], physical: [], digital: [] };
 
+// 'logos': only the platform and family logos (and the family colours), which the Big Screen blades, tiles and chips show.
+if (process.argv[5] === 'logos') {
+  const ext = (t) => ({ 'image/svg+xml': '.svg', 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' }[t] || '.img');
+  const write = (buf, name) => { const rel = 'media/' + name; fs.writeFileSync(path.join(OUT, rel), buf); return rel; };
+  const o = { made: new Date().toISOString().slice(0, 10), platform_logos: [], family_logos: [], family_colours: [] };
+  if (has('platform_logos')) for (const r of db.prepare('SELECT * FROM platform_logos').all()) { const { data, ...rest } = r; o.platform_logos.push({ ...rest, file: write(data, 'plat-' + r.slug + ext(r.type)) }); }
+  if (has('family_logos')) for (const r of db.prepare('SELECT * FROM family_logos').all()) { const { data, ...rest } = r; o.family_logos.push({ ...rest, file: write(data, 'fam-' + String(r.family).replace(/[^a-z0-9]+/gi, '_') + ext(r.type)) }); }
+  if (has('family_colours')) o.family_colours = db.prepare('SELECT * FROM family_colours').all();
+  fs.writeFileSync(path.join(OUT, 'showcase.json'), JSON.stringify(o, null, 1));
+  console.log(`wrote ${OUT}: ${o.platform_logos.length} platform logos, ${o.family_logos.length} family logos, ${o.family_colours.length} family colours`);
+  process.exit(0);
+}
+
 // Games: for each platform, the best-described ones that have a cover (a description and a year first, then the better rated).
 for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()) {
   if (SKIP.has(p.slug)) continue;
