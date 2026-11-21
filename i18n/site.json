@@ -2357,15 +2357,6 @@
   "ja": "グラフとレポート",
   "it": "Grafici e report"
  },
- "The numbers behind your library, for those who like numbers.": {
-  "fr": "Les chiffres de votre bibliothèque, pour ceux qui les aiment.",
-  "zh": "你的游戏库背后的数据，献给爱看数字的人。",
-  "es": "Las cifras de tu biblioteca, para quienes aman los números.",
-  "pt": "Os números da sua biblioteca, para quem gosta de números.",
-  "de": "Die Zahlen hinter deiner Bibliothek, für alle, die Zahlen lieben.",
-  "ja": "ライブラリの数字を、数字好きのために。",
-  "it": "I numeri della tua libreria, per chi ama i numeri."
- },
  "Your artwork sources": {
   "fr": "Vos sources d'illustrations",
   "zh": "自选图片来源",
@@ -2536,5 +2527,14 @@
   "de": "Mit No-Intro und Redump abgeglichen, damit du weißt, dass deine ROMs in Ordnung sind.",
   "ja": "No-Intro と Redump で照合し、お持ちのROMが正しいか確かめます。",
   "it": "Confrontate con No-Intro e Redump, così sai che le tue ROM sono buone."
+ },
+ "Charts and statistics on everything in your library.": {
+  "fr": "Graphiques et statistiques sur tout ce que contient votre bibliothèque.",
+  "zh": "关于你游戏库中一切内容的图表和统计。",
+  "es": "Gráficos y estadísticas de todo lo que hay en tu biblioteca.",
+  "pt": "Gráficos e estatísticas sobre tudo o que há na sua biblioteca.",
+  "de": "Diagramme und Statistiken zu allem in deiner Bibliothek.",
+  "ja": "ライブラリにあるすべてについてのグラフと統計。",
+  "it": "Grafici e statistiche su tutto ciò che c'è nella tua libreria."
  }
 }
