@@ -1349,23 +1349,23 @@
   "ja": "紹介ビデオを見る",
   "it": "Guarda l’intro"
  },
- "A 74-second tour of the whole library, with music. Press play for the sound.": {
-  "fr": "Une visite de 74 secondes de toute la bibliothèque, avec de la musique. Lancez la lecture pour le son.",
-  "zh": "74 秒带你游览整个游戏库，配有音乐。点击播放即可听到声音。",
-  "es": "Un recorrido de 74 segundos por toda la biblioteca, con música. Pulsa reproducir para oír el sonido.",
-  "pt": "Um passeio de 74 segundos por toda a biblioteca, com música. Toque em reproduzir para ouvir o som.",
-  "de": "Eine 74-sekündige Tour durch die ganze Bibliothek, mit Musik. Auf Play drücken für den Ton.",
-  "ja": "ライブラリ全体を74秒で巡るツアーです。音楽付き。再生すると音が出ます。",
-  "it": "Un tour di 74 secondi di tutta la libreria, con musica. Premi play per ascoltare l’audio."
+ "A 77-second tour of the whole library, with music. Press play for the sound.": {
+  "fr": "Une visite de 77 secondes de toute la bibliothèque, avec de la musique. Lancez la lecture pour le son.",
+  "zh": "77 秒带你游览整个游戏库，配有音乐。点击播放即可听到声音。",
+  "es": "Un recorrido de 77 segundos por toda la biblioteca, con música. Pulsa reproducir para oír el sonido.",
+  "pt": "Um passeio de 77 segundos por toda a biblioteca, com música. Toque em reproduzir para ouvir o som.",
+  "de": "Eine 77-sekündige Tour durch die ganze Bibliothek, mit Musik. Auf Play drücken für den Ton.",
+  "ja": "ライブラリ全体を77秒で巡るツアーです。音楽付き。再生すると音が出ます。",
+  "it": "Un tour di 77 secondi di tutta la libreria, con musica. Premi play per ascoltare l’audio."
  },
- "The game-sauce logo: a gamepad and a joystick above the name, on a neon sunset": {
-  "fr": "Le logo de game-sauce : une manette et un joystick au-dessus du nom, sur un coucher de soleil néon",
-  "zh": "game-sauce 标志：名称上方是手柄和摇杆，背景为霓虹落日",
-  "es": "El logotipo de game-sauce: un mando y un joystick sobre el nombre, en un atardecer de neón",
-  "pt": "O logótipo do game-sauce: um comando e um joystick sobre o nome, num pôr do sol néon",
-  "de": "Das game-sauce-Logo: ein Gamepad und ein Joystick über dem Namen, vor einem Neon-Sonnenuntergang",
-  "ja": "game-sauce のロゴ：名前の上にゲームパッドとジョイスティック、ネオンの夕日を背景に",
-  "it": "Il logo di game-sauce: un gamepad e un joystick sopra il nome, su un tramonto al neon"
+ "The game-sauce mascot, a sauce bottle with a GS label, above the pixel name on a purple and pink background": {
+  "fr": "La mascotte de game-sauce, une bouteille de sauce avec une étiquette GS, au-dessus du nom en pixels sur un fond violet et rose",
+  "zh": "game-sauce 吉祥物：贴着 GS 标签的酱汁瓶，位于像素风名称上方，背景为紫色和粉色",
+  "es": "La mascota de game-sauce, una botella de salsa con una etiqueta GS, sobre el nombre en píxeles, con un fondo morado y rosa",
+  "pt": "A mascote do game-sauce, uma garrafa de molho com um rótulo GS, acima do nome em pixels, num fundo roxo e rosa",
+  "de": "Das game-sauce-Maskottchen, eine Saucenflasche mit GS-Etikett, über dem Pixel-Namen auf violett-rosa Hintergrund",
+  "ja": "game-sauce のマスコット、GS ラベルのソースのボトルが、ドット文字の名前の上にいる。背景は紫とピンク",
+  "it": "La mascotte di game-sauce, una bottiglia di salsa con l'etichetta GS, sopra il nome in pixel su uno sfondo viola e rosa"
  },
  "The game-sauce intro": {
   "fr": "L’introduction de game-sauce",
