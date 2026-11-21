@@ -44,6 +44,29 @@ const videoOf = (slug, title, max = 8 * 1048576) => { const v = videoStore.get(s
 let videos = 0, manuals = 0;
 const out = { made: new Date().toISOString().slice(0, 10), roms: [], physical: [], digital: [] };
 
+// 'cases': a few named games from the Physical shelf (and the Library), with everything the case shows: cover, spine, back, disc art and the manual.
+//   node showcase-export.mjs /tmp/showcase-cases 14 "" cases "alan wake,halo 3"
+if (process.argv[5] === 'cases') {
+  const names = String(process.argv[6] || 'alan wake').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+  const o = { made: new Date().toISOString().slice(0, 10), physical: [], roms: [], cases: true };
+  const grab = (f, max = 10 * 1048576) => { try { if (f && fs.statSync(f).isFile() && fs.statSync(f).size <= max) return take(f); } catch { /* gone */ } return null; };
+  if (has('physical_games')) for (const r of db.prepare('SELECT * FROM physical_games').all()) {
+    if (!names.some((n) => String(r.title).toLowerCase().includes(n))) continue;
+    o.physical.push({ platform: r.platform, title: r.title, region: r.region, year: r.release_year, developer: r.developer, publisher: r.publisher, genre: r.genre, players: r.players, rating: r.rating, description: r.description,
+      cover: grab(r.cover_path), spine: grab(r.spine_path), disc: grab(r.disc_path), back: grab(r.back_path), manual: grab(r.manual_path), manual_name: r.manual_name });
+  }
+  for (const r of db.prepare("SELECT r.id, r.title, p.slug AS platform, r.cover_path FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.hidden = 0 AND r.missing = 0").all()) {
+    if (!names.some((n) => r.title.toLowerCase().includes(n))) continue;
+    const extra = {};
+    if (has('rom_files')) for (const f of db.prepare("SELECT kind, path FROM rom_files WHERE rom_id = ? AND kind IN ('spine', 'disc', 'back', 'manual', 'logo', 'marquee', 'fanart', 'screenshot')").all(r.id)) { const g = grab(f.path); if (g) extra[f.kind] = g; }
+    o.roms.push({ platform: r.platform, title: r.title, cover: grab(r.cover_path), extra });
+  }
+  fs.writeFileSync(path.join(OUT, 'showcase.json'), JSON.stringify(o, null, 1));
+  console.log(`wrote ${OUT}: ${o.physical.length} shelf games and ${o.roms.length} Library games named like ${names.join(' / ')}; ${copied} files, ${(bytes / 1048576).toFixed(1)} MB`);
+  console.log('shelf: ' + o.physical.map((g) => `${g.title} [${['cover', 'spine', 'disc', 'back', 'manual'].filter((k) => g[k]).join(',')}]`).join('; '));
+  process.exit(0);
+}
+
 // 'logos': only the platform and family logos (and the family colours), which the Big Screen blades, tiles and chips show.
 if (process.argv[5] === 'logos') {
   const ext = (t) => ({ 'image/svg+xml': '.svg', 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' }[t] || '.img');
