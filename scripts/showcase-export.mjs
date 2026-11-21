@@ -59,7 +59,10 @@ if (process.argv[5] === 'cases') {
     if (!names.some((n) => r.title.toLowerCase().includes(n))) continue;
     const extra = {};
     if (has('rom_files')) for (const f of db.prepare("SELECT kind, path FROM rom_files WHERE rom_id = ? AND kind IN ('spine', 'disc', 'back', 'manual', 'logo', 'marquee', 'fanart', 'screenshot')").all(r.id)) { const g = grab(f.path); if (g) extra[f.kind] = g; }
-    o.roms.push({ platform: r.platform, title: r.title, cover: grab(r.cover_path), extra });
+    // a small game file (up to 8 MB) is copied too, for a clip of it running in the browser
+    const row = db.prepare('SELECT filename, storage_path, size_bytes, description, release_year, developer, publisher, genre, players FROM roms WHERE id = ?').get(r.id);
+    let romFile = null; if (row && row.size_bytes <= 8 * 1048576 && row.storage_path) { try { if (fs.existsSync(row.storage_path)) { fs.copyFileSync(row.storage_path, path.join(OUT, 'media', 'rom-' + r.id + path.extname(row.filename || row.storage_path))); romFile = 'media/rom-' + r.id + path.extname(row.filename || row.storage_path); } } catch { /* not readable */ } }
+    o.roms.push({ platform: r.platform, title: r.title, filename: row?.filename, rom: romFile, year: row?.release_year, developer: row?.developer, publisher: row?.publisher, genre: row?.genre, players: row?.players, description: row?.description, cover: grab(r.cover_path), extra });
   }
   fs.writeFileSync(path.join(OUT, 'showcase.json'), JSON.stringify(o, null, 1));
   console.log(`wrote ${OUT}: ${o.physical.length} shelf games and ${o.roms.length} Library games named like ${names.join(' / ')}; ${copied} files, ${(bytes / 1048576).toFixed(1)} MB`);
