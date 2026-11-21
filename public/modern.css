@@ -655,8 +655,8 @@ html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on.pa
 html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"]:has(> .chip-logo-img):hover { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--chip-c) 55%, transparent); }
 html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on:has(> .chip-logo-img), html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].open:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 14%, #ffffff); box-shadow: inset 0 0 0 2px var(--chip-c); }
 html[data-theme="light"] body.ui-modern .chip-row .chip[style*="--chip-c"].on.part:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 8%, #ffffff); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--chip-c) 55%, transparent); }
-html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img,
-html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img,
-html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img,
-html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: none; }
-html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img), html[data-theme="light"] .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 14%, #ffffff); box-shadow: inset 0 0 0 2px var(--chip-c); }
+html[data-theme="light"] body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"]:has(> .chip-logo-img):hover .chip-logo-img,
+html[data-theme="light"] body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img) .chip-logo-img,
+html[data-theme="light"] body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img,
+html[data-theme="light"] body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: none; }
+html[data-theme="light"] body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img), html[data-theme="light"] body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) { background: color-mix(in srgb, var(--chip-c) 14%, #ffffff); box-shadow: inset 0 0 0 2px var(--chip-c); }
