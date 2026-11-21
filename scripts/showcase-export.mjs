@@ -1,7 +1,7 @@
 // Read-only: picks a spread of games that have a cover (a few from every platform, plus some of the Physical shelf and Digital) and copies their
 // details and cover pictures into one folder, so they can be used to take screenshots and videos for the website.
 // Nothing about people is copied: no accounts, passwords, keys, file paths on the server, or ROM files. The database is opened read-only.
-//   node showcase-export.mjs [out-folder] [games-per-platform]
+//   node showcase-export.mjs [out-folder] [games-per-platform] [platforms-to-leave-out, e.g. switch,switch2]
 //   On the Proxmox host:  pct exec 100 -- runuser -u gamesauce -- env GAMESAUCE_DATA_DIR=/var/lib/game-sauce/data node /opt/game-sauce/showcase-export.mjs /tmp/showcase 14
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
@@ -9,6 +9,7 @@ import path from 'node:path';
 
 const OUT = path.resolve(process.argv[2] || 'showcase');
 const PER = Math.max(1, Number(process.argv[3]) || 14);
+const SKIP = new Set(String(process.argv[4] || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));   // platforms left out, e.g. switch,switch2
 const DATA_DIR = process.env.GAMESAUCE_DATA_DIR || path.resolve('data');
 const FILE = process.env.GAMESAUCE_DB_FILE || path.join(DATA_DIR, 'gamesauce.db');
 if (!fs.existsSync(FILE)) { console.log('No database at', FILE, '(set GAMESAUCE_DATA_DIR to the data folder)'); process.exit(1); }
@@ -39,9 +40,10 @@ const out = { made: new Date().toISOString().slice(0, 10), roms: [], physical: [
 
 // Games: for each platform, the best-described ones that have a cover (a description and a year first, then the better rated).
 for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()) {
+  if (SKIP.has(p.slug)) continue;
   // Games with a video and a logo come first (they film best), then the best described ones.
   const rows = db.prepare(`SELECT id, title, region, release_year, developer, publisher, genre, players, rating, description, cover_path, favorite
-    FROM roms WHERE platform_id = ? AND cover_path IS NOT NULL AND cover_path <> '' AND hidden = 0 AND missing = 0 AND is_system = 0
+    FROM roms WHERE platform_id = ? AND cover_path IS NOT NULL AND cover_path <> '' AND hidden = 0 AND hidden_all = 0 AND source_hidden = 0 AND missing = 0 AND is_system = 0   -- a game hidden from everyone, or in a source that is switched off, is never taken
     ORDER BY EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'video') DESC, EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'logo') DESC,
       (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, PER * 3);
   let n = 0;
