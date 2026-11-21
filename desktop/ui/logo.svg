@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="48 46 416 424" width="128" height="128">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
 <title>game-sauce</title>
 <defs>
 <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc400"/><stop offset=".5" stop-color="#ff4d7a"/><stop offset="1" stop-color="#7b3ff2"/></linearGradient>
 <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff5a3c"/><stop offset=".55" stop-color="#e8143c"/><stop offset="1" stop-color="#b80f35"/></linearGradient>
 <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe45c"/><stop offset="1" stop-color="#ffab00"/></linearGradient>
 </defs>
-<!-- a sunburst behind the bottle -->
+<g transform="translate(-13.283 -13.887) scale(0.30189)"><!-- a sunburst behind the bottle -->
 <circle cx="256" cy="262" r="196" fill="#fff6d9" stroke="#1b1035" stroke-width="6"/>
 <circle cx="256" cy="262" r="168" fill="none" stroke="#ffc400" stroke-width="5" stroke-dasharray="3 14" stroke-linecap="round"/>
 <!-- the bottle -->
@@ -31,5 +31,5 @@
 <circle cx="204" cy="276" r="9" fill="#ff8fb3" fill-opacity=".85"/><circle cx="308" cy="276" r="9" fill="#ff8fb3" fill-opacity=".85"/>
 <!-- sauce drip from the nozzle -->
 <path d="M256 52c0-10 8-10 8-20" stroke="none" fill="none"/>
-
+</g>
 </svg>
