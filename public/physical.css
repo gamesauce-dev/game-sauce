@@ -254,3 +254,14 @@ html[data-theme="light"] body.ui-modern .ph-row { background: #ffffff; box-shado
 .ph-buy-inc { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
 .ph-buy-inc .check { display: inline-flex; align-items: center; gap: 0.4rem; }
 .ph-buy-inc .check input { width: auto; }
+
+/* The plastic of a case takes the colour that platform's real cases have: Xbox and Xbox 360 green, Xbox One black with a green edge, PlayStation 4 blue, PlayStation 5 white, Wii and Wii U white, Switch red (the rest stay dark). */
+.ph-case[data-plat="xbox"] .ph-case-back, .ph-case[data-plat="xbox"] .ph-case-inside { background: #0f3d12; box-shadow: inset 0 0 0 3px #2f9a35, inset 0 0 0 4px rgba(255,255,255,.14); }
+.ph-case[data-plat="xbox360"] .ph-case-back, .ph-case[data-plat="xbox360"] .ph-case-inside { background: #19661c; box-shadow: inset 0 0 0 3px #7ac943, inset 0 0 0 4px rgba(255,255,255,.18); }
+.ph-case[data-plat="xbox360"] .ph-tray, .ph-case[data-plat="xbox"] .ph-tray { background: radial-gradient(circle at 50% 50%, #1f7a24 0 22%, #17601b 23% 100%); }
+.ph-case[data-plat="xboxone"] .ph-case-back, .ph-case[data-plat="xboxone"] .ph-case-inside, .ph-case[data-plat="xboxseries"] .ph-case-back, .ph-case[data-plat="xboxseries"] .ph-case-inside { background: #0b0d0b; box-shadow: inset 0 0 0 3px #2f9a35, inset 0 0 0 4px rgba(255,255,255,.1); }
+.ph-case[data-plat="ps4"] .ph-case-back, .ph-case[data-plat="ps4"] .ph-case-inside { background: #0c3a8a; box-shadow: inset 0 0 0 3px #3b82d9, inset 0 0 0 4px rgba(255,255,255,.16); }
+.ph-case[data-plat="ps4"] .ph-tray { background: radial-gradient(circle at 50% 50%, #1450aa 0 22%, #0f428f 23% 100%); }
+.ph-case[data-plat="ps5"] .ph-case-back, .ph-case[data-plat="ps5"] .ph-case-inside, .ph-case[data-plat="wii"] .ph-case-back, .ph-case[data-plat="wii"] .ph-case-inside, .ph-case[data-plat="wiiu"] .ph-case-back, .ph-case[data-plat="wiiu"] .ph-case-inside { background: #eceff3; box-shadow: inset 0 0 0 3px #c7ced9, inset 0 0 0 4px rgba(0,0,0,.08); }
+.ph-case[data-plat="ps5"] .ph-tray, .ph-case[data-plat="wii"] .ph-tray, .ph-case[data-plat="wiiu"] .ph-tray { background: radial-gradient(circle at 50% 50%, #dfe4ea 0 22%, #d2d9e2 23% 100%); }
+.ph-case[data-plat="switch"] .ph-case-back, .ph-case[data-plat="switch"] .ph-case-inside, .ph-case[data-plat="switch2"] .ph-case-back, .ph-case[data-plat="switch2"] .ph-case-inside { background: #b3121f; box-shadow: inset 0 0 0 3px #e2394a, inset 0 0 0 4px rgba(255,255,255,.16); }
