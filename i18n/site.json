@@ -1124,14 +1124,14 @@
   "ja": "ランチャーの設定ページ：プラットフォームごとの行に、エミュレーターのプログラムと引数、RetroArch のコアのボタン",
   "it": "La pagina di configurazione del launcher: una riga per ogni piattaforma con il suo programma emulatore e gli argomenti, e un pulsante per i core RetroArch"
  },
- "The Digital library: a grid of Steam games with hours played, and tabs for Steam, PlayStation, Nintendo and Xbox": {
-  "fr": "La bibliothèque numérique : une grille de jeux Steam avec les heures jouées, et des onglets Steam, PlayStation, Nintendo et Xbox",
-  "zh": "数字游戏库：带游玩时长的 Steam 游戏网格，以及 Steam、PlayStation、任天堂和 Xbox 标签页",
-  "es": "La biblioteca digital: una cuadrícula de juegos de Steam con horas jugadas, y pestañas de Steam, PlayStation, Nintendo y Xbox",
-  "pt": "A biblioteca Digital: uma grade de jogos do Steam com horas jogadas, e abas de Steam, PlayStation, Nintendo e Xbox",
-  "de": "Die digitale Bibliothek: ein Raster aus Steam-Spielen mit Spielstunden und Tabs für Steam, PlayStation, Nintendo und Xbox",
-  "ja": "デジタルライブラリ：プレイ時間付きの Steam ゲームのグリッドと、Steam、PlayStation、Nintendo、Xbox のタブ",
-  "it": "La libreria Digitale: una griglia di giochi Steam con le ore giocate e schede per Steam, PlayStation, Nintendo e Xbox"
+ "The Digital library: a grid of Steam games with hours played, and tabs for Steam and the console stores": {
+  "fr": "La bibliothèque numérique : une grille de jeux Steam avec les heures jouées, et des onglets pour Steam et les boutiques de consoles",
+  "zh": "数字游戏库：显示游玩时长的 Steam 游戏网格，以及 Steam 和主机商店的标签页",
+  "es": "La biblioteca digital: una cuadrícula de juegos de Steam con las horas jugadas y pestañas para Steam y las tiendas de consolas",
+  "pt": "A biblioteca digital: uma grade de jogos do Steam com as horas jogadas e abas para o Steam e as lojas de consoles",
+  "de": "Die digitale Bibliothek: ein Raster mit Steam-Spielen und ihren Spielstunden sowie Reiter für Steam und die Konsolen-Stores",
+  "ja": "デジタルライブラリ：プレイ時間つきの Steam ゲームの一覧と、Steam およびコンソールストアのタブ",
+  "it": "La libreria digitale: una griglia di giochi Steam con le ore giocate e le schede per Steam e per gli store delle console"
  },
  "The emulators page, with a card for each platform": {
   "fr": "La page Émulateurs, avec une carte par plateforme",
