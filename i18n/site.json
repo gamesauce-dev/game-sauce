@@ -2330,15 +2330,6 @@
   "ja": "各プラットフォームの公式リストのうち、ROM・物理・デジタルでどれだけ持っているかがわかります。",
   "it": "Scopri quanto della lista ufficiale di ogni piattaforma possiedi, tra ROM, fisico e digitale."
  },
- "Spreadsheets": {
-  "fr": "Tableurs",
-  "zh": "电子表格",
-  "es": "Hojas de cálculo",
-  "pt": "Planilhas",
-  "de": "Tabellen",
-  "ja": "スプレッドシート",
-  "it": "Fogli di calcolo"
- },
  "Import and export your catalogue as CSV.": {
   "fr": "Importez et exportez votre catalogue en CSV.",
   "zh": "以 CSV 导入和导出你的游戏目录。",
@@ -2536,5 +2527,14 @@
   "de": "Diagramme und Statistiken zu allem in deiner Bibliothek.",
   "ja": "ライブラリにあるすべてについてのグラフと統計。",
   "it": "Grafici e statistiche su tutto ciò che c'è nella tua libreria."
+ },
+ "Cataloguing": {
+  "fr": "Catalogage",
+  "zh": "编目",
+  "es": "Catalogación",
+  "pt": "Catalogação",
+  "de": "Katalogisierung",
+  "ja": "カタログ作成",
+  "it": "Catalogazione"
  }
 }
