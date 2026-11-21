@@ -2482,5 +2482,41 @@
   "de": "Jeder führt sein eigenes Regal mit Discs und Modulen.",
   "ja": "ディスクやカートリッジの棚も、一人ひとりが自分のものを持てます。",
   "it": "Ognuno ha il proprio scaffale di dischi e cartucce."
+ },
+ "For the administrator": {
+  "fr": "Pour l'administrateur",
+  "zh": "为了管理员",
+  "es": "Para el administrador",
+  "pt": "Para o administrador",
+  "de": "Für den Administrator",
+  "ja": "管理者のために",
+  "it": "Per l'amministratore"
+ },
+ "Scheduled tasks": {
+  "fr": "Tâches planifiées",
+  "zh": "定时任务",
+  "es": "Tareas programadas",
+  "pt": "Tarefas agendadas",
+  "de": "Geplante Aufgaben",
+  "ja": "スケジュールタスク",
+  "it": "Attività pianificate"
+ },
+ "Backups and game fingerprinting run on a schedule you set.": {
+  "fr": "Les sauvegardes et les empreintes de jeux s'exécutent selon le calendrier que vous fixez.",
+  "zh": "备份和游戏指纹生成按你设定的计划自动运行。",
+  "es": "Las copias de seguridad y las huellas de los juegos se ejecutan con el horario que elijas.",
+  "pt": "Os backups e a geração das impressões digitais dos jogos rodam no horário que você definir.",
+  "de": "Backups und das Erstellen der Spiel-Fingerabdrücke laufen nach einem Zeitplan, den du festlegst.",
+  "ja": "バックアップとゲームの指紋作成は、設定したスケジュールで自動実行されます。",
+  "it": "I backup e le impronte dei giochi vengono eseguiti secondo la pianificazione che imposti."
+ },
+ "An overall report on the health of your whole system.": {
+  "fr": "Un rapport global sur la santé de tout votre système.",
+  "zh": "整个系统健康状况的总体报告。",
+  "es": "Un informe general sobre el estado de todo tu sistema.",
+  "pt": "Um relatório geral sobre a saúde de todo o seu sistema.",
+  "de": "Ein Gesamtbericht über den Zustand deines ganzen Systems.",
+  "ja": "システム全体の状態をまとめたレポート。",
+  "it": "Un report completo sulla salute di tutto il sistema."
  }
 }

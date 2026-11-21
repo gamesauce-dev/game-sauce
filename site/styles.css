@@ -216,7 +216,7 @@ html:lang(ja) body, html:lang(zh-Hans) body { line-break: strict; word-break: au
 @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
 
 /* grouped feature lists */
-.fgroups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 28px; }
+.fgroups { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 28px; }
 .fgroup { padding: 22px 22px 8px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.03); }
 .fgroup > h3 { margin: 0 0 14px; font-size: 1.25rem; letter-spacing: -.01em; background: linear-gradient(90deg, #ffd34d, #3fd6c6); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .fgroup .fi { padding: 11px 0; border-top: 1px solid rgba(255,255,255,.08); }
