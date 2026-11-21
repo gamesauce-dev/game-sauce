@@ -2330,15 +2330,6 @@
   "ja": "各プラットフォームの公式リストのうち、ROM・物理・デジタルでどれだけ持っているかがわかります。",
   "it": "Scopri quanto della lista ufficiale di ogni piattaforma possiedi, tra ROM, fisico e digitale."
  },
- "Import and export your catalogue as CSV.": {
-  "fr": "Importez et exportez votre catalogue en CSV.",
-  "zh": "以 CSV 导入和导出你的游戏目录。",
-  "es": "Importa y exporta tu catálogo en CSV.",
-  "pt": "Importe e exporte seu catálogo em CSV.",
-  "de": "Importiere und exportiere deinen Katalog als CSV.",
-  "ja": "カタログをCSVで読み込み・書き出しできます。",
-  "it": "Importa ed esporta il tuo catalogo in CSV."
- },
  "Charts and reports": {
   "fr": "Graphiques et rapports",
   "zh": "图表与报告",
@@ -2536,5 +2527,14 @@
   "de": "Katalogisierung",
   "ja": "カタログ作成",
   "it": "Catalogazione"
+ },
+ "Export your collection to CSV, edit it in a spreadsheet, and import it back.": {
+  "fr": "Exportez votre collection en CSV, modifiez-la dans un tableur, puis réimportez-la.",
+  "zh": "把你的收藏导出为 CSV，在电子表格中编辑，再导入回来。",
+  "es": "Exporta tu colección a CSV, edítala en una hoja de cálculo y vuelve a importarla.",
+  "pt": "Exporte sua coleção para CSV, edite em uma planilha e importe de volta.",
+  "de": "Exportiere deine Sammlung als CSV, bearbeite sie in einer Tabelle und importiere sie wieder.",
+  "ja": "コレクションをCSVに書き出し、スプレッドシートで編集して、また取り込めます。",
+  "it": "Esporta la tua collezione in CSV, modificala in un foglio di calcolo e importala di nuovo."
  }
 }
