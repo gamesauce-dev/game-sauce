@@ -1997,31 +1997,31 @@
   "ja": "無料 <i>&amp;</i> オープンソース",
   "it": "GRATIS <i>E</i> OPEN SOURCE"
  },
- "Know what you own": {
-  "fr": "Sachez ce que vous possédez",
-  "zh": "清楚你拥有什么",
-  "es": "Sabe lo que tienes",
-  "pt": "Saiba o que você tem",
-  "de": "Wissen, was man besitzt",
-  "ja": "持っているものを把握",
-  "it": "Sai cosa possiedi"
+ "For game play": {
+  "fr": "Pour jouer",
+  "zh": "为了游戏体验",
+  "es": "Para jugar",
+  "pt": "Para jogar",
+  "de": "Fürs Spielen",
+  "ja": "ゲームプレイのために",
+  "it": "Per giocare"
  },
- "Your household, looked after": {
-  "fr": "Votre foyer, bien entouré",
-  "zh": "照顾好你的家人",
-  "es": "Tu hogar, bien cuidado",
-  "pt": "Sua casa, bem cuidada",
-  "de": "Der ganze Haushalt, gut versorgt",
-  "ja": "家族みんなを安心サポート",
-  "it": "La tua famiglia, al sicuro"
+ "For the household": {
+  "fr": "Pour toute la famille",
+  "zh": "为了全家人",
+  "es": "Para toda la familia",
+  "pt": "Para toda a família",
+  "de": "Für den ganzen Haushalt",
+  "ja": "家族みんなのために",
+  "it": "Per tutta la famiglia"
  },
- "Plays where you do": {
-  "fr": "Joue là où vous êtes",
-  "zh": "随你在哪都能玩",
-  "es": "Juega donde tú juegas",
-  "pt": "Joga onde você estiver",
-  "de": "Spielt, wo du spielst",
-  "ja": "どこでも遊べる",
-  "it": "Gioca dove giochi tu"
+ "For collectors": {
+  "fr": "Pour les collectionneurs",
+  "zh": "为了收藏家",
+  "es": "Para coleccionistas",
+  "pt": "Para colecionadores",
+  "de": "Für Sammler",
+  "ja": "コレクターのために",
+  "it": "Per i collezionisti"
  }
 }
