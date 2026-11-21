@@ -55,7 +55,7 @@ delete-from-disk. Imported copies in `storage/roms` are removed together with th
 
 The Library in the Modern look (Classic has the same features with a sidebar):
 
-![The Library](screenshots/library.png)
+![The Library](screenshots/library.webp)
 
 The Home page, with the ticker, Continue playing and Recently added:
 
@@ -98,7 +98,7 @@ Admins can find locked games, select them all and unlock them in one go:
 
 Click any tile.
 
-![Game details, pinned beside the games](screenshots/detail.png)
+![Game details, pinned beside the games](screenshots/detail.webp)
 
 - **‹ 3 / 24 ›** at the top steps to the previous or next game without closing the panel (the
   **←** and **→** keys do the same). It walks the list you opened the game from: the library grid,

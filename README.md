@@ -1,4 +1,8 @@
-# game-sauce
+<p align="center"><img src="public/logo-wide.svg" alt="game-sauce: a sauce bottle mascot above the pixel name" width="360"></p>
+
+<h1 align="center">game-sauce</h1>
+
+<p align="center"><b>A free, self-hosted library for the games you own.</b><br>Artwork, play in the browser, Big Screen on the TV, your shelf and your Steam games too.</p>
 
 [![Tests](https://github.com/gamesauce-dev/game-sauce/actions/workflows/test.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/test.yml)
 [![Docker image](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml/badge.svg)](https://github.com/gamesauce-dev/game-sauce/actions/workflows/docker.yml)
@@ -12,7 +16,7 @@ library, enrich it with metadata and artwork, play many older games in the brows
 ROMs back out. Built for a household: you run it, and you give accounts to the people you trust.
 Express + SQLite on the server, a single static page on the client, no build step.
 
-![The Library (Modern look)](docs/screenshots/library.png)
+![The Library (Modern look)](docs/screenshots/library.webp)
 
 **New here? Want to try it on your own computer?** → [Download it](#download) and double-click Start: nothing to install, no server, no Docker, no settings to edit. (Prefer to run it from the source code? [Quick start for a desktop](docs/QUICKSTART-DESKTOP.md).)
 
@@ -91,23 +95,15 @@ That removes the "downloaded from the internet" mark; it does not ask again. You
 <details>
 <summary>More screenshots</summary>
 
-**Modern look**
+The screenshots show a demo library. Game covers and artwork belong to their respective owners.
 
 | | |
 |---|---|
-| ![Home](docs/screenshots/home.png) | ![One platform, details window pinned](docs/screenshots/detail.png) |
-| ![Locked games, select all, unlock](docs/screenshots/locked.png) | ![Collections](docs/screenshots/collections.png) |
-| ![CSV tools: one CSV plus one zip](docs/screenshots/csv-tools.png) | ![Health](docs/screenshots/health.png) |
-| ![Emulator guide](docs/screenshots/emulators.png) | ![Light mode](docs/screenshots/library-light.png) |
-
-**Classic look**
-
-| | |
-|---|---|
-| ![Backups and restore](docs/screenshots/backups.png) | ![Gamepad navigation](docs/screenshots/gamepad.png) |
-| ![Sources](docs/screenshots/sources.png) | |
-
-![Sign-in screen](docs/screenshots/login.png)
+| ![Game details beside the library](docs/screenshots/detail.webp) | ![The light theme](docs/screenshots/library-light.webp) |
+| ![Big Screen: the wheel](docs/screenshots/bigscreen-wheel.webp) | ![Big Screen: a game's page](docs/screenshots/bigscreen-game.webp) |
+| ![The Carousel](docs/screenshots/carousel.webp) | ![A case opened on the Physical shelf](docs/screenshots/shelf-open.webp) |
+| ![The Digital library with Steam](docs/screenshots/digital-library.webp) | ![Emulators](docs/screenshots/emulators.webp) |
+| ![The classic look](docs/screenshots/library-classic.webp) | ![The sign-in screen](docs/screenshots/login.webp) |
 
 </details>
 
