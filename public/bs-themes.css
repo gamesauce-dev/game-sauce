@@ -37,6 +37,8 @@
 .bs-theme-xbox360 .bs-ptile.bs-t-fav { background: linear-gradient(135deg, #9f1239, #e11d48 55%, #fb7185); }
 .bs-theme-xbox360 .bs-ptile.bs-t-colls, .bs-theme-xbox360 .bs-ptile.bs-t-coll { background: linear-gradient(135deg, #4c1d95, #7c3aed 55%, #a78bfa); }
 .bs-theme-xbox360 .bs-ptile.bs-t-fav.on { background: linear-gradient(135deg, #be123c, #f43f5e 55%, #fda4af); }
+.bs-theme-xbox360 .bs-ptile.bs-t-steam { background: linear-gradient(135deg, #0c2f4d, #1b6aa5 55%, #66c0f4); }
+.bs-theme-xbox360 .bs-ptile.bs-t-steam.on { background: linear-gradient(135deg, #12486f, #2a86cc 55%, #8fd3ff); }
 .bs-theme-xbox360 .bs-ptile.bs-t-colls.on, .bs-theme-xbox360 .bs-ptile.bs-t-coll.on { background: linear-gradient(135deg, #6d28d9, #8b5cf6 55%, #c4b5fd); }
 .bs-theme-xbox360 .bs-ttxt { text-shadow: 0 .06em .3em rgba(0, 0, 0, .65); }
 .bs-theme-xbox360 .bs-mosaic { opacity: .3; }

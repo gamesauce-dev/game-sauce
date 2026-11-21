@@ -171,14 +171,16 @@ body.bs-open #gp-legend { display: none !important; }
 .bs-railwrap.dim { opacity: .55; }
 .bs-railwrap.dim .bs-ptile.on { transform: none; border-color: transparent; box-shadow: none; }
 .bs-ptile { position: relative; overflow: hidden; }
-.bs-ptile.bs-t-fav, .bs-ptile.bs-t-colls, .bs-ptile.bs-t-coll { flex-direction: row; justify-content: flex-start; gap: .7em; padding: .6em 1em; text-align: left; border-color: rgba(255, 255, 255, .12); }
+.bs-ptile.bs-t-fav, .bs-ptile.bs-t-steam, .bs-ptile.bs-t-colls, .bs-ptile.bs-t-coll { flex-direction: row; justify-content: flex-start; gap: .7em; padding: .6em 1em; text-align: left; border-color: rgba(255, 255, 255, .12); }
 .bs-t-fav { background: linear-gradient(135deg, #9f1239, #e11d48 55%, #fb7185); }
+.bs-t-steam { background: linear-gradient(135deg, #0c2f4d, #1b6aa5 55%, #66c0f4); }
 .bs-t-colls, .bs-t-coll { background: linear-gradient(135deg, #4c1d95, #7c3aed 55%, #a78bfa); }
 .bs-ptile.bs-t-fav.on, .bs-ptile.bs-t-colls.on, .bs-ptile.bs-t-coll.on { background: linear-gradient(135deg, #be123c, #f43f5e 55%, #fda4af); }
+.bs-ptile.bs-t-steam.on { background: linear-gradient(135deg, #12486f, #2a86cc 55%, #8fd3ff); }
 .bs-ptile.bs-t-colls.on, .bs-ptile.bs-t-coll.on { background: linear-gradient(135deg, #6d28d9, #8b5cf6 55%, #c4b5fd); }
 .bs-mosaic { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); opacity: .38; }
 .bs-mosaic i { background-size: cover; background-position: center; }
-.bs-ptile.bs-t-fav::after, .bs-ptile.bs-t-colls::after, .bs-ptile.bs-t-coll::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 80%); }
+.bs-ptile.bs-t-fav::after, .bs-ptile.bs-t-steam::after, .bs-ptile.bs-t-colls::after, .bs-ptile.bs-t-coll::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 80%); }
 .bs-ticon, .bs-ttxt { position: relative; z-index: 1; }
 .bs-ticon svg { width: 2.4em; height: 2.4em; color: #fff; filter: drop-shadow(0 .1em .3em rgba(0, 0, 0, .5)); }
 .bs-ttxt { display: flex; flex-direction: column; min-width: 0; }

@@ -489,3 +489,13 @@ test('Art import for all three lists: applying puts each picture on its own list
   assert.ok(db.prepare("SELECT spine_path, cover_path FROM physical_games WHERE title = 'Triple Title'").get().spine_path, 'the shelf spine');
   assert.ok(db.prepare("SELECT cover_path FROM digital_user_meta WHERE app_id IN (SELECT app_id FROM digital_games WHERE name = 'Triple Title')").get()?.cover_path, 'the Digital cover');
 });
+
+test('Big Screen: the Steam games switched on in the Digital Library are listed like games, with Play (opens Steam) and Favourite only', async () => {
+  const { gameMenu, steamGame } = await import('../public/bigscreen.js');
+  const g = steamGame({ app_id: 620, name: 'Portal 2', hours: 68.7, last_played: 1760000000, favourite: 1, cover_url: 'https://cdn.example/620.jpg', launch_url: 'steam://rungameid/620' });
+  assert.equal(g.steam, true); assert.equal(g.id, 'steam:620'); assert.equal(g.title, 'Portal 2'); assert.equal(g.favorite, true);
+  assert.equal(g.launch_url, 'steam://rungameid/620'); assert.equal(g.platform_name, '68.7 h'); assert.match(g.description, /68\.7 hours played/);
+  assert.deepEqual(gameMenu(g).map((m) => m.k), ['play', 'fav'], 'nothing to collect, mark broken or hide');
+  assert.deepEqual(gameMenu(g, true).map((m) => m.k), ['play'], 'a play-only account can only play');
+  assert.equal(steamGame({ app_id: 1, name: 'X', hours: 0 }).platform_name, 'Unplayed');
+});

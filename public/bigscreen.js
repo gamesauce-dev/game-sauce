@@ -90,7 +90,15 @@ export function gameMenu(g, playOnly = false) {   // a play-only account cannot 
     { k: 'broken', label: 'Broken', on: Boolean(g?.broken) },   // a toggle too: the word stays, it turns red when it is on
     { k: 'hide', label: 'Hide' }
   ];
+  if (g?.steam) return items.filter((m) => ['play', 'fav'].includes(m.k) && !(playOnly && m.k === 'fav'));   // a Steam game: Play (opens Steam) and Favourite
   return playOnly ? items.filter((m) => !['coll', 'broken', 'hide'].includes(m.k)) : items;
+}
+
+/** A Steam game from the Digital Library, shaped like a Library game so the wheel, the cross bar and the game page can show it. Only the ones with the play button switched on are listed. */
+export function steamGame(d) {
+  const hours = d.hours ? `${Number(d.hours).toLocaleString()} hours played` : 'Not played yet';
+  const last = d.last_played ? ` · last played ${new Date(d.last_played * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : '';
+  return { id: 'steam:' + d.app_id, steam: true, app_id: String(d.app_id), title: d.name, sort_title: d.name, platform: 'steam', platform_name: d.hours ? `${Number(d.hours).toLocaleString()} h` : 'Unplayed', platform_accent: '#1b6aa5', genre: 'Steam', cover_url: d.cover_url || '', favorite: Boolean(d.favourite), launch_url: d.launch_url || '', description: `${hours}${last}. Starts in Steam on this PC.`, playable: false, release_year: null };
 }
 
 /** The on-screen keyboard (to name a collection with the pad), and how the pad moves over it. Pure, so it can be tested. */
@@ -116,7 +124,7 @@ let root = null, off = null;
 /** Open Big Screen. host: { api, toast, platforms(), user(), openPlayer(rom), platformIcon?(p, size), kiosk?: boolean, start?: { platform } }. */
 export function openBigScreen(host) {
   if (root) return;
-  const st = { screen: 'platforms', level: 0, row: 0, pis: [0, 0], sub: null, fam: null, plat: null, src: null, plats: [], pi: 0, games: [], gi: 0, mi: 0, lp: null, cache: new Map(), peek: new Map(), tok: 0, bg: 0, favCount: 0, colls: [], dirty: false };
+  const st = { steamCount: 0, screen: 'platforms', level: 0, row: 0, pis: [0, 0], sub: null, fam: null, plat: null, src: null, plats: [], pi: 0, games: [], gi: 0, mi: 0, lp: null, cache: new Map(), peek: new Map(), tok: 0, bg: 0, favCount: 0, colls: [], dirty: false };
   const noLauncher = () => host.user()?.can_download === false;
   const known = () => (noLauncher() ? [] : st.lp);
   const launchable = (slug) => known() === null || known().includes(slug) || (slug === 'xbla' && known().includes('xbox360'));   // an Xbox Live Arcade game starts in the Xbox 360 emulator
@@ -133,7 +141,7 @@ export function openBigScreen(host) {
   const gameAccent = (g) => (HEX.test(g?.platform_accent || '') ? g.platform_accent : accent(st.plats.find((p) => p.slug === g?.platform)));
   // the first row: Favourites and Collections (when there are any), then the families; then the platforms of one family, or the collections
   const families = () => { const m = new Map(); for (const p of st.plats) { const k = p.family || 'Others'; if (!m.has(k)) m.set(k, { kind: 'family', name: k, colour: famColour(p), logo_v: p.family_logo_v, plate: p.family_logo_plate, plats: [], games: 0 }); const f = m.get(k); f.plats.push(p); f.games += count(p); } return [...m.values()]; };
-  const extraItems = () => [...(st.favCount > 0 ? [{ kind: 'fav', name: 'Favourites', colour: '#e11d48', games: st.favCount }] : []), ...(st.colls.length ? [{ kind: 'colls', name: 'Collections', colour: '#7c3aed', n: st.colls.length, covers: st.colls.flatMap((c) => (c.covers || []).slice(0, 1)).slice(0, 4) }] : [])];   // the row of their own below the families
+  const extraItems = () => [...(st.favCount > 0 ? [{ kind: 'fav', name: 'Favourites', colour: '#e11d48', games: st.favCount }] : []), ...(st.steamCount > 0 ? [{ kind: 'steam', name: 'Steam', colour: '#1b6aa5', games: st.steamCount }] : []), ...(st.colls.length ? [{ kind: 'colls', name: 'Collections', colour: '#7c3aed', n: st.colls.length, covers: st.colls.flatMap((c) => (c.covers || []).slice(0, 1)).slice(0, 4) }] : [])];   // the row of their own below the families
   const collItems = () => st.colls.map((c) => ({ kind: 'collection', id: c.id, name: c.name, games: Number(c.count || 0), covers: (c.covers || []).slice(0, 4), colour: '#7c3aed' }));
   const switchRow = (r) => { if (r === st.row || (r === 1 && !extraItems().length)) return false; st.pis[st.row] = st.pi; st.row = r; st.pi = st.pis[r] || 0; return true; };
   const railItems = () => (st.level === 0 ? (st.row === 1 ? extraItems() : families()) : st.sub === 'colls' ? collItems() : (families().find((f) => f.name === st.fam)?.plats || []));
@@ -191,12 +199,17 @@ export function openBigScreen(host) {
   };
 
   // ── loading: the games of a platform, of your favourites, or of one collection ──
-  const srcKey = (s) => (s.kind === 'platform' ? 'p:' + s.slug : s.kind === 'fav' ? 'fav' : 'c:' + s.id);
+  const srcKey = (s) => (s.kind === 'platform' ? 'p:' + s.slug : s.kind === 'fav' ? 'fav' : s.kind === 'steam' ? 'steam' : 'c:' + s.id);
   const srcQuery = (s) => (s.kind === 'platform' ? { platform: s.slug } : s.kind === 'fav' ? { favorite: '1' } : { collection: String(s.id) });
   const usable = (g) => !g.missing && !g.multidisc && (g.playable || (!noLauncher() && launchable(g.platform)));   // a game this PC can start, in the browser or with its emulator
   const loadGames = (s) => {
     const key = srcKey(s);
     if (st.cache.has(key)) return st.cache.get(key);
+    if (s.kind === 'steam') {   // the Steam games the person switched the play button on for (their Digital Library): a list of their own, not the Library's
+      const sj = host.api('/digital/games?stores=steam&installed=1&sort=name').then((d) => (d.items || []).map(steamGame));
+      st.cache.set(key, sj); sj.catch(() => st.cache.delete(key));
+      return sj;
+    }
     const job = (async () => {
       let all = [], total = Infinity;
       while (all.length < Math.min(total, MAX)) {
@@ -213,6 +226,7 @@ export function openBigScreen(host) {
   };
   const peek = (s) => {   // a few games, for the picture behind a tile
     const key = srcKey(s);
+    if (s.kind === 'steam') { if (!st.peek.has(key)) st.peek.set(key, loadGames(s).then((g) => g.filter((x) => x.cover_url).slice(0, 24)).catch(() => [])); return st.peek.get(key); }
     if (!st.peek.has(key)) { const q = new URLSearchParams({ ...srcQuery(s), sort: 'title', limit: '24' }); if (s.kind === 'platform' && (host.user()?.play_only || !launchable(s.slug))) q.set('playable', '1'); st.peek.set(key, host.api(`/roms?${q}`).then((d) => d.items.filter((g) => g.cover_url && !g.missing)).catch(() => [])); }
     return st.peek.get(key);
   };
@@ -221,6 +235,7 @@ export function openBigScreen(host) {
   // ── screen 1: the tiles ──
   const pico = (p, size = 56) => (host.platformIcon ? host.platformIcon(p, size) : '');
   const HEART = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  const PCICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M10 8.5l4 2-4 2z" fill="currentColor"/></svg>';
   const STACK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="2.5" width="14" height="9" rx="2" opacity=".35"/><rect x="3.5" y="5.5" width="17" height="10" rx="2" opacity=".6"/><rect x="2" y="9" width="20" height="12.5" rx="2.5"/></svg>';
   const mosaic = (covers) => `<span class="bs-mosaic" aria-hidden="true">${[0, 1, 2, 3].map((n) => `<i${covers?.[n] ? ` style="background-image:url('${esc(covers[n])}')"` : ''}></i>`).join('')}</span>`;
   // A logo set to have a light backing (Settings > Platforms), or every logo when the person asked for it, gets the class a look can draw a plate with.
@@ -231,6 +246,7 @@ export function openBigScreen(host) {
     if (k === 'family') inner = x.logo_v ? `<img${plated(x) ? ' class="bs-plate"' : ''} src="/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}" alt="" draggable="false" />` : `<b>${esc(x.name)}</b>`;
     else if (k === 'platform') { colour = accent(x); inner = x.logo_v ? `<img${plated(x) ? ' class="bs-plate"' : ''} src="/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}" alt="" draggable="false" />` : `<span class="bs-pico">${pico(x)}</span><b>${esc(x.name)}</b>`; }
     else if (k === 'fav') { cls = ' bs-t-fav'; inner = `<span data-mos="fav">${mosaic([])}</span><span class="bs-ticon">${HEART}</span><span class="bs-ttxt"><b>Favourites</b><small>${plural(x.games, 'game')}</small></span>`; }
+    else if (k === 'steam') { cls = ' bs-t-steam'; inner = `<span data-mos="steam">${mosaic([])}</span><span class="bs-ticon">${PCICON}</span><span class="bs-ttxt"><b>Steam</b><small>${plural(x.games, 'game')}</small></span>`; }
     else if (k === 'colls') { cls = ' bs-t-colls'; inner = `${mosaic(x.covers)}<span class="bs-ticon">${STACK}</span><span class="bs-ttxt"><b>Collections</b><small>${plural(x.n, 'collection')}</small></span>`; }
     else { cls = ' bs-t-coll'; inner = `${mosaic(x.covers)}<span class="bs-ticon">${STACK}</span><span class="bs-ttxt"><b>${esc(x.name)}</b><small>${plural(x.games, 'game')}</small></span>`; }
     return `<div class="bs-ptile${cls}" data-i="${i}" data-r="${r}" style="--pc:${esc(colour)}">${inner}</div>`;
@@ -248,6 +264,7 @@ export function openBigScreen(host) {
     if (two) fillMosaics();
   };
   const fillMosaics = () => {   // the covers behind the Favourites tile come from your favourite games
+    if (st.steamCount > 0) peek({ kind: 'steam' }).then((g) => { const host_ = $('[data-mos="steam"]'); if (!host_ || !g.length) return; host_.innerHTML = mosaic(g.slice(0, 4).map((x) => x.cover_url)); }).catch(() => {});
     if (st.favCount > 0) peek({ kind: 'fav' }).then((g) => { const host_ = $('[data-mos="fav"]'); if (!host_ || !g.length) return; host_.innerHTML = mosaic(g.slice(0, 4).map((x) => x.cover_url)); }).catch(() => {});
   };
   const plural = (n, w) => `${Number(n).toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
@@ -265,12 +282,12 @@ export function openBigScreen(host) {
     const logo = k === 'family' ? (x.logo_v ? `/api/platforms/families/logo?family=${encodeURIComponent(x.name)}&v=${x.logo_v}` : '') : k === 'platform' ? (x.logo_v ? `/api/platforms/${encodeURIComponent(x.slug)}/logo?v=${x.logo_v}` : '') : '';
     const pills = k === 'family' ? `<span class="bs-pill">${plural(x.plats.length, 'platform')}</span><span class="bs-pill dim">${plural(x.games, 'game')}</span>`
       : k === 'platform' ? `${x.manufacturer ? `<span class="bs-pill">${esc(x.manufacturer)}</span>` : ''}<span class="bs-pill dim">${plural(count(x), 'game')}</span>`
-      : k === 'fav' ? `<span class="bs-pill dim">${plural(x.games, 'game')}</span>` : k === 'colls' ? `<span class="bs-pill dim">${plural(x.n, 'collection')}</span>` : `<span class="bs-pill dim">${plural(x.games, 'game')}</span>`;
-    const art = k === 'fav' ? HEART : k === 'colls' || k === 'collection' ? STACK : '';
+      : k === 'fav' || k === 'steam' ? `<span class="bs-pill dim">${plural(x.games, 'game')}</span>` : k === 'colls' ? `<span class="bs-pill dim">${plural(x.n, 'collection')}</span>` : `<span class="bs-pill dim">${plural(x.games, 'game')}</span>`;
+    const art = k === 'fav' ? HEART : k === 'steam' ? PCICON : k === 'colls' || k === 'collection' ? STACK : '';
     $('#bs-hero').innerHTML = `${art ? `<div class="bs-heroart bs-ha-${k}" style="--pc:${esc(x.colour)}"><span class="bs-heroicon">${art}</span><div class="bs-heroname">${esc(x.name)}</div></div>` : logo ? `<img class="bs-herologo${plated(x)}" src="${logo}" alt="" />` : `<div class="bs-heroname">${esc(x.name)}</div>`}<div class="bs-facts">${pills}</div>`;
     setBackdrop(null, ac);
     clearTimeout(heroTimer);
-    const s = k === 'family' ? { kind: 'platform', slug: x.plats[0].slug } : k === 'platform' ? { kind: 'platform', slug: x.slug } : k === 'fav' ? { kind: 'fav' } : k === 'collection' ? { kind: 'coll', id: x.id } : null;
+    const s = k === 'family' ? { kind: 'platform', slug: x.plats[0].slug } : k === 'platform' ? { kind: 'platform', slug: x.slug } : k === 'fav' ? { kind: 'fav' } : k === 'steam' ? { kind: 'steam' } : k === 'collection' ? { kind: 'coll', id: x.id } : null;
     const token = st.pi + ':' + st.level + ':' + st.sub + ':' + st.row;
     if (!s) { if (k === 'colls' && st.colls[0]?.covers?.[0]) setBackdrop(st.colls[0].covers[0], ac); return; }
     heroTimer = setTimeout(async () => { const g = await peek(s); if (!root || st.screen !== 'platforms' || token !== st.pi + ':' + st.level + ':' + st.sub + ':' + st.row || !g.length) return; setBackdrop(g[Math.floor(Math.random() * g.length)].cover_url, ac); if (k === 'platform') loadGames(s).catch(() => {}); }, 350);   // the games load while the person looks at the platform
@@ -279,7 +296,7 @@ export function openBigScreen(host) {
   const leaveGames = () => {   // back from the wheel: to the tile row it came from
     st.screen = 'platforms';
     const s = st.src || { kind: 'platform' };
-    if (s.kind === 'fav') { st.level = 0; st.sub = null; st.fam = null; st.row = 1; st.pi = Math.max(0, extraItems().findIndex((x) => x.kind === 'fav')); }
+    if (s.kind === 'fav' || s.kind === 'steam') { st.level = 0; st.sub = null; st.fam = null; st.row = 1; st.pi = Math.max(0, extraItems().findIndex((x) => x.kind === s.kind)); }
     else if (s.kind === 'coll') { st.level = 1; st.sub = 'colls'; st.fam = null; st.pi = Math.max(0, collItems().findIndex((x) => x.id === s.id)); }
     else {
       const f = families().find((x) => x.name === (st.plat?.family || 'Others')) || families()[0];
@@ -684,8 +701,10 @@ export function openBigScreen(host) {
   // ── playing ──
   const canBrowser = (g) => Boolean(g && g.playable && !g.missing);
   const canLocalPlay = (g) => Boolean(g && host.user()?.can_download !== false && launchable(g.platform));
-  const openBrowser = (g) => { if (!canBrowser(g)) return say('This game cannot be played in the browser.', true); pauseVideo(); host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => say(err.message, true)); };
+  const openBrowser = (g) => { if (g?.steam) return say('A Steam game starts in Steam on this PC: press Y.', true); if (!canBrowser(g)) return say('This game cannot be played in the browser.', true); pauseVideo(); host.api(`/roms/${g.id}`).then(host.openPlayer).catch((err) => say(err.message, true)); };
+  const playSteam = (g) => { if (!g.launch_url) return say('Switch the play button on for this game in the Digital Library first.', true); pauseVideo(); say('Starting in Steam…'); location.href = g.launch_url; };   // steam://rungameid/...: Steam on this PC takes it from here
   const playLocal = async (g) => {
+    if (g.steam) return playSteam(g);
     if (!canLocalPlay(g)) return say('No emulator is set up on this PC for this platform.', true);
     pauseVideo();
     try {
@@ -695,7 +714,7 @@ export function openBigScreen(host) {
     } catch (err) { say(err.message || 'Could not start the game', true); }
   };
   // a game with issues can often still be played: Play only says so, and starts it
-  const play = (g) => { if (!g) return; if (g.broken) say('Emulation has issues with this game, so it may not run well. Starting it anyway…'); if (canLocalPlay(g)) return playLocal(g); if (canBrowser(g)) return openBrowser(g); say('This game cannot be started from this PC.', true); };
+  const play = (g) => { if (!g) return; if (g.steam) return playSteam(g); if (g.broken) say('Emulation has issues with this game, so it may not run well. Starting it anyway…'); if (canLocalPlay(g)) return playLocal(g); if (canBrowser(g)) return openBrowser(g); say('This game cannot be started from this PC.', true); };
 
   // ── the questions on top: a yes/no, the keyboard, the collection chooser ──
   const overlay = (id, html) => { $('#' + id)?.remove(); const d = document.createElement('div'); d.className = 'bs-ov'; d.id = id; d.innerHTML = html; root.appendChild(d); return d; };
@@ -794,6 +813,10 @@ export function openBigScreen(host) {
     st.gi = Math.min(st.gi, st.games.length - 1); backToWheel();
   };
   const toggleFav = async (g) => {
+    if (g.steam) {   // a Steam game's favourite is its own mark in the Digital Library
+      try { await host.api(`/digital/games/steam/${encodeURIComponent(g.app_id)}/mark`, { method: 'PUT', body: JSON.stringify({ field: 'favourite', value: !g.favorite }) }); g.favorite = !g.favorite; st.dirty = true; paintMenu(); $('.bs-favstar')?.classList.toggle('on', Boolean(g.favorite)); say(g.favorite ? 'Added to your favourites.' : 'Removed from your favourites.'); } catch (err) { say(err.message, true); }
+      return;
+    }
     try {
       const r = await host.api(`/roms/${g.id}/favorite`, { method: 'POST', body: JSON.stringify({}) });
       g.favorite = r.favorite; st.favCount = Math.max(0, st.favCount + (r.favorite ? 1 : -1)); st.dirty = true; paintMenu(); $('.bs-favstar')?.classList.toggle('on', Boolean(g.favorite));
@@ -868,6 +891,7 @@ export function openBigScreen(host) {
       else if (a === 'select' && item()) {
         const x = item(), k = x.kind || 'platform';
         if (k === 'fav') enterSource({ kind: 'fav', name: 'Favourites' });
+        else if (k === 'steam') enterSource({ kind: 'steam', name: 'Steam' });
         else if (k === 'colls') { st.pis[1] = st.pi; st.level = 1; st.sub = 'colls'; st.pi = 0; drawPlatforms(); }
         else if (k === 'collection') enterSource({ kind: 'coll', id: x.id, name: x.name });
         else if (k === 'family') { st.pis[0] = st.pi; if (x.plats.length === 1) enterSource({ kind: 'platform', slug: x.plats[0].slug, name: x.plats[0].name, plat: x.plats[0] }); else { st.level = 1; st.sub = 'family'; st.fam = x.name; st.pi = 0; drawPlatforms(); } }
@@ -928,6 +952,7 @@ export function openBigScreen(host) {
   if (want) { st.plat = want; const f = families().find((x) => x.name === (want.family || 'Others')); if (f && f.plats.length > 1) { st.level = 1; st.sub = 'family'; st.fam = f.name; st.pi = f.plats.indexOf(want); } else st.pi = Math.max(0, families().findIndex((x) => x.name === (want.family || 'Others'))); }
   drawPlatforms();
   const refreshTop = () => { if (root && st.screen === 'platforms' && st.level === 0) { const cur = item()?.name; st.pi = Math.max(0, railItems().findIndex((x) => x.name === cur)); drawPlatforms(); } };
+  host.api('/digital/games?stores=steam&installed=1').then((d) => { st.steamCount = Number(d.total || 0); refreshTop(); }).catch(() => {});
   host.api('/roms?favorite=1&limit=1').then((d) => { st.favCount = Number(d.total || 0); refreshTop(); }).catch(() => {});
   host.api('/collections').then((d) => { st.colls = d.items || d || []; refreshTop(); }).catch(() => {});
   host.api('/prefs').then((p) => { const lp = parseLp(p); if (!lp && root && !noLauncher()) say('Showing every platform. Run Check my PC in the Carousel so only the ones this PC can start show here.'); if (lp && root) { st.lp = lp.platforms; st.plats = platList(); st.level = 0; st.row = 0; st.sub = null; st.fam = null; st.pi = 0; if (st.screen === 'platforms') drawPlatforms(); } }).catch(() => {});
