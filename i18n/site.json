@@ -2392,5 +2392,95 @@
   "de": "Hol Cover, Logos und Videos von ScreenScraper, SteamGridDB, IGDB oder TheGamesDB, oder nimm deine eigenen.",
   "ja": "ScreenScraper、SteamGridDB、IGDB、TheGamesDB からカバーやロゴ、動画を取得でき、自前の素材も使えます。",
   "it": "Scarica copertine, loghi e video da ScreenScraper, SteamGridDB, IGDB o TheGamesDB, oppure usa i tuoi."
+ },
+ "Account control": {
+  "fr": "Contrôle des comptes",
+  "zh": "账号管理",
+  "es": "Control de cuentas",
+  "pt": "Controle de contas",
+  "de": "Kontoverwaltung",
+  "ja": "アカウント管理",
+  "it": "Controllo degli account"
+ },
+ "Create accounts, set each person&#x27;s role, and switch any account off.": {
+  "fr": "Créez des comptes, fixez le rôle de chacun et désactivez n'importe quel compte.",
+  "zh": "创建账号，设定每个人的角色，也可随时停用任何账号。",
+  "es": "Crea cuentas, asigna el rol de cada persona y desactiva cualquier cuenta.",
+  "pt": "Crie contas, defina o papel de cada pessoa e desative qualquer conta.",
+  "de": "Konten anlegen, die Rolle jeder Person festlegen und jedes Konto abschalten.",
+  "ja": "アカウントを作成し、人ごとに役割を設定し、いつでも無効にできます。",
+  "it": "Crea account, assegna il ruolo a ciascuno e disattiva qualsiasi account."
+ },
+ "Play-only accounts": {
+  "fr": "Comptes jeu seul",
+  "zh": "仅游玩账号",
+  "es": "Cuentas solo para jugar",
+  "pt": "Contas só para jogar",
+  "de": "Konten nur zum Spielen",
+  "ja": "プレイ専用アカウント",
+  "it": "Account solo gioco"
+ },
+ "A simple grid of games that can be played, with no downloads and no admin pages. Ideal for the kids.": {
+  "fr": "Une simple grille de jeux jouables, sans téléchargement ni pages d'administration. Idéal pour les enfants.",
+  "zh": "只显示可玩游戏的简洁网格，没有下载，也没有管理页面。非常适合孩子。",
+  "es": "Una cuadrícula sencilla de juegos jugables, sin descargas ni páginas de administración. Ideal para los niños.",
+  "pt": "Uma grade simples de jogos jogáveis, sem downloads e sem páginas de administração. Ideal para as crianças.",
+  "de": "Ein einfaches Raster spielbarer Spiele, ohne Downloads und ohne Admin-Seiten. Ideal für die Kinder.",
+  "ja": "遊べるゲームだけのシンプルな一覧で、ダウンロードも管理ページもありません。子どもにぴったり。",
+  "it": "Una semplice griglia di giochi giocabili, senza download né pagine di amministrazione. Ideale per i bambini."
+ },
+ "Download limits": {
+  "fr": "Limites de téléchargement",
+  "zh": "下载限制",
+  "es": "Límites de descarga",
+  "pt": "Limites de download",
+  "de": "Download-Beschränkungen",
+  "ja": "ダウンロード制限",
+  "it": "Limiti di download"
+ },
+ "Choose who may download game files: everyone, nobody, or person by person.": {
+  "fr": "Choisissez qui peut télécharger les fichiers de jeu : tout le monde, personne, ou personne par personne.",
+  "zh": "决定谁可以下载游戏文件：所有人、没有人，或逐人设置。",
+  "es": "Decide quién puede descargar los archivos de juego: todos, nadie o persona por persona.",
+  "pt": "Escolha quem pode baixar os arquivos de jogo: todos, ninguém ou pessoa por pessoa.",
+  "de": "Lege fest, wer Spieldateien herunterladen darf: alle, niemand oder Person für Person.",
+  "ja": "ゲームファイルをダウンロードできる人を、全員・誰も・一人ずつから選べます。",
+  "it": "Scegli chi può scaricare i file di gioco: tutti, nessuno o persona per persona."
+ },
+ "Your own digital library": {
+  "fr": "Votre bibliothèque numérique",
+  "zh": "你自己的数字游戏库",
+  "es": "Tu propia biblioteca digital",
+  "pt": "Sua própria biblioteca digital",
+  "de": "Deine eigene digitale Bibliothek",
+  "ja": "自分だけのデジタルライブラリ",
+  "it": "La tua libreria digitale"
+ },
+ "Everyone sees their own Steam and console games, and nobody else&#x27;s.": {
+  "fr": "Chacun voit ses propres jeux Steam et console, et ceux de personne d'autre.",
+  "zh": "每个人只能看到自己的 Steam 和主机游戏，看不到别人的。",
+  "es": "Cada persona ve sus propios juegos de Steam y de consola, y los de nadie más.",
+  "pt": "Cada pessoa vê seus próprios jogos de Steam e de console, e os de mais ninguém.",
+  "de": "Jeder sieht die eigenen Steam- und Konsolenspiele, und die von niemand anderem.",
+  "ja": "Steamやコンソールのゲームは、自分のものだけが自分に表示されます。",
+  "it": "Ognuno vede i propri giochi Steam e console, e quelli di nessun altro."
+ },
+ "Your own physical shelf": {
+  "fr": "Votre propre étagère",
+  "zh": "你自己的实体收藏架",
+  "es": "Tu propia estantería",
+  "pt": "Sua própria estante",
+  "de": "Dein eigenes Regal",
+  "ja": "自分だけの棚",
+  "it": "Il tuo scaffale"
+ },
+ "Everyone keeps their own shelf of discs and cartridges.": {
+  "fr": "Chacun garde sa propre étagère de disques et de cartouches.",
+  "zh": "每个人都有自己的光盘和卡带收藏架。",
+  "es": "Cada persona tiene su propia estantería de discos y cartuchos.",
+  "pt": "Cada pessoa tem sua própria estante de discos e cartuchos.",
+  "de": "Jeder führt sein eigenes Regal mit Discs und Modulen.",
+  "ja": "ディスクやカートリッジの棚も、一人ひとりが自分のものを持てます。",
+  "it": "Ognuno ha il proprio scaffale di dischi e cartucce."
  }
 }
