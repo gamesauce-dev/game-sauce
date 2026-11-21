@@ -34,18 +34,31 @@ function take(file) {
   return name;
 }
 
+let videos = 0, manuals = 0;
 const out = { made: new Date().toISOString().slice(0, 10), roms: [], physical: [], digital: [] };
 
 // Games: for each platform, the best-described ones that have a cover (a description and a year first, then the better rated).
 for (const p of db.prepare('SELECT id, slug, name, family FROM platforms').all()) {
-  const rows = db.prepare(`SELECT title, region, release_year, developer, publisher, genre, players, rating, description, cover_path, favorite
+  // Games with a video and a logo come first (they film best), then the best described ones.
+  const rows = db.prepare(`SELECT id, title, region, release_year, developer, publisher, genre, players, rating, description, cover_path, favorite
     FROM roms WHERE platform_id = ? AND cover_path IS NOT NULL AND cover_path <> '' AND hidden = 0 AND missing = 0 AND is_system = 0
-    ORDER BY (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, PER * 3);
+    ORDER BY EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'video') DESC, EXISTS (SELECT 1 FROM rom_files f WHERE f.rom_id = roms.id AND f.kind = 'logo') DESC,
+      (description IS NOT NULL AND description <> '') DESC, (release_year IS NOT NULL) DESC, rating DESC, title LIMIT ?`).all(p.id, PER * 3);
   let n = 0;
   for (const r of rows) {
     if (n >= PER) break;
     const cover = take(r.cover_path); if (!cover) continue;
-    out.roms.push({ platform: p.slug, platform_name: p.name, family: p.family, title: r.title, region: r.region, year: r.release_year, developer: r.developer, publisher: r.publisher, genre: r.genre, players: r.players, rating: r.rating, description: r.description, favorite: r.favorite ? 1 : 0, cover });
+    // The extras kept for the game: its logo, a screenshot, its marquee, a short video and a manual (a few of the biggest are skipped, so the folder stays a size to copy).
+    const extra = {};
+    if (has('rom_files')) for (const f of db.prepare("SELECT kind, path, bytes FROM rom_files WHERE rom_id = ? AND kind IN ('logo', 'screenshot', 'marquee', 'video', 'manual')").all(r.id)) {
+      const cap = { video: 14 * 1048576, manual: 6 * 1048576 }[f.kind] || 3 * 1048576;
+      if (f.kind === 'video' && videos >= 40) continue;
+      if (f.kind === 'manual' && manuals >= 6) continue;
+      if (f.bytes && f.bytes > cap) continue;
+      const got = take(f.path); if (!got) continue;
+      extra[f.kind] = got; if (f.kind === 'video') videos++; if (f.kind === 'manual') manuals++;
+    }
+    out.roms.push({ extra, platform: p.slug, platform_name: p.name, family: p.family, title: r.title, region: r.region, year: r.release_year, developer: r.developer, publisher: r.publisher, genre: r.genre, players: r.players, rating: r.rating, description: r.description, favorite: r.favorite ? 1 : 0, cover });
     n++;
   }
 }
@@ -70,4 +83,5 @@ if (has('digital_games') && has('digital_details')) {
 fs.writeFileSync(path.join(OUT, 'showcase.json'), JSON.stringify(out, null, 1));
 const perPlat = {}; for (const r of out.roms) perPlat[r.platform] = (perPlat[r.platform] || 0) + 1;
 console.log(`wrote ${OUT}: ${out.roms.length} games on ${Object.keys(perPlat).length} platforms, ${out.physical.length} on the shelf, ${out.digital.length} digital; ${copied} pictures, ${(bytes / 1048576).toFixed(1)} MB`);
+console.log(`kept ${videos} videos and ${manuals} manuals, with logos, screenshots and marquees where the games have them`);
 console.log('platforms:', Object.entries(perPlat).map(([k, v]) => `${k} ${v}`).join(', '));
