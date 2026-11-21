@@ -152,14 +152,14 @@
   "ja": "Windows &middot; macOS（Apple シリコン）&middot; Linux &middot; Docker、Unraid、Proxmox &middot; Raspberry Pi",
   "it": "Windows &middot; macOS (Apple silicon) &middot; Linux &middot; Docker, Unraid e Proxmox &middot; Raspberry Pi"
  },
- "Screenshots use built-in demo data with generated covers.": {
-  "fr": "Les captures d'écran utilisent les données de démonstration intégrées, avec des jaquettes générées.",
-  "zh": "截图使用内置的演示数据和生成的封面。",
-  "es": "Las capturas usan datos de demostración incluidos, con carátulas generadas.",
-  "pt": "As capturas de tela usam dados de demonstração embutidos, com capas geradas.",
-  "de": "Die Screenshots verwenden eingebaute Demodaten mit generierten Covern.",
-  "ja": "スクリーンショットは、内蔵のデモデータと生成されたカバーを使っています。",
-  "it": "Gli screenshot usano dati demo integrati con copertine generate."
+ "The screenshots and videos show a demo library. Game covers and artwork belong to their respective owners.": {
+  "fr": "Les captures d’écran et les vidéos montrent une bibliothèque de démonstration. Les jaquettes et visuels des jeux appartiennent à leurs propriétaires respectifs.",
+  "zh": "截图和视频展示的是一个演示游戏库。游戏封面和美术资源归其各自所有者所有。",
+  "es": "Las capturas y los vídeos muestran una biblioteca de demostración. Las carátulas y el material gráfico de los juegos pertenecen a sus respectivos propietarios.",
+  "pt": "As capturas de tela e os vídeos mostram uma biblioteca de demonstração. As capas e imagens dos jogos pertencem aos seus respectivos proprietários.",
+  "de": "Die Screenshots und Videos zeigen eine Demo-Bibliothek. Cover und Artwork der Spiele gehören ihren jeweiligen Eigentümern.",
+  "ja": "スクリーンショットと動画はデモ用のライブラリです。ゲームのカバーやアートワークの権利は、それぞれの権利者に帰属します。",
+  "it": "Gli screenshot e i video mostrano una libreria dimostrativa. Le copertine e le immagini dei giochi appartengono ai rispettivi proprietari."
  },
  "Everything for a collection you already have": {
   "fr": "Tout pour une collection que vous avez déjà",
@@ -1097,14 +1097,14 @@
   "ja": "サインイン画面：ネオンのグリッドの上の game-sauce のロゴと、ユーザー名とパスワードの入力欄",
   "it": "La schermata di accesso: il logo di game-sauce su una griglia al neon, con i campi nome utente e password"
  },
- "The Physical shelf with a PlayStation 2 case open, showing its instruction booklet and disc": {
-  "fr": "L'étagère physique avec un boîtier PlayStation 2 ouvert, montrant son livret et son disque",
-  "zh": "实体游戏架上打开的 PlayStation 2 盒子，里面是说明书和光盘",
-  "es": "La estantería física con una caja de PlayStation 2 abierta, mostrando su manual y su disco",
-  "pt": "A estante Física com uma caixa de PlayStation 2 aberta, mostrando o manual e o disco",
-  "de": "Das physische Regal mit einer geöffneten PlayStation-2-Hülle, die ihr Heft und ihre Disc zeigt",
-  "ja": "PlayStation 2 のケースが開いた物理の棚。説明書とディスクが見える",
-  "it": "Lo scaffale Fisico con una custodia PlayStation 2 aperta, che mostra il libretto di istruzioni e il disco"
+ "The Physical shelf with a green Xbox 360 case open, showing its manual and disc": {
+  "fr": "L’étagère Physique avec un boîtier Xbox 360 vert ouvert, montrant son manuel et son disque",
+  "zh": "实体书架，一个绿色的 Xbox 360 盒子已打开，露出说明书和光盘",
+  "es": "La estantería Física con una caja verde de Xbox 360 abierta, que muestra su manual y su disco",
+  "pt": "A estante Física com uma caixa verde de Xbox 360 aberta, mostrando o manual e o disco",
+  "de": "Das Physical-Regal mit einer geöffneten grünen Xbox-360-Hülle, in der Anleitung und Disc zu sehen sind",
+  "ja": "物理ライブラリの棚。緑の Xbox 360 のケースが開き、説明書とディスクが見える",
+  "it": "Lo scaffale Fisico con una custodia verde di Xbox 360 aperta, che mostra il manuale e il disco"
  },
  "The Carousel: a fan of covers with Play in browser and Play on this PC below": {
   "fr": "Le Carrousel : un éventail de jaquettes avec Jouer dans le navigateur et Jouer sur ce PC en dessous",
