@@ -685,3 +685,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '65') ON CON
 /* ── v66: the BIOS a DAT's set borrows ROMs from (romof), kept with the set, so a FinalBurn Neo or CPS DAT can teach "Play locally" which BIOS to send as well as the MAME list. */
 if (!db.prepare('PRAGMA table_info(dat_sets)').all().some((c) => c.name === 'romof')) db.exec('ALTER TABLE dat_sets ADD COLUMN romof TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '66') ON CONFLICT(key) DO UPDATE SET value = '66'").run();
+
+/* ── v67: a game's long name ("Initial D Arcade Stage (Export)") beside its short one ("Initial D Arcade Stage"). title stays the short name; each person chooses which one they see (Preferences > Game names). */
+if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'long_title')) db.exec('ALTER TABLE roms ADD COLUMN long_title TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '67') ON CONFLICT(key) DO UPDATE SET value = '67'").run();

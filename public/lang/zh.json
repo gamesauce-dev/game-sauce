@@ -2106,5 +2106,12 @@
  "Select a Game": "选择游戏",
  "Available Content": "可用内容",
  "green and glossy like the 2005 dashboard, on Xbox consoles": "绿色光泽，仿 2005 年主界面，用于 Xbox 系列主机",
- "Preferences": "偏好设置"
+ "Preferences": "偏好设置",
+ "Game names": "游戏名称",
+ "How a game's name shows in the ROM Library. The short name leaves out the bracketed part (Initial D Arcade Stage), the long name keeps it (Initial D Arcade Stage (Export)). A game with no long name shows its usual name either way.": "游戏名称在 ROM 库中的显示方式。简短名称不含括号部分（Initial D Arcade Stage），完整名称保留括号（Initial D Arcade Stage (Export)）。没有完整名称的游戏，两种方式都显示其通常名称。",
+ "Short": "简短",
+ "Long": "完整",
+ "without the bracketed part": "不含括号部分",
+ "the full name": "完整名称",
+ "Full name: {a}": "完整名称：{a}"
 }

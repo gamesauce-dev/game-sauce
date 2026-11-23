@@ -50,8 +50,10 @@ const upload = multer({
     limits: { fileSize: Number(process.env.GAMESAUCE_MAX_UPLOAD || 8 * 1024 * 1024 * 1024) }
 });
 
+// title is what this person asked to see (Preferences > Game names: the short name, or the long one where a game has it). short_title and long_title are always sent, so the edit form keeps editing the short one.
+const NAME_LONG_SQL = `COALESCE((SELECT value FROM user_prefs up WHERE up.user_id = @uid AND up.key = 'name_style'), 'short') = 'long' AND COALESCE(r.long_title, '') <> ''`;
 const ROM_COLUMNS = `
-  r.id, r.title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
+  r.id, CASE WHEN ${NAME_LONG_SQL} THEN r.long_title ELSE r.title END AS title, r.title AS short_title, r.long_title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
   r.release_year, r.developer, r.publisher, r.genre, r.players, r.rating,
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
   r.meta_source, r.meta_synced_at, r.play_count, r.broken, r.multidisc_override,
@@ -446,6 +448,7 @@ router.get('/', (req, res) => {
     // rather than LIKE so that % and _ in the query are not wildcards.
     where.push(`(
       instr(lower(r.title), lower(@q)) > 0 OR
+      instr(lower(COALESCE(r.long_title,'')), lower(@q)) > 0 OR
       instr(lower(COALESCE(r.developer,'')), lower(@q)) > 0 OR
       instr(lower(COALESCE(r.publisher,'')), lower(@q)) > 0 OR
       instr(lower(COALESCE(r.genre,'')), lower(@q)) > 0 OR

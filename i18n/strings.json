@@ -6514,5 +6514,26 @@
  },
  "Zip64 archives are not supported": {
   "files": 1
+ },
+ "Game names": {
+  "files": 1
+ },
+ "How a game's name shows in the ROM Library. The short name leaves out the bracketed part (Initial D Arcade Stage), the long name keeps it (Initial D Arcade Stage (Export)). A game with no long name shows its usual name either way.": {
+  "files": 1
+ },
+ "Short": {
+  "files": 1
+ },
+ "Long": {
+  "files": 1
+ },
+ "without the bracketed part": {
+  "files": 1
+ },
+ "the full name": {
+  "files": 1
+ },
+ "Full name: {a}": {
+  "files": 1
  }
 }

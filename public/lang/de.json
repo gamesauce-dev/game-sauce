@@ -2108,5 +2108,12 @@
  "Select a Game": "Spiel auswählen",
  "Available Content": "Verfügbare Inhalte",
  "green and glossy like the 2005 dashboard, on Xbox consoles": "grün und glänzend wie das Dashboard von 2005, auf Xbox-Konsolen",
- "Preferences": "Voreinstellungen"
+ "Preferences": "Voreinstellungen",
+ "Game names": "Spielnamen",
+ "How a game's name shows in the ROM Library. The short name leaves out the bracketed part (Initial D Arcade Stage), the long name keeps it (Initial D Arcade Stage (Export)). A game with no long name shows its usual name either way.": "Wie der Name eines Spiels in der ROM-Bibliothek angezeigt wird. Der kurze Name lässt den Teil in Klammern weg (Initial D Arcade Stage), der lange behält ihn (Initial D Arcade Stage (Export)). Ein Spiel ohne langen Namen zeigt in beiden Fällen seinen gewohnten Namen.",
+ "Short": "Kurz",
+ "Long": "Lang",
+ "without the bracketed part": "ohne den Teil in Klammern",
+ "the full name": "der vollständige Name",
+ "Full name: {a}": "Vollständiger Name: {a}"
 }

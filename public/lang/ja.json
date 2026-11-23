@@ -2108,5 +2108,12 @@
  "Select a Game": "ゲームを選択",
  "Available Content": "利用可能なコンテンツ",
  "green and glossy like the 2005 dashboard, on Xbox consoles": "緑色で光沢のある2005年のダッシュボード風。Xbox 系のゲーム機で使われます",
- "Preferences": "環境設定"
+ "Preferences": "環境設定",
+ "Game names": "ゲーム名",
+ "How a game's name shows in the ROM Library. The short name leaves out the bracketed part (Initial D Arcade Stage), the long name keeps it (Initial D Arcade Stage (Export)). A game with no long name shows its usual name either way.": "ROMライブラリでのゲーム名の表示方法です。短い名前は括弧の部分を省き（Initial D Arcade Stage）、長い名前は括弧も含みます（Initial D Arcade Stage (Export)）。長い名前がないゲームは、どちらでも通常の名前を表示します。",
+ "Short": "短い",
+ "Long": "長い",
+ "without the bracketed part": "括弧の部分なし",
+ "the full name": "完全な名前",
+ "Full name: {a}": "正式名称：{a}"
 }

@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import db from '../db.js';
 import { sortTitle } from './metadata.js';
+import { isSetFamily } from './romdeps.js';
 
 const unesc = (s) => String(s || '')
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
@@ -103,28 +104,42 @@ export function mameTitleTrusted(platformSlug, filename) {
 }
 export const ARCADE_ROMSET = new Set(['mame', 'neogeo', 'cps1', 'cps2', 'cps3', 'naomi', 'atomiswave', 'fba', 'arcade', 'coinop']);
 
+/** "Initial D Arcade Stage (Export)" -> "Initial D Arcade Stage": the name before the first bracket. A name that starts with a bracket is kept whole. */
+export function shortName(full) {
+  const f = String(full || '').trim();
+  const i = f.indexOf('(');
+  const s = i > 0 ? f.slice(0, i).trim() : f;
+  return s || f;
+}
+
 /** Title/year/developer from the list for MAME ROMs (all of them, or one id).
  *  Authoritative: a zip name IS the identifier, so this replaces filename-derived
  *  and (mis)matched provider titles. */
 export function applyMameNames(romId = null) {
-  const arcade = [...ARCADE_ROMSET];
+  // Every arcade-romset platform, and a platform the person made whose name says it is one (seganaomi2); a zip or 7z whose name is a set in the list.
   const rows = db.prepare(`
     SELECT r.id, r.filename, r.meta_source, p.slug FROM roms r JOIN platforms p ON p.id = r.platform_id
-    WHERE p.slug IN (${arcade.map(() => '?').join(',')}) ${romId ? 'AND r.id = ?' : ''}
-  `).all(...arcade, ...(romId ? [romId] : []));
+    WHERE (lower(r.filename) LIKE '%.zip' OR lower(r.filename) LIKE '%.7z') ${romId ? 'AND r.id = ?' : ''}
+  `).all(...(romId ? [romId] : [])).filter((r) => ARCADE_ROMSET.has(r.slug) || isSetFamily(r.slug));
   const find = db.prepare('SELECT * FROM mame_names WHERE name = ?');
-  const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
+  // title is the short name and long_title the full one, as the list gives it. A title a provider or the person set is left alone; the long name is separate, so it is always kept.
+  const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, long_title = ?, release_year = COALESCE(?, release_year),
     developer = COALESCE(developer, ?), meta_source = 'mame-list', updated_at = datetime('now') WHERE id = ?`);
-  let matched = 0;
+  const setLong = db.prepare("UPDATE roms SET long_title = ?, updated_at = datetime('now') WHERE id = ? AND COALESCE(long_title, '') <> COALESCE(?, '')");
+  const flagSystem = db.prepare("UPDATE roms SET is_system = 1, updated_at = datetime('now') WHERE id = ? AND is_system = 0");
+  let matched = 0, system = 0;
   db.transaction(() => {
     for (const r of rows) {
       const key = String(r.filename).replace(/\.(zip|7z)$/i, '').toLowerCase();
       const n = find.get(key);
       if (!n) continue;
-      if (r.slug !== 'mame' && r.meta_source && r.meta_source !== 'filename' && r.meta_source !== 'mame-list') continue;   // another arcade platform keeps a title a provider or the person gave it
-      upd.run(n.title, sortTitle(n.title), n.year, n.manufacturer, r.id);
+      const short = shortName(n.title);
+      const long = short !== String(n.title || '').trim() ? String(n.title).trim() : null;
+      if (n.isbios || n.isdevice) { if (flagSystem.run(r.id).changes) system++; }   // a BIOS or device set is not a game: System, so it is hidden
+      if (r.slug !== 'mame' && r.meta_source && r.meta_source !== 'filename' && r.meta_source !== 'mame-list') { setLong.run(long, r.id, long); continue; }   // another arcade platform keeps a title a provider or the person gave it
+      upd.run(short, sortTitle(short), long, n.year, n.manufacturer, r.id);
       matched++;
     }
   })();
-  return { mame_roms: rows.length, matched };
+  return { mame_roms: rows.length, matched, system };
 }

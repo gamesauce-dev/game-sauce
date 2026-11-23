@@ -1616,6 +1616,7 @@ async function openDetail(id) {
     <div class="detail-head">
       <div style="flex:1">
         <h2 class="detail-title">${esc(rom.title)}</h2>
+        ${rom.long_title ? `<p class="hint detail-fullname">Full name: ${esc(rom.long_title)}</p>` : ''}
         <div class="detail-plat"><i style="background:${rom.platform_accent}"></i>${esc(rom.platform_name)}${rom.release_year ? ` · ${rom.release_year}` : ''}</div>
       </div>
     </div>
@@ -1648,7 +1649,7 @@ async function openDetail(id) {
     <div class="panel" style="padding:12px">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input id="identify-q" class="search" style="flex:1;min-width:180px" type="search"
-          placeholder="Title to search…" value="${esc(rom.title)}" autocomplete="off" />
+          placeholder="Title to search…" value="${esc(rom.short_title ?? rom.title)}" autocomplete="off" />
         <div class="provpick" id="identify-provider" data-value="${esc(state.prefs?.identify_provider || 'thegamesdb')}" title="Which catalogue to search — click ☆ to make one your default"></div>
         <select id="identify-platform" class="select" style="max-width:190px"></select>
         <button class="btn" id="identify-search">Search</button>
@@ -1700,7 +1701,7 @@ async function openDetail(id) {
 
     <div class="section-label">Edit</div>
     <form class="edit-form" id="edit-form">
-      <label class="field"><span>Title</span><input name="title" value="${esc(rom.title)}" /></label>
+      <label class="field"><span>Title</span><input name="title" value="${esc(rom.short_title ?? rom.title)}" /></label>
       <div class="field-row">
         <label class="field"><span>Developer</span><input name="developer" value="${esc(rom.developer || '')}" /></label>
         <label class="field"><span>Publisher</span><input name="publisher" value="${esc(rom.publisher || '')}" /></label>
@@ -4101,6 +4102,18 @@ function initProfilePanel() {
       try { await api('/prefs/chip_style', { method: 'PUT', body: JSON.stringify({ value: v === 'chips' ? null : v }) }); } catch (err) { return toast(err.message, true); }
       state.prefs = { ...(state.prefs || {}) }; if (v === 'logos') state.prefs.chip_style = 'logos'; else delete state.prefs.chip_style;
       paintCs(); window.dispatchEvent(new Event('gs:chipstyle'));
+    };
+  }
+  // Game names: short or long. Kept with the account; the Library is read again so every tile shows the one chosen.
+  const nsBox = $('#namestyle-picker');
+  if (nsBox) {
+    const paintNs = () => { const now = state.prefs?.name_style === 'long' ? 'long' : 'short'; nsBox.innerHTML = [['short', 'Short', 'without the bracketed part'], ['long', 'Long', 'the full name']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-namestyle="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    paintNs();
+    nsBox.onclick = async (ev) => {
+      const b = ev.target.closest('[data-namestyle]'); if (!b) return; const v = b.dataset.namestyle;
+      try { await api('/prefs/name_style', { method: 'PUT', body: JSON.stringify({ value: v === 'short' ? null : v }) }); } catch (err) { return toast(err.message, true); }
+      state.prefs = { ...(state.prefs || {}) }; if (v === 'long') state.prefs.name_style = 'long'; else delete state.prefs.name_style;
+      paintNs(); loadLibrary();
     };
   }
   const plateBox = $('#chipplate');
