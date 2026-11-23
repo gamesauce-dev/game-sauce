@@ -48,11 +48,11 @@ export async function importMameNames(filePath) {
   db.prepare("UPDATE roms SET dat_status = NULL, dat_entry_id = NULL, dat_set_id = NULL, dat_title = NULL, dat_checked_at = NULL WHERE dat_set_id IN (SELECT id FROM dat_sets WHERE datfile_id IN (SELECT id FROM datfiles WHERE filename = 'mame -listxml'))").run();
   db.prepare("DELETE FROM datfiles WHERE filename = 'mame -listxml'").run();
   const datfileId = Number(db.prepare("INSERT INTO datfiles (name, filename, source, system_name, platform_slug) VALUES ('MAME (-listxml)', 'mame -listxml', 'mame -listxml', 'MAME', 'mame')").run().lastInsertRowid);
-  const insSet = db.prepare("INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, status) VALUES (?, 'mame', ?, ?, ?, 'verified')");
+  const insSet = db.prepare("INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, romof, status) VALUES (?, 'mame', ?, ?, ?, ?, 'verified')");
   let sets = 0;
   const refs = new Map();       // machine -> the devices it uses
   const romDevices = new Set();  // devices that have ROMs of their own (the only ones that can be a zip of their own)
-  const write = db.transaction((rows) => { for (const r of rows) { ins.run(r); if (r.refs.length) refs.set(r.name, r.refs); if (r.isdevice && r.hasroms) romDevices.add(r.name); if (!r.isdevice) { insSet.run(datfileId, r.name, r.title, r.cloneof ? String(r.cloneof).toLowerCase() : null); sets++; } } });   // a device is not a game you keep
+  const write = db.transaction((rows) => { for (const r of rows) { ins.run(r); if (r.refs.length) refs.set(r.name, r.refs); if (r.isdevice && r.hasroms) romDevices.add(r.name); if (!r.isdevice) { insSet.run(datfileId, r.name, r.title, r.cloneof ? String(r.cloneof).toLowerCase() : null, r.romof ? String(r.romof).toLowerCase() : null); sets++; } } });   // a device is not a game you keep
 
   const decoder = new TextDecoder(enc);
   let buf = '', count = 0, sawMachine = false, batch = [];

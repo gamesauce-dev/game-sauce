@@ -681,3 +681,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '64') ON CON
 /* ── v65: the devices a MAME set uses that have ROMs of their own (a split or merged set keeps them in their own zips), so "Play locally" can send those zips too. Filled the next time the MAME name list is imported. */
 if (!db.prepare('PRAGMA table_info(mame_names)').all().some((c) => c.name === 'devices')) db.exec('ALTER TABLE mame_names ADD COLUMN devices TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '65') ON CONFLICT(key) DO UPDATE SET value = '65'").run();
+
+/* ── v66: the BIOS a DAT's set borrows ROMs from (romof), kept with the set, so a FinalBurn Neo or CPS DAT can teach "Play locally" which BIOS to send as well as the MAME list. */
+if (!db.prepare('PRAGMA table_info(dat_sets)').all().some((c) => c.name === 'romof')) db.exec('ALTER TABLE dat_sets ADD COLUMN romof TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '66') ON CONFLICT(key) DO UPDATE SET value = '66'").run();

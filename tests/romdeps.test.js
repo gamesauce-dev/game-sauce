@@ -190,3 +190,18 @@ test('the name CSV (rom_of and devices columns) teaches the BIOS and device sets
   assert.equal(r.devices, 'gdboard,other_dev');
   assert.equal(db.prepare("SELECT romof FROM mame_names WHERE name = 'oldgame'").get().romof, null, 'an old CSV without the columns still imports');
 });
+
+test('a FinalBurn Neo style DAT (romof on each game) teaches the BIOS too', async () => {
+  const { importDat } = await import('../src/dats.js');
+  const dat = path.join(TMP, 'fbneo.dat');
+  fs.writeFileSync(dat, `<?xml version="1.0"?><datafile><header><name>FinalBurn Neo - Arcade Games</name><description>FBNeo Arcade</description><version>1</version></header>
+<game name="fbgame" romof="fbbios"><description>FB Game</description><rom name="a.bin" size="1" crc="00000001"/></game>
+<game name="fbbios" isbios="yes"><description>FB Bios</description><rom name="b.bin" size="1" crc="00000002"/></game>
+</datafile>`);
+  await importDat({ filePath: dat, platform: 'fba', name: 'fbneo' });
+  assert.equal(db.prepare("SELECT romof FROM dat_sets WHERE set_name = 'fbgame'").get().romof, 'fbbios');
+  const fb = db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES ('FB Game','fb game','fbgame.zip',(SELECT id FROM platforms WHERE slug = 'fba'),?,1,'rd7')").run(put('fba/fbgame.zip', 'g')).lastInsertRowid;
+  put('fba/fbbios.zip', 'bios');
+  db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES ('FB Bios','fb bios','fbbios.zip',(SELECT id FROM platforms WHERE slug = 'fba'),?,1,'rd8')").run(path.join(ROMS, 'fba', 'fbbios.zip'));
+  assert.deepEqual(deps.findCompanions(romOf(fb)).files.map((f) => f.rel), ['fbbios.zip']);
+});

@@ -63,7 +63,14 @@ export function findCompanions(rom) {
   const ownDir = setFolder(rom.storage_path, own);
   if (ownDir) { const l = []; listFolder(ownDir, path.basename(ownDir), l); l.forEach(add); }
 
-  const names = db.prepare('SELECT cloneof, romof, devices, isdevice FROM mame_names WHERE name = ?');
+  const fromNames = db.prepare('SELECT cloneof, romof, devices, isdevice FROM mame_names WHERE name = ?');
+  const fromDat = db.prepare('SELECT cloneof, romof FROM dat_sets WHERE set_name = ? AND (cloneof IS NOT NULL OR romof IS NOT NULL) ORDER BY id LIMIT 1');
+  // What is known about a set: the MAME list or name CSV first, and a DAT (FinalBurn Neo, CPS) for whatever they do not say.
+  const names = { get(name) {
+    const a = fromNames.get(name), b = fromDat.get(name);
+    if (!a && !b) return undefined;
+    return { cloneof: a?.cloneof || b?.cloneof || null, romof: a?.romof || b?.romof || null, devices: a?.devices || null, isdevice: a?.isdevice || 0 };
+  } };
   const findRom = db.prepare(`SELECT r.filename, r.storage_path FROM roms r JOIN platforms p ON p.id = r.platform_id
     WHERE r.missing = 0 AND lower(r.filename) IN (@a, @b) AND p.slug IN (${[...SET_FAMILY].map((s) => `'${s}'`).join(',')}) ORDER BY r.id LIMIT 1`);
   const seen = new Set([own]);

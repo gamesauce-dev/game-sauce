@@ -168,7 +168,7 @@ export async function importDat({ filePath, platform = null, name = null, userId
     VALUES (@datfile_id, @platform_slug, @title, @rom_name, @size, @crc32, @md5, @sha1, @status, @cloneof, @norm)
   `);
 
-  const insertSet = db.prepare('INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, status) VALUES (@datfile_id, @platform_slug, @set_name, @title, @cloneof, @status)');
+  const insertSet = db.prepare('INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, romof, status) VALUES (@datfile_id, @platform_slug, @set_name, @title, @cloneof, @romof, @status)');
   let inserted = 0;
   let skipped = 0;
   let sets = 0;
