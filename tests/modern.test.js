@@ -304,7 +304,7 @@ test('Modern: Retro font is a per-device switch that only swaps the font variabl
 
 test('Details window: nav arrows, search/save icons, upload-cover icon, no duplicates in More actions, genre pills like chips', () => {
   const css = read('public/modern.css'), js = read('public/modern.js');
-  for (const [sel, n] of [['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'], ['[data-promo="addcoll"]', 'collection-grid'], ['[data-promo="refresh"]', 'scan-again'], ['#new-collection', 'add-collection']]) {
+  for (const [sel, n] of [['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['[data-promo="addcoll"]', 'collection-grid'], ['[data-promo="refresh"]', 'scan-again'], ['#new-collection', 'add-collection']]) {
     assert.ok(js.includes(`'${sel}'`) || js.includes(`${sel}"]', '${n}'`) || js.includes(sel), sel);
     assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
   }
@@ -333,7 +333,7 @@ test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover
   assert.match(css, /\.card-fav::before[^}]*star\.svg/);   // a star on the tile, not the face icon
   assert.match(css, /\.card-fav\.on::before[^}]*star-fill\.svg/);
   assert.match(css, /data-act="clearmatch"\]::before[^}]*clear-reset\.svg/);
-  assert.ok(js.includes("['label.btn:has(#cover-input)', 'upload-cover']"));
+  assert.ok(!js.includes("'label.btn:has(#cover-input)'") && !js.includes("'#edit-form button[type=\"submit\"]'"), 'Save changes and Upload cover are text buttons in the Details window');
   assert.ok(js.includes("{ view: 'collections', icon: 'collection'"));
   assert.match(js, /data-promo="addcoll"\]', 'add-collection'/);
 });
@@ -631,7 +631,7 @@ test('the download button in the details header is glass like the rest, not gree
 
 test('no-green buttons: neutral outline, new icons wired, welcome tour and change password are icon-sized', () => {
   const css = read('public/modern.css'), js = read('public/modern.js');
-  for (const id of ['#edit-form button[type="submit"]', '#new-collection', '#add-source', '#create-source', '#emu-upload-form button[type="submit"]', '#profile-upload', '#welcome-again', '#password-form button[type="submit"]', '#dat-upload', '#names-apply', '#covers-apply', '#dup-hide-all', '#backup-download', '#backup-save', '#platform-add-toggle'])
+  for (const id of ['#new-collection', '#add-source', '#create-source', '#emu-upload-form button[type="submit"]', '#profile-upload', '#welcome-again', '#password-form button[type="submit"]', '#dat-upload', '#names-apply', '#covers-apply', '#dup-hide-all', '#backup-download', '#backup-save', '#platform-add-toggle'])
     assert.ok(css.includes('body.ui-modern ' + id + ',') || css.includes('body.ui-modern ' + id + ' {'), 'neutral rule for ' + id);
   for (const [sel, name] of [["'#new-collection', 'add-collection'", 'add-collection'], ["'#add-source, #empty-add-source', 'source-add-2'", 'source-add-2'], ["'#create-source', 'source-add-and-scan-2'", 'source-add-and-scan-2'], ["'save-to-vault-2'", 'save-to-vault-2'], ["'#welcome-again', 'welcome-tour-2'", 'welcome-tour-2'], ["'#password-form button[type=\"submit\"]', 'save-password'", 'save-password'], ["'#covers-preview', 'preview-2'", 'preview-2'], ["'#names-preview', 'preview-2'", 'preview-2'], ["'#backup-save', 'save-settings-2'", 'save-settings-2'], ["'#platform-add-toggle', 'add-platform-2'", 'add-platform-2']]) {
     assert.ok(js.includes(sel), 'wired: ' + sel); assert.ok(fs.existsSync(new URL('../public/modern/icons/' + name + '.svg', import.meta.url)), name + '.svg exists');
@@ -646,7 +646,7 @@ test('the change-password icon rule comes after the general settings-form rule, 
 
 test('icons on the neutral (formerly green) buttons use the text colour, so they show on the light theme too', () => {
   const css = read('public/modern.css');
-  for (const id of ['#add-source', '#welcome-again', '#names-apply', '#backup-save', '#platform-add-toggle', '#edit-form button[type="submit"]'])
+  for (const id of ['#add-source', '#welcome-again', '#names-apply', '#backup-save', '#platform-add-toggle'])
     assert.ok(css.includes('body.ui-modern ' + id + '[data-mi]::before'), id);
   assert.match(css, /\[data-mi\]::before \{ background: currentColor; \}\n\/\* Welcome tour/);
 });
@@ -829,4 +829,13 @@ test('Modern: the Select icon lights up when it is on but is never filled in, li
   const css = read('public/modern.css');
   assert.ok(css.includes('body.ui-modern .mb-btn#tl-select.is-on svg path[stroke] { fill: none; }'), 'Select stays an outline');
   assert.ok(css.includes('body.ui-modern .mb-navbtn.is-on svg path[stroke] { fill: none; }'), 'and so do the main-menu icons');
+});
+
+test('Settings pages show text buttons (green, red for delete/stop), the DAT import comes first, the avatar says Preferences', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  assert.match(css, /#view-settings \[data-mi\]:not\(\.tile\):not\(\.subtile\)[^{]*::before \{ display: none; \}/);
+  assert.match(css, /#view-settings :is\(\[data-mi="delete"\], \[data-mi="cancel"\]/);
+  assert.match(css, /#mod-dat > \.dat-import \{ order: -1;/);
+  assert.match(css, /#drawer \.vid-find, body\.ui-modern #drawer \.vid-toggle/);
+  assert.ok(js.includes('id="mb-acct-btn" aria-haspopup="menu" aria-expanded="false" title="Preferences"'));
 });

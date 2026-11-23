@@ -94,7 +94,7 @@ async function doBuildBar() {
       <button class="mb-btn" id="mb-theme" title="" aria-label="Light or dark">${ic['dark-mode']}${ic['light-mode']}</button>
       <button class="mb-btn mb-gui is-on" id="mb-gui" title="Modern look (click for Classic)" aria-label="Switch look" aria-pressed="true">${ic['gui-toggle']}</button>
       <div class="mb-acct">
-        <button class="mb-avatar-btn" id="mb-acct-btn" aria-haspopup="menu" aria-expanded="false" title="Account"><span class="mb-avatar" id="mb-avatar"></span></button>
+        <button class="mb-avatar-btn" id="mb-acct-btn" aria-haspopup="menu" aria-expanded="false" title="Preferences"><span class="mb-avatar" id="mb-avatar"></span></button>
         <div class="mb-menu hidden" id="mb-menu" role="menu">
           <div class="mb-menu-head"><b id="mb-uname"></b><small id="mb-urole"></small></div>
           <button class="mb-menu-item" role="menuitem" data-mview="settings" data-acct="account">${ic['my-account']}<span>My account</span></button>
@@ -681,7 +681,7 @@ const ICON_MAP = [
   ['.detail-actions a[download]', 'download'], ['.detail-actions [data-act="play"]', 'play'], ['.detail-actions [data-act="favorite"]', 'favourite'],
   ['.detail-actions #more-btn', 'more-actions'], ['.detail-actions [data-act="delete"]', 'delete'],
   ['.detail-actions [data-promo="addcoll"]', 'add-collection'], ['.detail-actions [data-promo="hide"]', 'hidden'], ['.detail-actions [data-promo="refresh"]', 'scan-again'],
-  ['label.btn:has(#cover-input)', 'upload-cover'], ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'], ['#edit-form button[type="submit"]', 'save'],
+  ['#drawer-prev', 'arrow-left'], ['#drawer-next', 'arrow-right'], ['#identify-search', 'search'],
   // Settings leftovers found by the 1 Nov audit
   ['#names-apply', 'tick'], ['#export-csv', 'game-csv'], ['#covers-preview', 'preview-2'], ['#dgc-preview', 'preview-2'], ['#dgc-apply', 'csv-import'], ['#covers-apply', 'tick'], ['#export-covers', 'covers'], ['#backup-download', 'database-download'], ['a.btn[download]', 'download'], ['[data-act="lb-update"]', 'database-download'],
   ['[data-pact="edit"], [data-fam-rename]', 'edit'], ['[data-fam-save]', 'tick'], ['#view-settings [data-pact="save"]', 'save-platform'], ['[data-fam-colour-reset]', 'clear-reset'], ['[data-logo-pick], [data-famlogo-pick]', 'upload-cover'], ['[data-logo-remove], [data-famlogo-remove]', 'delete'], ['[data-pact="delete"], [data-bk-del], [data-save-del], [data-act="delete-user"]', 'delete'],

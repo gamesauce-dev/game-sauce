@@ -341,7 +341,7 @@ body.ui-modern .dat-row .file-input { flex: 0 1 22rem; width: auto; min-width: 0
 body.ui-modern .file-input::file-selector-button { background: var(--panel-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 0.5rem; padding: 0.35rem 0.7rem; margin-right: 0.6rem; cursor: pointer; font: inherit; }
 body.ui-modern .file-input::file-selector-button:hover { border-color: var(--accent); }
 body.ui-modern .dat-row .btn-primary[data-mi] { flex: 0 0 auto; }
-body.ui-modern .dat-row { flex-wrap: nowrap; }
+body.ui-modern .dat-row { flex-wrap: wrap; }
 
 /* Light mode: yellow and green text need a darker shade to be readable on white; dark mode keeps its brighter ones. */
 html[data-theme="light"] body.ui-modern {
@@ -460,7 +460,6 @@ html[data-theme="light"] body.ui-modern .detail-hero.has-shot .hero-back { filte
 
 /* ── No green on these buttons: the neutral outlined look (the glass-neutral buttons of the rest of Modern), the icon carries the meaning.
    Their icons use the text colour. Other primary buttons keep their colour. ── */
-body.ui-modern #edit-form button[type="submit"],
 body.ui-modern #new-collection,
 body.ui-modern #collection-create,
 body.ui-modern #add-source,
@@ -476,7 +475,6 @@ body.ui-modern #dup-hide-all,
 body.ui-modern #backup-download,
 body.ui-modern #backup-save,
 body.ui-modern #platform-add-toggle { background: var(--panel); border-color: var(--line-2); color: var(--text); }
-body.ui-modern #edit-form button[type="submit"]:hover:not(:disabled),
 body.ui-modern #new-collection:hover:not(:disabled),
 body.ui-modern #collection-create:hover:not(:disabled),
 body.ui-modern #add-source:hover:not(:disabled),
@@ -492,7 +490,6 @@ body.ui-modern #dup-hide-all:hover:not(:disabled),
 body.ui-modern #backup-download:hover:not(:disabled),
 body.ui-modern #backup-save:hover:not(:disabled),
 body.ui-modern #platform-add-toggle:hover:not(:disabled) { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
-body.ui-modern #edit-form button[type="submit"]:disabled,
 body.ui-modern #new-collection:disabled,
 body.ui-modern #collection-create:disabled,
 body.ui-modern #add-source:disabled,
@@ -509,7 +506,6 @@ body.ui-modern #backup-download:disabled,
 body.ui-modern #backup-save:disabled,
 body.ui-modern #platform-add-toggle:disabled { opacity: .45; }
 /* The icon on these buttons takes the button's text colour. (Primary buttons draw it white, which is right on green but disappears on the light theme's white button.) */
-body.ui-modern #edit-form button[type="submit"][data-mi]::before,
 body.ui-modern #new-collection[data-mi]::before,
 body.ui-modern #collection-create[data-mi]::before,
 body.ui-modern #add-source[data-mi]::before,
@@ -675,3 +671,31 @@ html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--ch
 html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) .chip-logo-img,
 html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: none; }
 html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img), html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) { box-shadow: 0 0 0 2px var(--chip-c); border-radius: 0.7rem; }
+
+/* ── Settings (System) pages: the action buttons in each area are text buttons again. The icon stays on the two rows of navigation (the tiles and the sub-tiles);
+   everything else in Settings shows its words: green for something the person does, red for delete, remove, stop and the like. The words were never removed
+   (the icon is only a mask over a button whose text is hidden by font-size: 0), so no new text, and no new translation, is needed. :not(#_) only raises the specificity
+   above the older icon rules. ── */
+body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_) {
+  font-size: 0.88rem; line-height: 1.2; letter-spacing: normal; width: auto; min-width: 0; height: auto; padding: 0.5rem 0.9rem; gap: 0; white-space: normal;
+  background: var(--apply); border: 1px solid var(--apply); color: #fff;
+}
+body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_)::before { display: none; }
+body.ui-modern #view-settings .btn-sm[data-mi]:not(.tile):not(.subtile):not(#_) { padding: 0.3rem 0.65rem; font-size: 0.8rem; height: auto; min-width: 0; }
+body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_):hover:not(:disabled) { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
+body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_):disabled { opacity: .45; }
+body.ui-modern #view-settings :is([data-mi="delete"], [data-mi="cancel"], [data-mi="close"], [data-mi="database-backup-delete"], [data-mi="clear-covers"], [data-mi="user-disable"], [data-mi="folder-disable"], .btn-danger):not(.tile):not(.subtile):not(#_) {
+  background: var(--cancel); border-color: var(--cancel); color: #fff;
+}
+body.ui-modern #view-settings :is([data-mi="delete"], [data-mi="cancel"], [data-mi="close"], [data-mi="database-backup-delete"], [data-mi="clear-covers"], [data-mi="user-disable"], [data-mi="folder-disable"], .btn-danger):not(.tile):not(.subtile):not(#_):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cancel) 82%, #000); border-color: color-mix(in srgb, var(--cancel) 82%, #000); color: #fff;
+}
+/* "Import a DAT" comes first on the DAT files page (the order is changed here, so Classic's page is untouched). */
+body.ui-modern #mod-dat:not(.hidden) { display: flex; flex-direction: column; }
+body.ui-modern #mod-dat > h3 { order: -3; }
+body.ui-modern #mod-dat > .hint { order: -2; }
+body.ui-modern #mod-dat > .dat-import { order: -1; margin: 0 0 1rem; }
+
+/* Details window: Find missing assets, Show cover, Upload cover and Save changes are green text buttons. */
+body.ui-modern #drawer .vid-find, body.ui-modern #drawer .vid-toggle, body.ui-modern #drawer label.btn:has(#cover-input) { background: var(--apply); border-color: var(--apply); color: #fff; cursor: pointer; }
+body.ui-modern #drawer .vid-find:hover:not(:disabled), body.ui-modern #drawer .vid-toggle:hover:not(:disabled), body.ui-modern #drawer label.btn:has(#cover-input):hover { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
