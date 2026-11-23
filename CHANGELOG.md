@@ -4,6 +4,22 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-23
+
+### Added
+- **Play locally sends the files a MAME game needs besides its zip.** An arcade, MAME, FinalBurn Neo, Neo Geo, NAOMI, Atomiswave, Model 2 or 3, CPS or Cave game is often more than one file: a **CHD disk image** in a folder named like the zip (`beachspi.zip` with `beachspi/gds-0014.chd`), its **parent set** when it is a clone, a **BIOS set** (`naomi.zip`, `neogeo.zip`) and **device sets**. The Play link now lists the ones the library has, and the launcher downloads them beside the game in the same layout, so `{romdir}` already holds everything MAME or Flycast needs. It suits non-merged, split and merged ROM sets (a non-merged set holds all of this inside each zip, so there is nothing to add). The launcher never mistakes these files for saves, refuses any path that could leave the game's folder, and quick launch keeps them so a large disk image downloads once. A platform you made yourself counts when its name says it is one of these (for example `seganaomi2`), and its copy keeps the ROM's own file name. Download the launcher again for this.
+- **The name CSV can carry the BIOS and devices.** Two new columns, `rom_of` and `devices` (devices that have ROMs of their own, separated by `;`). An older CSV without them still imports.
+- **Which BIOS a set needs is learned from the MAME list, and from a FinalBurn Neo or CPS DAT.** Re-import the MAME `-listxml` list (and those DATs) once so the BIOS and device sets are known; clones already work.
+
+### Changed
+- **Modern look: Settings buttons are text buttons.** In every Settings screen the icon-only action buttons show their words: green for an action, red for Delete, Remove and Stop. The icons stay on the two rows of tiles. In the game details window Save changes, Upload cover, Find missing assets and Show cover are green text buttons, and the Save in the Digital and Physical game details too. All of them share one size (the compact ones in dense rows share a smaller one). Fingerprints' Run now is green and Stop red.
+- **The first My account tile is called Preferences**, and the account button's hover text reads Preferences.
+- **Library tools > DAT files starts with Import a DAT.**
+- **The DAT import limit is 2 GB** (it was 512 MB), so a full MAME list fits, including the UTF-16 one that `mame -listxml > file` writes on Windows; a file over the limit says so in plain words.
+
+### Fixed
+- **A Settings screen opens at its top.** Opening a tall panel (Preferences, CSV tools, Backups, Metadata providers, Platforms) scrolled the page down by about 100 px, which hid the tile rows and the top of the panel.
+
 ## [0.22.4] - 2026-11-21
 
 ### Changed
