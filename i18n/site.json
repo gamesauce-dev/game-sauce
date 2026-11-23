@@ -2546,13 +2546,13 @@
   "ja": "フォルダーやzipファイルからゲーム素材を取り込めます。",
   "it": "Importa risorse di gioco da cartelle e file zip."
  },
- "Choosing Super Nintendo in the Library, pressing Play in browser on Battle Grand Prix, and the racing game running in the page": {
-  "fr": "Choix de Super Nintendo dans la bibliothèque, clic sur Jouer dans le navigateur pour Battle Grand Prix, puis le jeu de course qui tourne dans la page",
-  "zh": "在游戏库中选择超级任天堂，对 Battle Grand Prix 点击“在浏览器中游玩”，然后这款赛车游戏在页面中运行",
-  "es": "Elegir Super Nintendo en la biblioteca, pulsar Jugar en el navegador en Battle Grand Prix y ver el juego de carreras ejecutándose en la página",
-  "pt": "Escolhendo Super Nintendo na biblioteca, clicando em Jogar no navegador em Battle Grand Prix e o jogo de corrida rodando na página",
-  "de": "In der Bibliothek Super Nintendo wählen, bei Battle Grand Prix auf „Im Browser spielen“ klicken und das Rennspiel läuft in der Seite",
-  "ja": "ライブラリでスーパーファミコンを選び、Battle Grand Prix の「ブラウザで遊ぶ」を押すと、レースゲームがページ内で動き出す",
-  "it": "Scegliere Super Nintendo nella libreria, premere Gioca nel browser su Battle Grand Prix e il gioco di corse che gira nella pagina"
+ "Choosing Super Nintendo in the Library, pressing Play in browser on Battle Grand Prix, and the game loading and starting in the page": {
+  "fr": "Choix de Super Nintendo dans la bibliothèque, clic sur Jouer dans le navigateur pour Battle Grand Prix, puis le jeu qui se charge et démarre dans la page",
+  "zh": "在游戏库中选择超级任天堂，对 Battle Grand Prix 点击“在浏览器中游玩”，然后游戏在页面中加载并启动",
+  "es": "Elegir Super Nintendo en la biblioteca, pulsar Jugar en el navegador en Battle Grand Prix y ver el juego cargarse e iniciarse en la página",
+  "pt": "Escolhendo Super Nintendo na biblioteca, clicando em Jogar no navegador em Battle Grand Prix e o jogo carregando e iniciando na página",
+  "de": "In der Bibliothek Super Nintendo wählen, bei Battle Grand Prix auf „Im Browser spielen“ klicken und das Spiel lädt und startet in der Seite",
+  "ja": "ライブラリでスーパーファミコンを選び、Battle Grand Prix の「ブラウザで遊ぶ」を押すと、ゲームがページ内で読み込まれて始まる",
+  "it": "Scegliere Super Nintendo nella libreria, premere Gioca nel browser su Battle Grand Prix e il gioco che si carica e parte nella pagina"
  }
 }
