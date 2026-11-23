@@ -699,3 +699,18 @@ body.ui-modern #mod-dat > .dat-import { order: -1; margin: 0 0 1rem; }
 /* Details window: Find missing assets, Show cover, Upload cover and Save changes are green text buttons. */
 body.ui-modern #drawer .vid-find, body.ui-modern #drawer .vid-toggle, body.ui-modern #drawer label.btn:has(#cover-input) { background: var(--apply); border-color: var(--apply); color: #fff; cursor: pointer; }
 body.ui-modern #drawer .vid-find:hover:not(:disabled), body.ui-modern #drawer .vid-toggle:hover:not(:disabled), body.ui-modern #drawer label.btn:has(#cover-input):hover { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
+
+/* ── One size for every text button. A few plain buttons (Fingerprints, Game assets Save, the details window's Save changes and Upload cover) were left at the base size and
+   looked bigger than the rest. Regular buttons are one size, the compact ones (.btn-sm, in dense rows) another; the two details-window buttons that sit in a line of text
+   (Find missing assets, Show cover) match Save changes and Upload cover. The plain buttons also get the colours: green for an action, red for Stop and Delete. ── */
+body.ui-modern #view-settings .btn:not(.btn-sm):not(.tile):not(.subtile):not(#_):not(#__) { font-size: 0.88rem; line-height: 1.2; padding: 0.5rem 0.9rem; height: auto; min-height: 0; }
+body.ui-modern #view-settings .btn.btn-sm:not(.tile):not(.subtile):not(#_):not(#__) { font-size: 0.8rem; line-height: 1.2; padding: 0.3rem 0.65rem; height: auto; min-height: 0; }
+body.ui-modern #view-settings .btn:not([data-mi]):not(.tile):not(.subtile):not(#_) { background: var(--apply); border-color: var(--apply); color: #fff; }
+body.ui-modern #view-settings .btn:not([data-mi]):not(.tile):not(.subtile):not(#_):hover:not(:disabled) { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
+body.ui-modern #view-settings :is(.btn-danger, #hash-stop):not(.tile):not(.subtile):not(#_):not(#__) { background: var(--cancel); border-color: var(--cancel); color: #fff; }
+body.ui-modern #view-settings :is(.btn-danger, #hash-stop):not(.tile):not(.subtile):not(#_):not(#__):hover:not(:disabled) { background: color-mix(in srgb, var(--cancel) 82%, #000); border-color: color-mix(in srgb, var(--cancel) 82%, #000); color: #fff; }
+body.ui-modern #drawer :is(.vid-find, .vid-toggle, label.btn:has(#cover-input), #edit-form button[type="submit"]):not(#_) { font-size: 0.88rem; line-height: 1.2; padding: 0.5rem 0.9rem; height: auto; min-height: 0; }
+/* A button that is only an icon in Classic carries a text label that only the Modern look shows. */
+.mb-text { display: none; }
+body.ui-modern .mb-text { display: inline; }
+body.ui-modern #artfolders-save > svg { display: none; }

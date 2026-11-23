@@ -4377,7 +4377,7 @@ function paintGameAssets() {
 /* Role-dependent tile grid. Modules render in a fixed order; admins get the
    fully list. Clicking a tile reveals ONLY its module below. */
 const SETTINGS_MODULES = [
-  { id: 'profile', label: 'Profile picture', mi: 'profile-pic', ico: '🖼', adminOnly: false },
+  { id: 'profile', label: 'Preferences', mi: 'profile-pic', ico: '🖼', adminOnly: false },
   { id: 'welcome', label: 'Welcome tour', mi: 'welcome-tour', ico: '👋', adminOnly: false },
   { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
