@@ -709,7 +709,7 @@ body.ui-modern #view-settings .btn:not([data-mi]):not(.tile):not(.subtile):not(#
 body.ui-modern #view-settings .btn:not([data-mi]):not(.tile):not(.subtile):not(#_):hover:not(:disabled) { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
 body.ui-modern #view-settings :is(.btn-danger, #hash-stop):not(.tile):not(.subtile):not(#_):not(#__) { background: var(--cancel); border-color: var(--cancel); color: #fff; }
 body.ui-modern #view-settings :is(.btn-danger, #hash-stop):not(.tile):not(.subtile):not(#_):not(#__):hover:not(:disabled) { background: color-mix(in srgb, var(--cancel) 82%, #000); border-color: color-mix(in srgb, var(--cancel) 82%, #000); color: #fff; }
-body.ui-modern #drawer :is(.vid-find, .vid-toggle, label.btn:has(#cover-input), #edit-form button[type="submit"]):not(#_) { font-size: 0.88rem; line-height: 1.2; padding: 0.5rem 0.9rem; height: auto; min-height: 0; }
+body.ui-modern #drawer :is(.vid-find, .vid-toggle, label.btn:has(#cover-input), #edit-form button[type="submit"], #dg-edit button[type="submit"], #ph-edit button[type="submit"]):not(#_) { font-size: 0.88rem; line-height: 1.2; padding: 0.5rem 0.9rem; height: auto; min-height: 0; }
 /* A button that is only an icon in Classic carries a text label that only the Modern look shows. */
 .mb-text { display: none; }
 body.ui-modern .mb-text { display: inline; }

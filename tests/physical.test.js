@@ -190,7 +190,7 @@ test('the Physical page: nav entries, view, CSV destination choice, shelf and ti
 
 test('Modern: the Physical page uses icons with hover words (reusing the icon set); Classic keeps its words', () => {
   const modern = read('public/modern.js'), mcss = read('public/modern.css'), ph = read('public/physical.js');
-  for (const [sel, icon] of [['[data-ph-toggle="fav"]', 'favourite'], ['[data-ph-toggle="nocover"]', 'no-covers-2'], ['[data-ph-toggle="unmatched"]', 'issue'], ['[data-ph-act="lookup"]', 'fetch-metadata-3'], ['[data-ph-act="import"]', 'csv-import'], ['[data-ph-act="add"]', 'game-add'], ['#ph-id-go', 'search'], ['#ph-edit button[type="submit"]', 'save']]) {
+  for (const [sel, icon] of [['[data-ph-toggle="fav"]', 'favourite'], ['[data-ph-toggle="nocover"]', 'no-covers-2'], ['[data-ph-toggle="unmatched"]', 'issue'], ['[data-ph-act="lookup"]', 'fetch-metadata-3'], ['[data-ph-act="import"]', 'csv-import'], ['[data-ph-act="add"]', 'game-add'], ['#ph-id-go', 'search']]) {
     assert.ok(modern.includes(`['${sel.startsWith('#ph-') || sel.startsWith('#ph-edit') ? sel : '#view-physical ' + sel}', '${icon}']`), sel);
     assert.ok(fs.existsSync(new URL(`../public/modern/icons/${icon}.svg`, import.meta.url)), icon + '.svg is shipped');
   }

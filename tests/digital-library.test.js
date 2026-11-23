@@ -217,7 +217,7 @@ test('the page: laid out like Physical, store and console chips, Steam hours in 
   // Modern: icons in place of the text buttons, with the words as the hover text
   for (const [sel, icon] of [['[data-dg-toggle="fav"]', 'favourite'], ['[data-dg-toggle="installed"]', 'gamepad'], ['[data-dg-toggle="hidden"]', 'hidden'], ['#dg-reset', 'clear-reset-2'], ['[data-dg-act="import"]', 'csv-import'], ['[data-dg-act="add"]', 'game-add']])
     assert.ok(modern.includes(`['#view-digital ${sel}', '${icon}']`), sel);
-  for (const sel of ['#dg-id-go', '#dg-edit button[type="submit"]', '#dg-add button[type="submit"]']) assert.ok(modern.includes(`['${sel}'`), sel);
+  for (const sel of ['#dg-id-go', '#dg-add button[type="submit"]']) assert.ok(modern.includes(`['${sel}'`), sel);
   assert.match(modern, /\['#dg-sync, #steam-sync', 'fetch-games'\]/);
   assert.match(css, /\.ph-bar-end \{ margin-left: auto;/);
 });
