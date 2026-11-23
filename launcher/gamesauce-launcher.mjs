@@ -212,12 +212,13 @@ function removeDir(dir) {
 /** Some emulators write saves and save states next to the ROM they were given, which here is the temporary copy. Anything in
  *  the temporary folder besides the ROM itself is copied to ~/.gamesauce/rescued/<title>-<time>/ before the folder is deleted,
  *  so it is not lost. Returns { dest, count } or null when there was nothing. Throws if the copy fails. */
-export function rescueExtras(dir, romPath, title, skipDir = null) {
+export function rescueExtras(dir, romPath, title, skipDir = null, skipPaths = null) {
   const extras = [];
   const walk = (d) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, e.name);
       if (skipDir && p === skipDir) continue;   // the unpacked game itself is not a save
+      if (skipPaths && skipPaths.has(p)) continue;   // nor are the files that came with the game (a CHD, a parent or BIOS set)
       if (e.isDirectory()) walk(p);
       else if (p !== romPath) extras.push(p);
     }
@@ -248,12 +249,12 @@ export function sweepStale(parent = tempParent(), now = Date.now()) {
   return removed;
 }
 
-async function download(server, token, destFile, onProgress) {
+async function download(server, token, destFile, onProgress, route = 'launch') {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 30_000); // time to get a response; the body itself may take as long as it needs
   let res;
   try {
-    res = await fetch(`${server}/api/launch/${encodeURIComponent(token)}`, { signal: ctl.signal });
+    res = await fetch(`${server}/api/${route}/${encodeURIComponent(token)}`, { signal: ctl.signal });
   } catch (e) {
     throw new LaunchError(`Could not reach ${server}: ${e.cause?.code || e.message}`);
   } finally { clearTimeout(timer); }
@@ -275,6 +276,24 @@ async function download(server, token, destFile, onProgress) {
   });
   await pipeline(Readable.fromWeb(res.body), counter, fs.createWriteStream(destFile));
   if (fs.statSync(destFile).size === 0) throw new LaunchError('The downloaded ROM is empty.');
+  return res.headers;
+}
+
+/** The files that go with a game (a CHD folder, a parent set, a BIOS set), from the header the server sends with the game itself.
+ *  Each is { p: path under the game's folder, s: size, t: one-time token }. Anything that could land outside the game's folder is dropped. */
+export function parseExtras(value) {
+  if (!value) return [];
+  let list;
+  try { list = JSON.parse(Buffer.from(String(value), 'base64').toString('utf8')); } catch { return []; }
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const f of list.slice(0, 60)) {
+    if (!f || typeof f.p !== 'string' || typeof f.t !== 'string' || !/^[A-Za-z0-9_-]{20,100}$/.test(f.t)) continue;
+    const parts = f.p.split('/');
+    if (!f.p || f.p.length > 300 || /[\\:\u0000]/.test(f.p) || f.p.startsWith('/') || parts.some((x) => !x || x === '.' || x === '..')) continue;
+    out.push({ p: f.p, s: Number(f.s) > 0 ? Number(f.s) : 0, t: f.t });
+  }
+  return out;
 }
 
 function waitForExit(child) {
@@ -350,6 +369,7 @@ async function doLaunch(link, rep, configFile) {
   // An Xbox Live Arcade package (".xbla" in the library) is handed over with no extension: Xenia takes a file without one for an STFS package.
   const romPath = path.join(dir, copyName(link, entry));
   let child = null, unpacked = null, prepared = Boolean(fresh);
+  const extraPaths = new Set();   // companion files placed beside the game; not saves, so they are not rescued
   const onSignal = (sig) => {
     try { child?.kill(); } catch { /* already gone */ }
     if (cached) { unlockEntry(dir); if (!prepared) removeDir(dir); } else removeDir(dir);
@@ -367,7 +387,24 @@ async function doLaunch(link, rep, configFile) {
     } else {
       log(`Downloading "${link.title}" (${link.platform}) from ${link.server}`);
       rep.send('downloading', { bytes: 0, total: link.size });
-      await download(link.server, link.token, romPath, (got, total) => rep.send('downloading', { bytes: got, total: total || link.size }));
+      const mainHeaders = await download(link.server, link.token, romPath, (got, total) => rep.send('downloading', { bytes: got, total: Math.max(total, link.size || 0) }));
+
+      // Files that go with the game (a MAME game's CHD folder, its parent set, its BIOS set) are put beside it, in the same layout, so the emulator finds them.
+      const extras = parseExtras(mainHeaders.get('x-gamesauce-extras'));
+      if (extras.length) {
+        const all = extras.reduce((n, f) => n + f.s, 0);
+        const mainSize = fs.statSync(romPath).size;
+        let done = 0;
+        for (const f of extras) {
+          const dest = path.join(dir, ...f.p.split('/'));
+          if (!path.resolve(dest).startsWith(path.resolve(dir) + path.sep)) continue;
+          fs.mkdirSync(path.dirname(dest), { recursive: true });
+          log(`Downloading ${f.p} (${Math.round(f.s / 1048576)} MB) that goes with "${link.title}"`);
+          await download(link.server, f.t, dest, (got) => rep.send('downloading', { bytes: mainSize + done + got, total: mainSize + all }), 'launch-extra');
+          done += f.s;
+          extraPaths.add(dest);
+        }
+      }
 
       // A zipped game for an emulator that cannot open one: unpack it next to the download, drop the archive, and start the file that boots the game.
       startPath = romPath;
@@ -419,7 +456,7 @@ async function doLaunch(link, rep, configFile) {
     else {
       let keep = false;
       try {
-        const r = rescueExtras(dir, romPath, link.title, unpacked);
+        const r = rescueExtras(dir, romPath, link.title, unpacked, extraPaths);
         if (r) log(`The emulator wrote ${r.count} file(s) next to the ROM (saves?). Copied them to ${r.dest}`);
       } catch (e) {
         keep = true; // never delete something we could not copy out

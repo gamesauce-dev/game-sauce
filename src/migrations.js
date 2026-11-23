@@ -673,3 +673,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS dat_sets (
 db.exec('CREATE INDEX IF NOT EXISTS idx_dat_sets_name ON dat_sets(set_name)');
 db.exec('CREATE INDEX IF NOT EXISTS idx_dat_sets_datfile ON dat_sets(datfile_id)');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '63') ON CONFLICT(key) DO UPDATE SET value = '63'").run();
+
+/* ── v64: which BIOS (or parent) a MAME set borrows ROMs from (romof in MAME's own list), so "Play locally" can send the BIOS set with the game. Filled the next time the MAME name list is imported. */
+if (!db.prepare('PRAGMA table_info(mame_names)').all().some((c) => c.name === 'romof')) db.exec('ALTER TABLE mame_names ADD COLUMN romof TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '64') ON CONFLICT(key) DO UPDATE SET value = '64'").run();

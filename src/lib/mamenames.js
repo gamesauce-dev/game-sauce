@@ -26,6 +26,7 @@ function parseBlock(block) {
     year: /^\d{4}/.test(tag(body, 'year') || '') ? Number(tag(body, 'year').slice(0, 4)) : null,
     manufacturer: tag(body, 'manufacturer'),
     cloneof: attr(head, 'cloneof'),
+    romof: attr(head, 'romof'),
     isbios: attr(head, 'isbios') === 'yes' ? 1 : 0,
     isdevice: attr(head, 'isdevice') === 'yes' ? 1 : 0
   };
@@ -37,10 +38,10 @@ export async function importMameNames(filePath) {
   const bom = Buffer.alloc(2); fs.readSync(fd, bom, 0, 2, 0); fs.closeSync(fd);
   const enc = bom[0] === 0xff && bom[1] === 0xfe ? 'utf-16le' : 'utf-8';
 
-  const ins = db.prepare(`INSERT INTO mame_names (name, title, year, manufacturer, cloneof, isbios, isdevice)
-    VALUES (@name, @title, @year, @manufacturer, @cloneof, @isbios, @isdevice)
+  const ins = db.prepare(`INSERT INTO mame_names (name, title, year, manufacturer, cloneof, romof, isbios, isdevice)
+    VALUES (@name, @title, @year, @manufacturer, @cloneof, @romof, @isbios, @isdevice)
     ON CONFLICT(name) DO UPDATE SET title = excluded.title, year = excluded.year, manufacturer = excluded.manufacturer,
-      cloneof = excluded.cloneof, isbios = excluded.isbios, isdevice = excluded.isdevice`);
+      cloneof = excluded.cloneof, romof = excluded.romof, isbios = excluded.isbios, isdevice = excluded.isdevice`);
   // The machines of the list are also kept as the sets of a DAT ("MAME (-listxml)"), so an arcade game can be matched on its file name: a newer list replaces an older one.
   db.prepare("UPDATE roms SET dat_status = NULL, dat_entry_id = NULL, dat_set_id = NULL, dat_title = NULL, dat_checked_at = NULL WHERE dat_set_id IN (SELECT id FROM dat_sets WHERE datfile_id IN (SELECT id FROM datfiles WHERE filename = 'mame -listxml'))").run();
   db.prepare("DELETE FROM datfiles WHERE filename = 'mame -listxml'").run();

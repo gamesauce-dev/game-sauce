@@ -19,6 +19,7 @@ import { clearDuplicateCache } from '../lib/duplicates.js';
 import { mintLaunchToken } from '../lib/launch.js';
 import { flagVideos } from '../lib/emumovies.js';
 import { romFiles, romFile, dropRomFiles } from '../lib/romfiles.js';
+import { findCompanions, companionFingerprint } from '../lib/romdeps.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -857,9 +858,12 @@ router.post('/:id/launch', (req, res) => {
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (isMultiDisc(rom)) return res.status(409).json({ error: MULTIDISC_MESSAGE, multidisc: true });   // one file cannot start a set of discs
   if (!fs.existsSync(rom.storage_path)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
-  const { token, lid, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null, { title: rom.title, size: rom.size_bytes });
+  // A MAME-family game may need a CHD folder, a parent set or a BIOS set beside its zip (src/lib/romdeps.js).
+  const deps = findCompanions(rom);
+  const extraBytes = deps.files.reduce((n, f) => n + f.size, 0);
+  const { token, lid, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null, { title: rom.title, size: (Number(rom.size_bytes) || 0) + extraBytes, extras: deps.files });
   // id and fp (the file's size and date) let the launcher's quick launch tell that a copy it kept is still this file.
-  res.json({ token, lid, size: Number(rom.size_bytes) || 0, expires_in, platform: rom.platform, title: rom.title, file: path.basename(rom.filename, path.extname(rom.filename)), ext: path.extname(rom.filename).toLowerCase(), id: rom.id, fp: `${Number(rom.size_bytes) || 0}-${Number(rom.scanned_mtime) || 0}` });
+  res.json({ token, lid, size: (Number(rom.size_bytes) || 0) + extraBytes, expires_in, platform: rom.platform, title: rom.title, file: path.basename(rom.filename, path.extname(rom.filename)), ext: path.extname(rom.filename).toLowerCase(), id: rom.id, fp: `${Number(rom.size_bytes) || 0}-${Number(rom.scanned_mtime) || 0}${companionFingerprint(deps.files)}`, companions: deps.files.length, missing_sets: deps.missing });
 });
 
 /* ── play: browser streaming for BIOS-free platforms (EmulatorJS) ──

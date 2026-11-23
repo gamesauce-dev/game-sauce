@@ -34,7 +34,7 @@ import { launcherEntries } from './lib/launcherpack.js';
 import { zipChunks } from './lib/export.js';
 import { detectMultiDisc } from './lib/multidisc.js';
 import { scanStorage, publicScan, clearOut, reattach } from './lib/storageclean.js';
-import { launchFileHandler, launchProgressHandler, launchStatusHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
+import { launchFileHandler, launchExtraHandler, launchProgressHandler, launchStatusHandler, launcherSyncHandler, launcherPlatformsHandler, mintSyncToken } from './lib/launch.js';
 
 // The public library list (`GET /api/platforms`) reports ROM counts; the
 // admin catalogue below needs extensions as an array and must be auditable,
@@ -102,6 +102,7 @@ export function createApp() {
   // Play locally: the launcher on the user's PC has no session, so the one-time token in the address is its credential
   // (see src/lib/launch.js). Must stay above requireAuth.
   api.get('/launch/:token', launchFileHandler);
+  api.get('/launch-extra/:token', launchExtraHandler);
   // The launcher tells the server how far it has got (downloading, unpacking, starting, running); the launch id is its credential.
   api.post('/launch/:lid/progress', launchProgressHandler);
   // The launcher reports which platforms it has an emulator for (the one-time sync token is its credential; see mintSyncToken below).

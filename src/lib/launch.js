@@ -34,13 +34,13 @@ function prune(now = Date.now()) {
   while (launches.size >= MAX_OUTSTANDING) launches.delete(launches.keys().next().value);
 }
 
-export function mintLaunchToken(romId, userId, { title = '', size = 0 } = {}) {
+export function mintLaunchToken(romId, userId, { title = '', size = 0, extras = [] } = {}) {
   prune();
   const token = randomToken(32);
   const lid = randomToken(24);
   const now = Date.now();
   const uid = userId == null ? null : Number(userId);
-  tokens.set(hashToken(token), { romId: Number(romId), userId: uid, expires: now + LAUNCH_TTL_MS, lid });
+  tokens.set(hashToken(token), { romId: Number(romId), userId: uid, expires: now + LAUNCH_TTL_MS, lid, extras });
   launches.set(lid, { userId: uid, romId: Number(romId), title: String(title).slice(0, 200), size: Math.max(0, Number(size) || 0), created: now, updated: now, state: 'waiting', total: 0, sock: null, sockBase: 0, bytesSent: 0, reported: null });
   return { token, lid, expires_in: Math.round(LAUNCH_TTL_MS / 1000) };
 }
@@ -53,6 +53,36 @@ export function takeLaunchToken(token) {
   if (!entry) return null;
   tokens.delete(key); // single use, even if the rest of the request fails
   return entry.expires > Date.now() ? entry : null;
+}
+
+// Files that go with a game (a CHD folder, a parent or BIOS set: see romdeps.js). Each gets its own one-time token, handed to the launcher
+// in a response header when it fetches the game, and good for an hour because a disk image can take a while to start.
+const extraTokens = new Map(); // hashToken(token) -> { abs, userId, expires }
+const EXTRA_TTL_MS = 60 * 60 * 1000;
+
+function mintExtraTokens(extras, userId) {
+  const now = Date.now();
+  for (const [k, v] of extraTokens) if (v.expires <= now) extraTokens.delete(k);
+  const list = [];
+  for (const f of extras) {
+    const t = randomToken(32);
+    extraTokens.set(hashToken(t), { abs: f.abs, userId, expires: now + EXTRA_TTL_MS });
+    list.push({ p: f.rel, s: f.size, t });
+  }
+  while (extraTokens.size > MAX_OUTSTANDING * 40) extraTokens.delete(extraTokens.keys().next().value);
+  return list;
+}
+
+/** GET /api/launch-extra/:token — public (the token is the credential). One companion file, once. */
+export function launchExtraHandler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const t = String(req.params.token || '');
+  const key = t.length >= 20 && t.length <= 100 ? hashToken(t) : null;
+  const e = key ? extraTokens.get(key) : null;
+  if (!e || e.expires <= Date.now()) return res.status(404).json({ error: 'This download link has expired or was already used. Click Play locally again.' });
+  extraTokens.delete(key);
+  if (!fs.existsSync(e.abs)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
+  res.download(e.abs, path.basename(e.abs), (err) => { if (err && !res.headersSent) res.status(500).end(); });
 }
 
 /** GET /api/launch/:token — public (the token is the credential). Streams the ROM file to the launcher. */
@@ -70,6 +100,12 @@ export function launchFileHandler(req, res) {
 
   // Logged as its own kind: it is not a manual download (that feeds "most downloaded") and not a browser play.
   db.prepare("INSERT INTO downloads (rom_id, bytes, user_id, kind) VALUES (?, ?, ?, 'launch')").run(rom.id, rom.size_bytes, entry.userId);
+
+  // Companion files (CHD folder, parent and BIOS sets): listed in a header a launcher that knows about them reads; an older one ignores it.
+  if (entry.extras && entry.extras.length) {
+    const list = mintExtraTokens(entry.extras, entry.userId);
+    res.setHeader('X-Gamesauce-Extras', Buffer.from(JSON.stringify(list)).toString('base64'));
+  }
 
   // Count what is sent so the page can show a progress bar (the launcher downloads, not the browser).
   const rec = entry.lid ? launches.get(entry.lid) : null;

@@ -1,0 +1,92 @@
+// The files a MAME-family game needs besides its own zip.
+//
+// MAME (and the Naomi, Atomiswave and Model 2/3 sets) find a game by the name of its zip, but a game is often more than that file:
+//   - a CHD disk image kept in a folder named like the zip (beachspi.zip needs beachspi/beachspi.chd),
+//   - its parent set, when it is a clone (sf2ue needs sf2),
+//   - a BIOS set (naomi.zip, neogeo.zip, pgm.zip).
+// "Play locally" downloads one file, so the launcher also needs to be told about these. This works out the list from the library
+// (where the parent and BIOS zips are) and from the folder next to each zip (where its CHD folder is). It reads the disk only;
+// nothing here changes anything.
+import fs from 'node:fs';
+import path from 'node:path';
+import db from '../db.js';
+
+/** Platforms whose games are MAME sets (a zip named for the set). */
+export const SET_FAMILY = new Set(['arcade', 'mame', 'fba', 'neogeo', 'naomi', 'atomiswave', 'segamodel2', 'segamodel3', 'cps1', 'cps2', 'cps3', 'cave']);
+
+const MAX_FILES = 40;      // extras the launcher is told about (they travel in one response header)
+const MAX_DEPTH = 6;       // clone -> parent -> BIOS chains are short; this stops a loop in bad data
+
+const setBase = (filename) => path.basename(String(filename || ''), path.extname(String(filename || ''))).toLowerCase();
+
+/** The folder named like the set, beside its zip (any capitals), or null. */
+function setFolder(zipPath, name) {
+  const dir = path.dirname(zipPath);
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return null; }
+  const hit = entries.find((e) => e.isDirectory() && e.name.toLowerCase() === name.toLowerCase());
+  return hit ? path.join(dir, hit.name) : null;
+}
+
+/** Every file under a folder (not following links), as { rel, abs, size, mtime }, with rel starting at prefix. */
+function listFolder(dir, prefix, out) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+  for (const e of entries) {
+    if (out.length >= MAX_FILES) return;
+    const abs = path.join(dir, e.name);
+    if (e.isDirectory()) listFolder(abs, `${prefix}/${e.name}`, out);
+    else if (e.isFile() && !e.name.startsWith('._')) {
+      try { const st = fs.statSync(abs); if (st.size > 0) out.push({ rel: `${prefix}/${e.name}`, abs, size: st.size, mtime: Math.round(st.mtimeMs) }); } catch { /* gone */ }
+    }
+  }
+}
+
+/**
+ * @param {{ filename: string, storage_path: string, platform: string }} rom  the game being launched
+ * @returns {{ files: {rel:string, abs:string, size:number, mtime:number}[], missing: string[] }}
+ *   files: what to put beside the game's own zip (rel is the path under that folder, with "/");
+ *   missing: parent or BIOS sets the library does not have.
+ */
+export function findCompanions(rom) {
+  const out = { files: [], missing: [] };
+  if (!rom || !SET_FAMILY.has(rom.platform)) return out;
+  if (!/\.(zip|7z)$/i.test(rom.filename || '')) return out;
+  const have = new Set();
+  const add = (f) => { if (!have.has(f.rel.toLowerCase()) && out.files.length < MAX_FILES) { have.add(f.rel.toLowerCase()); out.files.push(f); } };
+
+  const own = setBase(rom.filename);
+  have.add(String(rom.filename).toLowerCase());
+  const ownDir = setFolder(rom.storage_path, own);
+  if (ownDir) { const l = []; listFolder(ownDir, path.basename(ownDir), l); l.forEach(add); }
+
+  const names = db.prepare('SELECT cloneof, romof, isdevice FROM mame_names WHERE name = ?');
+  const findRom = db.prepare(`SELECT r.filename, r.storage_path FROM roms r JOIN platforms p ON p.id = r.platform_id
+    WHERE r.missing = 0 AND lower(r.filename) IN (@a, @b) AND p.slug IN (${[...SET_FAMILY].map((s) => `'${s}'`).join(',')}) ORDER BY r.id LIMIT 1`);
+  const seen = new Set([own]);
+  const walk = (name, depth) => {
+    const row = names.get(name);
+    if (!row) return;
+    for (const dep of [row.cloneof, row.romof]) {
+      const d = String(dep || '').toLowerCase();
+      if (!d || seen.has(d) || depth >= MAX_DEPTH) continue;
+      seen.add(d);
+      const hit = findRom.get({ a: `${d}.zip`, b: `${d}.7z` });
+      if (!hit) { if (!names.get(d)?.isdevice) out.missing.push(d); continue; }
+      try { const st = fs.statSync(hit.storage_path); add({ rel: hit.filename, abs: hit.storage_path, size: st.size, mtime: Math.round(st.mtimeMs) }); } catch { out.missing.push(d); continue; }
+      const dir = setFolder(hit.storage_path, d);
+      if (dir) { const l = []; listFolder(dir, path.basename(dir), l); l.forEach(add); }
+      walk(d, depth + 1);
+    }
+  };
+  walk(own, 0);
+  return out;
+}
+
+/** A short text that changes when any companion file changes (it joins the file's fingerprint for quick launch). */
+export function companionFingerprint(files) {
+  if (!files.length) return '';
+  let h = 0;
+  for (const f of files) for (const ch of `${f.rel}:${f.size}:${f.mtime}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `-x${files.length}${h.toString(36)}`;
+}
