@@ -4801,7 +4801,16 @@ function showSettingsModule(id) {
   if (id === 'reports') reports.load($('#reports-box'), { api, t, openLibrary: openLibraryWith }).catch((err) => toast(err.message, true));
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }
-  panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  // Show the module from its top, under the tile rows. (scrollIntoView with block "nearest" slid a tall panel up by its overhang, which hid the tile rows and the top of the panel.)
+  // Only a panel that starts below the fold (a small screen, where the tiles are tall) is scrolled up to just under the pinned header.
+  const scroller = (() => { for (let el = panel.parentElement; el; el = el.parentElement) { const o = getComputedStyle(el).overflowY; if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight) return el; } return null; })();
+  const anchor = $('.settings-anchor');
+  if (scroller) {
+    scroller.scrollTop = 0;
+    const gap = 12, hdr = anchor ? anchor.getBoundingClientRect().bottom : 0;
+    const need = panel.getBoundingClientRect().top - hdr - gap;
+    if (need > scroller.clientHeight * 0.6) scroller.scrollBy({ top: need, behavior: 'smooth' });
+  } else window.scrollTo({ top: 0 });
 }
 
 /* Duplicate finder: groups of different versions of one game, with a suggested keeper. */
