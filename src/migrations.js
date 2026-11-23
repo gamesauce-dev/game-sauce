@@ -677,3 +677,7 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '63') ON CON
 /* ── v64: which BIOS (or parent) a MAME set borrows ROMs from (romof in MAME's own list), so "Play locally" can send the BIOS set with the game. Filled the next time the MAME name list is imported. */
 if (!db.prepare('PRAGMA table_info(mame_names)').all().some((c) => c.name === 'romof')) db.exec('ALTER TABLE mame_names ADD COLUMN romof TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '64') ON CONFLICT(key) DO UPDATE SET value = '64'").run();
+
+/* ── v65: the devices a MAME set uses that have ROMs of their own (a split or merged set keeps them in their own zips), so "Play locally" can send those zips too. Filled the next time the MAME name list is imported. */
+if (!db.prepare('PRAGMA table_info(mame_names)').all().some((c) => c.name === 'devices')) db.exec('ALTER TABLE mame_names ADD COLUMN devices TEXT');
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '65') ON CONFLICT(key) DO UPDATE SET value = '65'").run();

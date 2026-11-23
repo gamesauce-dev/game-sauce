@@ -72,6 +72,8 @@ before(async () => {
   nm.run('beachspic', 'Beach Spikers (clone)', 'beachspi', 'beachspi');
   nm.run('plain', 'Plain', 'neogeo', null);   // a BIOS the library does not have
   nm.run('naomi', 'Sega NAOMI Bios', null, null);
+  put('naomi_gdrom.zip', 'device-zip'); ids.dev = add('GD-ROM board', path.join(ROMS, 'naomi_gdrom.zip'), 'naomi', 'rd6');
+  db.prepare("UPDATE mame_names SET devices = 'naomi_gdrom,nozip_dev' WHERE name = 'beachspi'").run();   // a device with a zip, and one a non-merged set keeps inside the game's zip
 });
 after(async () => {
   await new Promise((r) => server?.close(r));
@@ -88,6 +90,12 @@ test('the CHD folder beside the zip, and the BIOS set, are listed for a game', (
   assert.ok(rels.includes('naomi.zip'), 'the BIOS set named by romof');
   assert.ok(!rels.includes('beachspi.zip'), 'the game itself is the main download, not a companion');
   assert.deepEqual(c.missing, []);
+});
+
+test('a device with ROMs of its own is sent when the library has its zip; one it lacks is not a problem', () => {
+  const c = deps.findCompanions(romOf(ids.beach));
+  assert.ok(c.files.some((f) => f.rel === 'naomi_gdrom.zip'));
+  assert.ok(!c.missing.includes('nozip_dev'), 'a non-merged set needs nothing extra for it');
 });
 
 test('a clone brings its parent set, the parent\'s CHD folder and the BIOS', () => {
@@ -155,4 +163,18 @@ test('parseExtras drops anything that could land outside the game\'s folder', ()
   assert.deepEqual(out.map((f) => f.p), ['ok/file.chd']);
   assert.deepEqual(launcher.parseExtras('not base64 json'), []);
   assert.deepEqual(launcher.parseExtras(null), []);
+});
+
+test('importing the MAME list keeps romof and only the devices that have ROMs', async () => {
+  const xml = path.join(TMP, 'list.xml');
+  fs.writeFileSync(xml, `<mame>
+<machine name="gdboard" isdevice="yes"><description>GD board</description><year>2001</year><rom name="a.bin" size="1" crc="1"/></machine>
+<machine name="cpu_dev" isdevice="yes"><description>A CPU</description></machine>
+<machine name="gamex" romof="naomi"><description>Game X</description><year>2002</year><manufacturer>Sega</manufacturer><device_ref name="gdboard"/><device_ref name="cpu_dev"/></machine>
+</mame>`);
+  const { importMameNames } = await import('../src/lib/mamenames.js');
+  await importMameNames(xml);
+  const r = db.prepare("SELECT romof, devices FROM mame_names WHERE name = 'gamex'").get();
+  assert.equal(r.romof, 'naomi');
+  assert.equal(r.devices, 'gdboard', 'the CPU has no ROMs of its own, so it is not kept');
 });

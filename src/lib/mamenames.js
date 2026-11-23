@@ -27,6 +27,8 @@ function parseBlock(block) {
     manufacturer: tag(body, 'manufacturer'),
     cloneof: attr(head, 'cloneof'),
     romof: attr(head, 'romof'),
+    refs: [...new Set([...block.matchAll(/<device_ref name="([^"]+)"/g)].map((m) => m[1].toLowerCase()))],   // devices this machine uses
+    hasroms: /<rom /.test(block) ? 1 : 0,
     isbios: attr(head, 'isbios') === 'yes' ? 1 : 0,
     isdevice: attr(head, 'isdevice') === 'yes' ? 1 : 0
   };
@@ -48,7 +50,9 @@ export async function importMameNames(filePath) {
   const datfileId = Number(db.prepare("INSERT INTO datfiles (name, filename, source, system_name, platform_slug) VALUES ('MAME (-listxml)', 'mame -listxml', 'mame -listxml', 'MAME', 'mame')").run().lastInsertRowid);
   const insSet = db.prepare("INSERT INTO dat_sets (datfile_id, platform_slug, set_name, title, cloneof, status) VALUES (?, 'mame', ?, ?, ?, 'verified')");
   let sets = 0;
-  const write = db.transaction((rows) => { for (const r of rows) { ins.run(r); if (!r.isdevice) { insSet.run(datfileId, r.name, r.title, r.cloneof ? String(r.cloneof).toLowerCase() : null); sets++; } } });   // a device is not a game you keep
+  const refs = new Map();       // machine -> the devices it uses
+  const romDevices = new Set();  // devices that have ROMs of their own (the only ones that can be a zip of their own)
+  const write = db.transaction((rows) => { for (const r of rows) { ins.run(r); if (r.refs.length) refs.set(r.name, r.refs); if (r.isdevice && r.hasroms) romDevices.add(r.name); if (!r.isdevice) { insSet.run(datfileId, r.name, r.title, r.cloneof ? String(r.cloneof).toLowerCase() : null); sets++; } } });   // a device is not a game you keep
 
   const decoder = new TextDecoder(enc);
   let buf = '', count = 0, sawMachine = false, batch = [];
@@ -78,6 +82,10 @@ export async function importMameNames(filePath) {
   consume(true);
   flush();
   if (!sawMachine) throw Object.assign(new Error('That does not look like a MAME -listxml file (no <machine> entries)'), { status: 400 });
+
+  // Keep only the devices that have ROMs: in a split or merged ROM set those are zips of their own that a game needs beside its own zip.
+  const setDevices = db.prepare('UPDATE mame_names SET devices = ? WHERE name = ?');
+  db.transaction(() => { for (const [name, list] of refs) { const keep = list.filter((d) => romDevices.has(d)); if (keep.length) setDevices.run(keep.join(','), name); } })();
 
   db.prepare('UPDATE datfiles SET entries = ? WHERE id = ?').run(sets, datfileId);
   const applied = applyMameNames();

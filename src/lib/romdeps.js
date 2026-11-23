@@ -3,7 +3,10 @@
 // MAME (and the Naomi, Atomiswave and Model 2/3 sets) find a game by the name of its zip, but a game is often more than that file:
 //   - a CHD disk image kept in a folder named like the zip (beachspi.zip needs beachspi/beachspi.chd),
 //   - its parent set, when it is a clone (sf2ue needs sf2),
-//   - a BIOS set (naomi.zip, neogeo.zip, pgm.zip).
+//   - a BIOS set (naomi.zip, neogeo.zip, pgm.zip),
+//   - a device set (a controller or sound board that has ROMs of its own).
+// A non-merged ROM set has all of these inside each game's zip, so there is nothing to add; a split or merged set keeps them apart, and
+// they are sent when the library has them (a parent or BIOS the library lacks is reported, one that is not needed does no harm).
 // "Play locally" downloads one file, so the launcher also needs to be told about these. This works out the list from the library
 // (where the parent and BIOS zips are) and from the folder next to each zip (where its CHD folder is). It reads the disk only;
 // nothing here changes anything.
@@ -60,19 +63,21 @@ export function findCompanions(rom) {
   const ownDir = setFolder(rom.storage_path, own);
   if (ownDir) { const l = []; listFolder(ownDir, path.basename(ownDir), l); l.forEach(add); }
 
-  const names = db.prepare('SELECT cloneof, romof, isdevice FROM mame_names WHERE name = ?');
+  const names = db.prepare('SELECT cloneof, romof, devices, isdevice FROM mame_names WHERE name = ?');
   const findRom = db.prepare(`SELECT r.filename, r.storage_path FROM roms r JOIN platforms p ON p.id = r.platform_id
     WHERE r.missing = 0 AND lower(r.filename) IN (@a, @b) AND p.slug IN (${[...SET_FAMILY].map((s) => `'${s}'`).join(',')}) ORDER BY r.id LIMIT 1`);
   const seen = new Set([own]);
   const walk = (name, depth) => {
     const row = names.get(name);
     if (!row) return;
-    for (const dep of [row.cloneof, row.romof]) {
+    // A device's ROMs are in the game's own zip in a non-merged set and in a zip of their own in a split or merged one: sent when the library has it, and not a problem when it does not.
+    const devs = String(row.devices || '').split(',').filter(Boolean);
+    for (const dep of [row.cloneof, row.romof, ...devs]) {
       const d = String(dep || '').toLowerCase();
       if (!d || seen.has(d) || depth >= MAX_DEPTH) continue;
       seen.add(d);
       const hit = findRom.get({ a: `${d}.zip`, b: `${d}.7z` });
-      if (!hit) { if (!names.get(d)?.isdevice) out.missing.push(d); continue; }
+      if (!hit) { if (!devs.includes(d) && !names.get(d)?.isdevice) out.missing.push(d); continue; }
       try { const st = fs.statSync(hit.storage_path); add({ rel: hit.filename, abs: hit.storage_path, size: st.size, mtime: Math.round(st.mtimeMs) }); } catch { out.missing.push(d); continue; }
       const dir = setFolder(hit.storage_path, d);
       if (dir) { const l = []; listFolder(dir, path.basename(dir), l); l.forEach(add); }
