@@ -380,7 +380,7 @@ shows while you hold, and no other button is intercepted, so the game never lose
 - Filename tags in `(...)` / `[...]` are read for region and revision.
 - Enrichment runs one game at a time with gaps because providers rate-limit.
 - Covers are cached in `storage/media`; deleting a game deletes its cached art.
-- The DAT import limit is 512 MB (`GAMESAUCE_MAX_DAT`); a MAME list of about 400 MB fits.
+- The DAT import limit is 2 GB (`GAMESAUCE_MAX_DAT`, in bytes); a full MAME list fits, even the UTF-16 one that `mame -listxml > file` writes on Windows.
 - The animated sign-in background switches itself off if your system asks for reduced motion.
 
 ## Exporting your game data

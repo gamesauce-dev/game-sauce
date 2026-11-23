@@ -28,7 +28,7 @@ const upload = multer({
     destination: (req, file, cb) => cb(null, storageDir('dats')),
     filename: (req, file, cb) => cb(null, `${Date.now()}-${path.basename(file.originalname).replace(/[^\w.\-]+/g, '_')}`)
   }),
-  limits: { fileSize: Number(process.env.GAMESAUCE_MAX_DAT || 512 * 1024 * 1024) },
+  limits: { fileSize: Number(process.env.GAMESAUCE_MAX_DAT || 2 * 1024 * 1024 * 1024) },
   fileFilter: (req, file, cb) => {
     const ok = /\.(dat|xml)$/i.test(file.originalname);
     cb(ok ? null : Object.assign(new Error('DAT files must be .dat or .xml'), { status: 400 }), ok);
@@ -47,7 +47,16 @@ router.get('/', (req, res) => {
  * Import a DAT from an uploaded file, or from a path already on this machine.
  * Both go through the same streaming parser.
  */
-router.post('/', upload.single('dat'), async (req, res, next) => {
+// A file over the limit says so in plain words (the MAME list written by `mame -listxml > file` on Windows is UTF-16, twice the size of a UTF-8 one).
+const takeDat = (req, res, next) => upload.single('dat')(req, res, (err) => {
+  if (err && err.code === 'LIMIT_FILE_SIZE') {
+    const mb = Math.round(Number(process.env.GAMESAUCE_MAX_DAT || 2 * 1024 * 1024 * 1024) / 1048576);
+    return res.status(413).json({ error: `That file is over the ${mb} MB DAT limit. Raise GAMESAUCE_MAX_DAT, or save the list as UTF-8 (a MAME list written on Windows is twice as big as it needs to be).` });
+  }
+  next(err);
+});
+
+router.post('/', takeDat, async (req, res, next) => {
   let uploadedPath = req.file?.path || null;
   try {
     const sourcePath = uploadedPath || (req.body?.path ? path.resolve(String(req.body.path)) : null);

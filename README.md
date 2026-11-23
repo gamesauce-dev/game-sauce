@@ -276,7 +276,7 @@ How matching works:
    hash rather than by row id.
 
 Parsing is streamed (`saxen`), so a 40 MB DAT does not sit in memory. Files are `.dat`/`.xml`,
-up to `GAMESAUCE_MAX_DAT` (512 MB). The DAT itself is not stored — only the catalogue.
+up to `GAMESAUCE_MAX_DAT` (2 GB). The DAT itself is not stored — only the catalogue.
 
 `node scripts/make-sample-dats.mjs ../demo-roms sample-dats` generates small real-format DATs
 matching the demo library, for trying the feature without downloading a full set.
