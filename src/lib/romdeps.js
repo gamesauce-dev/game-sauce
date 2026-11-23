@@ -17,6 +17,9 @@ import db from '../db.js';
 /** Platforms whose games are MAME sets (a zip named for the set). */
 export const SET_FAMILY = new Set(['arcade', 'mame', 'fba', 'neogeo', 'naomi', 'atomiswave', 'segamodel2', 'segamodel3', 'cps1', 'cps2', 'cps3', 'cave']);
 
+/** True for a MAME-family platform: the built-in ones, and one the person made whose name says so ("seganaomi2"). */
+export const isSetFamily = (slug) => SET_FAMILY.has(slug) || /naomi|atomiswave|model[23]|mame|arcade|neogeo|fba|cps[123]?|cave|hikaru|triforce|chihiro/.test(String(slug || ''));
+
 const MAX_FILES = 40;      // extras the launcher is told about (they travel in one response header)
 const MAX_DEPTH = 6;       // clone -> parent -> BIOS chains are short; this stops a loop in bad data
 
@@ -53,7 +56,7 @@ function listFolder(dir, prefix, out) {
  */
 export function findCompanions(rom) {
   const out = { files: [], missing: [] };
-  if (!rom || !SET_FAMILY.has(rom.platform)) return out;
+  if (!rom || !isSetFamily(rom.platform)) return out;
   if (!/\.(zip|7z)$/i.test(rom.filename || '')) return out;
   const have = new Set();
   const add = (f) => { if (!have.has(f.rel.toLowerCase()) && out.files.length < MAX_FILES) { have.add(f.rel.toLowerCase()); out.files.push(f); } };
@@ -71,8 +74,9 @@ export function findCompanions(rom) {
     if (!a && !b) return undefined;
     return { cloneof: a?.cloneof || b?.cloneof || null, romof: a?.romof || b?.romof || null, devices: a?.devices || null, isdevice: a?.isdevice || 0 };
   } };
-  const findRom = db.prepare(`SELECT r.filename, r.storage_path FROM roms r JOIN platforms p ON p.id = r.platform_id
-    WHERE r.missing = 0 AND lower(r.filename) IN (@a, @b) AND p.slug IN (${[...SET_FAMILY].map((s) => `'${s}'`).join(',')}) ORDER BY r.id LIMIT 1`);
+  const findAll = db.prepare(`SELECT r.filename, r.storage_path, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id
+    WHERE r.missing = 0 AND lower(r.filename) IN (@a, @b) ORDER BY r.id`);
+  const findRom = { get: (q) => findAll.all(q).find((r) => isSetFamily(r.platform)) };
   const seen = new Set([own]);
   const walk = (name, depth) => {
     const row = names.get(name);

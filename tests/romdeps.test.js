@@ -205,3 +205,17 @@ test('a FinalBurn Neo style DAT (romof on each game) teaches the BIOS too', asyn
   db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES ('FB Bios','fb bios','fbbios.zip',(SELECT id FROM platforms WHERE slug = 'fba'),?,1,'rd8')").run(path.join(ROMS, 'fba', 'fbbios.zip'));
   assert.deepEqual(deps.findCompanions(romOf(fb)).files.map((f) => f.rel), ['fbbios.zip']);
 });
+
+test('a platform the person made (seganaomi2) is treated as MAME-family: the CHD folder is found and the copy keeps its file name', async () => {
+  assert.equal(deps.isSetFamily('seganaomi2'), true);
+  assert.equal(deps.isSetFamily('snes'), false);
+  assert.equal(launcher.keepsFileName('seganaomi2'), true);
+  assert.equal(launcher.keepsFileName('snes'), false);
+  db.prepare("INSERT INTO platforms (slug, name, short_name, extensions) VALUES ('seganaomi2', 'Sega Naomi 2', 'N2', 'zip')").run();
+  db.prepare("UPDATE roms SET platform_id = (SELECT id FROM platforms WHERE slug = 'seganaomi2') WHERE id = ?").run(ids.beach);
+  const rels = deps.findCompanions(romOf(ids.beach)).files.map((f) => f.rel);
+  assert.ok(rels.includes('beachspi/gds-0014.chd'));
+  assert.ok(rels.includes('naomi.zip'), 'the BIOS is found even though it is filed under another platform name');
+  const m = (await call(`/api/roms/${ids.beach}/launch`, { token: adminTok, method: 'POST' })).body;
+  assert.ok(m.companions >= 2);
+});
