@@ -62,7 +62,7 @@ before(async () => {
     .run(title, title.toLowerCase(), path.basename(file), slug, file, fs.statSync(file).size, sha).lastInsertRowid;
   ids.beach = add('Beach Spikers', put('beachspi.zip', 'beach-zip'), 'naomi', 'rd1');
   put('beachspi/gds-0014.chd', 'big-disk-image');   // the disk is named by MAME's own list, not like the zip; the folder name is what ties it to the game
-  put('Beachspi/notes/extra.bin', 'nested');
+  put('beachspi/notes/extra.bin', 'nested');
   ids.bios = add('Naomi BIOS', put('naomi.zip', 'bios-zip'), 'naomi', 'rd2');
   ids.clone = add('Beach Spikers (clone)', put('beachspic.zip', 'clone-zip'), 'naomi', 'rd3');
   ids.plain = add('Plain', put('plain.zip', 'plain-zip'), 'naomi', 'rd4');

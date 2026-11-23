@@ -25,13 +25,12 @@ const MAX_DEPTH = 6;       // clone -> parent -> BIOS chains are short; this sto
 
 const setBase = (filename) => path.basename(String(filename || ''), path.extname(String(filename || ''))).toLowerCase();
 
-/** The folder named like the set, beside its zip (any capitals), or null. */
-function setFolder(zipPath, name) {
+/** The folders named like the set, beside its zip (any capitals: on a case-sensitive disk Beachspi and beachspi are two folders, and both count). */
+function setFolders(zipPath, name) {
   const dir = path.dirname(zipPath);
   let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return null; }
-  const hit = entries.find((e) => e.isDirectory() && e.name.toLowerCase() === name.toLowerCase());
-  return hit ? path.join(dir, hit.name) : null;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return []; }
+  return entries.filter((e) => e.isDirectory() && e.name.toLowerCase() === name.toLowerCase()).map((e) => path.join(dir, e.name));
 }
 
 /** Every file under a folder (not following links), as { rel, abs, size, mtime }, with rel starting at prefix. */
@@ -63,8 +62,7 @@ export function findCompanions(rom) {
 
   const own = setBase(rom.filename);
   have.add(String(rom.filename).toLowerCase());
-  const ownDir = setFolder(rom.storage_path, own);
-  if (ownDir) { const l = []; listFolder(ownDir, path.basename(ownDir), l); l.forEach(add); }
+  for (const ownDir of setFolders(rom.storage_path, own)) { const l = []; listFolder(ownDir, path.basename(ownDir), l); l.forEach(add); }
 
   const fromNames = db.prepare('SELECT cloneof, romof, devices, isdevice FROM mame_names WHERE name = ?');
   const fromDat = db.prepare('SELECT cloneof, romof FROM dat_sets WHERE set_name = ? AND (cloneof IS NOT NULL OR romof IS NOT NULL) ORDER BY id LIMIT 1');
@@ -90,8 +88,7 @@ export function findCompanions(rom) {
       const hit = findRom.get({ a: `${d}.zip`, b: `${d}.7z` });
       if (!hit) { if (!devs.includes(d) && !names.get(d)?.isdevice) out.missing.push(d); continue; }
       try { const st = fs.statSync(hit.storage_path); add({ rel: hit.filename, abs: hit.storage_path, size: st.size, mtime: Math.round(st.mtimeMs) }); } catch { out.missing.push(d); continue; }
-      const dir = setFolder(hit.storage_path, d);
-      if (dir) { const l = []; listFolder(dir, path.basename(dir), l); l.forEach(add); }
+      for (const dir of setFolders(hit.storage_path, d)) { const l = []; listFolder(dir, path.basename(dir), l); l.forEach(add); }
       walk(d, depth + 1);
     }
   };
