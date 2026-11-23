@@ -2115,5 +2115,8 @@
  "Long": "Longo",
  "without the bracketed part": "sem a parte entre parênteses",
  "the full name": "o nome completo",
- "Full name: {a}": "Nome completo: {a}"
+ "Full name: {a}": "Nome completo: {a}",
+ "Theme videos": "Vídeos de tema",
+ "theme videos": "vídeos de tema",
+ "Theme videos (a short looping clip that shows a game off, such as arcade theme videos) go in a folder called theme, laid out the same way. They are kept apart from the gameplay videos: a game's tile plays its theme video when you hover over it, and its gameplay video when it has no theme video, while the game's details window still plays the gameplay video.": "Os vídeos de tema (um clipe curto em loop que apresenta um jogo, como os vídeos de tema de arcade) ficam numa pasta chamada theme, organizada da mesma forma. Eles são guardados à parte dos vídeos de gameplay: o bloco de um jogo reproduz o vídeo de tema ao passar o mouse e o vídeo de gameplay quando não há vídeo de tema, enquanto a janela de detalhes do jogo continua reproduzindo o vídeo de gameplay."
 }

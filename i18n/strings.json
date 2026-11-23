@@ -20,6 +20,9 @@
  "— that protects against someone reading a copy of the database, not against someone with access to the whole data folder. Set": {
   "files": 1
  },
+ ", {a} arcade games matched": {
+  "files": 1
+ },
  ", {a} bad dump(s)": {
   "files": 1
  },
@@ -30,6 +33,9 @@
   "files": 1
  },
  ", {a} covers": {
+  "files": 1
+ },
+ ", {a} digital": {
   "files": 1
  },
  ", {a} enriched": {
@@ -51,6 +57,9 @@
   "files": 1
  },
  ", {a} not on its list": {
+  "files": 1
+ },
+ ", {a} on the shelf": {
   "files": 1
  },
  ", {a} removed": {
@@ -338,7 +347,7 @@
  "{a} Delete them anyway?": {
   "files": 1
  },
- "{a} entries imported ({b})": {
+ "{a} entries imported{b} ({c})": {
   "files": 1
  },
  "{a} failed": {
@@ -371,6 +380,9 @@
  "{a} games added to your Physical shelf": {
   "files": 1
  },
+ "{a} games in DAT · {b} have · {c} missing. A game counts once whatever its region, and is held as a ROM, on the Physical shelf or in Digital (anyone on this server).": {
+  "files": 1
+ },
  "{a} games in the file ({b}): {c} would be added, {d} updated, {e} {f} already there{g}.": {
   "files": 2
  },
@@ -381,6 +393,9 @@
   "files": 1
  },
  "{a} has the full screen": {
+  "files": 1
+ },
+ "{a} hours played": {
   "files": 1
  },
  "{a} in DAT · {b} have · {c} missing.": {
@@ -533,6 +548,9 @@
  "{a}{b} found in the zip, {c} would be saved{d}{e}.": {
   "files": 1
  },
+ "{a}{b}. Starts in Steam on this PC.": {
+  "files": 1
+ },
  "{b} · added": {
   "files": 1
  },
@@ -543,6 +561,9 @@
   "files": 1
  },
  "{c} · last seen {d} UTC": {
+  "files": 1
+ },
+ "{c} (show the controls)": {
   "files": 1
  },
  "{c} Digital game{d} that were in your Digital library before their disc was linked are never offered here.": {
@@ -558,6 +579,9 @@
   "files": 1
  },
  "{d} added": {
+  "files": 1
+ },
+ "{e} releases": {
   "files": 1
  },
  "{e} unchanged": {
@@ -641,10 +665,16 @@
  "▯ With spine art": {
   "files": 1
  },
+ "▲ ▼ Back to the games": {
+  "files": 1
+ },
  "▶ Installed": {
   "files": 1
  },
  "▶ Play": {
+  "files": 1
+ },
+ "◀ ▶ Change platform ▲ ▼ Back to the games": {
   "files": 1
  },
  "○ Needs match": {
@@ -794,6 +824,9 @@
  "A backup is one": {
   "files": 1
  },
+ "a clear logo, else a screenshot, else the box": {
+  "files": 1
+ },
  "A collection with that name already exists": {
   "files": 1
  },
@@ -827,6 +860,9 @@
  "A No-Intro or Redump": {
   "files": 1
  },
+ "A open · B back · LB RB turn the page · up, then left or right, changes platform": {
+  "files": 1
+ },
  "A safety backup of the current data is saved first, and the data being replaced is kept. The server will restart and everyone will need to sign in again.": {
   "files": 1
  },
@@ -840,6 +876,12 @@
   "files": 1
  },
  "A short walk through the first things to set up: your password and picture (and, for an admin, game sources and the database).": {
+  "files": 1
+ },
+ "a slow wave of light and a cross bar of platforms, on PlayStation consoles": {
+  "files": 1
+ },
+ "A Steam game starts in Steam on this PC: press Y.": {
   "files": 1
  },
  "A web link to this game's manual": {
@@ -856,9 +898,6 @@
  },
  "Accent colour": {
   "files": 2
- },
- "Account": {
-  "files": 1
  },
  "Active sessions": {
   "files": 2
@@ -1082,6 +1121,9 @@
  "An Xbox One or Series disc is only added to your Digital library if you switch on the disc to digital icon in the game's details.": {
   "files": 1
  },
+ "and {a} sets by name": {
+  "files": 1
+ },
  "and is not in backups — keep it somewhere safe.": {
   "files": 1
  },
@@ -1160,6 +1202,9 @@
  "As an admin your Hide takes this game away from every member as well. It stays in the Library under Hidden, where you can show it again.": {
   "files": 1
  },
+ "as before": {
+  "files": 1
+ },
  "As before: the scan takes as long as reading every new file.": {
   "files": 1
  },
@@ -1197,9 +1242,6 @@
   "files": 1
  },
  "Automatic cover": {
-  "files": 1
- },
- "Available Content": {
   "files": 1
  },
  "B — neon night face": {
@@ -1274,17 +1316,17 @@
  "Badge text": {
   "files": 1
  },
+ "Best available": {
+  "files": 1
+ },
  "Best effort:": {
   "files": 1
  },
  "beta installer, tested": {
   "files": 1
  },
- "big screen": {
-  "files": 1
- },
  "Big Screen": {
-  "files": 2
+  "files": 3
  },
  "Big Screen look": {
   "files": 1
@@ -1320,6 +1362,9 @@
   "files": 1
  },
  "Bought on": {
+  "files": 1
+ },
+ "Box art": {
   "files": 1
  },
  "box backs": {
@@ -1367,6 +1412,9 @@
  "button in the ROM Library, Physical and Digital): for example a LaunchBox": {
   "files": 1
  },
+ "button type=\"button\"": {
+  "files": 1
+ },
  "button:not([disabled]):not([tabindex=\"-1\"]), a[href]:not([tabindex=\"-1\"]), input:not([type=\"hidden\"]):not([disabled]):not([tabindex=\"-1\"]), select:not([disabled]):not([tabindex=\"-1\"]), textarea:not([disabled]):not([tabindex=\"-1\"]), [tabindex]:not([tabindex=\"-1\"])": {
   "files": 1
  },
@@ -1374,6 +1422,9 @@
   "files": 1
  },
  "C — sauce-drop face": {
+  "files": 1
+ },
+ "calc(100% -": {
   "files": 1
  },
  "can be cleared.": {
@@ -1422,6 +1473,9 @@
   "files": 1
  },
  "Catalogue the games you own on disc or cartridge: add one by hand, or bring a whole list in from a CSV. Covers and details are looked up for you, and you can match any game by hand.": {
+  "files": 1
+ },
+ "Change blade": {
   "files": 1
  },
  "Change password": {
@@ -1553,6 +1607,9 @@
  "Choose your own password": {
   "files": 1
  },
+ "class=\"bs-bl-lab alt": {
+  "files": 1
+ },
  "Classic look (click for Modern)": {
   "files": 1
  },
@@ -1566,6 +1623,9 @@
   "files": 1
  },
  "Clear covers…": {
+  "files": 1
+ },
+ "Clear logos": {
   "files": 1
  },
  "Clear match": {
@@ -1626,6 +1686,9 @@
   "files": 1
  },
  "Co-op nights": {
+  "files": 1
+ },
+ "Collection completeness": {
   "files": 1
  },
  "Collection created": {
@@ -2447,6 +2510,9 @@
  "Folders on the server that people can bring game assets in from: pictures, manuals": {
   "files": 1
  },
+ "Follows the month": {
+  "files": 1
+ },
  "for": {
   "files": 1
  },
@@ -2538,6 +2604,9 @@
   "files": 1
  },
  "Game logos": {
+  "files": 1
+ },
+ "Game names": {
   "files": 1
  },
  "Game not found": {
@@ -2822,6 +2891,9 @@
  "Housekeeping": {
   "files": 1
  },
+ "How a game's name shows in the ROM Library. The short name leaves out the bracketed part (Initial D Arcade Stage), the long name keeps it (Initial D Arcade Stage (Export)). A game with no long name shows its usual name either way.": {
+  "files": 1
+ },
  "How adding ROMs works here": {
   "files": 1
  },
@@ -2835,6 +2907,18 @@
   "files": 1
  },
  "How this works": {
+  "files": 1
+ },
+ "hsl({a}, {b}%, {c}%)": {
+  "files": 1
+ },
+ "hsla({a}, 70%, 78%, {b})": {
+  "files": 1
+ },
+ "hsla({a}, 75%, 86%, {b})": {
+  "files": 1
+ },
+ "hsla({a}, 80%, 92%, {b})": {
   "files": 1
  },
  "Icon": {
@@ -2900,7 +2984,7 @@
  "Imported {a}.": {
   "files": 1
  },
- "imported {i} UTC": {
+ "imported {g} UTC": {
   "files": 1
  },
  "Imported copies / seed rows": {
@@ -3260,9 +3344,6 @@
  "Make this my default provider": {
   "files": 2
  },
- "MAME name list: {a} names loaded, {b} of your {c} MAME ROMs titled": {
-  "files": 1
- },
  "Manual": {
   "files": 3
  },
@@ -3318,6 +3399,9 @@
   "files": 1
  },
  "Matched by a provider or DAT": {
+  "files": 1
+ },
+ "Matched by name": {
   "files": 1
  },
  "matching “{a}”": {
@@ -3501,6 +3585,9 @@
   "files": 1
  },
  "Next game (→)": {
+  "files": 1
+ },
+ "Next page": {
   "files": 1
  },
  "next to the database": {
@@ -3860,6 +3947,9 @@
  "not played yet": {
   "files": 1
  },
+ "Not played yet": {
+  "files": 1
+ },
  "Not recognised": {
   "files": 1
  },
@@ -3965,6 +4055,9 @@
  "On the server now": {
   "files": 1
  },
+ "On the Xbox 360 look of Big Screen the blades show this platform's name instead of its logo (for a logo that does not suit a slim band)": {
+  "files": 1
+ },
  "on this platform": {
   "files": 1
  },
@@ -3972,6 +4065,9 @@
   "files": 3
  },
  "one": {
+  "files": 1
+ },
+ "One line per game, any region": {
   "files": 1
  },
  "one reading a day": {
@@ -4112,6 +4208,9 @@
  "PAL, NTSC-U, JP…": {
   "files": 1
  },
+ "pale channel tiles over a curved bar, on the Wii, GameCube and Wii U": {
+  "files": 1
+ },
  "part of a multi-disc set": {
   "files": 1
  },
@@ -4199,6 +4298,9 @@
  "picks by the controller's name. This is remembered on this browser only.": {
   "files": 1
  },
+ "Pictures (PlayStation 3 and Wii)": {
+  "files": 1
+ },
  "Pictures are no longer shared between accounts": {
   "files": 1
  },
@@ -4215,7 +4317,7 @@
   "files": 1
  },
  "Platform": {
-  "files": 4
+  "files": 5
  },
  "Platform *": {
   "files": 1
@@ -4257,7 +4359,7 @@
   "files": 1
  },
  "Platforms": {
-  "files": 2
+  "files": 3
  },
  "play": {
   "files": 1
@@ -4347,6 +4449,12 @@
   "files": 1
  },
  "PlayStation 3": {
+  "files": 2
+ },
+ "PlayStation 3 colour": {
+  "files": 1
+ },
+ "PlayStation 3 pictures": {
   "files": 1
  },
  "PlayStation 4": {
@@ -4365,7 +4473,7 @@
   "files": 1
  },
  "Preferences": {
-  "files": 1
+  "files": 2
  },
  "Press Change password": {
   "files": 1
@@ -4403,11 +4511,14 @@
  "Previous game (←)": {
   "files": 1
  },
+ "Previous page": {
+  "files": 1
+ },
  "Price paid": {
   "files": 1
  },
  "Profile picture": {
-  "files": 2
+  "files": 1
  },
  "Profile picture removed": {
   "files": 1
@@ -4755,7 +4866,7 @@
   "files": 1
  },
  "ROM library": {
-  "files": 1
+  "files": 2
  },
  "ROM Library": {
   "files": 3
@@ -5231,6 +5342,9 @@
  "Show the case: open it, turn it over, read the manual": {
   "files": 1
  },
+ "Show the name on Big Screen blades": {
+  "files": 1
+ },
  "Show the selected hidden games again": {
   "files": 1
  },
@@ -5384,14 +5498,20 @@
  "Starting {a} on this PC": {
   "files": 1
  },
+ "Starting in Steam…": {
+  "files": 1
+ },
  "Starting your emulator…": {
+  "files": 1
+ },
+ "starts at once; B leaves it": {
   "files": 1
  },
  "stay where they are": {
   "files": 1
  },
  "Steam": {
-  "files": 3
+  "files": 4
  },
  "Steam app ID": {
   "files": 1
@@ -5481,6 +5601,9 @@
   "files": 2
  },
  "Switch look": {
+  "files": 1
+ },
+ "Switch the play button on for this game in the Digital Library first.": {
   "files": 1
  },
  "Switch to the tile view to select games": {
@@ -5579,6 +5702,9 @@
  "That file is over 50 MB.": {
   "files": 2
  },
+ "That file is over the {a} MB DAT limit. Raise GAMESAUCE_MAX_DAT, or save the list as UTF-8 (a MAME list written on Windows is twice as big as it needs to be).": {
+  "files": 1
+ },
  "That folder already belongs to the source \"{a}\"": {
   "files": 1
  },
@@ -5657,6 +5783,12 @@
  "The backup folder must be an absolute path": {
   "files": 1
  },
+ "The blades show the logo": {
+  "files": 1
+ },
+ "The blades show the name": {
+  "files": 1
+ },
  "The built-in catalogue covers the common systems; arcade oddities (Model 2/3, NAOMI, Atomiswave…) ship seeded too. Add your own here — name, slug, file extensions, and the ScreenScraper / TheGamesDB ids if you know them (leave blank when unsure; matching and scanning still work, enrichment just skips that provider). Changes apply immediately — no rebuild, no restart.": {
   "files": 1
  },
@@ -5664,6 +5796,9 @@
   "files": 1
  },
  "The colour of the {e} chip (the platform chips keep their own colours)": {
+  "files": 1
+ },
+ "The colour of the PlayStation 3 look. By default it follows the month, as the console did.": {
   "files": 1
  },
  "The colour tints this person in the chat: their picture, their row in the list and the messages you receive from them. It is chosen here (and can be changed on their row above); green is kept for your own messages.": {
@@ -5720,6 +5855,9 @@
  "The front of the box or case": {
   "files": 1
  },
+ "the full name": {
+  "files": 1
+ },
  "the game": {
   "files": 1
  },
@@ -5750,13 +5888,16 @@
  "The launcher never answered. Check it is installed on this PC (docs/LOCAL-LAUNCH.md), then try again.": {
   "files": 1
  },
+ "the Library": {
+  "files": 1
+ },
  "The link is taken off the game.": {
   "files": 1
  },
  "the look Big Screen has always had": {
   "files": 1
  },
- "The look of Big Screen. Your choice is kept with your account.": {
+ "The look of Big Screen. Switch on one or both: each look is used only on its own consoles, and everything else keeps the Standard look. Your choice is kept with your account.": {
   "files": 1
  },
  "The manual could not be shown.": {
@@ -5765,7 +5906,13 @@
  "The match has no description.": {
   "files": 1
  },
+ "the name in text when a game has none": {
+  "files": 1
+ },
  "The new name cannot be empty": {
+  "files": 1
+ },
+ "The normal screen": {
   "files": 1
  },
  "The notice": {
@@ -5804,6 +5951,9 @@
  "The video source sent an address that is not a web link": {
   "files": 1
  },
+ "The whole bar counts a game under the first of these that holds it. A game counts once whatever its region, across everyone on this server.": {
+  "files": 1
+ },
  "The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.": {
   "files": 1
  },
@@ -5838,6 +5988,18 @@
   "files": 1
  },
  "Their sessions end immediately.": {
+  "files": 1
+ },
+ "theme videos": {
+  "files": 1
+ },
+ "Theme videos": {
+  "files": 1
+ },
+ "Theme videos (a short looping clip that shows a game off, such as arcade theme videos) go in a folder called theme, laid out the same way. They are kept apart from the gameplay videos: a game's tile plays its theme video when you hover over it, and its gameplay video when it has no theme video, while the game's details window still plays the gameplay video.": {
+  "files": 1
+ },
+ "then the box": {
   "files": 1
  },
  "There are no games in the file.": {
@@ -5883,6 +6045,9 @@
   "files": 1
  },
  "This does not look like a zip file": {
+  "files": 1
+ },
+ "This download link has expired or was already used. Click Play locally again.": {
   "files": 1
  },
  "This export is too large for one zip: pick fewer platforms": {
@@ -6027,6 +6192,12 @@
   "files": 1
  },
  "translate(-50%, 0) translateX({a}px) translateY({b}px) rotate({c}deg) scale({d})": {
+  "files": 1
+ },
+ "translate(-50%, calc(-50% + {a}em))": {
+  "files": 1
+ },
+ "translate({a}em, {b}em)": {
   "files": 1
  },
  "translate({a}px, {b}px) scale({c}, {d})": {
@@ -6299,6 +6470,9 @@
  "Welcome tour": {
   "files": 2
  },
+ "What each game shows in the PlayStation 3 and Wii looks. Best available uses a clear logo when a game has one.": {
+  "files": 1
+ },
  "What is this set for?": {
   "files": 1
  },
@@ -6311,6 +6485,9 @@
  "When an account has a game that another account already has pictures for (cover, spine, disc, back), copy those pictures across, quietly.": {
   "files": 1
  },
+ "When you sign in": {
+  "files": 1
+ },
  "Where game details come from": {
   "files": 1
  },
@@ -6321,6 +6498,12 @@
   "files": 1
  },
  "Where the game's name ends in the file name (optional; several endings can be separated with": {
+  "files": 1
+ },
+ "Where you land": {
+  "files": 1
+ },
+ "Where you land. Big Screen starts at once (press B to leave it for the normal screen); a play-only account starts there unless you choose otherwise.": {
   "files": 1
  },
  "Whether this person can download ROM files. 'Default' follows the switch above.": {
@@ -6336,6 +6519,9 @@
   "files": 1
  },
  "White pad on the sunset gradient, gold sauce drip. Friendly, colourful.": {
+  "files": 1
+ },
+ "wi-tile bs-bl-row": {
   "files": 1
  },
  "Wii": {
@@ -6375,6 +6561,9 @@
   "files": 1
  },
  "Withdraw this notice?": {
+  "files": 1
+ },
+ "without the bracketed part": {
   "files": 1
  },
  "work here. Get a free dev pair via “get credentials ↗” (forum request), or ask whoever runs this server to set": {
@@ -6436,6 +6625,9 @@
  },
  "Xbox Series X|S": {
   "files": 2
+ },
+ "xm-item bs-bl-row": {
+  "files": 1
  },
  "Year": {
   "files": 4
@@ -6513,27 +6705,6 @@
   "files": 1
  },
  "Zip64 archives are not supported": {
-  "files": 1
- },
- "Game names": {
-  "files": 1
- },
- "How a game's name shows in the ROM Library. The short name leaves out the bracketed part (Initial D Arcade Stage), the long name keeps it (Initial D Arcade Stage (Export)). A game with no long name shows its usual name either way.": {
-  "files": 1
- },
- "Short": {
-  "files": 1
- },
- "Long": {
-  "files": 1
- },
- "without the bracketed part": {
-  "files": 1
- },
- "the full name": {
-  "files": 1
- },
- "Full name: {a}": {
   "files": 1
  }
 }

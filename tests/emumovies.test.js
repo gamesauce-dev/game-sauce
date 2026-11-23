@@ -660,3 +660,45 @@ test('a video in the details window stops when the window is closed or its page 
   assert.ok(js.includes("drawerEl.classList.contains('hidden')") && js.includes("drawerEl.querySelectorAll('video').forEach((v) => v.pause())"), 'paused when the window is hidden');
   assert.ok(js.includes("v.addEventListener('timeupdate', () => { if (!v.isConnected || !v.offsetParent) v.pause(); })"), 'and when it is no longer on screen');
 });
+
+test('theme videos: a theme folder is imported as its own kind; a tile previews the theme video first and the gameplay video otherwise, and the details window keeps the gameplay video', async () => {
+  const { db } = await import('../src/db.js');
+  const pack = path.join(TMP, 'themepack');
+  const put = (rel, buf) => { const f = path.join(pack, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, buf); return f; };
+  const THEME = Buffer.concat([MP4, Buffer.alloc(500, 2)]);   // a different size from the gameplay video, so the two can be told apart
+  const play = put('gameplay/tp-play.mp4', MP4);
+  const theme = put('snes/theme/tpa.mp4', THEME);   // named like the ROM (arcade sets are)
+  put('snes/theme/Theme Unknown Game.mp4', THEME);
+  put('snes/theme/Theme Old.avi', Buffer.from('RIFF....AVI '));
+  assert.equal((await call('/api/art/folders', { method: 'PUT', body: { folders: [pack] } })).status, 200);
+  const ins = (title, file) => db.prepare("INSERT INTO roms (title, sort_title, filename, storage_path, platform_id, size_bytes, sha1) VALUES (?, ?, ?, 'x', (SELECT id FROM platforms WHERE slug = 'snes'), 1, ?)").run(title, title.toLowerCase(), file, 'sha-' + file).lastInsertRowid;
+  const a = ins('Theme Game A', 'tpa.sfc'), b = ins('Theme Game B', 'tpb.sfc');
+  for (const t of ['theme game a', 'theme game b']) db.prepare("INSERT INTO game_videos (platform, title_key, path, bytes, source) VALUES ('snes', ?, ?, ?, 'folder')").run(t, play, MP4.length);
+
+  const prev = await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack } });
+  assert.equal(prev.body.matched.theme, 1); assert.equal(prev.body.will.theme, 1);
+  assert.equal(prev.body.unsupported_videos, 1, 'a format a browser cannot play is listed, as for gameplay videos');
+  assert.equal(db.prepare('SELECT COUNT(*) c FROM theme_videos').get().c, 0, 'a preview saves nothing');
+  await call('/api/art/import', { method: 'POST', body: { target: 'video', folder: pack, apply: true } });
+  let st; for (let i = 0; i < 80; i++) { st = (await call('/api/art/import/status')).body; if (!st.running && st.finished_at) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(st.applied.theme, 1);
+  const row = db.prepare("SELECT path FROM theme_videos WHERE platform = 'snes' AND title_key = 'theme game a'").get();
+  assert.equal(row.path, path.resolve(theme), 'linked where it is');
+  assert.equal(db.prepare("SELECT bytes FROM game_videos WHERE title_key = 'theme game a'").get().bytes, MP4.length, 'the gameplay video was not replaced');
+
+  const list = (await call('/api/roms?q=Theme%20Game&limit=50')).body.items;
+  const ga = list.find((x) => x.id === a), gb = list.find((x) => x.id === b);
+  assert.equal(ga.has_theme, true); assert.equal(ga.has_video, true);
+  assert.ok(!gb.has_theme && gb.has_video, 'no theme video: the tile falls back to gameplay');
+  assert.equal((await call(`/api/videos/file?kind=rom&id=${a}`)).body.length, MP4.length, 'the details window still gets the gameplay video');
+  assert.equal((await call(`/api/videos/file?kind=rom&id=${a}&variant=theme`)).body.length, THEME.length);
+  assert.equal((await call(`/api/videos/file?kind=rom&id=${b}&variant=theme`)).status, 404);
+  assert.equal((await call(`/api/videos/status?kind=rom&id=${a}`)).body.available, true);
+
+  // the same folder through the all-in-one importer reads the theme folder too, and a second run finds nothing to do
+  const all = await call('/api/art/import', { method: 'POST', body: { target: 'rom', folder: pack } });
+  assert.equal(all.body.matched.theme, 1); assert.equal(all.body.will.theme, 0);
+  const js = fs.readFileSync(new URL('../public/video.js', import.meta.url), 'utf8');
+  assert.ok(js.includes("tile.dataset.theme === '1'") && js.includes("q.set('variant', 'theme')"), 'the tile preview asks for the theme video');
+  assert.ok(!/variant/.test(js.slice(js.indexOf('const query ='), js.indexOf('const MUTE_KEY'))), 'the details window never asks for it');
+});

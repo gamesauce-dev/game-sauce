@@ -5,6 +5,7 @@ import { videoSourcesEnabled, videoSourceLabel, ensureVideo, videoFile, recently
 import { isConsoleStore, libSlug } from '../lib/consoles.js';
 import { listGames } from '../lib/steam.js';
 import { fetchAssets } from '../lib/assets.js';
+import { themeVideoFile } from '../lib/themevideos.js';
 
 // Game videos for the details window. One address shape for the three places a game can live:
 //   ?kind=rom&id=12   ?kind=physical&id=7   ?kind=digital&store=xbox&id=<app id>
@@ -67,7 +68,8 @@ router.post('/assets', async (req, res, next) => {
 router.get('/file', (req, res) => {
   const game = resolveGame(req);
   if (!game) return notFound(res);
-  const have = videoFile(game);
+  // ?variant=theme is the game's theme video (what a tile plays on hover); without it, always the gameplay video (the details window).
+  const have = req.query.variant === 'theme' ? themeVideoFile(game) : videoFile(game);
   if (!have) return res.status(404).json({ error: 'No video for this game' });
   res.setHeader('Cache-Control', 'private, max-age=3600');
   res.type(path.extname(have.path) === '.webm' ? 'video/webm' : 'video/mp4');

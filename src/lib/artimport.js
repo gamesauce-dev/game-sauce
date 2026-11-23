@@ -29,6 +29,7 @@ import { MAX_MANUAL_BYTES } from './manuals.js';
 import { MAX_COVER_BYTES, sniffImage } from './coverzip.js';
 import { titleKey as videoTitleKey } from './emumovies.js';
 import { setRomFile } from './romfiles.js';
+import { setThemeVideo } from './themevideos.js';
 import { saveCover } from './storage.js';
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -83,7 +84,8 @@ const SIMPLE_KIND = {
   logo: ['logos', 'logo', 'wheels', 'wheel', 'clearlogo', 'clearlogos', 'gamelogo', 'gamelogos', 'titlelogo', 'titlelogos'],
   marquee: ['marquees', 'marquee', 'banners', 'banner'],
   fanart: ['fanart', 'fanarts', 'backgrounds', 'background', 'fanartbackground', 'artwork'],
-  video: ['videos', 'video', 'videosnaps', 'videosnap', 'snaps', 'snap', 'movies', 'previews', 'preview', 'clips']
+  video: ['videos', 'video', 'videosnaps', 'videosnap', 'snaps', 'snap', 'movies', 'previews', 'preview', 'clips'],
+  theme: ['theme', 'themes', 'themevideo', 'themevideos', 'themevideo']   // a short looping video that shows a game off on its tile (arcade theme videos): its own kind, apart from the gameplay video
 };
 const SIMPLE_LOOKUP = new Map(Object.entries(SIMPLE_KIND).flatMap(([kind, names]) => names.map((n) => [n, kind])));
 /** Not box art: the extra pictures a RetroBat or media pack puts next to the cover. */
@@ -135,10 +137,10 @@ export function classify(segs, fileName) {
   for (let i = segs.length - 1; i >= 1; i--) {
     const kind = SIMPLE_LOOKUP.get(squash(segs[i]));
     if (!kind) continue;
-    if (kind === 'video') {
+    if (kind === 'video' || kind === 'theme') {
       if (!VIDEO_EXT.has(ext) && !OTHER_VIDEO_EXT.has(ext)) return null;
       // Both orders are in use: <platform>/videos/<title>.mp4 and <videos>/<platform>/<title>.mp4 (LaunchBox); the plan tries the folder above and the folder below as the platform.
-      return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: (/(([^)]*))/.exec(base) || [])[1] || '', title: base.replace(/-video$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };   // RetroBat names them <rom name>-video.mp4
+      return { layout: 'simple', folder: segs[i], kind, platform: segs[i - 1], region: segs[i + 1] || '', fileRegion: (/(([^)]*))/.exec(base) || [])[1] || '', title: base.replace(/-(video|theme)$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };   // RetroBat names them <rom name>-video.mp4
     }
     if (kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
     if (kind !== 'manual' && NOT_COVER.test(base)) return null;
@@ -152,10 +154,10 @@ export function classify(segs, fileName) {
 function forcedEntry(segs, fileName, force) {
   const dot = fileName.lastIndexOf('.');
   const ext = dot >= 0 ? fileName.slice(dot).toLowerCase() : '', base = dot >= 0 ? fileName.slice(0, dot) : fileName;
-  if (force.kind === 'video') {
+  if (force.kind === 'video' || force.kind === 'theme') {
     if (!VIDEO_EXT.has(ext) && !OTHER_VIDEO_EXT.has(ext)) return null;
     const br = /(([^)]*))/.exec(base);
-    return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: 'video', platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: br ? br[1] : '', title: base.replace(/-video$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
+    return { layout: 'picked', folder: segs[segs.length - 1] || '', kind: force.kind, platform: force.platform || '', platforms: force.platform ? [] : [...segs].reverse(), region: '', fileRegion: br ? br[1] : '', title: base.replace(/-(video|theme)$/i, ''), n: 1, weak: false, unsupported: !VIDEO_EXT.has(ext) };
   }
   if (force.kind === 'manual' ? ext !== '.pdf' : !IMAGE_EXT.has(ext)) return null;
   const bracket = /\(([^)]*)\)/.exec(base), num = /-(\d{1,3})$/.exec(base);
@@ -254,7 +256,7 @@ function videoGames(userId) {
 }
 
 /** What a video import would do. Videos are kept per platform and title (one per game, shared by every list), and are linked where they are, not copied. */
-function planVideoImport(userId, scan, { replace = false, cut = '' } = {}) {
+function planVideoImport(userId, scan, { replace = false, cut = '' } = {}, vkind = 'video') {
   const games = videoGames(userId);
   const byKey = new Map();
   for (const g of games) { const k = `${g.platform}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, g); }
@@ -265,19 +267,19 @@ function planVideoImport(userId, scan, { replace = false, cut = '' } = {}) {
   const unsupported = [], unsupportedAll = { n: 0 };
   const best = new Map();   // `${slug}\n${video key}` -> { game, slug, key, entry, rank }
   for (const e of scan.files) {
-    if (e.kind !== 'video') continue;
+    if (e.kind !== vkind) continue;
     if (e.unsupported) { unsupportedAll.n++; if (unsupported.length < 8) unsupported.push(path.basename(e.file)); continue; }
     const names = e.platforms?.length ? e.platforms : [e.platform, e.region];
     const slug = names.map(platOf).find(Boolean) || null;
     if (!slug) { const nm = names.find(Boolean) || '(no folder)'; unknownPlatforms.set(nm, (unknownPlatforms.get(nm) || 0) + 1); continue; }
     candidates++;
     const g = byKey.get(`${slug}\n${titleKey(cutTitle(e.title, cut))}`) || byStem.get(`${slug}\n${squash(cutTitle(e.title, cut))}`) || byStem.get(`${slug}\n${firstWord(cutTitle(e.title, cut))}`);
-    if (!g) { unmatchedTotal++; if (unmatched.length < 10) unmatched.push({ kind: 'video', platform: slug, title: e.title }); continue; }
+    if (!g) { unmatchedTotal++; if (unmatched.length < 10) unmatched.push({ kind: vkind, platform: slug, title: e.title }); continue; }
     const key = videoTitleKey(g.title), id = `${slug}\n${key}`, rank = regionRank(g.region, e.fileRegion) * 100 + (e.n || 1);
     const cur = best.get(id);
-    if (!cur || rank < cur.rank) best.set(id, { game: g, slug, key, entry: e, rank, kind: 'video' });
+    if (!cur || rank < cur.rank) best.set(id, { game: g, slug, key, entry: e, rank, kind: vkind });
   }
-  const have = db.prepare('SELECT path, source FROM game_videos WHERE platform = ? AND title_key = ?');
+  const have = db.prepare(vkind === 'theme' ? "SELECT path, 'folder' AS source FROM theme_videos WHERE platform = ? AND title_key = ?" : 'SELECT path, source FROM game_videos WHERE platform = ? AND title_key = ?');
   const items = [];
   for (const b of best.values()) {
     const row = have.get(b.slug, b.key);
@@ -285,11 +287,11 @@ function planVideoImport(userId, scan, { replace = false, cut = '' } = {}) {
     if (!there || (replace && row.source === 'folder')) items.push(b);   // a video that was fetched from EmuMovies is never replaced by a file
   }
   const seenMap = new Map();
-  for (const e of scan.files) { if (e.kind !== 'video') continue; const k = `${e.platform || '?'}\n${e.folder || ''}`; seenMap.set(k, (seenMap.get(k) || 0) + 1); }
-  const seen = [...seenMap].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, files]) => { const [platform, folder] = k.split('\n'); return { platform, folder, kind: 'video', files }; });
+  for (const e of scan.files) { if (e.kind !== vkind) continue; const k = `${e.platform || '?'}\n${e.folder || ''}`; seenMap.set(k, (seenMap.get(k) || 0) + 1); }
+  const seen = [...seenMap].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, files]) => { const [platform, folder] = k.split('\n'); return { platform, folder, kind: vkind, files }; });
   return {
-    items, matched: { video: best.size }, will: { video: items.length }, skipped: { video: best.size - items.length },
-    candidates: { video: candidates }, games: games.length,
+    items, matched: { [vkind]: best.size }, will: { [vkind]: items.length }, skipped: { [vkind]: best.size - items.length },
+    candidates: { [vkind]: candidates }, games: games.length,
     wraps: { files: 0, odd: 0, odd_list: [], platforms: [] },
     seen, unmatched, unmatched_total: unmatchedTotal, unknown_platforms: [...unknownPlatforms].slice(0, 20).map(([name, files]) => ({ name, files })),
     unsupported_videos: unsupportedAll.n, unsupported_list: unsupported
@@ -304,6 +306,7 @@ async function applyVideo(b) {
   const ok = (head.length >= 12 && head.toString('latin1', 4, 8) === 'ftyp') || (head.length >= 4 && head.readUInt32BE(0) === 0x1a45dfa3);
   if (!ok) throw new Error('not an mp4 or webm video (convert it first)');
   const st = await fsp.stat(b.entry.file);
+  if (b.kind === 'theme') { setThemeVideo(b.slug, b.key, path.resolve(b.entry.file), st.size); return; }
   db.prepare("INSERT INTO game_videos (platform, title_key, path, bytes, source, fetched_at, tried_at) VALUES (?, ?, ?, ?, 'folder', datetime('now'), datetime('now')) ON CONFLICT(platform, title_key) DO UPDATE SET path = excluded.path, bytes = excluded.bytes, source = 'folder', fetched_at = datetime('now'), tried_at = datetime('now')")
     .run(b.slug, b.key, path.resolve(b.entry.file), st.size);
 }
@@ -313,13 +316,33 @@ async function applyVideo(b) {
  * What an import would do for a list (physical, digital or rom): its pictures and manuals, and the videos in the same folder (videos belong to a game wherever it is listed,
  * so they are planned the same way for every list). Nothing is changed.
  */
+/** Gameplay videos and theme videos of a folder, planned separately (each in its own table, so neither replaces the other) and reported together. Rows appear only for a kind the folder has. */
+function planVideos(userId, scan, opts, always = false) {
+  const o = { replace: opts.replace, cut: opts.cut };
+  const parts = [['video', planVideoImport(userId, scan, o, 'video')], ['theme', planVideoImport(userId, scan, o, 'theme')]];
+  const out = { items: [], matched: {}, will: {}, skipped: {}, candidates: {}, games: parts[0][1].games, wraps: parts[0][1].wraps, seen: [], unmatched: [], unmatched_total: 0, unknown_platforms: [], unsupported_videos: 0, unsupported_list: [] };
+  const unk = new Map();
+  for (const [kind, v] of parts) {
+    const has = v.candidates[kind] || v.unsupported_videos || v.unmatched_total;
+    if (!has && !(always && kind === 'video')) continue;
+    out.items.push(...v.items); out.seen.push(...v.seen);
+    for (const k of ['matched', 'will', 'skipped', 'candidates']) out[k][kind] = v[k][kind];
+    out.unmatched.push(...v.unmatched); out.unmatched_total += v.unmatched_total;
+    for (const u of v.unknown_platforms) unk.set(u.name, (unk.get(u.name) || 0) + u.files);
+    out.unsupported_videos += v.unsupported_videos; out.unsupported_list.push(...v.unsupported_list);
+  }
+  out.unknown_platforms = [...unk].slice(0, 20).map(([name, files]) => ({ name, files }));
+  out.unmatched = out.unmatched.slice(0, 14); out.unsupported_list = out.unsupported_list.slice(0, 8);
+  return out;
+}
+
 export function planArtImport(userId, scan, opts = {}) {
   const base = planPictures(userId, scan, opts);
-  if (opts.target === 'video') return base;
-  const v = planVideoImport(userId, scan, { replace: opts.replace, cut: opts.cut });
+  if (opts.target === 'video') return base;   // (the video-only plan below is planVideos too)
+  const v = planVideos(userId, scan, opts);
   base.items.push(...v.items);
-  // The Videos row only appears when the folder has videos (so a pictures-only folder reads exactly as before).
-  if (v.candidates.video || v.unsupported_videos || v.unmatched_total) for (const k of ['matched', 'will', 'skipped', 'candidates']) base[k] = { ...base[k], video: v[k].video };
+  // The Videos and Theme videos rows only appear when the folder has them (so a pictures-only folder reads exactly as before).
+  for (const k of ['matched', 'will', 'skipped', 'candidates']) base[k] = { ...base[k], ...v[k] };
   base.unmatched_total += v.unmatched_total; base.unmatched = [...base.unmatched, ...v.unmatched].slice(0, 14);
   const unk = new Map(base.unknown_platforms.map((u) => [u.name, u.files]));
   for (const u of v.unknown_platforms) unk.set(u.name, (unk.get(u.name) || 0) + u.files);
@@ -330,7 +353,7 @@ export function planArtImport(userId, scan, opts = {}) {
 }
 
 function planPictures(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
-  if (target === 'video') return planVideoImport(userId, scan, { replace, cut });
+  if (target === 'video') return planVideos(userId, scan, { replace, cut }, true);
   // 'both' is the person's shelf and their Digital list in one pass, and 'all' adds the Library (an admin's): what each list takes goes to it. The shelf takes covers, spines, discs, backs and manuals
   // (and cuts a full wrap into three); Digital takes covers; the Library takes those and its logo, marquee and background too (it does not take a wrap).
   const multi = target === 'both' || target === 'all';
@@ -412,7 +435,7 @@ const publicPlan = (p, scan, folder) => ({
 });
 
 /** What an import would do (nothing is saved). */
-const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back', 'video', 'logo', 'marquee', 'fanart'].includes(kind) ? { kind, platform: String(platform || '') } : null);
+const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back', 'video', 'theme', 'logo', 'marquee', 'fanart'].includes(kind) ? { kind, platform: String(platform || '') } : null);
 export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
   return publicPlan(planArtImport(userId, scan, { target, replace, cut, split }), scan, folder);
@@ -444,7 +467,7 @@ async function applyRomArt(b) {
 }
 
 async function applyOne(userId, target, b) {
-  if (b.kind === 'video') return applyVideo(b);
+  if (b.kind === 'video' || b.kind === 'theme') return applyVideo(b);
   const list = target === 'both' || target === 'all' ? b.game._list : target;   // which list this one belongs to
   if (list === 'rom') return applyRomArt(b);
   const st = await fsp.stat(b.entry.file);

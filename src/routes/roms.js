@@ -18,6 +18,7 @@ import os from 'node:os';
 import { clearDuplicateCache } from '../lib/duplicates.js';
 import { mintLaunchToken } from '../lib/launch.js';
 import { flagVideos } from '../lib/emumovies.js';
+import { flagThemeVideos } from '../lib/themevideos.js';
 import { romFiles, romFile, dropRomFiles } from '../lib/romfiles.js';
 import { findCompanions, companionFingerprint } from '../lib/romdeps.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
@@ -572,6 +573,7 @@ router.get('/', (req, res) => {
     return { ...r, playable: core || null, playable_core: core, ...extra };
   });
   flagVideos(out, (r) => r.title, (r) => r.platform);
+  flagThemeVideos(out, (r) => r.title, (r) => r.platform);
   res.json({ total, limit: lim, offset: off, items: out });
 });
 

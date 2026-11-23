@@ -425,9 +425,9 @@ export function openBigScreen(host) {
     clearTimeout(st.bgT); st.bgT = setTimeout(() => { const art = gameBackdrop(g); if (root && st.screen === 'games' && game() === g) setBackdrop(art || g.cover_url, gameAccent(g), Boolean(art)); }, 140);
     // a game with a video plays it in the picture's place once the highlight has rested a moment (without sound: the list is for browsing); it fades in over the screenshot
     clearTimeout(st.vidT);
-    if (g.has_video) st.vidT = setTimeout(() => {
+    if (g.has_video || g.has_theme) st.vidT = setTimeout(() => {
       const box = $('#bs-bl-prev .bs-bl-shot'); if (!box || !root || st.screen !== 'games' || game() !== g) return;
-      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}`;
+      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}${g.has_theme ? '&variant=theme' : ''}`;
       v.addEventListener('playing', () => box.classList.add('video')); v.addEventListener('error', () => v.remove());
       box.appendChild(v); v.play?.().catch(() => v.remove());
     }, 700);
@@ -513,9 +513,9 @@ export function openBigScreen(host) {
     root.style.setProperty('--ac', gameAccent(g));
     // a game with a video plays it beside the picture once the highlight has rested a moment (without sound: the list is for browsing)
     const box = $('#xm-vid'); clearTimeout(st.vidT); box.classList.remove('on'); box.textContent = '';
-    if (g.has_video) st.vidT = setTimeout(() => {
+    if (g.has_video || g.has_theme) st.vidT = setTimeout(() => {
       if (!root || !xmb() || st.screen !== 'games' || game() !== g) return;
-      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}`;
+      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}${g.has_theme ? '&variant=theme' : ''}`;
       v.addEventListener('playing', () => box.classList.add('on')); v.addEventListener('error', () => v.remove());
       box.appendChild(v); v.play?.().catch(() => v.remove());
     }, 700);
@@ -570,9 +570,9 @@ export function openBigScreen(host) {
     // a game with a video plays it in its tile once the highlight has rested a moment (without sound)
     clearTimeout(st.vidT); $('.wi-tile .wi-vid')?.remove();
     const g = game();
-    if (g?.has_video) st.vidT = setTimeout(() => {
+    if (g?.has_video || g?.has_theme) st.vidT = setTimeout(() => {
       const t = st.els.get(st.gi); if (!t || !root || !wii() || st.screen !== 'games' || game() !== g) return;
-      const v = document.createElement('video'); v.className = 'wi-vid'; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}`;
+      const v = document.createElement('video'); v.className = 'wi-vid'; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = `/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}${g.has_theme ? '&variant=theme' : ''}`;
       v.addEventListener('playing', () => v.classList.add('on')); v.addEventListener('error', () => v.remove());
       t.querySelector('.wi-art').appendChild(v); v.play?.().catch(() => v.remove());
     }, 700);

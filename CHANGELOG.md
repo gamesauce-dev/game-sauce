@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+
+- **Theme videos.** The game assets import reads a `theme` folder of videos per platform. A tile's hover preview plays the theme video when the game has one and the gameplay video otherwise; the details window still plays the gameplay video.
+
 ## [0.23.0] - 2026-11-23
 
 ### Added

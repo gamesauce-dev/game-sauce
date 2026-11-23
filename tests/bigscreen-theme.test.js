@@ -75,7 +75,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   for (const k of ['A', 'B', 'X', 'Y']) assert.ok(css.includes(`.bs-xb i[data-k="${k}"]`), k);
   assert.ok(css.includes('.bs-theme-xbox360.bs-bl-on .bs-hints { display: none; }') && css.includes('.bs-theme-xbox360 .bs-bl-desc { flex: 0 0 auto; height: 5.8em;'));
   assert.ok(js.includes("const logoImg = (p, cls)") && js.includes("logoImg(src.plat, 'bs-bl-hlogo')") && js.includes("logoImg(st.plats.find((p) => p.slug === g.platform), 'bs-bl-plogo')"));
-  assert.ok(js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes('v.muted = true') && js.includes('clearTimeout(st.vidT)'), 'the video starts once the highlight rests, is silent, and is cleared on leaving');
+  assert.ok(js.includes('if (g.has_video || g.has_theme) st.vidT = setTimeout(') && js.includes('v.muted = true') && js.includes('clearTimeout(st.vidT)'), 'the video starts once the highlight rests, is silent, and is cleared on leaving');
   for (const c of ['.bs-bl-shot.video video', '.bs-bl-plogo', '.bs-bl-hlogo']) assert.ok(css.includes('.bs-theme-xbox360 ' + c), c);
   assert.ok(css.includes(".bs-theme-xbox360 .bs-xbl .bs-xb:first-child { margin-left") && css.includes(".bs-theme-xbox360 .bs-xbr .bs-xb:first-child { margin-right"), "the buttons are staggered");
   // inspired by, not copied: no outside address, no font file, no picture
@@ -105,7 +105,7 @@ test('the cross bar picks the best picture a game has, or the kind the person ch
 
 test('the cross bar plays the video of a game beside its picture once the highlight rests', () => {
   const js = read('public/bigscreen.js'), css = read('public/bs-themes.css');
-  assert.ok(js.includes('id="xm-vid"') && js.includes('if (g.has_video) st.vidT = setTimeout(') && js.includes("const box = $('#xm-vid')") && css.includes('.bs-theme-ps3 .xm-vid.on'));
+  assert.ok(js.includes('id="xm-vid"') && js.includes('if (g.has_video || g.has_theme) st.vidT = setTimeout(') && js.includes("const box = $('#xm-vid')") && css.includes('.bs-theme-ps3 .xm-vid.on'));
 });
 
 test('the Wii look: a grid of channel tiles twelve to a page over a curved bar, paging arrows, any looks together', async () => {

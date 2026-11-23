@@ -5,6 +5,7 @@ import db from '../db.js';
 import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysical, updatePhysical, removePhysical, setDigitalCounterpart, linkAllDigital, physicalCoverPath, physicalSpinePath, physicalDiscPath, physicalBackPath, physicalManualPath, setPhysicalArt, removePhysicalArt, setManualLink, setManualFile, removeManual, applyMatch, clearMatch, matchOne, importPhysicalCsv, purchaseSellers, startMatchJob, matchJobStatus } from '../lib/physical.js';
 
 import { flagVideos } from '../lib/emumovies.js';
+import { flagThemeVideos } from '../lib/themevideos.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
@@ -29,6 +30,7 @@ router.get('/games', (req, res) => {
     hidden: ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : ''
   });
   flagVideos(out.items, (g) => g.title, (g) => g.platform);
+  flagThemeVideos(out.items, (g) => g.title, (g) => g.platform);
   res.json({ ...out, total: out.items.length });
 });
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 import multer from 'multer';
 import db from '../db.js';
 import { flagVideos } from '../lib/emumovies.js';
+import { flagThemeVideos } from '../lib/themevideos.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, libSlug, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, forgetMissingConsoleCovers, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
@@ -43,6 +44,7 @@ router.get('/games', (req, res) => {
   const letter = String(req.query.letter || '').toUpperCase();
   const items = /^[A-Z#]$/.test(letter) ? all.filter((g) => bucket(g.name) === letter) : all;
   flagVideos(items.filter((g) => g.store !== 'steam'), (g) => g.name, (g) => libSlug(g.platform));   // tiles of games with a kept video offer a preview
+  flagThemeVideos(items.filter((g) => g.store !== 'steam'), (g) => g.name, (g) => libSlug(g.platform));
   res.json({ items, total: items.length, total_hours: Math.round(items.reduce((s, g) => s + g.minutes, 0) / 6) / 10, letters });
 });
 

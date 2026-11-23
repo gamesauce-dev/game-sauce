@@ -2115,5 +2115,8 @@
  "Long": "長い",
  "without the bracketed part": "括弧の部分なし",
  "the full name": "完全な名前",
- "Full name: {a}": "正式名称：{a}"
+ "Full name: {a}": "正式名称：{a}",
+ "Theme videos": "テーマ動画",
+ "theme videos": "テーマ動画",
+ "Theme videos (a short looping clip that shows a game off, such as arcade theme videos) go in a folder called theme, laid out the same way. They are kept apart from the gameplay videos: a game's tile plays its theme video when you hover over it, and its gameplay video when it has no theme video, while the game's details window still plays the gameplay video.": "テーマ動画（ゲームを紹介する短いループ動画。アーケードのテーマ動画など）は、theme という名前のフォルダに同じ構成で入れます。ゲームプレイ動画とは別に保存され、ゲームのタイルにカーソルを重ねるとテーマ動画が、テーマ動画がない場合はゲームプレイ動画が再生されます。ゲームの詳細ウィンドウでは引き続きゲームプレイ動画が再生されます。"
 }

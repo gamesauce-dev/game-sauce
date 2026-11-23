@@ -4,7 +4,7 @@
 //    in it. If the game has a video it plays, muted and looping, in place of the cover at the top; if not and EmuMovies is set up, a "Find video"
 //    button asks for it. Nothing is downloaded by opening a window.
 //  * tiles: a tile of a game that already has a video carries data-vid="rom:12" / "physical:7" / "digital:xbox:halo-infinite-xone"; hovering it
-//    for a moment opens a small pop-out window beside it with the video playing. Tiles never download anything: only videos already kept play.
+//    for a moment opens a small pop-out window beside it with the video playing: the game's theme video when it has one (data-theme="1"), else its gameplay video. Tiles never download anything: only videos already kept play.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const query = (slot) => new URLSearchParams({ kind: slot.dataset.kind, id: slot.dataset.id, ...(slot.dataset.store ? { store: slot.dataset.store } : {}) }).toString();
 /* Sound is on by default in the details window. If the person turns it off (or on again) with the video's own control, that choice is remembered on this device. */
@@ -149,9 +149,10 @@ const canHover = window.matchMedia?.('(hover: hover)').matches !== false;
 const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 let hoverTile = null, hoverTimer = 0, hoverVideo = null;
 
-function srcFor(id) {
+function srcFor(id, theme = false) {
   const [kind, a, b] = String(id).split(':');
   const q = new URLSearchParams(kind === 'digital' ? { kind, store: a, id: b } : { kind, id: a });
+  if (theme) q.set('variant', 'theme');   // the game's theme video; the details window never asks for it
   return `/api/videos/file?${q}`;
 }
 function stopPreview() {
@@ -166,7 +167,7 @@ function startPreview(tile) {
   const pop = document.createElement('div');
   pop.className = 'vid-pop'; pop.setAttribute('aria-hidden', 'true');
   const v = document.createElement('video');
-  v.src = srcFor(tile.dataset.vid); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
+  v.src = srcFor(tile.dataset.vid, tile.dataset.theme === '1'); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto';
   const cap = document.createElement('div');
   cap.className = 'vid-pop-cap'; cap.textContent = (tile.querySelector('.card-title')?.textContent || tile.getAttribute('aria-label') || '').trim();
   pop.append(backdropFrom(tile.querySelector('.card-cover')), v, cap);

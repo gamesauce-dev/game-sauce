@@ -689,3 +689,10 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '66') ON CON
 /* ── v67: a game's long name ("Initial D Arcade Stage (Export)") beside its short one ("Initial D Arcade Stage"). title stays the short name; each person chooses which one they see (Preferences > Game names). */
 if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === 'long_title')) db.exec('ALTER TABLE roms ADD COLUMN long_title TEXT');
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '67') ON CONFLICT(key) DO UPDATE SET value = '67'").run();
+
+/* ── v68: theme videos (src/lib/themevideos.js): one short looping video per platform and title, linked from a folder, kept apart from the gameplay videos. A tile's hover plays it first. ── */
+db.exec(`CREATE TABLE IF NOT EXISTS theme_videos (
+  platform TEXT NOT NULL, title_key TEXT NOT NULL, path TEXT NOT NULL, bytes INTEGER,
+  PRIMARY KEY (platform, title_key)
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '68') ON CONFLICT(key) DO UPDATE SET value = '68'").run();

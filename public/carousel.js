@@ -150,9 +150,9 @@ export function openCarousel(host) {
   let vTimer = 0;
   const showVideo = (g) => {
     const box = $('#cv-video'); if (!box) return;
-    if (g && g.has_video && !g.steam && g.id != null) {
+    if (g && (g.has_video || g.has_theme) && !g.steam && g.id != null) {
       if (box.dataset.id === String(g.id)) return;
-      box.innerHTML = `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}" muted loop autoplay playsinline preload="auto"></video>`;
+      box.innerHTML = `<video src="/api/videos/file?kind=rom&id=${encodeURIComponent(g.id)}${g.has_theme ? '&variant=theme' : ''}" muted loop autoplay playsinline preload="auto"></video>`;
       box.dataset.id = String(g.id);
       const v = box.querySelector('video');
       v.addEventListener('error', () => { if (box.dataset.id === String(g.id)) { box.classList.remove('on'); delete box.dataset.id; box.innerHTML = ''; } });   // the file has gone: the covers come back down
