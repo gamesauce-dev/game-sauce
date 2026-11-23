@@ -61,7 +61,7 @@ before(async () => {
   const add = (title, file, slug, sha) => db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1) VALUES (?,?,?,(SELECT id FROM platforms WHERE slug = ?),?,?,?)")
     .run(title, title.toLowerCase(), path.basename(file), slug, file, fs.statSync(file).size, sha).lastInsertRowid;
   ids.beach = add('Beach Spikers', put('beachspi.zip', 'beach-zip'), 'naomi', 'rd1');
-  put('beachspi/beachspi.chd', 'big-disk-image');
+  put('beachspi/gds-0014.chd', 'big-disk-image');   // the disk is named by MAME's own list, not like the zip; the folder name is what ties it to the game
   put('Beachspi/notes/extra.bin', 'nested');
   ids.bios = add('Naomi BIOS', put('naomi.zip', 'bios-zip'), 'naomi', 'rd2');
   ids.clone = add('Beach Spikers (clone)', put('beachspic.zip', 'clone-zip'), 'naomi', 'rd3');
@@ -84,7 +84,7 @@ const romOf = (id) => db.prepare('SELECT r.filename, r.storage_path, p.slug AS p
 test('the CHD folder beside the zip, and the BIOS set, are listed for a game', () => {
   const c = deps.findCompanions(romOf(ids.beach));
   const rels = c.files.map((f) => f.rel).sort();
-  assert.ok(rels.includes('beachspi/beachspi.chd'), 'the CHD in the folder named like the zip');
+  assert.ok(rels.includes('beachspi/gds-0014.chd'), 'the CHD in the folder named like the zip');
   assert.ok(rels.includes('naomi.zip'), 'the BIOS set named by romof');
   assert.ok(!rels.includes('beachspi.zip'), 'the game itself is the main download, not a companion');
   assert.deepEqual(c.missing, []);
@@ -93,7 +93,7 @@ test('the CHD folder beside the zip, and the BIOS set, are listed for a game', (
 test('a clone brings its parent set, the parent\'s CHD folder and the BIOS', () => {
   const rels = deps.findCompanions(romOf(ids.clone)).files.map((f) => f.rel);
   assert.ok(rels.includes('beachspi.zip'));
-  assert.ok(rels.includes('beachspi/beachspi.chd'));
+  assert.ok(rels.includes('beachspi/gds-0014.chd'));
   assert.ok(rels.includes('naomi.zip'));
 });
 
@@ -118,7 +118,7 @@ test('the game response lists companions in a header; each companion downloads o
   const r = await call(`/api/launch/${m.token}`);
   assert.equal(r.status, 200);
   const list = launcher.parseExtras(r.headers.get('x-gamesauce-extras'));
-  const chd = list.find((f) => f.p === 'beachspi/beachspi.chd');
+  const chd = list.find((f) => f.p === 'beachspi/gds-0014.chd');
   assert.ok(chd);
   const got = await call(`/api/launch-extra/${chd.t}`);
   assert.equal(got.status, 200);
@@ -134,7 +134,7 @@ test('the launcher puts the companions beside the game in the same layout, then 
   await launcher.launch(link, { configFile: writeConfig({ naomi: { command: process.execPath, args: [FAKE, '{rom}'] } }) });
   const saw = JSON.parse(fs.readFileSync(OUT, 'utf8'));
   assert.equal(path.basename(saw.rom), 'beachspi.zip', 'the game keeps its set name');
-  assert.equal(saw.files['beachspi/beachspi.chd'], 'big-disk-image');
+  assert.equal(saw.files['beachspi/gds-0014.chd'], 'big-disk-image');
   assert.equal(saw.files['naomi.zip'], 'bios-zip');
   assert.deepEqual(fs.readdirSync(LTMP).filter((n) => n.startsWith('gamesauce-launch-')), []);
   assert.equal(fs.existsSync(path.join(TMP, 'rescued')) && fs.readdirSync(path.join(TMP, 'rescued')).length, false, 'companions are not mistaken for saves');
