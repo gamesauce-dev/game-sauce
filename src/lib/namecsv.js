@@ -31,7 +31,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   const head = rows[0].map((h) => h.trim().toLowerCase());
   const col = (n) => head.indexOf(String(n || '').trim().toLowerCase());
   const iRom = col(romCol), iName = col(nameCol), iYear = col(yearCol), iMaker = col(makerCol);
-  const iBios = col('is_bios'), iDev = col('is_device'), iArc = col('is_arcade'), iClone = col('clone_of');
+  const iBios = col('is_bios'), iDev = col('is_device'), iArc = col('is_arcade'), iClone = col('clone_of'), iRomOf = col('rom_of'), iDevices = col('devices');
   // The columns Settings > Game names > Export writes, so an exported file can be edited and imported again. Any of them may be missing.
   const FIELD_COLS = { developer: col('developer'), publisher: col('publisher'), genre: col('genre'), region: col('region'), revision: col('revision'), players: col('players'), rating: col('rating'), description: col('description') };
   const iTags = col('tags'), iSysItem = col('system_item'), iPlat = col('platform'), iCover = col('cover_file');
@@ -60,7 +60,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   for (const r of rows.slice(1)) {
     const rowPlat = slugOf(r); if (!rowPlat) continue;
     const k = rowPlat + '|' + keyOf(r[iRom]); const title = decodeEntities(String(r[iName] || '')).trim();
-    if (keyOf(r[iRom]) && title && !map.has(k)) map.set(k, { platform: rowPlat, coverFile: text(r, iCover), details: detailsOf(r), title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
+    if (keyOf(r[iRom]) && title && !map.has(k)) map.set(k, { platform: rowPlat, coverFile: text(r, iCover), details: detailsOf(r), title, year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, romof: iRomOf >= 0 ? keyOf(r[iRomOf]) || null : null, devices: iDevices >= 0 ? [...new Set(String(r[iDevices] || '').split(/[;|,]/).map(keyOf).filter(Boolean))].join(',') || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
     // (e.g. the CPS3 sets share a BIOS but are playable). Otherwise BIOS/device, or is_arcade filled in as not-yes, means System.
     system: !(iArc >= 0 && yes(r[iArc])) && ((iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) || (iArc >= 0 && String(r[iArc] || '').trim() !== '')) });
   }
@@ -89,6 +89,11 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
     {
       const up = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer, cloneof) VALUES (?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET cloneof = excluded.cloneof WHERE mame_names.cloneof IS NULL AND excluded.cloneof IS NOT NULL');
       db.transaction(() => { for (const m of rows) if (m.cloneof) up.run(m.key, m.title, m.year, m.maker, m.cloneof); })();
+    }
+    // The BIOS a set borrows from (rom_of) and the devices with ROMs of their own (devices): "Play locally" sends those sets with the game.
+    {
+      const up = db.prepare('INSERT INTO mame_names (name, title, year, manufacturer, romof, devices) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET romof = COALESCE(excluded.romof, mame_names.romof), devices = COALESCE(excluded.devices, mame_names.devices)');
+      db.transaction(() => { for (const m of rows) if (m.romof || m.devices) up.run(m.key, m.title, m.year, m.maker, m.romof, m.devices); })();
     }
     const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, release_year = COALESCE(?, release_year),
       developer = COALESCE(developer, ?), updated_at = datetime('now') WHERE id = ?`);

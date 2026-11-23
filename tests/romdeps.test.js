@@ -178,3 +178,15 @@ test('importing the MAME list keeps romof and only the devices that have ROMs', 
   assert.equal(r.romof, 'naomi');
   assert.equal(r.devices, 'gdboard', 'the CPU has no ROMs of its own, so it is not kept');
 });
+
+test('the name CSV (rom_of and devices columns) teaches the BIOS and device sets too', async () => {
+  const { importNames } = await import('../src/lib/namecsv.js');
+  const csv = 'rom_name,clone_of,full_game_name,short_game_name,year,manufacturer,is_bios,is_device,is_arcade,rom_of,devices\n'
+    + 'csvgame,,Csv Game (USA),Csv Game,2003,Sega,no,no,yes,Naomi,gdboard;other_dev\n'
+    + 'oldgame,,Old Game,Old Game,1999,Sega,no,no,yes,,\n';
+  importNames({ csvText: csv, platform: 'naomi', apply: true });
+  const r = db.prepare("SELECT romof, devices FROM mame_names WHERE name = 'csvgame'").get();
+  assert.equal(r.romof, 'naomi');
+  assert.equal(r.devices, 'gdboard,other_dev');
+  assert.equal(db.prepare("SELECT romof FROM mame_names WHERE name = 'oldgame'").get().romof, null, 'an old CSV without the columns still imports');
+});
