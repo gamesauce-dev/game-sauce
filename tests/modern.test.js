@@ -587,7 +587,7 @@ test('Library: total beside the platform heading, tighter spacing; add-folder us
   assert.match(js, /\['\[data-act="add-folder"\]', 'source-add-2'\]/); assert.ok(fs.existsSync(new URL('../public/modern/icons/source-add-2.svg', import.meta.url)));
   assert.match(js, /const keepPinned = view === 'library' && document\.body\.classList\.contains\('details-pinned'\);/);
   // A pinned Steam game's details close on leaving Digital (and a ROM's on entering it); a Physical game's stay in Physical in the same way.
-  assert.match(app, /function setView\(view\) \{\r?\n[^]*?const own = state\.openDigital \? 'digital' : state\.openPhysical != null \? 'physical' : 'library';\r?\n    if \(own === 'library' \? \(view === 'digital' \|\| view === 'physical' \|\| view === 'messages'\) : view !== own\) closeDrawer\(\);\r?\n  \}\r?\n  state\.view = view;/);
+  assert.match(app, /function setView\(view, \{ restore = false \} = \{\}\) \{\r?\n[^]*?const own = state\.openDigital \? 'digital' : state\.openPhysical != null \? 'physical' : 'library';\r?\n    if \(own === 'library' \? \(view === 'digital' \|\| view === 'physical' \|\| view === 'messages'\) : view !== own\) closeDrawer\(\);\r?\n  \}\r?\n  state\.view = view;/);
 });
 
 test('Modern details header: blurred cover backdrop with the pills and action icons laid on it, built from the existing elements', () => {

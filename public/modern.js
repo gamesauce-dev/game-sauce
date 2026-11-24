@@ -162,7 +162,7 @@ function onBarClick(e) {
 
 /* ───────────── pages ───────────── */
 let current = 'home';
-export function go(view) {
+export function go(view, opts = {}) {
   if (!isModern()) return;
   current = view;
   closePop();
@@ -179,7 +179,7 @@ export function go(view) {
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
   if (view === 'home') { showHome(); return; }
   hideHome();
-  ctx.setView(view);
+  ctx.setView(view, opts);
 }
 export const currentView = () => current;
 
@@ -884,12 +884,12 @@ export async function applyMode(mode, { fresh = false } = {}) {
     paintToggles();
     // A page refresh keeps you where you were: Library stays Library, Home stays Home. A fresh sign-in or a look switch starts at Home.
     let was = null; try { was = sessionStorage.getItem('gamesauce_mview'); } catch { /* storage unavailable */ }
-    go(fresh ? 'home' : (ctx.state().view === 'library' ? (was === 'library' ? 'library' : 'home') : ctx.state().view));
+    go(fresh ? 'home' : (ctx.state().view === 'library' ? (was === 'library' ? 'library' : 'home') : ctx.state().view), { restore: !fresh });   // a refresh also puts Settings and Tools back on the area they were on
   } else {
     untipify();
     restorePinIcon();
     hideHome();
     delete document.body.dataset.mview;
-    ctx.setView(ctx.state().view === 'home' ? 'library' : ctx.state().view);
+    ctx.setView(ctx.state().view === 'home' ? 'library' : ctx.state().view, { restore: true });   // the look changes, the page does not
   }
 }

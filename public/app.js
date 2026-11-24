@@ -281,7 +281,10 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('.sidebar')?.classList.contains('open')) setSidebar(false); });
 
-function setView(view) {
+function setView(view, { restore = false } = {}) {
+  // Opening Settings or Tools from the navigation starts on the first area; only a page refresh puts the person back where they were.
+  if (!restore && view === 'settings') { activeSettingsModule = null; for (const k of Object.keys(settingsLastInGroup)) delete settingsLastInGroup[k]; }
+  if (!restore && view === 'tools') activeToolsModule = null;
   // A pinned details window stays beside the games, but only the games it belongs to: a Steam game's details do not follow you
   // out of Digital, and a ROM's details do not follow you into it.
   // Physical is the same: its games' details stay in Physical, and a ROM's or a Steam game's do not follow you into it.
@@ -4247,7 +4250,7 @@ function showApp(user, { restore = false } = {}) {
     activeToolsModule = saved.toolsModule || null;
     // Members cannot open admin-only views; fall back to the Library.
     const target = ((saved.view === 'sources' || saved.view === 'upload') && !isAdmin) ? 'library' : saved.view;
-    setView(target);
+    setView(target, { restore: true });
   } else {
     // Fresh start: forget filters from any earlier session in this tab.
     clearNav();
@@ -4368,7 +4371,7 @@ function showToolsModule(id) {
   if (id === 'addgames') initConsoleImport();
   if (id === 'gameassets') paintGameAssets();
 }
-function loadTools() { showToolsModule(activeToolsModule || 'playpc'); }
+function loadTools() { showToolsModule(activeToolsModule || toolsVisible()[0].id); }
 
 /** Game Assets: the importer for pictures, manuals and videos from a folder on the server. It matches your Physical shelf and your Digital list in one pass: a game in both gets its cover in both. */
 function paintGameAssets() {
