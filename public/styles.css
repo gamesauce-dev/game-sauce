@@ -1952,3 +1952,11 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .lib-chip { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 0.72rem; color: #0b1020; background: var(--good); }
 .lib-chip.k-phys { background: #38bdf8; }
 .lib-chip.k-dig { background: #a78bfa; }
+
+/* Settings > Pictures: the stored cover and its WebP, side by side at 100% */
+.img-preview { margin-top: 14px; }
+.img-prev-pair { display: flex; gap: 12px; flex-wrap: wrap; overflow-x: auto; }   /* 100%: never scaled down, so what you compare is real pixels */
+.img-prev-pair figure { margin: 0; }
+.img-prev-pair img { display: block; max-width: none; width: auto; height: auto; border: 1px solid var(--line, #2a2f3a); border-radius: 6px; background: #0b0d12; }
+.img-prev-pair figcaption { font-size: 12px; margin-top: 4px; opacity: .85; }
+.img-prev-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }

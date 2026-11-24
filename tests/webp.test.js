@@ -138,3 +138,28 @@ test('tiles ask for thumbnails of our own covers only', async () => {
   assert.equal(thumb('/api/roms/5/cover?w=320'), '/api/roms/5/cover?w=320');
   assert.equal(thumb(null), '');
 });
+
+test('the admin preview shows the same piece of a real cover, stored and as WebP, and respects the floor', async () => {
+  const info = await call(`/api/admin/images/preview?quality=80&rom=${romId}`);
+  assert.equal(info.status, 200);
+  assert.equal(info.body.sample.id, romId); assert.equal(info.body.quality, 80);
+  assert.equal(info.body.width, 900); assert.equal(info.body.height, 1260);
+  assert.ok(info.body.webp_bytes < info.body.original_bytes && info.body.saving_pct > 50);
+  assert.deepEqual(info.body.crop, { w: 480, h: 480 });
+  // without a rom a cover is picked from the library
+  assert.ok((await call('/api/admin/images/preview?quality=85')).body.sample);
+  const a = await call(`/api/admin/images/preview/original.png?rom=${romId}&quality=80`);
+  const b = await call(`/api/admin/images/preview/webp.png?rom=${romId}&quality=80`);
+  assert.equal(a.type, 'image/png'); assert.equal(b.type, 'image/png');
+  const [ma, mb] = await Promise.all([sharp(a.body).metadata(), sharp(b.body).metadata()]);
+  assert.deepEqual([ma.width, ma.height], [480, 480]); assert.deepEqual([mb.width, mb.height], [480, 480]);
+  // a lower quality looks worse (further from the original) than a higher one
+  const lo = await call(`/api/admin/images/preview/webp.png?rom=${romId}&quality=70`), hi = await call(`/api/admin/images/preview/webp.png?rom=${romId}&quality=95`);
+  const raw = async (buf) => sharp(buf).raw().toBuffer(); const ra = await raw(a.body);
+  const err = async (buf) => { const r = await raw(buf); let se = 0; for (let i = 0; i < ra.length; i++) { const d = ra[i] - r[i]; se += d * d; } return se; };
+  assert.ok((await err(lo.body)) > (await err(hi.body)), 'the preview really changes with the quality');
+  for (const bad of [69, 96, 'x']) assert.equal((await call(`/api/admin/images/preview?quality=${bad}`)).status, 400);
+  assert.equal((await call(`/api/admin/images/preview/webp.png?rom=${romId}&quality=10`)).status, 400);
+  assert.equal((await call('/api/admin/images/preview?quality=85', { token: memberTok })).status, 403);
+  assert.equal((await call(`/api/admin/images/preview/webp.png?rom=${romId}&quality=85`, { token: memberTok })).status, 403);
+});

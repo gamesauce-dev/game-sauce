@@ -161,3 +161,49 @@ export async function sendImage(req, res, file) {
     if (!res.headersSent) return original();
   }
 }
+
+/* ───────── the admin's preview: the same piece of a real cover, original and WebP, before a quality is chosen ───────── */
+
+const CROP = 480;   // shown at 100%, so what the admin sees is what a pixel looks like
+
+/** A cover from the library to judge by: the one asked for, else a random PNG or JPEG one (the kind that gets converted). */
+function previewSample(romId) {
+  const rows = romId
+    ? db.prepare('SELECT id, title, cover_path FROM roms WHERE id = ? AND cover_path IS NOT NULL').all(Number(romId))
+    : db.prepare("SELECT id, title, cover_path FROM roms WHERE cover_path IS NOT NULL AND (lower(cover_path) LIKE '%.png' OR lower(cover_path) LIKE '%.jpg' OR lower(cover_path) LIKE '%.jpeg') ORDER BY RANDOM() LIMIT 12").all();
+  return rows.find((r) => r.cover_path && fs.existsSync(r.cover_path) && CONVERTIBLE.has(path.extname(r.cover_path).toLowerCase())) || null;
+}
+
+function checkedQuality(q) {
+  const n = Number(q === undefined || q === '' ? readSettings().quality : q);
+  if (!Number.isInteger(n) || n < MIN_QUALITY || n > MAX_QUALITY) throw Object.assign(new Error(`Quality must be a whole number from ${MIN_QUALITY} to ${MAX_QUALITY}`), { status: 400 });
+  return n;
+}
+
+/** The numbers for the preview: the cover chosen, its size now, and its size as WebP at this quality. */
+export async function previewInfo({ rom, quality } = {}) {
+  const q = checkedQuality(quality);
+  const sharp = await getSharp();
+  if (!sharp) throw Object.assign(new Error('The picture converter is not available on this machine'), { status: 503 });
+  const s = previewSample(rom);
+  if (!s) return { sample: null, quality: q };
+  const meta = await sharp(s.cover_path, { failOn: 'none' }).metadata();
+  const webp = await sharp(s.cover_path, { failOn: 'none' }).webp({ quality: q, effort: 4, smartSubsample: true, alphaQuality: 100 }).toBuffer();
+  const orig = fs.statSync(s.cover_path).size;
+  return { sample: { id: s.id, title: s.title }, quality: q, width: meta.width, height: meta.height, format: meta.format, original_bytes: orig, webp_bytes: webp.length, saving_pct: Math.round(100 - (100 * webp.length) / orig), crop: { w: Math.min(CROP, meta.width), h: Math.min(CROP, meta.height) } };
+}
+
+/** The middle of the cover at 100%: as PNG from the original (kind 'original'), or as WebP at this quality (kind 'webp'). The same pixels either way. */
+export async function previewCrop({ rom, quality, kind }) {
+  const q = checkedQuality(quality);
+  const sharp = await getSharp();
+  if (!sharp) throw Object.assign(new Error('The picture converter is not available on this machine'), { status: 503 });
+  const s = previewSample(rom);
+  if (!s) throw Object.assign(new Error('No cover to preview'), { status: 404 });
+  const meta = await sharp(s.cover_path, { failOn: 'none' }).metadata();
+  const w = Math.min(CROP, meta.width), h = Math.min(CROP, meta.height);
+  const region = { left: Math.floor((meta.width - w) / 2), top: Math.floor((meta.height - h) / 2), width: w, height: h };
+  // the crop is taken from the whole picture encoded at this quality, as it would be sent (a WebP of a crop alone would not match)
+  const base = kind === 'webp' ? await sharp(s.cover_path, { failOn: 'none' }).webp({ quality: q, effort: 4, smartSubsample: true, alphaQuality: 100 }).toBuffer() : s.cover_path;
+  return sharp(base, { failOn: 'none' }).extract(region).png().toBuffer();
+}

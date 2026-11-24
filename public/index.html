@@ -576,6 +576,14 @@
         <div class="hash-form">
           <label class="policy-row"><input type="checkbox" id="img-enabled" /> <span><b>Send WebP copies</b><br><small class="hint">Switch off to send every picture as it was stored.</small></span></label>
           <div class="hash-max"><label for="img-quality"><b>Quality</b></label> <input type="range" id="img-quality" min="70" max="95" step="1" /> <b id="img-qval"></b><br><small class="hint">Allowed: <span id="img-range"></span>. 85 looks the same as the original to the eye at a fraction of the size; a lower number is never allowed because covers start to look blocky. Changing it rebuilds the copies as pictures are opened.</small></div>
+          <div class="img-preview" id="img-preview">
+            <div class="img-prev-head"><b>Preview</b> <span class="hint" id="img-prev-title"></span> <button class="btn btn-sm" id="img-prev-next" type="button" title="Try another cover from your library">Another cover</button></div>
+            <p class="hint" id="img-prev-note" style="margin:.2rem 0 .5rem">The middle of one of your covers at 100% size, as it is now and as it would be sent at the quality above. Move the slider and compare. Nothing is saved until you press Save.</p>
+            <div class="img-prev-pair">
+              <figure><img id="img-prev-orig" alt="The cover as stored" /><figcaption id="img-prev-orig-cap">Stored</figcaption></figure>
+              <figure><img id="img-prev-webp" alt="The cover as a WebP at the chosen quality" /><figcaption id="img-prev-webp-cap">WebP</figcaption></figure>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <button class="btn btn-primary" id="img-save" type="button">Save</button>
             <button class="btn" id="img-clear" type="button" title="Delete the WebP copies; they are made again when pictures are opened">Clear the copies</button>

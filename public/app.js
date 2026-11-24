@@ -4480,7 +4480,28 @@ async function loadImages() {
     : 'The picture converter could not be loaded on this machine, so pictures are sent as they are.';
   if (!$('#img-save').dataset.bound) {
     $('#img-save').dataset.bound = '1';
-    q.addEventListener('input', () => { $('#img-qval').textContent = q.value; });
+    let sample = null, timer = null, seq = 0;
+    // The preview: the same middle piece of one real cover, stored and as WebP at the slider's quality. The server holds the floor, so the slider cannot ask for less.
+    const kb = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+    const preview = async (another = false) => {
+      const mine = ++seq;
+      try {
+        const info = await api(`/admin/images/preview?quality=${q.value}${sample && !another ? `&rom=${sample}` : ''}`);
+        if (mine !== seq) return;
+        if (!info.sample) { $('#img-preview').classList.add('hidden'); return; }
+        $('#img-preview').classList.remove('hidden');
+        sample = info.sample.id;
+        $('#img-prev-title').textContent = `${info.sample.title} (${info.width}×${info.height} ${info.format})`;
+        const v = `&rom=${sample}&quality=${q.value}&t=${mine}`;
+        $('#img-prev-orig').src = `/api/admin/images/preview/original.png?${v}`;
+        $('#img-prev-webp').src = `/api/admin/images/preview/webp.png?${v}`;
+        $('#img-prev-orig-cap').textContent = `As stored: ${kb(info.original_bytes)}`;
+        $('#img-prev-webp-cap').textContent = `WebP at ${info.quality}: ${kb(info.webp_bytes)} (${info.saving_pct}% smaller)`;
+      } catch (err) { if (mine === seq) { $('#img-prev-note').textContent = err.message; } }
+    };
+    q.addEventListener('input', () => { $('#img-qval').textContent = q.value; clearTimeout(timer); timer = setTimeout(() => preview(), 300); });
+    $('#img-prev-next').addEventListener('click', () => preview(true));
+    preview();
     $('#img-save').addEventListener('click', async () => {
       try { await api('/admin/images', { method: 'PUT', body: JSON.stringify({ enabled: $('#img-enabled').checked, quality: Number(q.value) }) }); $('#img-msg').textContent = t('Saved.'); loadImages(); } catch (err) { $('#img-msg').textContent = err.message; toast(err.message, true); }
     });

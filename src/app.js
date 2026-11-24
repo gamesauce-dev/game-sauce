@@ -188,6 +188,16 @@ export function createApp() {
     req.auditDetail = { enabled: req.body?.enabled, quality: req.body?.quality };
     res.json(await imagesStatus());
   });
+  // The preview: the middle of one real cover at 100%, the original beside the WebP at the quality being tried (?quality=, ?rom= to keep the same cover).
+  api.get('/admin/images/preview', requireAuth, requireAdmin, async (req, res) => {
+    const { previewInfo } = await import('./lib/webp.js');
+    try { res.json(await previewInfo({ rom: req.query.rom, quality: req.query.quality })); } catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+  });
+  api.get('/admin/images/preview/:kind.png', requireAuth, requireAdmin, async (req, res) => {
+    const { previewCrop } = await import('./lib/webp.js');
+    if (!['original', 'webp'].includes(req.params.kind)) return res.status(404).json({ error: 'No such preview' });
+    try { const png = await previewCrop({ rom: req.query.rom, quality: req.query.quality, kind: req.params.kind }); res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'private, no-store' }); res.send(png); } catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+  });
   api.post('/admin/images/clear', requireAuth, requireAdmin, async (req, res) => {
     const { clearImageCache } = await import('./lib/webp.js');
     req.auditDetail = clearImageCache();
