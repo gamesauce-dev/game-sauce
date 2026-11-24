@@ -6706,5 +6706,8 @@
  },
  "Zip64 archives are not supported": {
   "files": 1
+ },
+ "): for example a LaunchBox": {
+  "files": 1
  }
 }

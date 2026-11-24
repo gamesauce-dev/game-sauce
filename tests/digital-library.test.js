@@ -219,6 +219,7 @@ test('the page: laid out like Physical, store and console chips, Steam hours in 
     assert.ok(modern.includes(`['#view-digital ${sel}', '${icon}']`), sel);
   for (const sel of ['#dg-id-go', '#dg-add button[type="submit"]']) assert.ok(modern.includes(`['${sel}'`), sel);
   assert.match(modern, /\['#dg-sync, #steam-sync', 'fetch-games'\]/);
+  assert.ok(modern.includes("['fetchcovers', 'fetch-metadata-3', '#dg-fetch', 'Fetch missing covers', true]"), 'the Modern Digital bar has Fetch missing covers (shown while the page has none with a cover)');
   assert.match(css, /\.ph-bar-end \{ margin-left: auto;/);
 });
 

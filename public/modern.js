@@ -331,7 +331,6 @@ function buildLibraryTools(ic) {
     ${po ? '' : `<button class="mb-btn" id="tl-hidden" title="Hidden games" aria-label="Hidden games">${ic.hidden}</button>
     <button class="mb-btn" id="tl-nocover" title="Games with no cover yet" aria-label="Games with no cover yet">${ic['no-covers-2']}</button>
     <button class="mb-btn" id="tl-select" title="Select several games" aria-label="Select several games">${ic['select-2']}</button>`}
-    ${admin ? `<button class="mb-btn" id="tl-assets" title="Import game assets from a folder: artwork, manuals and videos" aria-label="Import game assets">${ic['game-assets']}</button>` : ''}
     ${admin ? `<button class="mb-btn" id="tl-fetch" title="Fetch metadata" aria-label="Fetch metadata"><span class="tl-ic">${ic['fetch-metadata-3']}</span><span class="tl-sp">${ic['3-dot-spinner']}</span></button>` : ''}
     ${po ? '' : `<button class="mb-btn" id="tl-more" title="More filters" aria-label="More filters" aria-haspopup="menu">${ic['more-actions']}</button>`}`;
   host.dataset.icons = JSON.stringify({ system: ic.system, orphans: ic.orphans, issue: ic.issue, lock: ic.lock });
@@ -344,7 +343,7 @@ function buildLibraryTools(ic) {
 function toolClick(e) {
   const view = $('#mb-library-tools')?.dataset.view;
   if (LISTS.includes(view)) return listToolClick(e, view);
-  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more, #tl-assets');
+  const b = e.target.closest('#tl-reset, #tl-fav, #tl-hidden, #tl-nocover, #tl-select, #tl-fetch, #tl-sort, #tl-more');
   if (!b) return false;
   if (b.id === 'tl-reset') { chipFamily = null; ctx.resetFilters?.().then(() => { renderChips(); syncTools(); }); }
   else if (b.id === 'tl-fav') proxy('[data-toggle="favorite"]');
@@ -352,7 +351,6 @@ function toolClick(e) {
   else if (b.id === 'tl-nocover') proxy('[data-toggle="nocover"]');
   else if (b.id === 'tl-select') proxy('#select-toggle');
   else if (b.id === 'tl-fetch') proxy('#bulk-enrich');
-  else if (b.id === 'tl-assets') q('#lib-assets')?.click();
   else if (b.id === 'tl-sort') {
     const sel = q('#sort'); if (!sel) return true;
     openPop(b, [...sel.options].map((o) => `<button class="mb-menu-item${o.value === sel.value ? ' on' : ''}" role="menuitemradio" aria-checked="${o.value === sel.value}" data-pick="${o.value}"><span>${o.textContent}</span></button>`).join(''),
@@ -395,7 +393,7 @@ const LIST_TOOLS = {
   digital: {
     q: '#dg-q', reset: '#dg-reset', sort: '#dg-sort', sortDefault: 'name', fav: '[data-dg-toggle="fav"]', hidden: '[data-dg-toggle="hidden"]', nocover: '[data-dg-toggle="nocover"]', select: '#view-digital [data-bulk-toggle]',
     nocoverTip: 'Show console games with no cover',
-    extras: [['installed', 'gamepad', '[data-dg-toggle="installed"]', 'Show installed Steam games'], ['refresh', 'fetch-games', '#dg-sync', 'Fetch my Steam games again, and look up console games that have no details', true], ['add', 'game-add', '[data-dg-act="add"]', 'Add a game by hand', true]],
+    extras: [['installed', 'gamepad', '[data-dg-toggle="installed"]', 'Show installed Steam games'], ['refresh', 'fetch-games', '#dg-sync', 'Fetch my Steam games again, and look up console games that have no details', true], ['fetchcovers', 'fetch-metadata-3', '#dg-fetch', 'Fetch missing covers', true], ['add', 'game-add', '[data-dg-act="add"]', 'Add a game by hand', true]],
     more: []
   },
   physical: {
@@ -465,7 +463,7 @@ function syncListTools(view) {
   const lit = (sel) => Boolean(q(sel)?.classList.contains('on') || q(sel)?.classList.contains('is-on'));
   const r = $('#tl-reset'); if (r) { const act = Boolean(q(T.reset) && !q(T.reset).classList.contains('hidden')); r.classList.toggle('is-dim', !act); r.disabled = !act; }
   for (const [id, sel] of [['tl-fav', T.fav], ['tl-hidden', T.hidden], ['tl-nocover', T.nocover], ['tl-select', T.select]]) $('#' + id)?.classList.toggle('is-on', lit(sel));
-  for (const [k, , sel] of T.extras) { const x = $(`[data-x="${k}"]`); if (!x) continue; x.classList.toggle('hidden', !q(sel)); x.classList.toggle('is-on', lit(sel) && /toggle/.test(sel)); }
+  for (const [k, , sel] of T.extras) { const x = $(`[data-x="${k}"]`); if (!x) continue; x.classList.toggle('hidden', !q(sel) || (k === 'fetchcovers' && q(sel).classList.contains('hidden'))); x.classList.toggle('is-on', lit(sel) && /toggle/.test(sel)); }   // Fetch missing covers shows while the page's own button does, that is, while a console game has no cover
   const sel = q(T.sort), sort = $('#tl-sort'); if (sel && sort) { sort.classList.toggle('is-on', sel.value !== T.sortDefault); sort.title = 'Sort order: ' + (sel.selectedOptions?.[0]?.textContent || ''); }
   const search = $('#tl-q'), real = q(T.q); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
 }

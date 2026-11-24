@@ -406,21 +406,6 @@ document.addEventListener('gs-assets-changed', (e) => {
   else if (d.kind === 'digital') { digital.openDigitalDetail(d.store, d.id); digital.loadDigital(true); }
 });
 
-/** Game assets (pictures, manuals and videos) for Library games, from a folder on the server (see public/artimport-ui.js). */
-function openRomImport(target) {
-  state.detailToken = (state.detailToken || 0) + 1;
-  state.openRomId = null; state.openDigital = null; state.openPhysical = null;
-  const drawer = $('#drawer');
-  drawer.classList.remove('hidden'); syncPin(); $('#scrim').classList.toggle('hidden', pinned());
-  $('#drawer-nav')?.classList.add('hidden');
-  $('#drawer-body').innerHTML = '';
-  drawer.scrollTop = 0;
-  renderArtImport({ api, toast }, $('#drawer-body'), { target, onDone: () => loadLibrary() });
-}
-document.addEventListener('click', (e) => {
-  if (e.target.closest('#lib-assets')) openRomImport('rom');
-});
-
 /* ─────────────────────────── sidebar ─────────────────────────── */
 
 async function loadPlatforms() {
@@ -4229,7 +4214,6 @@ function showApp(user, { restore = false } = {}) {
   const isAdmin = user.role === 'admin';
   $$('[data-view="sources"]').forEach((b) => b.classList.toggle('hidden', !isAdmin));
   $('#bulk-enrich')?.classList.toggle('hidden', !isAdmin);
-  $('#lib-assets')?.classList.toggle('hidden', !isAdmin);   // the Library is shared: an admin brings in its pictures, manuals and videos
   if (isAdmin) startEnrichPolling(); // picks up a metadata run that kept going across a refresh
   // Settings is for everyone (cog in the footer), but admin-only module pills
   // and tiles stay hidden for members; renderSettingsTiles filters by role.

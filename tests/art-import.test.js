@@ -283,14 +283,14 @@ test('the preview says what it saw: each folder as it was read, folders with pic
   assert.ok(read('public/artimport-ui.js').includes('What was found in the folder') && read('public/artimport-ui.js').includes('Linked folders are not followed') && read('public/artimport-ui.js').includes('list="art-plat-list"'), 'the screen shows it, and the platform box can be typed into');
 });
 
-test('Game assets: one Import game assets button everywhere, the Settings entry is renamed with a floppy-disk save, and the wording does not say pictures only', () => {
+test('Game assets: imported from Tools (no button in a toolbar), the Settings entry is renamed with a floppy-disk save, and the wording does not say pictures only', () => {
   const html = read('public/index.html'), app = read('public/app.js'), ui = read('public/artimport-ui.js'), modern = read('public/modern.js');
   assert.ok(html.includes('<h3>Game assets ') && !html.includes('<h3>Artwork folders'));
   assert.ok(app.includes("label: 'Game assets'") && app.includes("toast('Game asset folders saved')"));
   assert.match(html, /id="artfolders-save"[^>]*><svg/, 'the save button is an icon');
-  assert.ok(html.includes('id="lib-assets"') && html.includes('id="mod-gameassets"'));
+  assert.ok(html.includes('id="mod-gameassets"') && !html.includes('id="lib-assets"'), 'the import lives in Tools, not in the Library toolbar');
   assert.ok(!html.includes('id="lib-art"') && !html.includes('id="lib-video"') && !html.includes('data-ph-act="videos"') && !html.includes('data-dg-act="videos"'), 'no separate video buttons');
-  assert.ok(modern.includes("id=\"tl-assets\"") && modern.includes("'game-assets'") && !modern.includes("'import-media'] ") );
+  assert.ok(!modern.includes('tl-assets') && modern.includes("'game-assets'") && !modern.includes("'import-media'] "));
   assert.ok(ui.includes("file${p.unmatched_total === 1 ? '' : 's'} matched none of your games") && !ui.includes("picture${p.unmatched_total"));
 });
 
