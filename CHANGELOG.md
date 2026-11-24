@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-11-24
+
 ### Added
 
 - **Short and long game names.** A game now has a short name ("Initial D Arcade Stage") and a long one ("Initial D Arcade Stage (Export)"). Uploading the MAME list fills both on every MAME-family platform, including a platform you made yourself (such as `seganaomi2`), and flags BIOS and device sets as System; the name CSV's `full_game_name` column fills the long name. **Preferences > Game names** chooses which one the ROM Library shows (short by default); search matches both, the details window shows the full name, and the edit form edits the short one. A title you or a provider set is kept. Re-upload the MAME list once to fill in the long names.
