@@ -220,13 +220,15 @@ test('a hand-edited title is not overwritten by a rematch', async () => {
   assert.equal(after.dat_status, 'verified', 'but the verification is still recorded');
 });
 
-test('rematch with force does take the DAT title', async () => {
+test('rematch with force still keeps a title the person typed', async () => {
   const roms = (await call('/api/roms?q=Chrono')).body.items;
   const res = await call('/api/dats/rematch', { method: 'POST', body: { force: true } });
   assert.equal(res.status, 200);
 
   const after = (await call(`/api/roms/${roms[0].id}`)).body;
-  assert.equal(after.title, 'Chrono Trigger (USA)');
+  assert.equal(after.title, 'Chrono Trigger (my own label)');
+  // the person puts the DAT's name back by hand
+  await call(`/api/roms/${roms[0].id}`, { method: 'PATCH', body: { title: 'Chrono Trigger (USA)' } });
 });
 
 test('a ROM can be filtered by its DAT status', async () => {
