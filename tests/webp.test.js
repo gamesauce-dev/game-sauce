@@ -146,6 +146,13 @@ test('the admin preview shows the same piece of a real cover, stored and as WebP
   assert.equal(info.body.width, 900); assert.equal(info.body.height, 1260);
   assert.ok(info.body.webp_bytes < info.body.original_bytes && info.body.saving_pct > 50);
   assert.deepEqual(info.body.crop, { w: 480, h: 480 });
+  assert.equal(info.body.would_convert, true);
+  // a picture that is already squeezed hard comes out bigger as WebP: the preview says so and the cover is left alone
+  const { COVER_DIR } = await import('../src/lib/storage.js');
+  const lowq = path.join(COVER_DIR, 'prev-lowq.jpg'); fs.writeFileSync(lowq, await sharp({ create: { width: 300, height: 300, channels: 3, noise: { type: 'gaussian', mean: 120, sigma: 30 } } }).blur(1.2).jpeg({ quality: 25 }).toBuffer());
+  const lid = Number(db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1, meta_source, cover_path) VALUES ('Squeezed', 'squeezed', 'sq.sfc', (SELECT id FROM platforms WHERE slug = 'snes'), ?, 1, 'wp9', 'filename', ?)").run(path.join(TMP, 'sq.sfc'), lowq).lastInsertRowid);
+  const sq = await call(`/api/admin/images/preview?quality=85&rom=${lid}`);
+  assert.ok(sq.body.webp_bytes > sq.body.original_bytes && sq.body.saving_pct < 0 && sq.body.would_convert === false);
   // without a rom a cover is picked from the library
   assert.ok((await call('/api/admin/images/preview?quality=85')).body.sample);
   const a = await call(`/api/admin/images/preview/original.png?rom=${romId}&quality=80`);

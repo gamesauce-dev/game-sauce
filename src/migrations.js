@@ -696,3 +696,13 @@ db.exec(`CREATE TABLE IF NOT EXISTS theme_videos (
   PRIMARY KEY (platform, title_key)
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '68') ON CONFLICT(key) DO UPDATE SET value = '68'").run();
+
+/* ── v69: the journal of stored pictures converted to WebP (src/lib/webpjob.js): where each came from, so it can be put back while the original is kept. ── */
+db.exec(`CREATE TABLE IF NOT EXISTS image_conversions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, old_path TEXT NOT NULL, new_path TEXT NOT NULL, kept_path TEXT,
+  old_bytes INTEGER, new_bytes INTEGER, quality INTEGER, converted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  restored_at TEXT, purged_at TEXT
+)`);
+db.exec('CREATE INDEX IF NOT EXISTS idx_imgconv_new ON image_conversions(new_path)');
+db.exec('CREATE TABLE IF NOT EXISTS image_skips (path TEXT PRIMARY KEY, bytes INTEGER NOT NULL, reason TEXT)');   // pictures that would not shrink: not tried again unless the file changes
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '69') ON CONFLICT(key) DO UPDATE SET value = '69'").run();

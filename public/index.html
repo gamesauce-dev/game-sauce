@@ -590,6 +590,23 @@
           </div>
           <p class="hint" id="img-msg"></p>
         </div>
+
+        <h4 style="margin:1.4rem 0 .3rem">Convert the stored pictures</h4>
+        <p class="hint" style="margin-top:0">The copies above make pages faster but keep your files as they are. This goes further and replaces the stored PNG and JPEG pictures themselves with WebP, which also frees disk space. Only pictures inside the game-sauce storage folder are touched, never files in your own folders. A picture is replaced only when the WebP is at least 10% smaller, and every original is kept for the number of days below, so <b>Put the originals back</b> undoes it all.</p>
+        <div id="imgc-status" class="hash-status"></div>
+        <div class="hash-form">
+          <label class="policy-row"><input type="radio" name="imgc-mode" value="off" /> <span><b>Not scheduled</b><br><small class="hint">Only when you press Run now.</small></span></label>
+          <label class="policy-row"><input type="radio" name="imgc-mode" value="overnight" /> <span><b>Overnight</b><br><small class="hint">From <input type="time" id="imgc-from" /> to <input type="time" id="imgc-to" /> (this server's clock). One picture at a time; it stops when the window closes and carries on the next night.</small></span></label>
+          <div class="hash-max"><label for="imgc-keep"><b>Keep the originals for</b></label> <input type="number" id="imgc-keep" min="1" max="90" step="1" /> <span>days</span><br><small class="hint">After that the originals are removed and the conversion is final. Needs the disk space of the originals until then.</small></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn btn-primary" id="imgc-save" type="button">Save schedule</button>
+            <button class="btn" id="imgc-estimate" type="button" title="Convert a sample in memory and say how much it would save; nothing changes">Estimate the saving</button>
+            <button class="btn" id="imgc-run" type="button">Run now</button>
+            <button class="btn" id="imgc-stop" type="button">Stop</button>
+            <button class="btn" id="imgc-restore" type="button" title="Put the original pictures back while they are still kept">Put the originals back</button>
+          </div>
+          <p class="hint" id="imgc-msg"></p>
+        </div>
       </div>
 
       <div class="panel hidden" id="mod-reports">

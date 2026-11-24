@@ -77,7 +77,8 @@ export const stats = { thumbnails: 0, converted: 0, kept_original: 0, failed: 0,
 let sharpP = null;
 /** sharp, or null when it cannot be loaded here (the feature then switches itself off). */
 export function getSharp() {
-  sharpP ||= import('sharp').then((m) => { const s = m.default; try { s.concurrency(Math.max(1, Math.min(2, os.cpus().length))); } catch { /* default */ } return s; }).catch(() => null);
+  // No cache: a file sharp has read must be free to move or remove (Windows keeps cached files open).
+  sharpP ||= import('sharp').then((m) => { const s = m.default; try { s.concurrency(Math.max(1, Math.min(2, os.cpus().length))); s.cache(false); } catch { /* default */ } return s; }).catch(() => null);
   return sharpP;
 }
 export const webpAvailable = async () => Boolean(await getSharp());
@@ -142,7 +143,10 @@ export async function sendImage(req, res, file) {
   const abs = path.resolve(file);
   const original = () => res.sendFile(abs);
   try {
-    if (!readSettings().enabled || !CONVERTIBLE.has(path.extname(abs).toLowerCase())) return original();
+    const ext = path.extname(abs).toLowerCase();
+    const wantsThumb = THUMB_WIDTHS.includes(Number(req.query?.w));
+    // a stored WebP (converted by the library job) still gets thumbnails for the tiles; only a PNG or JPEG is also made into a full-size WebP
+    if (!readSettings().enabled || !(CONVERTIBLE.has(ext) || (wantsThumb && ext === '.webp'))) return original();
     res.vary('Accept');
     if (!String(req.headers.accept || '').includes('image/webp') || !(await getSharp())) return original();
     const w = Number(req.query?.w);
@@ -190,7 +194,7 @@ export async function previewInfo({ rom, quality } = {}) {
   const meta = await sharp(s.cover_path, { failOn: 'none' }).metadata();
   const webp = await sharp(s.cover_path, { failOn: 'none' }).webp({ quality: q, effort: 4, smartSubsample: true, alphaQuality: 100 }).toBuffer();
   const orig = fs.statSync(s.cover_path).size;
-  return { sample: { id: s.id, title: s.title }, quality: q, width: meta.width, height: meta.height, format: meta.format, original_bytes: orig, webp_bytes: webp.length, saving_pct: Math.round(100 - (100 * webp.length) / orig), crop: { w: Math.min(CROP, meta.width), h: Math.min(CROP, meta.height) } };
+  return { sample: { id: s.id, title: s.title }, quality: q, width: meta.width, height: meta.height, format: meta.format, original_bytes: orig, webp_bytes: webp.length, saving_pct: Math.round(100 - (100 * webp.length) / orig), would_convert: webp.length <= orig * (1 - MIN_SAVING), crop: { w: Math.min(CROP, meta.width), h: Math.min(CROP, meta.height) } };
 }
 
 /** The middle of the cover at 100%: as PNG from the original (kind 'original'), or as WebP at this quality (kind 'webp'). The same pixels either way. */

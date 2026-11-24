@@ -4465,6 +4465,49 @@ async function loadVersionLine() {
 }
 
 /* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
+let imgcTimer = null;
+async function loadImageConvert(fillForm = true) {
+  const box = $('#imgc-status'); if (!box) return;
+  clearTimeout(imgcTimer);
+  const s = await api('/admin/images/convert');
+  const mb = (n) => (n / 1048576).toFixed(1);
+  if (fillForm) {
+    $$('[name="imgc-mode"]').forEach((r) => { r.checked = r.value === s.mode; });
+    $('#imgc-from').value = s.window_start; $('#imgc-to').value = s.window_end; $('#imgc-keep').value = s.keep_days;
+  }
+  const lines = [];
+  if (s.running) lines.push(`Running: ${s.done.toLocaleString()} of ${s.total.toLocaleString()} pictures looked at (${s.converted.toLocaleString()} converted, ${s.skipped.toLocaleString()} left as they were, ${s.failed.toLocaleString()} failed), ${mb(s.bytes_saved)} MB saved so far${s.current ? `, now ${s.current}` : ''}.`);
+  else if (s.mode === 'overnight') lines.push(`Scheduled ${s.window_start} to ${s.window_end} (server time now ${s.server_time}, ${s.server_tz}).${s.paused ? ' Stopped for now.' : ''}`);
+  else lines.push('Not scheduled.');
+  lines.push(`In total: ${s.converted_total.toLocaleString()} pictures converted, ${mb(s.before_total)} MB became ${mb(s.after_total)} MB (${mb(s.saved_total)} MB saved). ${s.originals_kept.toLocaleString()} originals are being kept (${mb(s.originals_kept_bytes)} MB).`);
+  box.textContent = lines.join(' ');
+  $('#imgc-run').disabled = s.running; $('#imgc-restore').disabled = s.running;
+  if (!$('#imgc-save').dataset.bound) {
+    $('#imgc-save').dataset.bound = '1';
+    const say = (m) => { $('#imgc-msg').textContent = m; };
+    $('#imgc-save').addEventListener('click', async () => {
+      try { await api('/admin/images/convert', { method: 'PUT', body: JSON.stringify({ mode: ($$('[name="imgc-mode"]').find((r) => r.checked) || {}).value, window_start: $('#imgc-from').value, window_end: $('#imgc-to').value, keep_days: Number($('#imgc-keep').value) }) }); say(t('Saved.')); loadImageConvert(true); } catch (err) { say(err.message); toast(err.message, true); }
+    });
+    $('#imgc-estimate').addEventListener('click', async () => {
+      say('Working it out…'); $('#imgc-estimate').disabled = true;
+      try { const e = await api('/admin/images/convert/estimate'); say(`${e.pictures.toLocaleString()} stored PNG and JPEG pictures, ${mb(e.bytes)} MB. Judging by ${e.sampled} of them at quality ${e.quality}, about ${e.would_convert_pct}% would be converted and the library would shrink by about ${mb(e.estimated_saving_bytes)} MB (${e.estimated_saving_pct}%). Nothing was changed.`); } catch (err) { say(err.message); } finally { $('#imgc-estimate').disabled = false; }
+    });
+    $('#imgc-run').addEventListener('click', async () => {
+      const ok = await confirmDialog({ title: 'Convert the stored pictures now?', body: 'Every stored PNG and JPEG that shrinks by at least 10% is replaced with a WebP at the quality chosen above. The originals are kept for the number of days set here, and Put the originals back undoes it.', okLabel: 'Convert' });
+      if (!ok) return;
+      try { await api('/admin/images/convert/run', { method: 'POST' }); say(''); } catch (err) { toast(err.message, true); }
+      loadImageConvert(false);
+    });
+    $('#imgc-stop').addEventListener('click', async () => { await api('/admin/images/convert/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadImageConvert(false); });
+    $('#imgc-restore').addEventListener('click', async () => {
+      const ok = await confirmDialog({ title: 'Put the originals back?', body: 'Every converted picture is replaced by its original again, as long as the original is still kept. Pictures whose originals are already gone stay as WebP.', okLabel: 'Put back', danger: true });
+      if (!ok) return;
+      try { const r = await api('/admin/images/convert/restore', { method: 'POST' }); say(`${r.restored.toLocaleString()} pictures put back${r.unavailable ? `; ${r.unavailable.toLocaleString()} could not be (their originals are gone)` : ''}.`); } catch (err) { toast(err.message, true); }
+      loadImageConvert(true);
+    });
+  }
+  if (activeSettingsModule === 'images' && s.running) imgcTimer = setTimeout(() => loadImageConvert(false).catch(() => {}), 3000);
+}
 /** Settings > Maintenance > Pictures: WebP copies for faster loading (the stored pictures are never changed). */
 async function loadImages() {
   const box = $('#img-status'); if (!box) return;
@@ -4496,7 +4539,9 @@ async function loadImages() {
         $('#img-prev-orig').src = `/api/admin/images/preview/original.png?${v}`;
         $('#img-prev-webp').src = `/api/admin/images/preview/webp.png?${v}`;
         $('#img-prev-orig-cap').textContent = `As stored: ${kb(info.original_bytes)}`;
-        $('#img-prev-webp-cap').textContent = `WebP at ${info.quality}: ${kb(info.webp_bytes)} (${info.saving_pct}% smaller)`;
+        $('#img-prev-webp-cap').textContent = info.would_convert
+          ? `WebP at ${info.quality}: ${kb(info.webp_bytes)} (${info.saving_pct}% smaller)`
+          : `WebP at ${info.quality}: ${kb(info.webp_bytes)} (${info.saving_pct < 0 ? `${-info.saving_pct}% larger` : `only ${info.saving_pct}% smaller`}: not worth it, so this cover would be left as it is)`;
       } catch (err) { if (mine === seq) { $('#img-prev-note').textContent = err.message; } }
     };
     q.addEventListener('input', () => { $('#img-qval').textContent = q.value; clearTimeout(timer); timer = setTimeout(() => preview(), 300); });
@@ -4852,7 +4897,7 @@ function showSettingsModule(id) {
   if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
   if (id === 'hashing') loadHashing().catch((err) => toast(err.message, true));
-  if (id === 'images') loadImages().catch((err) => toast(err.message, true));
+  if (id === 'images') { loadImages().catch((err) => toast(err.message, true)); loadImageConvert().catch((err) => toast(err.message, true)); }
   if (id === 'reports') reports.load($('#reports-box'), { api, t, openLibrary: openLibraryWith }).catch((err) => toast(err.message, true));
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }

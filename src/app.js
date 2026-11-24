@@ -188,6 +188,26 @@ export function createApp() {
     req.auditDetail = { enabled: req.body?.enabled, quality: req.body?.quality };
     res.json(await imagesStatus());
   });
+  // Convert the stored pictures themselves (Settings > Maintenance > Pictures): the schedule, an estimate, run now, stop, put the originals back.
+  api.get('/admin/images/convert', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); res.json(j.jobStatus()); });
+  api.put('/admin/images/convert', requireAuth, requireAdmin, async (req, res) => {
+    const j = await import('./lib/webpjob.js');
+    try { j.saveConvertSettings(req.body || {}, req.user.id); } catch (err) { return res.status(err.status || 400).json({ error: err.message }); }
+    req.auditDetail = { mode: req.body?.mode, keep_days: req.body?.keep_days };
+    res.json(j.jobStatus());
+  });
+  api.get('/admin/images/convert/estimate', requireAuth, requireAdmin, async (req, res) => {
+    const j = await import('./lib/webpjob.js');
+    try { res.json(await j.estimate()); } catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+  });
+  api.post('/admin/images/convert/run', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); req.auditDetail = { forced: true }; res.json(j.startJob({ forced: true })); });
+  api.post('/admin/images/convert/stop', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); res.json(j.stopJob()); });
+  api.post('/admin/images/convert/restore', requireAuth, requireAdmin, async (req, res) => {
+    const j = await import('./lib/webpjob.js');
+    if (j.jobStatus().running) return res.status(409).json({ error: 'A conversion is running: stop it first' });
+    const out = j.restoreAll(); req.auditDetail = out; res.json({ ...out, ...j.jobStatus() });
+  });
+
   // The preview: the middle of one real cover at 100%, the original beside the WebP at the quality being tried (?quality=, ?rom= to keep the same cover).
   api.get('/admin/images/preview', requireAuth, requireAdmin, async (req, res) => {
     const { previewInfo } = await import('./lib/webp.js');
