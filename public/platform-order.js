@@ -15,3 +15,17 @@ export function groupedOptions(list, { selected = null, label = (p) => p.name } 
   for (const p of orderPlatforms(list)) { const f = familyOf(p); if (!groups.has(f)) groups.set(f, []); groups.get(f).push(p); }
   return [...groups.entries()].map(([fam, plats]) => `<optgroup label="${esc(fam)}">${plats.map((p) => `<option value="${esc(p.slug)}"${p.slug === selected ? ' selected' : ''}>${esc(label(p))}</option>`).join('')}</optgroup>`).join('');
 }
+
+/** The family each Digital store sits in, as the Library files its consoles (Steam has none: it is last, like Others). */
+export const STORE_FAMILY = { xbox: 'Microsoft', nintendo: 'Nintendo', playstation: 'Sony' };
+
+/** The Digital Library's store chips in the Library's family order: the families A to Z, Steam (no family) last. */
+export function orderStores(stores) {
+  const fam = (s) => STORE_FAMILY[s.store] || 'Others';
+  return [...stores].sort((a, b) => ((fam(a) === 'Others') - (fam(b) === 'Others')) || by(fam(a), fam(b)) || by(a.store, b.store));
+}
+
+/** A store's console chips in the Library's order: the platforms A to Z by the Library's name for them. nameOf(p) gives that name. */
+export function orderConsoles(list, nameOf = (p) => p.name) {
+  return [...list].sort((a, b) => by(nameOf(a), nameOf(b)));
+}

@@ -4,6 +4,7 @@
 import { identifyBlock, wireIdentify, comboHtml, wireCombo } from './identify.js';
 import { attachBulk } from './bulk.js';
 import { assetWords } from './video.js';
+import { orderStores, orderConsoles } from './platform-order.js';
 import { landChips } from './chip-motion.js';
 import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { familyLabel, platformBadge, platformChip } from './platform-names.js';
@@ -167,12 +168,12 @@ function paintToolbar() {
 
 function renderChips() {
   const host = $('#dg-chips'); if (!host) return;
-  const stores = STORE_ORDER.map((s) => (dg.info.stores || []).find((x) => x.store === s)).filter((x) => x && x.visible > 0);
+  const stores = orderStores(STORE_ORDER.map((s) => (dg.info.stores || []).find((x) => x.store === s)).filter((x) => x && x.visible > 0));   // the Library's family order (platform-order.js)
   if (!stores.length) { host.innerHTML = ''; return; }
   const plats = (dg.info.platforms || []).filter((p) => p.count > 0);
   const total = stores.reduce((t, s) => t + s.visible, 0);
   const pk = new Set(dg.picked);
-  const subsOf = (s) => plats.filter((p) => p.store === s);
+  const subsOf = (s) => orderConsoles(plats.filter((p) => p.store === s), (p) => libRow(p.platform)?.name || p.label);
   const whole = (s) => pk.has(tok.store(s));
   const part = (s) => subsOf(s).some((p) => pk.has(tok.plat(p.platform)));
   if (dg.family && !subsOf(dg.family).length) dg.family = null;
@@ -547,7 +548,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
 /* ───────────── add a game by hand / import a CSV (both in the details window) ───────────── */
 
 // the families A to Z (as in every platform picker), the consoles in each A to Z
-const consoleOptions = () => ['nintendo', 'playstation', 'xbox'].flatMap((s) => Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => ({ value: id, label: p.label, hint: DG_STORE[s].label })).sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true })));
+const consoleOptions = () => orderStores(['nintendo', 'playstation', 'xbox'].map((store) => ({ store }))).map((x) => x.store).flatMap((s) => Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => ({ value: id, label: p.label, hint: DG_STORE[s].label })).sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true })));
 
 let lastAdd = { platform: '', country: '' };   // kept while the form stays open (pinned, or "Add and another"), forgotten when it closes
 
