@@ -569,6 +569,21 @@
         </div>
       </div>
 
+      <div class="panel hidden" id="mod-images">
+        <h3>Pictures <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Covers and other pictures are sent to the browser as WebP copies, which are much smaller, so pages load faster. Your stored pictures are never changed or replaced: the copies are kept apart and made the first time a picture is shown. Exports, backups and the launcher pack still use the originals.</p>
+        <div id="img-status" class="hash-status"></div>
+        <div class="hash-form">
+          <label class="policy-row"><input type="checkbox" id="img-enabled" /> <span><b>Send WebP copies</b><br><small class="hint">Switch off to send every picture as it was stored.</small></span></label>
+          <div class="hash-max"><label for="img-quality"><b>Quality</b></label> <input type="range" id="img-quality" min="70" max="95" step="1" /> <b id="img-qval"></b><br><small class="hint">Allowed: <span id="img-range"></span>. 85 looks the same as the original to the eye at a fraction of the size; a lower number is never allowed because covers start to look blocky. Changing it rebuilds the copies as pictures are opened.</small></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn btn-primary" id="img-save" type="button">Save</button>
+            <button class="btn" id="img-clear" type="button" title="Delete the WebP copies; they are made again when pictures are opened">Clear the copies</button>
+          </div>
+          <p class="hint" id="img-msg"></p>
+        </div>
+      </div>
+
       <div class="panel hidden" id="mod-reports">
         <h3>Reports &amp; stats <span class="pill warn admin-only">admin</span></h3>
         <p class="hint" style="margin-top:0">The whole collection in charts: your ROM Library, the Physical shelves and the Digital lists together. Click a platform or a genre to open its games in the Library.</p>

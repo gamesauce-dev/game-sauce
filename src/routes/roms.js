@@ -22,6 +22,7 @@ import { flagThemeVideos } from '../lib/themevideos.js';
 import { romFiles, romFile, dropRomFiles } from '../lib/romfiles.js';
 import { findCompanions, companionFingerprint } from '../lib/romdeps.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
+import { sendImage } from '../lib/webp.js';
 import {
   placeRom, tempPath, romStoragePath,
   removeRomFile, removeCoverFile, saveCover
@@ -790,7 +791,7 @@ router.get('/:id/cover', (req, res) => {
     return res.status(404).json({ error: 'No cover' });
   }
   res.setHeader('Cache-Control', 'public, max-age=86400');
-  res.sendFile(path.resolve(rom.cover_path));
+  sendImage(req, res, rom.cover_path);
 });
 
 /** A file the picture importer brought in for this game: spine, disc, back or manual (?download=1 saves it instead of showing it). */

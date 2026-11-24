@@ -8,6 +8,7 @@ import { assetWords } from './video.js';
 import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml, wireCombo } from './identify.js';
 import { platformBadge, platformChip, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
+import { thumb } from './thumb.js';
 import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { drawPage, mountViewer, pdfReady } from './pdfview.js';
 import { attachBulk } from './bulk.js';
@@ -337,7 +338,7 @@ const tileHtml = (g) => {
   return `<div class="card ph-card" data-ph-id="${g.id}"${g.has_video || g.has_theme ? ` data-vid="physical:${g.id}"${g.has_theme ? ' data-theme="1"' : ''}` : ''} tabindex="0" role="button" aria-label="${esc(g.title)}, ${esc(p.name)}">
     <div class="card-cover" style="background:linear-gradient(160deg,${col},#12141a)">
       <div class="card-fallback${g.has_cover ? ' has-cover' : ''}">${esc(initials(g.title))}</div>
-      ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" alt="" onerror="this.style.display='none';this.previousElementSibling?.classList.remove('has-cover')" />` : ''}
+      ${g.cover_url ? `<img loading="lazy" src="${esc(thumb(g.cover_url))}" alt="" onerror="this.style.display='none';this.previousElementSibling?.classList.remove('has-cover')" />` : ''}
       <span class="card-badge ph-badge" style="background:${esc(col)}" title="${esc(p.name)}"><span class="dg-badge-txt">${esc(platformBadge(p))}</span></span>
       ${g.digital_linked ? `<span class="dg-disc" title="Disc to digital" aria-label="Disc to digital">${ctx.ICON.disc}</span>` : ''}
       <button type="button" class="card-fav ${g.favourite ? 'on' : ''}" data-ph-fav="${g.id}" tabindex="-1" title="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? ctx.ICON.starFill : ctx.ICON.star}</button>

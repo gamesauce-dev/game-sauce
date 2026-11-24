@@ -1,5 +1,6 @@
 import { platformIconSvg, PLATFORM_ICON_TYPES, iconTypeFor } from './platform-icons.js';
 import { groupedOptions } from './platform-order.js';   // the one order of every platform picker: families A to Z, Others last, the platforms in each A to Z
+import { thumb } from './thumb.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -594,7 +595,7 @@ function cardHtml(rom) {
   // Only real files get an <img>. A failed load leaves the initials fallback
   // underneath rather than an empty box.
   const cover = rom.cover_url
-    ? `<img loading="lazy" src="${esc(rom.cover_url)}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />`
+    ? `<img loading="lazy" src="${esc(thumb(rom.cover_url))}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="this.style.display='none'" />`
     : '';
   return `
     <div class="card" data-rom="${rom.id}"${rom.has_video || rom.has_theme ? ` data-vid="rom:${rom.id}"${rom.has_theme ? ' data-theme="1"' : ''}` : ''} role="button" tabindex="0">
@@ -4401,6 +4402,7 @@ const SETTINGS_MODULES = [
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
   { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true },
   { id: 'hashing',   label: 'Fingerprints',    mi: 'database-check', ico: '🔍', adminOnly: true },
+  { id: 'images',    label: 'Pictures',        mi: 'covers', ico: '🖼', adminOnly: true },
   { id: 'reports',   label: 'Reports & stats', mi: 'stats', ico: '📈', adminOnly: true }
 ];
 
@@ -4409,7 +4411,7 @@ const SETTINGS_MODULES = [
 const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
-  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing'], adminOnly: true },
+  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing', 'images'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
   { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
@@ -4463,6 +4465,30 @@ async function loadVersionLine() {
 }
 
 /* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
+/** Settings > Maintenance > Pictures: WebP copies for faster loading (the stored pictures are never changed). */
+async function loadImages() {
+  const box = $('#img-status'); if (!box) return;
+  const s = await api('/admin/images');
+  const mb = (n) => (n / 1048576).toFixed(1);
+  $('#img-enabled').checked = s.enabled;
+  const q = $('#img-quality'); q.min = s.min; q.max = s.max; q.value = s.quality;
+  $('#img-qval').textContent = s.quality;
+  $('#img-range').textContent = `${s.min} to ${s.max}`;
+  const saved = s.stats.bytes_in ? Math.round(100 - (100 * s.stats.bytes_out) / s.stats.bytes_in) : 0;
+  box.innerHTML = s.available
+    ? `${s.cache.files.toLocaleString()} WebP copies kept (${mb(s.cache.bytes)} MB). Since the server started: ${s.stats.thumbnails.toLocaleString()} thumbnails made, ${s.stats.converted.toLocaleString()} full-size pictures converted${s.stats.bytes_in ? `, ${saved}% smaller (${mb(s.stats.bytes_in)} MB to ${mb(s.stats.bytes_out)} MB)` : ''}; ${s.stats.kept_original.toLocaleString()} kept as they were (no real saving); ${s.stats.failed.toLocaleString()} failed${s.stats.queued ? `; ${s.stats.queued} waiting` : ''}.`
+    : 'The picture converter could not be loaded on this machine, so pictures are sent as they are.';
+  if (!$('#img-save').dataset.bound) {
+    $('#img-save').dataset.bound = '1';
+    q.addEventListener('input', () => { $('#img-qval').textContent = q.value; });
+    $('#img-save').addEventListener('click', async () => {
+      try { await api('/admin/images', { method: 'PUT', body: JSON.stringify({ enabled: $('#img-enabled').checked, quality: Number(q.value) }) }); $('#img-msg').textContent = t('Saved.'); loadImages(); } catch (err) { $('#img-msg').textContent = err.message; toast(err.message, true); }
+    });
+    $('#img-clear').addEventListener('click', async () => {
+      try { await api('/admin/images/clear', { method: 'POST' }); $('#img-msg').textContent = t('The WebP copies were cleared; they are made again as pictures are opened.'); loadImages(); } catch (err) { toast(err.message, true); }
+    });
+  }
+}
 let hashTimer = null;
 async function loadHashing(fillForm = true) {   // fillForm: put the saved choices into the form (the first time, and after Save); the refreshes while a job runs only touch the status, so a change you are making is not undone
   const box = $('#hash-status'); if (!box) return;
@@ -4805,6 +4831,7 @@ function showSettingsModule(id) {
   if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
   if (id === 'hashing') loadHashing().catch((err) => toast(err.message, true));
+  if (id === 'images') loadImages().catch((err) => toast(err.message, true));
   if (id === 'reports') reports.load($('#reports-box'), { api, t, openLibrary: openLibraryWith }).catch((err) => toast(err.message, true));
   if (id === 'duplicates') loadDuplicates(true);
   if (id === 'backup') { loadBackups().catch((err) => toast(err.message, true)); loadRestoreStatus(); }

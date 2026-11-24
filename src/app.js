@@ -176,6 +176,24 @@ export function createApp() {
     res.json(stopHashJob());
   });
 
+  // WebP copies of pictures (Settings > Maintenance > Images): on/off and the quality (never below the floor), what it has saved so far, clear the copies.
+  const imagesStatus = async () => {
+    const w = await import('./lib/webp.js');
+    return { available: await w.webpAvailable(), ...w.imageSettings(), min: w.MIN_QUALITY, max: w.MAX_QUALITY, default: w.DEFAULT_QUALITY, stats: { ...w.stats, queued: w.queueLength() }, cache: w.imageCacheInfo() };
+  };
+  api.get('/admin/images', requireAuth, requireAdmin, async (req, res) => res.json(await imagesStatus()));
+  api.put('/admin/images', requireAuth, requireAdmin, async (req, res) => {
+    const { saveImageSettings } = await import('./lib/webp.js');
+    try { saveImageSettings(req.body || {}, req.user.id); } catch (err) { return res.status(err.status || 400).json({ error: err.message }); }
+    req.auditDetail = { enabled: req.body?.enabled, quality: req.body?.quality };
+    res.json(await imagesStatus());
+  });
+  api.post('/admin/images/clear', requireAuth, requireAdmin, async (req, res) => {
+    const { clearImageCache } = await import('./lib/webp.js');
+    req.auditDetail = clearImageCache();
+    res.json(await imagesStatus());
+  });
+
   // Reports across the whole collection (Settings > Reports, admin, read-only). Asking also records today's snapshot, once a day.
   api.get('/admin/reports', requireAuth, requireAdmin, async (req, res) => {
     const { collectReports, recordSnapshot, listSnapshots } = await import('./lib/reports.js');

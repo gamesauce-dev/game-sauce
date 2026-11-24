@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+
+- **WebP copies of pictures, for faster pages.** A browser that accepts WebP is now sent a small WebP copy of a cover instead of the stored file: tiles in the Library, Physical and Digital grids ask for a 640 px-wide thumbnail (made at once, a few milliseconds), and the full-size picture is converted in the background after its first view (the first request gets the original, so nothing waits). The stored pictures are never changed or replaced, so exports, backups, the cover zip and every path in the database are unchanged; the copies live in `image-cache` beside the covers. A copy is used only when it is at least 10% smaller, and GIFs are left alone. **Settings > Maintenance > Pictures** (admin) turns it off and sets the quality (default 85, never below 70 or above 95; a lower number is refused by the server too); changing the quality rebuilds the copies, and Clear the copies deletes them. In a test with 120 large PNG covers, full-size pictures came out 92% smaller and a grid of thumbnails loaded about 99% fewer bytes than the originals. Uses the `sharp` library; if it cannot load on a machine, pictures are sent as before.
+
 ### Fixed
 
 - **Hide works from a Home tile.** Pressing Hide in the details window of a game opened from Recently added or Continue playing now takes the tile off the row at once (Classic and Modern), and Recently added no longer lists a game you hid yourself after a reload.

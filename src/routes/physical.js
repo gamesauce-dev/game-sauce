@@ -9,6 +9,7 @@ import { flagThemeVideos } from '../lib/themevideos.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
+import { sendImage } from '../lib/webp.js';
 
 const router = express.Router();
 const manualUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MANUAL_BYTES } });
@@ -114,21 +115,21 @@ router.get('/cover/:id', (req, res) => {
   const file = physicalCoverPath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No cover' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
-  res.sendFile(path.resolve(file));
+  sendImage(req, res, file);
 });
 
 router.get('/back/:id', (req, res) => {
   const file = physicalBackPath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No back' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
-  res.sendFile(path.resolve(file));
+  sendImage(req, res, file);
 });
 
 router.get('/disc/:id', (req, res) => {
   const file = physicalDiscPath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No disc' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
-  res.sendFile(path.resolve(file));
+  sendImage(req, res, file);
 });
 
 // The person's own picture for a game: its cover, spine or disc (kind). Uploaded (POST, a JPEG, PNG or WebP up to 8 MB, checked) or put back to the automatic one (DELETE).
@@ -169,7 +170,7 @@ router.get('/spine/:id', (req, res) => {
   const file = physicalSpinePath(me(req), req.params.id);
   if (!file) return res.status(404).json({ error: 'No spine' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
-  res.sendFile(path.resolve(file));
+  sendImage(req, res, file);
 });
 
 // Games from a CSV (Platform, Game, Region, Notes, Year) onto the signed-in person's own shelf. Without apply nothing is saved: the answer is the preview.

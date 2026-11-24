@@ -7,6 +7,7 @@ import { flagThemeVideos } from '../lib/themevideos.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, libSlug, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, forgetMissingConsoleCovers, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
+import { sendImage } from '../lib/webp.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -145,7 +146,7 @@ router.get('/cover/:store/:appId', (req, res) => {
   const file = own ? consoleCoverPath(req.params.store, req.params.appId, me(req)) : null;
   if (!file) return res.status(404).json({ error: 'No cover' });
   res.setHeader('Cache-Control', 'private, max-age=86400');
-  res.sendFile(path.resolve(file));
+  sendImage(req, res, file);
 });
 
 // Console games from a CSV (Platform, Game, Country) into the signed-in person's own list.

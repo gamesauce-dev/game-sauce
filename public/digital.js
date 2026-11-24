@@ -6,6 +6,7 @@ import { attachBulk } from './bulk.js';
 import { assetWords } from './video.js';
 import { orderStores, orderConsoles } from './platform-order.js';
 import { landChips } from './chip-motion.js';
+import { thumb } from './thumb.js';
 import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { familyLabel, platformBadge, platformChip } from './platform-names.js';
 
@@ -284,7 +285,7 @@ export async function loadDigital(keep = false) {
     return `<div class="card dg-card${g.hidden ? ' is-hidden' : ''}" data-dg-app="${esc(g.app_id)}" data-dg-store-of="${esc(g.store)}"${g.has_video || g.has_theme ? ` data-vid="digital:${esc(g.store)}:${esc(g.app_id)}"${g.has_theme ? ' data-theme="1"' : ''}` : ''}>
       <div class="card-cover" style="background:linear-gradient(160deg,${st.bg},#12141a)">
         <div class="card-fallback">${esc(initials(g.name))}</div>
-        ${g.cover_url ? `<img loading="lazy" src="${esc(g.cover_url)}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
+        ${g.cover_url ? `<img loading="lazy" src="${esc(thumb(g.cover_url))}" data-fb="${esc(g.cover_fallback_url || '')}" alt="" onload="this.previousElementSibling?.classList.add('has-cover')" onerror="if(this.dataset.fb&&!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fb}else{this.style.display='none'}" />` : ''}
         ${steam
           ? `<span class="card-badge dg-badge" data-store="${esc(g.store)}" title="${esc(st.label)}" aria-label="${esc(st.label)}"><span class="dg-badge-ico" aria-hidden="true"></span><span class="dg-badge-txt">${esc(st.short)}</span></span>`
           // A console game's badge is the same as in the Library and Physical: the platform's colour (Settings > Platforms) with its short name.
