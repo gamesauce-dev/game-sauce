@@ -6,7 +6,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Added
 
+- **Short and long game names.** A game now has a short name ("Initial D Arcade Stage") and a long one ("Initial D Arcade Stage (Export)"). Uploading the MAME list fills both on every MAME-family platform, including a platform you made yourself (such as `seganaomi2`), and flags BIOS and device sets as System; the name CSV's `full_game_name` column fills the long name. **Preferences > Game names** chooses which one the ROM Library shows (short by default); search matches both, the details window shows the full name, and the edit form edits the short one. A title you or a provider set is kept. Re-upload the MAME list once to fill in the long names.
 - **Theme videos.** The game assets import reads a `theme` folder of videos per platform. A tile's hover preview plays the theme video when the game has one and the gameplay video otherwise; the details window still plays the gameplay video.
+
+### Fixed
+
+- **Clearing unused files no longer deletes the covers of console games in the Digital Library.** Settings > Maintenance > Database maintenance > Unused files judged a provider picture by the web address it came from, but a console game's cover keeps only its file path in the database, so those covers were listed as unused and deleted. A picture the database points at by its path now counts as used. If you already cleared them, press **Fetch missing covers** on the Digital page to fetch them again (a cover you picked by hand has to be picked again).
 
 ## [0.23.0] - 2026-11-23
 

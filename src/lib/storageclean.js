@@ -1,7 +1,7 @@
 // Unused asset files in the storage folder: pictures, manuals and videos nothing points at any more (left behind by a deleted game, a replaced picture, a redone import).
 // Scan first (nothing is changed), then clear out on request. Only these folders are looked at: covers, media (ScreenScraper pictures), rom-files (a game's own spine, disc, logo...),
 // manuals and videos. ROMs, saves, emulators, DATs and the artwork folders an admin listed are never touched.
-// "Used" is judged generously: a file counts as used when ANY text in the database mentions its name (or, for provider pictures, the address it was fetched from),
+// "Used" is judged generously: a file counts as used when ANY text in the database mentions its name or path (or, for provider pictures, the address it was fetched from),
 // so a missing reference can only keep a file, never lose one that is in use. A file written in the last ten minutes is left alone (an import or fetch may be mid-way).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,7 +90,12 @@ export function scanStorage() {
       const name = s[s.length - 1].toLowerCase();
       let used;
       if (g.by === 'name') used = tails.has(`${g.dir}/${name}`) || tails.has(name);
-      else if (g.by === 'hash') { const m = /^[a-z0-9]+-([0-9a-f]{40})\./i.exec(name); used = m ? hashes.has(m[1].toLowerCase()) : true; }   // a name we do not recognise is kept
+      else if (g.by === 'hash') {
+        // A provider picture is named for the hash of the address it was fetched from, so the address in the database keeps it. But a picture can also be kept by its PATH alone: a console game's cover in the Digital Library
+        // (digital_details.cover_path, digital_user_meta.cover_path) keeps no address, so the path in the database is what counts too. A name we do not recognise is kept.
+        const m = /^[a-z0-9]+-([0-9a-f]{40})\./i.exec(name);
+        used = m ? (hashes.has(m[1].toLowerCase()) || tails.has(`${g.dir}/${name}`) || tails.has(name)) : true;
+      }
       else used = tails.has(s.slice(-3).join('/').toLowerCase());
       if (g.key === 'videos' && /\.part$/i.test(name)) used = false;   // a download that never finished
       if (used) continue;
