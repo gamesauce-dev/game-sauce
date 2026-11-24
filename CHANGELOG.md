@@ -4,6 +4,13 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Hide works from a Home tile.** Pressing Hide in the details window of a game opened from Recently added or Continue playing now takes the tile off the row at once (Classic and Modern), and Recently added no longer lists a game you hid yourself after a reload.
+- **Settings and Tools open on their first area.** Opening either page from the navigation starts on the first tile (and, for Settings, its first sub-tile; for Tools, the first tab) instead of the last one used. A page refresh still puts you back where you were.
+- **Digital Library chips are in the Library's order.** The store chips run in the Library's family order (Xbox, Nintendo, PlayStation, then Steam last) and each store's console chips are A to Z, as are the consoles in Add a game.
+- **A DAT import or the MAME list no longer renames a title you edited.** Typing a new title now marks it as yours: importing or re-matching a DAT (even with force) and uploading the MAME list leave it alone, and the long name is still filled in. Hidden games (yours or for everyone) are never touched by a DAT import; this is now covered by a test. Titles edited before this update cannot be told apart from names the app made itself, so edit them once more to protect them.
+
 ## [0.23.1] - 2026-11-24
 
 ### Added
