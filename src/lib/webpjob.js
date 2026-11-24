@@ -254,3 +254,54 @@ export function startConvertScheduler(everyMs = 60_000) {
   setInterval(tick, everyMs).unref();
 }
 export { MIN_QUALITY };
+
+/* ───────── what was converted: a list the admin can look through, with the picture before and after ───────── */
+
+/** Which game and which picture a stored file belongs to, from where the database points at it now. */
+function whose(p) {
+  const rom = db.prepare("SELECT r.title, pl.name AS platform FROM roms r JOIN platforms pl ON pl.id = r.platform_id WHERE r.cover_path = ? LIMIT 1").get(p);
+  if (rom) return { title: rom.title, platform: rom.platform, kind: 'cover', list: 'ROM Library' };
+  const rf = db.prepare("SELECT r.title, pl.name AS platform, f.kind FROM rom_files f JOIN roms r ON r.id = f.rom_id JOIN platforms pl ON pl.id = r.platform_id WHERE f.path = ? LIMIT 1").get(p);
+  if (rf) return { title: rf.title, platform: rf.platform, kind: rf.kind, list: 'ROM Library' };
+  for (const col of ['cover', 'spine', 'disc', 'back']) {
+    const ph = db.prepare(`SELECT title, platform FROM physical_games WHERE ${col}_path = ? LIMIT 1`).get(p);
+    if (ph) return { title: ph.title, platform: ph.platform, kind: col, list: 'Physical' };
+  }
+  for (const t of ['digital_details', 'digital_user_meta']) {
+    const d = db.prepare(`SELECT g.name, g.store FROM ${t} m JOIN digital_games g ON g.store = m.store AND g.app_id = m.app_id WHERE m.cover_path = ? LIMIT 1`).get(p);
+    if (d) return { title: d.name, platform: d.store, kind: 'cover', list: 'Digital' };
+  }
+  const esc = JSON.stringify(p).slice(1, -1);
+  const pm = db.prepare("SELECT title FROM roms WHERE instr(provider_media, ?) > 0 LIMIT 1").get(esc);
+  if (pm) return { title: pm.title, platform: '', kind: 'provider picture', list: 'ROM Library' };
+  return { title: path.basename(p), platform: '', kind: 'picture', list: '' };
+}
+
+/** A page of the journal, newest first. q matches the file name; state: all | converted | restored | final (original removed). */
+export function conversionLog({ offset = 0, limit = 25, q = '', state = 'all' } = {}) {
+  const lim = Math.min(Math.max(Number(limit) || 25, 1), 100), off = Math.max(Number(offset) || 0, 0);
+  const where = [], args = [];
+  if (q) { where.push("(instr(lower(old_path), lower(?)) > 0)"); args.push(String(q)); }
+  if (state === 'restored') where.push('restored_at IS NOT NULL');
+  else if (state === 'converted') where.push('restored_at IS NULL AND purged_at IS NULL AND kept_path IS NOT NULL');   // the original is still kept
+  else if (state === 'final') where.push('restored_at IS NULL AND (purged_at IS NOT NULL OR kept_path IS NULL)');
+  const w = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const total = db.prepare(`SELECT COUNT(*) AS n FROM image_conversions ${w}`).get(...args).n;
+  const items = db.prepare(`SELECT * FROM image_conversions ${w} ORDER BY id DESC LIMIT ? OFFSET ?`).all(...args, lim, off).map((r) => {
+    const restored = Boolean(r.restored_at), keptNow = Boolean(r.kept_path && !r.purged_at && !restored && fs.existsSync(r.kept_path));
+    return {
+      id: r.id, ...whose(restored ? r.old_path : r.new_path), file: path.basename(r.old_path), old_bytes: r.old_bytes, new_bytes: r.new_bytes,
+      saving_pct: r.old_bytes ? Math.round(100 - (100 * r.new_bytes) / r.old_bytes) : 0, quality: r.quality, converted_at: r.converted_at,
+      state: restored ? 'restored' : keptNow ? 'converted' : 'final', can_compare: keptNow
+    };
+  });
+  return { total, offset: off, limit: lim, items };
+}
+
+/** The picture before ('original', only while it is kept) or after ('webp') of one journal row. */
+export function conversionFile(id, kind) {
+  const r = db.prepare('SELECT * FROM image_conversions WHERE id = ?').get(Number(id));
+  if (!r) return null;
+  const file = kind === 'original' ? (r.restored_at ? r.old_path : r.kept_path) : (r.restored_at ? null : r.new_path);
+  return file && fs.existsSync(file) ? path.resolve(file) : null;
+}

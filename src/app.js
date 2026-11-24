@@ -200,6 +200,18 @@ export function createApp() {
     const j = await import('./lib/webpjob.js');
     try { res.json(await j.estimate()); } catch (err) { res.status(err.status || 500).json({ error: err.message }); }
   });
+  api.get('/admin/images/convert/log', requireAuth, requireAdmin, async (req, res) => {
+    const j = await import('./lib/webpjob.js');
+    res.json(j.conversionLog({ offset: req.query.offset, limit: req.query.limit, q: String(req.query.q || '').slice(0, 100), state: String(req.query.state || 'all') }));
+  });
+  api.get('/admin/images/convert/log/:id/:kind', requireAuth, requireAdmin, async (req, res) => {
+    const j = await import('./lib/webpjob.js');
+    if (!['original', 'webp'].includes(req.params.kind)) return res.status(404).json({ error: 'No such picture' });
+    const file = j.conversionFile(req.params.id, req.params.kind);
+    if (!file) return res.status(404).json({ error: req.params.kind === 'original' ? 'The original is no longer kept' : 'No such picture' });
+    res.set('Cache-Control', 'private, no-store');
+    res.sendFile(file);
+  });
   api.post('/admin/images/convert/run', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); req.auditDetail = { forced: true }; res.json(j.startJob({ forced: true, limit: Number(req.body?.limit) || 0 })); });
   api.post('/admin/images/convert/remove-originals', requireAuth, requireAdmin, async (req, res) => {
     const j = await import('./lib/webpjob.js');

@@ -189,3 +189,46 @@ test('Keep until I remove them: nothing is purged automatically, and a button re
   // back to days
   assert.equal((await call('/api/admin/images/convert', { method: 'PUT', body: { keep_forever: false } })).body.keep_forever, false);
 });
+
+test('the converted-pictures list names the game and picture, and lets the admin compare before and after', async () => {
+  const f = path.join(COVER_DIR, 'report-me.png'); const bytes = await noisy(520, 720, 140).png().toBuffer(); fs.writeFileSync(f, bytes);
+  addRom('Report Me', 'wr1', f);
+  await call('/api/admin/images/convert/run', { method: 'POST', body: {} }); await job.jobIdle();
+  const log = await call('/api/admin/images/convert/log?q=report-me');
+  assert.equal(log.status, 200); assert.equal(log.body.total, 1);
+  const it = log.body.items[0];
+  assert.equal(it.title, 'Report Me'); assert.equal(it.kind, 'cover'); assert.equal(it.list, 'ROM Library'); assert.equal(it.platform, 'Super Nintendo');
+  assert.equal(it.state, 'converted'); assert.equal(it.can_compare, true); assert.ok(it.saving_pct > 20 && it.old_bytes === bytes.length);
+  // before and after
+  const before = await call(`/api/admin/images/convert/log/${it.id}/original`);
+  assert.equal(before.status, 200); assert.ok(before.body.equals(bytes), 'the original, byte for byte');
+  const now = await call(`/api/admin/images/convert/log/${it.id}/webp`);
+  assert.equal((await sharp(now.body).metadata()).format, 'webp');
+  // the state filter and paging
+  const all = await call('/api/admin/images/convert/log?limit=2');
+  assert.equal(all.body.items.length, 2); assert.ok(all.body.total > 2);
+  assert.ok((await call('/api/admin/images/convert/log?state=converted&limit=100')).body.items.every((i) => i.state === 'converted'));
+  assert.ok((await call('/api/admin/images/convert/log?state=final&limit=100')).body.items.every((i) => i.state === 'final'), 'pictures whose original is gone are final');
+  assert.ok((await call('/api/admin/images/convert/log?q=no-such-file')).body.total === 0);
+  // admin only
+  for (const p of ['/api/admin/images/convert/log', `/api/admin/images/convert/log/${it.id}/original`]) assert.equal((await call(p, { token: memberTok })).status, 403, p);
+  assert.equal((await call(`/api/admin/images/convert/log/${it.id}/other`)).status, 404);
+  // once the original is removed there is nothing to compare, and the list says so
+  await call('/api/admin/images/convert/remove-originals', { method: 'POST' });
+  assert.equal((await call(`/api/admin/images/convert/log/${it.id}/original`)).status, 404);
+  const after = (await call('/api/admin/images/convert/log?q=report-me')).body.items[0];
+  assert.equal(after.state, 'final'); assert.equal(after.can_compare, false);
+  // a put-back picture is listed as put back
+  const f2 = path.join(COVER_DIR, 'report-two.png'); fs.writeFileSync(f2, await noisy(520, 720, 60).png().toBuffer()); addRom('Report Two', 'wr2', f2);
+  await call('/api/admin/images/convert/run', { method: 'POST', body: {} }); await job.jobIdle();
+  await call('/api/admin/images/convert/restore', { method: 'POST' });
+  const back = (await call('/api/admin/images/convert/log?q=report-two')).body.items[0];
+  assert.equal(back.state, 'restored'); assert.equal(back.title, 'Report Two');
+});
+
+test('the progress bar and the list are wired into the Pictures panel', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  for (const id of ['imgc-box', 'imgc-bar', 'imgc-pct', 'imgc-log-box', 'imgc-compare']) assert.ok(html.includes(`id="${id}"`), id);
+  assert.ok(html.indexOf('id="imgc-msg"') < html.indexOf('id="imgc-status"'), 'the status box sits below the buttons');
+  assert.match(app, /function loadImageLog\(\)/); assert.match(app, /about \$\{span\(left\)\} left/);
+});

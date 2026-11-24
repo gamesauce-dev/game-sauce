@@ -4466,6 +4466,35 @@ async function loadVersionLine() {
 
 /* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
 let imgcTimer = null;
+const imgLog = { offset: 0, limit: 25, total: 0 };
+/** The converted pictures, a page at a time: which game, which picture, the sizes, and whether the original is still there to compare. */
+async function loadImageLog() {
+  const list = $('#imgc-log-list'); if (!list) return;
+  const q = $('#imgc-log-q').value.trim(), state = $('#imgc-log-state').value;
+  const r = await api(`/admin/images/convert/log?offset=${imgLog.offset}&limit=${imgLog.limit}&state=${encodeURIComponent(state)}&q=${encodeURIComponent(q)}`);
+  imgLog.total = r.total;
+  const kb = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+  const label = { converted: 'Converted, original kept', final: 'Converted, original gone', restored: 'Put back' };
+  list.innerHTML = r.items.length
+    ? `<table><thead><tr><th>Game</th><th>Picture</th><th class="num">Before</th><th class="num">After</th><th class="num">Saved</th><th>State</th><th></th></tr></thead><tbody>${r.items.map((i) => `<tr>
+        <td>${esc(i.title)}${i.platform ? ` <span class="hint">${esc(i.platform)}${i.list ? `, ${esc(i.list)}` : ''}</span>` : ''}<div class="hint">${esc(i.file)}</div></td>
+        <td>${esc(i.kind)}</td><td class="num">${kb(i.old_bytes)}</td><td class="num">${i.state === 'restored' ? '' : kb(i.new_bytes)}</td><td class="num">${i.state === 'restored' ? '' : `${i.saving_pct}%`}</td>
+        <td>${esc(label[i.state] || i.state)}<div class="hint">${esc(i.converted_at ? new Date(`${String(i.converted_at).replace(' ', 'T')}Z`).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '')}${i.quality ? `, quality ${i.quality}` : ''}</div></td>
+        <td>${i.can_compare ? `<button type="button" class="btn btn-sm" data-imgc-cmp="${i.id}" data-title="${esc(i.title)}" data-before="${i.old_bytes}" data-after="${i.new_bytes}">Compare</button>` : ''}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="hint">Nothing here yet.</p>';
+  const from = r.total ? r.offset + 1 : 0, to = Math.min(r.offset + r.items.length, r.total);
+  $('#imgc-log-count').textContent = `${from.toLocaleString()} to ${to.toLocaleString()} of ${r.total.toLocaleString()}`;
+  $('#imgc-log-prev').disabled = r.offset <= 0; $('#imgc-log-next').disabled = r.offset + r.items.length >= r.total;
+  $$('[data-imgc-cmp]', list).forEach((b) => b.addEventListener('click', () => {
+    const id = b.dataset.imgcCmp;
+    $('#imgc-cmp-title').textContent = b.dataset.title;
+    $('#imgc-cmp-orig').src = `/api/admin/images/convert/log/${id}/original?t=${Date.now()}`;
+    $('#imgc-cmp-webp').src = `/api/admin/images/convert/log/${id}/webp?t=${Date.now()}`;
+    $('#imgc-cmp-orig-cap').textContent = `Before: ${kb(Number(b.dataset.before))}`;
+    $('#imgc-cmp-webp-cap').textContent = `Now (WebP): ${kb(Number(b.dataset.after))}`;
+    $('#imgc-compare').classList.remove('hidden'); $('#imgc-compare').scrollIntoView({ block: 'nearest' });
+  }));
+}
 async function loadImageConvert(fillForm = true) {
   const box = $('#imgc-status'); if (!box) return;
   clearTimeout(imgcTimer);
@@ -4483,6 +4512,18 @@ async function loadImageConvert(fillForm = true) {
   if (!s.running && s.limit_reached) lines.push(`The last run stopped after ${s.converted.toLocaleString()} pictures, as asked.`);
   lines.push(`In total: ${s.converted_total.toLocaleString()} pictures converted, ${mb(s.before_total)} MB became ${mb(s.after_total)} MB (${mb(s.saved_total)} MB saved). ${s.originals_kept.toLocaleString()} originals are being kept (${mb(s.originals_kept_bytes)} MB${s.keep_forever ? ', until you remove them' : `, each removed ${s.keep_days} days after its conversion`}).`);
   box.textContent = lines.join(' ');
+  // The progress bar: a trial counts toward its limit, a full run toward every picture; the time left is worked out from the pace so far.
+  const bar = $('#imgc-progress');
+  if (s.running) {
+    const den = s.limit || s.total, num = s.limit ? s.converted : s.done;
+    const pct = den ? Math.min(100, Math.round((100 * num) / den)) : 0;
+    const secs = s.started_at ? (Date.now() - new Date(s.started_at).getTime()) / 1000 : 0;
+    const left = num > 0 && secs > 3 ? Math.round((secs / num) * (den - num)) : null;
+    const span = (n) => (n >= 3600 ? `${Math.floor(n / 3600)} h ${Math.round((n % 3600) / 60)} min` : n >= 60 ? `${Math.round(n / 60)} min` : `${n} s`);
+    bar.classList.remove('hidden'); $('#imgc-bar').value = pct;
+    $('#imgc-pct').textContent = `${pct}%${left !== null ? `, about ${span(left)} left` : ''}`;
+  } else bar.classList.add('hidden');
+  if (!s.running && $('#imgc-log-box') && !$('#imgc-log-box').classList.contains('hidden')) loadImageLog().catch(() => {});
   $('#imgc-run').disabled = s.running; $('#imgc-restore').disabled = s.running; $('#imgc-remove').disabled = s.running || !s.originals_kept;
   if (!$('#imgc-save').dataset.bound) {
     $('#imgc-save').dataset.bound = '1';
@@ -4500,6 +4541,18 @@ async function loadImageConvert(fillForm = true) {
       try { await api('/admin/images/convert/run', { method: 'POST', body: JSON.stringify({ limit: Number($('#imgc-limit').value) || 0 }) }); say(''); } catch (err) { toast(err.message, true); }
       loadImageConvert(false);
     });
+    $('#imgc-log-toggle').addEventListener('click', () => {
+      const box = $('#imgc-log-box'), open = box.classList.toggle('hidden') === false;
+      $('#imgc-log-toggle').textContent = open ? 'Hide the converted pictures' : 'Show the converted pictures';
+      if (open) { imgLog.offset = 0; loadImageLog().catch((err) => toast(err.message, true)); }
+    });
+    let logTimer = null;
+    const logAgain = () => { imgLog.offset = 0; $('#imgc-compare').classList.add('hidden'); loadImageLog().catch(() => {}); };
+    $('#imgc-log-q').addEventListener('input', () => { clearTimeout(logTimer); logTimer = setTimeout(logAgain, 300); });
+    $('#imgc-log-state').addEventListener('change', logAgain);
+    $('#imgc-log-prev').addEventListener('click', () => { imgLog.offset = Math.max(0, imgLog.offset - imgLog.limit); loadImageLog().catch(() => {}); });
+    $('#imgc-log-next').addEventListener('click', () => { imgLog.offset += imgLog.limit; loadImageLog().catch(() => {}); });
+    $('#imgc-cmp-close').addEventListener('click', () => $('#imgc-compare').classList.add('hidden'));
     $('#imgc-remove').addEventListener('click', async () => {
       const ok = await confirmDialog({ title: 'Remove the kept originals?', body: `${s.originals_kept.toLocaleString()} original pictures (${mb(s.originals_kept_bytes)} MB) will be taken away for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Remove them', danger: true });
       if (!ok) return;

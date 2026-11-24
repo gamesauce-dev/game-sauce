@@ -6,6 +6,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Added
 
+- **A report and a progress bar for the picture conversion (Settings > Maintenance > Pictures).** The run's figures now sit in a shaded box of their own below the buttons, with a progress bar, the percentage and a time-left estimate while it runs (a trial counts toward its "Stop after" limit). **Show the converted pictures** lists every conversion: the game and which picture (cover, spine, disc ...), before and after sizes, the saving, the quality, when, and whether the original is still kept, with a search by file name and a filter (original kept, original gone, put back). **Compare** shows the picture before and after side by side at 100% size for as long as the original is kept.
+
+### Added
+
 - **Trial runs and keeping the originals for good (Settings > Maintenance > Pictures).** Run now has a **Stop after N pictures** box, so a first run can convert a few hundred pictures for you to look at before the rest (Put the originals back undoes them). The originals can now be kept **until you remove them** instead of for a number of days, and **Remove the kept originals** deletes them on request (it says how many and how much space, and asks first; after that those conversions are final).
 
 ### Changed
