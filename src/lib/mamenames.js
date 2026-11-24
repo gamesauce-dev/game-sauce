@@ -122,7 +122,7 @@ export function applyMameNames(romId = null) {
     WHERE (lower(r.filename) LIKE '%.zip' OR lower(r.filename) LIKE '%.7z') ${romId ? 'AND r.id = ?' : ''}
   `).all(...(romId ? [romId] : [])).filter((r) => ARCADE_ROMSET.has(r.slug) || isSetFamily(r.slug));
   const find = db.prepare('SELECT * FROM mame_names WHERE name = ?');
-  // title is the short name and long_title the full one, as the list gives it. A title a provider or the person set is left alone; the long name is separate, so it is always kept.
+  // title is the short name and long_title the full one, as the list gives it. A title the person typed is left alone on every platform, and one a provider set on every other arcade platform; the long name is separate, so it is always kept.
   const upd = db.prepare(`UPDATE roms SET title = ?, sort_title = ?, long_title = ?, release_year = COALESCE(?, release_year),
     developer = COALESCE(developer, ?), meta_source = 'mame-list', updated_at = datetime('now') WHERE id = ?`);
   const setLong = db.prepare("UPDATE roms SET long_title = ?, updated_at = datetime('now') WHERE id = ? AND COALESCE(long_title, '') <> COALESCE(?, '')");
@@ -136,7 +136,7 @@ export function applyMameNames(romId = null) {
       const short = shortName(n.title);
       const long = short !== String(n.title || '').trim() ? String(n.title).trim() : null;
       if (n.isbios || n.isdevice) { if (flagSystem.run(r.id).changes) system++; }   // a BIOS or device set is not a game: System, so it is hidden
-      if (r.slug !== 'mame' && r.meta_source && r.meta_source !== 'filename' && r.meta_source !== 'mame-list') { setLong.run(long, r.id, long); continue; }   // another arcade platform keeps a title a provider or the person gave it
+      if (r.meta_source === 'manual' || (r.slug !== 'mame' && r.meta_source && r.meta_source !== 'filename' && r.meta_source !== 'mame-list')) { setLong.run(long, r.id, long); continue; }   // another arcade platform keeps a title a provider or the person gave it
       upd.run(short, sortTitle(short), long, n.year, n.manufacturer, r.id);
       matched++;
     }

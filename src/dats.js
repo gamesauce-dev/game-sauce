@@ -333,7 +333,9 @@ export function applyDatMatch(rom, { force = false } = {}) {
   // Once a DAT has supplied a title we treat it as confirmed. Renaming again on a
   // later rematch would silently undo a title the user edited by hand.
   const titleFromFilename = ['filename', 'seed', null, undefined].includes(rom.meta_source);
-  const rename = force || (titleFromFilename && !rom.dat_status);
+  // A title the person typed ('manual') or a provider gave is never replaced, not even by a forced re-match; only a title the app derived itself can be.
+  const ours = titleFromFilename || ['dat', 'mame-list'].includes(rom.meta_source);
+  const rename = ours && (force || (titleFromFilename && !rom.dat_status));
 
   db.prepare(`
     UPDATE roms SET

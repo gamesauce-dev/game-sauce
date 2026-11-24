@@ -1161,6 +1161,8 @@ router.patch('/:id', (req, res) => {
   if (req.body.title !== undefined && req.body.title) {
     sets.push('sort_title = @sort_title');
     params.sort_title = sortTitle(req.body.title);
+    // A title the person typed is theirs: a DAT import, a re-match or the MAME list never replaces it.
+    if (String(req.body.title) !== String(existing.title)) sets.push("meta_source = 'manual'");
   }
 
   if (req.body.platform !== undefined && (PLATFORM_SLUGS.has(req.body.platform) || db.prepare('SELECT 1 FROM platforms WHERE slug = ?').get(String(req.body.platform)))) {
