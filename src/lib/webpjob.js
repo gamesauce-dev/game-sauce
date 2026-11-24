@@ -277,11 +277,33 @@ function whose(p) {
   return { title: path.basename(p), platform: '', kind: 'picture', list: '' };
 }
 
-/** A page of the journal, newest first. q matches the file name; state: all | converted | restored | final (original removed). */
+/** Every stored picture path that belongs to a game whose name contains q (ROM, its files, Physical, Digital), put in a temporary table the query can join. */
+function pathsOfGamesNamed(q) {
+  const like = String(q).toLowerCase();
+  db.exec('CREATE TEMP TABLE IF NOT EXISTS _imgq (p TEXT PRIMARY KEY)'); db.exec('DELETE FROM _imgq');
+  const add = db.prepare('INSERT OR IGNORE INTO _imgq (p) VALUES (?)');
+  const titled = "(instr(lower(r.title), @q) > 0 OR instr(lower(COALESCE(r.long_title, '')), @q) > 0)";
+  const rows = [
+    ...db.prepare(`SELECT r.cover_path AS p FROM roms r WHERE r.cover_path IS NOT NULL AND ${titled}`).all({ q: like }),
+    ...db.prepare(`SELECT f.path AS p FROM rom_files f JOIN roms r ON r.id = f.rom_id WHERE ${titled}`).all({ q: like }),
+    ...['cover', 'spine', 'disc', 'back'].flatMap((c) => db.prepare(`SELECT ${c}_path AS p FROM physical_games WHERE ${c}_path IS NOT NULL AND instr(lower(title), @q) > 0`).all({ q: like })),
+    ...['digital_details', 'digital_user_meta'].flatMap((t) => db.prepare(`SELECT m.cover_path AS p FROM ${t} m JOIN digital_games g ON g.store = m.store AND g.app_id = m.app_id WHERE m.cover_path IS NOT NULL AND instr(lower(g.name), @q) > 0`).all({ q: like }))
+  ];
+  db.transaction(() => { for (const r of rows) add.run(r.p); })();
+  // a provider's picture is named inside the game's media list (JSON)
+  for (const r of db.prepare(`SELECT r.provider_media AS m FROM roms r WHERE r.provider_media IS NOT NULL AND r.provider_media <> '' AND ${titled}`).all({ q: like })) {
+    try { for (const m of Object.values(JSON.parse(r.m))) if (m && typeof m === 'object' && m.path) add.run(m.path); } catch { /* not JSON */ }
+  }
+}
+
+/** A page of the journal, newest first. q matches the game's name (or long name) or the file name; state: all | converted | restored | final (original removed). */
 export function conversionLog({ offset = 0, limit = 25, q = '', state = 'all' } = {}) {
   const lim = Math.min(Math.max(Number(limit) || 25, 1), 100), off = Math.max(Number(offset) || 0, 0);
   const where = [], args = [];
-  if (q) { where.push("(instr(lower(old_path), lower(?)) > 0)"); args.push(String(q)); }
+  if (q) {
+    pathsOfGamesNamed(q);
+    where.push('(instr(lower(old_path), lower(?)) > 0 OR old_path IN (SELECT p FROM _imgq) OR new_path IN (SELECT p FROM _imgq))'); args.push(String(q));
+  }
   if (state === 'restored') where.push('restored_at IS NOT NULL');
   else if (state === 'converted') where.push('restored_at IS NULL AND purged_at IS NULL AND kept_path IS NOT NULL');   // the original is still kept
   else if (state === 'final') where.push('restored_at IS NULL AND (purged_at IS NOT NULL OR kept_path IS NULL)');

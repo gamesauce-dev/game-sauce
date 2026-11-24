@@ -210,6 +210,14 @@ test('the converted-pictures list names the game and picture, and lets the admin
   assert.ok((await call('/api/admin/images/convert/log?state=converted&limit=100')).body.items.every((i) => i.state === 'converted'));
   assert.ok((await call('/api/admin/images/convert/log?state=final&limit=100')).body.items.every((i) => i.state === 'final'), 'pictures whose original is gone are final');
   assert.ok((await call('/api/admin/images/convert/log?q=no-such-file')).body.total === 0);
+  // search by the game's name, not only the file's: partial, any case, covers its other pictures and the games that share a picture
+  const byName = async (q) => (await call(`/api/admin/images/convert/log?limit=100&q=${encodeURIComponent(q)}`)).body.items;
+  assert.deepEqual((await byName('REPORT m')).map((i) => i.title), ['Report Me'], 'by title, any case, partial');
+  assert.ok((await byName('shared a')).some((i) => i.kind === 'spine') && (await byName('shared a')).some((i) => i.kind === 'cover'), "a game's cover and its spine");
+  assert.ok((await byName('shared b')).some((i) => i.kind === 'cover'), 'the other game that shares the cover finds it too');
+  assert.ok((await byName('boxed')).some((i) => i.list === 'Physical'), 'a Physical game by its title');
+  assert.ok((await byName('media')).some((i) => i.kind === 'provider picture'), "a provider's picture by the game's title");
+  assert.equal((await byName('zzz no such game')).length, 0);
   // admin only
   for (const p of ['/api/admin/images/convert/log', `/api/admin/images/convert/log/${it.id}/original`]) assert.equal((await call(p, { token: memberTok })).status, 403, p);
   assert.equal((await call(`/api/admin/images/convert/log/${it.id}/other`)).status, 404);
