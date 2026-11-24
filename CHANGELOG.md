@@ -6,6 +6,14 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Added
 
+- **Trial runs and keeping the originals for good (Settings > Maintenance > Pictures).** Run now has a **Stop after N pictures** box, so a first run can convert a few hundred pictures for you to look at before the rest (Put the originals back undoes them). The originals can now be kept **until you remove them** instead of for a number of days, and **Remove the kept originals** deletes them on request (it says how many and how much space, and asks first; after that those conversions are final).
+
+### Changed
+
+- The Mac app's signing step now also signs the picture library's `.dylib`, which Apple's notarisation needs. The bundle build, the Docker build and the release checks now stop if the picture library (WebP) cannot load, instead of shipping a build without it.
+
+### Added
+
 - **Convert the stored pictures to WebP, on a schedule.** **Settings > Maintenance > Pictures > Convert the stored pictures** (admin) replaces the stored PNG and JPEG pictures with WebP at the chosen quality, overnight inside a time window you set (off until you switch it on) or when you press Run now. It only touches pictures inside the game-sauce storage folder, never files in your own folders, and replaces a picture only when the WebP is at least 10% smaller and decodes to the same size (a JPEG that is already squeezed hard is left as it is). Every original is moved to `image-originals` and kept for 1 to 90 days (default 14); **Put the originals back** undoes the whole conversion, and after that time the originals are removed and it is final. Every game, shelf entry and cover that pointed at a picture is updated together, including a cover shared by several games. **Estimate the saving** converts a sample in memory first and changes nothing. A converted picture still gets tile thumbnails. The preview now says so when a cover would come out bigger as WebP (a JPEG that is already well compressed can): that cover would be left alone.
 
 ### Added

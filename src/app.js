@@ -200,7 +200,12 @@ export function createApp() {
     const j = await import('./lib/webpjob.js');
     try { res.json(await j.estimate()); } catch (err) { res.status(err.status || 500).json({ error: err.message }); }
   });
-  api.post('/admin/images/convert/run', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); req.auditDetail = { forced: true }; res.json(j.startJob({ forced: true })); });
+  api.post('/admin/images/convert/run', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); req.auditDetail = { forced: true }; res.json(j.startJob({ forced: true, limit: Number(req.body?.limit) || 0 })); });
+  api.post('/admin/images/convert/remove-originals', requireAuth, requireAdmin, async (req, res) => {
+    const j = await import('./lib/webpjob.js');
+    if (j.jobStatus().running) return res.status(409).json({ error: 'A conversion is running: stop it first' });
+    const out = j.removeKeptOriginals(); req.auditDetail = out; res.json({ ...out, ...j.jobStatus() });
+  });
   api.post('/admin/images/convert/stop', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); res.json(j.stopJob()); });
   api.post('/admin/images/convert/restore', requireAuth, requireAdmin, async (req, res) => {
     const j = await import('./lib/webpjob.js');

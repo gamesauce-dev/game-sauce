@@ -102,6 +102,11 @@ if (fs.existsSync(prebuilds)) {
 const probe = spawnSync(path.join(stage, 'runtime', exe), ['-e', "import('better-sqlite3').then((m) => { new m.default(':memory:').prepare('select 1').get(); })"], { cwd: app, encoding: 'utf8' });
 if (probe.status !== 0) die('the bundled Node cannot load the database library:\n' + (probe.stderr || probe.stdout));
 log('the database library loads under the bundled Node');
+// The picture library (WebP copies and the stored-picture conversion) ships a ready-made file for each kind of computer too, installed by npm for this one only.
+// The app still works without it (pictures are sent as they are), but a bundle that silently lost WebP would be a surprise: make a tiny WebP under the bundled Node, or stop.
+const probeImg = spawnSync(path.join(stage, 'runtime', exe), ['-e', "import('sharp').then(async (m) => { const b = await m.default({ create: { width: 8, height: 8, channels: 3, background: '#336699' } }).webp().toBuffer(); if (b.length < 10) process.exit(2); })"], { cwd: app, encoding: 'utf8' });
+if (probeImg.status !== 0) die('the bundled Node cannot load the picture library (sharp):\n' + (probeImg.stderr || probeImg.stdout));
+log('the picture library makes a WebP under the bundled Node');
 
 // 3. Start files and a short read-me.
 const put = (file, text, mode = 0o644) => { fs.writeFileSync(path.join(stage, file), win ? text.replace(/\n/g, '\r\n') : text, { mode }); };

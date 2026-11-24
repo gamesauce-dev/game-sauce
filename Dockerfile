@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 # Install dependencies first for better layer caching.
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+# The picture library (WebP) has to load in this image, for amd64 and arm64: a build that cannot make a WebP stops here, not at the first customer.
+RUN node -e "import('sharp').then(async (m) => { const b = await m.default({ create: { width: 8, height: 8, channels: 3, background: '#336699' } }).webp().toBuffer(); if (b.length < 10) process.exit(2); console.log('sharp ok', m.default.versions.sharp); })"
 
 COPY public ./public
 COPY src ./src

@@ -151,3 +151,41 @@ test('originals are removed after the days chosen, and then the conversion is fi
   assert.equal(r.body.restored, 0); assert.ok(r.body.unavailable >= 5, 'nothing to put back once the originals are gone');
   assert.equal((await call(`/api/roms/${ids.a}/cover`)).type, 'image/webp', 'and the library still works');
 });
+
+test('a trial run stops after the number of pictures asked for', async () => {
+  const mk = async (n) => { const f = path.join(COVER_DIR, `trial-${n}.png`); fs.writeFileSync(f, await noisy(500, 700, 100 + n * 10).png().toBuffer()); addRom(`Trial ${n}`, `wt${n}`, f); return f; };
+  const t = [await mk(1), await mk(2), await mk(3)];
+  const r = await call('/api/admin/images/convert/run', { method: 'POST', body: { limit: 2 } });
+  assert.equal(r.status, 200); assert.equal(r.body.limit, 2);
+  await job.jobIdle();
+  const st = (await call('/api/admin/images/convert')).body;
+  assert.equal(st.converted, 2); assert.equal(st.limit_reached, true);
+  const done = t.filter((f) => fs.existsSync(f.replace(/\.png$/, '.webp')));
+  assert.equal(done.length, 2, 'exactly two were converted');
+  assert.equal(t.filter((f) => fs.existsSync(f)).length, 1, 'the third is still the original, waiting');
+  // the next run (no limit) carries on with the rest
+  await call('/api/admin/images/convert/run', { method: 'POST', body: {} }); await job.jobIdle();
+  const after = (await call('/api/admin/images/convert')).body;
+  assert.equal(after.converted, 1); assert.equal(after.limit, 0); assert.equal(after.limit_reached, false);
+  assert.ok(t.every((f) => !fs.existsSync(f)));
+});
+
+test('Keep until I remove them: nothing is purged automatically, and a button removes them on request', async () => {
+  const set = await call('/api/admin/images/convert', { method: 'PUT', body: { keep_forever: true, keep_days: 1 } });
+  assert.equal(set.body.keep_forever, true);
+  const kept = db.prepare('SELECT kept_path FROM image_conversions WHERE restored_at IS NULL AND purged_at IS NULL AND kept_path IS NOT NULL').all().map((r) => r.kept_path);
+  assert.ok(kept.length >= 3 && kept.every((k) => fs.existsSync(k)));
+  const p = job.purgeOriginals(Date.now() + 400 * 86400_000);
+  assert.equal(p.purged, 0); assert.equal(p.kept_by_choice, true);
+  assert.ok(kept.every((k) => fs.existsSync(k)), 'still there a year on');
+  assert.equal((await call('/api/admin/images/convert', { token: memberTok, method: 'POST' })).status !== 200, true);
+  assert.equal((await call('/api/admin/images/convert/remove-originals', { token: memberTok, method: 'POST' })).status, 403);
+  const rm = await call('/api/admin/images/convert/remove-originals', { method: 'POST' });
+  assert.equal(rm.status, 200); assert.equal(rm.body.removed, kept.length); assert.ok(rm.body.bytes > 0);
+  assert.ok(kept.every((k) => !fs.existsSync(k)));
+  assert.equal(rm.body.originals_kept, 0);
+  // the WebP pictures are untouched and the library still serves them
+  assert.equal((await call(`/api/roms/${ids.a}/cover`)).type, 'image/webp');
+  // back to days
+  assert.equal((await call('/api/admin/images/convert', { method: 'PUT', body: { keep_forever: false } })).body.keep_forever, false);
+});

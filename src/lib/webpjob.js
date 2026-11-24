@@ -17,7 +17,7 @@ import { inWindow } from './hashjob.js';
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MIN_SAVING = 0.10;
 export const MIN_KEEP_DAYS = 1, MAX_KEEP_DAYS = 90, DEFAULT_KEEP_DAYS = 14;
-const KEYS = { mode: 'images.convert_mode', start: 'images.convert_window_start', end: 'images.convert_window_end', keep: 'images.keep_days' };
+const KEYS = { mode: 'images.convert_mode', start: 'images.convert_window_start', end: 'images.convert_window_end', keep: 'images.keep_days', forever: 'images.keep_forever' };
 
 const getSetting = (k) => db.prepare('SELECT value FROM app_settings WHERE key = ?').get(k)?.value;
 const putSetting = (k, v, userId = null) => db.prepare(`INSERT INTO app_settings (key, value, encrypted, updated_by, updated_at) VALUES (?, ?, 0, ?, datetime('now'))
@@ -31,10 +31,12 @@ export function convertSettings() {
     mode: MODES.includes(mode) ? mode : 'off',
     window_start: HHMM.test(start || '') ? start : '02:00',
     window_end: HHMM.test(end || '') ? end : '06:00',
-    keep_days: Number.isInteger(keep) && keep >= MIN_KEEP_DAYS && keep <= MAX_KEEP_DAYS ? keep : DEFAULT_KEEP_DAYS
+    keep_days: Number.isInteger(keep) && keep >= MIN_KEEP_DAYS && keep <= MAX_KEEP_DAYS ? keep : DEFAULT_KEEP_DAYS,
+    keep_forever: getSetting(KEYS.forever) === '1'   // the originals stay until the admin removes them by hand
   };
 }
-export function saveConvertSettings({ mode, window_start, window_end, keep_days } = {}, userId = null) {
+export function saveConvertSettings({ mode, window_start, window_end, keep_days, keep_forever } = {}, userId = null) {
+  if (keep_forever !== undefined) putSetting(KEYS.forever, keep_forever ? '1' : '0', userId);
   if (mode !== undefined) { if (!MODES.includes(mode)) throw Object.assign(new Error('Choose off or overnight.'), { status: 400 }); putSetting(KEYS.mode, mode, userId); }
   for (const [k, v] of [[KEYS.start, window_start], [KEYS.end, window_end]]) {
     if (v === undefined) continue;
@@ -134,7 +136,7 @@ export async function convertOne(c, quality) {
 
 /* ───────── the job ───────── */
 
-const job = { running: false, stop: false, forced: false, total: 0, done: 0, converted: 0, skipped: 0, failed: 0, bytes_saved: 0, current: '', started_at: null, finished_at: null };
+const job = { running: false, stop: false, forced: false, limit: 0, limit_reached: false, total: 0, done: 0, converted: 0, skipped: 0, failed: 0, bytes_saved: 0, current: '', started_at: null, finished_at: null };
 let paused = false;
 const allowedNow = (forced) => forced || (convertSettings().mode === 'overnight' && (() => { const s = convertSettings(); return inWindow(s.window_start, s.window_end); })());
 
@@ -165,7 +167,7 @@ export async function estimate(sample = 30) {
   return { pictures: all.length, bytes: total, sampled: picked.length, would_convert_pct: picked.length ? Math.round((100 * ok) / picked.length) : 0, estimated_saving_bytes: Math.round(total * (1 - ratio)), estimated_saving_pct: Math.round(100 * (1 - ratio)), quality };
 }
 
-export function startJob({ forced = false } = {}) {
+export function startJob({ forced = false, limit = 0 } = {}) {
   if (job.running) return jobStatus();
   if (paused) { const s = convertSettings(); if (s.mode === 'overnight' && !inWindow(s.window_start, s.window_end)) paused = false; }
   if (paused && !forced) return jobStatus();
@@ -174,10 +176,12 @@ export function startJob({ forced = false } = {}) {
   const skipped = new Map(db.prepare('SELECT path, bytes FROM image_skips').all().map((r) => [r.path, r.bytes]));
   const list = candidates().filter((c) => skipped.get(c.path) !== c.bytes);   // what would not shrink last time is not tried again (until the file changes)
   if (!list.length) { Object.assign(job, { total: 0, done: 0, finished_at: new Date().toISOString() }); return jobStatus(); }
-  Object.assign(job, { running: true, stop: false, forced, total: list.length, done: 0, converted: 0, skipped: 0, failed: 0, bytes_saved: 0, current: '', started_at: new Date().toISOString(), finished_at: null });
+  const cap = Number.isInteger(Number(limit)) && Number(limit) > 0 ? Number(limit) : 0;   // a trial run: stop after this many pictures have been converted
+  Object.assign(job, { running: true, stop: false, forced, limit: cap, limit_reached: false, total: list.length, done: 0, converted: 0, skipped: 0, failed: 0, bytes_saved: 0, current: '', started_at: new Date().toISOString(), finished_at: null });
   (async () => {
     try {
       for (const c of list) {
+        if (job.limit && job.converted >= job.limit) { job.limit_reached = true; break; }
         if (job.stop || !allowedNow(job.forced)) break;   // stopped, or the window has closed: the rest waits for the next night
         job.current = path.basename(c.abs);
         const r = await convertOne(c, imageSettings().quality).catch(() => ({ ok: false, reason: 'error' }));
@@ -220,11 +224,22 @@ export function restoreAll() {
 
 /** Delete the kept originals that are older than the days the admin chose. Called once an hour or so; the WebP stays and the conversion is final. */
 export function purgeOriginals(now = Date.now()) {
-  const days = convertSettings().keep_days;
+  const { keep_days: days, keep_forever } = convertSettings();
+  if (keep_forever) return { purged: 0, kept_by_choice: true };   // the admin chose to remove them by hand
   const rows = db.prepare("SELECT id, kept_path FROM image_conversions WHERE restored_at IS NULL AND purged_at IS NULL AND kept_path IS NOT NULL AND converted_at <= datetime(?, 'unixepoch')").all(Math.floor(now / 1000) - days * 86400);
   let purged = 0;
   for (const r of rows) { try { fs.rmSync(r.kept_path, { force: true }); db.prepare("UPDATE image_conversions SET purged_at = datetime('now') WHERE id = ?").run(r.id); purged++; } catch { /* in use */ } }
   return { purged };
+}
+
+/** Remove every kept original now, whatever its age (the admin pressed the button). The WebP stays and those conversions become final. */
+export function removeKeptOriginals() {
+  const rows = db.prepare('SELECT id, kept_path FROM image_conversions WHERE restored_at IS NULL AND purged_at IS NULL AND kept_path IS NOT NULL').all();
+  let removed = 0, bytes = 0;
+  for (const r of rows) {
+    try { try { bytes += fs.statSync(r.kept_path).size; } catch { /* already gone */ } fs.rmSync(r.kept_path, { force: true }); db.prepare("UPDATE image_conversions SET purged_at = datetime('now') WHERE id = ?").run(r.id); removed++; } catch { /* in use */ }
+  }
+  return { removed, bytes };
 }
 
 export function startConvertScheduler(everyMs = 60_000) {

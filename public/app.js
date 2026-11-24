@@ -4474,19 +4474,21 @@ async function loadImageConvert(fillForm = true) {
   if (fillForm) {
     $$('[name="imgc-mode"]').forEach((r) => { r.checked = r.value === s.mode; });
     $('#imgc-from').value = s.window_start; $('#imgc-to').value = s.window_end; $('#imgc-keep').value = s.keep_days;
+    $$('[name="imgc-keep-mode"]').forEach((r) => { r.checked = r.value === (s.keep_forever ? 'forever' : 'days'); });
   }
   const lines = [];
-  if (s.running) lines.push(`Running: ${s.done.toLocaleString()} of ${s.total.toLocaleString()} pictures looked at (${s.converted.toLocaleString()} converted, ${s.skipped.toLocaleString()} left as they were, ${s.failed.toLocaleString()} failed), ${mb(s.bytes_saved)} MB saved so far${s.current ? `, now ${s.current}` : ''}.`);
+  if (s.running) lines.push(`Running${s.limit ? ` (a trial: stops after ${s.limit.toLocaleString()} converted)` : ''}: ${s.done.toLocaleString()} of ${s.total.toLocaleString()} pictures looked at (${s.converted.toLocaleString()} converted, ${s.skipped.toLocaleString()} left as they were, ${s.failed.toLocaleString()} failed), ${mb(s.bytes_saved)} MB saved so far${s.current ? `, now ${s.current}` : ''}.`);
   else if (s.mode === 'overnight') lines.push(`Scheduled ${s.window_start} to ${s.window_end} (server time now ${s.server_time}, ${s.server_tz}).${s.paused ? ' Stopped for now.' : ''}`);
   else lines.push('Not scheduled.');
-  lines.push(`In total: ${s.converted_total.toLocaleString()} pictures converted, ${mb(s.before_total)} MB became ${mb(s.after_total)} MB (${mb(s.saved_total)} MB saved). ${s.originals_kept.toLocaleString()} originals are being kept (${mb(s.originals_kept_bytes)} MB).`);
+  if (!s.running && s.limit_reached) lines.push(`The last run stopped after ${s.converted.toLocaleString()} pictures, as asked.`);
+  lines.push(`In total: ${s.converted_total.toLocaleString()} pictures converted, ${mb(s.before_total)} MB became ${mb(s.after_total)} MB (${mb(s.saved_total)} MB saved). ${s.originals_kept.toLocaleString()} originals are being kept (${mb(s.originals_kept_bytes)} MB${s.keep_forever ? ', until you remove them' : `, each removed ${s.keep_days} days after its conversion`}).`);
   box.textContent = lines.join(' ');
-  $('#imgc-run').disabled = s.running; $('#imgc-restore').disabled = s.running;
+  $('#imgc-run').disabled = s.running; $('#imgc-restore').disabled = s.running; $('#imgc-remove').disabled = s.running || !s.originals_kept;
   if (!$('#imgc-save').dataset.bound) {
     $('#imgc-save').dataset.bound = '1';
     const say = (m) => { $('#imgc-msg').textContent = m; };
     $('#imgc-save').addEventListener('click', async () => {
-      try { await api('/admin/images/convert', { method: 'PUT', body: JSON.stringify({ mode: ($$('[name="imgc-mode"]').find((r) => r.checked) || {}).value, window_start: $('#imgc-from').value, window_end: $('#imgc-to').value, keep_days: Number($('#imgc-keep').value) }) }); say(t('Saved.')); loadImageConvert(true); } catch (err) { say(err.message); toast(err.message, true); }
+      try { await api('/admin/images/convert', { method: 'PUT', body: JSON.stringify({ mode: ($$('[name="imgc-mode"]').find((r) => r.checked) || {}).value, window_start: $('#imgc-from').value, window_end: $('#imgc-to').value, keep_days: Number($('#imgc-keep').value), keep_forever: ($$('[name="imgc-keep-mode"]').find((r) => r.checked) || {}).value === 'forever' }) }); say(t('Saved.')); loadImageConvert(true); } catch (err) { say(err.message); toast(err.message, true); }
     });
     $('#imgc-estimate').addEventListener('click', async () => {
       say('Working it out…'); $('#imgc-estimate').disabled = true;
@@ -4495,8 +4497,14 @@ async function loadImageConvert(fillForm = true) {
     $('#imgc-run').addEventListener('click', async () => {
       const ok = await confirmDialog({ title: 'Convert the stored pictures now?', body: 'Every stored PNG and JPEG that shrinks by at least 10% is replaced with a WebP at the quality chosen above. The originals are kept for the number of days set here, and Put the originals back undoes it.', okLabel: 'Convert' });
       if (!ok) return;
-      try { await api('/admin/images/convert/run', { method: 'POST' }); say(''); } catch (err) { toast(err.message, true); }
+      try { await api('/admin/images/convert/run', { method: 'POST', body: JSON.stringify({ limit: Number($('#imgc-limit').value) || 0 }) }); say(''); } catch (err) { toast(err.message, true); }
       loadImageConvert(false);
+    });
+    $('#imgc-remove').addEventListener('click', async () => {
+      const ok = await confirmDialog({ title: 'Remove the kept originals?', body: `${s.originals_kept.toLocaleString()} original pictures (${mb(s.originals_kept_bytes)} MB) will be taken away for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Remove them', danger: true });
+      if (!ok) return;
+      try { const r = await api('/admin/images/convert/remove-originals', { method: 'POST' }); say(`${r.removed.toLocaleString()} originals removed, ${mb(r.bytes)} MB freed.`); } catch (err) { toast(err.message, true); }
+      loadImageConvert(true);
     });
     $('#imgc-stop').addEventListener('click', async () => { await api('/admin/images/convert/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadImageConvert(false); });
     $('#imgc-restore').addEventListener('click', async () => {
