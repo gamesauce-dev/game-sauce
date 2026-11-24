@@ -538,7 +538,7 @@ export function createApp() {
                p.short_name AS platform_short, p.badge AS platform_badge, p.accent AS platform_accent,
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id
-        WHERE r.hidden_all = 0 AND r.source_hidden = 0
+        WHERE r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${mine == null ? -1 : mine})
         ORDER BY r.created_at DESC LIMIT 24
       `).all().map((r) => ({ ...r, cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : null })),
       downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE kind = \'download\'').get().n,

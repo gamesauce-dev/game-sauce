@@ -1340,9 +1340,15 @@ async function bulkDeleteSelected() {
   }
 }
 
+/** A game just hidden leaves the Home rows (Recently added, Continue playing; Classic and Modern) without waiting for a reload. */
+function dropFromHomeRows(id) {
+  $$('#mh-recent .card, #mh-played .card, #recent-row .card, #played-row .card').forEach((c) => { if (String(c.dataset.rom) === String(id)) c.remove(); });
+}
+
 async function toggleHidden(id) {
   try {
     const { hidden } = await api(`/roms/${id}/hide`, { method: 'POST' });
+    if (hidden) dropFromHomeRows(id);
     toast(hidden ? (authState.user?.role === 'admin' ? 'Hidden (members will not see it either)' : 'Hidden from your view (others still see it)') : 'Back in your library');
     await loadLibrary();
     loadPlatforms();
@@ -1791,7 +1797,8 @@ async function openDetail(id) {
   });
 
   $('[data-act="hide"]', drawer).addEventListener('click', async () => {
-    await api(`/roms/${id}/hide`, { method: 'POST' });
+    const { hidden } = await api(`/roms/${id}/hide`, { method: 'POST' });
+    if (hidden) dropFromHomeRows(id);   // opened from Recently added or Continue playing: the tile goes at once
     closeDrawer();
     await loadLibrary();
     loadPlatforms();
