@@ -202,6 +202,9 @@ test('the converted-pictures list names the game and picture, and lets the admin
   // before and after
   const before = await call(`/api/admin/images/convert/log/${it.id}/original`);
   assert.equal(before.status, 200); assert.ok(before.body.equals(bytes), 'the original, byte for byte');
+  const small = await call(`/api/admin/images/convert/log/${it.id}/original?w=448`);
+  assert.equal(small.type, 'image/png'); assert.equal((await sharp(small.body).metadata()).width, 448, 'the compare window gets a tile-sized copy');
+  assert.ok(small.body.length < bytes.length, 'and it is lighter than the full file');
   const now = await call(`/api/admin/images/convert/log/${it.id}/webp`);
   assert.equal((await sharp(now.body).metadata()).format, 'webp');
   // the state filter and paging

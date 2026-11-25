@@ -1970,7 +1970,14 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .imgc-log-list th, .imgc-log-list td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line, #232833); vertical-align: top; }
 .imgc-log-list th { color: var(--muted, #9aa3b2); font-weight: 600; }
 .imgc-log-list .num { text-align: right; white-space: nowrap; }
-.imgc-compare { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line, #232833); }
+/* Before and after: a window over the page, each picture the size of a tile in the Library grid (about 14rem wide) */
+.imgc-compare { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .65); }
+.imgc-compare.hidden { display: none; }
+.imgc-cmp-card { max-width: min(100%, 38rem); max-height: 100%; overflow: auto; padding: 14px 16px; border: 1px solid var(--line-2, #2e3442); border-radius: var(--radius-sm, 8px); background: var(--panel, #15181f); box-shadow: var(--shadow); }
+.imgc-cmp-pair { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.imgc-cmp-pair figure { margin: 0; width: 14rem; }
+.imgc-cmp-pair img { display: block; width: 14rem; max-width: 100%; height: auto; max-height: 22rem; object-fit: contain; border: 1px solid var(--line, #232833); border-radius: 6px; background: #0b0d12; }
+.imgc-cmp-pair figcaption { font-size: 12px; margin-top: 6px; opacity: .9; display: flex; flex-direction: column; gap: 2px; }
 .imgc-progress progress { appearance: none; -webkit-appearance: none; border: 0; border-radius: 7px; overflow: hidden; background: var(--bg-2, #101218); }
 .imgc-progress progress::-webkit-progress-bar { background: var(--bg-2, #101218); border: 1px solid var(--line, #232833); border-radius: 7px; }
 .imgc-progress progress::-webkit-progress-value { background: var(--accent, #7c5cff); border-radius: 7px; }

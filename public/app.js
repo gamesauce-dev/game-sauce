@@ -4488,11 +4488,13 @@ async function loadImageLog() {
   $$('[data-imgc-cmp]', list).forEach((b) => b.addEventListener('click', () => {
     const id = b.dataset.imgcCmp;
     $('#imgc-cmp-title').textContent = b.dataset.title;
-    $('#imgc-cmp-orig').src = `/api/admin/images/convert/log/${id}/original?t=${Date.now()}`;
-    $('#imgc-cmp-webp').src = `/api/admin/images/convert/log/${id}/webp?t=${Date.now()}`;
+    const orig = `/api/admin/images/convert/log/${id}/original`, now = `/api/admin/images/convert/log/${id}/webp`;
+    // The picture is shown at the size of a tile (the server sends the full file; the browser scales it), with a link to the full size in a new tab.
+    $('#imgc-cmp-orig').src = `${orig}?w=448&t=${Date.now()}`; $('#imgc-cmp-webp').src = `${now}?w=448&t=${Date.now()}`;
+    $('#imgc-cmp-orig-open').href = orig; $('#imgc-cmp-webp-open').href = now;
     $('#imgc-cmp-orig-cap').textContent = `Before: ${kb(Number(b.dataset.before))}`;
     $('#imgc-cmp-webp-cap').textContent = `Now (WebP): ${kb(Number(b.dataset.after))}`;
-    $('#imgc-compare').classList.remove('hidden'); $('#imgc-compare').scrollIntoView({ block: 'nearest' });
+    $('#imgc-compare').classList.remove('hidden'); $('#imgc-cmp-close').focus({ preventScroll: true });
   }));
 }
 async function loadImageConvert(fillForm = true) {
@@ -4552,7 +4554,10 @@ async function loadImageConvert(fillForm = true) {
     $('#imgc-log-state').addEventListener('change', logAgain);
     $('#imgc-log-prev').addEventListener('click', () => { imgLog.offset = Math.max(0, imgLog.offset - imgLog.limit); loadImageLog().catch(() => {}); });
     $('#imgc-log-next').addEventListener('click', () => { imgLog.offset += imgLog.limit; loadImageLog().catch(() => {}); });
-    $('#imgc-cmp-close').addEventListener('click', () => $('#imgc-compare').classList.add('hidden'));
+    const closeCmp = () => { $('#imgc-compare').classList.add('hidden'); $('#imgc-cmp-orig').removeAttribute('src'); $('#imgc-cmp-webp').removeAttribute('src'); };
+    $('#imgc-cmp-close').addEventListener('click', closeCmp);
+    $('#imgc-compare').addEventListener('click', (e) => { if (e.target === $('#imgc-compare')) closeCmp(); });   // a click outside the card closes it
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#imgc-compare').classList.contains('hidden')) closeCmp(); });
     $('#imgc-remove').addEventListener('click', async () => {
       const ok = await confirmDialog({ title: 'Remove the kept originals?', body: `${s.originals_kept.toLocaleString()} original pictures (${mb(s.originals_kept_bytes)} MB) will be taken away for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Remove them', danger: true });
       if (!ok) return;

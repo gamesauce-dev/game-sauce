@@ -623,11 +623,14 @@
               <button class="btn btn-sm" id="imgc-log-next" type="button">Next</button>
             </div>
             <div id="imgc-log-list" class="imgc-log-list"></div>
-            <div id="imgc-compare" class="imgc-compare hidden">
-              <div class="img-prev-head"><b id="imgc-cmp-title"></b> <button class="btn btn-sm" id="imgc-cmp-close" type="button">Close</button></div>
-              <div class="img-prev-pair">
-                <figure><img id="imgc-cmp-orig" alt="The picture before" /><figcaption id="imgc-cmp-orig-cap">Before</figcaption></figure>
-                <figure><img id="imgc-cmp-webp" alt="The picture now, as WebP" /><figcaption id="imgc-cmp-webp-cap">Now</figcaption></figure>
+            <div id="imgc-compare" class="imgc-compare hidden" role="dialog" aria-modal="true" aria-label="Before and after">
+              <div class="imgc-cmp-card">
+                <div class="img-prev-head"><b id="imgc-cmp-title"></b> <span style="flex:1"></span> <button class="btn btn-sm" id="imgc-cmp-close" type="button">Close</button></div>
+                <p class="hint" style="margin:.2rem 0 .6rem">Shown the size of a tile in the Library grid. Open either one in full size in a new tab.</p>
+                <div class="imgc-cmp-pair">
+                  <figure><img id="imgc-cmp-orig" alt="The picture before" /><figcaption><span id="imgc-cmp-orig-cap">Before</span> <a id="imgc-cmp-orig-open" href="#" target="_blank" rel="noopener">Open full size</a></figcaption></figure>
+                  <figure><img id="imgc-cmp-webp" alt="The picture now, as WebP" /><figcaption><span id="imgc-cmp-webp-cap">Now</span> <a id="imgc-cmp-webp-open" href="#" target="_blank" rel="noopener">Open full size</a></figcaption></figure>
+                </div>
               </div>
             </div>
           </div>

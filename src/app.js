@@ -210,6 +210,10 @@ export function createApp() {
     const file = j.conversionFile(req.params.id, req.params.kind);
     if (!file) return res.status(404).json({ error: req.params.kind === 'original' ? 'The original is no longer kept' : 'No such picture' });
     res.set('Cache-Control', 'private, no-store');
+    // ?w=448: a small copy for the compare window (a lossless PNG, so both sides are scaled the same way and the only difference is the conversion); without it, the file itself
+    if (Number(req.query.w) === 448) {
+      try { const { getSharp } = await import('./lib/webp.js'); const sharp = await getSharp(); if (sharp) return res.type('image/png').send(await sharp(file, { failOn: 'none' }).resize({ width: 448, withoutEnlargement: true }).png().toBuffer()); } catch { /* the file itself below */ }
+    }
     res.sendFile(file);
   });
   api.post('/admin/images/convert/run', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); req.auditDetail = { forced: true }; res.json(j.startJob({ forced: true, limit: Number(req.body?.limit) || 0 })); });
