@@ -49,6 +49,8 @@ router.post('/fetch', async (req, res, next) => {
   try {
     const game = resolveGame(req);
     if (!game) return notFound(res);
+    // The same rule as /status's can_fetch: asking the video services about a Library game spends the owner's accounts, so only an admin does it.
+    if (String({ ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) }.kind || '') === 'rom' && req.user?.role !== 'admin') return res.status(403).json({ error: 'Only an admin can fetch videos for Library games.' });
     const r = await ensureVideo({ ...game, force: req.body?.force === true });
     if (r.status === 'disabled') return res.status(400).json({ error: 'No video source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)' });
     if (r.status === 'error') return res.status(502).json({ error: r.error });

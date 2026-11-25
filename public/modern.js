@@ -574,7 +574,7 @@ export function renderChips() {
   // 'whole' = every platform of that family is on, so the family chip is solid; 'part' = just some, so it is outlined
   const famState = (f) => { const sl = fams.get(f).map((p) => p.slug); const n = sl.filter((s) => picked.has(s)).length; return n === 0 ? '' : n === sl.length ? ' on whole' : ' on part'; };
   if (chipFamily && !fams.has(chipFamily)) chipFamily = null;
-  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const logos = useLogos(ctx.state());
   host.innerHTML = `
     <div class="chip-row chip-fams" role="tablist">

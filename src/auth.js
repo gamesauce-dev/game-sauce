@@ -290,6 +290,11 @@ export function loginCounters(username, ip) {
   ];
 }
 
+// Wrong guesses at the current password (on the change-password form) have a count of their own: someone holding a stolen session is stopped
+// after a few, and cannot use them to lock the owner out of signing in.
+const changeKey = (username) => `\u0001change:${String(username).toLowerCase()}`;
+export const passwordChangeCounters = (username) => [{ key: changeKey(username), max: MAX_FAILURES, lapses: true, clearedBySuccess: true }];
+
 function loginLockRemaining(key) {
   const row = db.prepare('SELECT locked_until FROM login_attempts WHERE key = ?').get(key);
   if (!row?.locked_until) return 0;
@@ -347,8 +352,8 @@ export function clearLoginFailures(counters) {
 
 /** Forget a username's failed-login records (any address): used when an admin resets a password. An address's own count stays. */
 export function clearLoginFailuresForUser(username) {
-  db.prepare("DELETE FROM login_attempts WHERE key = ? OR key LIKE ? ESCAPE '\\'")
-    .run(userKey(username), String(username).toLowerCase().replace(/[\\%_]/g, '\\$&') + '|%');
+  db.prepare("DELETE FROM login_attempts WHERE key = ? OR key = ? OR key LIKE ? ESCAPE '\\'")
+    .run(userKey(username), changeKey(username), String(username).toLowerCase().replace(/[\\%_]/g, '\\$&') + '|%');
 }
 
 /* ──────────────────────────── audit log ──────────────────────────── */

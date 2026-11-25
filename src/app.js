@@ -98,6 +98,7 @@ export function createApp() {
 
   // Public: health and the auth surface. Everything else needs a session.
   api.get('/health', (req, res) => {
+    if (req.user?.role !== 'admin') return res.json({ ok: true });   // anyone may ask whether it is up; the figures are the admin's
     const { roms } = db.prepare('SELECT COUNT(*) AS roms FROM roms').get();
     const users = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
     res.json({ ok: true, roms, users, uptime: Math.round(process.uptime()) });
@@ -355,6 +356,9 @@ export function createApp() {
   // evolve: new rows, corrected provider ids, extra extensions. Admins can
   // manage them here without editing source; every change takes effect
   // immediately because lookups read the DB each time.
+  // A platform's colour is put straight into the pages' styles, so it must be a colour and nothing else. Empty means the plain grey.
+  const NOT_A_COLOUR = 'The colour must look like #5e35b1';
+  const cleanAccent = (v) => { const t = String(v ?? '').trim(); return !t ? '#6b7280' : /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(t) ? t : null; };
   const PLATFORM_FIELDS = ['name', 'short_name', 'family', 'manufacturer', 'generation', 'accent', 'screenscraper_id', 'tgdb_id', 'extensions', 'icon', 'badge'];
 
   // A family is only a label that groups platforms (nothing in metadata lookups reads it). A name typed in a different case
@@ -515,12 +519,13 @@ export function createApp() {
       family: canonFamily(req.body?.family) || 'Others',
       manufacturer: String(req.body?.manufacturer || '').trim() || null,
       generation: req.body?.generation === '' || req.body?.generation == null ? null : Number(req.body.generation),
-      accent: String(req.body?.accent || '#6b7280').trim(),
+      accent: cleanAccent(req.body?.accent),
       screenscraper_id: req.body?.screenscraper_id === '' || req.body?.screenscraper_id == null ? null : Number(req.body.screenscraper_id),
       tgdb_id: req.body?.tgdb_id === '' || req.body?.tgdb_id == null ? null : Number(req.body.tgdb_id),
       extensions: exts.join(','),
       icon: ICON_TYPES.includes(String(req.body?.icon || '')) ? String(req.body.icon) : null
     };
+    if (row.accent === null) return res.status(400).json({ error: NOT_A_COLOUR });
     if (row.generation !== null && !Number.isFinite(row.generation)) return res.status(400).json({ error: 'generation must be a number' });
     if (row.screenscraper_id !== null && !Number.isFinite(row.screenscraper_id)) return res.status(400).json({ error: 'screenscraper_id must be a number' });
     if (row.tgdb_id !== null && !Number.isFinite(row.tgdb_id)) return res.status(400).json({ error: 'tgdb_id must be a number' });
@@ -552,6 +557,7 @@ export function createApp() {
         if (!Number.isFinite(v)) return res.status(400).json({ error: `${f} must be a number or empty` });
       }
       if ((f === 'manufacturer') && v === '') v = null;
+      if (f === 'accent') { v = cleanAccent(v); if (v === null) return res.status(400).json({ error: NOT_A_COLOUR }); }
       if (f === 'badge') { v = String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, 12); if (v === '') v = null; }   // the text on its badges; empty = the default
       if (f === 'family') v = canonFamily(v) || 'Others';
       if (f === 'icon') { v = v === '' || v == null ? null : String(v); if (v !== null && !ICON_TYPES.includes(v)) return res.status(400).json({ error: `icon must be one of: ${ICON_TYPES.join(', ')}` }); }
@@ -717,7 +723,9 @@ export function createApp() {
   app.use((err, req, res, next) => {
     const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : err.name === 'MulterError' ? 400 : err.status || 500;   // MulterError: an upload over a limit, the sender's doing
     if (status >= 500) console.error('[error]', err.message);
-    res.status(status).json({ error: err.message || 'Internal error' });
+    // A fault nobody planned for can name files or the database: the admin is told (it is in the server's log too), others only that something went wrong.
+    const unplanned = status >= 500 && !err.status && req.user?.role !== 'admin';
+    res.status(status).json({ error: unplanned ? 'Internal error' : err.message || 'Internal error' });
   });
 
   return app;

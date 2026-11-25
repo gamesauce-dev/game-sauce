@@ -41,11 +41,9 @@ export function originGuard({ trustProxy = false } = {}) {
     if (site === 'cross-site') {
       return res.status(403).json({ error: 'Blocked: this request came from another website.' });
     }
-    if (!origin || origin === 'null') {
-      // No Origin: a non-browser client, or an old browser. 'null' (sandboxed pages) is refused only
-      // when the browser also told us it is cross-site, handled above.
-      return next();
-    }
+    if (!origin) return next();   // No Origin: a non-browser client, or an old browser.
+    // 'null' is a page with no origin of its own (sandboxed, or opened from a file): let through only when the browser itself says it is this site.
+    if (origin === 'null' && site === 'same-origin') return next();
 
     let host = '';
     try { host = new URL(origin).host.toLowerCase(); } catch { /* malformed */ }

@@ -1,6 +1,6 @@
 // Small SVG / HTML charts for Settings > Reports. No library: each function returns a string of HTML. Colours come from the page's own variables (public/reports.css),
 // so they follow the light and dark themes. Every chart is plain markup with labels, so it reads without colour and works for a screen reader.
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (n) => Number(n || 0).toLocaleString();
 
 /** A card of ranked bars: the label inside the bar, the count at the right, a track behind. Shows the top `top` rows, or all of them when `all` is true.

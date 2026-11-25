@@ -53,6 +53,8 @@
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   };
+  // Anything stored with a save is written into the page as text, never as markup.
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmtDate = (s) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString();
   async function listSaves() {
     try { return (await (await fetch(api, { credentials: 'same-origin' })).json()).items || []; }
@@ -85,7 +87,7 @@
         row.className = 'slot';
         row.innerHTML = (s.has_screenshot ? '<img alt="" src="' + api + '/' + s.id + '/screenshot">' : '<div class="noshot"></div>') +
           '<div class="meta"><b>' + (i === 0 ? 'Latest — ' : '') + fmtDate(s.updated_at) + '</b>' +
-          Math.round(s.size_bytes / 1024) + ' KB' + (mismatch(s) ? '<div class="warn">⚠ ' + mismatch(s) + '</div>' : '') + '</div>';
+          Math.round(s.size_bytes / 1024) + ' KB' + (mismatch(s) ? '<div class="warn">⚠ ' + esc(mismatch(s)) + '</div>' : '') + '</div>';
         const b = document.createElement('button');
         b.textContent = 'Load'; if (i === 0) b.className = 'primary';
         b.onclick = () => {

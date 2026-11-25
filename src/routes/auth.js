@@ -2,7 +2,7 @@ import { uploadLimits } from '../lib/uploads.js';
 import {
   createSession, createUser, deleteUser, describeAudit, destroyAllSessions, destroySession,
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
-  audit, loginCounters, startLoginAttempt, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser, MAX_LOGIN_NAME
+  audit, loginCounters, startLoginAttempt, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser, MAX_LOGIN_NAME, passwordChangeCounters
 } from '../auth.js';
 import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload, arcadeVerifiedOnly, setArcadeVerifiedOnly } from '../lib/policy.js';
 import db from '../db.js';
@@ -20,7 +20,7 @@ function readCookie(req, name) {
   if (!raw) return null;
   for (const part of raw.split(';')) {
     const [k, ...v] = part.trim().split('=');
-    if (k === name) return decodeURIComponent(v.join('='));
+    if (k === name) { try { return decodeURIComponent(v.join('=')); } catch { return null; } }   // a mangled cookie is no cookie
   }
   return null;
 }
@@ -186,7 +186,7 @@ router.post('/login', async (req, res, next) => {
       const state = recordLoginFailure(counters);
       audit({ id: user?.id, username: user?.username || username }, 'login.failed', { ip });
       return res.status(401).json({
-        error: user?.disabled ? 'That account is disabled' : 'Invalid username or password',
+        error: ok && user?.disabled ? 'That account is disabled' : 'Invalid username or password',   // only to someone who knows the password
         attempts_remaining: state.remaining > 0 ? state.remaining : 0
       });
     }
@@ -224,9 +224,21 @@ router.post('/password', requireAuth, async (req, res, next) => {
     const current = String(req.body?.current_password || '');
     const next_ = String(req.body?.new_password || '');
 
-    if (!(await verifyPassword(current, user.password_hash))) {
-      return res.status(401).json({ error: 'Current password is incorrect' });
+    const counters = passwordChangeCounters(user.username);
+    const attempt = startLoginAttempt(counters);
+    if (attempt.wait) {
+      return res.status(429).json({ error: `Too many failed attempts. Try again in ${Math.ceil(attempt.wait / 60000)} minute(s).`, retry_after: Math.ceil(attempt.wait / 1000) });
     }
+    try {
+      if (!(await verifyPassword(current, user.password_hash))) {
+        recordLoginFailure(counters);
+        audit(req.user, 'password.change_failed', { ip: clientIp(req) });
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+    } finally {
+      attempt.done();
+    }
+    clearLoginFailures(counters);
 
     // setPassword drops all sessions; re-issue one of the same kind for this browser.
     const cur = db.prepare('SELECT persistent FROM sessions WHERE id = ?').get(req.user.session_id);

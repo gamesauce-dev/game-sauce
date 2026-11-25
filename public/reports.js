@@ -1,7 +1,7 @@
 // Settings > Reports (admin): the whole collection (ROM Library, Physical shelves, Digital lists) as cards of charts. The numbers come from GET /api/admin/reports.
 import { rankedCard, donutCard, stackedCard, columnsCard, sameGameCard } from './charts.js';
 
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (n) => Number(n || 0).toLocaleString();
 const open = new Set();   // the ranked cards that are showing all their rows
 let data = null, root = null, ctx = null, gen = null;

@@ -111,7 +111,7 @@ router.get('/latest/:platform', async (req, res) => {
   if (!entry) return res.status(404).json({ error: 'No recommendation for that platform yet' });
   if (!entry.github) return res.json({ entry, latest: null, reason: 'no GitHub repo tracked for this pick' });
 
-  const out = await fetchLatestRelease(entry.github, { manual: req.query.refresh === '1' });
+  const out = await fetchLatestRelease(entry.github, { manual: req.query.refresh === '1' && req.user?.role === 'admin' });   // only an admin can have GitHub asked again early
   if (out.missing) return res.json({ entry, latest: null, reason: out.missing });
   res.json({ entry, latest: out.payload, cached: Boolean(out.cached), stale: out.stale || null });
 });
