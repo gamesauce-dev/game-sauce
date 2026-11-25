@@ -110,8 +110,8 @@ router.delete('/games/:id/match', (req, res) => {
   try { res.json(clearMatch(me(req), req.params.id)); } catch (err) { fail(res, err); }
 });
 
-// Look up details and covers again for games that have none (retry: also the ones nothing was found for last time).
-router.post('/match', (req, res) => { res.json(startMatchJob({ retry: req.body?.retry === true })); });
+// Look up details and covers again for games that have none (retry: also your own that nothing was found for last time).
+router.post('/match', (req, res) => { res.json(startMatchJob({ retry: req.body?.retry === true, userId: me(req) })); });
 
 router.get('/cover/:id', (req, res) => {
   const file = physicalCoverPath(me(req), req.params.id);

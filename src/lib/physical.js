@@ -770,8 +770,9 @@ export async function fetchDisc(userId, id, { cacheImpl = cacheMedia, discImpl =
 }
 
 /* One background run at a time looks up every game (anyone's) that has no match yet. With retry: true, games tried before are asked again too
-   (for example after adding a provider key). */
-const job = { running: false, total: 0, done: 0, found: 0, again: false, retry: false };
+   (for example after adding a provider key): only the games of the person asking (userId), so nobody spends the providers' allowance on someone else's
+   shelf or undoes what they decided. Without a userId (code and tests, never a page) it means everyone's. */
+const job = { running: false, total: 0, done: 0, found: 0, again: false, retry: new Set() };
 export const matchJobStatus = () => ({ running: job.running, total: job.total, done: job.done, found: job.found });
 // Games with no match yet, and (when the LaunchBox database is there) matched games that have no spine picture yet, or (a disc case) no disc picture yet.
 // The picture checks are for matched games only: a game nothing was found for keeps no "spine looked for" date, and would otherwise be asked about on every run.
@@ -781,11 +782,20 @@ const pending = (retry) => db.prepare(`SELECT id, user_id, platform, meta_source
                  OR (platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND disc_path IS NULL${retry ? '' : ' AND disc_tried_at IS NULL'}))
           OR (meta_source IS NOT NULL AND ? = 1 AND platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND back_path IS NULL AND back_locked = 0${retry ? '' : ' AND back_tried_at IS NULL'})) ORDER BY id`).all(launchbox.enabled ? 1 : 0, launchbox.enabled && lbHasBacks() ? 1 : 0);
 
-export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl, discImpl, backImpl } = {}) {
-  if (job.running) { job.again = true; job.retry = job.retry || retry; return matchJobStatus(); }
-  const todo = pending(retry);
+// What a run has to do: what has never been tried (anyone's), and for each person who asked to look again, their own that were.
+const EVERYONE = 'everyone';
+function toLookUp(retry) {
+  const list = new Map(pending(false).map((g) => [g.id, g]));
+  if (retry.size) for (const g of pending(true)) if (retry.has(EVERYONE) || retry.has(g.user_id)) list.set(g.id, g);
+  return [...list.values()].sort((a, b) => a.id - b.id);
+}
+
+export function startMatchJob({ retry = false, userId, enrichImpl, cacheImpl, spineImpl, discImpl, backImpl } = {}) {
+  const again = retry ? [userId === undefined ? EVERYONE : Number(userId)] : [];
+  if (job.running) { job.again = true; for (const who of again) job.retry.add(who); return matchJobStatus(); }
+  const todo = toLookUp(new Set(again));
   if (!todo.length) return matchJobStatus();
-  Object.assign(job, { running: true, total: todo.length, done: 0, found: 0, again: false, retry: false });
+  Object.assign(job, { running: true, total: todo.length, done: 0, found: 0, again: false, retry: new Set() });
   (async () => {
     try {
       let list = todo;
@@ -802,8 +812,8 @@ export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl,
           } catch { /* one game must not stop the run */ }
           job.done++;
         }
-        list = job.again ? pending(job.retry) : [];
-        job.total += list.length; job.again = false; job.retry = false;
+        list = job.again ? toLookUp(job.retry) : [];
+        job.total += list.length; job.again = false; job.retry = new Set();
       }
     } finally { job.running = false; }
   })();

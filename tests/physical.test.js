@@ -331,6 +331,41 @@ test('clearing a match keeps the pictures you uploaded or imported, and removes 
   assert.equal(get().cover_path, null);
 });
 
+test('Look up again for the shelf asks only about your own games, also while a run is already going', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const annId = db.prepare("SELECT id FROM users WHERE username = 'ann'").get().id;
+  const put = (uid, title) => db.prepare("INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key, meta_tried_at) VALUES (?, 'snes', ?, ?, ?, '2020-01-01 00:00:00')").run(uid, title, title.toLowerCase(), title).lastInsertRowid;
+  const mine = put(adminId, 'Admin Unmatched'), hers = put(annId, 'Member Unmatched');
+  const asked = [];
+  const none = async () => null;
+  const stub = { enrichImpl: async ({ title }) => { asked.push(title); return null; }, cacheImpl: none, spineImpl: none, discImpl: none, backImpl: none };
+  phys.startMatchJob({ ...stub, retry: true, userId: annId }); await phys.matchJobIdle();
+  assert.deepEqual(asked, ['Member Unmatched']);
+  asked.length = 0; phys.startMatchJob({ ...stub, retry: true, userId: adminId }); await phys.matchJobIdle();
+  assert.deepEqual(asked, ['Admin Unmatched'], 'the admin too');
+  // a game nobody has looked up yet is still looked up, whoever's it is
+  db.prepare('UPDATE physical_games SET meta_tried_at = NULL WHERE id = ?').run(mine);
+  asked.length = 0; phys.startMatchJob({ ...stub, retry: true, userId: annId }); await phys.matchJobIdle();
+  assert.deepEqual(asked.sort(), ['Admin Unmatched', 'Member Unmatched']);
+  // pressed while a run is going: it joins the queue, still for that person only
+  db.prepare('UPDATE physical_games SET meta_tried_at = NULL WHERE id = ?').run(hers);
+  let release; const held = new Promise((r) => { release = r; });
+  asked.length = 0;
+  phys.startMatchJob({ ...stub, enrichImpl: async ({ title }) => { asked.push(title); await held; return null; } });
+  phys.startMatchJob({ retry: true, userId: adminId });
+  release(); await phys.matchJobIdle();
+  assert.deepEqual(asked.sort(), ['Admin Unmatched', 'Member Unmatched'], 'her one from the first run, then only the admin\'s again');
+  // and the button itself: pressed by the member, the admin's game is left alone
+  db.prepare("UPDATE physical_games SET meta_tried_at = '2020-01-01 00:00:00'").run();
+  const r = await call('/api/physical/match', { method: 'POST', token: annTok, body: { retry: true } });
+  assert.equal(r.status, 200);
+  await phys.matchJobIdle();
+  const tried = (id) => db.prepare('SELECT meta_tried_at FROM physical_games WHERE id = ?').get(id).meta_tried_at;
+  assert.equal(tried(mine), '2020-01-01 00:00:00', 'untouched');
+  assert.notEqual(tried(hers), '2020-01-01 00:00:00');
+});
+
 test('the shelf draws a real spine when there is one and the drawn spine otherwise', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css'), modern = read('public/modern.js');
   assert.match(ph, /class="ph-sp-art"/); assert.match(ph, /g\.has_spine \? ' has-art' : ''/); assert.match(ph, /function onSpineLoad\(e\)/);
