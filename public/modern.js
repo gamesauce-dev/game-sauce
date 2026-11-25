@@ -171,20 +171,37 @@ export function go(view, opts = {}) {
   // The pin itself is remembered, so it is there again when a game is opened in the Library.
   const keepPinned = view === 'library' && document.body.classList.contains('details-pinned');
   if (!keepPinned && !$('#drawer')?.classList.contains('hidden')) ctx.closeDrawer?.();
+  applyMview(view);
+  if (view === 'home') { showHome(); return; }
+  hideHome();
+  ctx.setView(view, opts);
+}
+
+/** What changes in the bar and the page when Modern shows a view: its tools, the ticker, which page button is lit, and what the page remembers for a refresh. */
+function applyMview(view) {
   retool(view);   // Library, Digital and Physical each have their tools in the bar (the ticker is for the other pages)
   if (view === 'library') { setTimeout(syncTools, 120); setTimeout(renderChips, 250); setTimeout(syncAz, 400); }
   refreshTicker(view === 'library');   // home: rebuild so the ticker starts again from the name
   document.body.dataset.mview = view;
   try { sessionStorage.setItem('gamesauce_mview', view); } catch { /* storage unavailable */ }
   $$('.mb-navbtn').forEach((b) => b.classList.toggle('is-on', b.dataset.mview === view));
-  if (view === 'home') { showHome(); return; }
+}
+
+let homeSwitch = false;   // Home asks the app for the Library underneath it: that is not a visit to the Library
+/**
+ * The app changed view by itself (a button on another page that opens the Library with a filter, Digital's "set up" link to Tools ...)
+ * without going through go(): bring Modern's bar, ticker and page rules along, or the Library shows up dressed as Classic (its home strips and overview, no library tools).
+ */
+export function syncView(view) {
+  if (!isModern() || homeSwitch || document.body.dataset.mview === view) return;
+  current = view;
   hideHome();
-  ctx.setView(view, opts);
+  applyMview(view);
 }
 export const currentView = () => current;
 
 function showHome() {
-  ctx.setView('library');           // keeps the library data and state in one place
+  homeSwitch = true; try { ctx.setView('library'); } finally { homeSwitch = false; }   // keeps the library data and state in one place
   document.body.dataset.mview = 'home';
   $('#modern-home')?.classList.remove('hidden');
   renderHome();

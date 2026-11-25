@@ -295,6 +295,7 @@ function setView(view, { restore = false } = {}) {
   }
   state.view = view;
   saveNav();
+  modern.syncView?.(view);   // Modern follows when the app opens a view by itself (Show orphans, a link to Tools ...)
   $$('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
   $$('.view').forEach((v) => v.classList.add('hidden'));
   $(`#view-${view}`).classList.remove('hidden');
