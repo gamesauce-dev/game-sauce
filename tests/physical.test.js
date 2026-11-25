@@ -280,6 +280,24 @@ test('with the LaunchBox database there, a game nothing was found for is still a
   } finally { Object.defineProperty(providers.launchbox, 'enabled', realEnabled); }
 });
 
+test('a cleared match stays cleared: the next lookup run leaves the game alone until it is asked for again', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const a = phys.addPhysical(adminId, { platform: 'ps3', title: 'Matched Wrongly' });
+  await phys.matchJobIdle();
+  await phys.applyMatch(adminId, a.id, { title: 'Matched Wrongly', publisher: 'Wrong One', source: 'stub' }, { cacheImpl: async () => null });
+  phys.clearMatch(adminId, a.id);
+  const asked = [];
+  const none = async () => null;
+  const stub = { enrichImpl: async ({ title }) => { asked.push(title); return { title, publisher: 'Wrong One', source: 'stub' }; }, cacheImpl: none, spineImpl: none, discImpl: none, backImpl: none };
+  phys.startMatchJob(stub); await phys.matchJobIdle();
+  assert.deepEqual(asked, []);
+  const row = () => db.prepare('SELECT meta_source, publisher FROM physical_games WHERE id = ?').get(a.id);
+  assert.deepEqual(row(), { meta_source: null, publisher: null });
+  phys.startMatchJob({ ...stub, retry: true }); await phys.matchJobIdle();
+  assert.deepEqual(asked, ['Matched Wrongly'], 'Look up again for the shelf still asks');
+});
+
 test('the shelf draws a real spine when there is one and the drawn spine otherwise', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css'), modern = read('public/modern.js');
   assert.match(ph, /class="ph-sp-art"/); assert.match(ph, /g\.has_spine \? ' has-art' : ''/); assert.match(ph, /function onSpineLoad\(e\)/);

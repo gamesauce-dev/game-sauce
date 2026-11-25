@@ -680,7 +680,8 @@ export function clearMatch(userId, id) {
   if (!r) throw Object.assign(new Error('That game is not on your shelf'), { status: 404 });
   for (const f of [r.cover_path, r.spine_path, r.disc_path, r.back_path]) dropCustomCover(f, 'physical-');
   db.prepare(`UPDATE physical_games SET developer = NULL, publisher = NULL, genre = NULL, description = NULL, players = NULL, rating = NULL, cover_url = NULL, cover_path = NULL, cover_locked = 0, spine_url = NULL, spine_path = NULL, spine_tried_at = NULL, spine_locked = 0, disc_url = NULL, disc_path = NULL, disc_tried_at = NULL, disc_locked = 0, back_url = NULL, back_path = NULL, back_tried_at = NULL, back_locked = 0, cover_ar = NULL, spine_ar = NULL,
-    meta_source = NULL, meta_synced_at = NULL, meta_tried_at = NULL, updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
+    meta_source = NULL, meta_synced_at = NULL, meta_tried_at = datetime('now'),   -- counts as looked up: the next run must not put the cleared match straight back
+    updated_at = datetime('now') WHERE id = ? AND user_id = ?`).run(r.id, userId);
   return getPhysical(userId, id);
 }
 
