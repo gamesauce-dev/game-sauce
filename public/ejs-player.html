@@ -21,6 +21,9 @@
   button { font: inherit; cursor: pointer; border: 1px solid #3a3a52; background: #22223a; color: #e8e8f0; border-radius: 6px; padding: 7px 12px; }
   button:hover { border-color: #ff3d68; }
   button.primary { background: #ff3d68; border-color: #ff3d68; color: #fff; }
+  button.pad-on { outline: 3px solid #fff; outline-offset: 2px; }   /* where the controller is */
+  .slot:has(button.pad-on) { border-color: #ff3d68; }
+  #picker .pad-help { margin: 10px 0 0; }
   #msg { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); background: #161622; border: 1px solid #2a2a3c;
          color: #e8e8f0; padding: 6px 12px; border-radius: 6px; font: 12.5px system-ui, sans-serif; z-index: 9; display: none; }
 </style>
@@ -127,6 +130,52 @@
     } catch { /* not kept this time */ }
   }
 
+  /* ── the controller on the list of save states: D-pad or left stick to move, A to choose, B for "Start new game" / "Cancel" ── */
+  // Which button is A follows the layout chosen in the app's settings, else the pad's name (as public/gamepad.js does).
+  function faceButtons(pad) {
+    let pref = null;
+    try { pref = localStorage.getItem('gamesauce_pad_layout'); } catch {}
+    const nintendo = pref === 'nintendo' || (pref !== 'xbox' && /nintendo|switch|joy-?con|057e/i.test(pad.id || ''));
+    return nintendo ? { A: 1, B: 0 } : { A: 0, B: 1 };
+  }
+  function padOnList(el) {
+    const buttons = [...el.querySelectorAll('button')];
+    let at = 0, shown = false, armed = false, before = {}, heldSince = 0;
+    const mark = () => {
+      buttons.forEach((b, i) => b.classList.toggle('pad-on', i === at));
+      buttons[at].scrollIntoView({ block: 'nearest' });
+    };
+    const read = () => {
+      if (!el.isConnected) return;   // the list has gone: stop watching
+      requestAnimationFrame(read);
+      const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find((p) => p && p.connected);
+      if (!pad) return;
+      const down = (i) => Boolean(pad.buttons[i] && (pad.buttons[i].pressed || pad.buttons[i].value > 0.5));
+      const face = faceButtons(pad), y = pad.axes[1] || 0;
+      const now = { up: down(12) || y < -0.6, down: down(13) || y > 0.6, a: down(face.A), b: down(face.B) };
+      if (!shown) {
+        shown = true; mark();
+        const help = document.createElement('p'); help.className = 'pad-help'; help.textContent = 'Controller: D-pad or stick to move, A to choose, B for "' + buttons[buttons.length - 1].textContent + '".';
+        el.appendChild(help);
+      }
+      // Whatever is still held from starting the game counts for nothing until it is let go.
+      if (!armed) { armed = !(now.up || now.down || now.a || now.b); before = now; return; }
+      const pressed = (k) => now[k] && !before[k];
+      const way = now.up ? -1 : now.down ? 1 : 0;
+      const repeat = way && heldSince && performance.now() - heldSince > 400;   // held: keeps moving
+      if (pressed('up') || pressed('down') || repeat) {
+        at = Math.max(0, Math.min(buttons.length - 1, at + way)); mark();
+        heldSince = performance.now() - (repeat ? 270 : 0);
+      }
+      if (!way) heldSince = 0;
+      const choose = pressed('a'), back = pressed('b');
+      before = now;
+      if (choose) buttons[at].click();
+      else if (back) buttons[buttons.length - 1].click();
+    };
+    requestAnimationFrame(read);
+  }
+
   /* ── picker: choose a state (start-up, or mid-game via Load State) ── */
   let picking = false;
   function pickState(states, { allowNew }) {
@@ -157,6 +206,7 @@
       n.onclick = () => done(null);
       el.appendChild(n);
       document.body.appendChild(el);
+      padOnList(el);
     });
   }
 
