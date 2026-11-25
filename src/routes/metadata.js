@@ -15,7 +15,8 @@ import { mameTitleTrusted } from '../lib/mamenames.js';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
+// Which accounts are set up, and their names, are the admin's business (the page only asks for them on the admin's settings screen).
+router.get('/', requireAdmin, (req, res) => {
   const counts = db.prepare(`
     SELECT COALESCE(meta_source, 'none') AS source, COUNT(*) AS count
     FROM roms GROUP BY meta_source
@@ -36,7 +37,7 @@ router.post('/launchbox/update', requireAdmin, (req, res) => {
 /* ────────────────── provider credentials (UI) ────────────────── */
 
 /** Current credential state. Secrets are masked, never returned. */
-router.get('/providers', (req, res) => {
+router.get('/providers', requireAdmin, (req, res) => {
   res.json({
     ...describeProviderConfig(),
     status: providerStatus(),
@@ -126,7 +127,7 @@ router.post('/providers/test', requireAdmin, async (req, res, next) => {
 });
 
 /** ScreenScraper account/quota probe — tells you how many requests are left today. */
-router.get('/screenscraper/account', async (req, res, next) => {
+router.get('/screenscraper/account', requireAdmin, async (req, res, next) => {
   try {
     if (!screenscraper.enabled) {
       return res.status(400).json({ error: 'Set all four ScreenScraper fields first: SS_DEV_ID, SS_DEV_PASSWORD, SS_USER, SS_PASSWORD' });
@@ -165,7 +166,7 @@ router.get('/platform-ids', requireAdmin, async (req, res, next) => {
  * Returns matched / mismatched / unknown ids so a stale systemeid is visible
  * instead of quietly returning the wrong game's metadata.
  */
-router.get('/screenscraper/systems', async (req, res, next) => {
+router.get('/screenscraper/systems', requireAdmin, async (req, res, next) => {
   try {
     const systems = await screenscraper.systemList();
     if (!systems) return res.status(400).json({ error: 'ScreenScraper is not configured or did not respond' });

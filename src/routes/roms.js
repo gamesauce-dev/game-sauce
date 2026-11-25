@@ -81,7 +81,15 @@ const SORTS = {
   '-size': 'r.size_bytes ASC'
 };
 
-function withTags(rows) {
+/* Where a game's files are on the server is the admin's business. Anyone else gets the record without folders and file paths: they still learn
+ * WHICH pictures it has (the pages draw from that), but not where any is kept. viewer: who the answer is for; leave it out and nothing private is sent. */
+function forViewer(rom, viewer) {
+  if (viewer?.role === 'admin') return rom;
+  const { source_path, source_root, cover_path, provider_media, ...rest } = rom;
+  return { ...rest, media: rest.media ? Object.fromEntries(Object.keys(rest.media).map((kind) => [kind, {}])) : rest.media };
+}
+
+function withTags(rows, viewer) {
   if (!rows.length) return rows;
   const ids = rows.map((r) => r.id);
   const placeholders = ids.map(() => '?').join(',');
@@ -107,7 +115,7 @@ function withTags(rows) {
     if (r.provider_media) {
       try { media = JSON.parse(r.provider_media); } catch { media = null; }
     }
-    return {
+    return forViewer({
       ...r,
       tags: byRom.get(r.id) || [],
       ...(own.get(r.id) || {}),
@@ -116,7 +124,7 @@ function withTags(rows) {
       // ?v= changes whenever the image file does, so a newly matched/uploaded cover shows at once
       // instead of the browser's day-long cached copy of the old one.
       cover_url: r.cover_path ? `/api/roms/${r.id}/cover?v=${encodeURIComponent(path.basename(r.cover_path))}` : r.cover_url
-    };
+    }, viewer);
   });
 }
 
@@ -164,16 +172,16 @@ async function applyProviderMedia(meta, sha1) {
   return { coverPath, mediaJson: Object.keys(out).length ? JSON.stringify(out) : null };
 }
 
-function romById(id, uid = null) {
+function romById(id, uid = null, viewer = null) {
   const row = db.prepare(`
     SELECT ${ROM_COLUMNS} FROM roms r
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
     WHERE r.id = @rid
   `).get({ rid: id, uid: uid ?? -1 });
-  const full = row ? withTags([row])[0] : null;
+  const full = row ? withTags([row], viewer)[0] : null;
   if (full) {
-    full.favourite_of = db.prepare('SELECT u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id = ? ORDER BY u.username').all(full.id).map((x) => x.username);
+    if (viewer?.role === 'admin') full.favourite_of = db.prepare('SELECT u.username FROM favorites f JOIN users u ON u.id = f.user_id WHERE f.rom_id = ? ORDER BY u.username').all(full.id).map((x) => x.username);
     full.files = romFiles(id);   // a spine, disc, back or manual the picture importer brought in
     // Cheap playability flag for the detail drawer: BIOS-free core exists?
     const core = playableCore(full.platform, full.release_year, full.play_override);
@@ -215,7 +223,7 @@ export async function applyMetadataRecord(id, meta, uid = null) {
     meta.players, meta.rating, meta.description,
     meta.cover_url, coverPath, mediaJson, meta.source, id
   );
-  return romById(id, uid);
+  return romById(id, uid, { role: 'admin' });   // only the admin's routes (and the server's own jobs) put a match on a Library game
 }
 
 /**
@@ -568,7 +576,7 @@ router.get('/', (req, res) => {
 
   // Cheap playability flag for every tile: BIOS-free core exists for the ROM's
   // platform? Guards the controller badge on covers + the detail Play button.
-  const out = withTags(rows).map((r) => {
+  const out = withTags(rows, req.user).map((r) => {
     const core = playableCore(r.platform, r.release_year, r.play_override);
     // The core a check run should load the game with, even when the app does not offer it yet (admin tool).
     const extra = req.user?.role === 'admin' ? { candidate_core: playableCore(r.platform, null, 1) } : {};
@@ -599,7 +607,8 @@ router.get('/facets', (req, res) => {
     GROUP BY p.family ORDER BY count DESC
   `).all();
 
-  const sources = db.prepare(`
+  // Source folders are the admin's (the same rule as /api/sources, which only an admin may call).
+  const sources = req.user?.role !== 'admin' ? [] : db.prepare(`
     SELECT s.id, s.name, s.path, COUNT(r.id) AS count,
            COALESCE(SUM(r.size_bytes),0) AS bytes,
            SUM(CASE WHEN r.missing = 1 THEN 1 ELSE 0 END) AS missing
@@ -608,17 +617,18 @@ router.get('/facets', (req, res) => {
   `).all();
 
   const genres = db.prepare(`
-    SELECT genre AS name, COUNT(*) AS count FROM roms
-    WHERE genre IS NOT NULL AND genre <> '' GROUP BY genre ORDER BY count DESC, genre
+    SELECT genre AS name, COUNT(*) AS count FROM roms r
+    WHERE genre IS NOT NULL AND genre <> '' AND ${visibleSql(req.user)} GROUP BY genre ORDER BY count DESC, genre
   `).all();
 
   const regions = db.prepare(`
-    SELECT region AS name, COUNT(*) AS count FROM roms
-    WHERE region IS NOT NULL GROUP BY region ORDER BY count DESC
+    SELECT region AS name, COUNT(*) AS count FROM roms r
+    WHERE region IS NOT NULL AND ${visibleSql(req.user)} GROUP BY region ORDER BY count DESC
   `).all();
 
   const tags = db.prepare(`
-    SELECT t.name, COUNT(*) AS count FROM tags t JOIN rom_tags rt ON rt.tag_id = t.id
+    SELECT t.name, COUNT(*) AS count FROM tags t JOIN rom_tags rt ON rt.tag_id = t.id JOIN roms r ON r.id = rt.rom_id
+    WHERE ${visibleSql(req.user)}
     GROUP BY t.id ORDER BY count DESC, t.name
   `).all();
 
@@ -656,7 +666,7 @@ router.get('/recently-played', (req, res) => {
     ORDER BY last_play_id DESC
     LIMIT @lim
   `).all({ uid: req.user.id, lim: lim * 3 }); // over-fetch: some may no longer be playable
-  const items = withTags(rows)
+  const items = withTags(rows, req.user)
     .map((r) => ({ ...r, playable: playableCore(r.platform, r.release_year, r.play_override) || null }))
     .filter((r) => r.playable)
     .slice(0, lim)
@@ -746,7 +756,7 @@ router.param('id', (req, res, next, id) => {
 });
 
 router.get('/:id', (req, res) => {
-  const rom = romById(req.params.id, req.user?.id);
+  const rom = romById(req.params.id, req.user?.id, req.user);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
 
   const collections = db.prepare(`
@@ -1181,7 +1191,7 @@ router.patch('/:id', requireAdmin, (req, res) => {
 
   if (req.body.tags !== undefined) setTags(Number(req.params.id), req.body.tags);
 
-  res.json(romById(req.params.id, req.user?.id));
+  res.json(romById(req.params.id, req.user?.id, req.user));
 });
 
 /* -------------------------------------------------- bulk enrichment */
@@ -1446,7 +1456,7 @@ router.post('/upload', requireAdmin, upload.array('roms', 50), async (req, res, 
         }
       }
 
-      created.push(romById(romId, req.user?.id));
+      created.push(romById(romId, req.user?.id, req.user));
     } catch (err) {
       try { fs.unlinkSync(file.path); } catch { /* already moved */ }
       errors.push({ filename: file.originalname, error: err.message });
@@ -1576,7 +1586,7 @@ router.post('/:id/cover', requireAdmin, coverUpload.single('cover'), (req, res) 
   db.prepare("UPDATE roms SET cover_path = ?, cover_locked = 1, updated_at = datetime('now') WHERE id = ?")
     .run(coverPath, rom.id);
 
-  res.json(romById(rom.id, req.user?.id));
+  res.json(romById(rom.id, req.user?.id, req.user));
 });
 
 // Go back to automatic covers: forget the custom image and unlock the cover.
@@ -1585,7 +1595,7 @@ router.delete('/:id/cover', requireAdmin, (req, res) => {
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (rom.cover_locked && rom.cover_path) dropCoverFile(rom.cover_path, rom.id);
   db.prepare("UPDATE roms SET cover_path = NULL, cover_url = NULL, cover_locked = 0, updated_at = datetime('now') WHERE id = ?").run(rom.id);
-  res.json(romById(rom.id, req.user?.id));
+  res.json(romById(rom.id, req.user?.id, req.user));
 });
 
 /* ------------------------------------------------------ bulk actions */

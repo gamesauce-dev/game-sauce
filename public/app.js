@@ -1590,7 +1590,7 @@ async function openDetail(id) {
     ['Revision', rom.revision || '—'],
     ['Rating', rom.rating ? `${Number(rom.rating).toFixed(1)} / 5` : '—'],
     ['File', `<span class="mono">${esc(rom.filename)}</span>`],
-    ['Location', rom.source_path ? `<span class="mono">${esc(rom.source_path)}</span>` : '—'],
+    ...(canEdit ? [['Location', rom.source_path ? `<span class="mono">${esc(rom.source_path)}</span>` : '—']] : []),   // folders on the server are sent to the admin only
     ['Size', fmtBytes(rom.size_bytes)],
     ['CRC32', `<span class="mono">${esc(rom.crc32 || '—')}</span>`],
     ['MD5', `<span class="mono">${esc(rom.md5 || '—')}</span>`],

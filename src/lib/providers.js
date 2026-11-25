@@ -458,7 +458,7 @@ const screenscraper = {
     });
     const result = await ssThrottle(() => fetchJson(`${SS_API()}/ssuserInfos.php?${params}`));
     const u = result.data?.response?.ssuser;
-    if (!u) return { error: result.error || 'no user info', raw: result.data };
+    if (!u) return { error: result.error || 'no user info' };   // never the raw answer: it can repeat what was sent
     ssQuota = {
       today: Number(u.requeststoday) || null,
       max: Number(u.maxrequestsperday) || null,

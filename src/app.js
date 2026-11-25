@@ -600,11 +600,11 @@ export function createApp() {
         SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
                COUNT(DISTINCT platform_id) AS platforms,
                ${req.user?.role === 'admin' ? 'SUM(CASE WHEN missing = 1 THEN 1 ELSE 0 END)' : '0'} AS missing,   -- the games whose file is gone from its folder (an admin's own list to clean up)
-               (SELECT COUNT(*) FROM favorites WHERE user_id = ${mine == null ? -1 : mine}) AS favorites
+               (SELECT COUNT(*) FROM favorites fc JOIN roms fr ON fr.id = fc.rom_id WHERE fc.user_id = ${mine == null ? -1 : mine} AND ${visibleSql(req.user, 'fr')}) AS favorites
         FROM roms${req.user?.role === 'admin' ? ' WHERE source_hidden = 0' : ' WHERE hidden_all = 0 AND source_hidden = 0'}
       `).get(),
       mine: mine == null ? { favorites: 0, downloads: 0 } : {
-        favorites: db.prepare('SELECT COUNT(*) AS n FROM favorites WHERE user_id = ?').get(mine).n,
+        favorites: db.prepare(`SELECT COUNT(*) AS n FROM favorites f JOIN roms r ON r.id = f.rom_id WHERE f.user_id = ? AND ${visibleSql(req.user)}`).get(mine).n,
         downloads: db.prepare("SELECT COUNT(*) AS n FROM downloads WHERE user_id = ? AND kind = 'download'").get(mine).n
       },
       recent: db.prepare(`
@@ -614,13 +614,13 @@ export function createApp() {
         FROM roms r JOIN platforms p ON p.id = r.platform_id
         WHERE r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${mine == null ? -1 : mine})
         ORDER BY r.created_at DESC LIMIT 24
-      `).all().map((r) => ({ ...r, cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : null })),
+      `).all().map(({ cover_path, ...r }) => ({ ...r, cover_url: cover_path ? `/api/roms/${r.id}/cover` : null })),
       downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE kind = \'download\'').get().n,
       // Most-downloaded counts ACTUAL manual downloads only (kind='download').
       // Browser-play streams are kind='play' and excluded, so this number is
       // real downloads, not fetch events.
       topDownloaded: db.prepare(`
-        SELECT r.id, r.title, r.cover_path,
+        SELECT r.id, r.title,
                p.short_name AS platform_short, p.badge AS platform_badge, p.accent AS platform_accent,
                p.slug AS platform, COUNT(*) AS dl_count
         FROM downloads d JOIN roms r ON r.id = d.rom_id

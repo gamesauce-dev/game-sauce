@@ -221,7 +221,8 @@ function sha1Of(filePath) {
 
 function vaultRow(e) {
   if (!e) return null;
-  return { ...e, download_url: e.id ? `/api/emulators/vault/${e.id}/download` : null };
+  const { storage_path, ...rest } = e;   // where the file is kept is no part of the answer
+  return { ...rest, download_url: e.id ? `/api/emulators/vault/${e.id}/download` : null };
 }
 
 /**

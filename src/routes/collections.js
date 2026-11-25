@@ -51,9 +51,9 @@ router.get('/:id', (req, res) => {
     JOIN platforms p ON p.id = r.platform_id
     WHERE cr.collection_id = ? ${req.user?.role === 'admin' ? 'AND r.source_hidden = 0' : 'AND r.hidden_all = 0 AND r.source_hidden = 0'}
     ORDER BY r.sort_title
-  `).all(collection.id).map((r) => ({
+  `).all(collection.id).map(({ cover_path, ...r }) => ({
     ...r,
-    cover_url: r.cover_path ? `/api/roms/${r.id}/cover` : r.cover_url
+    cover_url: cover_path ? `/api/roms/${r.id}/cover` : r.cover_url
   })).map(({ play_override, missing, ...r }) => ({ ...r, playable: !missing && playableCore(r.platform, r.release_year, play_override) ? true : false }));
 
   res.json({ ...collection, items });

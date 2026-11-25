@@ -73,7 +73,7 @@ test('the artwork folders: only an admin sets them, each must be a real folder o
   for (const bad of ['images', '../x', path.join(TMP, 'nope')]) { const r = await call('/api/art/folders', { method: 'PUT', body: { folders: [bad] } }); assert.equal(r.status, 400, bad); }
   const ok = await call('/api/art/folders', { method: 'PUT', body: { folders: [LB, RB + path.sep, LB] } });
   assert.equal(ok.status, 200); assert.deepEqual(ok.body.folders.map((f) => f.path), [LB, RB], 'tidied, no repeats'); assert.ok(ok.body.folders.every((f) => f.exists));
-  const seen = await call('/api/art/folders', { as: 'ann' }); assert.deepEqual(seen.body.folders.map((f) => f.path), [LB, RB]); assert.equal(seen.body.can_edit, false);
+  const seen = await call('/api/art/folders', { as: 'ann' }); assert.deepEqual(seen.body.folders.map((f) => f.path), ['#1 images', '#2 roms'], 'a member gets labels, not where the folders are'); assert.equal(seen.body.can_edit, false);
   // a folder that is not on the list cannot be read, however it is spelled
   for (const f of [TMP, path.join(TMP, 'art'), path.join(LB, '..'), path.join(LB, 'sony playstation 3'), 'C:\\Windows', '/etc']) { const r = await preview(f); assert.equal(r.status, 400, f); assert.match(r.body.error, /artwork folders the admin has listed/); }
 });

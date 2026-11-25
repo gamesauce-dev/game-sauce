@@ -46,6 +46,12 @@ export function getArtFolders() {
 }
 export const folderState = () => getArtFolders().map((p) => { let ok = false; try { ok = fs.statSync(p).isDirectory(); } catch { /* not there */ } return { path: p, exists: ok }; });
 
+/* Members choose from the same folders but are not told where they are: they get a label (its place in the list and its own name), which stands for the folder. */
+const folderLabel = (p, i) => `#${i + 1} ${path.basename(p) || 'folder'}`;
+export const memberFolderState = () => folderState().map((f, i) => ({ path: folderLabel(f.path, i), exists: f.exists }));
+/** The listed folder a label stands for; anything else is passed on as it is (and refused later unless it is a listed folder). */
+export const folderFromLabel = (value) => getArtFolders().find((p, i) => folderLabel(p, i) === value) || value;
+
 /** Save the list (admin). Each must be an absolute path to a folder that exists on the server. Returns { folders } or throws a 400 naming the first bad one. */
 export function setArtFolders(list) {
   const out = [], saved = new Set(getArtFolders());
@@ -487,6 +493,9 @@ async function applyOne(userId, target, b) {
   }
 }
 
+/** Why one file failed, fit to show to whoever started the import: a message from the file system names the full path, so only its short code is kept. */
+const failureReason = (err) => (/^E[A-Z]+$/.test(String(err?.code || '')) ? `the file could not be read (${err.code})` : String(err?.message || err).slice(0, 120));
+
 /** Start importing (returns at once; ask artJobStatus for progress). One run per person at a time. */
 export async function startArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
   const cur = jobs.get(userId);
@@ -499,10 +508,10 @@ export async function startArtImport(userId, { target, folder, replace = false, 
     try {
       for (const b of plan.items) {
         try { await applyOne(userId, target, b); job.applied[b.kind] = (job.applied[b.kind] || 0) + 1; }
-        catch (err) { job.failed++; if (job.failures.length < 10) job.failures.push({ title: b.game.title, kind: b.kind, reason: String(err.message || err).slice(0, 120) }); }
+        catch (err) { job.failed++; if (job.failures.length < 10) job.failures.push({ title: b.game.title, kind: b.kind, reason: failureReason(err) }); }
         job.done++;
       }
-    } catch (err) { job.error = String(err.message || err).slice(0, 200); }
+    } catch (err) { job.error = failureReason(err); }
     finally { job.running = false; job.finished_at = new Date().toISOString(); }
   })();
   return artJobStatus(userId);

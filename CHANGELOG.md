@@ -22,6 +22,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
+- **Security: members are told less about the server.** Provider settings are now the admin's alone. Members and play-only accounts are no longer sent folder or file paths (a game's details show Location to the admin only, and artwork folders appear to members as a number and name), or other people's names on favourites; counts and filter lists leave out games hidden from everyone.
 - **Security: safer picture downloads.** Picking a match accepts pictures only from the search services (TheGamesDB, IGDB, LaunchBox), and picture and ScreenScraper file downloads no longer reach this computer or your private network, including through redirects. If you rely on one there, name it in `GAMESAUCE_FETCH_ALLOW_HOSTS`.
 - **Security: stronger sign-in limits.** Wider limits per address and per username, over-long sign-in names are turned away, and the activity log keeps the newest 10,000 failed sign-ins. Behind a reverse proxy (`GAMESAUCE_TRUST_PROXY=1`) only the address your proxy added is used now: with more than one proxy in a row, set `GAMESAUCE_PROXY_HOPS`.
 - **Security: a game hidden from members is now checked on every Library game address.** Update if other people have accounts on your server.

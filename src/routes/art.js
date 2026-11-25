@@ -2,7 +2,7 @@
 import express from 'express';
 import { requireAdmin } from './auth.js';
 import db from '../db.js';
-import { folderState, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder, getArtFolders } from '../lib/artimport.js';
+import { folderState, memberFolderState, folderFromLabel, setArtFolders, previewArtImport, startArtImport, artJobStatus, scanArtFolder, getArtFolders } from '../lib/artimport.js';
 import { importPlatformLogos, fetchPlatformArt } from '../lib/platformart.js';
 import { fillJob, startFill, stopFill } from '../lib/assets.js';
 import { cleanSplit } from '../lib/wrapcut.js';
@@ -18,7 +18,7 @@ const saveSplit = (uid, m) => db.prepare('INSERT INTO user_prefs (user_id, key, 
 const me = (req) => Number(req.user?.id ?? -1);
 const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
 
-router.get('/folders', (req, res) => res.json({ folders: folderState(), can_edit: req.user?.role === 'admin' }));
+router.get('/folders', (req, res) => res.json({ folders: req.user?.role === 'admin' ? folderState() : memberFolderState(), can_edit: req.user?.role === 'admin' }));
 
 // The platforms the importer can be told about (when the folder names do not say).
 router.get('/platforms', (req, res) => res.json({ items: db.prepare('SELECT slug, name FROM platforms ORDER BY name').all() }));
@@ -36,12 +36,13 @@ router.post('/import', async (req, res, next) => {
   const target = ['digital', 'video', 'rom', 'both', 'all'].includes(req.body?.target) ? req.body.target : 'physical';
   // The Library is shared by everyone, so only an admin changes the pictures and manuals of its games (videos are shared too, but only ever added).
   if ((target === 'rom' || target === 'all') && req.user?.role !== 'admin') return res.status(403).json({ error: 'Only an admin can import pictures and manuals for the Library.' });
-  const opts = { target, folder: String(req.body?.folder || ''), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 200), kind: String(req.body?.kind || ''), platform: String(req.body?.platform || '').slice(0, 60) };
+  const sentFolder = String(req.body?.folder || '');
+  const opts = { target, folder: folderFromLabel(sentFolder), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 200), kind: String(req.body?.kind || ''), platform: String(req.body?.platform || '').slice(0, 60) };
   const sent = cleanMap(req.body?.split), split = { ...savedSplit(me(req)), ...sent };
   opts.split = split;
   try {
     if (req.body?.apply === true) { if (Object.keys(sent).length) saveSplit(me(req), split); req.auditDetail = { target, apply: true }; return res.json(await startArtImport(me(req), opts)); }
-    res.json(await previewArtImport(me(req), opts));
+    res.json({ ...(await previewArtImport(me(req), opts)), folder: sentFolder });   // named back the way it was sent
   } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 
@@ -67,7 +68,7 @@ router.delete('/fill-job', requireAdmin, (req, res) => res.json({ ...stopFill() 
 
 router.get('/wrap-image', async (req, res, next) => {
   try {
-    const scan = await scanArtFolder(String(req.query.folder || ''));
+    const scan = await scanArtFolder(folderFromLabel(String(req.query.folder || '')));
     const e = scan.files[Number(req.query.i)];
     if (!e || e.kind !== 'wrap') return res.status(404).json({ error: 'No such picture' });
     res.setHeader('Cache-Control', 'private, max-age=300');
