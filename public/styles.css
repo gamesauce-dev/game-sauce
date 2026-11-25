@@ -1990,6 +1990,6 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
    !important: the Modern look paints every settings button green with a very specific rule, and these four must be told apart in both looks. */
 #view-settings #mod-images .btn.btn-red { background: #b42318 !important; border-color: #b42318 !important; color: #fff !important; }
 #view-settings #mod-images .btn.btn-red:hover:not(:disabled) { background: #d92d20 !important; border-color: #d92d20 !important; }
-#view-settings #mod-images .btn.btn-amber { background: #d97706 !important; border-color: #d97706 !important; color: #1a1203 !important; }
-#view-settings #mod-images .btn.btn-amber:hover:not(:disabled) { background: #f59e0b !important; border-color: #f59e0b !important; }
+#view-settings #mod-images .btn.btn-amber { background: #fbbf24 !important; border-color: #f59e0b !important; color: #1f1300 !important; font-weight: 600; }
+#view-settings #mod-images .btn.btn-amber:hover:not(:disabled) { background: #fcd34d !important; border-color: #fbbf24 !important; }
 #view-settings #mod-images .btn.btn-red:disabled, #view-settings #mod-images .btn.btn-amber:disabled { opacity: .45; }
