@@ -75,6 +75,9 @@
     </div>
 
     <nav class="nav" id="nav">
+      <button class="nav-item" data-view="home" title="Home: what is new, and what you were playing">
+        <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11 12 3.8 20.5 11"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/></svg></span> Home
+      </button>
       <button class="nav-item is-active" data-view="library">
         <span class="nav-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg></span> ROM Library
       </button>
@@ -126,6 +129,27 @@
     <section class="modern-home hidden" id="modern-home"></section>
 
     <!-- ───────────── library ───────────── -->
+    <!-- ───────────── home (Classic): the ticker, then Continue playing and Recently added, one under the other. Modern has its own Home page. ───────────── -->
+    <section class="view hidden" id="view-home">
+      <div id="lib-overview" class="overview hidden"></div>
+      <div class="strips">
+        <div id="lib-played-wrap" class="strip hidden" data-strip="played">
+          <button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row">
+            <span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span>
+          </button>
+          <div id="played-row" class="recent-row"></div>
+        </div>
+
+        <div id="lib-recent-wrap" class="strip hidden" data-strip="recent">
+          <button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row">
+            <span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span>
+          </button>
+          <div id="recent-row" class="recent-row"></div>
+        </div>
+      </div>
+      <p class="empty-hint hidden" id="home-empty">Nothing to show yet. Add some games, and what you play and what was added last will appear here.</p>
+    </section>
+
     <section class="view" id="view-library">
       <header class="toolbar">
         <div class="search-wrap">
@@ -168,24 +192,6 @@
       <!-- Platform chips (families, then the platforms of the chosen family), in Classic and Modern. -->
       <nav class="chip-rows" id="chip-rows" aria-label="Platforms"></nav>
 
-      <div id="lib-overview" class="overview hidden"></div>
-
-      <div class="strips">
-      <div id="lib-played-wrap" class="strip hidden" data-strip="played">
-        <button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row">
-          <span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span>
-        </button>
-        <div id="played-row" class="recent-row"></div>
-      </div>
-
-      <div id="lib-recent-wrap" class="strip hidden" data-strip="recent">
-        <button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row">
-          <span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span>
-        </button>
-        <div id="recent-row" class="recent-row"></div>
-      </div>
-      </div>
-
     <div class="filter-row">
         <div class="bulk-bar hidden" id="bulk-bar">
           <span id="bulk-count">0 selected</span>
@@ -209,7 +215,6 @@
       <!-- Modern: A-Z jump (left), grid size and back to top (right). Empty and hidden in Classic. -->
       <div class="az-bar" id="az-bar"></div>
 
-      <hr class="home-divider">
       <div id="lib-heading" class="lib-heading hidden"></div>
       <div id="grid" class="grid"></div>
       <div id="empty" class="empty hidden">

@@ -299,6 +299,7 @@ function setView(view, { restore = false } = {}) {
   $$('.view').forEach((v) => v.classList.add('hidden'));
   $(`#view-${view}`).classList.remove('hidden');
 
+  if (view === 'home') loadHome();
   if (view === 'library') loadLibrary();
   if (view === 'collections') loadCollections();
   if (view === 'upload') loadUploadPlatforms();
@@ -637,18 +638,8 @@ async function loadLibrary() {
     grid.innerHTML = Array.from({ length: 12 }, () => '<div class="skel skel-card"></div>').join('');
   }
 
-  // The overview strip + recent row only make sense on the unfiltered library
-  // home (no search, no filters). Any active filter hides them so the grid
-  // owns the full height.
+  // The ticker, Continue playing and Recently added live on Home (loadHome), not above the grid.
   if (state.platform === 'all') state.extraPlatforms = [];
-  const isHome = !state.q && state.platform === 'all' && !state.tag && !state.genre &&
-    !state.favorite && !state.source && !state.missing && !state.datStatus && !state.cover && !state.desc && !state.matched && !state.incl &&
-    !state.hidden && !state.system && !orphanOnly && !unmatchedOnly && !lockedOnly;
-  $('#lib-overview')?.classList.toggle('hidden', !isHome);
-  $('#lib-recent-wrap')?.classList.toggle('hidden', !isHome);
-  if (!isHome) $('#lib-played-wrap')?.classList.add('hidden');
-  else renderPlayedRow();
-  const statsP = isHome ? renderOverview().catch(() => {}) : Promise.resolve();
 
   const PAGE = 200; // server caps at 500; further pages load on scroll (see below)
   const params = new URLSearchParams({ sort: state.sort, limit: String(PAGE) });
@@ -757,7 +748,6 @@ async function loadLibrary() {
     grid.scrollTop = keepTop;
     requestAnimationFrame(() => { grid.scrollTop = keepTop; });
   }
-  try { await statsP; } catch { /* overview is decorative */ }
 
   $('#result-count').textContent = lockedOnly
     ? `${data.total} locked game${data.total === 1 ? '' : 's'}${state.q ? ` matching “${state.q}”` : ''}`
@@ -1063,7 +1053,7 @@ function closePlayer() {
   $('#player-scrim')?.classList.add('hidden');
   if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
   // The game just played moves to the front of "Continue playing".
-  if (state.view === 'library' && !$('#lib-played-wrap')?.closest('.hidden')) renderPlayedRow?.();
+  if (state.view === 'home') renderPlayedRow?.();
 }
 
 async function openPlayer(rom) {
