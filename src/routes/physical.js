@@ -1,3 +1,4 @@
+import { uploadLimits } from '../lib/uploads.js';
 import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
@@ -13,8 +14,8 @@ import { sendImage } from '../lib/webp.js';
 import { pickedCandidate } from '../lib/safefetch.js';
 
 const router = express.Router();
-const manualUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MANUAL_BYTES } });
-const coverUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const manualUpload = multer({ storage: multer.memoryStorage(), limits: uploadLimits(MAX_MANUAL_BYTES) });
+const coverUpload = multer({ storage: multer.memoryStorage(), limits: uploadLimits(8 * 1024 * 1024) });
 const me = (req) => Number(req.user?.id ?? -1);
 const fail = (res, err) => { if (err.status) return res.status(err.status).json({ error: err.message }); throw err; };
 

@@ -1,3 +1,4 @@
+import { uploadLimits } from '../lib/uploads.js';
 import {
   createSession, createUser, deleteUser, describeAudit, destroyAllSessions, destroySession,
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
@@ -105,7 +106,7 @@ router.post('/welcomed', requireAuth, (req, res) => {
 
 /** Server-wide switches. Anyone signed in can read them; only an admin can change them. */
 /* ───────────────────────── profile picture ───────────────────────── */
-const avatarUpload = multer({ limits: { fileSize: 1024 * 1024 } });
+const avatarUpload = multer({ limits: uploadLimits(1024 * 1024) });
 
 // Any signed-in person can see the household's pictures; only you can change yours.
 router.get('/avatar/:id', requireAuth, (req, res) => {

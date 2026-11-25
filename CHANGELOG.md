@@ -22,6 +22,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
+- **Security: uploads can no longer use up the server's memory.** Every upload now limits the text sent with the file (12 short fields), and emulator installers are saved straight to disk as they arrive.
 - **Security: only an admin's import replaces a shared video.** A member's asset import can still give a video to a game that has none, but no longer changes one that is there.
 - **Play-only accounts now see logos, game art and videos.** Platform and family logos, a game's own logo, marquee and background, and ROM Library videos were refused to them, so Big Screen showed placeholders and no video. They can watch videos, not fetch or change them.
 - **Security: members are told less about the server.** Provider settings are now the admin's alone. Members and play-only accounts are no longer sent folder or file paths (a game's details show Location to the admin only, and artwork folders appear to members as a number and name), or other people's names on favourites; counts and filter lists leave out games hidden from everyone.

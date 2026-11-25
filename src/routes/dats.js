@@ -1,3 +1,4 @@
+import { uploadLimits } from '../lib/uploads.js';
 import express from 'express';
 import multer from 'multer';
 import fs from 'node:fs';
@@ -28,7 +29,7 @@ const upload = multer({
     destination: (req, file, cb) => cb(null, storageDir('dats')),
     filename: (req, file, cb) => cb(null, `${Date.now()}-${path.basename(file.originalname).replace(/[^\w.\-]+/g, '_')}`)
   }),
-  limits: { fileSize: Number(process.env.GAMESAUCE_MAX_DAT || 2 * 1024 * 1024 * 1024) },
+  limits: uploadLimits(Number(process.env.GAMESAUCE_MAX_DAT || 2 * 1024 * 1024 * 1024)),
   fileFilter: (req, file, cb) => {
     const ok = /\.(dat|xml)$/i.test(file.originalname);
     cb(ok ? null : Object.assign(new Error('DAT files must be .dat or .xml'), { status: 400 }), ok);

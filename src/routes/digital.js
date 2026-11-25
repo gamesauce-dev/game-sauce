@@ -1,3 +1,4 @@
+import { uploadLimits } from '../lib/uploads.js';
 import express from 'express';
 import path from 'node:path';
 import multer from 'multer';
@@ -121,7 +122,7 @@ router.post('/games/:store/:appId/match', async (req, res, next) => {
   try { res.json(await applyConsoleMatch(me(req), req.params.store, req.params.appId, pickedCandidate(cand))); } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 // A cover of the person's own for a console game (JPEG, PNG or WebP up to 8 MB), or back to the shared one. Steam's covers come from Steam.
-const coverUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const coverUpload = multer({ storage: multer.memoryStorage(), limits: uploadLimits(8 * 1024 * 1024) });
 router.post('/games/:store/:appId/cover', (req, res) => {
   if (!consoleOnly(req, res)) return;
   coverUpload.single('cover')(req, res, (err) => {

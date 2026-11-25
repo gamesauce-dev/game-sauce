@@ -1,3 +1,4 @@
+import { uploadLimits } from './lib/uploads.js';
 import { LANGS } from '../public/i18n.js';   // the one list of languages (the Settings picker reads it too)
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
@@ -400,7 +401,7 @@ export function createApp() {
   });
 
   // ── Platform logos (admin uploads; anyone signed in can see them) ──
-  const logoUpload = multer({ limits: { fileSize: MAX_LOGO_BYTES } });
+  const logoUpload = multer({ limits: uploadLimits(MAX_LOGO_BYTES) });
   // Family logos. The family name goes in the query (names such as "NEC / SNK" contain a slash). Registered first so "families" is never read as a slug.
   api.get('/platforms/families/logo', requireAuth, (req, res) => {
     const row = db.prepare('SELECT data, type FROM family_logos WHERE family = ?').get(String(req.query.family || ''));
@@ -714,7 +715,7 @@ export function createApp() {
   /* ─────────────────────────────── errors ─────────────────────────────── */
 
   app.use((err, req, res, next) => {
-    const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : err.status || 500;
+    const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : err.name === 'MulterError' ? 400 : err.status || 500;   // MulterError: an upload over a limit, the sender's doing
     if (status >= 500) console.error('[error]', err.message);
     res.status(status).json({ error: err.message || 'Internal error' });
   });

@@ -1,3 +1,4 @@
+import { uploadLimits } from '../lib/uploads.js';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -67,7 +68,7 @@ const restoreUpload = multer({
     },
     filename: (req, file, cb) => cb(null, `upload-${Date.now()}.tar.gz`)
   }),
-  limits: { fileSize: MAX_RESTORE_BYTES }
+  limits: uploadLimits(MAX_RESTORE_BYTES)
 });
 
 router.get('/restore/status', (req, res) => {

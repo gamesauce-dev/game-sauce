@@ -1,3 +1,4 @@
+import { uploadLimits } from '../lib/uploads.js';
 import { isMultiDisc, MULTIDISC_MESSAGE } from '../lib/multidisc.js';
 import express from 'express';
 import multer from 'multer';
@@ -50,7 +51,7 @@ const upload = multer({
     },
     filename: (req, file, cb) => cb(null, path.basename(tempPath(file.originalname)))
   }),
-    limits: { fileSize: Number(process.env.GAMESAUCE_MAX_UPLOAD || 8 * 1024 * 1024 * 1024) }
+    limits: uploadLimits(Number(process.env.GAMESAUCE_MAX_UPLOAD || 8 * 1024 * 1024 * 1024), 50)
 });
 
 // title is what this person asked to see (Preferences > Game names: the short name, or the long one where a game has it). short_title and long_title are always sent, so the edit form keeps editing the short one.
@@ -699,7 +700,7 @@ router.get('/export/covers.zip', requireAdmin, (req, res) => {
 
 // Import covers (admin): a zip of pictures named after games (the zip Export covers writes). Preview first, then apply.
 // The zip goes to a temp file on disk and is read one picture at a time, so a big zip never has to fit in memory.
-const coverZipUpload = multer({ dest: path.join(os.tmpdir(), 'gamesauce-coverzip'), limits: { fileSize: 4 * 1024 * 1024 * 1024 - 1 } });
+const coverZipUpload = multer({ dest: path.join(os.tmpdir(), 'gamesauce-coverzip'), limits: uploadLimits(4 * 1024 * 1024 * 1024 - 1) });
 router.post('/bulk/import-covers', requireAdmin, coverZipUpload.single('zip'), (req, res, next) => {
   const file = req.file?.path;
   try {
@@ -719,7 +720,7 @@ router.post('/bulk/import-covers', requireAdmin, coverZipUpload.single('zip'), (
 
 // Name list (CSV): rename ROMs on one platform from a file-name -> game-name table. Preview first, then apply.
 // The CSV (and, optionally, a zip of the pictures its cover_file column names) both go to temp files and are read from there.
-const namesUpload = multer({ dest: path.join(os.tmpdir(), 'gamesauce-coverzip'), limits: { fileSize: 4 * 1024 * 1024 * 1024 - 1 } })
+const namesUpload = multer({ dest: path.join(os.tmpdir(), 'gamesauce-coverzip'), limits: uploadLimits(4 * 1024 * 1024 * 1024 - 1, 2) })
   .fields([{ name: 'csv', maxCount: 1 }, { name: 'zip', maxCount: 1 }]);
 router.post('/bulk/import-names', requireAdmin, namesUpload, (req, res, next) => {
   const csvFile = req.files?.csv?.[0], zipFile = req.files?.zip?.[0];
@@ -1560,7 +1561,7 @@ router.delete('/', requireAdmin, (req, res) => {
 
 /* -------------------------------------------------------- cover upload */
 
-const coverUpload = multer({ limits: { fileSize: 8 * 1024 * 1024 } });
+const coverUpload = multer({ limits: uploadLimits(8 * 1024 * 1024) });
 
 /** Identify an image by its first bytes. The browser's claimed type and the file name
  *  are not trusted: a renamed text/HTML/SVG file must never be stored as a cover. */

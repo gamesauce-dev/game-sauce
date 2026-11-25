@@ -1,4 +1,6 @@
 import express from 'express';
+import multer from 'multer';
+import { uploadLimits } from '../lib/uploads.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -152,62 +154,19 @@ router.get('/updates', async (req, res) => {
 // 1 GB cap — emulator installers are small; this is not a second ROM library.
 const MAX_EMU_BYTES = Number(process.env.GAMESAUCE_MAX_EMULATOR || 1024 * 1024 * 1024);
 
-/**
- * Minimal multipart parser (single file + text fields) so the vault upload
- * needs no new dependency. Streams the file to temp; fields stay in memory.
- */
-function parseMultipart(req) {
-  return new Promise((resolve, reject) => {
-    const ctype = req.headers['content-type'] || '';
-    const m = ctype.match(/boundary=(.+)$/);
-    if (!m) return reject(Object.assign(new Error('Send multipart/form-data with a "file" field'), { status: 400 }));
-    const boundary = Buffer.from('--' + m[1].trim().replace(/"/g, ''));
-    const chunks = [];
-    let bytes = 0;
-    req.on('data', (c) => {
-      bytes += c.length;
-      if (bytes > MAX_EMU_BYTES + 1024 * 1024) {
-        reject(Object.assign(new Error('Emulator file too large (cap 1 GB)'), { status: 413 }));
-        req.destroy();
-        return;
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => {
-      try {
-        const body = Buffer.concat(chunks);
-        const parts = [];
-        let start = 0;
-        for (;;) {
-          const i = body.indexOf(boundary, start);
-          if (i < 0) break;
-          parts.push(body.subarray(start, i));
-          start = i + boundary.length;
-        }
-        const fields = {};
-        let file = null;
-        for (const part of parts) {
-          const headEnd = part.indexOf(Buffer.from('\r\n\r\n'));
-          if (headEnd < 0) continue;
-          const head = part.subarray(0, headEnd).toString('latin1');
-          let data = part.subarray(headEnd + 4);
-          if (data.subarray(-2).toString() === '\r\n') data = data.subarray(0, -2);
-          const nameM = head.match(/name="([^"]+)"/);
-          const fileM = head.match(/filename="([^"]*)"/);
-          if (!nameM) continue;
-          if (fileM && fileM[1]) {
-            file = { filename: path.basename(fileM[1]), data };
-          } else {
-            fields[nameM[1]] = data.toString('utf8');
-          }
-        }
-        if (!file) return reject(Object.assign(new Error('Multipart body needs a "file" field'), { status: 400 }));
-        resolve({ fields, file });
-      } catch (err) { reject(err); }
-    });
-    req.on('error', reject);
-  });
-}
+// The file goes straight to a temporary file on disk, never into memory: an installer can be large.
+const vaultUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, os.tmpdir()),
+    filename: (req, file, cb) => cb(null, `gs-emu-${crypto.randomBytes(8).toString('hex')}`)
+  }),
+  limits: uploadLimits(MAX_EMU_BYTES),
+  defParamCharset: 'utf8'   // a file name with accents arrives as written
+}).single('file');
+const takeVaultFile = (req, res, next) => vaultUpload(req, res, (err) => {
+  if (err?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Emulator file too large (cap 1 GB)' });
+  next(err);
+});
 
 function sha1Of(filePath) {
   return new Promise((resolve, reject) => {
@@ -266,20 +225,20 @@ router.get('/vault/:id/download', (req, res) => {
 });
 
 /** Manual upload (admin). Fields: file + name, platform_slug (required), version?, os?, arch?, notes? */
-router.post('/vault/upload', requireAdmin, async (req, res, next) => {
+router.post('/vault/upload', requireAdmin, takeVaultFile, async (req, res, next) => {   // checked before the file is received
+  const tmp = req.file?.path;
   try {
-    const { fields, file } = await parseMultipart(req);
+    if (!tmp) return res.status(400).json({ error: 'Send multipart/form-data with a "file" field' });
+    const fields = req.body || {};
+    const file = { filename: path.basename(req.file.originalname) };
     const platform = String(fields.platform_slug || '').trim();
     if (!platform) {
       return res.status(400).json({ error: 'Platform is required: pick the platform this installer is for' });
     }
     const name = String(fields.name || file.filename.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ')).trim() || 'Emulator';
-    const tmp = path.join(os.tmpdir(), `gs-emu-${crypto.randomBytes(8).toString('hex')}`);
-    fs.writeFileSync(tmp, file.data);
     const sha1 = await sha1Of(tmp);
     const dupe = db.prepare('SELECT id FROM emulators WHERE sha1 = ?').get(sha1);
     if (dupe) {
-      fs.unlinkSync(tmp);
       return res.status(200).json(vaultRow(db.prepare('SELECT * FROM emulators WHERE id = ?').get(dupe.id)));
     }
     const dest = path.join(emuDir(), `${sha1.slice(0, 2)}`, `${sha1}-${file.filename}`);
@@ -293,12 +252,13 @@ router.post('/vault/upload', requireAdmin, async (req, res, next) => {
       source: 'upload',
       filename: file.filename,
       storage_path: dest,
-      size_bytes: file.data.length,
+      size_bytes: req.file.size,
       sha1,
       notes: fields.notes || null
     });
     res.status(201).json(vaultRow(row));
   } catch (err) { next(err); }
+  finally { if (tmp) fs.rmSync(tmp, { force: true }); }   // gone already when it was moved into the vault
 });
 
 /**
