@@ -9,6 +9,7 @@ import { parseFilename, sortTitle, decodeEntities } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
+import { canSeeRom, visibleSql } from '../lib/visibility.js';
 import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted, ARCADE_ROMSET } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
@@ -739,7 +740,7 @@ router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJ
 
 // A game hidden from everyone does not exist for members: every route that names it answers 404 (admins pass).
 router.param('id', (req, res, next, id) => {
-  if (req.user?.role !== 'admin' && /^\d+$/.test(id) && db.prepare('SELECT 1 FROM roms WHERE id = ? AND (hidden_all = 1 OR source_hidden = 1)').get(id)) return res.status(404).json({ error: 'ROM not found' });
+  if (/^\d+$/.test(id) && !canSeeRom(req.user, id)) return res.status(404).json({ error: 'ROM not found' });
   next();
 });
 
@@ -753,9 +754,9 @@ router.get('/:id', (req, res) => {
   `).all(rom.id);
 
   const siblings = db.prepare(`
-    SELECT id, title, region, revision FROM roms
+    SELECT id, title, region, revision FROM roms r
     WHERE platform_id = (SELECT platform_id FROM roms WHERE id = ?)
-      AND id <> ? AND sort_title = ?
+      AND id <> ? AND sort_title = ? AND ${visibleSql(req.user)}
   `).all(rom.id, rom.id, rom.sort_title);
 
   res.json({ ...rom, collections, variants: siblings });
@@ -790,7 +791,7 @@ router.get('/:id/cover', (req, res) => {
     if (rom?.cover_path) forgetMissingCovers(Number(req.params.id));
     return res.status(404).json({ error: 'No cover' });
   }
-  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.setHeader('Cache-Control', 'private, max-age=86400');   // one person's browser only: who may see a game differs from person to person
   sendImage(req, res, rom.cover_path);
 });
 
@@ -811,6 +812,7 @@ router.get('/:id/media/:kind', (req, res) => {
 
   const kind = String(req.params.kind);
   if (kind === 'box2d' && rom.cover_path && fs.existsSync(rom.cover_path)) {
+    res.setHeader('Cache-Control', 'private, max-age=86400');
     return res.sendFile(path.resolve(rom.cover_path));
   }
 
@@ -819,7 +821,7 @@ router.get('/:id/media/:kind', (req, res) => {
   const file = media?.[kind]?.path;
   if (!file || !fs.existsSync(file)) return res.status(404).json({ error: 'No media of that kind' });
 
-  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.setHeader('Cache-Control', 'private, max-age=86400');   // one person's browser only: who may see a game differs from person to person
   res.sendFile(path.resolve(file));
 });
 
@@ -1145,7 +1147,7 @@ const EDITABLE = [
   'release_year', 'players', 'rating', 'description'
 ];
 
-router.patch('/:id', (req, res) => {
+router.patch('/:id', requireAdmin, (req, res) => {
   const existing = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'ROM not found' });
 
@@ -1188,7 +1190,7 @@ router.patch('/:id', (req, res) => {
  * ScreenScraper throttles per account, and a parallel burst gets the account
  * rate-limited. `limit` lets the UI work through a big library in chunks.
  */
-router.post('/bulk/enrich', async (req, res, next) => {
+router.post('/bulk/enrich', requireAdmin, async (req, res, next) => {
   try {
     // after_id: page through every candidate in id order (the UI loops with this),
     // so ROMs that never match can't hog the same first batch forever.
@@ -1559,7 +1561,7 @@ export function sniffImage(buf) {
   return null; // GIF and SVG are deliberately not accepted (SVG can carry scripts)
 }
 
-router.post('/:id/cover', coverUpload.single('cover'), (req, res) => {
+router.post('/:id/cover', requireAdmin, coverUpload.single('cover'), (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
@@ -1577,7 +1579,7 @@ router.post('/:id/cover', coverUpload.single('cover'), (req, res) => {
 });
 
 // Go back to automatic covers: forget the custom image and unlock the cover.
-router.delete('/:id/cover', (req, res) => {
+router.delete('/:id/cover', requireAdmin, (req, res) => {
   const rom = db.prepare('SELECT id, cover_path, cover_locked FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (rom.cover_locked && rom.cover_path) dropCoverFile(rom.cover_path, rom.id);

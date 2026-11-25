@@ -1575,6 +1575,7 @@ async function openDetail(id) {
   }
   if (myOpen !== state.detailToken) return; // a newer game was opened while this one loaded
 
+  const canEdit = authState.user?.role === 'admin';   // only an admin edits a game's details (the server refuses anyone else)
   const initials = rom.title.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const rows = [
     ['Platform', `${esc(rom.platform_name)}`],
@@ -1628,9 +1629,9 @@ async function openDetail(id) {
           ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.multidisc ? ' on' : ''}" role="menuitem" data-act="multidisc">${ICON.disc || ICON.desktop}<span><b>Multi-disc set: ${rom.multidisc ? 'yes' : 'no'}</b><small>${rom.multidisc_override == null ? 'Decided from its file name. Click to say the opposite' : 'Set by hand. Click to go by its file name again'}</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? 'Show this game again' : 'Unhide for me') : 'Hide this game'}</b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? '<small>Hidden from members too</small>' : '') : (authState.user?.role === 'admin' ? '<small>Members will not see it either; you find it under Hidden</small>' : '<small>Only from your view; others still see it</small>')}</span></button>
-          <button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>
+          ${canEdit ? `<button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>` : ''}
           ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
-          <button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>
+          ${canEdit ? `<button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>` : ''}
           ${rom.cover_locked ? `<button class="mi" role="menuitem" data-act="cover-reset">${ICON.undo}<span><b>Back to automatic cover</b></span></button>` : ''}
         </div>
       </div>
@@ -1639,6 +1640,7 @@ async function openDetail(id) {
     </div>
 
     ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.${rom.multidisc_override == null ? ' (Decided from its file name.)' : ' (Set by hand.)'}</p>` : ''}
+    ${canEdit ? `
     <div class="section-label">Identify this game</div>
     <div class="panel" style="padding:12px">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1650,6 +1652,7 @@ async function openDetail(id) {
       </div>
       <div id="identify-list" class="results" style="margin-top:10px"></div>
     </div>
+    ` : ''}
 
     ${rom.missing ? `<p class="hint" style="color:var(--warn)">This file is not reachable — its drive may be offline. The catalogue entry is kept.</p>` : ''}
 
@@ -1693,6 +1696,7 @@ async function openDetail(id) {
           </button>`).join('')}
       </div>` : ''}
 
+    ${canEdit ? `
     <div class="section-label">Edit</div>
     <form class="edit-form" id="edit-form">
       <label class="field"><span>Title</span><input name="title" value="${esc(rom.short_title ?? rom.title)}" /></label>
@@ -1716,6 +1720,7 @@ async function openDetail(id) {
         <label class="btn" style="margin-left:auto">Upload cover<input type="file" accept="image/*" id="cover-input" hidden /></label>
       </div>
     </form>
+    ` : ''}
   `;
   // Cover images and the pills' wrapping change heights after layout: place the nav now and again once images settle.
   placeDrawerNav();
@@ -1834,7 +1839,7 @@ async function openDetail(id) {
     } catch (err) { toast(err.message, true); }
   });
 
-  $('[data-act="refresh"]', drawer).addEventListener('click', async (e) => {
+  $('[data-act="refresh"]', drawer)?.addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     // Modern look: the icon on the details row is a copy of this menu item (public/modern.js, promoteDetailActions); it is the one that shows, so it spins too.
     const promo = () => drawer.querySelector('[data-promo="refresh"]');
@@ -1988,7 +1993,7 @@ async function openDetail(id) {
 
   $$('[data-variant]', drawer).forEach((b) => b.addEventListener('click', () => openDetail(Number(b.dataset.variant))));
 
-  $('#cover-input', drawer).addEventListener('change', async (e) => {
+  $('#cover-input', drawer)?.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const fd = new FormData();
@@ -2002,7 +2007,7 @@ async function openDetail(id) {
     }
   });
 
-  $('#edit-form', drawer).addEventListener('submit', async (e) => {
+  $('#edit-form', drawer)?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const body = {};

@@ -1,4 +1,5 @@
 import express from 'express';
+import { canSeeRom } from '../lib/visibility.js';
 import path from 'node:path';
 import db from '../db.js';
 import { videoSourcesEnabled, videoSourceLabel, ensureVideo, videoFile, recentlyMissed } from '../lib/emumovies.js';
@@ -18,6 +19,7 @@ export function resolveGame(req) {
   const q = { ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) };
   const kind = String(q.kind || ''), id = String(q.id || '');
   if (kind === 'rom') {
+    if (!canSeeRom(req.user, id)) return null;
     const r = db.prepare('SELECT r.title, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(id);
     return r || null;
   }
@@ -39,7 +41,7 @@ router.get('/status', (req, res) => {
   const game = resolveGame(req);
   if (!game) return notFound(res);
   const have = videoFile(game);
-  res.json({ available: Boolean(have), bytes: have?.bytes || null, source: have ? videoSourceLabel(have.source) : null, can_fetch: videoSourcesEnabled().length > 0, missed: !have && recentlyMissed(game) });
+  res.json({ available: Boolean(have), bytes: have?.bytes || null, source: have ? videoSourceLabel(have.source) : null, can_fetch: videoSourcesEnabled().length > 0 && (String(req.query.kind) !== 'rom' || req.user?.role === 'admin'), missed: !have && recentlyMissed(game) });
 });
 
 // Ask EmuMovies for this game's video now (the person pressed the button). { force: true } asks again after a "none found".
@@ -57,6 +59,8 @@ router.post('/fetch', async (req, res, next) => {
 // "Find assets": look up this game's video, covers, spine, disc, back and manual and keep whatever is missing ({ force: true } asks the sources afresh). Gaps only; never in bulk.
 router.post('/assets', async (req, res, next) => {
   try {
+    // For a ROM Library game this adds covers, art and a manual to what everyone sees: that is editing the game, so only an admin does it. A person's own Physical and Digital games are theirs.
+    if (String(req.body?.kind || req.query.kind || '') === 'rom' && req.user?.role !== 'admin') return res.status(403).json({ error: 'Only an admin can add pictures and manuals to a Library game.' });
     const game = resolveGame(req);
     if (!game) return notFound(res);
     if (!videoSourcesEnabled().length) return res.status(400).json({ error: 'No source is set up (an admin adds ScreenScraper or EmuMovies under Settings, Metadata providers)' });

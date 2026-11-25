@@ -193,7 +193,7 @@ router.get('/screenscraper/systems', async (req, res, next) => {
 });
 
 /** Re-run the metadata lookup for one ROM. */
-router.post('/:id/refresh', async (req, res, next) => {
+router.post('/:id/refresh', requireAdmin, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(404).json({ error: 'Unknown API route' });
@@ -273,7 +273,7 @@ router.post('/search', async (req, res, next) => {
  * verbatim: { title, publisher, genre, release_year, players, rating,
  * description, cover_url, has_cover, platform_id, game_id }.
  */
-router.post('/:id/apply', async (req, res, next) => {
+router.post('/:id/apply', requireAdmin, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(404).json({ error: 'Unknown API route' });

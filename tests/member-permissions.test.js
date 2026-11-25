@@ -1,0 +1,136 @@
+// What a full member may and may not do: only an admin edits a game's details, and a game hidden from everyone does not exist for a member, on any route.
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'gamesauce-perms-test-'));
+process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
+process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
+process.env.GAMESAUCE_ADMIN_USER = 'pmadmin';
+process.env.GAMESAUCE_ADMIN_PASSWORD = 'pm-admin-password-1';
+
+let server, base, db, adminTok, memberTok, memberId, adminId, secret, twin, plain, collId;
+const SECRET = 'Zzsecret Quest';
+const call = async (p, { token = adminTok, method = 'GET', body, form, headers = {} } = {}) => {
+  const res = await fetch(base + p, { method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers }, body: form || (body ? JSON.stringify(body) : undefined) });
+  const text = await res.text();
+  let json = null; try { json = JSON.parse(text); } catch { /* not JSON */ }
+  return { status: res.status, text, body: json, cache: res.headers.get('cache-control') || '' };
+};
+const login = async (u, p) => (await call('/api/auth/login', { token: null, method: 'POST', body: { username: u, password: p } })).body.token;
+const addRom = (title, file, sha, cover = null) => Number(db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, sha1, meta_source, cover_path) VALUES (?, ?, ?, (SELECT id FROM platforms WHERE slug = 'snes'), ?, 1, ?, 'filename', ?)")
+  .run(title, 'zzsecret quest', file, path.join(TMP, file), sha, cover).lastInsertRowid);
+
+before(async () => {
+  const { prepareApp } = await import('../src/app.js');
+  const { app } = await prepareApp();
+  db = (await import('../src/db.js')).default;
+  const { COVER_DIR } = await import('../src/lib/storage.js');
+  await new Promise((r) => { server = app.listen(0, '127.0.0.1', r); });
+  base = `http://127.0.0.1:${server.address().port}`;
+  adminTok = await login('pmadmin', 'pm-admin-password-1');
+  await call('/api/auth/users', { method: 'POST', body: { username: 'pmmember', password: 'pm-member-pass-12', role: 'user' } });
+  memberTok = await login('pmmember', 'pm-member-pass-12');
+  memberId = db.prepare("SELECT id FROM users WHERE username = 'pmmember'").get().id;
+  adminId = db.prepare("SELECT id FROM users WHERE username = 'pmadmin'").get().id;
+  const cover = path.join(COVER_DIR, 'secret.png'); fs.writeFileSync(cover, Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c626001000000ffff03000006000557bfabd40000000049454e44ae426082', 'hex'));
+  secret = addRom(SECRET, 'zzsecret.sfc', 'pm1', cover);
+  fs.writeFileSync(path.join(TMP, 'zzsecret.sfc'), 'x');
+  twin = addRom('Zzvisible Twin', 'twin.sfc', 'pm2');       // same sort title as the secret: it would be listed as another version of it
+  plain = addRom('Plain Game', 'plain.sfc', 'pm3');
+  db.prepare('UPDATE roms SET sort_title = ? WHERE id = ?').run('plain game', plain);
+  // the member had touched the game before it was hidden: a collection, a favourite, play and download history
+  collId = (await call('/api/collections', { token: memberTok, method: 'POST', body: { name: 'Mine' } })).body.id;
+  await call(`/api/collections/${collId}/roms`, { token: memberTok, method: 'POST', body: { ids: [secret, plain] } });
+  await call(`/api/roms/${secret}/favorite`, { token: memberTok, method: 'POST', body: {} });
+  for (const kind of ['play', 'download', 'download', 'download']) db.prepare('INSERT INTO downloads (rom_id, user_id, kind) VALUES (?, ?, ?)').run(secret, memberId, kind);
+  await call(`/api/roms/${secret}/hide-all`, { method: 'POST', body: { hidden: true } });
+});
+after(async () => {
+  await new Promise((r) => server?.close(r));
+  db?.close();
+  try { fs.rmSync(TMP, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }); } catch { /* best effort */ }
+});
+
+const leaks = (r) => /zzsecret/i.test(r.text.replace(/zzsecret quest",?"?sort/gi, '')) && /Zzsecret Quest|zzsecret\.sfc/.test(r.text);
+
+test('no list, count or summary a member can ask for names a game hidden from everyone', async () => {
+  const urls = ['/api/stats', '/api/platforms', '/api/roms', '/api/roms?q=zzsecret', '/api/roms?hidden=1', '/api/roms?hidden=show', '/api/roms?system=all&hidden=all', '/api/roms?favorite=1', '/api/roms?sort=added', '/api/roms/facets',
+    '/api/roms/recently-played', '/api/collections', `/api/collections/${collId}`, '/api/messages/summary', `/api/roms/${twin}`, `/api/roms?platform=snes`];
+  for (const u of urls) {
+    const r = await call(u, { token: memberTok });
+    assert.ok(r.status < 500, `${u} ${r.status}`);
+    assert.ok(!leaks(r), `${u} names the hidden game: ${r.text.slice(0, 300)}`);
+  }
+  const stats = (await call('/api/stats', { token: memberTok })).body;
+  assert.ok(!stats.topDownloaded || stats.topDownloaded.id !== secret, 'the most downloaded game is not the hidden one');
+  assert.equal(stats.byPlatform.reduce((n, p) => n + p.count, 0), 2, 'platform counts leave it out');
+  const admin = (await call('/api/stats')).body;
+  assert.equal(admin.topDownloaded.id, secret, 'the admin still sees it');
+  assert.equal(admin.byPlatform.reduce((n, p) => n + p.count, 0), 3);
+});
+
+test('every route that names the hidden game answers "not found" to a member', async () => {
+  const routes = [['GET', ''], ['GET', '/cover'], ['GET', '/cover?w=320'], ['GET', '/file/spine'], ['GET', '/media/video'], ['GET', '/download'], ['GET', '/play'], ['GET', '/play/zzsecret.sfc'], ['GET', '/saves'],
+    ['POST', '/launch'], ['POST', '/saves'], ['POST', '/favorite'], ['POST', '/hide'], ['POST', '/broken'], ['DELETE', '/saves/1']];
+  for (const [method, tail] of routes) assert.equal((await call(`/api/roms/${secret}${tail}`, { token: memberTok, method, body: method === 'POST' ? {} : undefined })).status, 404, `${method} /roms/:id${tail}`);
+  // the video routes name a game by kind and id
+  for (const u of [`/api/videos/status?kind=rom&id=${secret}`, `/api/videos/file?kind=rom&id=${secret}`, `/api/videos/file?kind=rom&id=${secret}&variant=theme`]) assert.equal((await call(u, { token: memberTok })).status, 404, u);
+  assert.equal((await call('/api/videos/fetch', { token: memberTok, method: 'POST', body: { kind: 'rom', id: secret } })).status, 404, 'videos/fetch');
+  assert.equal((await call(`/api/videos/status?kind=rom&id=${secret}`)).status, 200, 'the admin still can');
+  assert.equal((await call(`/api/videos/status?kind=rom&id=${plain}`, { token: memberTok })).status, 200, 'a visible game is as before');
+});
+
+test('a hidden game cannot be named in a message, by the sender or to someone who cannot see it', async () => {
+  const share = (token, to, id) => call(`/api/messages/with/${to}`, { token, method: 'POST', body: { text: 'look', game: { type: 'rom', id } } });
+  const bySender = await share(memberTok, adminId, secret);
+  assert.equal(bySender.status, 400); assert.ok(!/Zzsecret/.test(bySender.text));
+  const toMember = await share(adminTok, memberId, secret);
+  assert.equal(toMember.status, 400, 'an admin cannot send a member the name of a game the member may not see');
+  assert.equal((await share(memberTok, adminId, plain)).status < 300, true, 'a visible game can be shared');
+});
+
+test('a member cannot change a game: details, identify, covers, lookups', async () => {
+  const before = db.prepare('SELECT title, genre, cover_path, meta_source FROM roms WHERE id = ?').get(plain);
+  const png = new FormData(); png.append('cover', new Blob([fs.readFileSync(db.prepare('SELECT cover_path FROM roms WHERE id = ?').get(secret).cover_path)], { type: 'image/png' }), 'c.png');
+  const attempts = [
+    ['edit details', `/api/roms/${plain}`, { method: 'PATCH', body: { title: 'Changed by a member', genre: 'x' } }],
+    ['edit tags', `/api/roms/${plain}`, { method: 'PATCH', body: { tags: ['x'] } }],
+    ['upload a cover', `/api/roms/${plain}/cover`, { method: 'POST', form: png }],
+    ['reset the cover', `/api/roms/${plain}/cover`, { method: 'DELETE' }],
+    ['refresh details', `/api/metadata/${plain}/refresh`, { method: 'POST', body: {} }],
+    ['identify', `/api/metadata/${plain}/apply`, { method: 'POST', body: { candidate: { title: 'Changed' } } }],
+    ['fetch details in bulk', '/api/roms/bulk/enrich', { method: 'POST', body: { ids: [plain] } }],
+    ['find assets for a library game', '/api/videos/assets', { method: 'POST', body: { kind: 'rom', id: plain } }]
+  ];
+  for (const [what, url, opts] of attempts) assert.equal((await call(url, { token: memberTok, ...opts })).status, 403, what);
+  assert.deepEqual(db.prepare('SELECT title, genre, cover_path, meta_source FROM roms WHERE id = ?').get(plain), before, 'nothing changed');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM rom_tags WHERE rom_id = ?').get(plain).n, 0);
+  // what stays a member's own: favourites, collections, hiding from their own view, and an admin can still edit
+  assert.equal((await call(`/api/roms/${plain}/favorite`, { token: memberTok, method: 'POST', body: {} })).status, 200);
+  assert.equal((await call(`/api/roms/${plain}/hide`, { token: memberTok, method: 'POST', body: {} })).status, 200);
+  const ok = await call(`/api/roms/${plain}`, { method: 'PATCH', body: { genre: 'Adventure' } });
+  assert.equal(ok.status, 200); assert.equal(db.prepare('SELECT genre FROM roms WHERE id = ?').get(plain).genre, 'Adventure');
+});
+
+test('covers are cached by one person\'s browser only, never by a shared cache', async () => {
+  for (const u of [`/api/roms/${secret}/cover`, `/api/roms/${secret}/media/box2d`]) {
+    const r = await call(u);
+    assert.equal(r.status, 200, u);
+    assert.match(r.cache, /private/, u); assert.ok(!/public/.test(r.cache), u);
+  }
+});
+
+test('the details window offers editing only to an admin', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  const fn = app.slice(app.indexOf('async function openDetail(id) {'), app.indexOf('async function openDetail(id) {') + 14000);
+  assert.match(fn, /const canEdit = authState\.user\?\.role === 'admin';/);
+  assert.match(fn, /\$\{canEdit \? `<button class="mi" role="menuitem" data-act="refresh">/);
+  assert.match(fn, /\$\{canEdit \? `<button class="mi" role="menuitem" data-act="cover-upload">/);
+  assert.match(fn, /\$\{canEdit \? `\n    <div class="section-label">Identify this game<\/div>/);
+  assert.match(fn, /\$\{canEdit \? `\n    <div class="section-label">Edit<\/div>/);
+  // the buttons that may be absent are wired only when they are there
+  for (const sel of [`'[data-act="refresh"]'`, "'#cover-input'", "'#edit-form'"]) assert.ok(app.includes(`$(${sel}, drawer)?.addEventListener`), sel);
+});

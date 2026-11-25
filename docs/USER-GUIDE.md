@@ -106,7 +106,9 @@ Click any tile.
 - **Collection split across drives?** On the Sources page, **＋ Add another folder** on a source adds a second (or third) folder to it: same name, same platform. If one drive is unplugged, its games stay put and the scan tells you which folder it could not read.
 - **Pin the details window.** The pin button beside the ✕ keeps a game's details open beside the grid; click another game and it switches. Unpin it to go back to the window that closes when you click away.
 - **Actions:** **Download** (hidden for members unless the admin allows it), **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
-  **Hide**, **Refresh metadata**, **Upload cover**, **Delete**.
+  **Hide**, **Refresh metadata**, **Upload cover**, **Delete**. **Only an admin edits a game's details**: members do not see
+  Refresh metadata, Upload cover, Identify this game or the edit form, and the server refuses those changes from them.
+  Members keep their own favourites, collections and Hide.
 - **Browser play: on/off** switches the Play button for this game only. A dot (•) means you have
   overridden the default. This is how you turn off a game that will not start, or turn on one that
   was hidden by the MAME year cut-off.

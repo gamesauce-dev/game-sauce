@@ -1,6 +1,7 @@
 import { LANGS } from '../public/i18n.js';   // the one list of languages (the Settings picker reads it too)
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
+import { visibleSql } from './lib/visibility.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
 import { usable, FAMILY_DEFAULTS } from './lib/colours.js';
 import multer from 'multer';
@@ -620,13 +621,14 @@ export function createApp() {
                p.slug AS platform, COUNT(*) AS dl_count
         FROM downloads d JOIN roms r ON r.id = d.rom_id
         JOIN platforms p ON p.id = r.platform_id
-        WHERE d.kind = 'download'
+        WHERE d.kind = 'download' AND ${visibleSql(req.user)}
         GROUP BY d.rom_id ORDER BY dl_count DESC LIMIT 1
       `).get() || null,
       sources: db.prepare('SELECT COUNT(*) AS n FROM sources').get().n,
       byPlatform: db.prepare(`
         SELECT p.short_name AS label, p.accent AS color, COUNT(r.id) AS count
         FROM platforms p JOIN roms r ON r.platform_id = p.id
+        WHERE ${visibleSql(req.user)}
         GROUP BY p.id ORDER BY count DESC LIMIT 10
       `).all()
     });

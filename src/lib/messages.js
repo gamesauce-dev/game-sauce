@@ -7,6 +7,7 @@
 //   - "Delete" removes a message for the person who deleted it only. The sender can RECALL a message for a few minutes: it is wiped for both.
 //   - When someone's account is deleted, every message they sent or received goes with it, on both sides.
 import db from '../db.js';
+import { canSeeRom } from './visibility.js';
 import { platformLabel } from './consoles.js';
 
 export const MAX_LEN = 200;
@@ -59,12 +60,15 @@ export const _resetRate = () => sent.clear();
 const clip = (s, n = 120) => String(s ?? '').slice(0, n);
 
 /** Check a game the sender picked and keep only a note about it: { type, title, platform } (and the ROM's id, so its details can be opened). */
-function shareOf(userId, game) {
+function shareOf(sender, to, game) {
+  const userId = sender.id;
   if (!game) return null;
   const type = String(game.type || '');
   if (type === 'rom') {
     const r = db.prepare('SELECT r.id, r.title, p.name AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(Number(game.id));
-    if (!r) throw fail(400, 'That game is not in the ROM Library.');
+    // neither side may learn of a game they are not allowed to see: the sender from its name, the receiver from the message
+    if (!r || !canSeeRom(sender, r.id)) throw fail(400, 'That game is not in the ROM Library.');
+    if (!canSeeRom(to, r.id)) throw fail(400, 'That game cannot be shared with this person.');
     return { type, id: r.id, title: clip(r.title), platform: clip(r.platform) };
   }
   if (type === 'digital') {
@@ -91,7 +95,7 @@ export function sendMessage(sender, toId, { body = '', game = null, replyTo = nu
   if (!to || to.disabled || (to.role !== 'admin' && to.play_only)) throw fail(404, 'That person cannot receive messages.');
   if (to.id === sender.id) throw fail(400, 'Choose someone else to write to.');
   const text = cleanText(body, { required: !game });
-  const share = shareOf(sender.id, game);
+  const share = shareOf(sender, to, game);
   let reply = null;
   if (replyTo != null && replyTo !== '') {
     reply = db.prepare(`SELECT id FROM messages WHERE id = @id AND ${visibleTo} AND ((sender_id = @me AND recipient_id = @other) OR (sender_id = @other AND recipient_id = @me))`).get({ id: Number(replyTo), me: sender.id, other: to.id });
