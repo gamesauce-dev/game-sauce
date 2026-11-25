@@ -2004,6 +2004,3 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 #view-home .strip .recent-row .card-title { min-height: 2.5em; }
 #view-home .strip .recent-row .card-sub { display: none; }
 #view-home #lib-overview { margin: 0 0 1rem; }
-
-/* The Modern tooltip box is styled only in Modern: anywhere else it must not exist on the page (it would show as plain text and add a scroll bar) */
-body:not(.ui-modern) #mb-tip { display: none !important; }
