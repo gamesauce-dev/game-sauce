@@ -205,6 +205,8 @@ test('the converted-pictures list names the game and picture, and lets the admin
   const small = await call(`/api/admin/images/convert/log/${it.id}/original?w=448`);
   assert.equal(small.type, 'image/png'); assert.equal((await sharp(small.body).metadata()).width, 448, 'the compare window gets a tile-sized copy');
   assert.ok(small.body.length < bytes.length, 'and it is lighter than the full file');
+  const big = await call(`/api/admin/images/convert/log/${it.id}/original?w=1200`);
+  assert.equal(big.type, 'image/png'); assert.equal((await sharp(big.body).metadata()).width, 520, 'a bigger view is never stretched past the picture itself');
   const now = await call(`/api/admin/images/convert/log/${it.id}/webp`);
   assert.equal((await sharp(now.body).metadata()).format, 'webp');
   // the state filter and paging
@@ -239,7 +241,8 @@ test('the converted-pictures list names the game and picture, and lets the admin
 
 test('the progress bar and the list are wired into the Pictures panel', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8'), html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-  for (const id of ['imgc-box', 'imgc-bar', 'imgc-pct', 'imgc-log-box', 'imgc-compare']) assert.ok(html.includes(`id="${id}"`), id);
+  for (const id of ['imgc-box', 'imgc-bar', 'imgc-pct', 'imgc-log-box', 'imgc-compare', 'imgc-cmp-range']) assert.ok(html.includes(`id="${id}"`), id);
+  assert.match(app, /function setCmpSize\(px\)/);
   assert.ok(html.indexOf('id="imgc-msg"') < html.indexOf('id="imgc-status"'), 'the status box sits below the buttons');
   assert.match(app, /function loadImageLog\(\)/); assert.match(app, /about \$\{span\(left\)\} left/);
 });

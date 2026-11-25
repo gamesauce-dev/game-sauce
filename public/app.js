@@ -4467,6 +4467,17 @@ async function loadVersionLine() {
 /* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
 let imgcTimer = null;
 const imgLog = { offset: 0, limit: 25, total: 0 };
+const cmpIds = { orig: '', now: '', big: false };
+/** Size both compare pictures together (px). Past 440 px a larger copy of each is loaded, so a bigger view is sharp, not stretched. */
+function setCmpSize(px) {
+  const card = $('#imgc-compare .imgc-cmp-card'); if (!card) return;
+  card.style.setProperty('--cmp-w', `${px}px`); $('#imgc-cmp-px').textContent = `${px} px`;
+  const big = px > 440;
+  if (!cmpIds.orig || (big === cmpIds.big && $('#imgc-cmp-orig').getAttribute('src'))) return;
+  cmpIds.big = big;
+  const w = big ? 1200 : 448, t = Date.now();
+  $('#imgc-cmp-orig').src = `${cmpIds.orig}?w=${w}&t=${t}`; $('#imgc-cmp-webp').src = `${cmpIds.now}?w=${w}&t=${t}`;
+}
 /** The converted pictures, a page at a time: which game, which picture, the sizes, and whether the original is still there to compare. */
 async function loadImageLog() {
   const list = $('#imgc-log-list'); if (!list) return;
@@ -4489,8 +4500,10 @@ async function loadImageLog() {
     const id = b.dataset.imgcCmp;
     $('#imgc-cmp-title').textContent = b.dataset.title;
     const orig = `/api/admin/images/convert/log/${id}/original`, now = `/api/admin/images/convert/log/${id}/webp`;
-    // The picture is shown at the size of a tile (the server sends the full file; the browser scales it), with a link to the full size in a new tab.
-    $('#imgc-cmp-orig').src = `${orig}?w=448&t=${Date.now()}`; $('#imgc-cmp-webp').src = `${now}?w=448&t=${Date.now()}`;
+    // The pictures start at the size of a tile; the slider makes both bigger or smaller together (a larger copy is fetched once it goes past 440 px), and a link opens each in full size in a new tab.
+    cmpIds.orig = orig; cmpIds.now = now; cmpIds.big = false;
+    setCmpSize(224);
+    $('#imgc-cmp-range').value = 224;
     $('#imgc-cmp-orig-open').href = orig; $('#imgc-cmp-webp-open').href = now;
     $('#imgc-cmp-orig-cap').textContent = `Before: ${kb(Number(b.dataset.before))}`;
     $('#imgc-cmp-webp-cap').textContent = `Now (WebP): ${kb(Number(b.dataset.after))}`;
@@ -4554,6 +4567,8 @@ async function loadImageConvert(fillForm = true) {
     $('#imgc-log-state').addEventListener('change', logAgain);
     $('#imgc-log-prev').addEventListener('click', () => { imgLog.offset = Math.max(0, imgLog.offset - imgLog.limit); loadImageLog().catch(() => {}); });
     $('#imgc-log-next').addEventListener('click', () => { imgLog.offset += imgLog.limit; loadImageLog().catch(() => {}); });
+    $('#imgc-cmp-range').addEventListener('input', (e) => setCmpSize(Number(e.target.value)));
+    $('#imgc-cmp-reset').addEventListener('click', () => { $('#imgc-cmp-range').value = 224; setCmpSize(224); });
     const closeCmp = () => { $('#imgc-compare').classList.add('hidden'); $('#imgc-cmp-orig').removeAttribute('src'); $('#imgc-cmp-webp').removeAttribute('src'); };
     $('#imgc-cmp-close').addEventListener('click', closeCmp);
     $('#imgc-compare').addEventListener('click', (e) => { if (e.target === $('#imgc-compare')) closeCmp(); });   // a click outside the card closes it

@@ -210,9 +210,9 @@ export function createApp() {
     const file = j.conversionFile(req.params.id, req.params.kind);
     if (!file) return res.status(404).json({ error: req.params.kind === 'original' ? 'The original is no longer kept' : 'No such picture' });
     res.set('Cache-Control', 'private, no-store');
-    // ?w=448: a small copy for the compare window (a lossless PNG, so both sides are scaled the same way and the only difference is the conversion); without it, the file itself
-    if (Number(req.query.w) === 448) {
-      try { const { getSharp } = await import('./lib/webp.js'); const sharp = await getSharp(); if (sharp) return res.type('image/png').send(await sharp(file, { failOn: 'none' }).resize({ width: 448, withoutEnlargement: true }).png().toBuffer()); } catch { /* the file itself below */ }
+    // ?w=448 (or 1200 when the compare window is made big): a smaller copy for the compare window (a lossless PNG, so both sides are scaled the same way and the only difference is the conversion); without it, the file itself
+    if ([448, 1200].includes(Number(req.query.w))) {
+      try { const { getSharp } = await import('./lib/webp.js'); const sharp = await getSharp(); if (sharp) return res.type('image/png').send(await sharp(file, { failOn: 'none' }).resize({ width: Number(req.query.w), withoutEnlargement: true }).png().toBuffer()); } catch { /* the file itself below */ }
     }
     res.sendFile(file);
   });
