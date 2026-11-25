@@ -9,7 +9,7 @@ import { parseFilename, sortTitle, decodeEntities } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
-import { canSeeRom, visibleSql } from '../lib/visibility.js';
+import { canSeeRom, isRomId, visibleSql } from '../lib/visibility.js';
 import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted, ARCADE_ROMSET } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
@@ -739,8 +739,9 @@ router.post('/bulk/import-names', requireAdmin, namesUpload, (req, res, next) =>
 router.get('/bulk/enrich-job', requireAdmin, (req, res) => res.json({ ...enrichJob }));
 
 // A game hidden from everyone does not exist for members: every route that names it answers 404 (admins pass).
+// An id that is not plain digits names no game, for anyone: it must be refused here, never passed on unchecked.
 router.param('id', (req, res, next, id) => {
-  if (/^\d+$/.test(id) && !canSeeRom(req.user, id)) return res.status(404).json({ error: 'ROM not found' });
+  if (!isRomId(id) || !canSeeRom(req.user, id)) return res.status(404).json({ error: 'ROM not found' });
   next();
 });
 

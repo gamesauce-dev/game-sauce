@@ -83,6 +83,40 @@ test('every route that names the hidden game answers "not found" to a member', a
   assert.equal((await call(`/api/videos/status?kind=rom&id=${plain}`, { token: memberTok })).status, 200, 'a visible game is as before');
 });
 
+test('no other way of writing a game number gets a member past the hidden check', async () => {
+  // The database reads "5.0", "5e0", "+5" and " 5" as game 5, so an id that is not plain digits must name no game at all.
+  const spell = (id) => [`${id}.0`, `${id}.`, `${id}e0`, `0${id}`, `%2B${id}`, `%20${id}`, `${id}%20`, `%09${id}`, `${id}%0A`];
+  const footprint = () => ({
+    broken: db.prepare('SELECT broken FROM roms WHERE id = ?').get(secret).broken,
+    saves: db.prepare('SELECT COUNT(*) AS n FROM save_states WHERE rom_id = ?').get(secret).n,
+    downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE rom_id = ?').get(secret).n
+  });
+  const before = footprint();
+  assert.equal((await call('/api/auth/policy', { method: 'PUT', body: { members_can_download: true } })).status, 200);   // so the download and launch routes are not refused for another reason
+  try {
+    const routes = [['GET', ''], ['GET', '/cover'], ['GET', '/media/box2d'], ['GET', '/file/spine'], ['GET', '/download'], ['GET', '/play'], ['GET', '/play/zzsecret.sfc'], ['GET', '/saves'],
+      ['POST', '/launch'], ['POST', '/saves'], ['POST', '/favorite'], ['POST', '/hide'], ['POST', '/broken'], ['DELETE', '/saves/1']];
+    for (const id of spell(secret)) for (const [method, tail] of routes) {
+      const r = await call(`/api/roms/${id}${tail}`, { token: memberTok, method, body: method === 'POST' ? {} : undefined });
+      assert.equal(r.status, 404, `${method} /roms/${id}${tail}`);
+      assert.ok(!/zzsecret/i.test(r.text), `${method} /roms/${id}${tail} names the hidden game`);
+    }
+    // a save sent as the player sends it
+    const res = await fetch(`${base}/api/roms/${secret}.0/saves`, { method: 'POST', headers: { Authorization: `Bearer ${memberTok}`, 'Content-Type': 'application/octet-stream' }, body: 'state' });
+    assert.equal(res.status, 404, 'POST saves with data');
+    for (const id of spell(secret)) assert.equal((await call(`/api/videos/status?kind=rom&id=${id}`, { token: memberTok })).status, 404, `videos ${id}`);
+  } finally {
+    await call('/api/auth/policy', { method: 'PUT', body: { members_can_download: false } });
+  }
+  assert.deepEqual(footprint(), before, 'nothing was changed or logged for the hidden game');
+  const { canSeeRom } = await import('../src/lib/visibility.js');
+  for (const id of [`${plain}.0`, ` ${plain}`, '0x1', '', null, 1.5]) assert.equal(canSeeRom({ id: memberId, role: 'user' }, id), false, `canSeeRom ${JSON.stringify(id)}`);
+  assert.equal(canSeeRom({ id: memberId, role: 'user' }, plain), true);
+  assert.equal(canSeeRom({ id: memberId, role: 'user' }, String(plain)), true);
+  assert.equal((await call(`/api/roms/${secret}`)).status, 200, 'the admin still opens it by its number');
+  assert.equal((await call(`/api/roms/${plain}`, { token: memberTok })).status, 200, 'a visible game is as before');
+});
+
 test('a hidden game cannot be named in a message, by the sender or to someone who cannot see it', async () => {
   const share = (token, to, id) => call(`/api/messages/with/${to}`, { token, method: 'POST', body: { text: 'look', game: { type: 'rom', id } } });
   const bySender = await share(memberTok, adminId, secret);

@@ -10,8 +10,13 @@ const isAdmin = (user) => user?.role === 'admin';
 /** An SQL condition (for a roms row named `alias`) that holds for the games this user may see. */
 export const visibleSql = (user, alias = 'r') => (isAdmin(user) ? '1 = 1' : `${alias}.hidden_all = 0 AND ${alias}.source_hidden = 0`);
 
+/** A game's number written the one way we accept: plain digits, no leading zero. The database would also read other spellings as a number, so
+ *  nothing that fails this may reach a query. */
+export const isRomId = (id) => /^[1-9]\d*$/.test(String(id));
+
 /** May this user see this ROM? A ROM that does not exist is nobody's to see (an admin gets the usual "not found" from the route itself). */
 export function canSeeRom(user, romId) {
   if (isAdmin(user)) return true;
+  if (!isRomId(romId)) return false;
   return Boolean(db.prepare(`SELECT 1 FROM roms r WHERE r.id = ? AND ${visibleSql(user)}`).get(Number(romId)));
 }
