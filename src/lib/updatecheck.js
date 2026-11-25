@@ -1,6 +1,6 @@
 // "Is there a newer game-sauce?" Looks at the latest published release of the project on GitHub.
 //
-// Load on GitHub: one request per server per six hours at most (the answer is cached, also across restarts, and shared with the
+// Load on GitHub: about one request per server per day (the answer is cached, also across restarts, and shared with the
 // emulator lookups' rate-limit back-off). Every household's server asks from its own address, and GitHub allows 60 anonymous
 // requests an hour per address, so this stays far below any limit however many people use the project.
 // Privacy: the only thing sent is an ordinary anonymous request for the project's release page; nothing about your library or

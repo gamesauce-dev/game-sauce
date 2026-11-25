@@ -769,7 +769,7 @@
  "For example: The server restarts at 10pm tonight.": "例如：服务器今晚 10 点重启。",
  "for games you also own as a physical copy (a disc or a cartridge) in your own collection, which switches the disc or cartridge icon on that game's tile (leave it empty to keep the icon as it is, or write": "用于你的收藏中同时拥有实体版（光盘或卡带）的游戏，这会点亮该游戏方块上的光盘或卡带图标（留空则保持图标不变，或填写",
  "For PlayStation, Nintendo and Xbox games you own as downloads. Steam games come from Steam (set that up under Settings → My account → Steam), so they are not added by hand. Details and a cover are looked up afterwards, and you can match the game by hand if they are wrong.": "适用于你以下载方式拥有的 PlayStation、任天堂和 Xbox 游戏。Steam 游戏来自 Steam（在 设置 → 我的账户 → Steam 中设置），因此无需手动添加。之后会自动查找详情和封面，如果有误，你可以手动匹配该游戏。",
- "for safekeeping. Latest-release checks hit the GitHub API live (10-minute cache); nightly-only projects report that instead of a version number.": "以妥善保存。最新版本检查会实时访问 GitHub API（缓存 10 分钟）；只有每日构建的项目会显示这一点，而不是版本号。",
+ "for safekeeping. game-sauce asks GitHub about each project once a day; nightly-only projects report that instead of a version number.": "以妥善保存。game-sauce 每天向 GitHub 查询每个项目一次；只有每日构建的项目会显示这一点，而不是版本号。",
  "for the platform (type to search)": "平台（输入以搜索）",
  "Forgets your own dev ID/password and falls back to the shared default. Your site login is untouched.": "忘记你自己的开发者 ID/密码，并恢复为共享的默认值。你的网站登录不受影响。",
  "Found for your games": "已为你的游戏找到",

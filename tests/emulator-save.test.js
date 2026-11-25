@@ -32,6 +32,8 @@ before(async () => {
     if (u.startsWith('https://api.github.com/')) {
       api.push({ url: u, auth: opts?.headers?.Authorization || null });
       if (mode === 'limited') return new Response('{}', { status: 403, headers: { 'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600) } });
+      if (mode === 'none') return new Response('{}', { status: 404 });
+      if (mode === 'broken') return new Response('{}', { status: 500 });
       return new Response(JSON.stringify(release()), { status: 200 });
     }
     if (u.startsWith('https://downloads.test/')) {
@@ -111,6 +113,59 @@ test('a download that fails says so and leaves nothing in the vault', async () =
   const r = await save();
   assert.equal(r.status, 502); assert.match(r.body.error, /Download failed \(404\)/);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM emulators').get().n, 0);
+});
+
+/* ───── how often GitHub is asked ───── */
+const age = (repo, hours) => { db.prepare("UPDATE metadata_cache SET fetched_at = datetime('now', ?) WHERE key = ?").run(`-${hours} hours`, `ghrel:${repo}`); mod._resetReleaseCache(); };
+
+test('an answer is good for a day', async () => {
+  await mod.fetchLatestRelease('o/daily');
+  for (const hours of [1, 7, 13, 23]) { age('o/daily', hours); assert.ok((await mod.fetchLatestRelease('o/daily')).payload, `${hours} h`); }
+  assert.equal(api.length, 1);
+  age('o/daily', 25);
+  await mod.fetchLatestRelease('o/daily');
+  assert.equal(api.length, 2);
+});
+
+test('"no release" is an answer too, and is kept for the day, even over a restart', async () => {
+  mode = 'none';
+  for (let i = 0; i < 4; i++) assert.match((await mod.fetchLatestRelease('o/nightly')).missing, /nightly\/rolling/);
+  mod._resetReleaseCache();   // as after a restart: only the stored copy is left
+  assert.match((await mod.fetchLatestRelease('o/nightly')).missing, /nightly\/rolling/);
+  assert.equal(api.length, 1);
+  age('o/nightly', 25); mode = 'ok';
+  assert.ok((await mod.fetchLatestRelease('o/nightly')).payload, 'a day later it is asked again, and a release that has appeared is seen');
+  assert.equal(api.length, 2);
+});
+
+test('after a check that failed, it is not tried again by itself for twelve hours', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() });
+  const hour = 3600 * 1000;
+  mode = 'broken';
+  for (let i = 0; i < 4; i++) assert.match((await mod.fetchLatestRelease('o/broken')).missing, /GitHub answered 500/);
+  assert.equal(api.length, 1, 'with nothing stored');
+  t.mock.timers.tick(11 * hour); await mod.fetchLatestRelease('o/broken'); assert.equal(api.length, 1);
+  t.mock.timers.tick(2 * hour); await mod.fetchLatestRelease('o/broken'); assert.equal(api.length, 2);
+  // with an old good answer: it is still shown, with the reason, and not asked for again and again
+  mode = 'ok'; await mod.fetchLatestRelease('o/old');
+  t.mock.timers.tick(25 * hour); mode = 'broken';
+  const asked = api.length;
+  for (let i = 0; i < 4; i++) { const r = await mod.fetchLatestRelease('o/old'); assert.ok(r.payload); assert.match(r.stale, /500/); }
+  assert.equal(api.length, asked + 1);
+});
+
+test('"Check latest releases" can still ask again after ten minutes, and not before', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() });
+  for (const [repo, as] of [['o/m1', 'ok'], ['o/m2', 'none'], ['o/m3', 'broken']]) {
+    mode = as;
+    const start = api.length;
+    await mod.fetchLatestRelease(repo);
+    await mod.fetchLatestRelease(repo, { manual: true });
+    assert.equal(api.length, start + 1, `${as}: not within ten minutes`);
+    t.mock.timers.tick(11 * 60 * 1000);
+    await mod.fetchLatestRelease(repo, { manual: true });
+    assert.equal(api.length, start + 2, `${as}: after ten minutes`);
+  }
 });
 
 test('one save button per release, which shows it is working', () => {

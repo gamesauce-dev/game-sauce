@@ -22,7 +22,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
-- **Save to vault for an emulator release works from what the page already knows.** It no longer asks GitHub again on every save (which could end in "GitHub answered 403"), and it uses the optional GitHub token. The Modern look has one save button instead of two that did the same, and a message stays on screen while the file is saved.
+- **Save to vault for an emulator release works from what the page already knows.** It no longer asks GitHub again on every save (which could end in "GitHub answered 403"), and it uses the optional GitHub token. The Modern look has one save button instead of two that did the same, and a message stays on screen while the file is saved. **GitHub is asked much less:** each project once a day (was every six hours), a "no release" answer is now kept like any other (it was asked again on every visit), and after a failed check it waits twelve hours before trying again by itself. **Check latest releases** still asks again once an answer is ten minutes old.
 - **Security: uploads can no longer use up the server's memory.** Every upload now limits the text sent with the file (12 short fields), and emulator installers are saved straight to disk as they arrive.
 - **Security: only an admin's import replaces a shared video.** A member's asset import can still give a video to a game that has none, but no longer changes one that is there.
 - **Play-only accounts now see logos, game art and videos.** Platform and family logos, a game's own logo, marquee and background, and ROM Library videos were refused to them, so Big Screen showed placeholders and no video. They can watch videos, not fetch or change them.

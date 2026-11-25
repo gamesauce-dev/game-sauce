@@ -208,7 +208,7 @@ Mesen, Snes9x, simple64, Dolphin, Cemu, Eden, mGBA, melonDS, Azahar, DuckStation
 PCSX2, RPCS3, PPSSPP, BlastEm, Mednafen, Flycast, MAME + FBNeo, Stella, xemu,
 shadPS4) with official-site + download-page links, the GitHub repo where one
 exists, a BIOS/keys warning where one is needed, and a live
-`GET /api/emulators/latest/:platform` check (GitHub API, 10-minute cache) with a
+`GET /api/emulators/latest/:platform` check (GitHub API, asked once a day for each project) with a
 per-OS asset picker. **Save to vault** (admin) downloads the official release
 asset server-side into `storage/emulators`; manual upload also supported
 (`POST /api/emulators/vault/upload`, multipart, 1 GB cap, deduped by SHA1).
@@ -640,7 +640,7 @@ Notes:
 | `GAMESAUCE_LAUNCHBOX_URL` | where the LaunchBox metadata file is downloaded from (default LaunchBox's own address) |
 | `GITHUB_TOKEN` / `GAMESAUCE_GITHUB_TOKEN` | optional GitHub token for the Emulators page's release lookups (including the one behind Save to vault), if you hit GitHub's anonymous rate limit |
 | `GAMESAUCE_HOME` | desktop quick start only: where `start.sh` / `start.bat` keep data (default a `game-sauce-data` folder beside the app) |
-| `GAMESAUCE_UPDATE_CHECK` | `0` turns off the admin's "update available" notice (it asks GitHub for the project's latest release at most once every six hours; nothing about your library is sent) |
+| `GAMESAUCE_UPDATE_CHECK` | `0` turns off the admin's "update available" notice (it asks GitHub for the project's latest release about once a day; nothing about your library is sent) |
 
 Env vars win over anything saved in the UI; a field pinned by env shows "set by environment"
 and cannot be edited from the page. The two `_SHARED` vars are the exception to the

@@ -778,7 +778,7 @@
  "For example: The server restarts at 10pm tonight.": "例：サーバーは今夜 22 時に再起動します。",
  "for games you also own as a physical copy (a disc or a cartridge) in your own collection, which switches the disc or cartridge icon on that game's tile (leave it empty to keep the icon as it is, or write": "自分のコレクションに物理版（ディスクやカートリッジ）も持っているゲーム用で、そのゲームのタイルのディスクやカートリッジのアイコンがオンになります（空にするとアイコンはそのままです。または次を書きます",
  "For PlayStation, Nintendo and Xbox games you own as downloads. Steam games come from Steam (set that up under Settings → My account → Steam), so they are not added by hand. Details and a cover are looked up afterwards, and you can match the game by hand if they are wrong.": "ダウンロード版で持っている PlayStation、Nintendo、Xbox のゲーム用です。Steam のゲームは Steam から取得されます（設定 → マイアカウント → Steam で設定）。そのため手動では追加しません。詳細とカバーは後から検索され、間違っていれば手動でゲームを照合できます。",
- "for safekeeping. Latest-release checks hit the GitHub API live (10-minute cache); nightly-only projects report that instead of a version number.": "保管のため。最新リリースの確認は GitHub API にライブで問い合わせます（10 分キャッシュ）。ナイトリー版のみのプロジェクトは、バージョン番号の代わりにそう表示されます。",
+ "for safekeeping. game-sauce asks GitHub about each project once a day; nightly-only projects report that instead of a version number.": "保管のため。game-sauce は各プロジェクトについて 1 日 1 回 GitHub に問い合わせます。ナイトリー版のみのプロジェクトは、バージョン番号の代わりにそう表示されます。",
  "for the platform (type to search)": "プラットフォーム用（入力して検索）",
  "Forgets your own dev ID/password and falls back to the shared default. Your site login is untouched.": "自分の開発用 ID / パスワードを忘れ、共有の既定に戻ります。サイトへのログインには影響しません。",
  "Found for your games": "あなたのゲームで見つかったもの",
