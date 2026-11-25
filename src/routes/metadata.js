@@ -9,7 +9,7 @@ import {
   describeProviderConfig, saveProviderConfig, clearProviderConfig, PROVIDER_FIELDS
 } from '../settings.js';
 import { applyMetadataRecord } from './roms.js';
-import { downloadCover } from '../lib/storage.js';
+import { pickedCandidate } from '../lib/safefetch.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { mameTitleTrusted } from '../lib/mamenames.js';
 
@@ -277,10 +277,10 @@ router.post('/:id/apply', requireAdmin, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(404).json({ error: 'Unknown API route' });
-    const cand = req.body?.candidate;
-    if (!cand || typeof cand !== 'object') {
+    if (!req.body?.candidate || typeof req.body.candidate !== 'object') {
       return res.status(400).json({ error: 'candidate object is required' });
     }
+    const cand = pickedCandidate(req.body.candidate);
 
     const exists = db.prepare('SELECT id FROM roms WHERE id = ?').get(id);
     if (!exists) return res.status(404).json({ error: 'ROM not found' });

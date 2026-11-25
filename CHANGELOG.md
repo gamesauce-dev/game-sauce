@@ -22,6 +22,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
+- **Security: safer picture downloads.** Picking a match accepts pictures only from the search services (TheGamesDB, IGDB, LaunchBox), and picture and ScreenScraper file downloads no longer reach this computer or your private network, including through redirects. If you rely on one there, name it in `GAMESAUCE_FETCH_ALLOW_HOSTS`.
 - **Security: stronger sign-in limits.** Wider limits per address and per username, over-long sign-in names are turned away, and the activity log keeps the newest 10,000 failed sign-ins. Behind a reverse proxy (`GAMESAUCE_TRUST_PROXY=1`) only the address your proxy added is used now: with more than one proxy in a row, set `GAMESAUCE_PROXY_HOPS`.
 - **Security: a game hidden from members is now checked on every Library game address.** Update if other people have accounts on your server.
 - **Only an admin can delete games or upload ROMs (security).** A member with a full account could delete games from the shared library, one at a time or in bulk (and, for an uploaded game, its file), and the server would accept a ROM upload from them even though the menu did not offer Add ROMs. The server now refuses both (an upload before any file is received), and members no longer see a Delete button in the details window or the bulk bar. A member's Hide still changes only their own view; hiding for everyone stays with admins.

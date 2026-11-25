@@ -8,6 +8,7 @@ import { fillAfterLookup } from '../lib/assets.js';
 import { CONSOLE_STORES, isConsoleStore, importConsoleCsv, removeConsoleGame, renameConsoleGame, libSlug, getConsoleDetails, consoleCoverPath, hasOwnConsoleCover, setConsoleCover, removeConsoleCover, storeUrl, countryFor, platformLabel, startDetailsJob, detailsJobStatus, addConsoleGame, consoleDetailsFor, editConsoleGame, applyConsoleMatch, clearConsoleMatch, lookupConsoleAgain } from '../lib/consoles.js';
 import { bucketOf, getDetails, describeAccount, saveAccount, removeAccount, syncSteam, listGames, countGames, forgetMissingConsoleCovers, countStores, setMark, parseSteamId, looksLikeKey } from '../lib/steam.js';
 import { sendImage } from '../lib/webp.js';
+import { pickedCandidate } from '../lib/safefetch.js';
 
 const router = express.Router();
 const me = (req) => Number(req.user?.id ?? -1);
@@ -117,7 +118,7 @@ router.post('/games/:store/:appId/match', async (req, res, next) => {
   if (!consoleOnly(req, res)) return;
   const cand = req.body?.candidate;
   if (!cand || typeof cand !== 'object') return res.status(400).json({ error: 'candidate object is required' });
-  try { res.json(await applyConsoleMatch(me(req), req.params.store, req.params.appId, cand)); } catch (err) { if (err.status) return fail(res, err); next(err); }
+  try { res.json(await applyConsoleMatch(me(req), req.params.store, req.params.appId, pickedCandidate(cand))); } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 // A cover of the person's own for a console game (JPEG, PNG or WebP up to 8 MB), or back to the shared one. Steam's covers come from Steam.
 const coverUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });

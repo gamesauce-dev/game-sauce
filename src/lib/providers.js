@@ -25,6 +25,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
 import { sniffProviderImage } from './coverzip.js';
+import { fetchRemote } from './safefetch.js';
 import { emumovies, registerVideoSource, titleKey as gameTitleKey } from './emumovies.js';
 
 const TIMEOUT_MS = Number(process.env.META_TIMEOUT_MS || 15000);
@@ -126,14 +127,12 @@ export async function cacheMedia(url, kind = 'box2d') {
     // like a busy server and never saved, so a game is not left pointing at something that cannot be shown.
     let buf = null, type = null;
     for (let attempt = 0; attempt < 3; attempt++) {
-      let res = null;
       try {
-        res = await fetch(ssSign(url), { signal: AbortSignal.timeout(20000), headers: { 'User-Agent': 'game-sauce/0.2' } });
+        const res = await fetchRemote(ssSign(url), { maxBytes: MAX_MEDIA_BYTES, userAgent: 'game-sauce/0.2' });
         if (res.ok) {
-          const got = Buffer.from(await res.arrayBuffer());
-          if (got.length && got.length <= MAX_MEDIA_BYTES && (type = sniffProviderImage(got))) { buf = got; break; }
+          if (res.body.length && (type = sniffProviderImage(res.body))) { buf = res.body; break; }
         } else if (res.status !== 429 && res.status < 500) break;
-      } catch { res = null; }
+      } catch (err) { if (err.blocked || err.tooBig) break; }   // asking again would not change either
       if (attempt < 2) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
     }
     if (!buf) return null;
@@ -440,13 +439,10 @@ const screenscraper = {
 
   /** One file from ScreenScraper (a picture or a manual): signed at this moment, waits its turn, and refuses anything over maxBytes. Throws a safe message. */
   async fetchFile(url, maxBytes) {
-    const res = await ssThrottle(() => fetch(ssSign(url), { signal: AbortSignal.timeout(60000), headers: { 'User-Agent': 'game-sauce' } }));
+    const res = await ssThrottle(() => fetchRemote(ssSign(url), { maxBytes, timeoutMs: 60000 }));
     if (!res.ok) throw new Error(`ScreenScraper's file answered HTTP ${res.status}`);
-    const declared = Number(res.headers.get('content-length'));
-    if (declared && declared > maxBytes) throw new Error('the file is over the size limit');
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (!buf.length || buf.length > maxBytes) throw new Error(buf.length ? 'the file is over the size limit' : 'the file was empty');
-    return buf;
+    if (!res.body.length) throw new Error('the file was empty');
+    return res.body;
   },
 
   /** Ask ScreenScraper how much of today's quota is left. */

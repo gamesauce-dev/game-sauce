@@ -9,6 +9,7 @@ process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
 process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
 process.env.GAMESAUCE_ADMIN_USER = 'cvadmin';
 process.env.GAMESAUCE_ADMIN_PASSWORD = 'cv-admin-password-1';
+process.env.GAMESAUCE_FETCH_ALLOW_HOSTS = '127.0.0.1';   // the fake picture server here is on this computer, which downloads otherwise refuse
 
 let server, base, tok, db, a, b;
 const hdr = () => ({ Authorization: `Bearer ${tok}` });

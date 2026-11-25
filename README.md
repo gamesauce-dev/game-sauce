@@ -618,6 +618,7 @@ Notes:
 | `GAMESAUCE_COOKIE_SECURE=1` | Secure cookies (only with HTTPS) |
 | `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` / `X-Forwarded-Host` behind a reverse proxy. Set it only when there is one: the proxy's own entry (the right-most) is taken as the visitor's address |
 | `GAMESAUCE_PROXY_HOPS` | with the setting above: how many proxies in a row add to `X-Forwarded-For` (default 1; e.g. `2` for a CDN in front of your own proxy) |
+| `GAMESAUCE_FETCH_ALLOW_HOSTS` | picture and ScreenScraper file downloads refuse addresses on this computer or your private network. If you need one (a mirror at home, or a DNS tool that answers with private addresses), list its host here: `host` or `host:port`, comma separated. The `SS_API_BASE` host is allowed already |
 | `GAMESAUCE_ALLOWED_ORIGINS` | extra web addresses allowed to make changes (comma separated), e.g. `https://games.example.org`, if a proxy hides the real host |
 | `GAMESAUCE_RATE_LIMIT` | requests per minute per user (default 900; `0` turns rate limiting off). Heavier actions (metadata lookups, downloads, uploads, backup/restore) have tighter caps scaled from it; override with `GAMESAUCE_RATE_LIMIT_METADATA`, `_DOWNLOAD`, `_UPLOAD`, `_HEAVY` |
 | `GAMESAUCE_BACKUP_DIR` | default folder for server-side backups (default `data/backups`; can also be set in Settings → Backups) |

@@ -10,6 +10,7 @@ process.env.GAMESAUCE_DATA_DIR = path.join(TMP, 'data');
 process.env.GAMESAUCE_STORAGE_DIR = path.join(TMP, 'storage');
 process.env.GAMESAUCE_ADMIN_USER = 'cadmin';
 process.env.GAMESAUCE_ADMIN_PASSWORD = 'c-admin-password-1';
+process.env.GAMESAUCE_FETCH_ALLOW_HOSTS = '127.0.0.1';   // the fake picture server here is on this computer, which downloads otherwise refuse
 
 let img, imgPort, hits = 0, failFirst = 2, db, mod;
 before(async () => {

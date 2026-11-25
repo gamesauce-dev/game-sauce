@@ -10,6 +10,7 @@ import { fillAfterLookup } from '../lib/assets.js';
 import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
 import { sendImage } from '../lib/webp.js';
+import { pickedCandidate } from '../lib/safefetch.js';
 
 const router = express.Router();
 const manualUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MANUAL_BYTES } });
@@ -91,7 +92,7 @@ router.post('/games/:id/match', async (req, res, next) => {
   try {
     const cand = req.body?.candidate;
     if (!cand || typeof cand !== 'object') return res.status(400).json({ error: 'candidate object is required' });
-    res.json(await applyMatch(me(req), req.params.id, { ...cand, source: cand.source || 'thegamesdb' }, { explicit: true }));   // picked by hand: it replaces an uploaded cover
+    res.json(await applyMatch(me(req), req.params.id, { ...pickedCandidate(cand), source: cand.source || 'thegamesdb' }, { explicit: true }));   // picked by hand: it replaces an uploaded cover
   } catch (err) { if (err.status) return fail(res, err); next(err); }
 });
 
