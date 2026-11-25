@@ -594,20 +594,20 @@
         </div>
 
         <h4 style="margin:1.4rem 0 .3rem">Convert the stored pictures</h4>
-        <p class="hint" style="margin-top:0">The copies above make pages faster but keep your files as they are. This goes further and replaces the stored PNG and JPEG pictures themselves with WebP, which also frees disk space. Only pictures inside the game-sauce storage folder are touched, never files in your own folders. A picture is replaced only when the WebP is at least 10% smaller, and every original is kept (for the number of days below, or until you remove them), so <b>Put the originals back</b> undoes it all while they are still there.</p>
+        <p class="hint" style="margin-top:0">The copies above make pages faster but keep your files as they are. This goes further and replaces the stored PNG and JPEG pictures themselves with WebP, which also frees disk space. Only pictures inside the game-sauce storage folder are touched, never files in your own folders. A picture is replaced only when the WebP is at least 10% smaller, and every original is kept (for the number of days below, or until you remove them), so <b>Return originals</b> undoes it all while they are still there.</p>
         <div class="hash-form">
           <label class="policy-row"><input type="radio" name="imgc-mode" value="off" /> <span><b>Not scheduled</b><br><small class="hint">Only when you press Run now.</small></span></label>
           <label class="policy-row"><input type="radio" name="imgc-mode" value="overnight" /> <span><b>Overnight</b><br><small class="hint">From <input type="time" id="imgc-from" /> to <input type="time" id="imgc-to" /> (this server's clock). One picture at a time; it stops when the window closes and carries on the next night.</small></span></label>
           <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="days" /> <span><b>Remove each original after</b> <input type="number" id="imgc-keep" min="1" max="90" step="1" /> <b>days</b><br><small class="hint">Counted from when that picture was converted. After that the original is gone for good and that conversion is final.</small></span></label>
-          <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="forever" /> <span><b>Keep the originals until I remove them</b><br><small class="hint">Nothing is removed automatically. They use the disk space of the originals until you press <i>Remove the kept originals</i> below.</small></span></label>
+          <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="forever" /> <span><b>Keep the originals until I remove them</b><br><small class="hint">Nothing is removed automatically. They use the disk space of the originals until you press <i>Remove originals</i> below.</small></span></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <button class="btn btn-primary" id="imgc-save" type="button">Save schedule</button>
             <button class="btn btn-amber" id="imgc-estimate" type="button" title="Convert a sample in memory and say how much it would save; nothing changes">Estimate the saving</button>
             <label class="hint" for="imgc-limit" style="align-self:center">Stop after</label> <input type="number" id="imgc-limit" min="0" step="1" placeholder="all" style="width:6em" title="A trial run: stop after this many pictures have been converted. Empty or 0 means all." /> <span class="hint" style="align-self:center">pictures</span>
             <button class="btn" id="imgc-run" type="button">Run now</button>
             <button class="btn btn-red" id="imgc-stop" type="button">Stop</button>
-            <button class="btn btn-amber" id="imgc-restore" type="button" title="Put the original pictures back while they are still kept">Put the originals back</button>
-            <button class="btn btn-red" id="imgc-remove" type="button" title="Free the space now: the kept originals go for good and the conversion is final">Remove the kept originals</button>
+            <button class="btn btn-amber" id="imgc-restore" type="button" title="Put the original pictures back while they are still kept">Return originals</button>
+            <button class="btn btn-red" id="imgc-remove" type="button" title="Free the space now: the kept originals go for good and the conversion is final">Remove originals</button>
           </div>
           <p class="hint" id="imgc-msg"></p>
           <details class="hint" style="margin-top:6px"><summary>What each button does</summary>
@@ -616,8 +616,8 @@
               <li><b>Estimate the saving</b>: tries a sample in memory and tells you roughly how much space the conversion would free. Changes nothing.</li>
               <li><b>Stop after N pictures + Run now</b>: converts pictures straight away, stopping after N if you set a number (a good first trial). Empty means all of them.</li>
               <li><b>Stop</b>: ends a run that is going. What is already converted stays converted.</li>
-              <li><b>Put the originals back</b>: undoes the conversions whose originals are still kept: the original returns and the WebP is deleted.</li>
-              <li><b>Remove the kept originals</b>: deletes the kept originals now to free the space. After this those conversions cannot be undone.</li>
+              <li><b>Return originals</b>: undoes the conversions whose originals are still kept: the original returns and the WebP is deleted.</li>
+              <li><b>Remove originals</b>: deletes the kept originals now to free the space. After this those conversions cannot be undone.</li>
               <li><b>Show the converted pictures</b>: a list of every conversion, searchable by game name, with a before and after to compare.</li>
             </ul>
           </details>

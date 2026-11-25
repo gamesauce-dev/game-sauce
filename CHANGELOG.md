@@ -14,7 +14,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ### Changed
 
 - **The Pictures page explains itself.** It now says up front that it has two separate parts (temporary display copies, which are safe, and the conversion of your stored pictures, which is off until you start it), says exactly what Clear the copies does and does not touch, and has a "What each button does" list for the conversion.
-- **Colour-coded buttons on the Pictures page.** Stop and Remove the kept originals are red (they end a run or delete files for good); Estimate the saving and Put the originals back are amber. The rest keep the normal colour.
+- **Clearer, safer buttons on the Pictures page.** Put the originals back is now **Return originals** and Remove the kept originals is now **Remove originals**. Remove originals asks twice: a first prompt with the current count and size, then a second one that needs a tick box ("I understand the originals cannot be recovered") before anything is deleted.
+- **Colour-coded buttons on the Pictures page.** Stop and Remove originals are red (they end a run or delete files for good); Estimate the saving and Return originals are amber. The rest keep the normal colour.
 - The Mac app's signing step now also signs the picture library's `.dylib`, which Apple's notarisation needs. The bundle build, the Docker build and the release checks now stop if the picture library (WebP) cannot load, instead of shipping a build without it.
 
 ### Fixed

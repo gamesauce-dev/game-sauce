@@ -4485,7 +4485,7 @@ async function loadImageLog() {
   const r = await api(`/admin/images/convert/log?offset=${imgLog.offset}&limit=${imgLog.limit}&state=${encodeURIComponent(state)}&q=${encodeURIComponent(q)}`);
   imgLog.total = r.total;
   const kb = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
-  const label = { converted: 'Converted, original kept', final: 'Converted, original gone', restored: 'Put back' };
+  const label = { converted: 'Converted, original kept', final: 'Converted, original gone', restored: 'Returned' };
   list.innerHTML = r.items.length
     ? `<table><thead><tr><th>Game</th><th>Picture</th><th class="num">Before</th><th class="num">After</th><th class="num">Saved</th><th>State</th><th></th></tr></thead><tbody>${r.items.map((i) => `<tr>
         <td>${esc(i.title)}${i.platform ? ` <span class="hint">${esc(i.platform)}${i.list ? `, ${esc(i.list)}` : ''}</span>` : ''}<div class="hint">${esc(i.file)}</div></td>
@@ -4551,7 +4551,7 @@ async function loadImageConvert(fillForm = true) {
       try { const e = await api('/admin/images/convert/estimate'); say(`${e.pictures.toLocaleString()} stored PNG and JPEG pictures, ${mb(e.bytes)} MB. Judging by ${e.sampled} of them at quality ${e.quality}, about ${e.would_convert_pct}% would be converted and the library would shrink by about ${mb(e.estimated_saving_bytes)} MB (${e.estimated_saving_pct}%). Nothing was changed.`); } catch (err) { say(err.message); } finally { $('#imgc-estimate').disabled = false; }
     });
     $('#imgc-run').addEventListener('click', async () => {
-      const ok = await confirmDialog({ title: 'Convert the stored pictures now?', body: 'Every stored PNG and JPEG that shrinks by at least 10% is replaced with a WebP at the quality chosen above. The originals are kept for the number of days set here, and Put the originals back undoes it.', okLabel: 'Convert' });
+      const ok = await confirmDialog({ title: 'Convert the stored pictures now?', body: 'Every stored PNG and JPEG that shrinks by at least 10% is replaced with a WebP at the quality chosen above. The originals are kept for the number of days set here, and Return originals undoes it.', okLabel: 'Convert' });
       if (!ok) return;
       try { await api('/admin/images/convert/run', { method: 'POST', body: JSON.stringify({ limit: Number($('#imgc-limit').value) || 0 }) }); say(''); } catch (err) { toast(err.message, true); }
       loadImageConvert(false);
@@ -4574,14 +4574,20 @@ async function loadImageConvert(fillForm = true) {
     $('#imgc-compare').addEventListener('click', (e) => { if (e.target === $('#imgc-compare')) closeCmp(); });   // a click outside the card closes it
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#imgc-compare').classList.contains('hidden')) closeCmp(); });
     $('#imgc-remove').addEventListener('click', async () => {
-      const ok = await confirmDialog({ title: 'Remove the kept originals?', body: `${s.originals_kept.toLocaleString()} original pictures (${mb(s.originals_kept_bytes)} MB) will be taken away for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Remove them', danger: true });
+      // This one cannot be taken back, so it asks twice, with the figures as they are now (not as they were when the page opened).
+      let cur; try { cur = await api('/admin/images/convert'); } catch (err) { toast(err.message, true); return; }
+      if (!cur.originals_kept) { say('There are no kept originals to remove.'); return; }
+      const ok = await confirmDialog({ title: 'Remove the originals?', body: `${cur.originals_kept.toLocaleString()} original pictures (${mb(cur.originals_kept_bytes)} MB) will be deleted for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Continue', danger: true });
       if (!ok) return;
+      const again = await confirmDialog({ title: 'Are you sure?', body: `This deletes ${cur.originals_kept.toLocaleString()} original pictures and frees ${mb(cur.originals_kept_bytes)} MB. There is no recycle bin and no way back. Return originals will no longer work for them.`, okLabel: 'Delete the originals', danger: true, checkLabel: 'I understand the originals cannot be recovered' });
+      if (!again.ok) return;
+      if (!again.checked) { toast('Tick the box to confirm; nothing was removed.', true); return; }
       try { const r = await api('/admin/images/convert/remove-originals', { method: 'POST' }); say(`${r.removed.toLocaleString()} originals removed, ${mb(r.bytes)} MB freed.`); } catch (err) { toast(err.message, true); }
       loadImageConvert(true);
     });
     $('#imgc-stop').addEventListener('click', async () => { await api('/admin/images/convert/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadImageConvert(false); });
     $('#imgc-restore').addEventListener('click', async () => {
-      const ok = await confirmDialog({ title: 'Put the originals back?', body: 'Every converted picture is replaced by its original again, as long as the original is still kept. Pictures whose originals are already gone stay as WebP.', okLabel: 'Put back', danger: true });
+      const ok = await confirmDialog({ title: 'Return the originals?', body: 'Every converted picture is replaced by its original again, as long as the original is still kept. Pictures whose originals are already gone stay as WebP.', okLabel: 'Return them', danger: true });
       if (!ok) return;
       try { const r = await api('/admin/images/convert/restore', { method: 'POST' }); say(`${r.restored.toLocaleString()} pictures put back${r.unavailable ? `; ${r.unavailable.toLocaleString()} could not be (their originals are gone)` : ''}.`); } catch (err) { toast(err.message, true); }
       loadImageConvert(true);

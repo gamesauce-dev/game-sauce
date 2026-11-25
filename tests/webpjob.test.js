@@ -126,7 +126,7 @@ test('outside its window a scheduled run does not start; Run now does, and repla
   assert.equal(again.total, 0);
 });
 
-test('Put the originals back undoes everything', async () => {
+test('Return originals undoes everything', async () => {
   const r = await call('/api/admin/images/convert/restore', { method: 'POST' });
   assert.equal(r.status, 200); assert.ok(r.body.restored >= 5); assert.equal(r.body.unavailable, 0);
   assert.ok(fs.readFileSync(files.shared).equals(files.sharedBytes), 'byte-identical');
@@ -244,5 +244,9 @@ test('the progress bar and the list are wired into the Pictures panel', () => {
   for (const id of ['imgc-box', 'imgc-bar', 'imgc-pct', 'imgc-log-box', 'imgc-compare', 'imgc-cmp-range']) assert.ok(html.includes(`id="${id}"`), id);
   assert.match(app, /function setCmpSize\(px\)/);
   assert.ok(html.indexOf('id="imgc-msg"') < html.indexOf('id="imgc-status"'), 'the status box sits below the buttons');
-  assert.match(app, /function loadImageLog\(\)/); assert.match(app, /about \$\{span\(left\)\} left/);
+  assert.match(app, /function loadImageLog\(\)/);
+  // the destructive button asks twice, the second time with a tick box, and uses the figures as they are now
+  const rm = app.slice(app.indexOf("$('#imgc-remove').addEventListener"), app.indexOf("$('#imgc-stop').addEventListener"));
+  assert.equal((rm.match(/confirmDialog\(/g) || []).length, 2, 'two confirmations'); assert.match(rm, /checkLabel:/); assert.match(rm, /again\.checked/); assert.match(rm, /api\('\/admin\/images\/convert'\)/);
+  assert.ok(html.includes('>Return originals</button>') && html.includes('>Remove originals</button>'), 'the buttons are named Return originals and Remove originals'); assert.match(app, /about \$\{span\(left\)\} left/);
 });
