@@ -1996,7 +1996,7 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 #view-settings #mod-images .btn.btn-red:disabled, #view-settings #mod-images .btn.btn-amber:disabled { opacity: .45; }
 
 /* Classic Home: the ticker, then Continue playing and Recently added stacked one under the other (the same order as on Modern's Home) */
-#view-home { padding: 0 0 1.4rem; }
+#view-home { padding-bottom: 1.4286rem; }   /* the side and top padding are the ordinary .view ones, so Home lines up with the other pages and the sidebar's logo */
 #view-home .strips, #view-home .strips:has(> .strip.hidden) { display: block; grid-template-columns: none; }
 #view-home .strip { margin: 0 0 1rem; }
 #view-home .strip .recent-row { grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr)); column-gap: 0.7rem; }   /* one row of tiles each, as on Modern's Home: the base rule keeps the extra rows at zero height */
@@ -2004,3 +2004,6 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 #view-home .strip .recent-row .card-title { min-height: 2.5em; }
 #view-home .strip .recent-row .card-sub { display: none; }
 #view-home #lib-overview { margin: 0 0 1rem; }
+
+/* The Modern tooltip box is styled only in Modern: anywhere else it must not exist on the page (it would show as plain text and add a scroll bar) */
+body:not(.ui-modern) #mb-tip { display: none !important; }

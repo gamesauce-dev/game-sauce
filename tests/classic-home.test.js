@@ -37,3 +37,10 @@ test('a fresh sign-in starts on Home in Classic, a refresh keeps Home, and the t
   assert.match(css, /body\.play-only \.nav-item\[data-view="home"\]/, 'a play-only account keeps its Play screen');
   assert.match(app, /if \(state\.view === 'home'\) renderPlayedRow\?\.\(\);/, 'a game just played moves to the front of Continue playing');
 });
+
+test('Home keeps the ordinary page padding, and the Modern tooltip box never lingers in Classic', () => {
+  assert.match(css, /#view-home \{ padding-bottom: [\d.]+rem; \}/, 'only the bottom padding is set, so the sides and top are the ordinary .view ones');
+  assert.ok(!/#view-home \{ padding: 0/.test(css), 'no zero side padding against the sidebar and the window edge');
+  assert.match(css, /body:not\(\.ui-modern\) #mb-tip \{ display: none !important; \}/, 'a tooltip left over from Modern is never drawn as plain text in Classic');
+  assert.match(modern, /function untipify\(\)[^\n]*tipHide\(\); \$\('#mb-tip'\)\?\.remove\(\); tipEl = null;/, 'leaving Modern takes the tooltip box away');
+});

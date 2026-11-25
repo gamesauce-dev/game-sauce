@@ -837,7 +837,7 @@ function tipify(root = document) {
   }
 }
 /** Leaving Modern: put every title back, so Classic shows the browser's own tooltips as before. */
-function untipify() { for (const el of $$('[data-mtip]')) { el.setAttribute('title', el.dataset.mtip); delete el.dataset.mtip; } $('#mb-tip')?.classList.remove('show'); }
+function untipify() { for (const el of $$('[data-mtip]')) { el.setAttribute('title', el.dataset.mtip); delete el.dataset.mtip; } tipHide(); $('#mb-tip')?.remove(); tipEl = null; }   // the tooltip box goes too: styled only in Modern, it would sit as plain text at the foot of the Classic page
 let tipEl = null, tipTimer = null, tipFor = null;
 function tipHide() { clearTimeout(tipTimer); tipFor = null; tipEl?.classList.remove('show'); }
 function tipShow(el) {
