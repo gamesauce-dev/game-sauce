@@ -937,7 +937,7 @@ function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      state.navSnap = null; state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
+      state.navSnap = null; state.nav = { el: card.closest('#grid, #recent-row, #played-row, .browse-only') || root };
       openDetail(Number(card.dataset.rom));
     }
   }));
@@ -945,7 +945,7 @@ function bindCards(root) {
   $$('.card', root).forEach((card) => card.addEventListener('click', (e) => {
     const id = Number(card.dataset.rom);
     // The recent row is browse-only: no bulk-select checkboxes there.
-    const inRecent = root.id === 'recent-row' || root.id === 'played-row';
+    const inRecent = root.id === 'recent-row' || root.id === 'played-row' || root.classList.contains('browse-only');   // Home's rows and its search results: browse-only
     // In select mode a tile tap toggles selection instead of opening detail.
     const selectBox = e.target.closest('[data-select]');
     if ((state.selectMode || selectBox) && !inRecent) {
@@ -978,7 +978,7 @@ function bindCards(root) {
     const openBtn = e.target.closest('[data-open-rom]');
     if (openBtn) return; // handled by its own listener, don't double-open
     // Prev/next walks the list this tile lives in (main grid or the recently-added row).
-    state.navSnap = null; state.nav = { el: card.closest('#grid, #recent-row, #played-row') || root };
+    state.navSnap = null; state.nav = { el: card.closest('#grid, #recent-row, #played-row, .browse-only') || root };
     openDetail(id);
   }));
 
@@ -4214,7 +4214,7 @@ function showApp(user, { restore = false } = {}) {
   physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showToolsModule });
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, showToolsModule, user: () => authState.user });
-  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView });
+  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView, openPhysicalDetail: physical.openDetail, openDigitalDetail: digital.openDigitalDetail });
   api('/prefs').then((p) => { state.prefs = p || {}; applyChipPlate(); syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); else if (startsInBigScreen()) openBigScreenView(); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 

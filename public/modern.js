@@ -2,12 +2,14 @@
 // still the default and is untouched. This file adds an icon-driven top bar, a Home page (ticker, Continue playing, Recently
 // added) and light/dark, all switched on by the body class `ui-modern`. The choice is stored per person (prefs: ui_mode).
 import { groupedOptions } from './platform-order.js';
+import { thumb } from './thumb.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 import { landChips } from './chip-motion.js';
 import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 const ICON_BASE = '/modern/icons/';
 const cache = new Map();
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /** An icon from the user's SVG set, inlined so it takes the text colour (currentColor) and can be tinted by state. */
 export async function icon(name) {
@@ -214,10 +216,11 @@ async function renderHome() {
   const hi = { search: await icon('search'), 'arrow-right': await icon('arrow-right') };
   host.innerHTML = `
     <form class="mh-search" id="mh-search" role="search" autocomplete="off">
-      <select id="mh-plat" aria-label="Platform to search" title="Search one platform, or all"><option value="all">All platforms</option></select>
-      <label class="mh-q">${hi.search}<input id="mh-q" type="search" placeholder="Search your games" aria-label="Search your games" autocomplete="off" /></label>
+      <select id="mh-plat" aria-label="Platform to search" title="All platforms searches your ROM, Physical and Digital libraries together. Choosing a platform searches that platform in the ROM Library."><option value="all">All platforms</option></select>
+      <label class="mh-q">${hi.search}<input id="mh-q" type="search" placeholder="Search all your libraries" aria-label="Search all your libraries: ROM, Physical and Digital" autocomplete="off" /></label>
       <button type="submit" class="mb-btn" id="mh-go" title="Search" aria-label="Search">${hi['arrow-right']}</button>
     </form>
+    <div class="mh-results hidden" id="mh-results" aria-live="polite"></div>
     <div class="strips mh-strips">
       <div class="strip" data-strip="played"><button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span></button><div class="recent-row" id="mh-played"></div></div>
       <div class="strip" data-strip="recent"><button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span></button><div class="recent-row" id="mh-recent"></div></div>
@@ -244,6 +247,8 @@ async function fillHomePlatforms() {
 /** Search from Home: set the Library's search text and platform, then show the Library with the results. */
 function submitHomeSearch() {
   const text = ($('#mh-q')?.value || '').trim(), plat = $('#mh-plat')?.value || 'all';
+  if (text && plat === 'all') { searchEverywhere(text); return; }   // every library at once; a chosen platform is a ROM Library search, as before
+  clearHomeResults();
   const st = ctx.state();
   Object.assign(st, { platform: plat, extraPlatforms: [], q: text });
   const real = document.querySelector('#search'); if (real) real.value = text;
@@ -252,6 +257,55 @@ function submitHomeSearch() {
   ctx.loadLibrary?.();
   ctx.loadPlatforms?.();
   window.dispatchEvent(new Event('gs:filters'));
+}
+
+/* ───────────── Home search across every library ───────────── */
+let homeSearchSeq = 0;
+const HOME_HITS = 12;   // tiles shown per library; the rest is one click away
+function clearHomeResults() { homeSearchSeq++; $('#modern-home')?.classList.remove('show-results'); const r = $('#mh-results'); if (r) { r.classList.add('hidden'); r.innerHTML = ''; } }
+
+/** Search the ROM, Physical and Digital libraries together and show what each one has, on Home. */
+async function searchEverywhere(text) {
+  const host = $('#mh-results'), home = $('#modern-home'); if (!host || !home) return;
+  const mine = ++homeSearchSeq;
+  home.classList.add('show-results'); host.classList.remove('hidden');
+  host.innerHTML = '<p class="hint">Searching your libraries…</p>';
+  const q = encodeURIComponent(text), get = (p) => api(p).catch(() => null);
+  const [rom, phys, dig] = await Promise.all([get(`/roms?q=${q}&limit=${HOME_HITS}&sort=title`), get(`/physical/games?q=${q}`), get(`/digital/games?q=${q}`)]);
+  if (mine !== homeSearchSeq) return;   // a newer search (or Clear) has taken over
+  const n = (x) => (x == null ? 0 : x.total ?? (x.items || []).length);
+  const initials = (t) => String(t || '').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
+  const tile = (key, title, sub, cover) => `<button type="button" class="mh-res-tile" data-mh-open="${esc(key)}" title="${esc(title)}"><span class="mh-res-cover">${cover ? `<img loading="lazy" src="${esc(thumb(cover))}" alt="" onerror="this.style.display='none'" />` : ''}<span class="mh-res-ini">${esc(initials(title))}</span></span><span class="mh-res-title">${esc(title)}</span><span class="mh-res-sub">${esc(sub || '')}</span></button>`;
+  const group = (id, label, total, body) => `<section class="mh-res-group" data-group="${id}"><div class="mh-res-head"><b>${label}</b> <span class="hint">${total.toLocaleString()} ${total === 1 ? 'game' : 'games'}</span>${total ? ` <button type="button" class="btn btn-sm" data-mh-all="${id}">Show ${total > HOME_HITS ? `all ${total.toLocaleString()}` : 'in the library'}</button>` : ''}</div>${total ? `<div class="mh-res-row${id === 'rom' ? ' browse-only' : ''}" id="mh-res-${id}">${body}</div>` : '<p class="hint" style="margin:.2rem 0 0">No match.</p>'}</section>`;
+  const total = n(rom) + n(phys) + n(dig);
+  host.innerHTML = `<div class="mh-res-top"><b>${total.toLocaleString()} ${total === 1 ? 'match' : 'matches'} for “${esc(text)}”</b> <button type="button" class="btn btn-sm" id="mh-res-clear">Clear search</button></div>`
+    + group('rom', 'ROM Library', n(rom), (rom?.items || []).slice(0, HOME_HITS).map(ctx.cardHtml).join(''))
+    + group('phys', 'Physical Library', n(phys), (phys?.items || []).slice(0, HOME_HITS).map((g) => tile(`phys:${g.id}`, g.title, g.platform_name || g.platform, g.cover_url)).join(''))
+    + group('dig', 'Digital Library', n(dig), (dig?.items || []).slice(0, HOME_HITS).map((g) => tile(`dig:${g.store}|${g.app_id}`, g.name, g.platform_label || g.platform || g.store, g.cover_url)).join(''));
+  if (n(rom)) ctx.bindCards(host.querySelector('#mh-res-rom'));
+  $('#mh-res-clear')?.addEventListener('click', () => { clearHomeResults(); const qi = $('#mh-q'); if (qi) { qi.value = ''; qi.focus(); } });
+  host.querySelectorAll('[data-mh-open]').forEach((b) => b.addEventListener('click', () => {
+    const [kind, id] = b.dataset.mhOpen.split(/:(.*)/s);
+    if (kind === 'phys') ctx.openPhysicalDetail?.(Number(id)); else { const [store, app] = id.split('|'); ctx.openDigitalDetail?.(store, app); }
+  }));
+  host.querySelectorAll('[data-mh-all]').forEach((b) => b.addEventListener('click', () => showAllIn(b.dataset.mhAll, text)));
+}
+
+/** "Show all": open that library with the search already typed (the Physical and Digital pages have their own search boxes, which load on input). */
+function showAllIn(which, text) {
+  if (which === 'rom') {
+    const st = ctx.state();
+    Object.assign(st, { platform: 'all', extraPlatforms: [], q: text });
+    const real = document.querySelector('#search'); if (real) real.value = text;
+    const tq = $('#tl-q'); if (tq) tq.value = text;
+    go('library'); ctx.loadLibrary?.(); ctx.loadPlatforms?.(); window.dispatchEvent(new Event('gs:filters'));
+    return;
+  }
+  go(which === 'phys' ? 'physical' : 'digital');
+  const box = () => document.querySelector(which === 'phys' ? '#ph-q' : '#dg-q');
+  let tries = 0;
+  const fill = () => { const b = box(); if (b) { b.value = text; b.dispatchEvent(new Event('input', { bubbles: true })); } else if (tries++ < 20) setTimeout(fill, 100); };
+  setTimeout(fill, 150);
 }
 
 function fillRow(sel, items, empty = '') {
