@@ -706,3 +706,12 @@ db.exec(`CREATE TABLE IF NOT EXISTS image_conversions (
 db.exec('CREATE INDEX IF NOT EXISTS idx_imgconv_new ON image_conversions(new_path)');
 db.exec('CREATE TABLE IF NOT EXISTS image_skips (path TEXT PRIMARY KEY, bytes INTEGER NOT NULL, reason TEXT)');   // pictures that would not shrink: not tried again unless the file changes
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '69') ON CONFLICT(key) DO UPDATE SET value = '69'").run();
+
+/* ── v70: pictures that sharing has copied, and pictures the admin has stopped (src/lib/artmoderation.js). A picture is known by the fingerprint of its file; the forms a converted picture takes share one block_id. ── */
+db.exec(`CREATE TABLE IF NOT EXISTS art_shared (
+  hash TEXT PRIMARY KEY, bytes INTEGER NOT NULL, title TEXT NOT NULL, platform TEXT NOT NULL, kind TEXT NOT NULL, shared_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+db.exec(`CREATE TABLE IF NOT EXISTS art_blocked (
+  hash TEXT PRIMARY KEY, block_id TEXT NOT NULL, title TEXT NOT NULL, platform TEXT NOT NULL, kind TEXT NOT NULL, blocked_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '70') ON CONFLICT(key) DO UPDATE SET value = '70'").run();

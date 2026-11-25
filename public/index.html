@@ -674,6 +674,11 @@
         <h4 style="margin:1.2rem 0 0.3rem">Share artwork between accounts</h4>
         <label class="policy-row"><input type="checkbox" id="art-share" /> <span>When an account has a game that another account already has pictures for (cover, spine, disc, back), copy those pictures across, quietly.</span></label>
         <p class="hint" style="margin-top:0.3rem">Only pictures: never manuals, notes, ratings or anything else. Each account gets a copy of its own, so changing or removing it never touches anyone else's, and a lookup or an import can still replace it. It applies to pictures a game is missing, when games are added or looked up.</p>
+        <h4 style="margin:1.2rem 0 0.3rem">Pictures that have been shared</h4>
+        <p class="hint" style="margin-top:0">If a picture should not be going round, remove it here. Only pictures that are on more than one account, or that sharing has copied, are listed, without saying whose they are.</p>
+        <div><button class="btn" id="art-shared-show" type="button">Show shared pictures</button></div>
+        <div id="art-shared-list"></div>
+        <div id="art-blocked-list"></div>
       </div>
 
       <div class="panel hidden" id="mod-covers">

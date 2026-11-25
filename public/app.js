@@ -5300,6 +5300,35 @@ async function loadArtFolders() {
     : 'No folders yet.';
   try { $('#art-share').checked = (await api('/art/sharing')).on; } catch { /* the box stays as it is */ }
 }
+
+/* Pictures that have been shared (admin): look at one, take it off every shelf and stop it being copied. The server never says whose it is. */
+const ART_KIND = { cover: 'Cover', spine: 'Spine', disc: 'Disc or cartridge', back: 'Back cover' };
+const artWhat = (i) => `<div><b translate="no">${esc(i.title)}</b> <span class="pill" translate="no">${esc(i.platform)}</span></div><div class="sub">${esc(ART_KIND[i.kind] || i.kind)}</div>`;
+async function loadSharedArt() {
+  const { items, blocked } = await api('/art/shared');
+  const list = $('#art-shared-list'), stopped = $('#art-blocked-list');
+  list.innerHTML = items.map((i, n) => `<div class="user-list-row art-shared-row">
+      <a class="art-shared-pic" href="/api/art/shared/${esc(i.id)}/picture" target="_blank" rel="noopener" title="Open the picture"><img src="/api/art/shared/${esc(i.id)}/picture" alt="" loading="lazy" /></a>
+      <div class="grow">${artWhat(i)}<div class="sub">On ${Number(i.accounts)} account${i.accounts === 1 ? '' : 's'}</div></div>
+      <button class="btn btn-danger" type="button" data-art-remove="${n}">Remove and stop sharing</button>
+    </div>`).join('') || '<p class="hint">No picture is on more than one account.</p>';
+  stopped.innerHTML = blocked.length ? '<h4 style="margin:1rem 0 0.3rem">Stopped from sharing</h4>' + blocked.map((i, n) => `<div class="user-list-row">
+      <div class="grow">${artWhat(i)}</div>
+      <button class="btn" type="button" data-art-allow="${n}">Allow sharing again</button>
+    </div>`).join('') : '';
+  list.querySelectorAll('[data-art-remove]').forEach((btn) => btn.addEventListener('click', async () => {
+    const i = items[Number(btn.dataset.artRemove)];
+    const ok = await confirmDialog({ title: 'Remove this picture?', body: 'It is taken off every account that has it, including the one it came from, and uploaded copies are deleted. It will not be copied between accounts again. This cannot be undone.', okLabel: 'Remove and stop sharing', danger: true });
+    if (!ok) return;
+    try { const r = await api(`/art/shared/${i.id}/remove`, { method: 'POST' }); toast(`Removed ${r.removed} picture${r.removed === 1 ? '' : 's'}`); await loadSharedArt(); }
+    catch (err) { toast(err.message, true); }
+  }));
+  stopped.querySelectorAll('[data-art-allow]').forEach((btn) => btn.addEventListener('click', async () => {
+    try { await api(`/art/blocked/${blocked[Number(btn.dataset.artAllow)].id}`, { method: 'DELETE' }); toast('That picture can be shared again'); await loadSharedArt(); }
+    catch (err) { toast(err.message, true); }
+  }));
+}
+$('#art-shared-show')?.addEventListener('click', () => loadSharedArt().catch((err) => toast(err.message, true)));
 $('#art-share')?.addEventListener('change', async (e) => {
   try { await api('/art/sharing', { method: 'PUT', body: JSON.stringify({ on: e.target.checked }) }); toast(e.target.checked ? 'Pictures are shared between accounts' : 'Pictures are no longer shared between accounts'); }
   catch (err) { toast(err.message, true); e.target.checked = !e.target.checked; }

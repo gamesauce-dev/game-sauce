@@ -7,6 +7,7 @@ import { importPlatformLogos, fetchPlatformArt } from '../lib/platformart.js';
 import { fillJob, startFill, stopFill } from '../lib/assets.js';
 import { cleanSplit } from '../lib/wrapcut.js';
 import { artSharing, setArtSharing } from '../lib/physical.js';
+import { sharedPictures, sharedPictureFile, blockedPictures, removeAndBlock, allowAgain } from '../lib/artmoderation.js';
 
 const router = express.Router();
 
@@ -26,6 +27,27 @@ router.get('/platforms', (req, res) => res.json({ items: db.prepare('SELECT slug
 // Whether pictures one account has are copied to another account's copy of the same game (see src/lib/physical.js, reuseArt).
 router.get('/sharing', (req, res) => res.json({ on: artSharing(), can_edit: req.user?.role === 'admin' }));
 router.put('/sharing', requireAdmin, (req, res) => { const on = setArtSharing(req.body?.on !== false); req.auditDetail = { share_art: on }; res.json({ on }); });
+
+// A problem picture that sharing has spread (see src/lib/artmoderation.js). The admin only. Nothing here says whose a picture is.
+router.get('/shared', requireAdmin, (req, res) => res.json({ items: sharedPictures(), blocked: blockedPictures() }));
+router.get('/shared/:id/picture', requireAdmin, (req, res) => {
+  const file = sharedPictureFile(req.params.id);
+  if (!file) return res.status(404).json({ error: 'No such picture' });
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.sendFile(file, { cacheControl: false });
+});
+router.post('/shared/:id/remove', requireAdmin, (req, res) => {
+  const out = removeAndBlock(req.params.id);
+  if (!out) return res.status(404).json({ error: 'No such picture' });
+  req.auditDetail = out;
+  res.json({ removed: out.removed });
+});
+router.delete('/blocked/:id', requireAdmin, (req, res) => {
+  const block = blockedPictures().find((b) => b.id === req.params.id);
+  if (!block || !allowAgain(block.id)) return res.status(404).json({ error: 'No such picture' });
+  req.auditDetail = { title: block.title, platform: block.platform, kind: block.kind };
+  res.json({ ok: true });
+});
 
 router.put('/folders', requireAdmin, (req, res) => {
   try { const out = setArtFolders(req.body?.folders); req.auditDetail = { folders: out.folders.length }; res.json(out); } catch (err) { fail(res, err); }

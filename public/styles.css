@@ -2002,3 +2002,6 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 #view-home .strip .recent-row .card-title { min-height: 2.5em; }
 #view-home .strip .recent-row .card-sub { display: none; }
 #view-home #lib-overview { margin: 0 0 1rem; }
+
+/* Pictures that have been shared (Settings > Game assets, admin). */
+.art-shared-pic img { display: block; width: 64px; height: 88px; object-fit: contain; background: rgba(127, 127, 127, 0.15); border-radius: 4px; }

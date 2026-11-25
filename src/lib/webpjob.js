@@ -13,6 +13,7 @@ import db from '../db.js';
 import { rootDir } from './storage.js';
 import { getSharp, imageSettings, clearImageCache, MIN_QUALITY } from './webp.js';
 import { inWindow } from './hashjob.js';
+import { noteConverted } from './artmoderation.js';
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MIN_SAVING = 0.10;
@@ -126,6 +127,7 @@ export async function convertOne(c, quality) {
   const newPath = c.path.replace(IMG, '.webp');
   try {
     db.transaction(() => {
+      noteConverted(c.abs, enc.buffer);   // a picture the admin has stopped stays stopped in its new form
       repoint(c.path, newPath, { type: 'image/webp', name: null, bytes: enc.buffer.length });
       db.prepare('INSERT INTO image_conversions (old_path, new_path, kept_path, old_bytes, new_bytes, quality) VALUES (?, ?, ?, ?, ?, ?)').run(c.path, newPath, kept, enc.old, enc.buffer.length, quality);
     })();

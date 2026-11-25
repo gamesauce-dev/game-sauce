@@ -11,6 +11,7 @@ import { decodeEntities, sortTitle } from './metadata.js';
 import { platformFor, CONSOLE_PLATFORMS, appIdFor, countryFor, removeConsoleGame, startDetailsJob } from './consoles.js';
 import { saveManual, deleteManualFile, cleanManualLink, manualType } from './manuals.js';
 import { saveCover, dropCustomCover } from './storage.js';
+import { isBlockedFile, noteShared } from './artmoderation.js';
 import { sniffImage, MAX_COVER_BYTES } from './coverzip.js';
 
 /** { w, h } in pixels of a JPEG, PNG or WebP file, read from its header (null when it cannot be read). */
@@ -563,13 +564,14 @@ export function reuseArt(userId, id) {
     .sort((a, b) => (String(b.region || '') === String(r.region || '')) - (String(a.region || '') === String(r.region || '')));   // the same region first
   let filled = 0;
   for (const [kind, k] of want) {
-    const from = others.find((o) => o[k.path] && fs.existsSync(o[k.path]));
+    const from = others.find((o) => o[k.path] && fs.existsSync(o[k.path]) && !isBlockedFile(o[k.path]));   // never one the admin has stopped
     if (!from) continue;
     const src = from[k.path];
     let dest = src;
     if (path.basename(src).startsWith('physical-')) {   // a file somebody uploaded or imported: take a copy, so one account removing theirs never breaks another's
       try { const buf = fs.readFileSync(src), type = sniffImage(buf); if (!type) continue; dest = saveCover(buf, `physical-${Number(userId)}-${r.id}-${kind}-${Date.now()}`, type); } catch { continue; }
     }   // (a picture a provider supplied is a shared cache file: it is safe to point at)
+    noteShared(src, { title: r.title, platform: r.platform, kind });   // so the admin can find it if it turns out to be a problem
     db.prepare(`UPDATE physical_games SET ${k.path} = ?, ${k.url} = NULL, ${k.ar ? `${k.ar} = ?, ` : ''}${k.lock} = 0, updated_at = datetime('now') WHERE id = ? AND user_id = ? AND ${k.lock} = 0`)
       .run(...[dest, ...(k.ar ? [imageAspect(dest)] : []), r.id, userId]);
     filled++;
