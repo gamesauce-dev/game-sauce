@@ -298,6 +298,39 @@ test('a cleared match stays cleared: the next lookup run leaves the game alone u
   assert.deepEqual(asked, ['Matched Wrongly'], 'Look up again for the shelf still asks');
 });
 
+test('clearing a match keeps the pictures you uploaded or imported, and removes the ones that came by themselves', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const { PNG } = await import('pngjs');
+  const png = (w, h) => { const p = new PNG({ width: w, height: h }); p.data.fill(90); return PNG.sync.write(p); };
+  const a = phys.addPhysical(adminId, { platform: 'ps3', title: 'Mine And Theirs' });
+  await phys.matchJobIdle();
+  const downloaded = path.join(TMP, 'downloaded-spine.png'); fs.writeFileSync(downloaded, png(60, 400));
+  await phys.applyMatch(adminId, a.id, { title: 'Mine And Theirs', publisher: 'Wrong One', source: 'stub', media: { spine: 'http://x/s.png' } }, { cacheImpl: async () => downloaded });
+  phys.setPhysicalArt(adminId, a.id, 'cover', png(300, 420));
+  phys.setPhysicalArt(adminId, a.id, 'back', png(300, 421));
+  const get = () => db.prepare('SELECT * FROM physical_games WHERE id = ?').get(a.id);
+  // a copy that sharing brought from another account is not one you uploaded
+  const copy = path.join(path.dirname(get().cover_path), `physical-${adminId}-${a.id}-disc-1.png`); fs.writeFileSync(copy, png(300, 300));
+  db.prepare('UPDATE physical_games SET disc_path = ?, disc_locked = 0 WHERE id = ?').run(copy, a.id);
+  const before = get();
+  phys.clearMatch(adminId, a.id);
+  const after = get();
+  assert.equal(after.meta_source, null); assert.equal(after.publisher, null);
+  for (const k of ['cover', 'back']) {
+    assert.equal(after[`${k}_path`], before[`${k}_path`], `your ${k} stays`);
+    assert.equal(after[`${k}_locked`], 1); assert.ok(fs.existsSync(after[`${k}_path`]));
+  }
+  assert.equal(after.cover_ar, before.cover_ar); assert.ok(after.cover_ar);
+  assert.equal(after.spine_path, null); assert.equal(after.spine_ar, null); assert.ok(fs.existsSync(downloaded), 'a downloaded file may be used elsewhere');
+  assert.equal(after.disc_path, null); assert.ok(!fs.existsSync(copy), 'the shared copy goes');
+  // and you can still change or remove your own afterwards
+  phys.setPhysicalArt(adminId, a.id, 'cover', png(300, 422));
+  assert.ok(!fs.existsSync(before.cover_path));
+  phys.removePhysicalArt(adminId, a.id, 'cover');
+  assert.equal(get().cover_path, null);
+});
+
 test('the shelf draws a real spine when there is one and the drawn spine otherwise', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css'), modern = read('public/modern.js');
   assert.match(ph, /class="ph-sp-art"/); assert.match(ph, /g\.has_spine \? ' has-art' : ''/); assert.match(ph, /function onSpineLoad\(e\)/);
