@@ -272,23 +272,22 @@ router.post('/vault/from-release', requireAdmin, async (req, res, next) => {
     if (!entry) return res.status(404).json({ error: 'No recommendation for that platform yet' });
     if (!entry.github) return res.status(400).json({ error: 'No GitHub repo tracked for this pick' });
 
-    const rel = await fetch(`https://api.github.com/repos/${entry.github}/releases/latest`, {
-      signal: AbortSignal.timeout(15000),
-      headers: { 'User-Agent': 'game-sauce/0.2', Accept: 'application/vnd.github+json' }
-    });
-    if (!rel.ok) return res.status(502).json({ error: `GitHub answered ${rel.status}` });
-    const j = await rel.json();
-    const assets = j.assets || [];
+    // The same remembered answer the page is showing (kept six hours, and the last good one while GitHub is refusing): asking afresh here
+    // spent one of GitHub's rationed requests on every save, without the token or the wait it asked for.
+    const known = await fetchLatestRelease(entry.github);
+    if (known.missing) return res.status(502).json({ error: known.missing });
+    const release = known.payload;
+    const assets = release.assets || [];
     if (!assets.length) return res.status(400).json({ error: 'Release has no downloadable assets' });
     const want = String(req.body?.asset || '');
     const picked = want
-      ? assets.find((a) => a.name === want || a.browser_download_url === want)
-      : assets.find((a) => /win|windows|\.zip$/i.test(a.name)) || assets[0];
+      ? assets.find((a) => a.name === want || a.url === want)
+      : assets.find((a) => /(^|[^a-z])win(dows|32|64)?([^a-z]|$)/i.test(a.name)) || assets.find((a) => /\.zip$/i.test(a.name)) || assets[0];
     if (!picked) return res.status(400).json({ error: 'No matching asset in the latest release' });
 
     // Prefer a Windows asset when the caller doesn't choose; Linux/macOS users
     // pick the matching asset from the dropdown. Size cap enforced on stream.
-    const dl = await fetch(picked.browser_download_url, {
+    const dl = await fetch(picked.url, {
       signal: AbortSignal.timeout(120000),
       headers: { 'User-Agent': 'game-sauce/0.2' }
     });
@@ -319,14 +318,14 @@ router.post('/vault/from-release', requireAdmin, async (req, res, next) => {
     const row = insertVault({
       platform_slug: (entry.platforms || [])[0] || null,
       name: entry.name,
-      version: j.tag_name || null,
+      version: release.tag || null,
       source: 'github-release',
-      source_url: picked.browser_download_url,
+      source_url: picked.url,
       filename: picked.name,
       storage_path: dest,
       size_bytes: bytes,
       sha1,
-      notes: `Official ${entry.name} ${j.tag_name || ''} from GitHub`.trim()
+      notes: `Official ${entry.name} ${release.tag || ''} from GitHub`.trim()
     });
     res.status(201).json(vaultRow(row));
   } catch (err) { next(err); }

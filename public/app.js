@@ -5470,7 +5470,7 @@ for (const id of ['#audit-action']) {
 
 /* ─────────────────────────── emulators ─────────────────────────── */
 
-const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false };
+const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false, saving: new Set() };   // saving: releases on their way into the vault
 
 async function loadEmulators() {
   const isAdmin = authState.user?.role === 'admin';
@@ -5556,7 +5556,7 @@ function renderEmuGuide() {
                    <select class="select" data-asset="${esc(key)}" title="Pick the installer for your OS">
                      ${latest.assets.map((a) => `<option value="${esc(a.url)}">${esc(a.name)} (${fmtBytes(a.size)})</option>`).join('')}
                    </select>
-                   ${authState.user?.role === 'admin' ? `<button class="btn btn-sm" data-save-release="${esc(key)}">Save to vault</button><button class="btn btn-sm emu-save-alt" data-save-release="${esc(key)}" title="Save to vault">Save to vault</button>` : ''}
+                   ${authState.user?.role === 'admin' ? `<button class="btn btn-sm" data-save-release="${esc(key)}"${emuState.saving.has(key) ? ' disabled' : ''}>Save to vault</button>` : ''}
                  </span>` : `<span class="hint">${(e.github && !latest.assets?.length) ? 'Latest release has no downloadable assets — use the download page above.' : ''}</span>`}
                ${vaulted.length ? `<span class="pill ok">in vault: ${vaulted.map((v) => esc(v.version || v.filename)).join(', ')}</span>` : ''}`
             : `<span class="hint">${esc(emuState.why[key] ? (/nightly\/rolling/.test(emuState.why[key]) ? `This project publishes ${emuState.why[key].replace(/^no published latest release \(|\)$/g, '')}: use the download page above.` : `Could not get the latest release: ${emuState.why[key]}. Press “Check latest releases” to try again, or use the download page above.`) : 'No GitHub release tracked — use the download page above (often nightly/rolling).')}</span>`}
@@ -5568,8 +5568,11 @@ function renderEmuGuide() {
   $$('[data-save-release]', wrap).forEach((btn) => btn.addEventListener('click', async () => {
     const key = btn.dataset.saveRelease;
     const sel = wrap.querySelector(`[data-asset="${CSS.escape(key)}"]`);
+    if (emuState.saving.has(key)) return;
+    emuState.saving.add(key);
     btn.disabled = true;
-    btn.textContent = 'Saving…';
+    // In the Modern look the button is only an icon, so the words go in the message, which stays (with its spinner) until the answer comes.
+    toast('Saving to the vault. A large file can take a while.', false, { busy: true });
     try {
       const r = await api('/emulators/vault/from-release', {
         method: 'POST',
@@ -5578,12 +5581,12 @@ function renderEmuGuide() {
       toast(`Saved ${r.name} ${r.version || ''} to the vault`);
       const vault = await api('/emulators/vault');
       emuState.vault = vault.items || [];
-      renderEmuGuide();
       renderEmuVault();
     } catch (err) {
       toast(err.message, true);
-      btn.disabled = false;
-      btn.textContent = 'Save to vault';
+    } finally {
+      emuState.saving.delete(key);
+      renderEmuGuide();
     }
   }));
 

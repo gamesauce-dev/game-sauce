@@ -289,9 +289,6 @@ body.ui-modern .card-fav.on { color: #f5c542; border-color: #f5c54299; }
 body.ui-modern .upload-layout { align-items: stretch; }
 body.ui-modern .upload-layout .dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-/* Emulators: the second save button (arrow-up) exists only in Modern; Classic keeps its single text button. */
-body.ui-modern .emu-save-alt { display: inline-flex; }
-
 /* Phone width: nothing may run past the edge. Emulator cards wrap their text and their picker row; the details bar fits the screen; the vault form is one column. */
 @media (max-width: 640px) {
   body.ui-modern .emu-card, body.ui-modern .emu-top, body.ui-modern .emu-note, body.ui-modern .emu-links, body.ui-modern .emu-latest { min-width: 0; max-width: 100%; }

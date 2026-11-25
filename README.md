@@ -638,7 +638,7 @@ Notes:
 | `GAMESAUCE_SLOW_MS` | requests slower than this many milliseconds are logged under Settings → Health (default 1000) |
 | `META_TIMEOUT_MS` | how long a metadata provider may take to answer before it is skipped (default 15000) |
 | `GAMESAUCE_LAUNCHBOX_URL` | where the LaunchBox metadata file is downloaded from (default LaunchBox's own address) |
-| `GITHUB_TOKEN` / `GAMESAUCE_GITHUB_TOKEN` | optional GitHub token for the Emulators page's "latest release" lookups, if you hit GitHub's anonymous rate limit |
+| `GITHUB_TOKEN` / `GAMESAUCE_GITHUB_TOKEN` | optional GitHub token for the Emulators page's release lookups (including the one behind Save to vault), if you hit GitHub's anonymous rate limit |
 | `GAMESAUCE_HOME` | desktop quick start only: where `start.sh` / `start.bat` keep data (default a `game-sauce-data` folder beside the app) |
 | `GAMESAUCE_UPDATE_CHECK` | `0` turns off the admin's "update available" notice (it asks GitHub for the project's latest release at most once every six hours; nothing about your library is sent) |
 
