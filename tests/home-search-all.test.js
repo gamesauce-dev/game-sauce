@@ -33,3 +33,11 @@ test('the app hands Modern the two detail openers, and ROM results are browse-on
   const show = js.slice(js.indexOf('function showAllIn('), js.indexOf('function fillRow('));
   assert.match(show, /'#ph-q' : '#dg-q'/, "Show all fills the Physical or Digital page's own search box");
 });
+
+test('the Show button just says Show all, and arriving at Home again starts clean with the two rows back', () => {
+  const fn = js.slice(js.indexOf('async function searchEverywhere('), js.indexOf('function showAllIn('));
+  assert.match(fn, /data-mh-all="\$\{id\}">Show all<\/button>/, 'the count is already shown beside it');
+  assert.ok(!/Show \$\{total > HOME_HITS/.test(fn));
+  const home = js.slice(js.indexOf('async function renderHome()'), js.indexOf('async function renderHome()') + 600);
+  assert.match(home, /homeSearchSeq\+\+; host\.classList\.remove\('show-results'\);/, "a Home page rebuilt after a search must not keep the class that hides the rows");
+});

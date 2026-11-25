@@ -213,6 +213,7 @@ function hideHome() { $('#modern-home')?.classList.add('hidden'); }
 /** Home: the ticker, Continue playing and Recently added. The game grid is cleared (Library shows it). */
 async function renderHome() {
   const host = $('#modern-home'); if (!host) return;
+  homeSearchSeq++; host.classList.remove('show-results');   // arriving at Home (any way) starts clean: no earlier search, and the two rows are back
   const hi = { search: await icon('search'), 'arrow-right': await icon('arrow-right') };
   host.innerHTML = `
     <form class="mh-search" id="mh-search" role="search" autocomplete="off">
@@ -276,7 +277,7 @@ async function searchEverywhere(text) {
   const n = (x) => (x == null ? 0 : x.total ?? (x.items || []).length);
   const initials = (t) => String(t || '').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
   const tile = (key, title, sub, cover) => `<button type="button" class="mh-res-tile" data-mh-open="${esc(key)}" title="${esc(title)}"><span class="mh-res-cover">${cover ? `<img loading="lazy" src="${esc(thumb(cover))}" alt="" onerror="this.style.display='none'" />` : ''}<span class="mh-res-ini">${esc(initials(title))}</span></span><span class="mh-res-title">${esc(title)}</span><span class="mh-res-sub">${esc(sub || '')}</span></button>`;
-  const group = (id, label, total, body) => `<section class="mh-res-group" data-group="${id}"><div class="mh-res-head"><b>${label}</b> <span class="hint">${total.toLocaleString()} ${total === 1 ? 'game' : 'games'}</span>${total ? ` <button type="button" class="btn btn-sm" data-mh-all="${id}">Show ${total > HOME_HITS ? `all ${total.toLocaleString()}` : 'in the library'}</button>` : ''}</div>${total ? `<div class="mh-res-row${id === 'rom' ? ' browse-only' : ''}" id="mh-res-${id}">${body}</div>` : '<p class="hint" style="margin:.2rem 0 0">No match.</p>'}</section>`;
+  const group = (id, label, total, body) => `<section class="mh-res-group" data-group="${id}"><div class="mh-res-head"><b>${label}</b> <span class="hint">${total.toLocaleString()} ${total === 1 ? 'game' : 'games'}</span>${total ? ` <button type="button" class="btn btn-sm" data-mh-all="${id}">Show all</button>` : ''}</div>${total ? `<div class="mh-res-row${id === 'rom' ? ' browse-only' : ''}" id="mh-res-${id}">${body}</div>` : '<p class="hint" style="margin:.2rem 0 0">No match.</p>'}</section>`;
   const total = n(rom) + n(phys) + n(dig);
   host.innerHTML = `<div class="mh-res-top"><b>${total.toLocaleString()} ${total === 1 ? 'match' : 'matches'} for “${esc(text)}”</b> <button type="button" class="btn btn-sm" id="mh-res-clear">Clear search</button></div>`
     + group('rom', 'ROM Library', n(rom), (rom?.items || []).slice(0, HOME_HITS).map(ctx.cardHtml).join(''))
