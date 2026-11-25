@@ -616,7 +616,8 @@ Notes:
 | `GAMESAUCE_MAX_STATES` | save states kept per user per game (default 10) |
 | `GAMESAUCE_MAME_PLAY_MAX_YEAR` | MAME games newer than this get no browser Play button (default 1990; `9999` turns the cut-off off) |
 | `GAMESAUCE_COOKIE_SECURE=1` | Secure cookies (only with HTTPS) |
-| `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` / `X-Forwarded-Host` behind a reverse proxy |
+| `GAMESAUCE_TRUST_PROXY=1` | trust `X-Forwarded-For` / `X-Forwarded-Host` behind a reverse proxy. Set it only when there is one: the proxy's own entry (the right-most) is taken as the visitor's address |
+| `GAMESAUCE_PROXY_HOPS` | with the setting above: how many proxies in a row add to `X-Forwarded-For` (default 1; e.g. `2` for a CDN in front of your own proxy) |
 | `GAMESAUCE_ALLOWED_ORIGINS` | extra web addresses allowed to make changes (comma separated), e.g. `https://games.example.org`, if a proxy hides the real host |
 | `GAMESAUCE_RATE_LIMIT` | requests per minute per user (default 900; `0` turns rate limiting off). Heavier actions (metadata lookups, downloads, uploads, backup/restore) have tighter caps scaled from it; override with `GAMESAUCE_RATE_LIMIT_METADATA`, `_DOWNLOAD`, `_UPLOAD`, `_HEAVY` |
 | `GAMESAUCE_BACKUP_DIR` | default folder for server-side backups (default `data/backups`; can also be set in Settings → Backups) |
@@ -708,8 +709,12 @@ stores only its scrypt hash.
 - Passwords: scrypt with N=32768, r=8, p=1 and a per-user salt; the parameters travel with the
   hash so they can be raised later. Minimum 10 characters, a letter and a number.
 - Login throttling: 8 failures per (username, IP) locks that pair for 15 minutes
-  (`GAMESAUCE_LOGIN_MAX_FAILURES`, `GAMESAUCE_LOGIN_LOCK_MINUTES`). Unknown usernames still pay the cost of
-  a hash comparison, so timing does not reveal which accounts exist.
+  (`GAMESAUCE_LOGIN_MAX_FAILURES`, `GAMESAUCE_LOGIN_LOCK_MINUTES`). Two wider limits stop someone getting round it:
+  30 failures from one address, whatever the username (`GAMESAUCE_LOGIN_MAX_FAILURES_PER_ADDRESS`), and 50 for one
+  username, whatever the address (`GAMESAUCE_LOGIN_MAX_FAILURES_PER_USER`). The last one locks that username for
+  everyone until it lapses; an admin's password reset lifts it. Devices that reach the server through a proxy share
+  one address unless `GAMESAUCE_TRUST_PROXY=1`. Unknown usernames still pay the cost of a hash comparison, so timing
+  does not reveal which accounts exist. The activity log keeps the newest 10,000 failed sign-ins.
 - Sessions: tokens are stored hashed (SHA-256), so a database leak does not leak live logins.
   Changing a password, disabling a user or deleting a user drops their sessions immediately.
   The last admin cannot be deleted or disabled.

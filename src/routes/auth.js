@@ -1,7 +1,7 @@
 import {
   createSession, createUser, deleteUser, describeAudit, destroyAllSessions, destroySession,
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
-  audit, loginLockRemaining, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser
+  audit, loginCounters, startLoginAttempt, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser, MAX_LOGIN_NAME
 } from '../auth.js';
 import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload, arcadeVerifiedOnly, setArcadeVerifiedOnly } from '../lib/policy.js';
 import db from '../db.js';
@@ -152,38 +152,50 @@ router.put('/policy', requireAdmin, (req, res) => {
   res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly() });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   const username = String(req.body?.username || '').trim();
   const password = String(req.body?.password || '');
   const ip = clientIp(req);
-  const key = `${username.toLowerCase()}|${ip}`;
 
-  const lockMs = loginLockRemaining(key);
-  if (lockMs > 0) {
+  // No account can have such a name, so it is turned away before any work, and nothing of it is stored.
+  if (!username || username.length > MAX_LOGIN_NAME || /[\u0000-\u001f\u007f]/.test(username)) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  const counters = loginCounters(username, ip);
+  const attempt = startLoginAttempt(counters);
+  if (attempt.wait) {
     return res.status(429).json({
-      error: `Too many failed attempts. Try again in ${Math.ceil(lockMs / 60000)} minute(s).`,
-      retry_after: Math.ceil(lockMs / 1000)
+      error: `Too many failed attempts. Try again in ${Math.ceil(attempt.wait / 60000)} minute(s).`,
+      retry_after: Math.ceil(attempt.wait / 1000)
     });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  let user;
+  try {
+    user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
-  // Always run a hash comparison, even for an unknown user, so response timing
-  // does not reveal which usernames exist.
-  const ok = user
-    ? await verifyPassword(password, user.password_hash)
-    : await verifyPassword(password, 'scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAA');
+    // Always run a hash comparison, even for an unknown user, so response timing
+    // does not reveal which usernames exist.
+    const ok = user
+      ? await verifyPassword(password, user.password_hash)
+      : await verifyPassword(password, 'scrypt$32768$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAA');
 
-  if (!user || !ok || user.disabled) {
-    const state = recordLoginFailure(key);
-    audit({ id: user?.id, username: user?.username || username }, 'login.failed', { ip });
-    return res.status(401).json({
-      error: user?.disabled ? 'That account is disabled' : 'Invalid username or password',
-      attempts_remaining: state.remaining > 0 ? state.remaining : 0
-    });
+    if (!user || !ok || user.disabled) {
+      const state = recordLoginFailure(counters);
+      audit({ id: user?.id, username: user?.username || username }, 'login.failed', { ip });
+      return res.status(401).json({
+        error: user?.disabled ? 'That account is disabled' : 'Invalid username or password',
+        attempts_remaining: state.remaining > 0 ? state.remaining : 0
+      });
+    }
+  } catch (err) {
+    return next(err);
+  } finally {
+    attempt.done();
   }
 
-  clearLoginFailures(key);
+  clearLoginFailures(counters);
   // "Keep me signed in": omitted/true = persistent (as before); false = browser-only.
   const persistent = req.body?.remember !== false;
   const { token, expires_in } = await createSession(user.id, { userAgent: req.headers['user-agent'], ip, persistent });

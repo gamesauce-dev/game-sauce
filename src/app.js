@@ -58,7 +58,11 @@ export function createApp() {
 
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', process.env.GAMESAUCE_TRUST_PROXY === '1');
+  // Behind a reverse proxy, believe only what our own proxy added: each proxy appends the address it saw to X-Forwarded-For, and anything
+  // further left was written by the caller. One proxy unless GAMESAUCE_PROXY_HOPS says there are more in a row.
+  const hops = Number(process.env.GAMESAUCE_PROXY_HOPS);
+  app.set('trust proxy', process.env.GAMESAUCE_TRUST_PROXY === '1' ? (Number.isInteger(hops) && hops >= 1 && hops <= 10 ? hops : 1) : false);
+  app.use('/api/auth/login', express.json({ limit: '16kb' }));   // open to anyone, and needs very little (this must come before the general reader)
   app.use(express.json({ limit: '2mb' }));
 
   // Basic hardening. No CSP nonce machinery — this is a local single-page app

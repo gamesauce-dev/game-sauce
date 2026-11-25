@@ -266,20 +266,61 @@ export function deleteUser(userId) {
 
 /* ───────────────────────── login throttling ───────────────────────── */
 
+/* Failed sign-ins are counted three ways, and any one of them can lock:
+ *  - one username from one address (GAMESAUCE_LOGIN_MAX_FAILURES, default 8),
+ *  - one address whatever the username (GAMESAUCE_LOGIN_MAX_FAILURES_PER_ADDRESS, default 30), so changing the name does not help,
+ *  - one username whatever the address (GAMESAUCE_LOGIN_MAX_FAILURES_PER_USER, default 50), so changing or faking the address does not help.
+ *    Set high on purpose: reaching it locks that username for everyone for a while. An admin's password reset lifts it.
+ * A lock lasts GAMESAUCE_LOGIN_LOCK_MINUTES (default 15). The two wider counts also start again after that long without a failure. */
 const MAX_FAILURES = Number(process.env.GAMESAUCE_LOGIN_MAX_FAILURES || 8);
+const MAX_PER_ADDRESS = Number(process.env.GAMESAUCE_LOGIN_MAX_FAILURES_PER_ADDRESS || 30);
+const MAX_PER_USER = Number(process.env.GAMESAUCE_LOGIN_MAX_FAILURES_PER_USER || 50);
 const LOCK_MINUTES = Number(process.env.GAMESAUCE_LOGIN_LOCK_MINUTES || 15);
 
-export function loginLockRemaining(key) {
+// The wider counts' keys start with a control character, which a sign-in name may not contain, so no username can imitate them.
+const addressKey = (ip) => `\u0001address:${ip}`;
+const userKey = (username) => `\u0001user:${String(username).toLowerCase()}`;
+
+/** The counters one sign-in attempt is held against. The narrow one counts until it is cleared or goes stale; the wide ones lapse. */
+export function loginCounters(username, ip) {
+  return [
+    { key: `${String(username).toLowerCase()}|${ip}`, max: MAX_FAILURES, lapses: false, clearedBySuccess: true },
+    { key: addressKey(ip), max: MAX_PER_ADDRESS, lapses: true, clearedBySuccess: false },   // not by success: or signing in to your own account would reset it
+    { key: userKey(username), max: MAX_PER_USER, lapses: true, clearedBySuccess: true }
+  ];
+}
+
+function loginLockRemaining(key) {
   const row = db.prepare('SELECT locked_until FROM login_attempts WHERE key = ?').get(key);
   if (!row?.locked_until) return 0;
   const until = new Date(`${row.locked_until.replace(' ', 'T')}Z`).getTime();
   return Math.max(0, until - Date.now());
 }
 
-export function recordLoginFailure(key) {
-  const row = db.prepare('SELECT failures FROM login_attempts WHERE key = ?').get(key);
-  const failures = (row?.failures || 0) + 1;
-  const lock = failures >= MAX_FAILURES ? `+${LOCK_MINUTES} minutes` : null;
+function failureCount({ key, lapses }) {
+  const row = db.prepare("SELECT failures, (last_failure <= datetime('now', ?)) AS old FROM login_attempts WHERE key = ?").get(`-${LOCK_MINUTES} minutes`, key);
+  return !row || (lapses && row.old) ? 0 : row.failures;
+}
+
+// Checking a password takes a moment, so guesses sent together would all be let in before the first had been counted. Those being checked count too.
+const checking = new Map();
+
+/** Take a place for one password check. Returns { wait } (milliseconds) when it may not happen, else { done } to call when it has finished. */
+export function startLoginAttempt(counters) {
+  const wait = Math.max(...counters.map((c) => loginLockRemaining(c.key)));
+  if (wait > 0) return { wait };
+  if (counters.some((c) => (checking.get(c.key) || 0) >= Math.max(1, c.max - failureCount(c)))) return { wait: 1000 };
+  for (const c of counters) checking.set(c.key, (checking.get(c.key) || 0) + 1);
+  return {
+    done() {
+      for (const c of counters) { const n = checking.get(c.key) - 1; if (n > 0) checking.set(c.key, n); else checking.delete(c.key); }
+    }
+  };
+}
+
+function countFailure(counter) {
+  const failures = failureCount(counter) + 1;
+  const lock = failures >= counter.max ? `+${LOCK_MINUTES} minutes` : null;
 
   db.prepare(`
     INSERT INTO login_attempts (key, failures, last_failure, locked_until)
@@ -288,27 +329,44 @@ export function recordLoginFailure(key) {
       failures = excluded.failures,
       last_failure = datetime('now'),
       locked_until = ${lock ? 'excluded.locked_until' : 'NULL'}
-  `).run(...(lock ? [key, failures, lock] : [key, failures]));
+  `).run(...(lock ? [counter.key, failures, lock] : [counter.key, failures]));
 
-  return { failures, locked: Boolean(lock), remaining: MAX_FAILURES - failures };
+  return counter.max - failures;
 }
 
-export function clearLoginFailures(key) {
-  db.prepare('DELETE FROM login_attempts WHERE key = ?').run(key);
+/** Count a failed sign-in on every counter. Returns how many tries are left before the first lock. */
+export function recordLoginFailure(counters) {
+  // Counters nobody has touched for a day, and which are not locking anything, are only taking up room.
+  db.prepare("DELETE FROM login_attempts WHERE last_failure < datetime('now', '-1 day') AND (locked_until IS NULL OR locked_until < datetime('now'))").run();
+  return { remaining: Math.min(...counters.map(countFailure)) };
 }
 
-/** Forget every failed-login record for a username (any address): used when an admin resets a password. */
+export function clearLoginFailures(counters) {
+  for (const c of counters) if (c.clearedBySuccess) db.prepare('DELETE FROM login_attempts WHERE key = ?').run(c.key);
+}
+
+/** Forget a username's failed-login records (any address): used when an admin resets a password. An address's own count stays. */
 export function clearLoginFailuresForUser(username) {
-  db.prepare("DELETE FROM login_attempts WHERE key LIKE ? ESCAPE '\\'")
-    .run(String(username).toLowerCase().replace(/[\\%_]/g, '\\$&') + '|%');
+  db.prepare("DELETE FROM login_attempts WHERE key = ? OR key LIKE ? ESCAPE '\\'")
+    .run(userKey(username), String(username).toLowerCase().replace(/[\\%_]/g, '\\$&') + '|%');
 }
 
 /* ──────────────────────────── audit log ──────────────────────────── */
 
+/** The longest username a sign-in is even looked at with, and the longest kept in the log. New accounts are limited to 32; this leaves room for a longer first admin name. */
+export const MAX_LOGIN_NAME = 64;
+// Anyone who can reach the sign-in page can add failed sign-ins, so only the newest are kept. Everything else in the log is kept as before.
+const KEEP_FAILED_LOGINS = 10_000;
+const cut = (v, n) => (v === null || v === undefined || v === '' ? null : String(v).slice(0, n));
+
 export function audit(user, action, { target = null, detail = null, ip = null } = {}) {
   db.prepare('INSERT INTO audit_log (user_id, username, action, target, detail, ip) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(user?.id || null, user?.username || null, action, target,
-      detail ? JSON.stringify(detail).slice(0, 2000) : null, ip || null);
+    .run(user?.id || null, cut(user?.username, MAX_LOGIN_NAME), cut(action, 300), cut(target, 200),
+      detail ? JSON.stringify(detail).slice(0, 2000) : null, cut(ip, 64));
+  if (action === 'login.failed') {
+    db.prepare("DELETE FROM audit_log WHERE action = 'login.failed' AND id <= (SELECT id FROM audit_log WHERE action = 'login.failed' ORDER BY id DESC LIMIT 1 OFFSET ?)")
+      .run(KEEP_FAILED_LOGINS);
+  }
 }
 
 export function listAudit({ limit = 100, action = null, username = null, since = null, until = null } = {}) {
