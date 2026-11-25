@@ -24,6 +24,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
+- **Physical games nothing was found for are no longer looked up again every time a game is added** (it happened when the LaunchBox database was downloaded). They are asked about once; **Look up again** still asks.
 - **Shared pictures arrive as a game is added** (or imported), instead of waiting their turn behind the online lookups of other games.
 - **Check latest releases** (Emulators) is a button with words again, not an icon.
 - **Security: smaller protections.** Wrong guesses at the current password lock the change-password form for a while (not your sign-in). Only someone with the right password is told an account is disabled. Unexpected faults are described to the admin only, a mangled cookie is ignored, and `/api/health` gives its figures to the admin only. Changes sent by a page with no origin of its own are refused. A platform's colour must be a colour. Members can no longer ask the video services about Library games or have GitHub asked again early (**Check latest releases** is the admin's).

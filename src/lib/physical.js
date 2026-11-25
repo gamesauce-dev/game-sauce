@@ -769,11 +769,12 @@ export async function fetchDisc(userId, id, { cacheImpl = cacheMedia, discImpl =
 const job = { running: false, total: 0, done: 0, found: 0, again: false, retry: false };
 export const matchJobStatus = () => ({ running: job.running, total: job.total, done: job.done, found: job.found });
 // Games with no match yet, and (when the LaunchBox database is there) matched games that have no spine picture yet, or (a disc case) no disc picture yet.
+// The picture checks are for matched games only: a game nothing was found for keeps no "spine looked for" date, and would otherwise be asked about on every run.
 const pending = (retry) => db.prepare(`SELECT id, user_id, platform, meta_source IS NOT NULL AS matched FROM physical_games
   WHERE (meta_source IS NULL${retry ? '' : ' AND meta_tried_at IS NULL'})
-     OR (? = 1 AND ((spine_path IS NULL${retry ? '' : ' AND spine_tried_at IS NULL'})
+     OR (meta_source IS NOT NULL AND ? = 1 AND ((spine_path IS NULL${retry ? '' : ' AND spine_tried_at IS NULL'})
                  OR (platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND disc_path IS NULL${retry ? '' : ' AND disc_tried_at IS NULL'}))
-          OR (? = 1 AND platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND back_path IS NULL AND back_locked = 0${retry ? '' : ' AND back_tried_at IS NULL'})) ORDER BY id`).all(launchbox.enabled ? 1 : 0, launchbox.enabled && lbHasBacks() ? 1 : 0);
+          OR (meta_source IS NOT NULL AND ? = 1 AND platform IN (${DISC_PLATFORMS.map((p) => `'${p}'`).join(',')}) AND back_path IS NULL AND back_locked = 0${retry ? '' : ' AND back_tried_at IS NULL'})) ORDER BY id`).all(launchbox.enabled ? 1 : 0, launchbox.enabled && lbHasBacks() ? 1 : 0);
 
 export function startMatchJob({ retry = false, enrichImpl, cacheImpl, spineImpl, discImpl, backImpl } = {}) {
   if (job.running) { job.again = true; job.retry = job.retry || retry; return matchJobStatus(); }

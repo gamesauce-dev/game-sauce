@@ -255,6 +255,31 @@ test('the lookup run adds a spine to a matched game without touching its details
   } finally { Object.defineProperty(providers.launchbox, 'enabled', realEnabled); }
 });
 
+test('with the LaunchBox database there, a game nothing was found for is still asked about only once, not again with every game added', async () => {
+  await phys.matchJobIdle();
+  db.prepare('DELETE FROM physical_games').run();
+  const providers = await import('../src/lib/providers.js');
+  const realEnabled = Object.getOwnPropertyDescriptor(providers.launchbox, 'enabled');
+  const a = phys.addPhysical(adminId, { platform: 'ps3', title: 'Nothing Knows This' });
+  await phys.matchJobIdle();
+  db.prepare('UPDATE physical_games SET meta_tried_at = NULL, spine_tried_at = NULL, disc_tried_at = NULL, back_tried_at = NULL WHERE id = ?').run(a.id);
+  Object.defineProperty(providers.launchbox, 'enabled', { get: () => true, configurable: true });
+  try {
+    const asked = [];
+    const none = async () => null;
+    const stub = { enrichImpl: async ({ title }) => { asked.push(title); return null; }, cacheImpl: none, spineImpl: none, discImpl: none, backImpl: none };
+    phys.startMatchJob(stub); await phys.matchJobIdle();
+    assert.deepEqual(asked, ['Nothing Knows This']);
+    db.prepare("INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key) VALUES (?, 'ps3', 'Added Later', 'added later', 'later')").run(adminId);
+    asked.length = 0; phys.startMatchJob(stub); await phys.matchJobIdle();
+    assert.deepEqual(asked, ['Added Later'], 'only the new one');
+    asked.length = 0; phys.startMatchJob(stub); await phys.matchJobIdle();
+    assert.deepEqual(asked, []);
+    phys.startMatchJob({ ...stub, retry: true }); await phys.matchJobIdle();
+    assert.deepEqual(asked.sort(), ['Added Later', 'Nothing Knows This'], 'asking again on purpose still does');
+  } finally { Object.defineProperty(providers.launchbox, 'enabled', realEnabled); }
+});
+
 test('the shelf draws a real spine when there is one and the drawn spine otherwise', () => {
   const ph = read('public/physical.js'), css = read('public/physical.css'), modern = read('public/modern.js');
   assert.match(ph, /class="ph-sp-art"/); assert.match(ph, /g\.has_spine \? ' has-art' : ''/); assert.match(ph, /function onSpineLoad\(e\)/);
