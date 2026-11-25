@@ -518,11 +518,11 @@ test('the CSV import takes an optional cover zip and shows a combined preview', 
   assert.match(r, /planCoversForCsv\(entries, hits/);
 });
 
-test('Emulators: the refresh button sits between the Vault and the first emulator, with its own icon', () => {
+test('Emulators: the refresh button sits between the Vault and the first emulator, and is a button with words', () => {
   const html = read('public/index.html'), js = read('public/modern.js');
   assert.ok(html.indexOf('id="emu-refresh-latest"') > html.indexOf('id="emu-upload-form"') && html.indexOf('id="emu-refresh-latest"') < html.indexOf('id="emu-guide"'));
-  assert.match(js, /\['#emu-refresh-latest', 'emulators-refresh'\]/);
-  for (const n of ['emulators-2', 'emulators-refresh', 'no-covers-2', 'fetch-metadata-3', 'heart']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  assert.doesNotMatch(js, /'#emu-refresh-latest'/, 'no icon stands in for its words');
+  for (const n of ['emulators-2', 'no-covers-2', 'fetch-metadata-3', 'heart']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
   assert.match(read('public/app.js'), /id: 'health',\s+label: 'Health',\s+mi: 'heart'/);
 });
 
@@ -564,7 +564,7 @@ test('details window keeps its previous / next row when the opened game leaves t
   assert.ok((app.match(/state\.navSnap = null;/g) || []).length >= 5, 'every fresh open resets the snapshot');
 });
 
-test('Modern remembers Library vs Home across a refresh; refresh button left and larger; bigger A-Z, add-folder icon; calm light close button', () => {
+test('Modern remembers Library vs Home across a refresh; refresh button on the left; bigger A-Z, add-folder icon; calm light close button', () => {
   const js = read('public/modern.js'), css = read('public/modern.css');
   assert.match(js, /sessionStorage\.setItem\('gamesauce_mview', view\)/); assert.match(js, /was === 'library' \? 'library' : 'home'/);
   assert.match(read('public/app.js'), /removeItem\('gamesauce_mview'\)/);

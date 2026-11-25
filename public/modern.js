@@ -766,7 +766,7 @@ const ICON_MAP = [
   ['#scan-all', 'scan-again'], ['#add-source, #empty-add-source', 'source-add-2'], ['#create-source', 'source-add-and-scan-2'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="relocate"]', 'folder-move'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
-  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-refresh-latest', 'emulators-refresh'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],
+  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],
   ['[data-save-release]', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-vault-del]', 'delete'],
   // Collections
   ['#new-collection', 'add-collection'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
