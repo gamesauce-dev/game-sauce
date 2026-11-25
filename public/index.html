@@ -572,6 +572,7 @@
       <div class="panel hidden" id="mod-images">
         <h3>Pictures <span class="pill warn admin-only">admin</span></h3>
         <p class="hint" style="margin-top:0">Covers and other pictures are sent to the browser as WebP copies, which are much smaller, so pages load faster. Your stored pictures are never changed or replaced: the copies are kept apart and made the first time a picture is shown. Exports, backups and the launcher pack still use the originals.</p>
+        <p class="hint" style="margin-top:0"><b>This page has two separate parts.</b> <b>Faster loading</b> (the first part) only makes temporary copies for display, and is safe to leave on. <b>Convert the stored pictures</b> (the second part, further down) is the one that replaces your actual files, and it is off until you start it.</p>
         <div id="img-status" class="hash-status"></div>
         <div class="hash-form">
           <label class="policy-row"><input type="checkbox" id="img-enabled" /> <span><b>Send WebP copies</b><br><small class="hint">Switch off to send every picture as it was stored.</small></span></label>
@@ -588,6 +589,7 @@
             <button class="btn btn-primary" id="img-save" type="button">Save</button>
             <button class="btn" id="img-clear" type="button" title="Delete the WebP copies; they are made again when pictures are opened">Clear the copies</button>
           </div>
+          <p class="hint" style="margin:.5rem 0 0"><b>Clear the copies</b> deletes only the temporary display copies (thumbnails and full-size WebP copies kept in the <code>image-cache</code> folder). They are rebuilt on their own as pictures are shown, so the first view of each is a little slower. It does <b>not</b> touch your stored pictures, the pictures you have converted below, or the kept originals, and you rarely need it: changing the quality already clears the copies. Use it only to free disk space.</p>
           <p class="hint" id="img-msg"></p>
         </div>
 
@@ -608,6 +610,17 @@
             <button class="btn" id="imgc-remove" type="button" title="Free the space now: the kept originals go for good and the conversion is final">Remove the kept originals</button>
           </div>
           <p class="hint" id="imgc-msg"></p>
+          <details class="hint" style="margin-top:6px"><summary>What each button does</summary>
+            <ul style="margin:.4rem 0 0 1.2rem">
+              <li><b>Save schedule</b>: keeps the overnight window and how long originals are kept. Nothing runs by itself unless Overnight is chosen.</li>
+              <li><b>Estimate the saving</b>: tries a sample in memory and tells you roughly how much space the conversion would free. Changes nothing.</li>
+              <li><b>Stop after N pictures + Run now</b>: converts pictures straight away, stopping after N if you set a number (a good first trial). Empty means all of them.</li>
+              <li><b>Stop</b>: ends a run that is going. What is already converted stays converted.</li>
+              <li><b>Put the originals back</b>: undoes the conversions whose originals are still kept: the original returns and the WebP is deleted.</li>
+              <li><b>Remove the kept originals</b>: deletes the kept originals now to free the space. After this those conversions cannot be undone.</li>
+              <li><b>Show the converted pictures</b>: a list of every conversion, searchable by game name, with a before and after to compare.</li>
+            </ul>
+          </details>
           <div class="imgc-box" id="imgc-box" aria-live="polite">
             <div id="imgc-status"></div>
             <div class="imgc-progress hidden" id="imgc-progress"><progress id="imgc-bar" max="100" value="0"></progress> <span id="imgc-pct"></span></div>

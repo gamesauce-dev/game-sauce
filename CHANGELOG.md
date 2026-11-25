@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+
+- **The Pictures page explains itself.** It now says up front that it has two separate parts (temporary display copies, which are safe, and the conversion of your stored pictures, which is off until you start it), says exactly what Clear the copies does and does not touch, and has a "What each button does" list for the conversion.
+
 ### Added
 
 - **A report and a progress bar for the picture conversion (Settings > Maintenance > Pictures).** The run's figures now sit in a shaded box of their own below the buttons, with a progress bar, the percentage and a time-left estimate while it runs (a trial counts toward its "Stop after" limit). **Show the converted pictures** lists every conversion: the game and which picture (cover, spine, disc ...), before and after sizes, the saving, the quality, when, and whether the original is still kept, with a search by game name (or long name) or file name, which also finds a game's other pictures, the games that share a picture, Physical and Digital games, and provider pictures, and a filter (original kept, original gone, put back). **Compare** opens a window over the page with the picture before and after side by side, each starting at the size of a tile in the Library grid, a **Size** slider that makes both bigger or smaller together (a sharper copy is loaded past 440 px; Tile size resets it), and an **Open full size** link for each (a new tab); it closes with its button, a click outside it or Escape. It works for as long as the original is kept.
