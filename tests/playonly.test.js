@@ -98,6 +98,32 @@ test('playable=1 lists only what the Play button would offer', async () => {
   assert.equal((await call('/api/roms?limit=50&playable=1', { token: playTok })).body.items.every((i) => i.playable), true);
 });
 
+test('a play-only person sees the logos and game art that Big Screen draws, and no other files', async () => {
+  const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c626001000000ffff03000006000557bfabd40000000049454e44ae426082', 'hex');
+  const family = db.prepare("SELECT family FROM platforms WHERE slug = 'snes'").get().family;
+  for (const [url, fields] of [['/api/platforms/snes/logo', {}], ['/api/platforms/families/logo', { family }]]) {
+    const fd = new FormData(); for (const [k, v] of Object.entries(fields)) fd.append(k, v); fd.append('logo', new Blob([PNG], { type: 'image/png' }), 'l.png');
+    assert.equal((await fetch(base + url, { method: 'POST', headers: { Authorization: `Bearer ${adminTok}` }, body: fd })).status, 200, url);
+  }
+  const { setRomFile } = await import('../src/lib/romfiles.js');
+  for (const id of [ids.snes, ids.ps2]) for (const kind of ['logo', 'marquee', 'fanart', 'spine', 'disc', 'back']) setRomFile(id, kind, PNG);
+  setRomFile(ids.snes, 'manual', Buffer.from('%PDF-1.4 a manual'), 'm.pdf');
+  const status = async (url) => (await fetch(base + url, { headers: { Authorization: `Bearer ${playTok}` } })).status;
+
+  const logos = ['/api/platforms/snes/logo?v=1', `/api/platforms/families/logo?family=${encodeURIComponent(family)}&v=1`, ...['logo', 'marquee', 'fanart'].map((k) => `/api/roms/${ids.snes}/file/${k}`)];
+  for (const url of logos) assert.equal(await status(url), 200, url);
+  for (const k of ['spine', 'disc', 'back', 'manual']) assert.equal(await status(`/api/roms/${ids.snes}/file/${k}`), 403, k);
+  assert.equal(await status('/api/platforms/all'), 403, 'the admin catalogue is not a logo');
+  for (const [method, url] of [['POST', '/api/platforms/snes/logo'], ['DELETE', '/api/platforms/snes/logo'], ['POST', '/api/platforms/families/logo'], ['DELETE', '/api/platforms/families/logo?family=x'], ['PUT', '/api/platforms/snes/logo/plate']]) {
+    assert.equal((await call(url, { token: playTok, method, body: {} })).status, 403, `${method} ${url}`);
+  }
+  // a game hidden from everyone keeps its art to itself
+  await call(`/api/roms/${ids.ps2}/hide-all`, { method: 'POST', body: { hidden: true } });
+  for (const k of ['logo', 'marquee', 'fanart']) assert.equal(await status(`/api/roms/${ids.ps2}/file/${k}`), 404, `hidden game ${k}`);
+  assert.equal(await status(`/api/roms/${ids.ps2}.0/file/logo`), 403);
+  await call(`/api/roms/${ids.ps2}/hide-all`, { method: 'POST', body: { hidden: false } });
+});
+
 test('switching a person back to full restores everything at once', async () => {
   await call(`/api/auth/users/${userIds.pplayer}`, { method: 'PATCH', body: { mode: 'full' } });
   assert.equal((await call('/api/collections', { token: playTok })).status, 200, 'same sign-in, no need to sign in again');

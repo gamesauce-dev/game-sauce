@@ -4,7 +4,7 @@
 //
 // What a play-only person may do:
 //   - sign in / out, read who they are, change their own password, picture and sessions, run the welcome tour   (/api/auth/...)
-//   - list games and open one, with its cover, so they can pick one (read only)
+//   - list games and open one, with its cover, so they can pick one (read only), with the logos and game art the play screen shows
 //   - play a game, and keep their own save states
 //   - mark favourites (their own)
 //   - see the platform list and the counts the screen needs
@@ -25,6 +25,8 @@ const ALLOW = [
   ['GET', /^\/roms\/playable$/],
   ['GET', /^\/roms\/\d+$/],
   ['GET', /^\/roms\/\d+\/(cover|media\/[a-z0-9_]+)$/i],
+  // the pictures Big Screen draws with: platform and family logos, and a game's own logo, marquee and background (not its manual or other files)
+  ['GET', /^\/platforms\/(families|[^/]+)\/logo$/], ['GET', /^\/roms\/\d+\/file\/(logo|marquee|fanart)$/],
   ['GET', /^\/roms\/\d+\/play(\/.*)?$/],
   ['GET', /^\/roms\/\d+\/saves(\/\d+\/(file|screenshot))?$/],
   ['POST', /^\/roms\/\d+\/saves$/],
