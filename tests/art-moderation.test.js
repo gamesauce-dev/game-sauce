@@ -186,3 +186,23 @@ test('through the app: stopped while the member re-adds the game, copied again o
   assert.ok(row(theirs).cover_path, 'copied again');
   assert.equal((await call(`/api/physical/cover/${theirs}`, { as: 'annmod' })).status, 200);
 });
+
+test('a shared picture arrives as a game is added, without waiting behind the online lookups', async () => {
+  const a = await add('annmod', 'Quick One'), b = await add('annmod', 'Quick Two');
+  phys.setPhysicalArt(ids.annmod, a, 'cover', png(300, 420, 30)); phys.setPhysicalArt(ids.annmod, b, 'cover', png(300, 420, 60));
+  // a lookup that does not finish until it is let go, so everything added now is behind it in the queue
+  let release; const held = new Promise((r) => { release = r; });
+  db.prepare("INSERT INTO physical_games (user_id, platform, title, sort_title, dedupe_key) VALUES (?, 'ps3', 'Slow Lookup', 'slow lookup', 'slow')").run(ids.catmod);
+  phys.startMatchJob({ enrichImpl: async () => { await held; return null; } });
+  assert.equal(phys.matchJobStatus().running, true);
+  try {
+    const one = phys.addPhysical(ids.benmod, { platform: 'ps3', title: 'Quick One' });
+    assert.equal(one.has_cover, true, 'there in the answer to adding it');
+    assert.ok(row(one.id).cover_path);
+    phys.importPhysicalCsv(ids.benmod, 'Title,Platform\nQuick Two,PS3\n', { apply: true });
+    const two = () => db.prepare("SELECT cover_path FROM physical_games WHERE user_id = ? AND title = 'Quick Two'").get(ids.benmod).cover_path;
+    for (let i = 0; i < 80 && !two(); i++) await new Promise((r) => setTimeout(r, 25));
+    assert.ok(two(), 'and an imported list does not wait either');
+    assert.equal(phys.matchJobStatus().running, true, 'while the lookup is still going');
+  } finally { release(); await idle(); }
+});

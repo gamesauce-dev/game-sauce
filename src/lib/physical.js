@@ -274,6 +274,7 @@ export function importPhysicalCsv(userId, csvText, { apply = false, replace = fa
       else if (wantDigital(g)) { if (linkDigital(userId, row)) linked++; }
     }
     if (linked) startDetailsJob();
+    shareSoon(userId, games.filter((g) => !existing.has(g.platform + '\n' + g.key)).map((g) => db.prepare('SELECT id FROM physical_games WHERE user_id = ? AND platform = ? AND dedupe_key = ?').get(userId, g.platform, g.key)?.id).filter(Boolean));
     startMatchJob();
   }
   return {
@@ -434,6 +435,7 @@ export function addPhysical(userId, { platform, title, region = '', notes = '', 
   if (dk.length) db.prepare(`UPDATE physical_games SET ${dk.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`).run(...dk.map((k) => details[k]), info.lastInsertRowid);
   // An Xbox One / Series disc is in Digital only when the person switched that on (the icon in its details, or digital: true here).
   if (DIGITAL_TWIN[slug] && (digital === true || digital === 'true') && linkDigital(userId, own(userId, info.lastInsertRowid))) startDetailsJob();
+  shareNow(userId, info.lastInsertRowid);   // another account's pictures are already here: no waiting behind the online lookups
   startMatchJob();
   return getPhysical(userId, info.lastInsertRowid);
 }
@@ -577,6 +579,13 @@ export function reuseArt(userId, id) {
     filled++;
   }
   return filled;
+}
+
+/* Sharing for a game just added. The lookup run does it too, but that is a queue: a copy needs no download, so it is not made to wait there. */
+const shareNow = (userId, id) => { try { reuseArt(userId, id); } catch { /* sharing must not stop a game being added */ } };
+// A whole imported list, one game at a time with room for page requests in between.
+async function shareSoon(userId, ids) {
+  for (const id of ids) { shareNow(userId, id); await new Promise((r) => setImmediate(r)); }
 }
 
 /** Back to the automatic picture: the uploaded one is forgotten (Look up again fetches one). */
