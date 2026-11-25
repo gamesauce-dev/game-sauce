@@ -127,7 +127,10 @@ Click any tile.
 
 Games on platforms that need no BIOS (many consoles from the 8-bit and 16-bit eras) have a ▶
 button. It runs the game in your browser using [EmulatorJS](https://emulatorjs.org/), loaded from
-its CDN while you play; the ROM never leaves your server except to your own browser.
+its CDN while you play; the ROM never leaves your server except to your own browser. Because that is
+code from another website, it runs in a sealed frame: it cannot use your sign-in or reach the rest of
+game-sauce. It is handed the one game you are playing and hands back that game's saves. Never type your
+password into anything shown inside the game window.
 
 - The player opens full-screen. **✕** closes it. Gamepads work (press a button once inside the frame).
 - **Saves are per user and stored on the server.** Use the player's *Save state* button, and

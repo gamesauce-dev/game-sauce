@@ -26,6 +26,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 - **Clear match keeps the pictures you uploaded or imported** for a Physical game. Pictures that came from a lookup or from another account are still removed.
 - **The shelf's Look up again asks only about your own games.** It used to ask again about every account's, which spent the providers' allowance and could undo someone else's cleared match.
+- **Security: the in-browser emulator is cut off from your account.** It is code from another website. It now runs in a frame with no cookie, no storage, no way into the app and no signed-in requests: the player page hands it the one game and takes back that game's saves. Your saves and the emulator's settings carry over.
 - **A cleared match stays cleared.** The next lookup (for example when another game was added) could put the same wrong match back. **Look up again** still asks.
 - **Physical games nothing was found for are no longer looked up again every time a game is added** (it happened when the LaunchBox database was downloaded). They are asked about once; **Look up again** still asks.
 - **Shared pictures arrive as a game is added** (or imported), instead of waiting their turn behind the online lookups of other games.

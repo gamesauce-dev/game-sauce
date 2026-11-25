@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { uploadLimits } from './lib/uploads.js';
 import { LANGS } from '../public/i18n.js';   // the one list of languages (the Settings picker reads it too)
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
@@ -717,7 +718,10 @@ export function createApp() {
 
   /* ───────────────────────────── frontend ───────────────────────────── */
 
-  app.use(express.static('public', { extensions: ['html'] }));
+  // The emulator's page runs code from another website, so the server itself cuts it off (see public/ejs-frame.html): this holds even when the page
+  // is opened on its own. Chosen by the file that is sent, so no other spelling of its address gets it without this.
+  const isolate = (res, file) => { if (path.basename(file).toLowerCase() === 'ejs-frame.html') res.setHeader('Content-Security-Policy', 'sandbox allow-scripts allow-pointer-lock'); };
+  app.use(express.static('public', { extensions: ['html'], setHeaders: isolate }));
   app.get('*', (req, res) => res.sendFile('index.html', { root: 'public' }));
 
   /* ─────────────────────────────── errors ─────────────────────────────── */

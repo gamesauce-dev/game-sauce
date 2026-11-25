@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emulator</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #e8e8f0; font: 14px system-ui, sans-serif; }
+  #game { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script>
+(function () {
+  // The isolated half of the player: the emulator, and nothing else. The server sends this page with "Content-Security-Policy: sandbox", and the
+  // page that frames it sandboxes it too, so it has no cookie, no storage, no way into the app and no signed-in requests. It talks only by
+  // messages to the page around it (ejs-player.html), which hands it one game and takes back save data.
+  // It refuses to load anything if it finds itself NOT cut off.
+  if (self.origin !== 'null' || parent === self) { document.body.textContent = 'This page only runs inside the player.'; return; }
+  const tell = (message, transfer) => parent.postMessage(message, '*', transfer || []);
+
+  // The emulator expects browser storage, which an isolated page does not have: it gets a stand-in in memory. The player page keeps its
+  // settings between games.
+  const settings = new Map();
+  const standIn = (changed) => {
+    const kept = changed ? settings : new Map();
+    return {
+      getItem: (k) => (kept.has(String(k)) ? kept.get(String(k)) : null),
+      setItem: (k, v) => { kept.set(String(k), String(v)); if (changed) changed(String(k), String(v)); },
+      removeItem: (k) => { kept.delete(String(k)); if (changed) changed(String(k), null); },
+      clear: () => { for (const k of [...kept.keys()]) { kept.delete(k); if (changed) changed(k, null); } },
+      key: (i) => [...kept.keys()][i] ?? null,
+      get length() { return kept.size; }
+    };
+  };
+  Object.defineProperty(window, 'localStorage', { configurable: true, value: standIn((key, value) => tell({ type: 'storage', key, value })) });
+  Object.defineProperty(window, 'sessionStorage', { configurable: true, value: standIn(null) });
+  Object.defineProperty(window, 'indexedDB', { configurable: true, value: undefined });   // there is none: say so, so nothing tries to open it
+
+  // The 'latest' EmulatorJS front end reads a save state through a core function (EmulatorJSGetState) that the cores on the CDN
+  // do not have yet; they offer the older save_state_info instead, so every Save State ended in "FAILED TO SAVE STATE".
+  // Until the two match again, read the state the way the cores offer it. If a core does have the new function, it is used.
+  function bridgeGetState() {
+    const gm = window.EJS_emulator && window.EJS_emulator.gameManager;
+    if (!gm || gm.__gsBridged) return Boolean(gm);
+    gm.__gsBridged = true;
+    const original = gm.getState && gm.getState.bind(gm);
+    gm.getState = function () {
+      const M = gm.Module || {};
+      if (typeof M.EmulatorJSGetState === 'function' && original) return original();
+      if (typeof M.cwrap !== 'function') { if (original) return original(); throw new Error('This core cannot save states'); }
+      const info = M.cwrap('save_state_info', 'string', [])().split('|');
+      if (info[2] !== '1') throw new Error(info[0] || 'This game cannot save states');
+      const size = parseInt(info[0], 10), ptr = parseInt(info[1], 10);
+      return new Uint8Array(M.HEAPU8.subarray(ptr, ptr + size));
+    };
+    return true;
+  }
+
+  function writeBattery(bytes) {
+    const gm = window.EJS_emulator.gameManager;
+    const path = gm.getSaveFilePath();
+    let cp = '';
+    const parts = path.split('/');
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!parts[i]) continue;
+      cp += '/' + parts[i];
+      if (!gm.FS.analyzePath(cp).exists) gm.FS.mkdir(cp);
+    }
+    if (gm.FS.analyzePath(path).exists) gm.FS.unlink(path);
+    gm.FS.writeFile(path, bytes);
+    gm.loadSaveFiles();
+  }
+  const attempt = (what, fn) => { try { fn(); tell({ type: 'loaded', what, ok: true }); } catch { tell({ type: 'loaded', what, ok: false }); } };
+  // Only these bytes are sent, not whatever larger block of memory they sit in.
+  const own = (bytes) => (bytes ? new Uint8Array(bytes) : null);
+
+  function boot(m) {
+    for (const [k, v] of Object.entries(m.settings || {})) settings.set(k, String(v));
+    const bridgeTimer = setInterval(() => { if (bridgeGetState()) clearInterval(bridgeTimer); }, 400);
+    setTimeout(() => clearInterval(bridgeTimer), 120000);
+
+    window.EJS_player = '#game';
+    window.EJS_gameUrl = new File([m.rom], m.name);
+    window.EJS_gameName = m.title;
+    // SYSTEM id ('segaMD', 'nes', …) — never a core filename.
+    window.EJS_core = m.core;
+    // 'latest' channel, not 'stable': carries the upstream gamepad-index fix
+    // (Chrome/Brave leaving slot 0 empty broke all pad input on stable).
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/latest/data/';
+    window.EJS_startOnLoaded = true;
+    window.EJS_color = '#ff3d68';
+    window.EJS_alignStartButton = 'center';
+    window.EJS_cacheConfig = { enabled: false };   // the emulator's download cache needs a database
+    window.EJS_disableDatabases = true;
+    window.EJS_Buttons = { cacheManager: false };   // there is no cache to manage
+    // Never use the browser's own slots: saves live on the server, per user.
+    window.EJS_defaultOptions = { 'save-state-location': 'download' };
+    if (m.state) window.EJS_loadStateURL = URL.createObjectURL(new Blob([m.state]));
+    window.EJS_onGameStart = () => {
+      bridgeGetState();
+      tell({ type: 'started' });
+      if (m.battery) setTimeout(() => { try { writeBattery(new Uint8Array(m.battery)); } catch { /* the game starts without it */ } }, 300);
+    };
+
+    if (m.saves) {
+      window.EJS_onSaveState = ({ state, screenshot }) => tell({ type: 'state', state: own(state), screenshot: own(screenshot) });
+      window.EJS_onLoadState = () => tell({ type: 'want-load' });
+      // Battery (in-game) saves: periodic autosave, only when changed.
+      window.EJS_fixedSaveInterval = 30000;
+      window.EJS_onSaveUpdate = ({ save }) => { if (save) tell({ type: 'battery', save: own(save) }); };
+      window.EJS_onSaveSave = ({ save }) => { if (save) tell({ type: 'battery', save: own(save), byHand: true }); };
+      window.EJS_onLoadSave = () => tell({ type: 'want-battery' });
+    }
+
+    const s = document.createElement('script');
+    s.src = 'https://cdn.emulatorjs.org/latest/data/loader.js';
+    document.body.appendChild(s);
+  }
+
+  let started = false;
+  addEventListener('message', (e) => {
+    if (e.source !== parent) return;
+    const m = e.data || {};
+    if (m.type === 'start' && !started) { started = true; boot(m); }
+    else if (m.type === 'load-state') attempt('state', () => window.EJS_emulator.gameManager.loadState(new Uint8Array(m.bytes)));
+    else if (m.type === 'load-battery') attempt('battery', () => writeBattery(new Uint8Array(m.bytes)));
+  });
+  tell({ type: 'ready' });
+  // Browsers gate the Gamepad API behind a user gesture: the required Play
+  // click counts, so pads work without extra prompts.
+})();
+</script>
+</body>
+</html>

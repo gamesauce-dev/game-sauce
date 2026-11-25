@@ -6,7 +6,8 @@
 <title>Play</title>
 <style>
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-  #game { width: 100%; height: 100%; }
+  #emu { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+  #wait { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9a9ab0; font: 14px system-ui, sans-serif; z-index: 4; pointer-events: none; }
   #picker { position: fixed; inset: 0; background: #0b0b12; color: #e8e8f0; font: 14px system-ui, sans-serif;
             display: flex; flex-direction: column; align-items: center; padding: 20px; overflow: auto; z-index: 5; }
   #picker h2 { margin: 6px 0 4px; font-size: 18px; }
@@ -25,28 +26,49 @@
 </style>
 </head>
 <body>
-<div id="game"></div>
+<div id="wait">Loading emulator…</div>
 <div id="msg"></div>
 <script>
-  // Same-origin iframe: every request below carries the session cookie, so no
-  // token ever appears in a URL. Params come from the parent opener.
-  // Saves are per signed-in user (server scopes by session): states via
-  // /api/roms/:id/saves, battery (in-game) saves loaded on start.
+  // The trusted half of the player. It is signed in (every request carries the session cookie, so no token is ever in an address) and it looks
+  // after the saves. It loads no outside code. The emulator, which comes from another website, runs in a frame of its own (ejs-frame.html) that is
+  // cut off from this page, the session and the server: it is handed this one game, and may only hand back save data for it.
+  // Saves are per signed-in user (server scopes by session): states via /api/roms/:id/saves, battery (in-game) saves loaded on start.
+  // Anything the frame sends is treated as untrusted: only known messages, only from that frame, and never shown as text.
   const q = new URLSearchParams(location.search);
   const romId = q.get('id');
   const api = '/api/roms/' + encodeURIComponent(romId) + '/saves';
   const core = q.get('core') || '';
+  const MAX_SAVE = 32 * 1024 * 1024, MAX_SHOT = 2 * 1024 * 1024;
 
   function flash(text) {
     const m = document.getElementById('msg');
     m.textContent = text; m.style.display = 'block';
     clearTimeout(flash.t); flash.t = setTimeout(() => { m.style.display = 'none'; }, Math.max(2500, String(text).length * 70));   // a long message stays long enough to read
   }
+  const waiting = (text) => { const w = document.getElementById('wait'); w.textContent = text; w.style.display = text ? 'flex' : 'none'; };
   const fetchBytes = async (url) => {
     const r = await fetch(url, { credentials: 'same-origin' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    return new Uint8Array(await r.arrayBuffer());
+    return r.arrayBuffer();
   };
+  // The game itself can be large, so the wait says how far it has got.
+  async function fetchGame(url) {
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if (!r.ok) { const why = await r.json().catch(() => null); throw new Error((why && why.error) || 'HTTP ' + r.status); }
+    const total = Number(r.headers.get('content-length')) || 0;
+    if (!total || !r.body || r.headers.get('content-encoding')) return r.arrayBuffer();   // (compressed on the way, the length is not the file's)
+    const all = new Uint8Array(total), reader = r.body.getReader();
+    let at = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (at + value.length > total) throw new Error('The game file changed while it was being read');
+      all.set(value, at); at += value.length;
+      waiting('Loading game… ' + Math.floor((at / total) * 100) + '%');
+    }
+    if (at !== total) throw new Error('The game did not arrive in full');
+    return all.buffer;
+  }
   const upload = async (url, method, bytes, extra) => {
     const r = await fetch(url, { method, credentials: 'same-origin', body: bytes,
       headers: { 'Content-Type': 'application/octet-stream' }, ...extra });
@@ -65,10 +87,10 @@
     catch { return []; }
   }
   // Current EmulatorJS build (CDN 'latest' moves). States are tagged "<system>@<version>"
-  // when saved; a different tag on load means the state may not restore.
+  // when saved; a different tag on load means the state may not restore. Only a version number is accepted from that answer.
   let ejsVersion = '';
-  const versionReady = fetch('https://cdn.emulatorjs.org/latest/data/version.json')
-    .then((r) => r.json()).then((j) => { ejsVersion = String(j.version || ''); }).catch(() => {});
+  const versionReady = fetch('https://cdn.emulatorjs.org/latest/data/version.json', { credentials: 'omit', referrerPolicy: 'no-referrer' })
+    .then((r) => r.json()).then((j) => { const v = String(j.version || ''); if (/^[\w.-]{1,20}$/.test(v)) ejsVersion = v; }).catch(() => {});
   const tag = () => core + (ejsVersion ? '@' + ejsVersion : '');
   function mismatch(s) {
     const [c, v] = String(s.core || '').split('@');
@@ -79,13 +101,41 @@
   }
   const notify = () => { try { parent.postMessage({ type: 'saves-changed', rom: Number(romId) }, location.origin); } catch {} };
 
+  /* ── the emulator's settings (controls, picture options). An isolated frame cannot keep anything, so they are kept here for it:
+        only its own keys ("ejs-…"), only text, within a size limit, and never read by this page. ── */
+  const STORE = 'gamesauce_ejs_frame', STORE_MAX = 1024 * 1024;
+  function readStore() {
+    try {
+      const kept = localStorage.getItem(STORE);
+      if (kept) return JSON.parse(kept) || {};
+      // The first time: what the emulator had saved before it was isolated comes along.
+      const had = {};
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('ejs-')) had[k] = localStorage.getItem(k); }
+      return had;
+    } catch { return {}; }
+  }
+  const store = readStore();
+  function keepSetting(key, value) {
+    if (typeof key !== 'string' || !key.startsWith('ejs-') || key.length > 300) return;
+    if (value !== null && (typeof value !== 'string' || value.length > 64 * 1024)) return;
+    delete store[key];
+    if (value !== null) store[key] = value;   // written last, so the least recently changed are first to go
+    try {
+      let text = JSON.stringify(store);
+      for (const k of Object.keys(store)) { if (text.length <= STORE_MAX) break; delete store[k]; text = JSON.stringify(store); }
+      localStorage.setItem(STORE, text);
+    } catch { /* not kept this time */ }
+  }
+
   /* ── picker: choose a state (start-up, or mid-game via Load State) ── */
+  let picking = false;
   function pickState(states, { allowNew }) {
+    picking = true;
     return new Promise((resolve) => {
       const el = document.createElement('div');
       el.id = 'picker';
       el.innerHTML = '<h2>Your save states</h2><p>Only you can see these. In-game (battery) saves load automatically.</p>';
-      const done = (v) => { el.remove(); resolve(v); };
+      const done = (v) => { el.remove(); picking = false; resolve(v); };
       states.forEach((s, i) => {
         const row = document.createElement('div');
         row.className = 'slot';
@@ -110,118 +160,112 @@
     });
   }
 
-  // The 'latest' EmulatorJS front end reads a save state through a core function (EmulatorJSGetState) that the cores on the CDN
-  // do not have yet; they offer the older save_state_info instead, so every Save State ended in "FAILED TO SAVE STATE".
-  // Until the two match again, read the state the way the cores offer it. If a core does have the new function, it is used.
-  function bridgeGetState() {
-    const gm = window.EJS_emulator && window.EJS_emulator.gameManager;
-    if (!gm || gm.__gsBridged) return Boolean(gm);
-    gm.__gsBridged = true;
-    const original = gm.getState && gm.getState.bind(gm);
-    gm.getState = function () {
-      const M = gm.Module || {};
-      if (typeof M.EmulatorJSGetState === 'function' && original) return original();
-      if (typeof M.cwrap !== 'function') { if (original) return original(); throw new Error('This core cannot save states'); }
-      const info = M.cwrap('save_state_info', 'string', [])().split('|');
-      if (info[2] !== '1') throw new Error(info[0] || 'This game cannot save states');
-      const size = parseInt(info[0], 10), ptr = parseInt(info[1], 10);
-      return new Uint8Array(M.HEAPU8.subarray(ptr, ptr + size));
-    };
-    return true;
+  /* ── the isolated frame ── */
+  let emu = null;
+  const toFrame = (message, transfer) => emu.contentWindow.postMessage(message, '*', transfer || []);   // '*': an isolated frame has no address to name
+  const focusGame = () => { try { emu.focus(); } catch {} };
+  const asBytes = (v, max) => (v instanceof Uint8Array && v.byteLength > 0 && v.byteLength <= max ? v : null);
+
+  // Saves from the frame are taken one at a time and not faster than a person (or the in-game autosave) makes them, so that a faulty or
+  // harmful emulator cannot push out this game's older states in a moment.
+  let lastState = 0, battery = { next: null, busy: false, last: 0 }, toldFull = false;
+  async function keepState(state, screenshot) {
+    if (Date.now() - lastState < 2000) return flash('Please wait a moment before saving again');
+    lastState = Date.now();
+    try {
+      const r = await upload(api + '?kind=state&core=' + encodeURIComponent(tag()), 'POST', state);
+      if (screenshot) await upload(api + '/' + Number(r.id) + '/screenshot', 'PUT', screenshot).catch(() => {});
+      flash('State saved to your account'); notify();
+    } catch (e) { flash('Save failed: ' + e.message); }
   }
-  const bridgeTimer = setInterval(() => { if (bridgeGetState()) clearInterval(bridgeTimer); }, 400);
-  setTimeout(() => clearInterval(bridgeTimer), 120000);
+  // The newest in-game save waiting is the one that counts: an older one still in the queue is replaced by it.
+  async function keepBattery(save, byHand) {
+    battery.next = { save, byHand: byHand || Boolean(battery.next && battery.next.byHand) };
+    if (battery.busy) return;
+    battery.busy = true;
+    while (battery.next) {
+      const wait = battery.last + 5000 - Date.now();
+      if (wait > 0) await new Promise((ok) => setTimeout(ok, wait));
+      const job = battery.next; battery.next = null; battery.last = Date.now();
+      try {
+        await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', job.save); toldFull = false; notify();
+        if (job.byHand) flash('In-game save stored');
+      } catch (e) {
+        // The next change tries again. A full save space will not clear itself, so that one is said (once), not left silent.
+        if (job.byHand) flash('Save failed: ' + e.message);
+        else if (e.code === 'save_space_full' && !toldFull) { toldFull = true; flash('In-game save not kept. ' + e.message); }
+      }
+    }
+    battery.busy = false;
+  }
+  async function chooseState() {
+    if (picking) return;
+    const list = (await listSaves()).filter((s) => s.kind === 'state');
+    if (!list.length) return flash('No saved states yet');
+    const pick = await pickState(list, { allowNew: false });
+    focusGame();
+    if (!pick) return;
+    try { const bytes = await fetchBytes(api + '/' + pick.id + '/file'); toFrame({ type: 'load-state', bytes }, [bytes]); }
+    catch (e) { flash('Load failed: ' + e.message); }
+  }
+  async function sendBattery() {
+    const now = (await listSaves()).find((s) => s.kind === 'battery');   // asked each time: every autosave replaces the one before
+    if (!now) return flash('No in-game save yet');
+    try { const bytes = await fetchBytes(api + '/' + now.id + '/file'); toFrame({ type: 'load-battery', bytes }, [bytes]); }
+    catch (e) { flash('Load failed: ' + e.message); }
+  }
+
+  let start = null;
+  addEventListener('message', (e) => {
+    if (!emu || e.source !== emu.contentWindow || e.origin !== 'null') return;   // only the isolated frame is listened to
+    const m = e.data && typeof e.data === 'object' ? e.data : {};
+    if (m.type === 'ready' && start) {   // handed over once only
+      const s = start; start = null;
+      toFrame(s, [s.rom, s.state, s.battery].filter(Boolean));
+      waiting('');   // the emulator shows its own progress from here
+    } else if (m.type === 'started') { waiting(''); focusGame(); }
+    else if (m.type === 'storage') keepSetting(m.key, m.value);
+    else if (!romId) return;
+    else if (m.type === 'state') { const state = asBytes(m.state, MAX_SAVE); if (state) keepState(state, asBytes(m.screenshot, MAX_SHOT)); }
+    else if (m.type === 'battery') { const save = asBytes(m.save, MAX_SAVE); if (save) keepBattery(save, m.byHand === true); }
+    else if (m.type === 'want-load') chooseState();
+    else if (m.type === 'want-battery') sendBattery();
+    else if (m.type === 'loaded') flash(m.what === 'battery' ? (m.ok === true ? 'In-game save loaded' : 'Load failed') : (m.ok === true ? 'State loaded' : 'Load failed'));
+  });
 
   async function boot() {
     await Promise.race([versionReady, new Promise((r) => setTimeout(r, 2500))]);
     const all = romId ? await listSaves() : [];
     const states = all.filter((s) => s.kind === 'state');
-    const battery = all.find((s) => s.kind === 'battery');
+    const inGame = all.find((s) => s.kind === 'battery');
     let startState = null;
-    if (states.length) startState = await pickState(states, { allowNew: true });
+    if (states.length) { waiting(''); startState = await pickState(states, { allowNew: true }); }
 
-    window.EJS_player = '#game';
-    window.EJS_gameUrl = q.get('rom') || '';
-    window.EJS_gameName = q.get('title') || 'game';
-    // SYSTEM id ('segaMD', 'nes', …) — never a core filename.
-    window.EJS_core = core;
-    // 'latest' channel, not 'stable': carries the upstream gamepad-index fix
-    // (Chrome/Brave leaving slot 0 empty broke all pad input on stable).
-    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/latest/data/';
-    window.EJS_startOnLoaded = true;
-    if (!window.EJS_onGameStart) window.EJS_onGameStart = () => { bridgeGetState(); };
-    window.EJS_color = '#ff3d68';
-    window.EJS_alignStartButton = 'center';
-    // Never use the browser's own IndexedDB slots: saves live on the server, per user.
-    window.EJS_defaultOptions = { 'save-state-location': 'download' };
-    if (startState) window.EJS_loadStateURL = api + '/' + startState.id + '/file';
+    // The game's address is only ever one on this server.
+    const from = new URL(q.get('rom') || '', location.origin);
+    if (from.origin !== location.origin || !from.pathname.startsWith('/api/roms/')) return waiting('That is not a game on this server.');
+    waiting('Loading game…');
+    let rom, stateBytes = null, batteryBytes = null;
+    try {
+      rom = await fetchGame(from.pathname + from.search);
+      if (startState) stateBytes = await fetchBytes(api + '/' + startState.id + '/file');
+      // The in-game save is restored on start (not when a full state is being loaded: the state contains it).
+      else if (inGame) batteryBytes = await fetchBytes(api + '/' + inGame.id + '/file').catch(() => null);
+    } catch (e) { return waiting('The game could not be loaded: ' + e.message); }
+    waiting('Loading emulator…');
+    const name = decodeURIComponent(from.pathname.split('/').pop() || 'game');   // arcade cores go by the file's exact name
+    start = { type: 'start', name, rom, core, title: q.get('title') || 'game', state: stateBytes, battery: batteryBytes, saves: Boolean(romId), settings: { ...store } };
 
-    if (romId) {
-      // Save state button -> server (screenshot attached as a second request).
-      window.EJS_onSaveState = async ({ state, screenshot }) => {
-        try {
-          const r = await upload(api + '?kind=state&core=' + encodeURIComponent(tag()), 'POST', state);
-          if (screenshot) await upload(api + '/' + r.id + '/screenshot', 'PUT', screenshot).catch(() => {});
-          flash('State saved to your account'); notify();
-        } catch (e) { flash('Save failed: ' + e.message); }
-      };
-      // Load State button -> pick from your server-side states.
-      window.EJS_onLoadState = async () => {
-        const list = (await listSaves()).filter((s) => s.kind === 'state');
-        if (!list.length) return flash('No saved states yet');
-        const pick = await pickState(list, { allowNew: false });
-        if (!pick) return;
-        try {
-          window.EJS_emulator.gameManager.loadState(await fetchBytes(api + '/' + pick.id + '/file'));
-          flash('State loaded');
-        } catch (e) { flash('Load failed: ' + e.message); }
-      };
-      // Battery (in-game) saves: periodic autosave to server, only when changed.
-      window.EJS_fixedSaveInterval = 30000;
-      let toldFull = false;
-      window.EJS_onSaveUpdate = async ({ save }) => {
-        try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); toldFull = false; notify(); }
-        catch (e) {
-          // The next change tries again. A full save space will not clear itself, so that one is said (once), not left silent.
-          if (e.code === 'save_space_full' && !toldFull) { toldFull = true; flash('In-game save not kept. ' + e.message); }
-        }
-      };
-      window.EJS_onSaveSave = async ({ save }) => {
-        try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); flash('In-game save stored'); notify(); }
-        catch (e) { flash('Save failed: ' + e.message); }
-      };
-      window.EJS_onLoadSave = async () => {
-        if (!battery) return flash('No in-game save yet');
-        try { await restoreBattery(); flash('In-game save loaded'); } catch (e) { flash('Load failed: ' + e.message); }
-      };
-      async function restoreBattery() {
-        const gm = window.EJS_emulator.gameManager;
-        const bytes = await fetchBytes(api + '/' + battery.id + '/file');
-        const path = gm.getSaveFilePath();
-        let cp = '';
-        const parts = path.split('/');
-        for (let i = 0; i < parts.length - 1; i++) {
-          if (!parts[i]) continue;
-          cp += '/' + parts[i];
-          if (!gm.FS.analyzePath(cp).exists) gm.FS.mkdir(cp);
-        }
-        if (gm.FS.analyzePath(path).exists) gm.FS.unlink(path);
-        gm.FS.writeFile(path, bytes);
-        gm.loadSaveFiles();
-      }
-      // Restore battery on boot (skipped if a full state is being loaded — it contains it).
-      if (battery && !startState) {
-        window.EJS_onGameStart = () => { bridgeGetState(); setTimeout(() => restoreBattery().catch(() => {}), 300); };
-      }
-    }
-
-    const s = document.createElement('script');
-    s.src = 'https://cdn.emulatorjs.org/latest/data/loader.js';
-    document.body.appendChild(s);
+    emu = document.createElement('iframe');
+    emu.id = 'emu';
+    emu.title = 'Emulator';
+    emu.setAttribute('sandbox', 'allow-scripts allow-pointer-lock');   // never allow-same-origin: that would undo all of it
+    emu.setAttribute('allow', 'gamepad *; fullscreen *; autoplay *; screen-wake-lock *');   // "*": an isolated frame matches no named address
+    emu.src = '/ejs-frame.html';
+    document.body.appendChild(emu);
+    setTimeout(() => waiting(''), 20000);   // the emulator shows its own progress and errors
   }
   boot();
-  // Browsers gate the Gamepad API behind a user gesture: the required Play
-  // click inside the frame counts, so pads work without extra prompts.
 </script>
 </body>
 </html>

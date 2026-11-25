@@ -198,7 +198,7 @@ test('play-only: a back-to-top arrow replaces the Library button, and the logo g
 });
 
 test('the player reads a save state through the older core function when the new one is missing', () => {
-  const html = fs.readFileSync(new URL('../public/ejs-player.html', import.meta.url), 'utf8');
+  const html = fs.readFileSync(new URL('../public/ejs-frame.html', import.meta.url), 'utf8');
   assert.match(html, /bridgeGetState/);
   assert.match(html, /cwrap\('save_state_info'/);
   assert.match(html, /EmulatorJSGetState/, 'a core that has the new function still uses it');

@@ -1004,6 +1004,9 @@ function bindCards(root) {
  *    page. Upstream cannot unload a WASM instance without a page reload, so
  *    closing the overlay only has to drop the frame: the emulator, its audio
  *    context and its cores die with it. No ghost audio, no stale globals.
+ *    That page is ours and looks after the saves; the emulator itself (code from
+ *    another website) runs one frame further in, cut off from the session
+ *    (ejs-frame.html).
  *  - 'latest' CDN channel, not 'stable': carries the upstream gamepad-index
  *    fix (Chrome/Brave leaving slot 0 empty broke all pad input on stable).
  */
@@ -1093,7 +1096,7 @@ async function openPlayer(rom) {
   // the placeholder so a blocked frame still shows a useful message.
   const frame = document.createElement('iframe');
   frame.title = `Play ${rom.title} in browser`;
-  frame.allow = 'gamepad; fullscreen; autoplay';
+  frame.allow = 'gamepad *; fullscreen *; autoplay *; screen-wake-lock *';   // passed on to the player's own isolated emulator frame
   frame.style.cssText = 'border:0;width:100%;min-height:0;height:100%;background:#000;border-radius:8px';
   const params = new URLSearchParams({
     id: String(rom.id),

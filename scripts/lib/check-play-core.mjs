@@ -243,7 +243,9 @@ export async function runCheck(conn, rawOpts, { emit = () => {}, signal } = {}) 
     page.on('response', (r) => { if (r.url().includes('/api/roms/') && r.url().includes('/play/')) romStatus = r.status(); });
     const frames = [], pngs = [];
     const shoot = async () => {
-      const png = await page.locator('#game canvas').first().screenshot({ timeout: 4000 }).catch(() => null);
+      const inFrame = await page.locator('iframe#emu').count().catch(() => 0);   // the emulator has a frame of its own; an older server draws on the page itself
+      const canvas = inFrame ? page.frameLocator('iframe#emu').locator('#game canvas') : page.locator('#game canvas');
+      const png = await canvas.first().screenshot({ timeout: 4000 }).catch(() => null);
       if (png) { pngs.push(png); frames.push(await measure(png)); }
     };
     try {
