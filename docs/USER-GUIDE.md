@@ -108,7 +108,8 @@ Click any tile.
 - **Actions:** **Download** (hidden for members unless the admin allows it), **▶ Play in browser** (where supported), **Favourite**, **＋ Collection**,
   **Hide**, **Refresh metadata**, **Upload cover**, **Delete**. **Only an admin edits a game's details**: members do not see
   Refresh metadata, Upload cover, Identify this game or the edit form, and the server refuses those changes from them.
-  Members keep their own favourites, collections and Hide.
+  **Only an admin deletes games or adds ROMs**: members have no Delete button, and the server refuses a delete or an upload
+  from them. Members keep their own favourites, collections and Hide, which changes only their own view.
 - **Browser play: on/off** switches the Play button for this game only. A dot (•) means you have
   overridden the default. This is how you turn off a game that will not start, or turn on one that
   was hidden by the MAME year cut-off.

@@ -604,7 +604,7 @@ function cardHtml(rom) {
       <div class="card-cover" style="background:linear-gradient(160deg,${rom.platform_accent}22,#12141a)">
         <div class="card-fallback">${esc(initials)}</div>
         ${cover}
-        <span class="card-select" data-select="${rom.id}" role="checkbox" title="Select for bulk delete"></span>
+        <span class="card-select" data-select="${rom.id}" role="checkbox" title="${authState.user?.role === 'admin' ? 'Select for bulk actions' : 'Select'}"></span>
         <span class="card-badge" style="background:${rom.platform_accent}cc">${esc(rom.platform_badge ? String(rom.platform_badge).toUpperCase() : rom.platform_short)}</span>
         ${rom.playable ? `<span class="card-play" title="Playable in the browser" aria-label="Playable in the browser">${ICON.gamepad}</span>` : ''}
         ${rom.playable && !rom.missing ? `<button type="button" class="card-playbtn" tabindex="-1" data-play="${rom.id}" title="Play in browser" aria-label="Play ${esc(rom.title)} in browser">▶</button>` : ''}
@@ -1227,6 +1227,7 @@ function syncSelectUI() {
   $('#bulk-md-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $$('.bl-label').forEach((l) => { l.textContent = state.locked ? 'Unlock' : 'Lock'; });
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
+  $('#bulk-delete-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');   // only an admin deletes games
   $('#bulk-hide-btn')?.classList.toggle('hidden', n === 0);
   $$('.bh-label').forEach((l) => { l.textContent = state.hidden ? 'Unhide' : 'Hide'; });
   $('#bulk-addcoll')?.classList.toggle('hidden', n === 0);
@@ -1636,7 +1637,7 @@ async function openDetail(id) {
         </div>
       </div>
       <input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
-      <button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>
+      ${canEdit ? `<button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>` : ''}
     </div>
 
     ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.${rom.multidisc_override == null ? ' (Decided from its file name.)' : ' (Set by hand.)'}</p>` : ''}
@@ -1858,7 +1859,7 @@ async function openDetail(id) {
     }
   });
 
-  $('[data-act="delete"]', drawer).addEventListener('click', async () => {
+  $('[data-act="delete"]', drawer)?.addEventListener('click', async () => {
     if (rom.keep_override === 1) return toast('This game is locked. Unlock it first (⋯ More → Locked) if you want to delete it.', true);
     const ok = await confirmDialog({
       title: `Delete “${rom.title}”?`,

@@ -386,7 +386,7 @@ bulkRouter.post('/lock', requireAdmin, (req, res) => {
   res.json({ changed, locked: lock });
 });
 
-bulkRouter.post('/delete', (req, res) => {
+bulkRouter.post('/delete', requireAdmin, (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number).filter(Boolean) : [];
   if (!ids.length) return res.status(400).json({ error: 'No ids supplied' });
 
@@ -1366,7 +1366,7 @@ router.delete('/bulk/enrich-job', requireAdmin, (req, res) => {
 
 /* ------------------------------------------------------------ upload */
 
-router.post('/upload', upload.array('roms', 50), async (req, res, next) => {
+router.post('/upload', requireAdmin, upload.array('roms', 50), async (req, res, next) => {   // checked before the files are received: nothing is written for anyone else
   const files = req.files || [];
   if (!files.length) return res.status(400).json({ error: 'No files uploaded' });
 
@@ -1470,7 +1470,7 @@ router.delete('/missing', requireAdmin, (req, res) => {
   res.json({ dry_run: false, deleted, errors: errors.slice(0, 20) });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', requireAdmin, (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
 

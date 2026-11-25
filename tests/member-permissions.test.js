@@ -134,3 +134,44 @@ test('the details window offers editing only to an admin', () => {
   // the buttons that may be absent are wired only when they are there
   for (const sel of [`'[data-act="refresh"]'`, "'#cover-input'", "'#edit-form'"]) assert.ok(app.includes(`$(${sel}, drawer)?.addEventListener`), sel);
 });
+
+test('a member cannot delete games, one at a time or in bulk, and cannot upload ROMs', async () => {
+  const doomed = addRom('Do Not Delete', 'keep.sfc', 'pm10'); fs.writeFileSync(path.join(TMP, 'keep.sfc'), 'keep me');
+  db.prepare('UPDATE roms SET in_place = 0 WHERE id = ?').run(doomed);
+  assert.equal((await call(`/api/roms/${doomed}`, { token: memberTok, method: 'DELETE' })).status, 403, 'delete one');
+  assert.equal((await call(`/api/roms/${doomed}?confirm_favorites=1&delete_file=1`, { token: memberTok, method: 'DELETE' })).status, 403, 'delete one, with its file');
+  assert.equal((await call('/api/roms/bulk/delete', { token: memberTok, method: 'POST', body: { ids: [doomed, plain], confirm_favorites: true } })).status, 403, 'delete in bulk');
+  assert.equal((await call('/api/roms', { token: memberTok, method: 'DELETE' })).status, 403, 'clear the library');
+  assert.equal((await call('/api/roms/missing', { token: memberTok, method: 'DELETE' })).status, 403, 'delete missing');
+  assert.ok(db.prepare('SELECT 1 FROM roms WHERE id = ?').get(doomed) && db.prepare('SELECT 1 FROM roms WHERE id = ?').get(plain), 'still in the library');
+  assert.ok(fs.existsSync(path.join(TMP, 'keep.sfc')), 'and the file is still on disk');
+
+  const incoming = path.join(TMP, 'storage', 'roms', '.incoming');
+  const count = () => { try { return fs.readdirSync(incoming).length; } catch { return 0; } };
+  const before = { roms: db.prepare('SELECT COUNT(*) AS n FROM roms').get().n, files: count() };
+  const form = new FormData(); form.append('roms', new Blob(['member upload ' + Math.random()]), 'sneaky.sfc'); form.append('platform', 'snes');
+  assert.equal((await call('/api/roms/upload', { token: memberTok, method: 'POST', form })).status, 403, 'upload');
+  assert.deepEqual({ roms: db.prepare('SELECT COUNT(*) AS n FROM roms').get().n, files: count() }, before, 'nothing was added or even received');
+  // an admin still can
+  assert.equal((await call(`/api/roms/${doomed}`, { method: 'DELETE' })).status, 200);
+});
+
+test("a member's Hide changes their own view only, one game or many", async () => {
+  const one = addRom('Hide Just Mine', 'h1.sfc', 'pm20'), two = addRom('Hide Mine Too', 'h2.sfc', 'pm21');
+  assert.equal((await call(`/api/roms/${one}/hide`, { token: memberTok, method: 'POST', body: { hidden: true } })).status, 200);
+  assert.equal((await call('/api/roms/bulk/hide', { token: memberTok, method: 'POST', body: { ids: [two], hidden: true } })).status, 200);
+  for (const id of [one, two]) assert.equal(db.prepare('SELECT hidden_all FROM roms WHERE id = ?').get(id).hidden_all, 0, 'not hidden for anyone else');
+  const ids = async (token) => (await call('/api/roms?limit=200', { token })).body.items.map((r) => r.id);
+  const mine = await ids(memberTok), admins = await ids(adminTok);
+  assert.ok(!mine.includes(one) && !mine.includes(two), 'gone from the member\'s own view');
+  assert.ok(admins.includes(one) && admins.includes(two), 'the admin still has them');
+  assert.equal((await call('/api/roms/bulk/hide-all', { token: memberTok, method: 'POST', body: { ids: [one], hidden: true } })).status, 403, 'hide for everyone is the admin\'s');
+  assert.equal((await call(`/api/roms/${one}/hide-all`, { token: memberTok, method: 'POST', body: { hidden: true } })).status, 403);
+});
+
+test('the Delete controls are offered only to an admin', () => {
+  const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  assert.match(app, /\$\{canEdit \? `<button class="ibtn ibtn-danger\$\{rom\.keep_override/, 'the details window button');
+  assert.ok(app.includes(`$('[data-act="delete"]', drawer)?.addEventListener`), 'wired only when it is there');
+  assert.ok(app.includes(`$('#bulk-delete-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin')`), 'the bulk bar button');
+});
