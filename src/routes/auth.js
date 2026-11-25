@@ -4,7 +4,7 @@ import {
   findSession, listAudit, listUsers, setPassword, touchSession, verifyPassword,
   audit, loginCounters, startLoginAttempt, recordLoginFailure, clearLoginFailures, clearLoginFailuresForUser, MAX_LOGIN_NAME, passwordChangeCounters
 } from '../auth.js';
-import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload, arcadeVerifiedOnly, setArcadeVerifiedOnly } from '../lib/policy.js';
+import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload, arcadeVerifiedOnly, setArcadeVerifiedOnly, saveQuotaMb, setSaveQuotaMb, MAX_SAVE_QUOTA_MB } from '../lib/policy.js';
 import db from '../db.js';
 import { userColour, nextUserColour, USER_COLOURS } from '../lib/colours.js';
 import express from 'express';
@@ -134,13 +134,20 @@ router.delete('/avatar', requireAuth, (req, res) => {
 });
 
 router.get('/policy', requireAuth, (req, res) => {
-  res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly() });
+  res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly(), save_quota_mb: saveQuotaMb() });
 });
 router.put('/policy', requireAdmin, (req, res) => {
   const body = req.body || {};
   const has = (k) => body[k] !== undefined;
-  if ((has('members_can_download') && typeof body.members_can_download !== 'boolean') || (has('arcade_verified_only') && typeof body.arcade_verified_only !== 'boolean') || (!has('members_can_download') && !has('arcade_verified_only'))) {
+  if ((has('members_can_download') && typeof body.members_can_download !== 'boolean') || (has('arcade_verified_only') && typeof body.arcade_verified_only !== 'boolean') || (!has('members_can_download') && !has('arcade_verified_only') && !has('save_quota_mb'))) {
     return res.status(400).json({ error: 'members_can_download / arcade_verified_only must be true or false' });
+  }
+  if (has('save_quota_mb') && !(Number.isInteger(body.save_quota_mb) && body.save_quota_mb >= 1 && body.save_quota_mb <= MAX_SAVE_QUOTA_MB)) {
+    return res.status(400).json({ error: 'The save space for each account must be more than zero and no more than 1024 GB' });
+  }
+  if (has('save_quota_mb')) {
+    const now = setSaveQuotaMb(body.save_quota_mb, req.user.id);
+    audit(req.user, 'policy.changed', { detail: { save_quota_mb: now }, ip: clientIp(req) });
   }
   if (has('members_can_download')) {
     const now = setMembersCanDownload(body.members_can_download, req.user.id);
@@ -150,7 +157,7 @@ router.put('/policy', requireAdmin, (req, res) => {
     const now = setArcadeVerifiedOnly(body.arcade_verified_only, req.user.id);
     audit(req.user, 'policy.changed', { detail: { arcade_verified_only: now }, ip: clientIp(req) });
   }
-  res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly() });
+  res.json({ members_can_download: membersCanDownload(), arcade_verified_only: arcadeVerifiedOnly(), save_quota_mb: saveQuotaMb() });
 });
 
 router.post('/login', async (req, res, next) => {

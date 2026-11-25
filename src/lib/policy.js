@@ -59,3 +59,25 @@ export function canDownload(user) {
 export function downloadSetting(user) {
   return user?.download_override === 1 ? 'allow' : user?.download_override === 0 ? 'deny' : 'default';
 }
+
+/* How much room each account has for browser-play saves (their data and screenshots), in MB. One figure for every account; the admin can change it. */
+export const DEFAULT_SAVE_QUOTA_MB = 1024;
+export const MAX_SAVE_QUOTA_MB = 1024 * 1024;
+let saveQuotaCache = null;
+export function saveQuotaMb() {
+  if (saveQuotaCache === null) {
+    const v = Number(db.prepare("SELECT value FROM app_settings WHERE key = 'saves.quota_mb'").get()?.value);
+    saveQuotaCache = Number.isInteger(v) && v >= 1 && v <= MAX_SAVE_QUOTA_MB ? v : DEFAULT_SAVE_QUOTA_MB;
+  }
+  return saveQuotaCache;
+}
+export const saveQuotaReset = () => { saveQuotaCache = null; };
+export function setSaveQuotaMb(mb, userId = null) {
+  db.prepare(`
+    INSERT INTO app_settings (key, value, encrypted, updated_by, updated_at)
+    VALUES ('saves.quota_mb', ?, 0, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = datetime('now')
+  `).run(String(mb), userId);
+  saveQuotaCache = mb;
+  return saveQuotaCache;
+}

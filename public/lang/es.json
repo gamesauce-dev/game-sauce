@@ -2139,5 +2139,12 @@
   "That picture can be shared again": "Esa imagen se puede compartir de nuevo",
   "Back cover": "Contraportada",
   "Cover": "Carátula",
-  "Spine": "Lomo"
+  "Spine": "Lomo",
+  "My saves": "Mis partidas guardadas",
+  "The save states and in-game saves from games you play in the browser. Each account has a set amount of room: when it is full, new saves are refused until you delete some. Nothing is deleted to make room.": "Los estados guardados y las partidas de los juegos que juegas en el navegador. Cada cuenta tiene un espacio fijo: cuando está lleno, no se admiten nuevas partidas hasta que borres alguna. No se borra nada para hacer sitio.",
+  "{a} of {b} used": "{a} de {b} usados",
+  "A game you can no longer open": "Un juego que ya no puedes abrir",
+  "Save space for each account (GB)": "Espacio para partidas por cuenta (GB)",
+  "Room for each person's browser-play saves, yours included. When it is full their new saves are refused; nothing is deleted. They manage theirs under Settings > My account > My saves.": "Espacio para las partidas del navegador de cada persona, incluidas las tuyas. Cuando está lleno no se admiten nuevas; no se borra nada. Cada uno las gestiona en Ajustes > Mi cuenta > Mis partidas guardadas.",
+  "Save space changed": "Espacio para partidas cambiado"
 }

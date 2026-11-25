@@ -2137,5 +2137,12 @@
   "That picture can be shared again": "Cette image peut de nouveau être partagée",
   "Back cover": "Dos de la jaquette",
   "Cover": "Jaquette",
-  "Spine": "Tranche"
+  "Spine": "Tranche",
+  "My saves": "Mes sauvegardes",
+  "The save states and in-game saves from games you play in the browser. Each account has a set amount of room: when it is full, new saves are refused until you delete some. Nothing is deleted to make room.": "Les états sauvegardés et les sauvegardes des jeux auxquels vous jouez dans le navigateur. Chaque compte dispose d’un espace fixe : quand il est plein, les nouvelles sauvegardes sont refusées jusqu’à ce que vous en supprimiez. Rien n’est supprimé pour faire de la place.",
+  "{a} of {b} used": "{a} sur {b} utilisés",
+  "A game you can no longer open": "Un jeu que vous ne pouvez plus ouvrir",
+  "Save space for each account (GB)": "Espace de sauvegarde par compte (Go)",
+  "Room for each person's browser-play saves, yours included. When it is full their new saves are refused; nothing is deleted. They manage theirs under Settings > My account > My saves.": "Place pour les sauvegardes du navigateur de chacun, les vôtres comprises. Quand elle est pleine, les nouvelles sont refusées ; rien n’est supprimé. Chacun gère les siennes dans Réglages > Mon compte > Mes sauvegardes.",
+  "Save space changed": "Espace de sauvegarde modifié"
 }

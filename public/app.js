@@ -4394,6 +4394,7 @@ const SETTINGS_MODULES = [
   { id: 'profile', label: 'Preferences', mi: 'profile-pic', ico: '🖼', adminOnly: false },
   { id: 'welcome', label: 'Welcome tour', mi: 'welcome-tour', ico: '👋', adminOnly: false },
   { id: 'password', label: 'Change password', mi: 'password-reset', ico: '🔑', adminOnly: false },
+  { id: 'saves', label: 'My saves', mi: 'game-save', ico: '💾', adminOnly: false },
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
   { id: 'providers', label: 'Metadata providers', mi: 'providers-2', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   mi: 'users', ico: '👥', adminOnly: true },
@@ -4415,7 +4416,7 @@ const SETTINGS_MODULES = [
 
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
-  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password'] },
+  { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password', 'saves'] },
   { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing', 'images'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
@@ -4970,6 +4971,28 @@ function initNamesPanel() {
   $('#names-covers-replace').onchange = () => { applyBtn.disabled = true; };
 }
 
+/* My saves: everything this account has saved from browser play, how much room it takes, and a way to delete it. */
+const saveSizeWords = (n) => (n >= 1073741824 ? `${(n / 1073741824).toFixed(2)} GB` : n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`);
+async function loadMySaves() {
+  const { used, limit, items } = await api('/saves');
+  $('#saves-used').textContent = `${saveSizeWords(used)} of ${saveSizeWords(limit)} used`;
+  $('#saves-bar').value = Math.min(100, (used / limit) * 100);
+  const list = $('#saves-list');
+  list.innerHTML = items.map((s) => `<div class="user-list-row">
+      <div class="grow">
+        <div>${s.title === null ? '<b>A game you can no longer open</b>' : `<b translate="no">${esc(s.title)}</b> <span class="pill" translate="no">${esc(s.platform)}</span>`}</div>
+        <div class="sub"><span>${s.kind === 'battery' ? 'In-game save' : 'Save state'}</span> · <span translate="no">${esc(new Date(s.updated_at.replace(' ', 'T') + 'Z').toLocaleString())} · ${esc(saveSizeWords(s.total_bytes))}</span></div>
+      </div>
+      <button class="btn btn-sm" type="button" data-mysave-del="${Number(s.id)}">Delete</button>
+    </div>`).join('') || '<div class="side-empty">No saves yet — use Save state inside the player.</div>';
+  $$('[data-mysave-del]', list).forEach((b) => b.addEventListener('click', async () => {
+    const ok = await confirmDialog({ title: 'Delete this save?', body: 'This cannot be undone.', okLabel: 'Delete', danger: true });
+    if (!ok) return;
+    try { await api(`/saves/${b.dataset.mysaveDel}`, { method: 'DELETE' }); await loadMySaves(); }
+    catch (err) { toast(err.message, true); }
+  }));
+}
+
 function showSettingsModule(id) {
   // A saved or stale module the person may not open (e.g. an admin one after signing in as a member) falls back to the first allowed one.
   if (!SETTINGS_MODULES.some((m) => m.id === id && settingsModuleOk(m))) id = settingsGroupMods(settingsVisibleGroups()[0])[0].id;
@@ -4986,6 +5009,7 @@ function showSettingsModule(id) {
   panel.classList.remove('hidden');
   if (id === 'profile') { initProfilePanel(); loadVersionLine(); }
   if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
+  if (id === 'saves') loadMySaves().catch((err) => toast(err.message, true));
   if (id === 'names') initNamesPanel();
   if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
@@ -5371,6 +5395,16 @@ async function loadUsersForModule() {
       box.onchange = async () => {
         try { const r = await api('/auth/policy', { method: 'PUT', body: JSON.stringify({ members_can_download: box.checked }) }); box.checked = r.members_can_download; toast(r.members_can_download ? 'Members can now download ROM files' : 'Members can no longer download ROM files'); }
         catch (err) { box.checked = !box.checked; toast(err.message, true); }
+      };
+    }
+    const sq = $('#policy-save-quota');
+    if (sq) {
+      const show = (mb) => { sq.value = String(Math.round((mb / 1024) * 100) / 100); };
+      show(pol.save_quota_mb);
+      sq.onchange = async () => {
+        const mb = Math.round(Number(sq.value) * 1024);
+        try { const r = await api('/auth/policy', { method: 'PUT', body: JSON.stringify({ save_quota_mb: mb }) }); pol.save_quota_mb = r.save_quota_mb; show(r.save_quota_mb); toast('Save space changed'); }
+        catch (err) { show(pol.save_quota_mb); toast(err.message, true); }
       };
     }
     const av = $('#policy-arcade-verified');

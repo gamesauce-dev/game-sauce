@@ -417,6 +417,14 @@
         <button class="btn btn-primary" id="welcome-again" type="button">Run the welcome tour again</button>
       </div>
 
+      <div class="panel hidden" id="mod-saves">
+        <h3>My saves</h3>
+        <p class="hint" style="margin-top:0">The save states and in-game saves from games you play in the browser. Each account has a set amount of room: when it is full, new saves are refused until you delete some. Nothing is deleted to make room.</p>
+        <p id="saves-used" style="margin-bottom:4px"></p>
+        <progress id="saves-bar" max="100" value="0" style="width:100%"></progress>
+        <div id="saves-list" class="counts"></div>
+      </div>
+
       <div class="panel hidden" id="mod-password">
         <h3>Change password</h3>
         <form class="edit-form" id="password-form">
@@ -484,6 +492,11 @@
           <input type="checkbox" id="policy-members-download" />
           <span><b>Let members download ROM files</b>
             <small>The default for everyone who has no personal setting below. Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.</small></span>
+        </label>
+        <label class="policy-row">
+          <input type="number" id="policy-save-quota" min="0.1" step="0.1" class="search" style="width:6rem" />
+          <span><b>Save space for each account (GB)</b>
+            <small>Room for each person's browser-play saves, yours included. When it is full their new saves are refused; nothing is deleted. They manage theirs under Settings &gt; My account &gt; My saves.</small></span>
         </label>
         <label class="policy-row">
           <input type="checkbox" id="policy-arcade-verified" />

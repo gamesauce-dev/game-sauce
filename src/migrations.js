@@ -715,3 +715,13 @@ db.exec(`CREATE TABLE IF NOT EXISTS art_blocked (
   hash TEXT PRIMARY KEY, block_id TEXT NOT NULL, title TEXT NOT NULL, platform TEXT NOT NULL, kind TEXT NOT NULL, blocked_at TEXT NOT NULL DEFAULT (datetime('now'))
 )`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '70') ON CONFLICT(key) DO UPDATE SET value = '70'").run();
+
+/* ── v71: a save's screenshot counts towards its owner's save space, so its size is kept with the save (src/lib/saves.js). Those already there are measured once. ── */
+if (!db.prepare('PRAGMA table_info(save_states)').all().some((c) => c.name === 'shot_bytes')) {
+  db.exec('ALTER TABLE save_states ADD COLUMN shot_bytes INTEGER NOT NULL DEFAULT 0');
+  const measured = db.prepare('UPDATE save_states SET shot_bytes = ? WHERE id = ?');
+  for (const r of db.prepare('SELECT id, shot_path FROM save_states WHERE shot_path IS NOT NULL').all()) {
+    try { measured.run(fs.statSync(r.shot_path).size, r.id); } catch { /* the picture is gone: it takes no room */ }
+  }
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '71') ON CONFLICT(key) DO UPDATE SET value = '71'").run();

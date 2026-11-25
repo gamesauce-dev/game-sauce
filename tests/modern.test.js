@@ -699,7 +699,7 @@ test('Digital page: view, Steam panel, nav entries and launch link exist', () =>
   assert.match(html, /id="view-digital"/); assert.match(html, /id="mod-steam"/); assert.match(html, /data-view="digital"/);
   const dgjs = fs.readFileSync(new URL('../public/digital.js', import.meta.url), 'utf8');
   assert.match(js, /view: 'digital'/); assert.match(dgjs, /async function loadDigital\(keep = false\)/); assert.match(app, /if \(view === 'digital'\) digital\.load\(\);/);
-  assert.match(app, /modules: \['profile', 'welcome', 'password'\]/); assert.match(app, /id: 'steam', label: 'Steam', mi: 'steam', own: true/);
+  assert.match(app, /modules: \['profile', 'welcome', 'password', 'saves'\]/); assert.match(app, /id: 'steam', label: 'Steam', mi: 'steam', own: true/);
   assert.ok(!/dg-card[^`]*download/.test(dgjs), 'no download on a digital tile');
 });
 

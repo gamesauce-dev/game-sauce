@@ -1031,7 +1031,7 @@ router.get('/:id/play', servePlay);
 // Every query is scoped to req.user.id: a user can only ever see, load or
 // delete their own states and battery saves.
 const rawBody = express.raw({ type: '*/*', limit: MAX_BYTES });
-const saveErr = (res, err) => res.status(err.status || 500).json({ error: err.message });
+const saveErr = (res, err) => res.status(err.status || 500).json({ error: err.message, ...(err.code === 'save_space_full' ? { code: err.code } : {}) });
 const romExists = (id) => !!db.prepare('SELECT 1 FROM roms WHERE id = ?').get(id);
 
 router.get('/:id/saves', (req, res) => {

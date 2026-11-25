@@ -14,6 +14,7 @@ import db from './db.js';
 import './migrations.js';
 import { seedPlatforms, ICON_TYPES, PLATFORM_BY_SLUG } from './lib/platforms.js';
 import romsRouter, { playableSql } from './routes/roms.js';
+import savesRouter from './routes/saves.js';
 import collectionsRouter from './routes/collections.js';
 import digitalRouter from './routes/digital.js';
 import physicalRouter from './routes/physical.js';
@@ -688,6 +689,7 @@ export function createApp() {
   });
 
   api.use('/roms', romsRouter);
+  api.use('/saves', savesRouter);
   api.use('/collections', collectionsRouter);
   api.use('/digital', digitalRouter);
   api.use('/physical', physicalRouter);

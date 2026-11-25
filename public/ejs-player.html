@@ -40,7 +40,7 @@
   function flash(text) {
     const m = document.getElementById('msg');
     m.textContent = text; m.style.display = 'block';
-    clearTimeout(flash.t); flash.t = setTimeout(() => { m.style.display = 'none'; }, 2500);
+    clearTimeout(flash.t); flash.t = setTimeout(() => { m.style.display = 'none'; }, Math.max(2500, String(text).length * 70));   // a long message stays long enough to read
   }
   const fetchBytes = async (url) => {
     const r = await fetch(url, { credentials: 'same-origin' });
@@ -50,7 +50,11 @@
   const upload = async (url, method, bytes, extra) => {
     const r = await fetch(url, { method, credentials: 'same-origin', body: bytes,
       headers: { 'Content-Type': 'application/octet-stream' }, ...extra });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r.ok) {
+      // The server's own words when it gives them (a full save space says what to do about it).
+      const why = await r.json().catch(() => null);
+      throw Object.assign(new Error((why && why.error) || 'HTTP ' + r.status), { code: why && why.code });
+    }
     return r.json();
   };
   // Anything stored with a save is written into the page as text, never as markup.
@@ -174,9 +178,13 @@
       };
       // Battery (in-game) saves: periodic autosave to server, only when changed.
       window.EJS_fixedSaveInterval = 30000;
+      let toldFull = false;
       window.EJS_onSaveUpdate = async ({ save }) => {
-        try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); notify(); }
-        catch { /* next change retries */ }
+        try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); toldFull = false; notify(); }
+        catch (e) {
+          // The next change tries again. A full save space will not clear itself, so that one is said (once), not left silent.
+          if (e.code === 'save_space_full' && !toldFull) { toldFull = true; flash('In-game save not kept. ' + e.message); }
+        }
       };
       window.EJS_onSaveSave = async ({ save }) => {
         try { await upload(api + '?kind=battery&core=' + encodeURIComponent(tag()), 'POST', save); flash('In-game save stored'); notify(); }

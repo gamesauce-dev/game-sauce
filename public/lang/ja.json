@@ -2139,5 +2139,12 @@
   "That picture can be shared again": "この画像は再び共有できます",
   "Back cover": "裏表紙",
   "Cover": "カバー",
-  "Spine": "背表紙"
+  "Spine": "背表紙",
+  "My saves": "マイセーブ",
+  "The save states and in-game saves from games you play in the browser. Each account has a set amount of room: when it is full, new saves are refused until you delete some. Nothing is deleted to make room.": "ブラウザで遊んだゲームのステートセーブとゲーム内セーブです。各アカウントの容量は決まっていて、いっぱいになると、削除するまで新しいセーブは保存できません。空きを作るために何かが削除されることはありません。",
+  "{a} of {b} used": "{b} 中 {a} を使用中",
+  "A game you can no longer open": "もう開けないゲーム",
+  "Save space for each account (GB)": "アカウントごとのセーブ容量 (GB)",
+  "Room for each person's browser-play saves, yours included. When it is full their new saves are refused; nothing is deleted. They manage theirs under Settings > My account > My saves.": "各ユーザー（自分を含む）のブラウザプレイのセーブ用の容量です。いっぱいになると新しいセーブは保存されません。何も削除されません。各自は「設定 > マイアカウント > マイセーブ」で管理します。",
+  "Save space changed": "セーブ容量を変更しました"
 }

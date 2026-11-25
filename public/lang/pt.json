@@ -2139,5 +2139,12 @@
   "That picture can be shared again": "Essa imagem pode ser compartilhada de novo",
   "Back cover": "Contracapa",
   "Cover": "Capa",
-  "Spine": "Lombada"
+  "Spine": "Lombada",
+  "My saves": "Meus saves",
+  "The save states and in-game saves from games you play in the browser. Each account has a set amount of room: when it is full, new saves are refused until you delete some. Nothing is deleted to make room.": "Os estados salvos e os saves dos jogos que você joga no navegador. Cada conta tem um espaço fixo: quando enche, novos saves são recusados até você apagar alguns. Nada é apagado para abrir espaço.",
+  "{a} of {b} used": "{a} de {b} usados",
+  "A game you can no longer open": "Um jogo que você não pode mais abrir",
+  "Save space for each account (GB)": "Espaço de saves por conta (GB)",
+  "Room for each person's browser-play saves, yours included. When it is full their new saves are refused; nothing is deleted. They manage theirs under Settings > My account > My saves.": "Espaço para os saves do navegador de cada pessoa, incluindo os seus. Quando enche, os novos são recusados; nada é apagado. Cada um cuida dos seus em Configurações > Minha conta > Meus saves.",
+  "Save space changed": "Espaço de saves alterado"
 }

@@ -2137,5 +2137,12 @@
   "That picture can be shared again": "这张图片可以再次共享",
   "Back cover": "封底",
   "Cover": "封面",
-  "Spine": "书脊"
+  "Spine": "书脊",
+  "My saves": "我的存档",
+  "The save states and in-game saves from games you play in the browser. Each account has a set amount of room: when it is full, new saves are refused until you delete some. Nothing is deleted to make room.": "你在浏览器中游玩游戏产生的即时存档和游戏内存档。每个账户的空间是固定的：满了之后，需先删除一些才能保存新存档。不会为了腾出空间而删除任何内容。",
+  "{a} of {b} used": "已使用 {a}，共 {b}",
+  "A game you can no longer open": "一个你已无法打开的游戏",
+  "Save space for each account (GB)": "每个账户的存档空间 (GB)",
+  "Room for each person's browser-play saves, yours included. When it is full their new saves are refused; nothing is deleted. They manage theirs under Settings > My account > My saves.": "每个人（包括你）浏览器游玩存档的空间。满了之后新存档会被拒绝；不会删除任何内容。各人可在“设置 > 我的账户 > 我的存档”中管理。",
+  "Save space changed": "存档空间已更改"
 }

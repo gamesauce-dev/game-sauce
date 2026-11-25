@@ -32,6 +32,7 @@ const ALLOW = [
   ['POST', /^\/roms\/\d+\/saves$/],
   ['PUT', /^\/roms\/\d+\/saves\/\d+\/screenshot$/],
   ['DELETE', /^\/roms\/\d+\/saves\/\d+$/],
+  ['GET', /^\/saves\/?$/], ['DELETE', /^\/saves\/\d+$/],   // all of their own saves in one list, to make room
   ['POST', /^\/roms\/\d+\/favorite$/],
   // watching a ROM Library game's video (never fetching one, and not videos of anyone's Physical or Digital games)
   ['GET', /^\/videos\/(file|status)$/, (query) => query.kind === 'rom'],
