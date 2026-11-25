@@ -98,7 +98,7 @@ test('Modern Home reuses Classic\'s boxes, equal tile sizes and equal title heig
   assert.match(js, /data-strip="recent"/);
   assert.match(css, /\.card-title \{ min-height: 2\.5em; \}/, 'every title is two lines tall, so covers never shrink');
   assert.match(css, /repeat\(auto-fill, minmax\(5\.6rem, 1fr\)\)/, 'one tile size for both boxes');
-  assert.match(read('public/app.js'), /applyStrips\(host, false\)|applyStrips\(b\.closest\('\.modern-home'\), false\)/, 'a short window does not collapse the Home boxes');
+  assert.match(read('public/app.js'), /applyStrips\(host, false\)|applyStrips\(b\.closest\('\.modern-home(, #view-home)?'\), false\)/, 'a short window does not collapse the Home boxes');
 });
 
 test('the ticker lives in the top bar on every page, and Library will swap it for the library tools', () => {

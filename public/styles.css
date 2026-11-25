@@ -1498,6 +1498,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 
 /* ───────── Play-only accounts: just games you can play, search and favourites ─────────
    This only tidies the screen. What a play-only account may actually do is enforced by the server (lib/playonly.js). */
+body.play-only .nav-item[data-view="home"],
 body.play-only .nav-item[data-view="collections"],
 body.play-only .nav-item[data-view="sources"],
 body.play-only .nav-item[data-view="upload"],
@@ -1993,3 +1994,13 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 #view-settings #mod-images .btn.btn-amber { background: #fbbf24 !important; border-color: #f59e0b !important; color: #1f1300 !important; font-weight: 600; }
 #view-settings #mod-images .btn.btn-amber:hover:not(:disabled) { background: #fcd34d !important; border-color: #fbbf24 !important; }
 #view-settings #mod-images .btn.btn-red:disabled, #view-settings #mod-images .btn.btn-amber:disabled { opacity: .45; }
+
+/* Classic Home: the ticker, then Continue playing and Recently added stacked one under the other (the same order as on Modern's Home) */
+#view-home { padding: 0 0 1.4rem; }
+#view-home .strips, #view-home .strips:has(> .strip.hidden) { display: block; grid-template-columns: none; }
+#view-home .strip { margin: 0 0 1rem; }
+#view-home .strip .recent-row { grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr)); column-gap: 0.7rem; }   /* one row of tiles each, as on Modern's Home: the base rule keeps the extra rows at zero height */
+#view-home .strip .recent-row .card { max-height: none; align-self: start; }
+#view-home .strip .recent-row .card-title { min-height: 2.5em; }
+#view-home .strip .recent-row .card-sub { display: none; }
+#view-home #lib-overview { margin: 0 0 1rem; }

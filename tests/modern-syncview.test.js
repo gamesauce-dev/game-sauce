@@ -9,7 +9,7 @@ const read = (rel) => fs.readFileSync(new URL('../' + rel, import.meta.url), 'ut
 test('every view the app opens by itself is followed by Modern', () => {
   const app = read('public/app.js'), modern = read('public/modern.js');
   const sv = app.slice(app.indexOf('function setView('), app.indexOf('function setView(') + 1400);
-  assert.match(sv, /state\.view = view;\n  saveNav\(\);\n  modern\.syncView\?\.\(view\);/, 'setView tells Modern which view is showing');
+  assert.match(sv, /state\.view = view;\n  saveNav\(\);\n  if \(view !== 'home'\) modern\.syncView\?\.\(view\);/, "setView tells Modern which view is showing (Home is Classic's own page)");
   // go() and syncView() share one routine, so they cannot drift apart
   const go = modern.slice(modern.indexOf('export function go('), modern.indexOf('export const currentView'));
   assert.match(go, /applyMview\(view\);/);

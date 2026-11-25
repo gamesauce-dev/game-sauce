@@ -295,7 +295,7 @@ function setView(view, { restore = false } = {}) {
   }
   state.view = view;
   saveNav();
-  modern.syncView?.(view);   // Modern follows when the app opens a view by itself (Show orphans, a link to Tools ...)
+  if (view !== 'home') modern.syncView?.(view);   // Modern follows when the app opens a view by itself (Show orphans, a link to Tools ...); Home is Classic's own page, Modern has another
   $$('.nav-item').forEach((b) => b.classList.toggle('is-active', b.dataset.view === view));
   $$('.view').forEach((v) => v.classList.add('hidden'));
   $(`#view-${view}`).classList.remove('hidden');
@@ -782,8 +782,8 @@ async function renderOverview() {
   const mine = stats.mine || { favorites: 0 };
   const top = stats.topDownloaded || null;
 
-  // Classic has no rolling strip any more (Modern has its own ticker in the top bar): only the Recently added row is drawn.
-  if (!document.body.classList.contains('ui-modern')) { clearInterval(overviewTimer); box.innerHTML = ''; box.classList.add('hidden'); paintRecentRow(stats); return; }
+  // Modern has its own Home page and ticker in the top bar: this Classic Home is never shown there.
+  if (document.body.classList.contains('ui-modern')) { clearInterval(overviewTimer); box.innerHTML = ''; box.classList.add('hidden'); paintRecentRow(stats); return; }
 
   let emuAlert = '';
   try {
@@ -884,15 +884,23 @@ function applyStrips(scope = document, shortWindowDefault = true) {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-strip-toggle]');
   if (!b) return;
-  const onModernHome = Boolean(b.closest('.modern-home'));
+  const onModernHome = Boolean(b.closest('.modern-home, #view-home'));   // either Home page: no grid below to save room for
   const st = stripState(!onModernHome);
   const key = b.dataset.stripToggle;
   st[key] = st[key] === 'closed' ? 'open' : 'closed';
   try { localStorage.setItem(STRIP_KEY, JSON.stringify(st)); } catch { /* private mode: still toggles for this page */ }
   applyStrips();
-  if (onModernHome) applyStrips(b.closest('.modern-home'), false);
+  if (onModernHome) applyStrips(b.closest('.modern-home, #view-home'), false);
 });
 applyStrips();
+
+/** Classic's Home page: the ticker, then Continue playing and Recently added, one under the other. */
+async function loadHome() {
+  applyStrips($('#view-home'), false);   // there is no grid below to save room for, so a short window does not fold them away
+  await Promise.all([renderOverview().catch(() => {}), renderPlayedRow()]);
+  const any = ['#lib-played-wrap', '#lib-recent-wrap'].some((s) => $(s) && !$(s).classList.contains('hidden'));
+  $('#home-empty')?.classList.toggle('hidden', any);
+}
 
 /** "Continue playing": this user's recently played games, newest first. */
 async function renderPlayedRow() {
@@ -4233,7 +4241,8 @@ function showApp(user, { restore = false } = {}) {
   const saved = restore ? readNav() : null;
   if (saved && $(`#view-${saved.view}`)) {
     for (const k of NAV_FIELDS) if (saved[k] !== undefined) state[k] = saved[k];
-    if (!['library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'tools', 'digital', 'physical', 'messages'].includes(saved.view)) saved.view = 'library';
+    if (!['home', 'library', 'collections', 'sources', 'upload', 'emulators', 'settings', 'tools', 'digital', 'physical', 'messages'].includes(saved.view)) saved.view = 'library';
+    if (saved.view === 'home' && document.body.classList.contains('ui-modern')) saved.view = 'library';   // Classic's Home page: Modern shows its own Home on top of the Library
     if (playOnly && saved.view !== 'settings' && saved.view !== 'tools') saved.view = 'library'; // a play-only account lives on the Play screen
     if (state.sort) $('#sort').value = state.sort;
     $('#search').value = state.q || '';
@@ -4251,7 +4260,7 @@ function showApp(user, { restore = false } = {}) {
     $('#search').value = '';
     $('#sort').value = 'title';
     activeSettingsModule = null;
-    setView('library');
+    setView(document.body.classList.contains('ui-modern') ? 'library' : 'home');   // a fresh sign-in starts on Home (Modern puts its own Home over the Library)
   }
   loadPlatforms();
 }

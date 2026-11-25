@@ -905,8 +905,9 @@ export async function applyMode(mode, { fresh = false } = {}) {
   } else {
     untipify();
     restorePinIcon();
+    const onHome = document.body.dataset.mview === 'home';   // on Modern's Home: Classic's own Home page
     hideHome();
     delete document.body.dataset.mview;
-    ctx.setView(ctx.state().view === 'home' ? 'library' : ctx.state().view, { restore: true });   // the look changes, the page does not
+    ctx.setView(onHome ? 'home' : ctx.state().view, { restore: true });   // the look changes, the page does not
   }
 }
