@@ -124,6 +124,32 @@ test('a play-only person sees the logos and game art that Big Screen draws, and 
   await call(`/api/roms/${ids.ps2}/hide-all`, { method: 'POST', body: { hidden: false } });
 });
 
+test('a play-only person can watch a Library game\'s videos, and can do nothing else with videos', async () => {
+  const file = path.join(TMP, 'snap.mp4'); fs.writeFileSync(file, Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.alloc(12), Buffer.from('SNAP')]));
+  const { titleKey } = await import('../src/lib/emumovies.js');
+  const { setThemeVideo } = await import('../src/lib/themevideos.js');
+  for (const [slug, title] of [['snes', 'Snes Game'], ['ps2', 'Ps2 Game']]) {
+    db.prepare("INSERT INTO game_videos (platform, title_key, path, bytes, source, fetched_at, tried_at) VALUES (?, ?, ?, ?, 'folder', datetime('now'), datetime('now'))").run(slug, titleKey(title), file, fs.statSync(file).size);
+    setThemeVideo(slug, titleKey(title), file, fs.statSync(file).size);
+  }
+  const status = async (url) => (await fetch(base + url, { headers: { Authorization: `Bearer ${playTok}` } })).status;
+  const watch = (id) => [`/api/videos/file?kind=rom&id=${id}`, `/api/videos/file?kind=rom&id=${id}&variant=theme`, `/api/videos/status?kind=rom&id=${id}`];
+
+  for (const url of watch(ids.snes)) assert.equal(await status(url), 200, url);
+  const part = await fetch(`${base}/api/videos/file?kind=rom&id=${ids.snes}`, { headers: { Authorization: `Bearer ${playTok}`, Range: 'bytes=0-7' } });
+  assert.equal(part.status, 206, 'the player can seek');
+  assert.equal((await call(`/api/videos/status?kind=rom&id=${ids.snes}`, { token: playTok })).body.can_fetch, false, 'no fetch button is offered');
+
+  for (const q of ['kind=physical&id=1', 'kind=digital&store=xbox&id=x', 'id=1', 'kind=rom&kind=physical&id=1', 'kind=ROM&id=1']) for (const what of ['file', 'status']) assert.equal(await status(`/api/videos/${what}?${q}`), 403, `${what}?${q}`);
+  for (const url of ['/api/videos/fetch', '/api/videos/assets', '/api/videos/fetch?kind=rom', '/api/videos/file?kind=rom&id=1', '/api/videos/status?kind=rom&id=1']) {
+    assert.equal((await call(url, { token: playTok, method: 'POST', body: { kind: 'rom', id: ids.snes, force: true } })).status, 403, `POST ${url}`);
+  }
+  await call(`/api/roms/${ids.ps2}/hide-all`, { method: 'POST', body: { hidden: true } });
+  for (const url of watch(ids.ps2)) assert.equal(await status(url), 404, `hidden game ${url}`);
+  for (const url of watch(`${ids.ps2}.0`)) assert.equal(await status(url), 404, `hidden game, oddly numbered ${url}`);
+  await call(`/api/roms/${ids.ps2}/hide-all`, { method: 'POST', body: { hidden: false } });
+});
+
 test('switching a person back to full restores everything at once', async () => {
   await call(`/api/auth/users/${userIds.pplayer}`, { method: 'PATCH', body: { mode: 'full' } });
   assert.equal((await call('/api/collections', { token: playTok })).status, 200, 'same sign-in, no need to sign in again');

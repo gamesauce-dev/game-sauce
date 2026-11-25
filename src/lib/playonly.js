@@ -4,7 +4,7 @@
 //
 // What a play-only person may do:
 //   - sign in / out, read who they are, change their own password, picture and sessions, run the welcome tour   (/api/auth/...)
-//   - list games and open one, with its cover, so they can pick one (read only), with the logos and game art the play screen shows
+//   - list games and open one, with its cover, so they can pick one (read only), with the logos, game art and videos the play screen shows
 //   - play a game, and keep their own save states
 //   - mark favourites (their own)
 //   - see the platform list and the counts the screen needs
@@ -33,18 +33,21 @@ const ALLOW = [
   ['PUT', /^\/roms\/\d+\/saves\/\d+\/screenshot$/],
   ['DELETE', /^\/roms\/\d+\/saves\/\d+$/],
   ['POST', /^\/roms\/\d+\/favorite$/],
+  // watching a ROM Library game's video (never fetching one, and not videos of anyone's Physical or Digital games)
+  ['GET', /^\/videos\/(file|status)$/, (query) => query.kind === 'rom'],
   ['GET', /^\/messages\/(summary|notices)$/], ['POST', /^\/messages\/notices\/\d+\/read$/], ['DELETE', /^\/messages\/notices\/\d+$/]
 ];
 
-export function playOnlyAllows(method, path) {
+/** query: the request's parsed query, for the few entries that depend on it. */
+export function playOnlyAllows(method, path, query = {}) {
   const m = String(method || 'GET').toUpperCase();
   const p = String(path || '').split('?')[0];
-  return ALLOW.some(([am, re]) => (am === m || (am === 'GET' && m === 'HEAD')) && re.test(p));
+  return ALLOW.some(([am, re, when]) => (am === m || (am === 'GET' && m === 'HEAD')) && re.test(p) && (!when || when(query || {})));
 }
 
 /** Express middleware: mount after the user is known (after requireAuth). */
 export function playOnlyGuard(req, res, next) {
-  if (req.user?.play_only && !playOnlyAllows(req.method, req.path)) {
+  if (req.user?.play_only && !playOnlyAllows(req.method, req.path, req.query)) {
     return res.status(403).json({ error: 'This account is set up for playing games only' });
   }
   next();
