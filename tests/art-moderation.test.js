@@ -163,3 +163,26 @@ test('the block still holds after pictures are converted, whichever way round it
   assert.equal(blocked(SPINE), true, 'the original is blocked as well');
   assert.equal(blocked(converted), true);
 });
+
+test('through the app: stopped while the member re-adds the game, copied again once allowed and they re-add it', async () => {
+  const upload = async (as, id, buf) => {
+    const fd = new FormData(); fd.append('image', new Blob([buf], { type: 'image/png' }), 'cover.png');
+    return (await fetch(`${base}/api/physical/games/${id}/art/cover`, { method: 'POST', headers: { Authorization: 'Bearer ' + tok[as] }, body: fd })).status;
+  };
+  const create = async (as) => { const r = await call('/api/physical/games', { as, method: 'POST', body: { platform: 'ps3', title: 'ZZ Test' } }); assert.equal(r.status, 201); await idle(); return r.body.id; };
+  const drop = async (as, id) => assert.equal((await call(`/api/physical/games/${id}`, { as, method: 'DELETE' })).status, 200);
+  const cover = png(300, 420, 160);
+
+  const own = await create('admin'); assert.equal(await upload('admin', own, cover), 200);
+  let theirs = await create('annmod');
+  assert.ok(row(theirs).cover_path, 'copied when first added');
+  assert.equal((await call(`/api/art/shared/${sha(cover)}/remove`, { method: 'POST', body: {} })).status, 200);
+  assert.equal(await upload('admin', own, cover), 200);
+  await drop('annmod', theirs); theirs = await create('annmod');
+  assert.equal(row(theirs).cover_path, null, 'not while it is stopped');
+  assert.equal((await call(`/api/art/blocked/${sha(cover)}`, { method: 'DELETE' })).status, 200);
+  assert.equal(row(theirs).cover_path, null, 'allowing it again does not by itself put it back');
+  await drop('annmod', theirs); theirs = await create('annmod');
+  assert.ok(row(theirs).cover_path, 'copied again');
+  assert.equal((await call(`/api/physical/cover/${theirs}`, { as: 'annmod' })).status, 200);
+});

@@ -5344,13 +5344,29 @@ async function loadSharedArt() {
     const i = items[Number(btn.dataset.artRemove)];
     const ok = await confirmDialog({ title: 'Remove this picture?', body: 'It is taken off every account that has it, including the one it came from, and uploaded copies are deleted. It will not be copied between accounts again. This cannot be undone.', okLabel: 'Remove and stop sharing', danger: true });
     if (!ok) return;
-    try { const r = await api(`/art/shared/${i.id}/remove`, { method: 'POST' }); toast(`Removed ${r.removed} picture${r.removed === 1 ? '' : 's'}`); await loadSharedArt(); }
-    catch (err) { toast(err.message, true); }
+    try {
+      const r = await api(`/art/shared/${i.id}/remove`, { method: 'POST' });
+      toast(`Removed ${r.removed} picture${r.removed === 1 ? '' : 's'}`);
+      stoppedInPlace(btn.closest('.art-shared-row'), i);
+    } catch (err) { toast(err.message, true); }
   }));
   stopped.querySelectorAll('[data-art-allow]').forEach((btn) => btn.addEventListener('click', async () => {
-    try { await api(`/art/blocked/${blocked[Number(btn.dataset.artAllow)].id}`, { method: 'DELETE' }); toast('That picture can be shared again'); await loadSharedArt(); }
+    try { await allowArt(blocked[Number(btn.dataset.artAllow)].id); await loadSharedArt(); }
     catch (err) { toast(err.message, true); }
   }));
+}
+async function allowArt(id) {
+  await api(`/art/blocked/${id}`, { method: 'DELETE' });
+  toast('That picture can be shared again');
+}
+// The row of a picture just removed stays where it was, with the way back on it: the list can be long, and loading it again would lose the place.
+function stoppedInPlace(row, i) {
+  row.classList.remove('art-shared-row');
+  row.innerHTML = `<div class="grow">${artWhat(i)}<div class="sub">Stopped from sharing</div></div><button class="btn" type="button">Allow sharing again</button>`;
+  row.querySelector('button').addEventListener('click', async () => {
+    try { await allowArt(i.id); row.remove(); }
+    catch (err) { toast(err.message, true); }
+  });
 }
 $('#art-shared-show')?.addEventListener('click', () => loadSharedArt().catch((err) => toast(err.message, true)));
 $('#art-share')?.addEventListener('change', async (e) => {
