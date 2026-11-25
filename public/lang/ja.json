@@ -1467,6 +1467,7 @@
  "replace the logos already there": "既にあるロゴを置き換える",
  "Replace videos linked from a folder earlier (a video fetched from EmuMovies is always kept)": "以前にフォルダーからリンクした動画を置き換える（EmuMovies から取得した動画は常に保持されます）",
  "Replace what is already there (the automatic ones only: your own uploads, and videos fetched from EmuMovies, are always kept)": "既にあるものを置き換える（自動のものだけ：自分でアップロードしたものと、EmuMovies から取得した動画は常に保持されます）",
+ "Replace what is already there (the automatic pictures only: your own uploads, and videos already there, are always kept)": "既にあるものを置き換える（自動の画像のみ：自分でアップロードしたものと、既にある動画は常に保持されます）",
  "Replaces titles you edited by hand with the DAT canonical titles.": "手動で編集したタイトルを、DAT の正式なタイトルに置き換えます。",
  "Reply": "返信",
  "Replying to": "返信先",

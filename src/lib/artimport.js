@@ -262,7 +262,8 @@ function videoGames(userId) {
 }
 
 /** What a video import would do. Videos are kept per platform and title (one per game, shared by every list), and are linked where they are, not copied. */
-function planVideoImport(userId, scan, { replace = false, cut = '' } = {}, vkind = 'video') {
+function planVideoImport(userId, scan, { replace = false, cut = '', admin = false } = {}, vkind = 'video') {
+  const mayReplace = replace && admin;   // videos are shared by everyone: only an admin's import changes one that is there
   const games = videoGames(userId);
   const byKey = new Map();
   for (const g of games) { const k = `${g.platform}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, g); }
@@ -290,7 +291,7 @@ function planVideoImport(userId, scan, { replace = false, cut = '' } = {}, vkind
   for (const b of best.values()) {
     const row = have.get(b.slug, b.key);
     const there = Boolean(row?.path) && hasFile(row.path);
-    if (!there || (replace && row.source === 'folder')) items.push(b);   // a video that was fetched from EmuMovies is never replaced by a file
+    if (!there || (mayReplace && row.source === 'folder')) items.push({ ...b, addOnly: !admin });   // a video that was fetched from EmuMovies is never replaced by a file
   }
   const seenMap = new Map();
   for (const e of scan.files) { if (e.kind !== vkind) continue; const k = `${e.platform || '?'}\n${e.folder || ''}`; seenMap.set(k, (seenMap.get(k) || 0) + 1); }
@@ -312,6 +313,8 @@ async function applyVideo(b) {
   const ok = (head.length >= 12 && head.toString('latin1', 4, 8) === 'ftyp') || (head.length >= 4 && head.readUInt32BE(0) === 0x1a45dfa3);
   if (!ok) throw new Error('not an mp4 or webm video (convert it first)');
   const st = await fsp.stat(b.entry.file);
+  // Looked at again at the moment of saving: one may have arrived since the plan was made. (No waiting happens between this look and the save.)
+  if (b.addOnly && hasFile(db.prepare(`SELECT path FROM ${b.kind === 'theme' ? 'theme_videos' : 'game_videos'} WHERE platform = ? AND title_key = ?`).get(b.slug, b.key)?.path)) throw new Error('this game has a video already');
   if (b.kind === 'theme') { setThemeVideo(b.slug, b.key, path.resolve(b.entry.file), st.size); return; }
   db.prepare("INSERT INTO game_videos (platform, title_key, path, bytes, source, fetched_at, tried_at) VALUES (?, ?, ?, ?, 'folder', datetime('now'), datetime('now')) ON CONFLICT(platform, title_key) DO UPDATE SET path = excluded.path, bytes = excluded.bytes, source = 'folder', fetched_at = datetime('now'), tried_at = datetime('now')")
     .run(b.slug, b.key, path.resolve(b.entry.file), st.size);
@@ -324,7 +327,7 @@ async function applyVideo(b) {
  */
 /** Gameplay videos and theme videos of a folder, planned separately (each in its own table, so neither replaces the other) and reported together. Rows appear only for a kind the folder has. */
 function planVideos(userId, scan, opts, always = false) {
-  const o = { replace: opts.replace, cut: opts.cut };
+  const o = { replace: opts.replace, cut: opts.cut, admin: opts.admin === true };
   const parts = [['video', planVideoImport(userId, scan, o, 'video')], ['theme', planVideoImport(userId, scan, o, 'theme')]];
   const out = { items: [], matched: {}, will: {}, skipped: {}, candidates: {}, games: parts[0][1].games, wraps: parts[0][1].wraps, seen: [], unmatched: [], unmatched_total: 0, unknown_platforms: [], unsupported_videos: 0, unsupported_list: [] };
   const unk = new Map();
@@ -358,8 +361,8 @@ export function planArtImport(userId, scan, opts = {}) {
   return base;
 }
 
-function planPictures(userId, scan, { target = 'physical', replace = false, cut = '', split = {} } = {}) {
-  if (target === 'video') return planVideos(userId, scan, { replace, cut }, true);
+function planPictures(userId, scan, { target = 'physical', replace = false, cut = '', split = {}, admin = false } = {}) {
+  if (target === 'video') return planVideos(userId, scan, { replace, cut, admin }, true);
   // 'both' is the person's shelf and their Digital list in one pass, and 'all' adds the Library (an admin's): what each list takes goes to it. The shelf takes covers, spines, discs, backs and manuals
   // (and cuts a full wrap into three); Digital takes covers; the Library takes those and its logo, marquee and background too (it does not take a wrap).
   const multi = target === 'both' || target === 'all';
@@ -442,9 +445,9 @@ const publicPlan = (p, scan, folder) => ({
 
 /** What an import would do (nothing is saved). */
 const forceOf = (kind, platform) => (['cover', 'spine', 'disc', 'manual', 'wrap', 'back', 'video', 'theme', 'logo', 'marquee', 'fanart'].includes(kind) ? { kind, platform: String(platform || '') } : null);
-export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
+export async function previewArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {}, admin = false }) {
   const scan = await scanArtFolder(folder, { fresh: true, force: forceOf(kind, platform) });
-  return publicPlan(planArtImport(userId, scan, { target, replace, cut, split }), scan, folder);
+  return publicPlan(planArtImport(userId, scan, { target, replace, cut, split, admin }), scan, folder);
 }
 
 /* ───────── the import itself, in the background ───────── */
@@ -497,11 +500,11 @@ async function applyOne(userId, target, b) {
 const failureReason = (err) => (/^E[A-Z]+$/.test(String(err?.code || '')) ? `the file could not be read (${err.code})` : String(err?.message || err).slice(0, 120));
 
 /** Start importing (returns at once; ask artJobStatus for progress). One run per person at a time. */
-export async function startArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {} }) {
+export async function startArtImport(userId, { target, folder, replace = false, cut = '', kind = '', platform = '', split = {}, admin = false }) {
   const cur = jobs.get(userId);
   if (cur?.running) return artJobStatus(userId);
   const scan = await scanArtFolder(folder, { force: forceOf(kind, platform) });
-  const plan = planArtImport(userId, scan, { target, replace, cut, split });
+  const plan = planArtImport(userId, scan, { target, replace, cut, split, admin });
   const job = { ...blank(), running: true, target, total: plan.items.length, started_at: new Date().toISOString() };
   jobs.set(userId, job);
   (async () => {

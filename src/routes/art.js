@@ -40,6 +40,7 @@ router.post('/import', async (req, res, next) => {
   const opts = { target, folder: folderFromLabel(sentFolder), replace: req.body?.replace === true, cut: String(req.body?.cut || '').slice(0, 200), kind: String(req.body?.kind || ''), platform: String(req.body?.platform || '').slice(0, 60) };
   const sent = cleanMap(req.body?.split), split = { ...savedSplit(me(req)), ...sent };
   opts.split = split;
+  opts.admin = req.user?.role === 'admin';   // from the sign-in, never from what was sent
   try {
     if (req.body?.apply === true) { if (Object.keys(sent).length) saveSplit(me(req), split); req.auditDetail = { target, apply: true }; return res.json(await startArtImport(me(req), opts)); }
     res.json({ ...(await previewArtImport(me(req), opts)), folder: sentFolder });   // named back the way it was sent

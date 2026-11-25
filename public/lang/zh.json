@@ -1464,6 +1464,7 @@
  "replace the logos already there": "替换已有的徽标",
  "Replace videos linked from a folder earlier (a video fetched from EmuMovies is always kept)": "替换之前从文件夹链接的视频（从 EmuMovies 获取的视频始终保留）",
  "Replace what is already there (the automatic ones only: your own uploads, and videos fetched from EmuMovies, are always kept)": "替换已有的内容（仅限自动获取的：你自己上传的内容和从 EmuMovies 获取的视频始终保留）",
+ "Replace what is already there (the automatic pictures only: your own uploads, and videos already there, are always kept)": "替换已有的内容（仅限自动获取的图片：你自己上传的内容和已有的视频始终保留）",
  "Replaces titles you edited by hand with the DAT canonical titles.": "用 DAT 中的规范标题替换你手动编辑过的标题。",
  "Reply": "回复",
  "Replying to": "回复给",

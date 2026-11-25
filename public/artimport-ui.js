@@ -32,6 +32,10 @@ export async function renderArtImport(ctx, body, { target, onDone = () => {}, se
   let folders = [], can_edit = false;
   try { ({ folders, can_edit } = await ctx.api('/art/folders')); } catch (err) { res.innerHTML = `<p class="hint">${esc(err.message)}</p>`; previewBtn.disabled = true; return; }
   const usable = folders.filter((f) => f.exists);
+  if (!can_edit) {   // videos are shared by everyone, so only an admin's import replaces one: say so, or leave the box out where videos are all there is
+    const row = replace.closest('label');
+    if (video) row.classList.add('hidden'); else row.querySelector('span').textContent = 'Replace what is already there (the automatic pictures only: your own uploads, and videos already there, are always kept)';
+  }
   if (can_edit) wireAddFolder(ctx, body, folders, (path) => renderArtImport(ctx, body, { target, onDone, select: path, openOptions }));
   if (!usable.length) {
     $('#art-folder-row', body).classList.add('hidden');
