@@ -118,6 +118,7 @@ test('every route is in the table exactly once, and the table has no routes the 
 });
 
 test('accounts below a route\'s level are refused, and being refused changes nothing', async () => {
+  (await import('../src/lib/restrictions.js')).flushRecords();   // the test's own games are taken in first: the first question about them would do it anyway
   const wrong = [], start = fingerprint();
   for (const e of entries()) {
     if (e.who === 'public' || e.who === 'token') continue;

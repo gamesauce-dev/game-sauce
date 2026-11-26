@@ -4,6 +4,7 @@ import { userColour, nextUserColour } from './lib/colours.js';
 import { purgeSaveFiles } from './lib/saves.js';
 import { purgeManualFiles } from './lib/manuals.js';
 import { purgeCustomCovers } from './lib/storage.js';
+import { forgetSubject, setUserGroups } from './lib/restrictions.js';
 import { hashPassword, hashToken, randomToken, verifyPassword } from './lib/auth.js';
 
 /* ───────────────────────────── users ───────────────────────────── */
@@ -69,6 +70,23 @@ if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'welcom
   db.exec('ALTER TABLE users ADD COLUMN welcomed INTEGER NOT NULL DEFAULT 0');
   db.exec('UPDATE users SET welcomed = 1');
 }
+// Age restrictions (src/lib/restrictions.js): a person's own age limit (NULL = none), and the groups people are put in.
+if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'age_limit')) {
+  db.exec('ALTER TABLE users ADD COLUMN age_limit INTEGER');
+}
+db.exec(`
+CREATE TABLE IF NOT EXISTS account_groups (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  name      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  age_limit INTEGER,
+  can_edit  INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS account_group_members (
+  user_id  INTEGER NOT NULL,
+  group_id INTEGER NOT NULL,
+  PRIMARY KEY (user_id, group_id)
+);
+`);
 // Play-only accounts: 1 = a cut-down "play in browser" screen and nothing else. The admin sets it per person.
 if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'play_only')) {
   db.exec('ALTER TABLE users ADD COLUMN play_only INTEGER NOT NULL DEFAULT 0');
@@ -197,17 +215,18 @@ export function purgeExpiredSessions() {
 /* ───────────────────────────── users ───────────────────────────── */
 
 export function listUsers() {
+  const inGroups = db.prepare('SELECT user_id, group_id FROM account_group_members ORDER BY group_id').all();
   return db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated, u.play_only, u.colour,
+    SELECT u.id, u.username, u.display_name, u.role, u.disabled, u.created_at, u.last_login_at, u.download_override, u.avatar_updated, u.play_only, u.colour, u.age_limit,
            (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND s.expires_at > datetime('now')) AS active_sessions
     FROM users u ORDER BY u.username
   `).all().map(({ download_override, avatar_updated, play_only, ...u }) => ({
-    ...u, avatar_v: avatar_updated || null, disabled: Boolean(u.disabled), mode: u.role !== 'admin' && play_only ? 'play' : 'full',
+    ...u, groups: inGroups.filter((m) => m.user_id === u.id).map((m) => m.group_id), avatar_v: avatar_updated || null, disabled: Boolean(u.disabled), mode: u.role !== 'admin' && play_only ? 'play' : 'full',
     download: download_override === 1 ? 'allow' : download_override === 0 ? 'deny' : 'default'
   }));
 }
 
-export async function createUser({ username, password, display_name = null, role = 'user', colour = null }) {
+export async function createUser({ username, password, display_name = null, role = 'user', colour = null, groups = [], age_limit = null }) {
   const name = String(username || '').trim();
   if (!/^[a-zA-Z0-9._-]{3,32}$/.test(name)) {
     throw Object.assign(new Error('Username must be 3–32 characters: letters, digits, dot, dash, underscore'), { status: 400 });
@@ -226,8 +245,13 @@ export async function createUser({ username, password, display_name = null, role
     if (!c.ok) throw Object.assign(new Error(c.reason), { status: 400 });
     chosen = c.colour;
   } else chosen = nextUserColour(db.prepare('SELECT colour FROM users').all().map((u) => u.colour));
-  const info = db.prepare('INSERT INTO users (username, display_name, password_hash, role, colour) VALUES (?, ?, ?, ?, ?)')
-    .run(name, display_name, await hashPassword(password), role === 'admin' ? 'admin' : 'user', chosen);
+  const hash = await hashPassword(password);
+  const info = db.transaction(() => {
+    const made = db.prepare('INSERT INTO users (username, display_name, password_hash, role, colour, age_limit) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(name, display_name, hash, role === 'admin' ? 'admin' : 'user', chosen, age_limit);
+    setUserGroups(Number(made.lastInsertRowid), groups);
+    return made;
+  })();
   // New people start in the Modern look (they can switch to Classic any time). People who already exist are left as they are.
   try { db.prepare("INSERT OR IGNORE INTO user_prefs (user_id, key, value) VALUES (?, 'ui_mode', 'modern')").run(Number(info.lastInsertRowid)); } catch { /* prefs table missing: they simply start in Classic */ }
   return { id: Number(info.lastInsertRowid), username: name, role, colour: chosen };
@@ -261,6 +285,8 @@ export function deleteUser(userId) {
   db.prepare('DELETE FROM physical_games WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM digital_user_meta WHERE user_id = ?').run(userId);
   purgeMessages(userId);   // every message they sent or received goes, on both sides
+  forgetSubject('user', userId);   // the games blocked for them, and their places in groups: a new account may be given this number
+  db.prepare('DELETE FROM account_group_members WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 }
 

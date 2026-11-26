@@ -204,6 +204,38 @@ export function setAdminRating(romIds, level, board = ratingSystem()) {
   return done;
 }
 
+/* A member who may edit games can change a title, and a title is what ties versions together. These two keep such a change from taking away a
+   rating that a game has from its other versions: read before the change, then call hold after it, in the same transaction. */
+
+/** This game and its other versions as they are rated now. */
+export function ratingsBefore(romId) {
+  flushRatings();
+  const rom = romRow(romId);
+  if (!rom) return [];
+  const rows = rom.sort_title ? db.prepare(`SELECT ${ROM_FIELDS} FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.platform_id = ? AND r.sort_title = ?`).all(rom.platform_id, rom.sort_title) : [rom];
+  return rows.filter((r) => r.age_level);
+}
+
+/** Give any of those games that is now less strict than it was the rating it had, as its own. */
+export function holdRatings(before) {
+  flushRatings();
+  const at = new Date().toISOString();
+  for (const was of before) {
+    const rom = romRow(was.id);
+    if (!rom || (rom.age_level ?? 0) >= was.age_level) continue;
+    const records = recordsFor(rom);
+    const own = ownRecord(rom, records);
+    if (was.age_source === 'admin') {
+      const write = db.prepare("UPDATE game_ratings SET admin_level = ?, admin_board = ?, admin_at = ?, updated_at = datetime('now') WHERE id = ?");
+      for (const id of new Set([own.id, ...records.map((x) => x.id)])) write.run(was.age_level, was.age_board, at, id);
+    } else {
+      db.prepare("UPDATE game_ratings SET level = ?, board = ?, source = ?, updated_at = datetime('now') WHERE id = ?").run(was.age_level, was.age_board, was.age_source, own.id);
+    }
+    markRelated(rom);
+  }
+  flushRatings();
+}
+
 /** Change which board's labels the app shows. Fetched ratings are chosen again from what the providers said, so the new board's own come first. */
 export function setRatingSystem(system) {
   if (!SYSTEMS[system]) throw Object.assign(new Error('Choose a classification from the list.'), { status: 400 });

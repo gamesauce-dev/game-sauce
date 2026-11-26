@@ -34,7 +34,7 @@ router.get('/games', (req, res) => {
     hidden: ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : ''
   });
   const mayPlay = out.items.filter((g) => titleWithinLimits(req.user, { title: g.title, platform: g.platform }));
-  flagVideos(mayPlay, (g) => g.title, (g) => g.platform);
+  flagVideos(mayPlay, (g) => g.title, (g) => g.platform, (title, platform) => titleWithinLimits(req.user, { title, platform }));
   flagThemeVideos(mayPlay, (g) => g.title, (g) => g.platform);
   res.json({ ...out, total: out.items.length });
 });

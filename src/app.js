@@ -24,6 +24,7 @@ import artRouter from './routes/art.js';
 import messagesRouter from './routes/messages.js';
 import videosRouter from './routes/videos.js';
 import ratingsRouter from './routes/ratings.js';
+import groupsRouter from './routes/groups.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
 import datsRouter from './routes/dats.js';
@@ -692,6 +693,7 @@ export function createApp() {
 
   api.use('/roms', romsRouter);
   api.use('/ratings', ratingsRouter);   // admin only (the router checks)
+  api.use('/groups', groupsRouter);
   api.use('/saves', savesRouter);
   api.use('/collections', collectionsRouter);
   api.use('/digital', digitalRouter);

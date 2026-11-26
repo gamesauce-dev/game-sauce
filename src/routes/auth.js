@@ -8,6 +8,8 @@ import { canDownload, downloadSetting, membersCanDownload, setMembersCanDownload
 import db from '../db.js';
 import { userColour, nextUserColour, USER_COLOURS } from '../lib/colours.js';
 import express from 'express';
+import { mayEditGames, limitValue, groupIds, setUserGroups, flushRecords } from '../lib/restrictions.js';
+import { canSeeRom } from '../lib/visibility.js';
 import multer from 'multer';
 import { sniffImage } from './roms.js';
 
@@ -76,6 +78,16 @@ export function requireAdmin(req, res, next) {
   next();
 }
 
+/** For the few ways of editing one Library game (its text, its match, its cover): the admin, or a member whose groups all allow editing, and then
+ *  only for a game they can see. The game's number is the :id in the address. */
+export function requireEditor(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Sign in required' });
+  if (req.user.role === 'admin') return next();
+  if (!mayEditGames(req.user)) return res.status(403).json({ error: 'Only an admin, or a member of a group that may edit games, can do this' });
+  if (!canSeeRom(req.user, req.params.id)) return res.status(404).json({ error: 'ROM not found' });
+  next();
+}
+
 const clientIp = (req) => (req.ip || req.socket?.remoteAddress || '').replace(/^::ffff:/, '');
 
 /* ───────────────────────────── session ───────────────────────────── */
@@ -91,6 +103,7 @@ router.get('/me', (req, res) => {
       role: req.user.role,
       avatar_v: db.prepare('SELECT avatar_updated FROM users WHERE id = ?').get(req.user.id)?.avatar_updated || null,
       can_download: canDownload(req.user),
+      can_edit: mayEditGames(req.user),
       play_only: Boolean(req.user.play_only),
       welcomed: Boolean(db.prepare('SELECT welcomed FROM users WHERE id = ?').get(req.user.id)?.welcomed)
     }
@@ -213,7 +226,7 @@ router.post('/login', async (req, res, next) => {
   res.json({
     token,
     expires_in,
-    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, avatar_v: user.avatar_updated || null, can_download: canDownload(user), play_only: user.role !== 'admin' && user.play_only === 1, welcomed: Boolean(user.welcomed) }
+    user: { id: user.id, username: user.username, display_name: user.display_name, role: user.role, avatar_v: user.avatar_updated || null, can_download: canDownload(user), can_edit: mayEditGames(user), play_only: user.role !== 'admin' && user.play_only === 1, welcomed: Boolean(user.welcomed) }
   });
 });
 
@@ -269,14 +282,19 @@ router.get('/users', requireAdmin, (req, res) => {
 
 router.post('/users', requireAdmin, async (req, res, next) => {
   try {
+    // checked before the account is made, so a wrong choice never leaves one behind without the restriction that was meant for it
+    const groups = req.body?.groups === undefined ? [] : groupIds(req.body.groups);
+    const ageLimit = req.body?.age_limit === undefined ? null : limitValue(req.body.age_limit);
     const created = await createUser({
       username: req.body?.username,
       password: req.body?.password,
       display_name: req.body?.display_name || null,
       role: req.body?.role === 'admin' ? 'admin' : 'user',
-      colour: req.body?.colour
+      colour: req.body?.colour,
+      groups,
+      age_limit: ageLimit
     });
-    audit(req.user, 'user.created', { target: created.username, detail: { role: created.role }, ip: clientIp(req) });
+    audit(req.user, 'user.created', { target: created.username, detail: { role: created.role, groups, age_limit: ageLimit }, ip: clientIp(req) });
     res.status(201).json(created);
   } catch (err) { next(err); }
 });
@@ -285,6 +303,13 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
   const id = Number(req.params.id);
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   if (!user) return res.status(404).json({ error: 'User not found' });
+
+  // read first: a request with a wrong group or limit changes nothing at all
+  let groups, ageLimit;
+  try {
+    if (req.body?.groups !== undefined) groups = groupIds(req.body.groups);
+    if (req.body?.age_limit !== undefined) ageLimit = limitValue(req.body.age_limit);
+  } catch (err) { return res.status(err.status || 500).json({ error: err.message }); }
 
   if (req.body?.disabled !== undefined) {
     if (user.role === 'admin' && req.body.disabled) {
@@ -326,6 +351,9 @@ router.patch('/users/:id', requireAdmin, (req, res) => {
     if (req.body.colour === '' || req.body.colour === null) db.prepare('UPDATE users SET colour = ? WHERE id = ?').run(nextUserColour(db.prepare('SELECT colour FROM users WHERE id != ?').all(id).map((u) => u.colour)), id);
     else { const c = userColour(req.body.colour); if (!c.ok) return res.status(400).json({ error: c.reason }); db.prepare('UPDATE users SET colour = ? WHERE id = ?').run(c.colour, id); }
   }
+
+  if (groups !== undefined) { flushRecords(); setUserGroups(id, groups); }
+  if (ageLimit !== undefined) db.prepare('UPDATE users SET age_limit = ? WHERE id = ?').run(ageLimit, id);
 
   if (req.body?.display_name !== undefined) {
     db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(req.body.display_name || null, id);

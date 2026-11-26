@@ -21,6 +21,9 @@ export function resolveGame(req) {
   return game && titleWithinLimits(req.user, game) ? game : null;
 }
 
+/** A video may be borrowed from a console of the same generation: never from one where this title is ruled out for the person. */
+const mayBorrow = (req, game) => (platform) => titleWithinLimits(req.user, { title: game.title, platform });
+
 function namedGame(req) {
   const q = { ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) };
   const kind = String(q.kind || ''), id = String(q.id || '');
@@ -46,7 +49,7 @@ const notFound = (res) => res.status(404).json({ error: 'That game is not in you
 router.get('/status', (req, res) => {
   const game = resolveGame(req);
   if (!game) return notFound(res);
-  const have = videoFile(game);
+  const have = videoFile(game, mayBorrow(req, game));
   res.json({ available: Boolean(have), bytes: have?.bytes || null, source: have ? videoSourceLabel(have.source) : null, can_fetch: videoSourcesEnabled().length > 0 && (String(req.query.kind) !== 'rom' || req.user?.role === 'admin'), missed: !have && recentlyMissed(game) });
 });
 
@@ -81,7 +84,7 @@ router.get('/file', (req, res) => {
   const game = resolveGame(req);
   if (!game) return notFound(res);
   // ?variant=theme is the game's theme video (what a tile plays on hover); without it, always the gameplay video (the details window).
-  const have = req.query.variant === 'theme' ? themeVideoFile(game) : videoFile(game);
+  const have = req.query.variant === 'theme' ? themeVideoFile(game) : videoFile(game, mayBorrow(req, game));
   if (!have) return res.status(404).json({ error: 'No video for this game' });
   res.setHeader('Cache-Control', 'private, max-age=3600');
   res.type(path.extname(have.path) === '.webm' ? 'video/webm' : 'video/mp4');

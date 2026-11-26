@@ -48,7 +48,7 @@ router.get('/games', (req, res) => {
   const letter = String(req.query.letter || '').toUpperCase();
   const items = /^[A-Z#]$/.test(letter) ? all.filter((g) => bucket(g.name) === letter) : all;
   const mayPlay = items.filter((g) => g.store !== 'steam' && titleWithinLimits(req.user, { title: g.name, platform: libSlug(g.platform) }));
-  flagVideos(mayPlay, (g) => g.name, (g) => libSlug(g.platform));   // tiles of games with a kept video offer a preview
+  flagVideos(mayPlay, (g) => g.name, (g) => libSlug(g.platform), (title, platform) => titleWithinLimits(req.user, { title, platform }));   // tiles of games with a kept video offer a preview
   flagThemeVideos(mayPlay, (g) => g.name, (g) => libSlug(g.platform));
   res.json({ items, total: items.length, total_hours: Math.round(items.reduce((s, g) => s + g.minutes, 0) / 6) / 10, letters });
 });

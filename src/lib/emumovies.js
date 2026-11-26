@@ -204,12 +204,13 @@ export function videoUsage() {
 }
 
 /** The cached video for a game: { path, bytes } or null (a file that has gone missing is forgotten). */
-export function videoFile({ title, platform }) {
+export function videoFile({ title, platform }, allowed = () => true) {
   const slug = String(platform?.slug || platform || ''), key = titleKey(title);
   if (!slug || !key) return null;
   const get = db.prepare('SELECT path, bytes, source FROM game_videos WHERE platform = ? AND title_key = ? AND path IS NOT NULL');
   // Its own video first, then the one kept for the same title on a console of the same generation.
   for (const plat of [slug, ...siblingPlatforms(slug)]) {
+    if (!allowed(plat)) continue;   // not for this person: a Library game of this title on that console is one they are limited from
     const row = get.get(plat, key);
     if (!row) continue;
     if (!fs.existsSync(row.path)) { db.prepare('DELETE FROM game_videos WHERE platform = ? AND title_key = ?').run(plat, key); continue; }   // a file that has gone is forgotten
@@ -226,13 +227,13 @@ export function recentlyMissed({ title, platform }) {
 }
 
 /** Marks list items that already have a kept video (item.has_video = true), so a tile can offer a preview. One query for the lot; items without one are left alone. */
-export function flagVideos(items, titleOf, platformOf) {
+export function flagVideos(items, titleOf, platformOf, allowed = () => true) {
   const keys = new Set(db.prepare("SELECT platform || char(10) || title_key AS k FROM game_videos WHERE path IS NOT NULL").all().map((r) => r.k));
   if (!keys.size) return items;
   for (const it of items) {
     const p = platformOf(it); if (!p) continue;
     const k = titleKey(titleOf(it));
-    if (keys.has(p + '\n' + k) || siblingPlatforms(p).some((s) => keys.has(s + '\n' + k))) it.has_video = true;   // its own video, or one a console of its generation has
+    if ([p, ...siblingPlatforms(p)].some((s) => keys.has(s + '\n' + k) && allowed(titleOf(it), s))) it.has_video = true;   // its own video, or one a console of its generation has
   }
   return items;
 }

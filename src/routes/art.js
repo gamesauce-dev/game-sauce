@@ -83,7 +83,7 @@ router.post('/platform-logos/fetch', requireAdmin, async (req, res, next) => {
 });
 
 /* Fill the gaps: one platform's games that have no logo, marquee or background, asked about at ScreenScraper, up to a limit per run (admin; one run at a time). */
-router.get('/fill-job', (req, res) => res.json({ ...fillJob }));
+router.get('/fill-job', requireAdmin, (req, res) => res.json({ ...fillJob }));
 router.post('/fill-job', requireAdmin, (req, res, next) => {
   try { const j = startFill({ platform: req.body?.platform, limit: req.body?.limit, userId: req.user.id }); req.auditDetail = { platform: j.platform, limit: j.limit, games: j.total }; res.json({ ...j }); } catch (err) { next(err); }
 });

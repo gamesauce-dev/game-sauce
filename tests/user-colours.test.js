@@ -104,7 +104,7 @@ test('the chat carries each person\'s colour: the people list, the conversations
 
 test('an account\'s colour is in the admin screens and the chat uses it for the avatar, the row and received messages', () => {
   const html = read('public/index.html'), app = read('public/app.js'), js = read('public/messages.js'), css = read('public/messages.css');
-  assert.match(html, /<input name="colour" type="color" value="#7c5cff" \/>/); assert.match(html, /grid-template-columns:1fr 1fr 1fr 5\.5rem auto/);
+  assert.match(html, /<input name="colour" type="color" value="#7c5cff" \/>/); assert.match(html, /grid-template-columns:repeat\(auto-fit, minmax\(9rem, 1fr\)\)/);   // the Add user form wraps: it has a Group choice too
   assert.match(html, /Green is kept for your own messages/);
   assert.match(app, /colour: fd\.get\('colour'\)/, 'sent when the account is made');
   assert.match(app, /newColour\.value = suggested/, 'the form starts on the first colour nobody has');

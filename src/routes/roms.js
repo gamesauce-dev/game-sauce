@@ -9,8 +9,8 @@ import { hashFile } from '../lib/hash.js';
 import { parseFilename, sortTitle, decodeEntities } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
-import { requireAdmin } from './auth.js';
-import { canSeeRom, isRomId, visibleSql, listedSql, unhiddenSql, notHiddenSql, hiddenFromEveryoneSql, refWithinLimitsSql, withinLimits } from '../lib/visibility.js';
+import { requireAdmin, requireEditor } from './auth.js';
+import { canSeeRom, isRomId, visibleSql, listedSql, unhiddenSql, notHiddenSql, hiddenFromEveryoneSql, refWithinLimitsSql, withinLimits, titleWithinLimits } from '../lib/visibility.js';
 import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted, ARCADE_ROMSET } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
@@ -25,7 +25,8 @@ import { romFiles, romFile, dropRomFiles } from '../lib/romfiles.js';
 import { findCompanions, companionFingerprint } from '../lib/romdeps.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import { sendImage } from '../lib/webp.js';
-import { ageOf, ratingSystem, convertedSql, flushRatings } from '../lib/ratings.js';
+import { ageOf, ratingSystem, convertedSql, ratingsBefore, holdRatings } from '../lib/ratings.js';
+import { flushRecords } from '../lib/restrictions.js';
 import { ratingsAfterLookup } from '../lib/ratingfetch.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -181,7 +182,7 @@ async function applyProviderMedia(meta, sha1) {
 }
 
 function romById(id, uid = null, viewer = null) {
-  flushRatings();   // the game as it is answered after a change shows its age rating as it is now
+  flushRecords();   // the game as it is answered after a change shows its age rating as it is now
   const row = db.prepare(`
     SELECT ${ROM_COLUMNS} FROM roms r
     JOIN platforms p ON p.id = r.platform_id
@@ -208,7 +209,9 @@ function romById(id, uid = null, viewer = null) {
  * auto-matcher and the manual "identify this game" flow, so both paths write
  * the same columns in the same way.
  */
-export async function applyMetadataRecord(id, meta, uid = null, { picked = false } = {}) {
+export async function applyMetadataRecord(id, meta, uid = null, { picked = false, editor = null } = {}) {
+  // editor: the member doing this, when it is not the admin or the server itself. Age ratings are the admin's, so a member's lookup neither
+  // takes in a rating nor, by changing the title, makes any game less strict.
   const rom = db.prepare('SELECT title, sha1, cover_path, cover_locked FROM roms WHERE id = ?').get(id);
   if (!rom) throw Object.assign(new Error('ROM not found'), { status: 404 });
 
@@ -217,7 +220,7 @@ export async function applyMetadataRecord(id, meta, uid = null, { picked = false
   let { coverPath, mediaJson } = await applyProviderMedia(meta, rom.sha1);
   // A cover the user uploaded themselves is never replaced by a provider's.
   if (rom.cover_locked && rom.cover_path) coverPath = rom.cover_path;
-  db.prepare(`
+  const write = () => db.prepare(`
     UPDATE roms SET
       title = COALESCE(?, title),
       sort_title = COALESCE(?, sort_title),
@@ -232,8 +235,13 @@ export async function applyMetadataRecord(id, meta, uid = null, { picked = false
     meta.players, meta.rating, meta.description,
     meta.cover_url, coverPath, mediaJson, meta.source, id
   );
+  if (editor) {
+    db.transaction(() => { const before = ratingsBefore(id); write(); holdRatings(before); })();
+    return romById(id, uid, editor);
+  }
+  write();
   await ratingsAfterLookup(id, { title: rom.title, meta, matched: meta.title, picked });
-  return romById(id, uid, { role: 'admin' });   // only the admin's routes (and the server's own jobs) put a match on a Library game
+  return romById(id, uid, { role: 'admin' });
 }
 
 /**
@@ -248,7 +256,7 @@ export async function applyMetadataRecord(id, meta, uid = null, { picked = false
  * @returns {{ fileDeleted: boolean }}
  */
 function deleteRomRow(rom, { deleteFile = false } = {}) {
-  flushRatings();   // the rating's record learns what it needs from the game (a new fingerprint, say) before the game goes
+  flushRecords();   // the rating's record learns what it needs from the game (a new fingerprint, say) before the game goes
   purgeSaveFiles({ romId: rom.id });
   dropRomFiles(rom.id);   // its imported spine, disc, back and manual
   const stmts = [
@@ -458,7 +466,7 @@ router.use('/bulk', bulkRouter);
 /* ---------------------------------------------------------------- list */
 
 router.get('/', (req, res) => {
-  flushRatings();   // games added or retitled since last time get their age ratings before the list is read (and filtered by them)
+  flushRecords();   // games added or retitled since last time get their age ratings before the list is read (and filtered by them)
   const {
     q, platform, genre, region, favorite, tag, source, family,
     sort = 'title', limit = 200, offset = 0, year_min, year_max
@@ -598,7 +606,7 @@ router.get('/', (req, res) => {
     const extra = req.user?.role === 'admin' ? { candidate_core: playableCore(r.platform, null, 1) } : {};
     return { ...r, playable: core || null, playable_core: core, ...extra };
   });
-  flagVideos(out, (r) => r.title, (r) => r.platform);
+  flagVideos(out, (r) => r.title, (r) => r.platform, (title, platform) => titleWithinLimits(req.user, { title, platform }));
   flagThemeVideos(out, (r) => r.title, (r) => r.platform);
   res.json({ total, limit: lim, offset: off, items: out });
 });
@@ -670,7 +678,7 @@ router.get('/facets', (req, res) => {
  * Hidden games and games that cannot be played any more are left out. */
 router.get('/recently-played', (req, res) => {
   const lim = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
-  flushRatings();
+  flushRecords();
   const rows = db.prepare(`
     SELECT ${ROM_COLUMNS}, MAX(d.id) AS last_play_id, MAX(d.created_at) AS last_played_at, COUNT(*) AS plays
     FROM downloads d
@@ -1104,6 +1112,7 @@ router.post('/:id/play-override', requireAdmin, (req, res) => {
 });
 
 router.post('/:id/hide', (req, res) => {
+  flushRecords();
   const rom = db.prepare('SELECT id, hidden_all FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!req.user) return res.status(401).json({ error: 'Sign in required' });
@@ -1119,18 +1128,20 @@ router.post('/:id/hide', (req, res) => {
   if (next) db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) VALUES (?, ?)').run(req.user.id, rom.id);
   else db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?').run(req.user.id, rom.id);
   // An admin's Hide also hides the game from members (only admins see it, under Hidden).
-  if (isAdmin) db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
+  if (isAdmin) { db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id); flushRecords(); }
 
   res.json({ id: Number(req.params.id), hidden: next });
 });
 
 /* Hide a game from EVERYONE (admin). hidden: true / false. Members lose sight of it at once; the admin finds it under Hidden. */
 router.post('/:id/hide-all', requireAdmin, (req, res) => {
+  flushRecords();
   const rom = db.prepare('SELECT id FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   const next = req.body?.hidden === false ? 0 : 1;
   if (req.romSnapshot) req.romSnapshot.hidden = Boolean(next);
   db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ?").run(next, rom.id);
+  flushRecords();
   res.json({ id: rom.id, hidden_all: next });
 });
 
@@ -1174,7 +1185,9 @@ const EDITABLE = [
   'release_year', 'players', 'rating', 'description'
 ];
 
-router.patch('/:id', requireAdmin, (req, res) => {
+router.patch('/:id', requireEditor, (req, res) => {
+  const member = req.user.role !== 'admin';
+  if (member && req.body?.platform !== undefined) return res.status(403).json({ error: 'Only an admin can move a game to another platform' });
   const existing = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json({ error: 'ROM not found' });
 
@@ -1200,12 +1213,16 @@ router.patch('/:id', requireAdmin, (req, res) => {
     params.platform = req.body.platform;
   }
 
-  if (sets.length) {
-    sets.push("updated_at = datetime('now')");
-    db.prepare(`UPDATE roms SET ${sets.join(', ')} WHERE id = @id`).run(params);
-  }
-
-  if (req.body.tags !== undefined) setTags(Number(req.params.id), req.body.tags);
+  db.transaction(() => {
+    // a member's change of title must not take an age rating off this game or one of its other versions
+    const before = member ? ratingsBefore(Number(req.params.id)) : null;
+    if (sets.length) {
+      sets.push("updated_at = datetime('now')");
+      db.prepare(`UPDATE roms SET ${sets.join(', ')} WHERE id = @id`).run(params);
+    }
+    if (req.body.tags !== undefined) setTags(Number(req.params.id), req.body.tags);
+    if (before) holdRatings(before);
+  })();
 
   res.json(romById(req.params.id, req.user?.id, req.user));
 });
@@ -1472,7 +1489,7 @@ router.post('/upload', requireAdmin, upload.array('roms', 50), async (req, res, 
           await ratingsAfterLookup(romId, { title: parsed.title, meta, matched: meta.title });
         }
       }
-      flushRatings();
+      flushRecords();
 
       created.push(romById(romId, req.user?.id, req.user));
     } catch (err) {
@@ -1590,7 +1607,7 @@ export function sniffImage(buf) {
   return null; // GIF and SVG are deliberately not accepted (SVG can carry scripts)
 }
 
-router.post('/:id/cover', requireAdmin, coverUpload.single('cover'), (req, res) => {
+router.post('/:id/cover', requireEditor, coverUpload.single('cover'), (req, res) => {
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
@@ -1608,7 +1625,7 @@ router.post('/:id/cover', requireAdmin, coverUpload.single('cover'), (req, res) 
 });
 
 // Go back to automatic covers: forget the custom image and unlock the cover.
-router.delete('/:id/cover', requireAdmin, (req, res) => {
+router.delete('/:id/cover', requireEditor, (req, res) => {
   const rom = db.prepare('SELECT id, cover_path, cover_locked FROM roms WHERE id = ?').get(req.params.id);
   if (!rom) return res.status(404).json({ error: 'ROM not found' });
   if (rom.cover_locked && rom.cover_path) dropCoverFile(rom.cover_path, rom.id);

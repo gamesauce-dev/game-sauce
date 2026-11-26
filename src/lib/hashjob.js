@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import db from '../db.js';
 import { hashFile } from './hash.js';
 import { applyDatMatch } from '../dats.js';
-import { flushRatings } from './ratings.js';
+import { flushRecords } from './restrictions.js';
 import { clearDuplicateCache } from './duplicates.js';
 
 const getMeta = (k) => db.prepare('SELECT value FROM meta WHERE key = ?').get(k)?.value ?? null;
@@ -95,7 +95,7 @@ async function one(r) {
     return;
   }
   db.prepare("UPDATE roms SET crc32 = ?, md5 = ?, sha1 = ?, updated_at = datetime('now') WHERE id = ?").run(h.crc32, h.md5, h.sha1, r.id);
-  flushRatings();   // a rating remembered by fingerprint is given back now (a game renamed since it was rated, say)
+  flushRecords();   // a rating remembered by fingerprint is given back now (a game renamed since it was rated, say)
   const row = db.prepare('SELECT r.id, r.title, r.filename, r.sha1, r.crc32, r.size_bytes, r.meta_source, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.id = ?').get(r.id);
   try { if (row) applyDatMatch(row); } catch { /* a DAT problem must not stop the fingerprints */ }
 }

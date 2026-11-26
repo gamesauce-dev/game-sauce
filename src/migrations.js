@@ -753,3 +753,37 @@ db.exec(`CREATE TRIGGER IF NOT EXISTS roms_rating_removed AFTER DELETE ON roms B
   INSERT INTO rating_dirty (rom_id, platform_id, sort_title) VALUES (old.id, old.platform_id, old.sort_title);
 END`);
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '72') ON CONFLICT(key) DO UPDATE SET value = '72'").run();
+
+/* ── v73: age restrictions (src/lib/restrictions.js). game_blocks and game_hides are kept apart from the games, by platform and file name and by fingerprint, so a block or "hidden from everyone" outlives
+   its game entry. rom_blocks is a copy of the blocks by game number. The triggers note what happens to each game, and flushRecords() acts on the notes. (Groups and limits are with the accounts: src/auth.js.) ── */
+{
+  const first = !db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'game_hides'").get();
+  db.exec('CREATE TABLE IF NOT EXISTS game_hides (platform TEXT NOT NULL, file_key TEXT NOT NULL, sha1 TEXT, PRIMARY KEY (platform, file_key))');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_game_hides_sha1 ON game_hides(sha1)');
+  db.exec(`CREATE TABLE IF NOT EXISTS game_blocks (
+    kind TEXT NOT NULL, subject_id INTEGER NOT NULL, platform TEXT NOT NULL, file_key TEXT NOT NULL, sha1 TEXT, sort_title TEXT,
+    UNIQUE (kind, subject_id, platform, file_key)
+  )`);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_game_blocks_name ON game_blocks(platform, file_key)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_game_blocks_sha1 ON game_blocks(sha1)');
+  db.exec('CREATE TABLE IF NOT EXISTS rom_blocks (rom_id INTEGER NOT NULL, kind TEXT NOT NULL, subject_id INTEGER NOT NULL, PRIMARY KEY (rom_id, kind, subject_id))');
+  db.exec('CREATE TABLE IF NOT EXISTS memory_dirty (seq INTEGER PRIMARY KEY AUTOINCREMENT, rom_id INTEGER NOT NULL, event TEXT NOT NULL, from_platform_id INTEGER)');
+  db.exec(`CREATE TRIGGER IF NOT EXISTS roms_memory_added AFTER INSERT ON roms BEGIN
+    INSERT INTO memory_dirty (rom_id, event) VALUES (new.id, 'added');
+  END`);
+  db.exec(`CREATE TRIGGER IF NOT EXISTS roms_memory_hidden AFTER UPDATE OF hidden_all ON roms WHEN old.hidden_all IS NOT new.hidden_all BEGIN
+    INSERT INTO memory_dirty (rom_id, event) VALUES (new.id, CASE WHEN new.hidden_all = 1 THEN 'hidden' ELSE 'shown' END);
+  END`);
+  db.exec(`CREATE TRIGGER IF NOT EXISTS roms_memory_changed AFTER UPDATE OF platform_id, sort_title, filename, sha1 ON roms
+    WHEN old.platform_id IS NOT new.platform_id OR old.sort_title IS NOT new.sort_title OR old.filename IS NOT new.filename OR old.sha1 IS NOT new.sha1 BEGIN
+    INSERT INTO memory_dirty (rom_id, event, from_platform_id) VALUES (new.id, CASE WHEN old.sha1 IS NOT new.sha1 THEN 'printed' ELSE 'changed' END, old.platform_id);
+  END`);
+  // a game number can be given out again, so nothing may stay behind under it
+  db.exec(`CREATE TRIGGER IF NOT EXISTS roms_memory_removed AFTER DELETE ON roms BEGIN
+    DELETE FROM rom_blocks WHERE rom_id = old.id;
+    DELETE FROM memory_dirty WHERE rom_id = old.id;
+  END`);
+  // what an admin had hidden from everyone before this was remembered
+  if (first) db.exec("INSERT INTO memory_dirty (rom_id, event) SELECT id, 'hidden' FROM roms WHERE hidden_all = 1");
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '73') ON CONFLICT(key) DO UPDATE SET value = '73'").run();

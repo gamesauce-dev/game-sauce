@@ -9,6 +9,7 @@ import path from 'node:path';
 // Each is taken out of the file the stated number of times; any other mention fails.
 const RULE = 'src/lib/visibility.js';
 const SCHEMA = 'src/migrations.js';
+const RECORDS = 'src/lib/restrictions.js';   // keeps the record of what an admin hid, and hides it again when it comes back; it sends nobody a list of games
 const MAY_NAME = {
   'src/lib/export.js': [['r.is_system, r.hidden_all,', 1], ["r.hidden_all ? 'yes' : ''", 1]],   // a column of the admin's CSV
   'src/lib/scanner.js': [['SET source_id = ?, source_hidden = ?,', 1], ['meta_source, source_hidden\n', 1]],   // a scan writes the source's mark
@@ -42,7 +43,8 @@ const READS_ROMS = {
   'src/routes/collections.js': 'members: every list uses the rule',
   'src/routes/dats.js': 'admin only', 'src/routes/metadata.js': 'admin only where it reads games', 'src/routes/sources.js': 'admin only',
   'src/routes/roms.js': 'members: lists use the rule, and every /:id route is checked before it runs',
-  'src/routes/videos.js': 'checked with canSeeRom first'
+  'src/routes/videos.js': 'checked with canSeeRom first',
+  'src/lib/restrictions.js': 'records of blocks and hidden games: no list of games is sent from here', 'src/routes/groups.js': 'admin only'
 };
 
 const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : e.name.endsWith('.js') ? [path.join(dir, e.name)] : []));
@@ -51,7 +53,7 @@ const sources = () => walk('src').map((f) => [f.split(path.sep).join('/'), fs.re
 test('only the visibility rule asks whether a game is hidden from everyone', () => {
   const wrong = [];
   for (const [file, text] of sources()) {
-    if (file === RULE || file === SCHEMA) continue;
+    if (file === RULE || file === SCHEMA || file === RECORDS) continue;
     let left = text;
     for (const [snippet, times] of MAY_NAME[file] || []) {
       const found = left.split(snippet).length - 1;

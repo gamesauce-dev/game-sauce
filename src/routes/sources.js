@@ -3,7 +3,7 @@ import { clearDuplicateCache } from '../lib/duplicates.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
-import { flushRatings } from '../lib/ratings.js';
+import { flushRecords } from '../lib/restrictions.js';
 import { dropRomFiles } from '../lib/romfiles.js';
 import { scanSource, scanAll, getScanProgress, getAllScanProgress, sourceRoots } from '../lib/scanner.js';
 import { getHashSettings, startHashJob } from '../lib/hashjob.js';
@@ -165,7 +165,7 @@ router.delete('/:id', (req, res) => {
   if (!src) return res.status(404).json({ error: 'Source not found' });
 
   const removeRoms = req.query.remove_roms === '1';
-  flushRatings();   // ratings stay behind when their games go, and are given back when the games are added again
+  flushRecords();   // ratings stay behind when their games go, and are given back when the games are added again
   db.prepare('UPDATE roms SET source_hidden = 0 WHERE source_id = ?').run(src.id);
   if (removeRoms) {
     // Only the catalogue entries go; the files on disk are never touched for an

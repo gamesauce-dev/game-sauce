@@ -1,6 +1,6 @@
 // A limit on a person, added to src/lib/visibility.js, must hold on every route: the game it rules out reaches them by no way at all.
-// There are no real limits yet, so this test adds one of its own. When age limits and blocks exist, set them up here in place of addLimit
-// (in restrict() below) and everything else still applies. A game hidden from everyone is covered in tests/route-permissions.test.js.
+// Most of this is done with blocks (one member blocked as a person, the other through a group); an age limit is then put through the same checks.
+// The last tests add rules of their own with addLimit. A game hidden from everyone is covered in tests/route-permissions.test.js.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -17,7 +17,7 @@ process.env.GAMESAUCE_RATE_LIMIT = '0';
 process.env.GAMESAUCE_UPDATE_CHECK = '0';
 
 const WORD = 'Qvxlimited';   // in everything about the games the limit rules out; after the limit it must reach neither member
-let app, server, base, db, realFetch, vis, adminId, lift;
+let app, server, base, db, realFetch, vis, restrictions, ratings, adminId, lift;
 const token = {}, ids = {}, games = {};
 let collection, physical, digital, launchCode, artLabel;
 
@@ -41,16 +41,20 @@ const ok = async (who, method, url, opts) => { const r = await call(who, method,
 const addRom = (title, filename, slug) => {
   const file = path.join(TMP, 'games', filename);
   fs.writeFileSync(file, `bytes of ${filename}`);
-  const id = Number(db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, meta_source, genre, region, cover_path) VALUES (?, 'shared sort title', ?, (SELECT id FROM platforms WHERE slug = ?), ?, 1, 'filename', ?, ?, ?)")
-    .run(title, filename, slug, file, title.includes(WORD) ? `${WORD}Genre` : 'Plain', title.includes(WORD) ? `${WORD}Region` : 'World', path.join(TMP, 'cover.png')).lastInsertRowid);
+  const id = Number(db.prepare("INSERT INTO roms (title, sort_title, filename, platform_id, storage_path, size_bytes, meta_source, genre, region, cover_path) VALUES (?, lower(?), ?, (SELECT id FROM platforms WHERE slug = ?), ?, 1, 'filename', ?, ?, ?)")
+    .run(title, title, filename, slug, file, title.includes(WORD) ? `${WORD}Genre` : 'Plain', title.includes(WORD) ? `${WORD}Region` : 'World', path.join(TMP, 'cover.png')).lastInsertRowid);
   const tag = title.includes(WORD) ? `${WORD}-tag` : 'plain-tag';
   db.prepare('INSERT OR IGNORE INTO tags (name) VALUES (?)').run(tag);
   db.prepare('INSERT INTO rom_tags (rom_id, tag_id) SELECT ?, id FROM tags WHERE name = ?').run(id, tag);
   return id;
 };
 
-/** Rule these games out for the two members. Returns what takes the rule away again. */
-const restrict = (romIds) => vis.addLimit((user, alias) => ([ids.member, ids.play].includes(Number(user?.id)) ? `${alias}.id NOT IN (${romIds.map(Number).join(',')})` : null));
+/** Block these games for the two members: one as a person, the other through a group. Returns what takes the blocks away again. */
+let groupId;
+const restrict = (romIds) => {
+  for (const id of romIds) restrictions.setBlocks(id, { users: [ids.member], groups: [groupId] });
+  return () => { for (const id of romIds) restrictions.setBlocks(id, {}); };
+};
 const ruledOut = () => [games.snes, games.ps5, games.parent];
 
 before(async () => {
@@ -60,6 +64,8 @@ before(async () => {
   ({ app } = await prepareApp());
   db = (await import('../src/db.js')).default;
   vis = await import('../src/lib/visibility.js');
+  restrictions = await import('../src/lib/restrictions.js');
+  ratings = await import('../src/lib/ratings.js');
   await new Promise((r) => { server = app.listen(0, '127.0.0.1', r); });
   base = `http://127.0.0.1:${server.address().port}`;
   const login = async (u, p) => (await ok('anonymous', 'POST', '/auth/login', { body: { username: u, password: p } })).token;
@@ -71,6 +77,8 @@ before(async () => {
     token[who] = await login(user, `${user}-password-12`);
   }
   await ok('admin', 'PUT', '/auth/policy', { body: { members_can_download: true } });
+  groupId = (await ok('admin', 'POST', '/groups', { body: { name: 'Blocked' } })).items[0].id;
+  await ok('admin', 'PATCH', `/auth/users/${ids.play}`, { body: { groups: [groupId] } });
 
   fs.mkdirSync(path.join(TMP, 'games'));
   fs.writeFileSync(path.join(TMP, 'cover.png'), Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'));
@@ -235,6 +243,22 @@ test('an artwork folder import by a member neither matches nor names a ruled-out
   db.prepare('DELETE FROM physical_games WHERE id = ?').run(physical);
   const without = await ok('member', 'POST', '/art/import', { body: { target: 'video', folder: artLabel } });
   assert.equal(without.matched.video, 0);
+});
+
+test('an age limit holds on every route in the same way', async () => {
+  lift?.(); lift = null;
+  ratings.setAdminRating(ruledOut(), 5);
+  assert.equal((await call('member', 'GET', `/roms/${games.snes}`)).status, 200, 'rated, with no limit yet');
+  db.prepare('DELETE FROM digital_games WHERE user_id = ?').run(ids.member);   // their own copy of that title is theirs to see
+  await ok('admin', 'PATCH', `/auth/users/${ids.member}`, { body: { age_limit: 4 } });   // their own limit
+  await ok('admin', 'PATCH', '/groups/' + groupId, { body: { age_limit: 3 } });          // and the group's, for the other
+  assert.deepEqual(await namingIt(), []);
+  for (const id of ruledOut()) for (const account of ['member', 'play']) assert.equal((await call(account, 'GET', `/roms/${id}`)).status, 404, `${account} ${id}`);
+  assert.equal((await ok('member', 'GET', '/roms?hidden=all')).total, 2, 'the unrated games still show');
+  await ok('admin', 'PATCH', `/auth/users/${ids.member}`, { body: { age_limit: null } });
+  await ok('admin', 'PATCH', '/groups/' + groupId, { body: { age_limit: null } });
+  ratings.setAdminRating(ruledOut(), null);
+  assert.equal((await call('member', 'GET', `/roms/${games.snes}`)).status, 200);
 });
 
 test('the admin is never limited', async () => {

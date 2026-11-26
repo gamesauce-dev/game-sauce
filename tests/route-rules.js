@@ -130,7 +130,6 @@ export const ROUTES = {
     'GET /art/platforms',
     'GET /art/sharing',
     'POST /art/import',
-    'GET /art/fill-job',
     'GET /art/wrap-image',
     'GET /art/import/status',
     'GET /messages/people',
@@ -154,7 +153,16 @@ export const ROUTES = {
     'GET /emulators/vault',
     'GET /emulators/vault/:id/download'
   ],
+  // Editing one Library game (PATCH /roms/:id, its cover, POST /metadata/:id/refresh and /apply) is listed under admin: an account in no group is
+  // refused there. A member whose groups allow editing gets through too: tests/restrictions.test.js.
   admin: [
+    'GET /art/fill-job',
+    'GET /groups',
+    'POST /groups',
+    'PATCH /groups/:id',
+    'DELETE /groups/:id',
+    'GET /groups/blocks/:id',
+    'PUT /groups/blocks/:id',
     'GET /ratings',
     'PUT /ratings/system',
     'POST /ratings/set',

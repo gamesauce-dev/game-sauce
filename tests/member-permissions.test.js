@@ -157,10 +157,13 @@ test('covers are cached by one person\'s browser only, never by a shared cache',
   }
 });
 
-test('the details window offers editing only to an admin', () => {
+test('the details window offers editing only to those who may edit, and the rest only to an admin', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const fn = app.slice(app.indexOf('async function openDetail(id) {'), app.indexOf('async function openDetail(id) {') + 14000);
-  assert.match(fn, /const canEdit = authState\.user\?\.role === 'admin';/);
+  assert.match(fn, /const isAdmin = authState\.user\?\.role === 'admin';/);
+  assert.match(fn, /const canEdit = isAdmin \|\| Boolean\(authState\.user\?\.can_edit\);/);   // can_edit: their groups allow it (tests/restrictions.test.js)
+  assert.match(fn, /\$\{isAdmin \? '<div class="edit-form" id="age-picker"[^']*id="block-picker"/, 'age rating and blocking');
+  assert.match(fn, /\.\.\.\(isAdmin \? \[\['Location'/, 'folders on the server');
   assert.match(fn, /\$\{canEdit \? `<button class="mi" role="menuitem" data-act="refresh">/);
   assert.match(fn, /\$\{canEdit \? `<button class="mi" role="menuitem" data-act="cover-upload">/);
   assert.match(fn, /\$\{canEdit \? `\n    <div class="section-label">Identify this game<\/div>/);
@@ -205,7 +208,7 @@ test("a member's Hide changes their own view only, one game or many", async () =
 
 test('the Delete controls are offered only to an admin', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
-  assert.match(app, /\$\{canEdit \? `<button class="ibtn ibtn-danger\$\{rom\.keep_override/, 'the details window button');
+  assert.match(app, /\$\{isAdmin \? `<button class="ibtn ibtn-danger\$\{rom\.keep_override/, 'the details window button');
   assert.ok(app.includes(`$('[data-act="delete"]', drawer)?.addEventListener`), 'wired only when it is there');
   assert.ok(app.includes(`$('#bulk-delete-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin')`), 'the bulk bar button');
 });

@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../db.js';
-import { requireAdmin } from './auth.js';
+import { requireAdmin, requireEditor } from './auth.js';
 import { enrich, providerStatus, screenscraper, thegamesdb, igdb, launchbox, steamgriddb, emumovies } from '../lib/providers.js';
 import { testConnection as testEmuMovies, forgetToken as forgetEmuMoviesToken } from '../lib/emumovies.js';
 import { buildReport } from '../lib/platformids.js';
@@ -194,7 +194,7 @@ router.get('/screenscraper/systems', requireAdmin, async (req, res, next) => {
 });
 
 /** Re-run the metadata lookup for one ROM. */
-router.post('/:id/refresh', requireAdmin, async (req, res, next) => {
+router.post('/:id/refresh', requireEditor, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(404).json({ error: 'Unknown API route' });
@@ -222,13 +222,15 @@ router.post('/:id/refresh', requireAdmin, async (req, res, next) => {
     });
 
     // The lookup also fills what the game is missing (video, spine, disc, back, manual...): gaps only, the way Find assets does.
-    const withAssets = async (body) => ({ ...body, assets: await fillAfterLookup({ kind: 'rom', id: rom.id, userId: req.user?.id }) });
+    // A member's refresh is of the text and the cover only.
+    const editor = req.user.role === 'admin' ? null : req.user;
+    const withAssets = async (body) => (editor ? body : { ...body, assets: await fillAfterLookup({ kind: 'rom', id: rom.id, userId: req.user?.id }) });
     if (!result) return res.json(await withAssets({ updated: false, reason: 'no provider returned a match' }));
     if (result.error) return res.json(await withAssets({ updated: false, reason: result.error }));
 
     // A refresh must also replace a stale automatic cover, so don't reuse the old one. A cover you uploaded or imported (cover_locked) is never replaced.
     if (result.cover_url) db.prepare('UPDATE roms SET cover_path = NULL WHERE id = ? AND cover_locked = 0').run(rom.id);
-    const updated = await applyMetadataRecord(rom.id, result, req.user?.id);
+    const updated = await applyMetadataRecord(rom.id, result, req.user?.id, { editor });
 
     res.json(await withAssets({ updated: true, source: result.source, cached: Boolean(result.cached), rom: updated }));
   } catch (err) { next(err); }
@@ -274,7 +276,7 @@ router.post('/search', async (req, res, next) => {
  * verbatim: { title, publisher, genre, release_year, players, rating,
  * description, cover_url, has_cover, platform_id, game_id }.
  */
-router.post('/:id/apply', requireAdmin, async (req, res, next) => {
+router.post('/:id/apply', requireEditor, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(404).json({ error: 'Unknown API route' });
@@ -304,7 +306,10 @@ router.post('/:id/apply', requireAdmin, async (req, res, next) => {
       has_cover: Boolean(cand.cover_url)
     };
 
-    const rom = await applyMetadataRecord(id, meta, req.user?.id, { picked: true });   // chosen by hand: its age ratings are this game's, whatever it is called
+    const editor = req.user.role === 'admin' ? null : req.user;
+    if (editor && !['thegamesdb', 'igdb', 'launchbox'].includes(meta.source)) return res.status(400).json({ error: 'Unknown provider' });
+    // chosen by hand: its age ratings are this game's, whatever it is called (not taken in from a member)
+    const rom = await applyMetadataRecord(id, meta, req.user?.id, { picked: true, editor });
     res.json({ updated: true, source: meta.source, rom });
   } catch (err) { next(err); }
 });

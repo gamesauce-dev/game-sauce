@@ -2008,3 +2008,18 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 
 /* Pictures that have been shared (Settings > Game assets, admin). */
 .art-shared-pic img { display: block; width: 64px; height: 88px; object-fit: contain; background: rgba(127, 127, 127, 0.15); border-radius: 4px; }
+
+/* Age restrictions: Settings > Groups and age limits, the group boxes on accounts, and Block this game. */
+.group-row { padding: 0.7143rem 0; border-bottom: 1px solid var(--line); }
+.group-row .hint { margin: 0.3571rem 0 0; }
+.group-fields { display: flex; gap: 0.7143rem; flex-wrap: wrap; align-items: flex-end; }
+.group-fields .field { min-width: 11rem; }
+.group-check { display: inline-flex; gap: 0.4286rem; align-items: center; min-height: 2.4rem; cursor: pointer; }
+.user-groups { display: flex; flex-wrap: wrap; gap: 0.2857rem 0.8571rem; margin: 0; padding: 0.2857rem 0.5714rem; border: 1px solid var(--line-2); border-radius: 0.5714rem; font-size: 0.8571rem; min-width: 0; }
+.user-groups legend { color: var(--dim); padding: 0 0.2857rem; }
+.user-groups label { display: inline-flex; gap: 0.2857rem; align-items: center; cursor: pointer; }
+.block-picker summary { cursor: pointer; }
+.block-picker .user-groups { margin-top: 0.5714rem; }
+/* an account row has more controls than fit on one line: they wrap under the name */
+.user-list-row { flex-wrap: wrap; }
+.user-list-row .grow { min-width: 14rem; }

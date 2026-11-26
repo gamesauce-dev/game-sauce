@@ -507,16 +507,37 @@
             <small>Arcade games (MAME, FinalBurn Neo, Neo Geo, CPS, Cave) often fall into the RetroArch menu instead of starting. With this on, none is offered for browser play until it has been switched on for that game, which the play-check tool does for every game it saw running (<code>scripts/check-play.mjs --candidates --apply</code>). Off: the usual rules apply.</small></span>
         </label>
         <div id="user-list" class="counts"></div>
-        <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr 5.5rem auto;display:grid;gap:10px;align-items:end">
+        <form class="edit-form" id="new-user-form" style="margin-top:14px;grid-template-columns:repeat(auto-fit, minmax(9rem, 1fr));display:grid;gap:10px;align-items:end">
           <label class="field"><span>Username</span><input name="username" required /></label>
           <label class="field"><span>Password</span><input name="password" type="password" required /></label>
           <label class="field"><span>Role</span>
             <select name="role"><option value="user">User</option><option value="admin">Admin</option></select>
           </label>
+          <label class="field" title="The group decides this person's age limit and whether they may edit games. More groups can be ticked on their row afterwards."><span>Group</span>
+            <select name="group"></select>
+          </label>
           <label class="field" title="This person's colour in the chat: their picture, their row in the list and the messages you receive from them. Green is kept for your own messages."><span>Colour</span><input name="colour" type="color" value="#7c5cff" /></label>
           <button class="btn btn-primary" type="submit">Add user</button>
         </form>
         <p class="hint" style="margin:6px 0 0">The colour tints this person in the chat: their picture, their row in the list and the messages you receive from them. It is chosen here (and can be changed on their row above); green is kept for your own messages.</p>
+      </div>
+
+      <div class="panel hidden" id="mod-groups">
+        <h3>Groups and age limits <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Put accounts into groups to limit which ROM Library games they see. A person can be in several groups and can have a limit of their own (under User accounts): the strictest wins. Admins are never limited. A single game can also be blocked for a group or a person, in the game's details.</p>
+        <p class="hint">These limits work inside game-sauce. They cannot stop someone who can open the ROM folders over a network share, or files already copied to a computer.</p>
+        <div id="group-list"></div>
+        <form class="edit-form" id="group-add" style="margin-top:14px">
+          <div class="group-fields">
+            <label class="field"><span>New group</span><input id="group-new-name" class="search" maxlength="40" required /></label>
+            <label class="field"><span>Age limit</span><select id="group-new-limit" class="select"></select></label>
+            <label class="group-check"><input type="checkbox" id="group-new-edit" /> <span>Members may edit games</span></label>
+            <button class="btn btn-primary" type="submit">Add group</button>
+          </div>
+        </form>
+        <p class="hint">Members who may edit can change a game's title and details, identify or refresh it, and change its cover. Deleting, uploading, hiding, bulk tools and age ratings stay with admins. Everyone in all of a person's groups must allow it, and play-only accounts never edit.</p>
+        <p class="hint" id="group-unrated"></p>
+        <button type="button" class="btn btn-sm" id="group-show-unrated">Show unrated games</button>
       </div>
 
       <div class="panel hidden" id="mod-platforms">
@@ -849,7 +870,7 @@
 
       <div class="panel hidden" id="mod-ratings">
         <h3>Age ratings <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">Age ratings for the games in the ROM Library. They do not limit what anyone can see yet. A game's rating is in its details, where you can change it; to rate several at once, select them in the Library and press <b>Set rating</b>.</p>
+        <p class="hint" style="margin-top:0">Age ratings for the games in the ROM Library. Age limits (Settings > Groups and age limits) go by them. A game's rating is in its details, where you can change it; to rate several at once, select them in the Library and press <b>Set rating</b>.</p>
         <label class="field" style="max-width:420px"><span>Classification</span><select id="age-system" class="select"></select></label>
         <p class="hint">Which country's ratings are shown. When no source has that rating for a game, another country's rating is converted, rounding to the stricter one, and marked as converted. RC means refused classification.</p>
         <div id="age-counts" class="counts"></div>

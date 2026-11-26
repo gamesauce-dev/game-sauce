@@ -16,6 +16,7 @@ import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
 import * as reports from './reports.js';   // Settings > Reports
 import { ageLine, fillAgePicker, rateMany, initRatingsPanel } from './ratings-ui.js';
+import { initGroupsPanel, userRestrictions, bindUserRestrictions, fillNewUserGroup, fillBlockPicker } from './groups-ui.js';   // age limits, groups and blocks
 import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 import { initDescScroll } from './descscroll.js';   // a long description scrolls itself
 import './pwreveal.js';   // the eye in password boxes
@@ -1598,7 +1599,9 @@ async function openDetail(id) {
   }
   if (myOpen !== state.detailToken) return; // a newer game was opened while this one loaded
 
-  const canEdit = authState.user?.role === 'admin';   // only an admin edits a game's details (the server refuses anyone else)
+  const isAdmin = authState.user?.role === 'admin';
+  // text, match and cover: the admin, or a member whose groups allow it. Everything else stays the admin's (the server refuses anyone else).
+  const canEdit = isAdmin || Boolean(authState.user?.can_edit);
   const initials = rom.title.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const rows = [
     ['Platform', `${esc(rom.platform_name)}`],
@@ -1613,7 +1616,7 @@ async function openDetail(id) {
     ['Rating', rom.rating ? `${Number(rom.rating).toFixed(1)} / 5` : '—'],
     ['Age rating', ageLine(rom.age)],
     ['File', `<span class="mono">${esc(rom.filename)}</span>`],
-    ...(canEdit ? [['Location', rom.source_path ? `<span class="mono">${esc(rom.source_path)}</span>` : '—']] : []),   // folders on the server are sent to the admin only
+    ...(isAdmin ? [['Location', rom.source_path ? `<span class="mono">${esc(rom.source_path)}</span>` : '—']] : []),   // folders on the server are sent to the admin only
     ['Size', fmtBytes(rom.size_bytes)],
     ['CRC32', `<span class="mono">${esc(rom.crc32 || '—')}</span>`],
     ['MD5', `<span class="mono">${esc(rom.md5 || '—')}</span>`],
@@ -1656,11 +1659,11 @@ async function openDetail(id) {
           ${canEdit ? `<button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>` : ''}
           ${authState.user?.role === 'admin' ? `<button class="mi" role="menuitem" data-act="clearmatch">${ICON.undo}<span><b>Clear match</b><small>Remove a wrong cover and details</small></span></button>` : ''}
           ${canEdit ? `<button class="mi" role="menuitem" data-act="cover-upload">${ICON.image}<span><b>${rom.cover_locked ? 'Change your cover' : 'Upload your own cover'}</b><small>JPEG, PNG or WebP, up to 8 MB</small></span></button>` : ''}
-          ${rom.cover_locked ? `<button class="mi" role="menuitem" data-act="cover-reset">${ICON.undo}<span><b>Back to automatic cover</b></span></button>` : ''}
+          ${canEdit && rom.cover_locked ? `<button class="mi" role="menuitem" data-act="cover-reset">${ICON.undo}<span><b>Back to automatic cover</b></span></button>` : ''}
         </div>
       </div>
       <input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" class="hidden" />
-      ${canEdit ? `<button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>` : ''}
+      ${isAdmin ? `<button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>` : ''}
     </div>
 
     ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.${rom.multidisc_override == null ? ' (Decided from its file name.)' : ' (Set by hand.)'}</p>` : ''}
@@ -1722,7 +1725,7 @@ async function openDetail(id) {
 
     ${canEdit ? `
     <div class="section-label">Edit</div>
-    <div class="edit-form" id="age-picker" style="margin-bottom:0.9rem"></div>
+    ${isAdmin ? '<div class="edit-form" id="age-picker" style="margin-bottom:0.9rem"></div><div id="block-picker" style="margin-bottom:0.9rem"></div>' : ''}
     <form class="edit-form" id="edit-form">
       <label class="field"><span>Title</span><input name="title" value="${esc(rom.short_title ?? rom.title)}" /></label>
       <div class="field-row">
@@ -2033,6 +2036,7 @@ async function openDetail(id) {
   });
 
   fillAgePicker($('#age-picker', drawer), rom, { api, toast, confirmDialog, onSaved: async () => { await loadLibrary(); openDetail(id); } });
+  fillBlockPicker($('#block-picker', drawer), rom, { api, toast });
 
   $('#edit-form', drawer)?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -4425,6 +4429,7 @@ const SETTINGS_MODULES = [
   { id: 'sessions',  label: 'Active sessions', mi: 'active-sessions', ico: '💻', adminOnly: false },
   { id: 'providers', label: 'Metadata providers', mi: 'providers-2', ico: '🔌', adminOnly: true },
   { id: 'users',     label: 'User accounts',   mi: 'users', ico: '👥', adminOnly: true },
+  { id: 'groups',    label: 'Groups and age limits', mi: 'security', ico: '👪', adminOnly: true },
   { id: 'platforms', label: 'Platforms',       mi: 'Library', ico: '🕹', adminOnly: true },
   { id: 'covers',    label: 'Covers & platform ids', mi: 'covers', ico: '🖼', adminOnly: true },
   { id: 'artfolders', label: 'Game assets', mi: 'folder-enable', ico: '📁', adminOnly: true },
@@ -4449,7 +4454,7 @@ const SETTINGS_GROUPS = [
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing', 'images'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
-  { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'providers', 'platforms'], adminOnly: true }
+  { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'groups', 'providers', 'platforms'], adminOnly: true }
 ];
 const settingsLastInGroup = {};
 const settingsIsAdmin = () => authState.user?.role === 'admin';
@@ -5043,6 +5048,8 @@ function showSettingsModule(id) {
   if (id === 'names') initNamesPanel();
   if (id === 'ratings') initRatingsPanel({ api, toast, confirmDialog, platformOptions, openList: openRatingList, onChanged: () => loadLibrary() });
   if (id === 'platforms') fillPlatArtFolders();
+  if (id === 'users') loadUsersForModule().catch((err) => toast(err.message, true));   // groups may have changed since Settings was opened
+  if (id === 'groups') initGroupsPanel({ api, toast, confirmDialog, openList: openRatingList, onChanged: () => loadUsersForModule().catch(() => {}) });
   if (id === 'health') loadHealth();
   if (id === 'hashing') loadHashing().catch((err) => toast(err.message, true));
   if (id === 'images') { loadImages().catch((err) => toast(err.message, true)); loadImageConvert().catch((err) => toast(err.message, true)); }
@@ -5471,7 +5478,8 @@ async function loadUsersForModule() {
       };
     }
   } catch { /* the list below still works */ }
-  const { items: users, suggested } = await api('/auth/users');
+  const [{ items: users, suggested }, groupInfo] = await Promise.all([api('/auth/users'), api('/groups')]);
+  fillNewUserGroup($('#new-user-form'), groupInfo);
   const newColour = $('#new-user-form [name="colour"]'); if (newColour && suggested) newColour.value = suggested;   // the first colour nobody has yet
   $('#user-list').innerHTML = users.map((u) => `
     <div class="user-list-row" data-user="${u.id}" data-name="${esc(u.username)}">
@@ -5487,12 +5495,14 @@ async function loadUsersForModule() {
         <select class="select" data-act="mode-setting"><option value="full" ${u.mode === 'full' ? 'selected' : ''}>Full</option><option value="play" ${u.mode === 'play' ? 'selected' : ''}>Play only</option></select></label>`}
       ${u.role === 'admin' ? '' : `<label class="dl-pick" title="Whether this person can download ROM files. 'Default' follows the switch above."><span>Downloads</span>
         <select class="select" data-act="download-setting"><option value="default" ${u.download === 'default' ? 'selected' : ''}>Default</option><option value="allow" ${u.download === 'allow' ? 'selected' : ''}>Always allowed</option><option value="deny" ${u.download === 'deny' ? 'selected' : ''}>Never</option></select></label>`}
+      ${userRestrictions(u, groupInfo)}
       <button class="btn btn-sm" data-act="reset-password" title="Set a new password for this user" ${u.id === (authState.user?.id) ? 'hidden' : ''}>Reset password</button>
       <button class="btn btn-sm" data-act="toggle-user" data-disabled="${u.disabled ? 1 : 0}">${u.disabled ? 'Enable' : 'Disable'}</button>
       <button class="btn btn-sm btn-danger" data-act="delete-user" ${u.id === (authState.user?.id) ? 'disabled' : ''}>Delete</button>
     </div>`).join('');
   $$('[data-user]').forEach((row) => {
     const id = Number(row.dataset.user);
+    bindUserRestrictions(row, id, { api, toast, reload: loadUsersForModule });
     $('[data-act="toggle-user"]', row)?.addEventListener('click', async () => {
       const disabled = row.textContent.includes('disabled');
       try { await api(`/auth/users/${id}`, { method: 'PATCH', body: JSON.stringify({ disabled: !disabled }) }); loadUsersForModule(); }
@@ -5883,7 +5893,8 @@ $('#new-user-form').addEventListener('submit', async (e) => {
         username: String(fd.get('username')).trim(),
         password: fd.get('password'),
         role: fd.get('role'),
-        colour: fd.get('colour')
+        colour: fd.get('colour'),
+        groups: fd.get('group') && fd.get('group') !== 'none' ? [Number(fd.get('group'))] : []
       })
     });
     e.target.reset();
