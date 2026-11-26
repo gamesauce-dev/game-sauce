@@ -2024,3 +2024,11 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .user-list-row { flex-wrap: wrap; }
 .user-list-row .grow { min-width: 14rem; }
 .emu-vault-head { margin: 0.7143rem 0 0.2857rem; font-size: 0.8571rem; color: var(--muted); }
+/* BIOS and firmware in the vault: a header for each platform that opens and closes its files. */
+.emu-bios-head { display: flex; align-items: center; gap: 0.5714rem; width: 100%; padding: 0.5714rem 0.7143rem; border: 1px solid var(--line-2); border-radius: 0.5714rem; background: var(--panel); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.emu-bios-head:hover, .emu-bios-head:focus-visible { border-color: var(--accent); }
+.emu-bios-head .chev { width: 0.7143rem; flex: 0 0 0.7143rem; text-align: center; color: var(--muted); }
+.emu-bios-head .emu-bios-name { flex: 1; min-width: 0; font-weight: 600; }
+.emu-bios-head .plat-count { color: var(--muted); }
+.emu-bios-files { display: grid; gap: 0.4286rem; margin: 0.1429rem 0 0.2857rem 1.2857rem; }
+.emu-bios-files[hidden] { display: none; }

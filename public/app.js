@@ -1,5 +1,5 @@
 import { platformIconSvg, PLATFORM_ICON_TYPES, iconTypeFor } from './platform-icons.js';
-import { groupedOptions } from './platform-order.js';   // the one order of every platform picker: families A to Z, Others last, the platforms in each A to Z
+import { groupedOptions, orderPlatforms } from './platform-order.js';   // the one order of every platform picker: families A to Z, Others last, the platforms in each A to Z
 import { thumb } from './thumb.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -5598,7 +5598,7 @@ for (const id of ['#audit-action']) {
 
 /* ─────────────────────────── emulators ─────────────────────────── */
 
-const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false, saving: new Set() };   // saving: releases on their way into the vault
+const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false, saving: new Set(), openBios: new Set() };   // saving: releases on their way into the vault
 
 async function loadEmulators() {
   const isAdmin = authState.user?.role === 'admin';
@@ -5735,6 +5735,27 @@ function renderEmuGuide() {
   });
 }
 
+/** The BIOS and firmware files under a header for each platform, in the order every platform list uses. A header opens and closes its files; they
+ *  start closed, and stay as they were left. A search shows what it found. */
+function biosGroups(files, row, searching) {
+  const by = new Map();
+  for (const v of files) { const slug = v.platform_slug || ''; if (!by.has(slug)) by.set(slug, []); by.get(slug).push(v); }
+  const known = new Map((window.__platformsCache || []).map((p) => [p.slug, p]));
+  const platforms = orderPlatforms([...by.keys()].map((slug) => known.get(slug) || { slug, name: slug || 'Others' }));
+  const name = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
+  return platforms.map((p) => {
+    const mine = by.get(p.slug).sort((a, b) => name(a.name, b.name));
+    const open = searching || emuState.openBios.has(p.slug);
+    return `<button type="button" class="emu-bios-head" data-bios-group="${esc(p.slug)}" aria-expanded="${open}">
+        <span class="chev" aria-hidden="true">${open ? '▾' : '▸'}</span>
+        <span class="plat-ico-wrap" aria-hidden="true">${known.has(p.slug) ? platformIconSvg(p, 16) : ''}</span>
+        <span class="emu-bios-name" translate="no">${esc(p.name)}</span>
+        <span class="plat-count">${mine.length}</span>
+      </button>
+      <div class="emu-bios-files"${open ? '' : ' hidden'}>${mine.map(row).join('')}</div>`;
+  }).join('');
+}
+
 function renderEmuVault() {
   const wrap = $('#emu-vault');
   if (!emuState.vault.length) {
@@ -5765,8 +5786,15 @@ function renderEmuVault() {
   // installers first, then BIOS and firmware files; the headings only show when there is something of the second kind
   const installers = shown.filter((v) => v.kind !== 'bios'), bios = shown.filter((v) => v.kind === 'bios');
   wrap.innerHTML = bios.length
-    ? `${installers.length ? `<h4 class="emu-vault-head">Emulator installers</h4>${installers.map(row).join('')}` : ''}<h4 class="emu-vault-head">BIOS and firmware</h4>${bios.map(row).join('')}`
+    ? `${installers.length ? `<h4 class="emu-vault-head">Emulator installers</h4>${installers.map(row).join('')}` : ''}<h4 class="emu-vault-head">BIOS and firmware</h4>${biosGroups(bios, row, Boolean(q))}`
     : installers.map(row).join('');
+  $$('[data-bios-group]', wrap).forEach((head) => head.addEventListener('click', () => {
+    const slug = head.dataset.biosGroup, open = head.getAttribute('aria-expanded') !== 'true';
+    if (open) emuState.openBios.add(slug); else emuState.openBios.delete(slug);
+    head.setAttribute('aria-expanded', String(open));
+    head.querySelector('.chev').textContent = open ? '▾' : '▸';
+    head.nextElementSibling.hidden = !open;
+  }));
   $$('[data-vault-del]', wrap).forEach((btn) => btn.addEventListener('click', async () => {
     const id = Number(btn.closest('[data-vault]').dataset.vault);
     const ok = await confirmDialog({
@@ -5861,6 +5889,7 @@ $('#emu-upload-form')?.addEventListener('submit', async (e) => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       (data.duplicate ? there : saved).push(data);
+      if (data.kind === 'bios') emuState.openBios.add(data.platform_slug);
     } catch (err) { failed.push(`${file.name}: ${err.message}`); }
   }
   button.disabled = false;
