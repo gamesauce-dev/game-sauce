@@ -312,3 +312,47 @@ test('a member\'s change of title takes no rating away, from this game or from i
     assert.deepEqual([column(lead, 'age_level'), column(follower, 'age_level')], [4, 4]);
   }
 });
+
+/* A member who may edit writes what everyone else is shown, the admin included. */
+
+test('only numbers go in the number fields, and only text in the others, however the change is made', async () => {
+  const id = addRom('Safe Values');
+  const mark = '<img src=x onerror=alert(1)>';
+  const before = () => db.prepare('SELECT title, release_year, players, rating, region, revision, description FROM roms WHERE id = ?').get(id);
+  const start = before();
+  for (const who of ['teen', 'admin']) {
+    for (const bad of [{ release_year: mark }, { release_year: 12 }, { release_year: 1999.5 }, { players: mark }, { players: -1 }, { rating: mark }, { rating: '1e9' }, { region: { a: 1 } }, { region: 'x'.repeat(201) },
+      { revision: ['a'] }, { title: { a: 1 } }, { title: '' }, { title: null }, { description: 'x'.repeat(100001) }, { tags: 'one' }, { tags: [{ a: 1 }] }, { tags: ['x'.repeat(101)] }, { tags: Array(101).fill('t') },
+      { genre: 'Fine', players: mark }]) {
+      assert.equal((await patch(who, id, bad)).status, 400, `${who} ${JSON.stringify(bad).slice(0, 80)}`);
+    }
+  }
+  assert.deepEqual(before(), start, 'a refused edit changes nothing');
+  assert.equal((await patch('teen', id, { release_year: '1994', players: 2, rating: 4.5, region: 'USA', revision: 2, developer: '', tags: ['one'] })).status, 200);
+  assert.deepEqual([column(id, 'release_year'), column(id, 'players'), column(id, 'rating'), column(id, 'revision'), column(id, 'developer')], [1994, 2, 4.5, '2', null]);
+
+  // a picked match is whatever the request says it is: what does not fit is left out
+  const r = await call('teen', 'POST', `/metadata/${id}/apply`, { candidate: { title: { a: 1 }, source: 'igdb', release_year: mark, players: mark, rating: mark, developer: { a: 1 }, publisher: 'p'.repeat(5000) } });
+  assert.equal(r.status, 200, r.text);
+  assert.deepEqual([column(id, 'title'), column(id, 'release_year'), column(id, 'players'), column(id, 'rating'), column(id, 'developer'), column(id, 'publisher').length], ['Safe Values', null, null, null, null, 1000]);
+});
+
+test('the pages show a game\'s year, players, region and revision as text, never as page code', () => {
+  // The second lock: whatever is stored, a value put into a page's HTML goes through esc() first. These are the shapes that once did not.
+  const raw = /\$\{\s*(?:rom|r|c|g|v|it)\??\.(?:release_year|players|region|revision)(?:\s*(?:\|\||\?\?)\s*'[^']*')?\s*\}|\['(?:Year|Released|Players|Region|Revision)',\s*(?:rom|g)\.\w+\s*(?:\|\||\])/;
+  const dir = new URL('../public/', import.meta.url);
+  const wrong = [];
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.js'))) {
+    fs.readFileSync(new URL(file, dir), 'utf8').split('\n').forEach((line, i) => {
+      if (/const (chips|facts) = \[/.test(line)) return;   // Big Screen builds plain text there and escapes the whole of it
+      if (raw.test(line.replace('esc(v.revision ? `Rev ${v.revision}` : \'\')', ''))) wrong.push(`${file}:${i + 1}: ${line.trim().slice(0, 160)}`);
+    });
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test('what a provider said when it failed goes to the admin only', () => {
+  const source = fs.readFileSync(new URL('../src/routes/metadata.js', import.meta.url), 'utf8');
+  assert.match(source, /reason: errorFor\(req\.user, result\.error\)/);
+  assert.doesNotMatch(source, /json\(\{[^\n]*error: hits\.error(,| \|\|)/);
+});

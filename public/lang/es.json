@@ -2249,5 +2249,7 @@
  "No such person.": "Esa persona no existe.",
  "Admins are never limited, so a game cannot be blocked for one.": "Los administradores nunca tienen límites, así que no se les puede bloquear un juego.",
  "Only an admin, or a member of a group that may edit games, can do this": "Solo puede hacerlo un administrador o un miembro de un grupo que pueda editar juegos",
- "Only an admin can move a game to another platform": "Solo un administrador puede mover un juego a otra plataforma"
+ "Only an admin can move a game to another platform": "Solo un administrador puede mover un juego a otra plataforma",
+ "One of the values is not allowed. Years, players and ratings must be numbers, and text must not be too long.": "Uno de los valores no está permitido. Los años, jugadores y puntuaciones deben ser números, y los textos no pueden ser demasiado largos.",
+ "The provider did not answer. An admin can check Metadata providers.": "El proveedor no respondió. Un administrador puede revisar los proveedores de metadatos."
 }

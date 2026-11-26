@@ -624,7 +624,7 @@ function cardHtml(rom) {
       </div>
       <div class="card-title">${esc(rom.title)}</div>
       <div class="card-sub">
-        ${rom.release_year ? `<span>${rom.release_year}</span>` : ''}
+        ${rom.release_year ? `<span>${esc(rom.release_year)}</span>` : ''}
         ${rom.region ? `<span>·</span><span>${esc(rom.region)}</span>` : ''}
         ${rom.multidisc ? '<span class="card-md" title="Part of a multi-disc set: Play on this PC cannot start it, but it can be downloaded" aria-label="Multi-disc set">DISC SET</span>' : ''}
       </div>
@@ -1606,13 +1606,13 @@ async function openDetail(id) {
   const rows = [
     ['Platform', `${esc(rom.platform_name)}`],
     ['Source', rom.source_name ? `${esc(rom.source_name)}` : (rom.in_place ? 'in place' : 'imported')],
-    ['Year', rom.release_year || '—'],
+    ['Year', esc(rom.release_year || '—')],
     ['Developer', rom.developer ? esc(rom.developer) : '—'],
     ['Publisher', rom.publisher ? esc(rom.publisher) : '—'],
     ['Genre', rom.genre ? esc(rom.genre) : '—'],
-    ['Players', rom.players || '—'],
-    ['Region', rom.region || '—'],
-    ['Revision', rom.revision || '—'],
+    ['Players', esc(rom.players || '—')],
+    ['Region', esc(rom.region || '—')],
+    ['Revision', esc(rom.revision || '—')],
     ['Rating', rom.rating ? `${Number(rom.rating).toFixed(1)} / 5` : '—'],
     ['Age rating', ageLine(rom.age)],
     ['File', `<span class="mono">${esc(rom.filename)}</span>`],
@@ -1639,7 +1639,7 @@ async function openDetail(id) {
       <div style="flex:1">
         <h2 class="detail-title">${esc(rom.title)}</h2>
         ${rom.long_title ? `<p class="hint detail-fullname">Full name: ${esc(rom.long_title)}</p>` : ''}
-        <div class="detail-plat"><i style="background:${rom.platform_accent}"></i>${esc(rom.platform_name)}${rom.release_year ? ` · ${rom.release_year}` : ''}</div>
+        <div class="detail-plat"><i style="background:${rom.platform_accent}"></i>${esc(rom.platform_name)}${rom.release_year ? ` · ${esc(rom.release_year)}` : ''}</div>
       </div>
     </div>
 
@@ -1734,11 +1734,11 @@ async function openDetail(id) {
       </div>
       <div class="field-row">
         <label class="field"><span>Genre</span><input name="genre" value="${esc(rom.genre || '')}" /></label>
-        <label class="field"><span>Year</span><input name="release_year" type="number" min="1950" max="2100" value="${rom.release_year || ''}" /></label>
+        <label class="field"><span>Year</span><input name="release_year" type="number" min="1950" max="2100" value="${esc(rom.release_year || '')}" /></label>
       </div>
       <div class="field-row">
-        <label class="field"><span>Players</span><input name="players" type="number" min="1" max="16" value="${rom.players || ''}" /></label>
-        <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" step="0.1" min="0" max="5" value="${rom.rating || ''}" /></label>
+        <label class="field"><span>Players</span><input name="players" type="number" min="1" max="16" value="${esc(rom.players || '')}" /></label>
+        <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" step="0.1" min="0" max="5" value="${esc(rom.rating || '')}" /></label>
       </div>
       <label class="field"><span>Region</span><input name="region" value="${esc(rom.region || '')}" /></label>
       <label class="field"><span>Tags (comma separated)</span><input name="tags" value="${esc((rom.tags || []).join(', '))}" /></label>
@@ -1989,7 +1989,7 @@ async function openDetail(id) {
         <button class="result-row ${c.has_cover ? 'ok' : 'skip'}" data-candidate="${i}">
           <span class="status"></span>
           ${c.cover_url ? `<img class="candidate-cover" loading="lazy" src="${esc(c.cover_url)}" alt="" onerror="this.remove()" />` : ''}
-          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${c.release_year})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : c.source === 'launchbox' ? 'LaunchBox' : 'TGDB')}</span></span>
+          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${esc(c.release_year)})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : c.source === 'launchbox' ? 'LaunchBox' : 'TGDB')}</span></span>
           <span class="note">${c.has_cover ? 'art ✓' : 'no art'}</span>
         </button>`).join('');
       $$('[data-candidate]', identifyList).forEach((btn) => btn.addEventListener('click', async () => {
@@ -3679,7 +3679,7 @@ async function openCollection(id) {
           <button class="result-row ok" style="flex:1;margin:0" data-rom-open="${r.id}">
             <span class="status"></span>
             <span class="name">${esc(r.title)}</span>
-            <span class="note">${esc(r.platform_short)}${r.release_year ? ` · ${r.release_year}` : ''}</span>
+            <span class="note">${esc(r.platform_short)}${r.release_year ? ` · ${esc(r.release_year)}` : ''}</span>
           </button>
           ${r.playable ? `<button class="btn btn-sm btn-play" data-rom-play="${r.id}" title="Play ${esc(r.title)} in the browser" aria-label="Play ${esc(r.title)} in the browser">▶ Play</button>` : ''}
           <button class="btn btn-sm" data-rom-remove="${r.id}" title="Remove from this collection (game stays in library)">✕ Remove</button>

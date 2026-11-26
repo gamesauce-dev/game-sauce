@@ -742,12 +742,12 @@ export async function openDetail(id) {
   const rows = [
     ['Platform', esc(g.platform_name)],
     ['Region', g.region ? esc(g.region) : '—'],
-    ['Released', g.release_year || '—'],
+    ['Released', esc(g.release_year || '—')],
     ['Developer', g.developer ? esc(g.developer) : '—'],
     ['Publisher', g.publisher ? esc(g.publisher) : '—'],
     ['Genre', g.genre ? esc(g.genre) : '—'],
-    ['Players', g.players || '—'],
-    ['Rating', g.rating != null ? `${g.rating} / 5` : '—'],
+    ['Players', esc(g.players || '—')],
+    ['Rating', g.rating != null ? `${esc(g.rating)} / 5` : '—'],
     ['Details from', g.matched ? esc(g.meta_source) : 'not matched yet'],
     ['Notes', g.notes ? esc(g.notes) : '—'],
     ...purchaseRows(g)
@@ -761,7 +761,7 @@ export async function openDetail(id) {
     </div>
     <div class="detail-head"><div style="flex:1">
       <h2 class="detail-title">${esc(g.title)}</h2>
-      <div class="detail-plat"><i style="background:${esc(col)}"></i>${esc(g.platform_name)} · on your shelf${g.release_year ? ` · ${g.release_year}` : ''}</div>
+      <div class="detail-plat"><i style="background:${esc(col)}"></i>${esc(g.platform_name)} · on your shelf${g.release_year ? ` · ${esc(g.release_year)}` : ''}</div>
     </div></div>
     <div class="detail-actions">
       <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-d="fav" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? I.starFill : I.star}</button>
@@ -797,11 +797,11 @@ ${manualBlock(g)}
       </div>
       <div class="field-row">
         <label class="field"><span>Genre</span><input name="genre" value="${esc(g.genre || '')}" /></label>
-        <label class="field"><span>Year</span><input name="release_year" type="number" min="1950" max="2100" value="${g.release_year || ''}" /></label>
+        <label class="field"><span>Year</span><input name="release_year" type="number" min="1950" max="2100" value="${esc(g.release_year || '')}" /></label>
       </div>
       <div class="field-row">
-        <label class="field"><span>Players</span><input name="players" type="number" min="1" max="16" value="${g.players || ''}" /></label>
-        <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" min="0" max="5" step="0.1" value="${g.rating ?? ''}" /></label>
+        <label class="field"><span>Players</span><input name="players" type="number" min="1" max="16" value="${esc(g.players || '')}" /></label>
+        <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" min="0" max="5" step="0.1" value="${esc(g.rating ?? '')}" /></label>
       </div>
       <label class="field"><span>Notes (edition, where it is kept)</span><input name="notes" value="${esc(g.notes || '')}" /></label>
       ${purchaseFields(g)}

@@ -2249,5 +2249,7 @@
  "No such person.": "そのユーザーはいません。",
  "Admins are never limited, so a game cannot be blocked for one.": "管理者は制限されないため、ゲームをブロックできません。",
  "Only an admin, or a member of a group that may edit games, can do this": "この操作は、管理者か、ゲームを編集できるグループのメンバーのみ行えます",
- "Only an admin can move a game to another platform": "ゲームを別のプラットフォームに移動できるのは管理者だけです"
+ "Only an admin can move a game to another platform": "ゲームを別のプラットフォームに移動できるのは管理者だけです",
+ "One of the values is not allowed. Years, players and ratings must be numbers, and text must not be too long.": "使用できない値があります。年、プレイ人数、評価は数字にし、文章は長すぎないようにしてください。",
+ "The provider did not answer. An admin can check Metadata providers.": "プロバイダーから応答がありませんでした。管理者がメタデータ プロバイダーを確認できます。"
 }

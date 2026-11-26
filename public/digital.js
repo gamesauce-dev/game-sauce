@@ -494,7 +494,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
         <label class="field"><span>Released</span><input name="release" value="${esc(d?.release || '')}" placeholder="Year" /></label>
       </div>
       <div class="field-row">
-        <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" min="0" max="5" step="0.1" value="${d?.rating ?? ''}" /></label>
+        <label class="field"><span>Rating (0–5)</span><input name="rating" type="number" min="0" max="5" step="0.1" value="${esc(d?.rating ?? '')}" /></label>
         <label class="field"><span>Store country</span><input name="country" value="${esc(g.country_name || '')}" placeholder="Australia or AU" /></label>
       </div>
       <label class="field"><span>Description</span><textarea name="description" rows="4">${esc(d?.description || '')}</textarea></label>

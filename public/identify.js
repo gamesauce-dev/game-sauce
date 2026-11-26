@@ -103,7 +103,7 @@ export function wireIdentify(root, { idp, ctx, onPick }) {
         <button class="result-row ${c.has_cover ? 'ok' : 'skip'}" data-cand="${i}">
           <span class="status"></span>
           ${c.cover_url ? `<img class="candidate-cover" loading="lazy" src="${esc(c.cover_url)}" alt="" onerror="this.remove()" />` : ''}
-          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${c.release_year})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : c.source === 'launchbox' ? 'LaunchBox' : 'TGDB')}</span></span>
+          <span class="name">${esc(c.title)}${c.release_year ? ` <span class="note">(${esc(c.release_year)})</span>` : ''}<span class="note"> · ${esc(c.source === 'igdb' ? 'IGDB' : c.source === 'launchbox' ? 'LaunchBox' : 'TGDB')}</span></span>
           <span class="note">${c.has_cover ? 'art ✓' : 'no art'}</span>
         </button>`).join('');
       $$('[data-cand]', list).forEach((btn) => btn.addEventListener('click', async () => {

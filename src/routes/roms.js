@@ -27,6 +27,7 @@ import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles,
 import { sendImage } from '../lib/webp.js';
 import { ageOf, ratingSystem, convertedSql, ratingsBefore, holdRatings } from '../lib/ratings.js';
 import { flushRecords } from '../lib/restrictions.js';
+import { editedValue, editedTags, cleanMatch } from '../lib/gamefields.js';
 import { ratingsAfterLookup } from '../lib/ratingfetch.js';
 import {
   placeRom, tempPath, romStoragePath,
@@ -217,6 +218,7 @@ export async function applyMetadataRecord(id, meta, uid = null, { picked = false
 
   // Provider text sometimes arrives with web-page codes ("&amp;"): store plain characters.
   for (const k of ['title', 'developer', 'publisher', 'genre', 'description']) if (typeof meta[k] === 'string') meta[k] = decodeEntities(meta[k]);
+  cleanMatch(meta);
   let { coverPath, mediaJson } = await applyProviderMedia(meta, rom.sha1);
   // A cover the user uploaded themselves is never replaced by a provider's.
   if (rom.cover_locked && rom.cover_path) coverPath = rom.cover_path;
@@ -1194,12 +1196,16 @@ router.patch('/:id', requireEditor, (req, res) => {
   const sets = [];
   const params = { id: Number(req.params.id) };
 
-  for (const field of EDITABLE) {
-    if (req.body[field] !== undefined) {
-      sets.push(`${field} = @${field}`);
-      params[field] = req.body[field] === '' ? null : req.body[field];
+  let tags;
+  try {
+    for (const field of EDITABLE) {
+      if (req.body[field] !== undefined) {
+        sets.push(`${field} = @${field}`);
+        params[field] = editedValue(field, req.body[field]);
+      }
     }
-  }
+    if (req.body.tags !== undefined) tags = editedTags(req.body.tags);
+  } catch (err) { return res.status(err.status || 500).json({ error: err.message }); }
 
   if (req.body.title !== undefined && req.body.title) {
     sets.push('sort_title = @sort_title');
@@ -1220,7 +1226,7 @@ router.patch('/:id', requireEditor, (req, res) => {
       sets.push("updated_at = datetime('now')");
       db.prepare(`UPDATE roms SET ${sets.join(', ')} WHERE id = @id`).run(params);
     }
-    if (req.body.tags !== undefined) setTags(Number(req.params.id), req.body.tags);
+    if (tags !== undefined) setTags(Number(req.params.id), tags);
     if (before) holdRatings(before);
   })();
 
@@ -1470,6 +1476,7 @@ router.post('/upload', requireAdmin, upload.array('roms', 50), async (req, res, 
         }).catch(() => null);
 
         if (meta && !meta.error) {
+          cleanMatch(meta);
           const { coverPath, mediaJson } = await applyProviderMedia(meta, hashes.sha1);
 
           db.prepare(`

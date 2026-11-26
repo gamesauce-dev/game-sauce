@@ -14,6 +14,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
+- **Security: members who may edit could have put page code into a game's details.** In the unreleased builds with editing groups, a member allowed to edit could save markup in a game's year, players, region or revision, and it ran in the browser of whoever opened the Library, the admin included. The server now refuses anything but numbers in number fields and bounded text in the others, and the pages show these values as text. **If you used an editing group on such a build, check that your accounts are as you left them** (Settings > User accounts and Activity log).
+- A member whose lookup fails is no longer sent the metadata provider's own error text.
+
 - **TheGamesDB's age rating is no longer treated as a score.** It sends text such as "T - Teen", which was read as a number and lost.
 
 ## [0.24.0] - 2026-11-26

@@ -15,6 +15,10 @@ import { mameTitleTrusted } from '../lib/mamenames.js';
 
 const router = express.Router();
 
+// What a provider said when it failed can repeat what it was sent, the server's own keys included: the admin sees it, nobody else does.
+const NO_ANSWER = 'The provider did not answer. An admin can check Metadata providers.';
+const errorFor = (user, error) => (user?.role === 'admin' ? error : NO_ANSWER);
+
 // Which accounts are set up, and their names, are the admin's business (the page only asks for them on the admin's settings screen).
 router.get('/', requireAdmin, (req, res) => {
   const counts = db.prepare(`
@@ -226,7 +230,7 @@ router.post('/:id/refresh', requireEditor, async (req, res, next) => {
     const editor = req.user.role === 'admin' ? null : req.user;
     const withAssets = async (body) => (editor ? body : { ...body, assets: await fillAfterLookup({ kind: 'rom', id: rom.id, userId: req.user?.id }) });
     if (!result) return res.json(await withAssets({ updated: false, reason: 'no provider returned a match' }));
-    if (result.error) return res.json(await withAssets({ updated: false, reason: result.error }));
+    if (result.error) return res.json(await withAssets({ updated: false, reason: errorFor(req.user, result.error) }));
 
     // A refresh must also replace a stale automatic cover, so don't reuse the old one. A cover you uploaded or imported (cover_locked) is never replaced.
     if (result.cover_url) db.prepare('UPDATE roms SET cover_path = NULL WHERE id = ? AND cover_locked = 0').run(rom.id);
@@ -264,9 +268,9 @@ router.post('/search', async (req, res, next) => {
     const svc = which === 'igdb' ? igdb : which === 'launchbox' ? launchbox : thegamesdb;
     const hits = await svc.search(q, { slug, tgdb_id });
     if (hits.error && !hits.items?.length) {
-      return res.status(502).json({ error: hits.error, items: [] });
+      return res.status(502).json({ error: errorFor(req.user, hits.error), items: [] });
     }
-    res.json({ items: hits.items || [], error: hits.error || null, provider: which });
+    res.json({ items: hits.items || [], error: hits.error ? errorFor(req.user, hits.error) : null, provider: which });
   } catch (err) { next(err); }
 });
 

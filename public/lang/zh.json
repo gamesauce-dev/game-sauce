@@ -2247,5 +2247,7 @@
  "No such person.": "没有这个人。",
  "Admins are never limited, so a game cannot be blocked for one.": "管理员永远不受限制，因此无法对其屏蔽游戏。",
  "Only an admin, or a member of a group that may edit games, can do this": "只有管理员或可编辑游戏的用户组成员才能执行此操作",
- "Only an admin can move a game to another platform": "只有管理员可以将游戏移到其他平台"
+ "Only an admin can move a game to another platform": "只有管理员可以将游戏移到其他平台",
+ "One of the values is not allowed. Years, players and ratings must be numbers, and text must not be too long.": "有一个值不被允许。年份、玩家人数和评分必须是数字，文字不能过长。",
+ "The provider did not answer. An admin can check Metadata providers.": "提供方没有响应。管理员可以检查元数据提供方设置。"
 }
