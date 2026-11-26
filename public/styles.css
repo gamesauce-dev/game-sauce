@@ -1412,6 +1412,7 @@ body.gp-active .card:focus::before, .card:focus-visible::before {
 .bulk-bar { display: flex; flex-wrap: wrap; flex: 1 1 100%; border-radius: 0.8rem; padding: 0.45rem 0.7rem; gap: 0.45rem; }
 .bulk-bar .bulk-spacer { flex: 1 1 auto; min-width: 0.5rem; }
 #bulk-count { font-weight: 600; color: var(--text); padding-right: 0.3rem; }
+.age-note { color: var(--muted); }
 
 /* Select checkbox: top-left, so the platform badge (bottom-left) and the DAT badge (bottom-right) stay fully visible.
    While selecting, the playable controller and the lock that normally sit there step down below it. */
@@ -1511,6 +1512,8 @@ body.play-only [data-toggle="hidden"],
 body.play-only [data-toggle="system"],
 body.play-only [data-toggle="orphan"],
 body.play-only [data-toggle="unmatched"],
+body.play-only [data-toggle="unrated"],
+body.play-only [data-toggle="converted"],
 body.play-only [data-action="select"],
 body.play-only #bulk-bar,
 body.play-only #lib-overview,

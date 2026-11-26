@@ -4,6 +4,14 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+
+- **Age ratings for ROM Library games.** A game can now have an age rating. **Nothing is limited by it yet**: everyone still sees the same games as before. **Settings > Library tools > Age ratings** (admin) chooses whose ratings are shown (Australia ACB, United States and Canada ESRB, or Europe and the UK PEGI), shows how many games are rated, unrated and converted, and has **Fetch ratings**, which asks IGDB and the downloaded LaunchBox database for each game's rating by its name and changes nothing else. When no source has the chosen board's rating, another board's is converted, rounding to the stricter one, and marked as converted. A metadata lookup brings a rating with it too, and an unrated version of a game shows the strictest rating of the other versions on the same platform. A fetched rating can become stricter but is never lowered or removed; a rating an admin sets always wins. Only admins change ratings: in a game's details, for several games at once with **Set rating** in the Library's selection bar, or with the new `age_rating` column of the game data CSV. The admin also gets **Unrated** and **Converted** filters. Ratings are remembered apart from the game entry, so a game that is removed and added again gets its rating back by file name and platform (and, once fingerprinted, even under a new name). **To use LaunchBox's ratings, download or update the LaunchBox database again** (Settings > Metadata providers): a copy downloaded before this version has none.
+
+### Fixed
+
+- **TheGamesDB's age rating is no longer treated as a score.** It sends text such as "T - Teen", which was read as a number and lost.
+
 ## [0.24.0] - 2026-11-26
 
 ### Added

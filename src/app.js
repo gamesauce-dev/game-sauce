@@ -23,6 +23,7 @@ import { CURRENCIES } from './lib/physical.js';
 import artRouter from './routes/art.js';
 import messagesRouter from './routes/messages.js';
 import videosRouter from './routes/videos.js';
+import ratingsRouter from './routes/ratings.js';
 import metadataRouter from './routes/metadata.js';
 import sourcesRouter from './routes/sources.js';
 import datsRouter from './routes/dats.js';
@@ -690,6 +691,7 @@ export function createApp() {
   });
 
   api.use('/roms', romsRouter);
+  api.use('/ratings', ratingsRouter);   // admin only (the router checks)
   api.use('/saves', savesRouter);
   api.use('/collections', collectionsRouter);
   api.use('/digital', digitalRouter);

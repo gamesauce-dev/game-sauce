@@ -725,3 +725,31 @@ if (!db.prepare('PRAGMA table_info(save_states)').all().some((c) => c.name === '
   }
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '71') ON CONFLICT(key) DO UPDATE SET value = '71'").run();
+
+/* ── v72: ROM Library age ratings (src/lib/ratings.js). game_ratings is kept apart from the games, by platform and file name and by fingerprint, so a rating outlives its game entry. The age_* columns
+   on roms are a copy of it; the triggers note each game that is added, removed, retitled, moved or fingerprinted, and flushRatings() brings the copy up to date. ── */
+db.exec(`CREATE TABLE IF NOT EXISTS game_ratings (
+  id INTEGER PRIMARY KEY, platform TEXT NOT NULL, file_key TEXT NOT NULL, sha1 TEXT,
+  admin_level INTEGER, admin_board TEXT, admin_at TEXT,
+  evidence TEXT, level INTEGER, board TEXT, source TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (platform, file_key)
+)`);
+db.exec('CREATE INDEX IF NOT EXISTS idx_game_ratings_sha1 ON game_ratings(sha1)');
+for (const [col, ddl] of [['age_level', 'INTEGER'], ['age_board', 'TEXT'], ['age_source', 'TEXT'], ['age_inherited', 'INTEGER NOT NULL DEFAULT 0']]) {
+  if (!db.prepare('PRAGMA table_info(roms)').all().some((c) => c.name === col)) db.exec(`ALTER TABLE roms ADD COLUMN ${col} ${ddl}`);
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_roms_versions ON roms(platform_id, sort_title)');
+db.exec('CREATE INDEX IF NOT EXISTS idx_roms_filename ON roms(platform_id, lower(filename))');
+db.exec(`CREATE TABLE IF NOT EXISTS rating_dirty (seq INTEGER PRIMARY KEY AUTOINCREMENT, rom_id INTEGER, platform_id INTEGER, sort_title TEXT, from_platform_id INTEGER)`);
+db.exec(`CREATE TRIGGER IF NOT EXISTS roms_rating_added AFTER INSERT ON roms BEGIN
+  INSERT INTO rating_dirty (rom_id, platform_id, sort_title) VALUES (new.id, new.platform_id, new.sort_title);
+END`);
+db.exec(`CREATE TRIGGER IF NOT EXISTS roms_rating_changed AFTER UPDATE OF platform_id, sort_title, filename, sha1 ON roms
+  WHEN old.platform_id IS NOT new.platform_id OR old.sort_title IS NOT new.sort_title OR old.filename IS NOT new.filename OR old.sha1 IS NOT new.sha1 BEGIN
+  INSERT INTO rating_dirty (rom_id, platform_id, sort_title, from_platform_id) VALUES (new.id, old.platform_id, old.sort_title, old.platform_id);
+END`);
+db.exec(`CREATE TRIGGER IF NOT EXISTS roms_rating_removed AFTER DELETE ON roms BEGIN
+  INSERT INTO rating_dirty (rom_id, platform_id, sort_title) VALUES (old.id, old.platform_id, old.sort_title);
+END`);
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '72') ON CONFLICT(key) DO UPDATE SET value = '72'").run();

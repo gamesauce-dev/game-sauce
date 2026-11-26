@@ -2,6 +2,8 @@
 // metadata providers can find the game. Works for any platform (arcade romsets first).
 import db from '../db.js';
 import { sortTitle, decodeEntities } from './metadata.js';
+import { ratingSystem, setAdminRating, flushRatings } from './ratings.js';
+import { parseTyped } from './ratingscale.js';
 
 /** Minimal RFC-4180 CSV parser (quotes, doubled quotes, CRLF, BOM). */
 export function parseCsv(text) {
@@ -35,6 +37,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   // The columns Settings > Game names > Export writes, so an exported file can be edited and imported again. Any of them may be missing.
   const FIELD_COLS = { developer: col('developer'), publisher: col('publisher'), genre: col('genre'), region: col('region'), revision: col('revision'), players: col('players'), rating: col('rating'), description: col('description') };
   const iTags = col('tags'), iSysItem = col('system_item'), iPlat = col('platform'), iCover = col('cover_file');
+  const iAge = col('age_rating');
   const hasDetails = Object.values(FIELD_COLS).some((i) => i >= 0) || iTags >= 0;
   const yes = (v) => /^(yes|y|true|1)$/i.test(String(v || '').trim());
   if (iRom < 0) throw Object.assign(new Error(`No "${romCol}" column. Columns found: ${rows[0].join(', ')}`), { status: 400 });
@@ -60,7 +63,7 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   for (const r of rows.slice(1)) {
     const rowPlat = slugOf(r); if (!rowPlat) continue;
     const k = rowPlat + '|' + keyOf(r[iRom]); const title = decodeEntities(String(r[iName] || '')).trim();
-    if (keyOf(r[iRom]) && title && !map.has(k)) map.set(k, { platform: rowPlat, coverFile: text(r, iCover), details: detailsOf(r), title, longTitle: iLong >= 0 ? decodeEntities(String(r[iLong] || '')).trim() : '', year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, romof: iRomOf >= 0 ? keyOf(r[iRomOf]) || null : null, devices: iDevices >= 0 ? [...new Set(String(r[iDevices] || '').split(/[;|,]/).map(keyOf).filter(Boolean))].join(',') || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
+    if (keyOf(r[iRom]) && title && !map.has(k)) map.set(k, { platform: rowPlat, coverFile: text(r, iCover), details: detailsOf(r), title, ageText: text(r, iAge), longTitle: iLong >= 0 ? decodeEntities(String(r[iLong] || '')).trim() : '', year: iYear >= 0 && /^\d{4}/.test(r[iYear] || '') ? Number(r[iYear].slice(0, 4)) : null, maker: iMaker >= 0 ? String(r[iMaker] || '').trim() || null : null, cloneof: iClone >= 0 ? keyOf(r[iClone]) || null : null, romof: iRomOf >= 0 ? keyOf(r[iRomOf]) || null : null, devices: iDevices >= 0 ? [...new Set(String(r[iDevices] || '').split(/[;|,]/).map(keyOf).filter(Boolean))].join(',') || null : null, // A machine marked is_arcade = yes is a real game: it is never System, even if it is also flagged BIOS or device
     // (e.g. the CPS3 sets share a BIOS but are playable). Otherwise BIOS/device, or is_arcade filled in as not-yes, means System.
     system: !(iArc >= 0 && yes(r[iArc])) && ((iBios >= 0 && yes(r[iBios])) || (iDev >= 0 && yes(r[iDev])) || (iArc >= 0 && String(r[iArc] || '').trim() !== '')) });
   }
@@ -69,6 +72,23 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
   const roms = wantSlugs.length ? db.prepare(`SELECT r.id, r.filename, r.title, p.slug AS slug FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE p.slug IN (${wantSlugs.map(() => '?').join(',')})`).all(...wantSlugs) : [];
   const hits = []; let unmatched = 0;
   for (const r of roms) { const m = map.get(r.slug + '|' + keyOf(r.filename)); if (m) hits.push({ id: r.id, filename: r.filename, from: r.title, ...m }); else unmatched++; }
+
+  // Age ratings: a filled cell that differs from what the game shows now becomes the admin's rating. The same value (an export brought back
+  // unchanged) is left alone, so fetched and inherited ratings stay what they were. A value that cannot be read changes nothing and is reported.
+  const ageChanges = [], badAges = [];
+  if (iAge >= 0) {
+    flushRatings();
+    const system = ratingSystem();
+    const now = db.prepare('SELECT age_level, age_board FROM roms WHERE id = ?');
+    for (const h of hits) {
+      if (!h.ageText) continue;
+      const typed = parseTyped(h.ageText, system);
+      if (!typed) { badAges.push(h.ageText); continue; }
+      const has = now.get(h.id);
+      if (has.age_level === typed.level && (!typed.named || typed.board === system || typed.board === has.age_board)) continue;
+      ageChanges.push({ id: h.id, level: typed.level, board: typed.board });
+    }
+  }
 
   const systemHits = hits.filter((h) => h.system);
   if (apply) {
@@ -117,6 +137,15 @@ export function importNames({ csvText, platform, romCol = 'rom_name', nameCol = 
         }
       })();
     }
+    // Last, so the ratings are filed under the names the games have now.
+    flushRatings();
+    const byRating = new Map();
+    for (const c of ageChanges) {
+      const k = `${c.level}|${c.board}`;
+      if (!byRating.has(k)) byRating.set(k, { level: c.level, board: c.board, ids: [] });
+      byRating.get(k).ids.push(c.id);
+    }
+    for (const g of byRating.values()) setAdminRating(g.ids, g.level, g.board);
   }
-  return { applied: apply, system_files: systemHits.length, hid: apply && hideSystem ? systemHits.length : 0, flagged: apply && flagSystem ? systemHits.length : 0, has_system_columns: iBios >= 0 || iDev >= 0 || iArc >= 0, has_cover_column: iCover >= 0, hits, csv_rows: rows.length - 1, roms_on_platform: roms.length, platforms: wantSlugs.length, platform_column: iPlat >= 0, matched: hits.length, unmatched, detail_columns: Object.entries(FIELD_COLS).filter(([, i]) => i >= 0).map(([f]) => f).concat(iTags >= 0 ? ['tags'] : []), details_rows: hits.filter((h) => Object.keys(h.details || {}).length).length, sample: hits.slice(0, 8).map(({ filename, from, title }) => ({ filename, from, title })) };
+  return { age_ratings: ageChanges.length, bad_age_ratings: badAges.length, bad_age_examples: [...new Set(badAges)].slice(0, 3), applied: apply, system_files: systemHits.length, hid: apply && hideSystem ? systemHits.length : 0, flagged: apply && flagSystem ? systemHits.length : 0, has_system_columns: iBios >= 0 || iDev >= 0 || iArc >= 0, has_cover_column: iCover >= 0, hits, csv_rows: rows.length - 1, roms_on_platform: roms.length, platforms: wantSlugs.length, platform_column: iPlat >= 0, matched: hits.length, unmatched, detail_columns: Object.entries(FIELD_COLS).filter(([, i]) => i >= 0).map(([f]) => f).concat(iTags >= 0 ? ['tags'] : [], iAge >= 0 ? ['age_rating'] : []), details_rows: hits.filter((h) => Object.keys(h.details || {}).length).length, sample: hits.slice(0, 8).map(({ filename, from, title }) => ({ filename, from, title })) };
 }

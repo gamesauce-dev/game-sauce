@@ -17,6 +17,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import Database from 'better-sqlite3';
 import { Parser } from 'saxen';
+import { ratingItem } from './ratingscale.js';
 
 const dataDir = () => process.env.GAMESAUCE_DATA_DIR || path.resolve('data');
 const lbDir = () => path.join(dataDir(), 'launchbox');
@@ -80,6 +81,7 @@ const toRecord = (g) => ({
   release_year: g.year || null,
   players: g.players || null,
   rating: g.rating || null,
+  age_ratings: [ratingItem('esrb', g.esrb, 'launchbox')].filter(Boolean),
   description: g.overview || null,
   cover_url: g.cover ? IMAGE_BASE + g.cover : null,
   has_cover: Boolean(g.cover),
@@ -120,6 +122,39 @@ export function launchboxFind(titles, slug, year = null) {
     return { ...toRecord(rows[0].g), matched_query: t };
   }
   return null;
+}
+
+/** Does the downloaded index hold age ratings? One made before they were kept does not: downloading it again adds them. */
+export function launchboxHasRatings() {
+  const c = open();
+  try { return Boolean(c && c.prepare('PRAGMA table_info(games)').all().some((x) => x.name === 'esrb')); } catch { return false; }
+}
+
+/**
+ * The ESRB ratings LaunchBox has for a game: of every entry on this platform whose name (or alternate name) is exactly the first of `titles`
+ * that has any. All of them, not one: several releases can share a name and many say "Not Rated". [{ board, level, source }].
+ */
+export function launchboxRatings(titles, slug) {
+  const c = open();
+  const plats = LB_PLATFORMS[slug];
+  if (!c || !plats || !launchboxHasRatings()) return [];
+  const marks = plats.map(() => '?').join(',');
+  const direct = c.prepare(`SELECT esrb FROM games WHERE platform IN (${marks}) AND (norm = ? OR rnorm = ?)`);
+  const alt = c.prepare(`SELECT g.esrb FROM alt a JOIN games g ON g.id = a.game_id WHERE g.platform IN (${marks}) AND (a.norm = ? OR a.rnorm = ?)`);
+  for (const t of titles) {
+    const { norm, rnorm } = keysOf(t);
+    if (norm.length < 2) continue;
+    let rows = direct.all(...plats, norm, rnorm);
+    if (!rows.length) rows = alt.all(...plats, norm, rnorm);
+    if (rows.length) return rows.map((r) => ratingItem('esrb', r.esrb, 'launchbox')).filter(Boolean);
+  }
+  return [];
+}
+
+/** Are two names the same game's? The rule LaunchBox matching uses: case, punctuation and a leading "the" aside, roman numerals read as digits. */
+export function sameName(a, b) {
+  const x = keysOf(a), y = keysOf(b);
+  return x.norm.length >= 2 && (x.norm === y.norm || x.rnorm === y.rnorm);
 }
 
 /** Name search for manual matching: games whose name contains the text, exact and prefix matches first. */
@@ -208,11 +243,11 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
   out.pragma('synchronous = OFF');
   out.exec(`
     CREATE TABLE games (id INTEGER PRIMARY KEY, platform TEXT NOT NULL, name TEXT NOT NULL, norm TEXT, rnorm TEXT, year INTEGER,
-      overview TEXT, genres TEXT, developer TEXT, publisher TEXT, players TEXT, rating REAL, cover TEXT, shot TEXT, spine TEXT, disc TEXT, back TEXT);
+      overview TEXT, genres TEXT, developer TEXT, publisher TEXT, players TEXT, rating REAL, cover TEXT, shot TEXT, spine TEXT, disc TEXT, back TEXT, esrb TEXT);
     CREATE TABLE alt (game_id INTEGER NOT NULL, norm TEXT, rnorm TEXT);
     CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
   `);
-  const insGame = out.prepare('INSERT OR IGNORE INTO games (id, platform, name, norm, rnorm, year, overview, genres, developer, publisher, players, rating) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+  const insGame = out.prepare('INSERT OR IGNORE INTO games (id, platform, name, norm, rnorm, year, overview, genres, developer, publisher, players, rating, esrb) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
   const insAlt = out.prepare('INSERT INTO alt (game_id, norm, rnorm) VALUES (?,?,?)');
   out.exec('BEGIN');
 
@@ -242,7 +277,7 @@ export async function importLaunchBox(xml, { totalBytes = 0, onProgress = () => 
         const players = Number(rec.MaxPlayers) > 0 ? String(Number(rec.MaxPlayers)) : null;
         insGame.run(id, rec.Platform, rec.Name, norm, rnorm, year, rec.Overview || null,
           (rec.Genres || '').split(';').map((s) => s.trim()).filter(Boolean).join(', ') || null,
-          rec.Developer || null, rec.Publisher || null, players, rating ? Math.round(rating * 10) / 10 : null);
+          rec.Developer || null, rec.Publisher || null, players, rating ? Math.round(rating * 10) / 10 : null, rec.ESRB || null);
         ids.add(id);
         games++;
       }
@@ -350,6 +385,7 @@ export function launchboxStatus() {
     has_discs: metaGet(c, 'discs') !== null,     // false for an index made before disc art was kept: update it to get discs
     backs: Number(metaGet(c, 'backs') || 0),
     has_backs: metaGet(c, 'backs') !== null,     // false for an index made before box backs were kept: update it to get them
+    has_ratings: launchboxHasRatings(),          // false for an index made before age ratings were kept: update it to get them
     imported_at: metaGet(c, 'imported_at'),
     source_modified: metaGet(c, 'source_modified'),
     bytes: size

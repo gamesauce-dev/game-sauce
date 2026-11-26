@@ -6,6 +6,8 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import db from '../db.js';
 import { notHiddenSql } from './visibility.js';
+import { ratingSystem, flushRatings } from './ratings.js';
+import { withBoard, RC_LEVEL } from './ratingscale.js';
 
 /** One CSV cell: quoted when it holds a comma, quote or line break; a leading = + - @ is defused so a spreadsheet never runs it. */
 export function csvCell(v) {
@@ -18,7 +20,7 @@ export function csvCell(v) {
 // imported again. The rest are the details window's editable fields, then the rest of what is known about the game.
 export const COLUMNS = [
   'rom_name', 'short_game_name', 'platform', 'platform_name', 'where', 'path', 'size_bytes',
-  'developer', 'publisher', 'genre', 'region', 'revision', 'year', 'players', 'rating', 'description', 'tags',
+  'developer', 'publisher', 'genre', 'region', 'revision', 'year', 'players', 'rating', 'age_rating', 'age_rating_from', 'description', 'tags',
   'cover_file', 'metadata_source', 'dat_status', 'crc32', 'md5', 'sha1', 'system_item', 'hidden_for_everyone'
 ];
 
@@ -50,7 +52,7 @@ function query({ platform = '', includeHidden = false } = {}) {
   if (!includeHidden) where.push(notHiddenSql());
   return db.prepare(`
     SELECT r.id, r.title, r.filename, r.size_bytes, r.region, r.revision, r.release_year, r.developer, r.publisher, r.genre, r.players,
-           r.rating, r.description, r.cover_path, r.meta_source, r.dat_status, r.crc32, r.md5, r.sha1, r.is_system, r.hidden_all,
+           r.rating, r.age_level, r.age_board, r.age_source, r.age_inherited, r.description, r.cover_path, r.meta_source, r.dat_status, r.crc32, r.md5, r.sha1, r.is_system, r.hidden_all,
            r.storage_path, r.source_id, r.in_place, p.slug AS platform, p.name AS platform_name, s.name AS source_name,
            (SELECT group_concat(t.name, '; ') FROM rom_tags rt JOIN tags t ON t.id = rt.tag_id WHERE rt.rom_id = r.id) AS tags
     FROM roms r JOIN platforms p ON p.id = r.platform_id LEFT JOIN sources s ON s.id = r.source_id
@@ -62,12 +64,18 @@ function query({ platform = '', includeHidden = false } = {}) {
 export function* csvLines(opts) {
   yield '\uFEFF' + COLUMNS.join(',') + '\r\n';
   const used = new Set();
+  flushRatings();
+  const system = ratingSystem();
   for (const r of query(opts)) {
+    // age_rating is what the app shows, with its board so it reads the same under any setting; age_rating_from says where it came from.
+    const age = r.age_level ? withBoard(system, r.age_level) : '';
+    const converted = r.age_board !== system && r.age_level !== RC_LEVEL;
+    const ageFrom = r.age_level ? [r.age_source, converted ? `converted from ${withBoard(r.age_board, r.age_level)}` : '', r.age_inherited ? 'inherited' : ''].filter(Boolean).join(', ') : '';
     const hasCover = Boolean(r.cover_path && fs.existsSync(r.cover_path));
     const cover = hasCover ? coverName(r, coverExt(r.cover_path), used).split('/').slice(1).join('/') : '';
     const cells = [
       r.filename, r.title, r.platform, r.platform_name, r.source_id ? `source: ${r.source_name || r.source_id}` : 'vault (imported)',
-      r.storage_path, r.size_bytes, r.developer, r.publisher, r.genre, r.region, r.revision, r.release_year, r.players, r.rating,
+      r.storage_path, r.size_bytes, r.developer, r.publisher, r.genre, r.region, r.revision, r.release_year, r.players, r.rating, age, ageFrom,
       r.description, r.tags, cover, r.meta_source, r.dat_status, r.crc32, r.md5, r.sha1, r.is_system ? 'yes' : '', r.hidden_all ? 'yes' : ''
     ];
     yield cells.map(csvCell).join(',') + '\r\n';

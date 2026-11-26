@@ -155,6 +155,12 @@ export const ROUTES = {
     'GET /emulators/vault/:id/download'
   ],
   admin: [
+    'GET /ratings',
+    'PUT /ratings/system',
+    'POST /ratings/set',
+    'GET /ratings/fetch',
+    'POST /ratings/fetch',
+    'DELETE /ratings/fetch',
     'PUT /auth/policy',
     'GET /auth/users',
     'POST /auth/users',

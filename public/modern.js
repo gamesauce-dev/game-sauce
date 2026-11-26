@@ -429,7 +429,7 @@ function toolClick(e) {
       (v) => { sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); });
   } else if (b.id === 'tl-more') {
     const ic = JSON.parse($('#mb-library-tools').dataset.icons || '{}');
-    const items = [['locked', 'Locked games', ic.lock, 'protected from deletion; unlock to delete'], ['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'No source', ic.orphans, 'a scan of their folder reconnects them'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched'], ['missing', 'Missing files', ic.issue, 'the file is gone from its folder']]
+    const items = [['locked', 'Locked games', ic.lock, 'protected from deletion; unlock to delete'], ['system', 'System items', ic.system, 'BIOS and devices'], ['orphan', 'No source', ic.orphans, 'a scan of their folder reconnects them'], ['unmatched', 'Needs a match', ic.issue, 'no provider matched'], ['unrated', 'Unrated games', ic.issue, 'no age rating yet'], ['converted', 'Converted ratings', ic.issue, 'rated by another country\'s board'], ['missing', 'Missing files', ic.issue, 'the file is gone from its folder']]
       .filter(([k]) => { const t = q(`[data-toggle="${k}"]`); return t && !t.classList.contains('hidden'); });
     if (!items.length) return true;
     openPop(b, items.map(([k, label, svg, sub]) => `<button class="mb-menu-item${q(`[data-toggle="${k}"]`)?.classList.contains('is-active') ? ' on' : ''}" role="menuitemcheckbox" data-pick="${k}">${svg}<span>${label}<small>${sub}</small></span></button>`).join(''),
@@ -448,7 +448,7 @@ function syncTools() {
   $('#tl-hidden')?.classList.toggle('is-on', on('[data-toggle="hidden"]'));
   $('#tl-nocover')?.classList.toggle('is-on', on('[data-toggle="nocover"]'));
   $('#tl-select')?.classList.toggle('is-on', on('#select-toggle'));
-  const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'locked', 'unmatched', 'missing'].some((k) => on(`[data-toggle="${k}"]`)));
+  const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'locked', 'unmatched', 'unrated', 'converted', 'missing'].some((k) => on(`[data-toggle="${k}"]`)));
   const sort = $('#tl-sort'); if (sort) { const s = q('#sort'); sort.classList.toggle('is-on', Boolean(s && s.value !== 'title')); sort.title = 'Sort: ' + (s?.selectedOptions?.[0]?.textContent || ''); }
   const search = $('#tl-q'), real = q('#search'); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
   const f = $('#tl-fetch');
@@ -771,7 +771,7 @@ const ICON_MAP = [
   // Collections
   ['#new-collection', 'add-collection'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
   // Library selection bar
-  ['#bulk-addcoll', 'add-collection'], ['#bulk-md-btn', 'disc'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-lock-btn', 'lock'], ['#bulk-cancel', 'done'],
+  ['#bulk-addcoll', 'add-collection'], ['#bulk-rate-btn', 'security'], ['#bulk-md-btn', 'disc'], ['#bulk-delete-btn', 'delete'], ['#bulk-system-btn', 'system'], ['#bulk-clearmatch-btn', 'clear-reset'], ['#bulk-lock-btn', 'lock'], ['#bulk-cancel', 'done'],
   // Settings: account
   ['#profile-upload', 'upload-cover'], ['#profile-remove', 'delete'], ['#welcome-again', 'welcome-tour-2'], ['#revoke-others', 'sign-out-devices'],
   // Settings: health, tools, maintenance

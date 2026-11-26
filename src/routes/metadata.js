@@ -297,13 +297,14 @@ router.post('/:id/apply', requireAdmin, async (req, res, next) => {
       description: cand.description ?? null,
       cover_url: cand.cover_url || null,
       media: cand.cover_url ? { box2d: cand.cover_url } : {},
+      age_ratings: (Array.isArray(cand.age_ratings) ? cand.age_ratings : []).filter((a) => ['igdb', 'launchbox', 'thegamesdb'].includes(a?.source)),
       source: cand.source || 'thegamesdb',
       source_id: cand.game_id ? String(cand.game_id) : null,
       cover_source: cand.source || 'thegamesdb',
       has_cover: Boolean(cand.cover_url)
     };
 
-    const rom = await applyMetadataRecord(id, meta, req.user?.id);
+    const rom = await applyMetadataRecord(id, meta, req.user?.id, { picked: true });   // chosen by hand: its age ratings are this game's, whatever it is called
     res.json({ updated: true, source: meta.source, rom });
   } catch (err) { next(err); }
 });

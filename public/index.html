@@ -171,6 +171,8 @@
           <button class="toggle-pill" data-toggle="hidden" title="Games you have hidden from your own view (other people still see them)">◌ Hidden</button>
           <button class="toggle-pill" data-toggle="nocover" title="Show only games that have no cover picture yet">▢ No cover</button>
           <button class="toggle-pill" data-toggle="system" title="BIOS, device and computer entries: kept and downloadable, but out of the main library">⚙ System</button>
+          <button class="toggle-pill hidden" data-toggle="unrated" title="Show only games with no age rating yet">◇ Unrated</button>
+          <button class="toggle-pill hidden" data-toggle="converted" title="Show only games whose age rating was converted from another country's rating">⇄ Converted</button>
           <button class="toggle-pill hidden" id="reset-filters" title="Clear the search, the platform choice and every filter: back to the whole library">↺ Reset</button>
           <button class="toggle-pill hidden" data-toggle="locked" title="Games you have locked (Keep): protected from deletion. Select them and unlock to be able to delete them.">🔒 Locked</button>
           <button class="toggle-pill" data-toggle="orphan" title="Games that are no longer attached to any source folder (for example a locked game whose source was removed). Scanning a source that covers their folder reconnects them.">⛁ No source</button>
@@ -199,6 +201,7 @@
           <button class="btn btn-sm hidden" id="bulk-addcoll">＋ Add to collection</button>
           <button class="btn btn-sm hidden" id="bulk-hide-btn" title="Hide the selected games (for an admin: members will not see them either; nothing is deleted)">◌ <span class="bh-label">Hide</span> selected</button>
           <button class="btn btn-sm hidden" id="bulk-system-btn" title="Move the selected games to System (or back to the library)">⚙ <span class="bs-label">Mark as System</span></button>
+          <button class="btn btn-sm hidden" id="bulk-rate-btn" title="Set the age rating of the selected games">◈ Set rating</button>
           <button class="btn btn-sm hidden" id="bulk-md-btn" title="Say the selected games are part of a multi-disc set (Play on this PC cannot start those)">💿 Multi-disc</button>
           <button class="btn btn-sm hidden" id="bulk-lock-btn" title="Lock / Unlock the selected games (a locked game cannot be deleted)">🔒 <span class="bl-label">Lock</span> selected</button>
           <button class="btn btn-sm hidden" id="bulk-clearmatch-btn" title="Remove the metadata match from the selected games (wrong cover, wrong details) so they can be matched again">⟲ Clear match</button>
@@ -805,7 +808,7 @@
 
       <div class="panel hidden" id="mod-names">
         <h3>CSV tools <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">Many romsets (FinalBurn Neo, MAME…) are named like <code>sf2ue.zip</code>, which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then <b>Fetch metadata</b> can find their covers. If the file also has the columns Export writes (developer, publisher, genre, region, revision, year, players, rating, description, tags), those are imported too: a filled cell replaces what the game has, an empty cell leaves it alone. Add the zip from Export covers as well and the <code>cover_file</code> column says which picture is each game's cover, so one Preview and one Apply bring in the details and the pictures together. Preview shows what would change before anything is saved. Files are never touched.</p>
+        <p class="hint" style="margin-top:0">Many romsets (FinalBurn Neo, MAME…) are named like <code>sf2ue.zip</code>, which no cover database understands. Upload a CSV that pairs each file name with the real game name; game-sauce renames the matching games on one platform, then <b>Fetch metadata</b> can find their covers. If the file also has the columns Export writes (developer, publisher, genre, region, revision, year, players, rating, age_rating, description, tags), those are imported too: a filled cell replaces what the game has, an empty cell leaves it alone. Add the zip from Export covers as well and the <code>cover_file</code> column says which picture is each game's cover, so one Preview and one Apply bring in the details and the pictures together. Preview shows what would change before anything is saved. Files are never touched.</p>
         <div class="edit-form" style="grid-template-columns:1fr 1fr;gap:10px;display:grid">
           <label class="field"><span>Platform</span><select id="names-platform" class="select"></select></label>
           <label class="field"><span>CSV file</span><input type="file" id="names-file" accept=".csv,text/csv" class="file-input" /></label>
@@ -833,7 +836,7 @@
 
         <div class="export-box">
           <h4>Export your game data</h4>
-          <p class="hint" style="margin-top:0">Downloads a CSV with one row per game: file name, title, platform, where the file lives (a source folder or the vault), size, developer, publisher, genre, region, revision, year, players, rating, description, tags, the cover's file name, where the details came from, and the checksums. The first two columns match the import above, so you can edit the file and bring it back. The covers come as a zip, each picture named after its game's file. Hidden-from-everyone games are left out unless you tick the box.</p>
+          <p class="hint" style="margin-top:0">Downloads a CSV with one row per game: file name, title, platform, where the file lives (a source folder or the vault), size, developer, publisher, genre, region, revision, year, players, rating, age rating, description, tags, the cover's file name, where the details came from, and the checksums. The first two columns match the import above, so you can edit the file and bring it back. The covers come as a zip, each picture named after its game's file. Hidden-from-everyone games are left out unless you tick the box.</p>
           <div class="export-row">
             <label class="field"><span>Platform</span><select id="export-platform" class="select"><option value="">All platforms</option></select></label>
             <label class="policy-row"><input type="checkbox" id="export-hidden" /> <span>Include games hidden from everyone</span></label>
@@ -842,6 +845,28 @@
           </div>
           <p class="hint" id="export-summary" style="margin-top:8px"></p>
         </div>
+      </div>
+
+      <div class="panel hidden" id="mod-ratings">
+        <h3>Age ratings <span class="pill warn admin-only">admin</span></h3>
+        <p class="hint" style="margin-top:0">Age ratings for the games in the ROM Library. They do not limit what anyone can see yet. A game's rating is in its details, where you can change it; to rate several at once, select them in the Library and press <b>Set rating</b>.</p>
+        <label class="field" style="max-width:420px"><span>Classification</span><select id="age-system" class="select"></select></label>
+        <p class="hint">Which country's ratings are shown. When no source has that rating for a game, another country's rating is converted, rounding to the stricter one, and marked as converted. RC means refused classification.</p>
+        <div id="age-counts" class="counts"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button type="button" class="btn btn-sm" id="age-show-unrated">Show unrated games</button>
+          <button type="button" class="btn btn-sm" id="age-show-converted">Show converted ratings</button>
+        </div>
+        <h4 style="margin:1.2rem 0 0.3rem">Fetch ratings</h4>
+        <p class="hint" style="margin-top:0">Asks IGDB and the downloaded LaunchBox database for each game's rating, by its name. Only ratings change: titles, covers and other details stay as they are. A fetched rating can become stricter but is never lowered or removed, and a rating an admin set is never touched.</p>
+        <div class="export-row">
+          <label class="field"><span>Platform</span><select id="age-platform" class="select"><option value="">All platforms</option></select></label>
+          <label class="policy-row"><input type="checkbox" id="age-recheck" /> <span>Also check games that already have a rating</span></label>
+          <button type="button" class="btn btn-primary" id="age-fetch">Fetch ratings</button>
+          <button type="button" class="btn hidden" id="age-stop">Stop</button>
+        </div>
+        <p class="hint" id="age-job" role="status"></p>
+        <p class="hint" id="age-sources"></p>
       </div>
 
       <div class="panel hidden" id="mod-dat">

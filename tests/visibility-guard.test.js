@@ -34,6 +34,7 @@ const READS_ROMS = {
   'src/lib/hashjob.js': 'server job', 'src/lib/health.js': 'admin only', 'src/lib/mamenames.js': 'server job', 'src/lib/namecsv.js': 'admin only', 'src/lib/reports.js': 'admin only',
   'src/lib/launch.js': 'the game a launch code names: limits are checked again when the code is used',
   'src/lib/messages.js': 'a shared game is checked for sender and reader',
+  'src/lib/ratings.js': 'age ratings: copied onto games and counted for the admin; no list of games is sent from here', 'src/lib/ratingfetch.js': "admin only (Fetch ratings, and ratings after an admin's lookup)",
   'src/lib/restore.js': 'admin only', 'src/lib/romdeps.js': 'companion files: the caller says which games may be sent',
   'src/lib/saves.js': 'own saves: a game is named only when visible',
   'src/lib/scanner.js': 'server job', 'src/lib/stats.js': 'admin only', 'src/lib/storageclean.js': 'admin only',

@@ -25,6 +25,8 @@ import { romFiles, romFile, dropRomFiles } from '../lib/romfiles.js';
 import { findCompanions, companionFingerprint } from '../lib/romdeps.js';
 import { listSaves, getSave, putSave, putScreenshot, deleteSave, purgeSaveFiles, MAX_BYTES } from '../lib/saves.js';
 import { sendImage } from '../lib/webp.js';
+import { ageOf, ratingSystem, convertedSql, flushRatings } from '../lib/ratings.js';
+import { ratingsAfterLookup } from '../lib/ratingfetch.js';
 import {
   placeRom, tempPath, romStoragePath,
   removeRomFile, removeCoverFile, saveCover
@@ -59,6 +61,7 @@ const NAME_LONG_SQL = `COALESCE((SELECT value FROM user_prefs up WHERE up.user_i
 const ROM_COLUMNS = `
   r.id, CASE WHEN ${NAME_LONG_SQL} THEN r.long_title ELSE r.title END AS title, r.title AS short_title, r.long_title, r.sort_title, r.filename, r.size_bytes, r.region, r.revision,
   r.release_year, r.developer, r.publisher, r.genre, r.players, r.rating,
+  r.age_level, r.age_board, r.age_source, r.age_inherited,
   r.description, r.cover_path, r.crc32, r.md5, r.sha1,
   r.meta_source, r.meta_synced_at, r.play_count, r.broken, r.multidisc_override,
   CASE WHEN EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = @uid) THEN 1 ELSE 0 END AS favorite, r.play_override, r.cover_locked,
@@ -111,13 +114,17 @@ function withTags(rows, viewer) {
     if (f.kind !== 'manual') (own.get(f.rom_id).art_from ||= {})[f.kind] = f.source || null;   // 'folder' = the person's own, 'screenscraper' = fetched
     if (f.kind === 'manual') own.get(f.rom_id).manual_type = f.type;   // application/pdf, or a picture
   }
-  return rows.map((r) => {
+  const system = ratingSystem();
+  return rows.map((row) => {
+    const { age_level, age_board, age_source, age_inherited, ...r } = row;
+    const age = ageOf(row, system);   // the age rating as one thing: null when unrated
     let media = null;
     if (r.provider_media) {
       try { media = JSON.parse(r.provider_media); } catch { media = null; }
     }
     return forViewer({
       ...r,
+      age,
       tags: byRom.get(r.id) || [],
       ...(own.get(r.id) || {}),
       multidisc: isMultiDisc(r) ? 1 : 0,   // part of a multi-disc set (by its name, or as an admin set it)
@@ -174,6 +181,7 @@ async function applyProviderMedia(meta, sha1) {
 }
 
 function romById(id, uid = null, viewer = null) {
+  flushRatings();   // the game as it is answered after a change shows its age rating as it is now
   const row = db.prepare(`
     SELECT ${ROM_COLUMNS} FROM roms r
     JOIN platforms p ON p.id = r.platform_id
@@ -200,8 +208,8 @@ function romById(id, uid = null, viewer = null) {
  * auto-matcher and the manual "identify this game" flow, so both paths write
  * the same columns in the same way.
  */
-export async function applyMetadataRecord(id, meta, uid = null) {
-  const rom = db.prepare('SELECT sha1, cover_path, cover_locked FROM roms WHERE id = ?').get(id);
+export async function applyMetadataRecord(id, meta, uid = null, { picked = false } = {}) {
+  const rom = db.prepare('SELECT title, sha1, cover_path, cover_locked FROM roms WHERE id = ?').get(id);
   if (!rom) throw Object.assign(new Error('ROM not found'), { status: 404 });
 
   // Provider text sometimes arrives with web-page codes ("&amp;"): store plain characters.
@@ -224,6 +232,7 @@ export async function applyMetadataRecord(id, meta, uid = null) {
     meta.players, meta.rating, meta.description,
     meta.cover_url, coverPath, mediaJson, meta.source, id
   );
+  await ratingsAfterLookup(id, { title: rom.title, meta, matched: meta.title, picked });
   return romById(id, uid, { role: 'admin' });   // only the admin's routes (and the server's own jobs) put a match on a Library game
 }
 
@@ -239,6 +248,7 @@ export async function applyMetadataRecord(id, meta, uid = null) {
  * @returns {{ fileDeleted: boolean }}
  */
 function deleteRomRow(rom, { deleteFile = false } = {}) {
+  flushRatings();   // the rating's record learns what it needs from the game (a new fingerprint, say) before the game goes
   purgeSaveFiles({ romId: rom.id });
   dropRomFiles(rom.id);   // its imported spine, disc, back and manual
   const stmts = [
@@ -448,6 +458,7 @@ router.use('/bulk', bulkRouter);
 /* ---------------------------------------------------------------- list */
 
 router.get('/', (req, res) => {
+  flushRatings();   // games added or retitled since last time get their age ratings before the list is read (and filtered by them)
   const {
     q, platform, genre, region, favorite, tag, source, family,
     sort = 'title', limit = 200, offset = 0, year_min, year_max
@@ -486,6 +497,9 @@ router.get('/', (req, res) => {
   if (req.query.collection) { where.push('EXISTS (SELECT 1 FROM collection_roms cr2 JOIN collections c2 ON c2.id = cr2.collection_id WHERE cr2.rom_id = r.id AND cr2.collection_id = @collection AND c2.user_id = @uid)'); params.collection = Number(req.query.collection); }   // one of your own collections (Big Screen)
   if (source) { where.push('r.source_id = @source'); params.source = Number(source); }
   if (family) { where.push('p.family = @family'); params.family = family; }
+  // Age ratings, the admin's two worklists: games with no rating, and games whose rating was converted from another board's.
+  if (req.user?.role === 'admin' && req.query.age === 'unrated') where.push('r.age_level IS NULL');
+  if (req.user?.role === 'admin' && req.query.age === 'converted') where.push(convertedSql('r'));
   if (req.query.dat_status) { where.push('r.dat_status = @dat_status'); params.dat_status = req.query.dat_status; }
   // Hidden ROMs are excluded by default so they disappear from every view that
   // does not ask for them; hidden=only is the filter that finds them again.
@@ -656,6 +670,7 @@ router.get('/facets', (req, res) => {
  * Hidden games and games that cannot be played any more are left out. */
 router.get('/recently-played', (req, res) => {
   const lim = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
+  flushRatings();
   const rows = db.prepare(`
     SELECT ${ROM_COLUMNS}, MAX(d.id) AS last_play_id, MAX(d.created_at) AS last_played_at, COUNT(*) AS plays
     FROM downloads d
@@ -1454,8 +1469,10 @@ router.post('/upload', requireAdmin, upload.array('roms', 50), async (req, res, 
             meta.players, meta.rating, meta.description,
             meta.cover_url, coverPath, mediaJson, meta.source, romId
           );
+          await ratingsAfterLookup(romId, { title: parsed.title, meta, matched: meta.title });
         }
       }
+      flushRatings();
 
       created.push(romById(romId, req.user?.id, req.user));
     } catch (err) {

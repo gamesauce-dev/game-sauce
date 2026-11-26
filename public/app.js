@@ -15,6 +15,7 @@ import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
 import * as messages from './messages.js';
 import * as reports from './reports.js';   // Settings > Reports
+import { ageLine, fillAgePicker, rateMany, initRatingsPanel } from './ratings-ui.js';
 import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 import { initDescScroll } from './descscroll.js';   // a long description scrolls itself
 import './pwreveal.js';   // the eye in password boxes
@@ -45,6 +46,7 @@ const state = {
   desc: null,      // 'none': games with no description (from Settings > Reports)
   matched: null,   // 'yes' | 'no': from the Stats totals
   incl: null,      // 'all' (hidden and System games too) | 'hidden' (hidden games too): the Stats page counts them, so its links must
+  age: null,       // admin: 'unrated' | 'converted' (age ratings)
   selectMode: false,
   selected: new Set(),
   collections: [],
@@ -60,7 +62,7 @@ let activeToolsModule = null; // which Tools tile is open
 let activeSettingsModule = null; // which Settings tile is open (declared early: saveNav reads it)
 const NAV_KEY = 'gamesauce_nav';
 const NAV_FIELDS = ['platform', 'extraPlatforms', 'q', 'sort', 'density', 'tag', 'genre', 'favorite', 'source', 'sourceName',
-  'missing', 'hidden', 'orphan', 'locked', 'unmatched', 'datStatus', 'cover', 'matched', 'incl'];
+  'missing', 'hidden', 'orphan', 'locked', 'unmatched', 'datStatus', 'cover', 'matched', 'incl', 'age'];
 function saveNav() {
   try {
     const snap = { view: state.view, settingsModule: activeSettingsModule, toolsModule: activeToolsModule };
@@ -208,6 +210,7 @@ function confirmChoice({ title = 'Choose', body = '', choices = [] } = {}) {
   bodyEl.textContent = body;
   checkWrap.classList.add('hidden');
 
+  actions.style.flexWrap = 'wrap';   // many choices (the age ratings) take a second line
   // Swap the stock OK/Cancel for one button per choice + a cancel.
   const original = [...actions.children];
   actions.innerHTML = '';
@@ -503,6 +506,7 @@ async function loadPlatforms() {
   syncOrphanToggle();
   syncUnmatchedToggle();
   document.querySelector('[data-toggle="locked"]')?.classList.toggle('hidden', authState.user?.role !== 'admin');
+  $$('[data-toggle="unrated"], [data-toggle="converted"]').forEach((b) => b.classList.toggle('hidden', authState.user?.role !== 'admin'));
   document.querySelector('[data-toggle="missing"]')?.classList.toggle('hidden', authState.user?.role !== 'admin' || !(stats.library.missing || state.missing));
 }
 
@@ -548,13 +552,13 @@ function renderLibHeading() {
 function filtersActive() {
   return Boolean(state.q || state.platform !== 'all' || (state.extraPlatforms || []).length || state.tag || state.genre || state.favorite
     || state.source || state.missing || state.hidden || state.system || state.orphan || state.locked || state.unmatched
-    || state.datStatus || state.cover || state.desc || state.matched || state.incl);
+    || state.datStatus || state.cover || state.desc || state.matched || state.incl || state.age);
 }
 /** Back to the whole library: search cleared, every platform and filter off. Sort and tile size stay as the person set them. */
 async function resetFilters() {
   state.azOffset = 0; state.azLetter = null; state.azFor = null;   // the list starts at its beginning again
   Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null, libKey: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null, age: null, libKey: null });
   const sb = $('#search'); if (sb) sb.value = '';
   const tq = $('#tl-q'); if (tq) tq.value = '';
   const g = $('#grid'); if (g) g.scrollTop = 0;
@@ -574,6 +578,7 @@ function activeFilterChips() {
   if (state.missing) chips.push({ label: 'Missing files', clear: () => { state.missing = false; } });
   if (state.datStatus) chips.push({ label: `DAT: ${state.datStatus}`, clear: () => { state.datStatus = null; } });
   if (state.incl) chips.push({ label: state.incl === 'all' ? 'Including hidden and System games' : 'Including hidden games', clear: () => { state.incl = null; } });
+  if (state.age) chips.push({ label: state.age === 'unrated' ? 'No age rating' : 'Converted age rating', clear: () => { state.age = null; } });
   if (state.cover) chips.push({ label: state.cover === 'none' ? 'No cover' : 'With a cover', clear: () => { state.cover = null; } });
   if (state.desc) chips.push({ label: 'No description', clear: () => { state.desc = null; } });
   if (state.matched) chips.push({ label: state.matched === 'yes' ? 'Matched by a provider or DAT' : 'Name from the file only', clear: () => { state.matched = null; } });
@@ -656,6 +661,7 @@ async function loadLibrary() {
   if (state.incl && !orphanOnly && !unmatchedOnly && !state.system && !state.hidden) { params.set('hidden', 'all'); if (state.incl === 'all') params.set('system', 'all'); }
   if (state.cover) params.set('cover', state.cover === 'none' ? '0' : '1');
   if (state.desc) params.set('desc', '0');
+  if (state.age && authState.user?.role === 'admin') params.set('age', state.age);
   if (state.matched) params.set('matched', state.matched === 'yes' ? '1' : '0');
   if (unmatchedOnly) { params.set('unmatched', 'only'); params.set('hidden', 'all'); }
   else if (orphanOnly) { params.set('orphan', 'only'); params.set('hidden', 'all'); }
@@ -1228,6 +1234,7 @@ function syncSelectUI() {
   $('#bulk-clearmatch-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $('#bulk-lock-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $('#bulk-md-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
+  $('#bulk-rate-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');
   $$('.bl-label').forEach((l) => { l.textContent = state.locked ? 'Unlock' : 'Lock'; });
   $$('.bs-label').forEach((l) => { l.textContent = state.system ? 'Back to library' : 'Mark as System'; });
   $('#bulk-delete-btn')?.classList.toggle('hidden', n === 0 || authState.user?.role !== 'admin');   // only an admin deletes games
@@ -1318,6 +1325,16 @@ async function bulkMultiDiscSelected() {
   } catch (err) { toast(err.message, true); }
 }
 
+// The admin's age rating for every selected game.
+async function bulkRateSelected() {
+  const ids = [...state.selected];
+  if (!ids.length) return toast('Select some tiles first', true);
+  if (!(await rateMany(ids, { api, toast, confirmChoice, confirmDialog }))) return;
+  state.selected.clear();
+  await loadLibrary();
+  syncSelectUI();
+}
+
 async function bulkDeleteSelected() {
   const ids = [...state.selected];
   if (!ids.length) return toast('Select some tiles first', true);
@@ -1374,6 +1391,7 @@ function syncFilterToggles() {
       : key === 'orphan' ? state.orphan
       : key === 'locked' ? state.locked
       : key === 'unmatched' ? state.unmatched
+      : key === 'unrated' || key === 'converted' ? state.age === key
       : key === 'missing' ? state.missing : false;
     btn.classList.toggle('is-active', Boolean(on));
   });
@@ -1411,6 +1429,7 @@ $$('[data-toggle]').forEach((btn) => btn.addEventListener('click', () => {
   else if (btn.dataset.toggle === 'hidden') { state.hidden = !state.hidden; if (state.hidden) state.system = false; }
   else if (btn.dataset.toggle === 'system') { state.system = !state.system; if (state.system) state.hidden = false; }
   else if (btn.dataset.toggle === 'nocover') state.cover = state.cover === 'none' ? null : 'none';
+  else if (btn.dataset.toggle === 'unrated' || btn.dataset.toggle === 'converted') state.age = state.age === btn.dataset.toggle ? null : btn.dataset.toggle;
   else if (btn.dataset.toggle === 'orphan') state.orphan = !state.orphan;
   else if (btn.dataset.toggle === 'locked') state.locked = !state.locked;
   else if (btn.dataset.toggle === 'unmatched') state.unmatched = !state.unmatched;
@@ -1592,6 +1611,7 @@ async function openDetail(id) {
     ['Region', rom.region || '—'],
     ['Revision', rom.revision || '—'],
     ['Rating', rom.rating ? `${Number(rom.rating).toFixed(1)} / 5` : '—'],
+    ['Age rating', ageLine(rom.age)],
     ['File', `<span class="mono">${esc(rom.filename)}</span>`],
     ...(canEdit ? [['Location', rom.source_path ? `<span class="mono">${esc(rom.source_path)}</span>` : '—']] : []),   // folders on the server are sent to the admin only
     ['Size', fmtBytes(rom.size_bytes)],
@@ -1702,6 +1722,7 @@ async function openDetail(id) {
 
     ${canEdit ? `
     <div class="section-label">Edit</div>
+    <div class="edit-form" id="age-picker" style="margin-bottom:0.9rem"></div>
     <form class="edit-form" id="edit-form">
       <label class="field"><span>Title</span><input name="title" value="${esc(rom.short_title ?? rom.title)}" /></label>
       <div class="field-row">
@@ -2010,6 +2031,8 @@ async function openDetail(id) {
       toast(err.message, true);
     }
   });
+
+  fillAgePicker($('#age-picker', drawer), rom, { api, toast, confirmDialog, onSaved: async () => { await loadLibrary(); openDetail(id); } });
 
   $('#edit-form', drawer)?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -3976,6 +3999,7 @@ $('#bulk-hide-btn')?.addEventListener('click', bulkHideSelected);
 $('#reset-filters')?.addEventListener('click', resetFilters);
 $('#bulk-lock-btn')?.addEventListener('click', bulkLockSelected);
 $('#bulk-md-btn')?.addEventListener('click', bulkMultiDiscSelected);
+$('#bulk-rate-btn')?.addEventListener('click', bulkRateSelected);
 $('#bulk-system-btn')?.addEventListener('click', bulkSystemSelected);
 $('#bulk-clearmatch-btn')?.addEventListener('click', () => clearMatchFor([...state.selected]));
 $('#bulk-addcoll')?.addEventListener('click', () => openAddToCollection([...state.selected]));
@@ -4265,7 +4289,7 @@ function showApp(user, { restore = false } = {}) {
     // Fresh start: forget filters from any earlier session in this tab.
     clearNav();
     Object.assign(state, { platform: 'all', q: '', sort: 'title', tag: null, genre: null, favorite: false,
-      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null });
+      source: null, sourceName: null, missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null, age: null });
     $('#search').value = '';
     $('#sort').value = 'title';
     activeSettingsModule = null;
@@ -4407,6 +4431,7 @@ const SETTINGS_MODULES = [
   { id: 'db',        label: 'Database maintenance', mi: 'database-maintenance', ico: '🗄️', adminOnly: true },
   { id: 'audit',     label: 'Activity log',    mi: 'activity-log', ico: '📜', adminOnly: true },
   { id: 'names',     label: 'CSV tools', mi: 'game-csv', ico: '🏷', adminOnly: true },
+  { id: 'ratings',   label: 'Age ratings', mi: 'security', ico: '🔞', adminOnly: true },
   { id: 'dat',       label: 'DAT files',       mi: 'DAT-files', ico: '💾', adminOnly: true },
   { id: 'backup',    label: 'Backups',         mi: 'database-backup-save', ico: '🛟', adminOnly: true },
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
@@ -4420,7 +4445,7 @@ const SETTINGS_MODULES = [
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password', 'saves'] },
-  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
+  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'ratings', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
   { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing', 'images'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
@@ -4963,6 +4988,8 @@ function initNamesPanel() {
         const c = r.covers, n = (v) => Number(v || 0).toLocaleString();
         out.innerHTML += `<br>${r.applied ? '<b>Covers:</b> ' : '<b>Covers:</b> '}${r.applied ? `${n(c.set)} saved${c.not_image ? `, ${n(c.not_image)} skipped (not a JPEG, PNG or WebP picture)` : ''}${c.unreadable ? `, ${n(c.unreadable)} could not be read` : ''}.` : `${c.by_column ? `${n(c.cover_rows)} row${c.cover_rows === 1 ? '' : 's'} name a cover; ` : 'No cover_file column, so the zip\'s pictures were matched by file name; '}${n(c.found)} found in the zip, ${n(c.will_set)} would be saved${c.already_have ? `, ${n(c.already_have)} games already have one (tick the box to replace them)` : ''}${c.not_in_zip ? `, ${n(c.not_in_zip)} not in the zip${c.missing_examples?.length ? ` (for example ${c.missing_examples.map(esc).join(', ')})` : ''}` : ''}.`}`;
       }
+      if (r.age_ratings) out.innerHTML += `<br>${esc(t(r.applied ? '{n} age ratings were set.' : '{n} age ratings would be set.', { n: Number(r.age_ratings).toLocaleString() }))}`;
+      if (r.bad_age_ratings) out.innerHTML += `<br>${esc(t('{n} values in the age_rating column are not ratings and change nothing, for example: {examples}', { n: Number(r.bad_age_ratings).toLocaleString(), examples: r.bad_age_examples.join(', ') }))}`;
       applyBtn.disabled = apply || !(r.matched || r.covers?.will_set);
       if (apply) { toast(`Renamed ${r.matched} games${r.covers ? `, ${r.covers.set || 0} covers` : ''}`); loadLibrary(); }
     } catch (err) { out.textContent = err.message; toast(err.message, true); }
@@ -5014,6 +5041,7 @@ function showSettingsModule(id) {
   if (id === 'welcome') $('#welcome-again').onclick = () => startWelcome();
   if (id === 'saves') loadMySaves().catch((err) => toast(err.message, true));
   if (id === 'names') initNamesPanel();
+  if (id === 'ratings') initRatingsPanel({ api, toast, confirmDialog, platformOptions, openList: openRatingList, onChanged: () => loadLibrary() });
   if (id === 'platforms') fillPlatArtFolders();
   if (id === 'health') loadHealth();
   if (id === 'hashing') loadHashing().catch((err) => toast(err.message, true));
@@ -5165,7 +5193,7 @@ async function loadStatsPanel() {
 function openLibraryWith({ platform = 'all', genre = null, cover = null, desc = null } = {}) {
   closeDrawer();
   Object.assign(state, { platform, extraPlatforms: [], q: '', tag: null, genre, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover, desc, matched: null, incl: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover, desc, matched: null, incl: null, age: null });
   const sb = $('#search'); if (sb) sb.value = '';
   state.libKey = null;
   setView('library');
@@ -5177,7 +5205,7 @@ function openLibraryWith({ platform = 'all', genre = null, cover = null, desc = 
 function openLibraryFor(kind) {
   closeDrawer();
   Object.assign(state, { platform: 'all', extraPlatforms: [], q: '', tag: null, genre: null, favorite: false, source: null, sourceName: null,
-    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null });
+    missing: false, hidden: false, system: false, orphan: false, locked: false, unmatched: false, datStatus: null, cover: null, desc: null, matched: null, incl: null, age: null });
   const sb = $('#search'); if (sb) sb.value = '';
   // The Stats page counts every game, so the lists these links open include hidden games (and System ones where the total does).
   if (kind === 'all' || kind === 'matched' || kind === 'unmatched-name' || kind === 'cover' || kind === 'missing') state.incl = 'all';
@@ -5191,6 +5219,14 @@ function openLibraryFor(kind) {
   else if (kind === 'cover') state.cover = 'with';
   else if (kind === 'nocover') state.cover = 'none';
   state.libKey = null;
+  setView('library');
+  loadLibrary();
+}
+
+/** The Library showing the games with no age rating, or with a converted one (Settings > Age ratings). Hidden games are counted there, so they show here too. */
+async function openRatingList(age) {
+  await resetFilters();
+  Object.assign(state, { age, incl: 'hidden', libKey: null });
   setView('library');
   loadLibrary();
 }

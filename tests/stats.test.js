@@ -91,7 +91,7 @@ test('Settings groups: "System health" holds Health and Reports & stats, and a C
   assert.match(ui, /label: 'System health'/);
   assert.match(ui, /id: 'reports',\s+label: 'Reports & stats'/);
   assert.doesNotMatch(ui, /id: 'coverage'/, 'Stats is part of Reports now');
-  assert.match(ui, /modules: \['dat', 'names', 'duplicates', 'covers', 'artfolders'\]/);
+  assert.match(ui, /modules: \['dat', 'names', 'ratings', 'duplicates', 'covers', 'artfolders'\]/);
   assert.doesNotMatch(ui, /label: 'Health & coverage'/);
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   const stats = html.slice(html.indexOf('id="mod-reports"'), html.indexOf('id="mod-covers"'));

@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { launchboxReady, launchboxFind, launchboxSearch } from './launchbox.js';
+import { ratingItem } from './ratingscale.js';
 import { sniffProviderImage } from './coverzip.js';
 import { fetchRemote } from './safefetch.js';
 import { emumovies, registerVideoSource, titleKey as gameTitleKey } from './emumovies.js';
@@ -718,7 +719,8 @@ const thegamesdb = {
         genre,
         release_year: Number(game.release_date?.slice(0, 4)) || null,
         players: game.players ? Number(game.players) || null : null,
-        rating: game.rating ? Number(game.rating) : null,
+        rating: null,   // TheGamesDB has no score: its "rating" is an ESRB age rating, as text ("T - Teen")
+        age_ratings: [ratingItem('esrb', game.rating, 'thegamesdb')].filter(Boolean),
         description: game.overview || null,
         cover_url: base && front ? `${base}${front.filename}` : null,
         has_cover: Boolean(base && front),
@@ -853,7 +855,7 @@ const igdb = {
     let games = [];
     let usedQuery = variants[0];
     for (const safe of variants) {
-      const apicalypse = `search "${safe}"; fields name,summary,first_release_date,rating,cover.url,artworks.url,screenshots.url,involved_companies.company.name,involved_companies.developer,involved_companies.publisher,genres.name,game_modes.name,platforms.slug; limit 10;${plat ? ` where platforms = (${plat});` : ''}`;
+      const apicalypse = `search "${safe}"; fields name,summary,first_release_date,rating,cover.url,artworks.url,screenshots.url,involved_companies.company.name,involved_companies.developer,involved_companies.publisher,genres.name,game_modes.name,platforms.slug,age_ratings.organization.name,age_ratings.rating_category.rating; limit 10;${plat ? ` where platforms = (${plat});` : ''}`;
 
       const result = await igdbFetch('games', apicalypse);
       if (result.error) return { error: result.error, items: [] };
@@ -889,6 +891,7 @@ const igdb = {
         players: null,
         rating: g.rating ? Math.round((Number(g.rating) / 20) * 10) / 10 : null,
         description: g.summary || null,
+        age_ratings: (Array.isArray(g.age_ratings) ? g.age_ratings : []).map((a) => ratingItem(a?.organization?.name, a?.rating_category?.rating, 'igdb')).filter(Boolean),
         cover_url: cover,
         has_cover: Boolean(cover),
         media: { box2d: cover, ...(shots[0] ? { screenshot: shots[0] } : {}) },
@@ -902,6 +905,9 @@ const igdb = {
     return { items };
   }
 };
+
+/** Does IGDB know this platform? An age rating is only asked for when the search can be held to the game's own platform. */
+export const igdbKnowsPlatform = (slug) => Boolean(IGDB_PLATFORMS[slug]);
 
 /* ─────────────────────── LaunchBox (local database) ─────────────────────── */
 
