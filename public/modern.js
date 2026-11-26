@@ -3,6 +3,7 @@
 // added) and light/dark, all switched on by the body class `ui-modern`. The choice is stored per person (prefs: ui_mode).
 import { groupedOptions } from './platform-order.js';
 import { thumb } from './thumb.js';
+import { t } from './i18n.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 import { landChips } from './chip-motion.js';
@@ -766,7 +767,7 @@ const ICON_MAP = [
   ['#scan-all', 'scan-again'], ['#add-source, #empty-add-source', 'source-add-2'], ['#create-source', 'source-add-and-scan-2'], ['#browse-source, #wz-browse', 'sources'], ['[data-act="scan"]', 'scan-again'],
   ['[data-act="add-folder"]', 'source-add-2'], ['[data-act="relocate"]', 'folder-move'], ['[data-act="drop-folder"]', 'cancel'], ['[data-act="have-want"]', 'have-want'], ['[data-act="remove"]', 'delete'],
   // Add ROMs / Emulators
-  ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],
+  ['#emu-refresh-latest', 'emulators-refresh'], ['#view-upload form button[type="submit"]', 'add-roms'], ['#emu-upload-form button[type="submit"]', 'save-to-vault-2'],
   ['[data-save-release]', 'save-to-vault'], ['.emu-dl', 'download'], ['[data-vault-del]', 'delete'],
   // Collections
   ['#new-collection', 'add-collection'], ['[data-act="delete-collection"]', 'delete'], ['[data-rom-remove]', 'cancel'], ['[data-rom-play]', 'play'],
@@ -793,7 +794,7 @@ function miRule(name) {
   // (the black square on a first visit or a hard refresh). Space is kept, so nothing moves when it appears.
   const add = () => {
     if (!miStyle) { miStyle = document.createElement('style'); miStyle.id = 'modern-icon-rules'; document.head.appendChild(miStyle); }
-    miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); visibility: visible; }\n`));
+    miStyle.appendChild(document.createTextNode(`body.ui-modern [data-mi="${name}"]::before, body.ui-modern [data-mt="${name}"][data-mt]::before { -webkit-mask-image: url(${ICON_BASE}${name}.svg); mask-image: url(${ICON_BASE}${name}.svg); visibility: visible; }\n`));
   };
   const img = new Image(); img.onload = add; img.onerror = add; img.src = `${ICON_BASE}${name}.svg`;
 }
@@ -857,6 +858,56 @@ function alignSubtiles() {
   row.style.paddingLeft = `${Math.round(left)}px`;
 }
 window.addEventListener('resize', () => { if (isModern()) alignSubtiles(); });
+/* ───────────── Text buttons: small, squared and tinted, with an icon ─────────────
+   Where an icon cannot carry the meaning (and everywhere in Settings) a button keeps its words. Those buttons are tagged data-mt="<icon>" and
+   data-mk="go | stop | plain" (the colour); modern.css draws them. As with data-mi, nothing a person reads is rewritten, and Classic ignores the tags. */
+const TEXT_CANDIDATES = '.btn, button.link';
+// These show words even where ICON_MAP gave them an icon: all of Settings, the confirm popup's two answers and the launcher download.
+const TEXT_FORCE = '#view-settings .btn, #modal-ok, #modal-cancel, #view-tools a.btn[download]';
+// The first match wins. A button not listed here keeps the icon ICON_MAP gave it, else a tick (a bin when it destroys something).
+const TEXT_ICONS = [
+  ['#drawer form button.btn-primary[type="submit"]', 'save'], ['label.btn:has(#cover-input)', 'upload-cover'], ['.vid-find', 'search'], ['.vid-toggle', 'preview'], ['[data-rom-manual], [data-msg-act="open-rom"]', 'arrow-right'],
+  ['[data-art]', 'image-upload'], ['[data-art-reset], [data-w-reset], [data-act="clear-own-dev"], #img-clear, #mh-res-clear, #emu-vault-clear', 'clear-reset-2'], ['[data-mv-close], #art-bcancel, [data-fam-cancel]', 'close'],
+  ['[data-mh-all]', 'arrow-right'], ['#lib-clear-platform, [data-dg-clear], [data-ph-clear]', 'close'],
+  ['#browse', 'add-roms'], ['#browse-folder, #art-browse', 'sources'], ['#browser-up, #pf-up, #art-bup', 'arrow-up'],
+  ['#playpc-setup', 'settings'], ['#playpc-check', 'computer'],
+  ['#modal-cancel, .modal-actions .btn-ghost', 'close'], ['#modal-ok.btn-danger', 'delete'], ['#modal-ok', 'tick'],
+  ['#age-show-unrated, #age-show-converted, #group-show-unrated, #art-shared-show', 'visible'], ['#age-fetch', 'fetch'],
+  ['#db-show-missing', 'show-orphans'], ['#db-purge-missing, #imgc-remove, [data-art-remove]', 'delete'],
+  ['#artfolders-save, #hash-save, #img-save, #imgc-save', 'save'], ['#hash-run, #imgc-run', 'play'], ['#hash-stop, #imgc-stop, #enrich-stop, #plat-fill-stop', 'stop'],
+  ['#imgc-estimate', 'stats'], ['#imgc-restore, #restore-apply', 'restore'], ['[data-imgc-cmp], .rp-find .btn', 'search']
+];
+const TEXT_STOP = new Set(['delete', 'cancel', 'close', 'stop', 'database-backup-delete', 'clear-covers', 'user-disable', 'folder-disable']);
+const TEXT_CALM = '#lib-clear-platform, [data-dg-clear], [data-ph-clear], [data-mv-close]';   // an X that only closes or clears a filter is not red
+const TEXT_GO = '.btn-primary, #artfolders-save, #hash-save, #img-save, #imgc-save';
+// A symbol or emoji at the start of a button's words: arrows, shapes and dingbats, a plus, the bin.
+const GLYPH = /^\s*(?:[←-⇿■-➿⤀-⯿+＋]|\ud83d[\uddc0-\uddd1])️?\s*/;
+const matches = (el, sel) => { try { return el.matches(sel); } catch { return false; } };
+/** A symbol at the start of the words ("↻ Scan", "+ Add platform") would sit beside the new icon, so Modern hides it. The whole string is
+    translated first (the language files are keyed on it, symbol and all), then split; Classic shows both halves, so it reads as before. */
+function hideGlyph(el) {
+  const node = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim());
+  if (!node || !GLYPH.test(node.nodeValue)) return;
+  const full = t(node.nodeValue.replace(/\s+/g, ' ').trim()), m = GLYPH.exec(full);
+  if (!m || !full.slice(m[0].length).trim()) return;
+  // Both halves go inside one span: in a button laid out as a row they stay one piece, so Classic keeps the space between symbol and words.
+  const whole = document.createElement('span'), g = document.createElement('span');
+  g.className = 'mt-glyph'; g.textContent = m[0];
+  whole.append(g, document.createTextNode(full.slice(m[0].length)));
+  node.replaceWith(whole);
+}
+function textify(el) {
+  const skip = el.matches('.tile, .subtile, .mb-btn, .ph-pill, #login-submit') || el.closest('[id^="wz-"]')   // sign-in and the welcome tour keep their own look
+    || (el.dataset.mi && !matches(el, TEXT_FORCE)) || !/\p{L}{2}/u.test(el.textContent || '');
+  if (skip) { if (el.dataset.mt) { delete el.dataset.mt; delete el.dataset.mk; } return; }
+  hideGlyph(el);
+  const danger = el.classList.contains('btn-danger');
+  const name = TEXT_ICONS.find(([sel]) => matches(el, sel))?.[1] || el.dataset.mi || (danger ? 'delete' : 'tick');
+  const kind = danger || (TEXT_STOP.has(name) && !matches(el, TEXT_CALM)) ? 'stop' : (matches(el, TEXT_GO) ? 'go' : 'plain');
+  if (el.dataset.mt !== name) el.dataset.mt = name;
+  if (el.dataset.mk !== kind) el.dataset.mk = kind;
+  miRule(name);
+}
 export function iconize(root = document) {
   if (!isModern()) return;
   alignSubtiles();
@@ -879,6 +930,10 @@ export function iconize(root = document) {
   const hb = $('#bulk-hide-btn');   // Hide shows the hidden icon; Unhide (when looking at hidden games) shows the visible one
   if (hb) { const want = /unhide/i.test(hb.textContent) ? 'visible' : 'hidden'; if (hb.dataset.mi !== want) { if (!hb.dataset.miLabel) hb.dataset.miLabel = hb.getAttribute('title') || 'Hide selected'; hb.dataset.mi = want; if (!hb.getAttribute('aria-label')) hb.setAttribute('aria-label', hb.title || hb.dataset.miLabel); miRule(want); } }
   for (const el of $$('[data-mi]', root)) miRule(el.dataset.mi);   // icons named in templates (the Settings tiles)
+  const words = $$(TEXT_CANDIDATES, root);
+  const own = root.nodeType === 1 ? root.closest?.(TEXT_CANDIDATES) : null;   // a redraw inside one button (its words changed): look at that button again
+  if (own) words.push(own);
+  for (const el of words) textify(el);
 }
 /* ───────────── hover words in the app's font ───────────── */
 function tipify(root = document) {

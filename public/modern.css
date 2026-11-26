@@ -335,8 +335,6 @@ body.ui-modern .mh-line .mh-brand { font-size: 1.05rem; font-weight: 700; letter
 /* Settings: file choosers share one look (DAT files, Game names CSV, Emulators vault, Backups restore): a framed row with the Choose file button inside. */
 body.ui-modern .file-input { display: block; width: 100%; box-sizing: border-box; padding: 0.4rem 0.6rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 0.65rem; color: var(--muted); font-size: 0.89rem; }
 body.ui-modern .dat-row .file-input { flex: 0 1 22rem; width: auto; min-width: 0; }
-body.ui-modern .file-input::file-selector-button { background: var(--panel-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 0.5rem; padding: 0.35rem 0.7rem; margin-right: 0.6rem; cursor: pointer; font: inherit; }
-body.ui-modern .file-input::file-selector-button:hover { border-color: var(--accent); }
 body.ui-modern .dat-row .btn-primary[data-mi] { flex: 0 0 auto; }
 body.ui-modern .dat-row { flex-wrap: wrap; }
 
@@ -665,44 +663,12 @@ html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--ch
 html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on.part:has(> .chip-logo-img) .chip-logo-img { filter: none; }
 html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].on:has(> .chip-logo-img), html:not([data-theme="light"]) body.ui-modern .ph-chip-row .ph-chip[style*="--chip-c"].open:has(> .chip-logo-img) { box-shadow: 0 0 0 2px var(--chip-c); border-radius: 0.7rem; }
 
-/* ── Settings (System) pages: the action buttons in each area are text buttons again. The icon stays on the two rows of navigation (the tiles and the sub-tiles);
-   everything else in Settings shows its words: green for something the person does, red for delete, remove, stop and the like. The words were never removed
-   (the icon is only a mask over a button whose text is hidden by font-size: 0), so no new text, and no new translation, is needed. :not(#_) only raises the specificity
-   above the older icon rules. ── */
-body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_) {
-  font-size: 0.88rem; line-height: 1.2; letter-spacing: normal; width: auto; min-width: 0; height: auto; padding: 0.5rem 0.9rem; gap: 0; white-space: normal;
-  background: var(--apply); border: 1px solid var(--apply); color: #fff;
-}
-body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_)::before { display: none; }
-body.ui-modern #view-settings .btn-sm[data-mi]:not(.tile):not(.subtile):not(#_) { padding: 0.3rem 0.65rem; font-size: 0.8rem; height: auto; min-width: 0; }
-body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_):hover:not(:disabled) { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
-body.ui-modern #view-settings [data-mi]:not(.tile):not(.subtile):not(#_):disabled { opacity: .45; }
-body.ui-modern #view-settings :is([data-mi="delete"], [data-mi="cancel"], [data-mi="close"], [data-mi="database-backup-delete"], [data-mi="clear-covers"], [data-mi="user-disable"], [data-mi="folder-disable"], .btn-danger):not(.tile):not(.subtile):not(#_) {
-  background: var(--cancel); border-color: var(--cancel); color: #fff;
-}
-body.ui-modern #view-settings :is([data-mi="delete"], [data-mi="cancel"], [data-mi="close"], [data-mi="database-backup-delete"], [data-mi="clear-covers"], [data-mi="user-disable"], [data-mi="folder-disable"], .btn-danger):not(.tile):not(.subtile):not(#_):hover:not(:disabled) {
-  background: color-mix(in srgb, var(--cancel) 82%, #000); border-color: color-mix(in srgb, var(--cancel) 82%, #000); color: #fff;
-}
 /* "Import a DAT" comes first on the DAT files page (the order is changed here, so Classic's page is untouched). */
 body.ui-modern #mod-dat:not(.hidden) { display: flex; flex-direction: column; }
 body.ui-modern #mod-dat > h3 { order: -3; }
 body.ui-modern #mod-dat > .hint { order: -2; }
 body.ui-modern #mod-dat > .dat-import { order: -1; margin: 0 0 1rem; }
 
-/* Details window: Find missing assets, Show cover, Upload cover and Save changes are green text buttons. */
-body.ui-modern #drawer .vid-find, body.ui-modern #drawer .vid-toggle, body.ui-modern #drawer label.btn:has(#cover-input) { background: var(--apply); border-color: var(--apply); color: #fff; cursor: pointer; }
-body.ui-modern #drawer .vid-find:hover:not(:disabled), body.ui-modern #drawer .vid-toggle:hover:not(:disabled), body.ui-modern #drawer label.btn:has(#cover-input):hover { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
-
-/* ── One size for every text button. A few plain buttons (Fingerprints, Game assets Save, the details window's Save changes and Upload cover) were left at the base size and
-   looked bigger than the rest. Regular buttons are one size, the compact ones (.btn-sm, in dense rows) another; the two details-window buttons that sit in a line of text
-   (Find missing assets, Show cover) match Save changes and Upload cover. The plain buttons also get the colours: green for an action, red for Stop and Delete. ── */
-body.ui-modern #view-settings .btn:not(.btn-sm):not(.tile):not(.subtile):not(#_):not(#__) { font-size: 0.88rem; line-height: 1.2; padding: 0.5rem 0.9rem; height: auto; min-height: 0; }
-body.ui-modern #view-settings .btn.btn-sm:not(.tile):not(.subtile):not(#_):not(#__) { font-size: 0.8rem; line-height: 1.2; padding: 0.3rem 0.65rem; height: auto; min-height: 0; }
-body.ui-modern #view-settings .btn:not([data-mi]):not(.tile):not(.subtile):not(#_) { background: var(--apply); border-color: var(--apply); color: #fff; }
-body.ui-modern #view-settings .btn:not([data-mi]):not(.tile):not(.subtile):not(#_):hover:not(:disabled) { background: var(--apply-2); border-color: var(--apply-2); color: #fff; }
-body.ui-modern #view-settings :is(.btn-danger, #hash-stop):not(.tile):not(.subtile):not(#_):not(#__) { background: var(--cancel); border-color: var(--cancel); color: #fff; }
-body.ui-modern #view-settings :is(.btn-danger, #hash-stop):not(.tile):not(.subtile):not(#_):not(#__):hover:not(:disabled) { background: color-mix(in srgb, var(--cancel) 82%, #000); border-color: color-mix(in srgb, var(--cancel) 82%, #000); color: #fff; }
-body.ui-modern #drawer :is(.vid-find, .vid-toggle, label.btn:has(#cover-input), #edit-form button[type="submit"], #dg-edit button[type="submit"], #ph-edit button[type="submit"]):not(#_) { font-size: 0.88rem; line-height: 1.2; padding: 0.5rem 0.9rem; height: auto; min-height: 0; }
 /* A button that is only an icon in Classic carries a text label that only the Modern look shows. */
 .mb-text { display: none; }
 body.ui-modern .mb-text { display: inline; }
@@ -725,3 +691,64 @@ body.ui-modern .mh-res-cover img { position: absolute; inset: 0; width: 100%; he
 body.ui-modern .mh-res-ini { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; opacity: .35; }
 body.ui-modern .mh-res-title { font-size: 0.75rem; line-height: 1.25; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
 body.ui-modern .mh-res-sub { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ───────────── Text buttons (tagged by modern.js: data-mt = the icon, data-mk = the colour) ─────────────
+   One look wherever a button keeps its words: small, squared, tinted, capitals, an icon in front. Hovering deepens the tint and lights the edge
+   with a glow, as the platform chips do. Green is the main action, red deletes, stops or cancels, everything else is neutral.
+   The three :not(#_) only raise the specificity above the older icon-only rules. */
+body.ui-modern {
+  --tb-text: #f6f7fb; --tb-bg: #1b1e27; --tb-edge: #3b4152; --tb-hover: #292446; --tb-glow: #a78bfa;
+  --tb-go-text: #5fe3a1; --tb-go-bg: #12291f; --tb-go-edge: #2c6b4c; --tb-go-hover: #1a4030;
+  --tb-stop-text: #ff9a9a; --tb-stop-bg: #2b171a; --tb-stop-edge: #7a3a40; --tb-stop-hover: #46222a;
+}
+html[data-theme="light"] body.ui-modern {
+  --tb-text: #1a1d26; --tb-bg: #ffffff; --tb-edge: #c3c8d6; --tb-hover: #ece8ff; --tb-glow: #7c5cff;
+  --tb-go-text: #0b6a3b; --tb-go-bg: #e2f6ea; --tb-go-edge: #7fcca1; --tb-go-hover: #c6ecd6;
+  --tb-stop-text: #9b1c1c; --tb-stop-bg: #fde8e8; --tb-stop-edge: #e59a9a; --tb-stop-hover: #fad0d0;
+}
+body.ui-modern [data-mt] { --c: var(--tb-text); --f: var(--tb-bg); --l: var(--tb-edge); --hf: var(--tb-hover); --e: var(--tb-glow); }
+body.ui-modern [data-mt][data-mk="go"] { --c: var(--tb-go-text); --f: var(--tb-go-bg); --l: var(--tb-go-edge); --hf: var(--tb-go-hover); --e: var(--tb-go-text); }
+body.ui-modern [data-mt][data-mk="stop"] { --c: var(--tb-stop-text); --f: var(--tb-stop-bg); --l: var(--tb-stop-edge); --hf: var(--tb-stop-hover); --e: var(--tb-stop-text); }
+body.ui-modern [data-mt]:not(.hidden):not([hidden]):not(#_):not(#__):not(#___),
+body.ui-modern :is(.block-picker, .ph-buy) > summary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.36rem;
+}
+body.ui-modern [data-mt]:not(#_):not(#__):not(#___),
+body.ui-modern :is(.block-picker, .ph-buy) > summary {
+  box-sizing: border-box; width: auto; min-width: 0; height: auto; min-height: 1.95rem; padding: 0.25rem 0.65rem 0.25rem 0.5rem;
+  border-radius: 0.36rem; font-size: 0.79rem; font-weight: 600; line-height: 1.2; letter-spacing: .05em; text-transform: uppercase; text-decoration: none; text-align: left; white-space: normal;
+  cursor: pointer; box-shadow: none; transition: background .15s, border-color .15s, box-shadow .15s;
+}
+body.ui-modern [data-mt]:not(#_):not(#__):not(#___) { background: var(--f); border: 1px solid var(--l); color: var(--c); }
+/* Hidden until its picture has loaded (as above). This rule stays weak on purpose: the rule modern.js writes for each icon must beat it. */
+body.ui-modern [data-mt]::before { visibility: hidden; }
+body.ui-modern [data-mt]:not(#_):not(#__):not(#___)::before {
+  content: ''; display: inline-block; flex: 0 0 auto; width: 1rem; height: 1rem; background: currentColor;
+  -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+body.ui-modern [data-mt]:not(#_):not(#__):not(#___):hover:not(:disabled),
+body.ui-modern [data-mt]:not(#_):not(#__):not(#___):focus-visible:not(:disabled) { background: var(--hf); border-color: var(--e); color: var(--c); box-shadow: 0 0 0 1px var(--e), 0 0 0.8rem color-mix(in srgb, var(--e) 55%, transparent); outline: none; }
+body.ui-modern [data-mt]:not(#_):not(#__):not(#___):disabled { opacity: .45; cursor: default; box-shadow: none; }
+body.ui-modern [data-mt] small { font-size: inherit; }
+body.ui-modern .mt-glyph { display: none; }
+/* A button the app has hidden stays hidden (the icon rules set a display, which used to show "Remove logo" with no logo, and your own "Reset password"). */
+body.ui-modern [data-mt][hidden], body.ui-modern .btn[data-mi][hidden] { display: none !important; }
+/* File chooser buttons: the neutral colours (the browser draws their words, so they carry no icon). */
+body.ui-modern .file-input::file-selector-button {
+  background: var(--tb-bg); border: 1px solid var(--tb-edge); color: var(--tb-text); border-radius: 0.36rem; min-height: 1.95rem; padding: 0.25rem 0.65rem; margin-right: 0.6rem;
+  cursor: pointer; font: inherit; font-size: 0.79rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+}
+body.ui-modern .file-input::file-selector-button:hover { background: var(--tb-hover); border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
+/* The two fold-out headings that behave as buttons. */
+body.ui-modern :is(.block-picker, .ph-buy) > summary { width: fit-content; list-style: none; background: var(--tb-bg); border: 1px solid var(--tb-edge); color: var(--tb-text); padding-left: 0.65rem; }
+body.ui-modern :is(.block-picker, .ph-buy) > summary::-webkit-details-marker { display: none; }
+body.ui-modern :is(.block-picker, .ph-buy) > summary::after { content: '▾'; font-size: 0.9rem; line-height: 1; }
+body.ui-modern :is(.block-picker, .ph-buy)[open] > summary::after { content: '▴'; }
+body.ui-modern :is(.block-picker, .ph-buy) > summary:hover, body.ui-modern :is(.block-picker, .ph-buy) > summary:focus-visible { background: var(--tb-hover); border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); outline: none; }
+/* Settings choices (language, Big Screen look, chips or logos ...): the same corners and glow, in normal lettering; only the chosen one is tinted. */
+body.ui-modern .lang-opt { border-radius: 0.36rem; background: var(--tb-bg); border: 1px solid var(--tb-edge); color: var(--tb-text); padding: 0.4rem 0.75rem; transition: background .15s, border-color .15s, box-shadow .15s; }
+body.ui-modern .lang-opt:hover, body.ui-modern .lang-opt:focus-visible { border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); outline: none; }
+body.ui-modern .lang-opt[aria-pressed="true"] { background: var(--tb-hover); border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow) inset; }
+body.ui-modern .lang-opt[aria-pressed="true"]:hover { box-shadow: 0 0 0 1px var(--tb-glow) inset, 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
+/* Emulators: the release check is an icon; it turns while it works. */
+body.ui-modern #emu-refresh-latest:disabled::before { animation: ibspin .8s linear infinite; }

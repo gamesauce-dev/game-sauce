@@ -324,7 +324,7 @@
         <p class="hint" id="playpc-state"></p>
         <h4 style="margin:1.2rem 0 0.3rem">Using a web browser, not the desktop app?</h4>
         <p class="hint" style="margin-top:0">The launcher has to be on the computer you play on. Download it, unzip it somewhere it can stay, and follow <b>READ ME FIRST</b> inside (it needs Node.js 18 or newer). Then come back here and press <b>Set up emulators</b>.</p>
-        <a class="btn" id="playpc-download" href="/api/launcher/download" download="game-sauce-launcher.zip">Download the launcher</a>
+        <a class="btn" id="playpc-download" href="/api/launcher/download" download="game-sauce-launcher.zip">Download launcher</a>
         <p class="hint hidden" id="playpc-dl-note">This account cannot play on a local emulator, because downloads of game files are turned off for it. An admin can change that under Settings, User accounts.</p>
       </div>
 
@@ -417,7 +417,7 @@
       <div class="panel hidden" id="mod-welcome">
         <h3>Welcome tour</h3>
         <p class="hint" style="margin-top:0">A short walk through the first things to set up: your password and picture (and, for an admin, game sources and the database).</p>
-        <button class="btn btn-primary" id="welcome-again" type="button">Run the welcome tour again</button>
+        <button class="btn btn-primary" id="welcome-again" type="button">Run welcome tour again</button>
       </div>
 
       <div class="panel hidden" id="mod-saves">
@@ -459,13 +459,13 @@
 
       <div class="panel hidden" id="mod-duplicates">
         <h3>Duplicate finder <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">Games you hold in more than one version (a USA and a Europe copy, a revision, an arcade clone). One copy per group is suggested; <b>Hide the others</b> tucks the rest away. Nothing is deleted and no file on disk is touched, and hidden games can be brought back from the Hidden filter.</p>
+        <p class="hint" style="margin-top:0">Games you hold in more than one version (a USA and a Europe copy, a revision, an arcade clone). One copy per group is suggested; <b>Hide others</b> tucks the rest away. Nothing is deleted and no file on disk is touched, and hidden games can be brought back from the Hidden filter.</p>
         <p class="hint dup-legend"><span class="lg lg-sug"></span> Green outline = suggested copy &nbsp;·&nbsp; 👁 button = hide that copy (members will not see it either) &nbsp;·&nbsp; ⚖ = a tie, check both</p>
         <div class="dup-top">
           <select id="dup-platform" class="select" aria-label="Platform"><option value="">All platforms</option></select>
           <span id="dup-summary" class="hint" style="margin:0"></span>
           <button class="btn btn-sm" id="dup-refresh">↻ Scan again</button>
-          <button class="btn btn-sm btn-primary hidden" id="dup-hide-all">Hide the others in this list</button>
+          <button class="btn btn-sm btn-primary hidden" id="dup-hide-all">Hide others in this list</button>
         </div>
         <div id="dup-list" class="dup-list"></div>
         <button class="btn btn-sm hidden" id="dup-more">Show more</button>
@@ -562,11 +562,11 @@
           <p class="hint" id="plat-art-msg" style="margin:0" role="status"></p>
           <hr style="border:0;border-top:1px solid var(--line);margin:4px 0" />
           <b>Game art for Big Screen</b>
-          <p class="hint" style="margin:0"><b>Fill the gaps</b> goes through one platform's games and asks ScreenScraper for the logo, marquee and background of each one that has none (small pictures only: never covers, manuals or videos). It looks at up to the number you choose per run, remembers the games it has asked about (a game ScreenScraper had nothing for is not asked again for two weeks), stops by itself when ScreenScraper's allowance for the day is used up, and carries on with other games the next time you run it.</p>
+          <p class="hint" style="margin:0"><b>Fill gaps</b> goes through one platform's games and asks ScreenScraper for the logo, marquee and background of each one that has none (small pictures only: never covers, manuals or videos). It looks at up to the number you choose per run, remembers the games it has asked about (a game ScreenScraper had nothing for is not asked again for two weeks), stops by itself when ScreenScraper's allowance for the day is used up, and carries on with other games the next time you run it.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <select id="plat-fill-platform" class="select" aria-label="Platform to fill the gaps for"></select>
             <select id="plat-fill-limit" class="select" aria-label="How many games to look at in this run"><option value="25">25 games</option><option value="50" selected>50 games</option><option value="100">100 games</option><option value="250">250 games</option></select>
-            <button type="button" class="btn btn-sm" id="plat-fill-go" title="Fill the gaps for this platform">Fill the gaps</button>
+            <button type="button" class="btn btn-sm" id="plat-fill-go" title="Fill the gaps for this platform">Fill gaps</button>
             <button type="button" class="btn btn-sm" id="plat-fill-stop" title="Stop this run" hidden>Stop</button>
           </div>
           <p class="hint" id="plat-fill-msg" style="margin:0" role="status"></p>
@@ -629,9 +629,9 @@
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <button class="btn btn-primary" id="img-save" type="button">Save</button>
-            <button class="btn" id="img-clear" type="button" title="Delete the WebP copies; they are made again when pictures are opened">Clear the copies</button>
+            <button class="btn" id="img-clear" type="button" title="Delete the WebP copies; they are made again when pictures are opened">Clear cache</button>
           </div>
-          <p class="hint" style="margin:.5rem 0 0"><b>Clear the copies</b> deletes only the temporary display copies (thumbnails and full-size WebP copies kept in the <code>image-cache</code> folder). They are rebuilt on their own as pictures are shown, so the first view of each is a little slower. It does <b>not</b> touch your stored pictures, the pictures you have converted below, or the kept originals, and you rarely need it: changing the quality already clears the copies. Use it only to free disk space.</p>
+          <p class="hint" style="margin:.5rem 0 0"><b>Clear cache</b> deletes only the temporary display copies (thumbnails and full-size WebP copies kept in the <code>image-cache</code> folder). They are rebuilt on their own as pictures are shown, so the first view of each is a little slower. It does <b>not</b> touch your stored pictures, the pictures you have converted below, or the kept originals, and you rarely need it: changing the quality already clears the copies. Use it only to free disk space.</p>
           <p class="hint" id="img-msg"></p>
         </div>
 
@@ -644,7 +644,7 @@
           <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="forever" /> <span><b>Keep the originals until I remove them</b><br><small class="hint">Nothing is removed automatically. They use the disk space of the originals until you press <i>Remove originals</i> below.</small></span></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <button class="btn btn-primary" id="imgc-save" type="button">Save schedule</button>
-            <button class="btn btn-amber" id="imgc-estimate" type="button" title="Convert a sample in memory and say how much it would save; nothing changes">Estimate the saving</button>
+            <button class="btn btn-amber" id="imgc-estimate" type="button" title="Convert a sample in memory and say how much it would save; nothing changes">Estimate saving</button>
             <label class="hint" for="imgc-limit" style="align-self:center">Stop after</label> <input type="number" id="imgc-limit" min="0" step="1" placeholder="all" style="width:6em" title="A trial run: stop after this many pictures have been converted. Empty or 0 means all." /> <span class="hint" style="align-self:center">pictures</span>
             <button class="btn" id="imgc-run" type="button">Run now</button>
             <button class="btn btn-red" id="imgc-stop" type="button">Stop</button>
@@ -655,19 +655,19 @@
           <details class="hint" style="margin-top:6px"><summary>What each button does</summary>
             <ul style="margin:.4rem 0 0 1.2rem">
               <li><b>Save schedule</b>: keeps the overnight window and how long originals are kept. Nothing runs by itself unless Overnight is chosen.</li>
-              <li><b>Estimate the saving</b>: tries a sample in memory and tells you roughly how much space the conversion would free. Changes nothing.</li>
+              <li><b>Estimate saving</b>: tries a sample in memory and tells you roughly how much space the conversion would free. Changes nothing.</li>
               <li><b>Stop after N pictures + Run now</b>: converts pictures straight away, stopping after N if you set a number (a good first trial). Empty means all of them.</li>
               <li><b>Stop</b>: ends a run that is going. What is already converted stays converted.</li>
               <li><b>Return originals</b>: undoes the conversions whose originals are still kept: the original returns and the WebP is deleted.</li>
               <li><b>Remove originals</b>: deletes the kept originals now to free the space. After this those conversions cannot be undone.</li>
-              <li><b>Show the converted pictures</b>: a list of every conversion, searchable by game name, with a before and after to compare.</li>
+              <li><b>Show converted pictures</b>: a list of every conversion, searchable by game name, with a before and after to compare.</li>
             </ul>
           </details>
           <div class="imgc-box" id="imgc-box" aria-live="polite">
             <div id="imgc-status"></div>
             <div class="imgc-progress hidden" id="imgc-progress"><progress id="imgc-bar" max="100" value="0"></progress> <span id="imgc-pct"></span></div>
           </div>
-          <div style="margin-top:10px"><button class="btn" id="imgc-log-toggle" type="button">Show the converted pictures</button></div>
+          <div style="margin-top:10px"><button class="btn" id="imgc-log-toggle" type="button">Show converted pictures</button></div>
           <div class="imgc-box hidden" id="imgc-log-box">
             <div class="imgc-log-bar">
               <input type="search" id="imgc-log-q" class="search" placeholder="Search by game name or file name" aria-label="Search the converted pictures by game name or file name" style="max-width:20em" />
@@ -785,7 +785,7 @@
         </p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px">
           <a class="btn btn-primary" id="backup-download" href="/api/backup/download" download>↓ Download a backup now</a>
-          <button class="btn" id="backup-run">Save one to the server folder now</button>
+          <button class="btn" id="backup-run">Save to server folder now</button>
         </div>
 
         <div class="section-label">Scheduled backups</div>

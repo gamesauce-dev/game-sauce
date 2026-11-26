@@ -298,7 +298,7 @@ game-sauce can be read in **English, French (Français), Chinese (中文), Spani
 
 ![Backups](screenshots/backups.png)
 
-- **Download a backup now** gives you one `.tar.gz`. **Save one to the server folder now** writes
+- **Download a backup now** gives you one `.tar.gz`. **Save to server folder now** writes
   it to the server instead. Every backup kept on the server has **Download**, **Restore…** and
   **Delete** buttons.
 - **Scheduled backups:** off, every 6 or 12 hours, daily or weekly. Choose how many to keep and the

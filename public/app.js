@@ -1699,7 +1699,7 @@ async function openDetail(id) {
     })()}
     ${(rom.files || []).find((f) => f.kind === 'manual') ? `<div class="section-label">Manual</div>
       <div class="panel" style="padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button type="button" class="btn btn-sm btn-primary" data-rom-manual title="Read the manual">Read the manual</button>
+        <button type="button" class="btn btn-sm btn-primary" data-rom-manual title="Read the manual">Read manual</button>
         <a class="btn btn-sm" href="${esc(rom.files.find((f) => f.kind === 'manual').url)}?download=1" download title="Save a copy of this manual">Download</a>
       </div>` : ''}
 
@@ -3304,7 +3304,7 @@ async function bulkEnrich({ onlyMissingCovers = false } = {}) {
     // The server looks up one platform per run. With several chips picked, ask which scope to use rather than quietly doing only the first.
     let platform = picked[0] || '';
     if (picked.length > 1) {
-      const choice = await confirmChoice({ title: 'Fetch metadata for which games?', body: `You have ${picked.length} platforms selected (${picked.map((s) => s.toUpperCase()).join(', ')}). A metadata run covers one platform or the whole library.`, choices: [{ id: 'first', label: `Just ${picked[0].toUpperCase()}` }, { id: 'all', label: 'The whole library' }] });
+      const choice = await confirmChoice({ title: 'Fetch metadata for which games?', body: `You have ${picked.length} platforms selected (${picked.map((s) => s.toUpperCase()).join(', ')}). A metadata run covers one platform or the whole library.`, choices: [{ id: 'first', label: `Just ${picked[0].toUpperCase()}` }, { id: 'all', label: 'Whole library' }] });
       if (!choice) return;
       platform = choice === 'all' ? '' : picked[0];
     }
@@ -3339,7 +3339,7 @@ async function verifyPlatformIds() {
   }).join('');
   const sure = r.rows.filter((x) => x.confident && x.suggestion);
   box.innerHTML = `<p class="hint" style="margin-top:10px">${sum}${r.notes?.length ? `<br><span class="note">${r.notes.map(esc).join(' ')}</span>` : ''}</p>
-    ${rows ? `${sure.length ? `<div style="margin:6px 0"><button class="btn btn-sm btn-primary" id="pid-apply-all" title="Save every suggestion that is a close name match">Use the ${sure.length} close match${sure.length === 1 ? '' : 'es'}</button></div>` : ''}<div class="pid-list">${rows}</div>` : '<p class="hint"><b>Everything checks out.</b></p>'}`;
+    ${rows ? `${sure.length ? `<div style="margin:6px 0"><button class="btn btn-sm btn-primary" id="pid-apply-all" title="Save every suggestion that is a close name match">Use ${sure.length} close match${sure.length === 1 ? '' : 'es'}</button></div>` : ''}<div class="pid-list">${rows}</div>` : '<p class="hint"><b>Everything checks out.</b></p>'}`;
   const save = async (x) => api(`/platforms/${encodeURIComponent(x.slug)}`, { method: 'PATCH', body: JSON.stringify({ [x.field]: x.suggestion.id }) });
   $$('[data-pid-use]', box).forEach((b) => b.addEventListener('click', async () => {
     const x = r.rows[Number(b.dataset.pidUse)];
@@ -4266,7 +4266,7 @@ function showApp(user, { restore = false } = {}) {
   // and tiles stay hidden for members; renderSettingsTiles filters by role.
   $$('#view-settings .admin-only').forEach((el) => el.classList.toggle('hidden', !isAdmin));
 
-  // First sign-in of a new account: the welcome tour (once; "Run the welcome tour again" in My account brings it back).
+  // First sign-in of a new account: the welcome tour (once; "Run welcome tour again" in My account brings it back).
   if (user.welcomed === false && !restore) setTimeout(() => startWelcome(), 350);
 
   // Every sign-in starts on the Library home. Signing out only hides the app, so without
@@ -4598,7 +4598,7 @@ async function loadImageConvert(fillForm = true) {
     });
     $('#imgc-log-toggle').addEventListener('click', () => {
       const box = $('#imgc-log-box'), open = box.classList.toggle('hidden') === false;
-      $('#imgc-log-toggle').textContent = open ? 'Hide the converted pictures' : 'Show the converted pictures';
+      $('#imgc-log-toggle').textContent = open ? 'Hide converted pictures' : 'Show converted pictures';
       if (open) { imgLog.offset = 0; loadImageLog().catch((err) => toast(err.message, true)); }
     });
     let logTimer = null;
@@ -4619,7 +4619,7 @@ async function loadImageConvert(fillForm = true) {
       if (!cur.originals_kept) { say('There are no kept originals to remove.'); return; }
       const ok = await confirmDialog({ title: 'Remove the originals?', body: `${cur.originals_kept.toLocaleString()} original pictures (${mb(cur.originals_kept_bytes)} MB) will be deleted for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Continue', danger: true });
       if (!ok) return;
-      const again = await confirmDialog({ title: 'Are you sure?', body: `This deletes ${cur.originals_kept.toLocaleString()} original pictures and frees ${mb(cur.originals_kept_bytes)} MB. There is no recycle bin and no way back. Return originals will no longer work for them.`, okLabel: 'Delete the originals', danger: true, checkLabel: 'I understand the originals cannot be recovered' });
+      const again = await confirmDialog({ title: 'Are you sure?', body: `This deletes ${cur.originals_kept.toLocaleString()} original pictures and frees ${mb(cur.originals_kept_bytes)} MB. There is no recycle bin and no way back. Return originals will no longer work for them.`, okLabel: 'Delete originals', danger: true, checkLabel: 'I understand the originals cannot be recovered' });
       if (!again.ok) return;
       if (!again.checked) { toast('Tick the box to confirm; nothing was removed.', true); return; }
       try { const r = await api('/admin/images/convert/remove-originals', { method: 'POST' }); say(`${r.removed.toLocaleString()} originals removed, ${mb(r.bytes)} MB freed.`); } catch (err) { toast(err.message, true); }
@@ -5107,7 +5107,7 @@ function renderDuplicates() {
     <div class="dup-group" data-gi="${gi}">
       <div class="dup-head"><b>${esc(grp.title)}</b> <span class="pill">${esc(grp.platform_short || grp.platform)}</span>${grp.size_mismatch ? ' <span class="pill warn" title="Same title but very different file sizes: these may be two different games that were given one title">⚠ sizes differ a lot: probably not duplicates</span>' : ''}
         <span class="grow"></span>
-        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one (members will not see them either)">Hide the others</button></div>
+        <button class="btn btn-sm" data-dup-hide="${gi}" title="Hide every copy except the suggested one (members will not see them either)">Hide others</button></div>
       <div class="dup-items">${grp.items.map((it) => `
         <div class="dup-item ${it.keep ? 'keep' : ''}" data-dup-open="${it.id}" title="Open this game">
           <div class="dup-cover">${it.cover_url ? `<img loading="lazy" src="${esc(it.cover_url)}" alt="" />` : ''}</div>
@@ -5982,7 +5982,7 @@ $('#new-user-form').addEventListener('submit', async (e) => {
 
 /* A short set of cards the first time someone signs in: members set a password and a picture; the admin also sets up
  * providers, downloads the LaunchBox database and adds a first folder. Everything in it is also available in Settings,
- * so any card can be skipped, and "Run the welcome tour again" in My account brings it back. */
+ * so any card can be skipped, and "Run welcome tour again" in My account brings it back. */
 const WELCOME = { step: 0, cards: [], open: false };
 
 function welcomeCards(isAdmin) {

@@ -9,6 +9,15 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **The Emulators vault is grouped by platform.** Installers, and BIOS and firmware files, each sit under a header for each platform that opens and closes, so a platform with several does not make one long list.
 - **BIOS and firmware files in the Emulators vault.** When uploading to the vault, an admin now chooses **BIOS or firmware** and the platform it is for; several files can be chosen at once, and each is downloaded under its own file name. They are listed apart from the emulator installers. They follow the ROM download setting: admins, and members allowed to download, see and download them; others do not see them, and play-only accounts reach none of the vault. game-sauce only stores your own files: it never fetches them and does not hand them to Play in browser or Play locally.
 
+### Changed
+
+- **Text buttons in the Modern look have a new style.** Where a button keeps its words, in Settings and elsewhere, it is now small and squared, softly tinted, with an icon: green for the main action, red for delete, stop and cancel, neutral for the rest. Pointing at one deepens the tint and makes its edge glow. **Check latest releases** on the Emulators page is now an icon. The Classic look keeps its buttons.
+- **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
+
+### Fixed
+
+- In the Modern look, some buttons that should have been hidden were shown, such as **Remove logo** for a platform with no logo, and **Reset password** on your own account.
+
 ## [0.25.0] - 2026-11-27
 
 ### Added

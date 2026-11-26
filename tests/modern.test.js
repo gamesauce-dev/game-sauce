@@ -333,7 +333,8 @@ test('Avatar picture sizing, favourite tile icon, clear-match icon, upload-cover
   assert.match(css, /\.card-fav::before[^}]*star\.svg/);   // a star on the tile, not the face icon
   assert.match(css, /\.card-fav\.on::before[^}]*star-fill\.svg/);
   assert.match(css, /data-act="clearmatch"\]::before[^}]*clear-reset\.svg/);
-  assert.ok(!js.includes("'label.btn:has(#cover-input)'") && !js.includes("'#edit-form button[type=\"submit\"]'"), 'Save changes and Upload cover are text buttons in the Details window');
+  const iconOnly = js.slice(js.indexOf('const ICON_MAP = ['), js.indexOf('const miKnown'));
+  assert.ok(!iconOnly.includes("'label.btn:has(#cover-input)'") && !iconOnly.includes("'#edit-form button[type=\"submit\"]'"), 'Save changes and Upload cover keep their words in the Details window');
   assert.ok(js.includes("{ view: 'collections', icon: 'collection'"));
   assert.match(js, /data-promo="addcoll"\]', 'add-collection'/);
 });
@@ -518,10 +519,10 @@ test('the CSV import takes an optional cover zip and shows a combined preview', 
   assert.match(r, /planCoversForCsv\(entries, hits/);
 });
 
-test('Emulators: the refresh button sits between the Vault and the first emulator, and is a button with words', () => {
+test('Emulators: the refresh button sits between the Vault and the first emulator, and is an icon in Modern', () => {
   const html = read('public/index.html'), js = read('public/modern.js');
   assert.ok(html.indexOf('id="emu-refresh-latest"') > html.indexOf('id="emu-upload-form"') && html.indexOf('id="emu-refresh-latest"') < html.indexOf('id="emu-guide"'));
-  assert.doesNotMatch(js, /'#emu-refresh-latest'/, 'no icon stands in for its words');
+  assert.match(js, /\['#emu-refresh-latest', 'emulators-refresh'\]/);
   for (const n of ['emulators-2', 'no-covers-2', 'fetch-metadata-3', 'heart']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
   assert.match(read('public/app.js'), /id: 'health',\s+label: 'Health',\s+mi: 'heart'/);
 });
@@ -828,11 +829,35 @@ test('Modern: the Select icon lights up when it is on but is never filled in, li
   assert.ok(css.includes('body.ui-modern .mb-navbtn.is-on svg path[stroke] { fill: none; }'), 'and so do the main-menu icons');
 });
 
-test('Settings pages show text buttons (green, red for delete/stop), the DAT import comes first, the avatar says Preferences', () => {
+test('Settings pages keep their words, the DAT import comes first, the avatar says Preferences', () => {
   const css = read('public/modern.css'), js = read('public/modern.js');
-  assert.match(css, /#view-settings \[data-mi\]:not\(\.tile\):not\(\.subtile\)[^{]*::before \{ display: none; \}/);
-  assert.match(css, /#view-settings :is\(\[data-mi="delete"\], \[data-mi="cancel"\]/);
+  assert.match(js, /const TEXT_FORCE = '#view-settings \.btn, /);
   assert.match(css, /#mod-dat > \.dat-import \{ order: -1;/);
-  assert.match(css, /#drawer \.vid-find, body\.ui-modern #drawer \.vid-toggle/);
   assert.ok(js.includes('id="mb-acct-btn" aria-haspopup="menu" aria-expanded="false" title="Preferences"'));
+});
+
+test('Modern text buttons: small tinted style with an icon, three colours, a hover glow, nothing outside the Modern look', () => {
+  const css = read('public/modern.css'), js = read('public/modern.js');
+  const block = css.slice(css.indexOf('Text buttons (tagged by modern.js'));
+  for (const v of ['--tb-bg', '--tb-go-bg', '--tb-stop-bg']) assert.equal(block.split(v + ':').length - 1, 2, v + ' has a dark and a light value');
+  assert.match(block, /\[data-mt\][^{]*:hover:not\(:disabled\),[\s\S]*?box-shadow: 0 0 0 1px var\(--e\)/);
+  for (const line of block.split('\n').filter((l) => /^(body|html)\b/.test(l))) assert.match(line, /ui-modern/, line);
+  // every icon the words can be given exists, and the rule that draws it is made for the text buttons too
+  const list = js.slice(js.indexOf('const TEXT_ICONS = ['), js.indexOf('const TEXT_STOP'));
+  const names = [...list.matchAll(/', '([a-z0-9-]+)'\]/g)].map((m) => m[1]);
+  assert.ok(names.length > 20);
+  for (const n of names) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
+  assert.ok(js.includes('body.ui-modern [data-mt="${name}"][data-mt]::before'));
+  assert.match(css, /body\.ui-modern \.mt-glyph \{ display: none; \}/);
+  // the icon is revealed by that generated rule, so no stronger rule here may hide it again
+  assert.doesNotMatch(block, /:not\(#_\)[^{]*::before \{[^}]*visibility: hidden/);
+});
+
+test('Shorter button wording is translated in every language', () => {
+  const wording = ['Download launcher', 'Run welcome tour again', 'Hide others', 'Hide others in this list', 'Fill gaps', 'Clear cache', 'Estimate saving',
+    'Show converted pictures', 'Hide converted pictures', 'Save to server folder now', 'Read manual', 'Delete originals', 'Whole library'];
+  for (const lang of ['de', 'es', 'fr', 'it', 'ja', 'pt', 'zh']) {
+    const words = JSON.parse(read(`public/lang/${lang}.json`));
+    for (const w of wording) assert.ok(words[w], `${lang}: ${w}`);
+  }
 });
