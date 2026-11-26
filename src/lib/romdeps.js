@@ -53,7 +53,7 @@ function listFolder(dir, prefix, out) {
  *   files: what to put beside the game's own zip (rel is the path under that folder, with "/");
  *   missing: parent or BIOS sets the library does not have.
  */
-export function findCompanions(rom) {
+export function findCompanions(rom, { allowed = () => true } = {}) {
   const out = { files: [], missing: [] };
   if (!rom || !isSetFamily(rom.platform)) return out;
   if (!/\.(zip|7z)$/i.test(rom.filename || '')) return out;
@@ -72,9 +72,9 @@ export function findCompanions(rom) {
     if (!a && !b) return undefined;
     return { cloneof: a?.cloneof || b?.cloneof || null, romof: a?.romof || b?.romof || null, devices: a?.devices || null, isdevice: a?.isdevice || 0 };
   } };
-  const findAll = db.prepare(`SELECT r.filename, r.storage_path, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id
+  const findAll = db.prepare(`SELECT r.id, r.filename, r.storage_path, p.slug AS platform FROM roms r JOIN platforms p ON p.id = r.platform_id
     WHERE r.missing = 0 AND lower(r.filename) IN (@a, @b) ORDER BY r.id`);
-  const findRom = { get: (q) => findAll.all(q).find((r) => isSetFamily(r.platform)) };
+  const findRom = { get: (q) => findAll.all(q).find((r) => isSetFamily(r.platform) && allowed(r.id)) };
   const seen = new Set([own]);
   const walk = (name, depth) => {
     const row = names.get(name);

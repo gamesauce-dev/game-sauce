@@ -7,6 +7,7 @@ import { listPhysical, physicalPlatforms, physicalCounts, getPhysical, addPhysic
 
 import { flagVideos } from '../lib/emumovies.js';
 import { flagThemeVideos } from '../lib/themevideos.js';
+import { titleWithinLimits } from '../lib/visibility.js';
 import { fillAfterLookup } from '../lib/assets.js';
 import { reviewCounterparts, dropCounterparts } from '../lib/twincleanup.js';
 import { MAX_MANUAL_BYTES, manualType } from '../lib/manuals.js';
@@ -32,8 +33,9 @@ router.get('/games', (req, res) => {
     unmatched: req.query.unmatched === '1', spine: req.query.spine === '1', letter: String(req.query.letter || '').toUpperCase(),
     hidden: ['show', 'only'].includes(String(req.query.hidden || '')) ? String(req.query.hidden) : ''
   });
-  flagVideos(out.items, (g) => g.title, (g) => g.platform);
-  flagThemeVideos(out.items, (g) => g.title, (g) => g.platform);
+  const mayPlay = out.items.filter((g) => titleWithinLimits(req.user, { title: g.title, platform: g.platform }));
+  flagVideos(mayPlay, (g) => g.title, (g) => g.platform);
+  flagThemeVideos(mayPlay, (g) => g.title, (g) => g.platform);
   res.json({ ...out, total: out.items.length });
 });
 

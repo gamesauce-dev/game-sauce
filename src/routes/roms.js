@@ -10,7 +10,7 @@ import { parseFilename, sortTitle, decodeEntities } from '../lib/metadata.js';
 import { detectPlatform, PLATFORM_SLUGS, extensionAllowed } from '../lib/platforms.js';
 import { enrich, cacheMedia } from '../lib/providers.js';
 import { requireAdmin } from './auth.js';
-import { canSeeRom, isRomId, visibleSql } from '../lib/visibility.js';
+import { canSeeRom, isRomId, visibleSql, listedSql, unhiddenSql, notHiddenSql, hiddenFromEveryoneSql, refWithinLimitsSql, withinLimits } from '../lib/visibility.js';
 import { canDownload, arcadeVerifiedOnly } from '../lib/policy.js';
 import { applyMameNames, mameTitleTrusted, ARCADE_ROMSET } from '../lib/mamenames.js';
 import { importNames } from '../lib/namecsv.js';
@@ -297,8 +297,9 @@ bulkRouter.post('/hide', (req, res) => {
 
   if (!req.user) return res.status(401).json({ error: 'Sign in required' });
   // Personal: this only changes what YOU see.
-  const add = db.prepare('INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) SELECT ?, id FROM roms WHERE id = ?');
-  const del = db.prepare('DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ?');
+  // A number that names a game this person may not see changes nothing, the same as a number that names no game.
+  const add = db.prepare(`INSERT OR IGNORE INTO hidden_roms (user_id, rom_id) SELECT ?, r.id FROM roms r WHERE r.id = ? AND ${visibleSql(req.user)}`);
+  const del = db.prepare(`DELETE FROM hidden_roms WHERE user_id = ? AND rom_id = ? AND ${refWithinLimitsSql(req.user, 'hidden_roms.rom_id')}`);
   // An admin's Hide also hides the game from members; only admins see it again (under Hidden).
   const everyone = req.user.role === 'admin' ? db.prepare("UPDATE roms SET hidden_all = ?, updated_at = datetime('now') WHERE id = ? AND hidden_all <> ?") : null;
   let changed = 0;
@@ -492,15 +493,15 @@ router.get('/', (req, res) => {
   // they can be selected, hidden or unhidden there); otherwise they stay out of the library.
   // A game an admin hid from everyone is invisible to members, always. An admin finds those under Hidden.
   const isAdminUser = req.user?.role === 'admin';
-  if (!isAdminUser) where.push('r.hidden_all = 0 AND r.source_hidden = 0');
+  if (!isAdminUser) where.push(visibleSql(req.user));
   if (req.query.system === 'only') where.push('r.is_system = 1');
   else {
     if (req.query.system !== 'all') where.push('r.is_system = 0');
     // Hiding is personal: only the signed-in person's own hidden games are left out (others still see them).
     const mine = 'EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid)';
-    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(isAdminUser ? `(${mine} OR r.hidden_all = 1 OR r.source_hidden = 1)` : mine);
+    if (req.query.hidden === '1' || req.query.hidden === 'only') where.push(isAdminUser ? `(${mine} OR ${hiddenFromEveryoneSql()})` : mine);
     else if (req.query.hidden === 'all') { /* no clause */ }
-    else where.push('NOT ' + mine + (isAdminUser ? ' AND r.hidden_all = 0 AND r.source_hidden = 0' : ''));
+    else where.push('NOT ' + mine + (isAdminUser ? ` AND ${notHiddenSql()}` : ''));
   }
   // Cover and metadata filters (used by the clickable totals on Settings > Stats). 'matched' = a provider or a DAT matched it;
   // the rest are names taken from the file.
@@ -592,19 +593,18 @@ router.get('/', (req, res) => {
 
 router.get('/facets', (req, res) => {
   // Members' counts leave out games an admin hid from everyone.
-  const vis = req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0';
-  const visOnly = req.user?.role === 'admin' ? ' WHERE source_hidden = 0' : ' WHERE hidden_all = 0 AND source_hidden = 0';
+  const listed = listedSql(req.user);
   const platforms = db.prepare(`
     SELECT p.slug, p.name, p.short_name, p.accent, p.family, p.manufacturer,
            p.generation, COUNT(r.id) AS count,
            COALESCE(SUM(r.size_bytes), 0) AS bytes
-    FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${vis}
+    FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id AND ${listed}
     GROUP BY p.id HAVING count > 0 ORDER BY p.name
   `).all();
 
   const families = db.prepare(`
     SELECT COALESCE(p.family,'Other') AS name, COUNT(r.id) AS count
-    FROM platforms p JOIN roms r ON r.platform_id = p.id${vis}
+    FROM platforms p JOIN roms r ON r.platform_id = p.id AND ${listed}
     GROUP BY p.family ORDER BY count DESC
   `).all();
 
@@ -636,15 +636,15 @@ router.get('/facets', (req, res) => {
   const stats = db.prepare(`
     SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
            COUNT(DISTINCT platform_id) AS platforms,
-           (SELECT COUNT(*) FROM favorites WHERE user_id = ${req.user ? Number(req.user.id) : -1}) AS favorites,
+           (SELECT COUNT(*) FROM favorites WHERE user_id = ${req.user ? Number(req.user.id) : -1} AND ${refWithinLimitsSql(req.user, 'favorites.rom_id')}) AS favorites,
            SUM(missing) AS missing,
-           (SELECT COUNT(*) FROM hidden_roms WHERE user_id = ${req.user ? Number(req.user.id) : -1}) + ${req.user?.role === 'admin' ? '(SELECT COUNT(*) FROM roms r2 WHERE r2.hidden_all = 1 AND NOT EXISTS (SELECT 1 FROM hidden_roms h2 WHERE h2.rom_id = r2.id AND h2.user_id = ' + Number(req.user.id) + '))' : '0'} AS hidden,
+           (SELECT COUNT(*) FROM hidden_roms WHERE user_id = ${req.user ? Number(req.user.id) : -1} AND ${refWithinLimitsSql(req.user, 'hidden_roms.rom_id')}) + ${req.user?.role === 'admin' ? '(SELECT COUNT(*) FROM roms r2 WHERE r2.hidden_all = 1 AND NOT EXISTS (SELECT 1 FROM hidden_roms h2 WHERE h2.rom_id = r2.id AND h2.user_id = ' + Number(req.user.id) + '))' : '0'} AS hidden,
            SUM(CASE WHEN meta_source IN ('screenscraper','thegamesdb') THEN 1 ELSE 0 END) AS enriched,
            SUM(CASE WHEN source_id IS NULL THEN 1 ELSE 0 END) AS orphaned,
            SUM(CASE WHEN missing = 1 AND source_id IS NOT NULL THEN 1 ELSE 0 END) AS missing_sourced,
            SUM(CASE WHEN meta_source IN ('filename','seed','') OR meta_source IS NULL THEN 1 ELSE 0 END) AS never_enriched,
            SUM(CASE WHEN source_id IS NULL AND in_place = 0 THEN 1 ELSE 0 END) AS imported_or_seed
-    FROM roms${visOnly}
+    FROM roms r WHERE ${listed}
   `).get();
 
   res.json({ platforms, families, sources, genres, regions, tags, stats });
@@ -662,7 +662,7 @@ router.get('/recently-played', (req, res) => {
     JOIN roms r ON r.id = d.rom_id
     JOIN platforms p ON p.id = r.platform_id
     LEFT JOIN sources s ON s.id = r.source_id
-    WHERE d.kind = 'play' AND d.user_id = @uid AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
+    WHERE d.kind = 'play' AND d.user_id = @uid AND ${unhiddenSql(req.user)} AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) AND r.missing = 0
     GROUP BY r.id
     ORDER BY last_play_id DESC
     LIMIT @lim
@@ -879,7 +879,7 @@ router.post('/:id/launch', (req, res) => {
   if (isMultiDisc(rom)) return res.status(409).json({ error: MULTIDISC_MESSAGE, multidisc: true });   // one file cannot start a set of discs
   if (!fs.existsSync(rom.storage_path)) return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });
   // A MAME-family game may need a CHD folder, a parent set or a BIOS set beside its zip (src/lib/romdeps.js).
-  const deps = findCompanions(rom);
+  const deps = findCompanions(rom, { allowed: (id) => withinLimits(req.user, id) });
   const extraBytes = deps.files.reduce((n, f) => n + f.size, 0);
   const { token, lid, expires_in } = mintLaunchToken(rom.id, req.user ? req.user.id : null, { title: rom.title, size: (Number(rom.size_bytes) || 0) + extraBytes, extras: deps.files });
   // id and fp (the file's size and date) let the launcher's quick launch tell that a copy it kept is still this file.

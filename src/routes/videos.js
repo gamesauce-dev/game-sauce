@@ -1,5 +1,5 @@
 import express from 'express';
-import { canSeeRom } from '../lib/visibility.js';
+import { canSeeRom, titleWithinLimits } from '../lib/visibility.js';
 import path from 'node:path';
 import db from '../db.js';
 import { videoSourcesEnabled, videoSourceLabel, ensureVideo, videoFile, recentlyMissed } from '../lib/emumovies.js';
@@ -16,6 +16,12 @@ const me = (req) => Number(req.user?.id ?? -1);
 
 /** { title, platform } for the game the request names, or null when the person has no such game. */
 export function resolveGame(req) {
+  const game = namedGame(req);
+  // Videos are kept by platform and title, so a person's own copy would otherwise play the video of a Library game they are limited from.
+  return game && titleWithinLimits(req.user, game) ? game : null;
+}
+
+function namedGame(req) {
   const q = { ...req.query, ...(req.body && typeof req.body === 'object' ? req.body : {}) };
   const kind = String(q.kind || ''), id = String(q.id || '');
   if (kind === 'rom') {

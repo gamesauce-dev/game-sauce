@@ -7,7 +7,7 @@
 //   - "Delete" removes a message for the person who deleted it only. The sender can RECALL a message for a few minutes: it is wiped for both.
 //   - When someone's account is deleted, every message they sent or received goes with it, on both sides.
 import db from '../db.js';
-import { canSeeRom } from './visibility.js';
+import { canSeeRom, accountById, withinLimits } from './visibility.js';
 import { platformLabel } from './consoles.js';
 
 export const MAX_LEN = 200;
@@ -109,9 +109,10 @@ export function sendMessage(sender, toId, { body = '', game = null, replyTo = nu
 const withinRecall = (m) => !m.recalled_at && (Date.now() - new Date(String(m.created_at).replace(' ', 'T') + 'Z').getTime()) <= RECALL_MINUTES * 60_000;
 const snippet = (m) => (m.recalled_at ? 'Message recalled' : clip(m.body || (m.game ? 'Shared a game' : ''), 70));
 
-function shape(m, me) {
+function shape(m, me, viewer) {
   const mine = m.sender_id === me;
   let game = null; if (m.game) { try { game = JSON.parse(m.game); } catch { game = null; } }
+  if (game?.type === 'rom' && !withinLimits(viewer, game.id)) game = null;   // the note about the game goes when a limit now rules it out for the reader
   let reply = null;
   if (m.reply_to) {
     const q = db.prepare('SELECT * FROM messages WHERE id = ?').get(m.reply_to);
@@ -124,7 +125,8 @@ function shape(m, me) {
 /** The conversation with one person, oldest first (the latest 200). */
 export function thread(me, otherId) {
   const rows = db.prepare(`SELECT * FROM (SELECT * FROM messages WHERE ${visibleTo} AND ((sender_id = @me AND recipient_id = @other) OR (sender_id = @other AND recipient_id = @me)) ORDER BY id DESC LIMIT 200) ORDER BY id`).all({ me, other: Number(otherId) });
-  return rows.map((m) => shape(m, me));
+  const viewer = accountById(me);
+  return rows.map((m) => shape(m, me, viewer));
 }
 
 /** Everyone the person has a conversation with, the most recent first, with the last message and how many are unread. */

@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import db from '../db.js';
+import { titleKey } from './titlekey.js';
 import { providerEnv } from '../settings.js';
 import { PLATFORMS } from './platforms.js';
 
@@ -64,7 +65,7 @@ export function siblingPlatforms(slug) {
 }
 
 /** The same game under different spellings (tags, case, punctuation) is one key. */
-export const titleKey = (title) => String(title || '').toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, ' ').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+export { titleKey };   // the name a video is kept under
 
 /* ─────────────────────────── provider ─────────────────────────── */
 

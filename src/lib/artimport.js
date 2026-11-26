@@ -29,6 +29,7 @@ import { MAX_MANUAL_BYTES } from './manuals.js';
 import { MAX_COVER_BYTES, sniffImage } from './coverzip.js';
 import { titleKey as videoTitleKey } from './emumovies.js';
 import { setRomFile } from './romfiles.js';
+import { visibleSql } from './visibility.js';
 import { setThemeVideo } from './themevideos.js';
 import { saveCover } from './storage.js';
 
@@ -253,9 +254,11 @@ function digitalGames(userId) {
 
 /* ───────── videos: the games from every list a person can play videos in, and the plan for them ───────── */
 
-/** Every game a video could belong to: the Library's (shared), and this person's Physical and Digital games. Keyed by Library platform and title. */
-function videoGames(userId) {
-  const out = db.prepare('SELECT r.title, r.region, p.slug AS platform, r.filename FROM roms r JOIN platforms p ON p.id = r.platform_id').all().map((r) => ({ ...r, stem: romStem(r.filename) }));
+/** Every game a video could belong to: the Library's that this person may see, and their Physical and Digital games. Keyed by Library platform and title.
+ *  The run's counts and its list of failed files name games, so one they may not see is not matched at all. */
+function videoGames(userId, admin) {
+  const out = db.prepare(`SELECT r.title, r.region, p.slug AS platform, r.filename FROM roms r JOIN platforms p ON p.id = r.platform_id
+    WHERE ${visibleSql({ id: Number(userId), role: admin ? 'admin' : 'user' })}`).all().map((r) => ({ ...r, stem: romStem(r.filename) }));
   for (const g of physicalGames(userId)) out.push({ title: g.title, region: g.region, platform: g.platform });
   for (const g of digitalGames(userId)) out.push({ title: g.title, region: g.region, platform: g.lib });
   return out;
@@ -264,7 +267,7 @@ function videoGames(userId) {
 /** What a video import would do. Videos are kept per platform and title (one per game, shared by every list), and are linked where they are, not copied. */
 function planVideoImport(userId, scan, { replace = false, cut = '', admin = false } = {}, vkind = 'video') {
   const mayReplace = replace && admin;   // videos are shared by everyone: only an admin's import changes one that is there
-  const games = videoGames(userId);
+  const games = videoGames(userId, admin);
   const byKey = new Map();
   for (const g of games) { const k = `${g.platform}\n${titleKey(g.title)}`; if (!byKey.has(k)) byKey.set(k, g); }
   const byStem = new Map();   // the Library's ROMs by their file name (arcade pictures and videos are named like the ROM)

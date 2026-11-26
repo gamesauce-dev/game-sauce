@@ -5,6 +5,7 @@
 import path from 'node:path';
 import db from '../db.js';
 import { parseFilename, sortTitle } from './metadata.js';
+import { notHiddenSql } from './visibility.js';
 
 const REGION_RANK = ['USA', 'World', 'Europe', 'Australia', 'Canada', 'Japan'];
 // Arcade romsets: the zip name IS the game, so two zips are the same game only if MAME's name list says one is a clone of the other.
@@ -81,7 +82,7 @@ function computeDuplicates({ platform = null, uid = null } = {}) {
            r.dat_status, r.source_path, r.storage_path, (SELECT name FROM sources WHERE id = r.source_id) AS source_name, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id) AS favorite, r.keep_override, r.cover_path, r.meta_source, r.source_id,
            p.id AS platform_id, p.slug AS platform_slug, p.name AS platform_name, p.short_name AS platform_short
     FROM roms r JOIN platforms p ON p.id = r.platform_id
-    WHERE r.is_system = 0 AND r.missing = 0 AND r.hidden_all = 0 AND r.source_hidden = 0
+    WHERE r.is_system = 0 AND r.missing = 0 AND ${notHiddenSql()}
       AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = @uid) ${platform ? 'AND p.slug = @platform' : ''}
   `).all({ uid: uid ?? -1, ...(platform ? { platform } : {}) });
 

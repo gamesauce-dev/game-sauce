@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import db from '../db.js';
 import { randomToken, hashToken } from './auth.js';
+import { accountById, withinLimits } from './visibility.js';
 
 export const LAUNCH_TTL_MS = 2 * 60 * 1000;
 const MAX_OUTSTANDING = 500;
@@ -92,7 +93,8 @@ export function launchFileHandler(req, res) {
   if (!entry) return res.status(404).json({ error: 'This launch link has expired or was already used. Click Play locally again.' });
 
   const rom = db.prepare('SELECT * FROM roms WHERE id = ?').get(entry.romId);
-  if (!rom) return res.status(404).json({ error: 'ROM not found' });
+  // The code was made for someone who could see the game. A limit set since then still holds.
+  if (!rom || (entry.userId != null && !withinLimits(accountById(entry.userId), rom.id))) return res.status(404).json({ error: 'ROM not found' });
   if (!fs.existsSync(rom.storage_path)) {
     if (rom.source_id) db.prepare('UPDATE roms SET missing = 1 WHERE id = ?').run(rom.id);
     return res.status(410).json({ error: 'File is not reachable — its drive may be offline' });

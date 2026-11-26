@@ -2,6 +2,7 @@
 // A game on a shelf or in a Digital list that several accounts have is counted once. Nothing here is secret: it is all counts and names.
 import db from '../db.js';
 import { platformLabel, CONSOLE_PLATFORMS } from './consoles.js';
+import { notHiddenByAdminSql } from './visibility.js';
 
 const thisYear = () => new Date().getFullYear();
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
@@ -21,7 +22,7 @@ function gather() {
   const add = (kind, title, slug, label, gen, r) => out.push({ kind, title, slug, platform: label, pkey: normName(label) || slug || 'unknown', gen: gen || null,
     genres: r.genres, year: r.year, cover: r.cover, desc: r.desc });
   for (const r of db.prepare(`SELECT p.slug, p.name AS platform, r.title, r.genre, r.release_year AS year, r.cover_path, r.description
-      FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.is_system = 0 AND r.hidden_all = 0`).all()) {
+      FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.is_system = 0 AND ${notHiddenByAdminSql()}`).all()) {
     add('roms', r.title, r.slug, r.platform, genOf.get(r.slug), { genres: splitGenres(r.genre), year: yearOf(r.year), cover: has(r.cover_path), desc: has(r.description) });
   }
   for (const r of db.prepare(`SELECT g.platform AS slug, g.title, g.genre, g.release_year AS year, g.cover_path, g.description

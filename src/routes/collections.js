@@ -1,6 +1,7 @@
 import express from 'express';
 import db from '../db.js';
 import { playableCore } from './roms.js';
+import { listedSql, visibleSql } from '../lib/visibility.js';
 
 const router = express.Router();
 
@@ -9,20 +10,19 @@ const mine = (req) => Number(req.user?.id ?? -1);
 const own = (req, id) => db.prepare('SELECT * FROM collections WHERE id = ? AND user_id = ?').get(id, mine(req));
 
 router.get('/', (req, res) => {
-  const admin = req.user?.role === 'admin';
   // The count is of the games the person can see in that collection: the same rule as opening it (games hidden from everyone, or
   // belonging to a source whose games are hidden, are not counted), so the tile's number matches the list.
   const rows = db.prepare(`
     SELECT c.id, c.name, c.description, c.created_at, COUNT(r.id) AS count
     FROM collections c
     LEFT JOIN collection_roms cr ON cr.collection_id = c.id
-    LEFT JOIN roms r ON r.id = cr.rom_id ${admin ? 'AND r.source_hidden = 0' : 'AND r.hidden_all = 0 AND r.source_hidden = 0'}
+    LEFT JOIN roms r ON r.id = cr.rom_id AND ${listedSql(req.user)}
     WHERE c.user_id = ?
     GROUP BY c.id ORDER BY c.name
   `).all(mine(req));
   // Up to four covers per collection, for the preview strip on its card.
   const pick = db.prepare(`SELECT r.id FROM collection_roms cr JOIN roms r ON r.id = cr.rom_id
-    WHERE cr.collection_id = ? AND r.cover_path IS NOT NULL ${admin ? 'AND r.source_hidden = 0' : 'AND r.hidden_all = 0 AND r.source_hidden = 0'} ORDER BY cr.rowid DESC LIMIT 4`);
+    WHERE cr.collection_id = ? AND r.cover_path IS NOT NULL AND ${listedSql(req.user)} ORDER BY cr.rowid DESC LIMIT 4`);
   for (const c of rows) c.covers = pick.all(c.id).map((x) => `/api/roms/${x.id}/cover`);
   res.json({ items: rows });
 });
@@ -49,7 +49,7 @@ router.get('/:id', (req, res) => {
     FROM collection_roms cr
     JOIN roms r ON r.id = cr.rom_id
     JOIN platforms p ON p.id = r.platform_id
-    WHERE cr.collection_id = ? ${req.user?.role === 'admin' ? 'AND r.source_hidden = 0' : 'AND r.hidden_all = 0 AND r.source_hidden = 0'}
+    WHERE cr.collection_id = ? AND ${listedSql(req.user)}
     ORDER BY r.sort_title
   `).all(collection.id).map(({ cover_path, ...r }) => ({
     ...r,
@@ -79,10 +79,12 @@ router.post('/:id/roms', (req, res) => {
 
   const ids = Array.isArray(req.body?.rom_ids) ? req.body.rom_ids.map(Number).filter(Boolean) : [];
   const link = db.prepare('INSERT OR IGNORE INTO collection_roms (collection_id, rom_id) VALUES (?, ?)');
+  // Only a game this person may see goes in; any other number is passed over, the same as one that names no game.
+  const there = db.prepare(`SELECT 1 FROM roms r WHERE r.id = ? AND ${visibleSql(req.user)}`);
   let added = 0;
   db.transaction(() => {
     for (const id of ids) {
-      if (db.prepare('SELECT 1 FROM roms WHERE id = ?').get(id)) added += link.run(collection.id, id).changes;
+      if (there.get(id)) added += link.run(collection.id, id).changes;
     }
   })();
   res.json({ added });

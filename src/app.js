@@ -3,7 +3,7 @@ import { uploadLimits } from './lib/uploads.js';
 import { LANGS } from '../public/i18n.js';   // the one list of languages (the Settings picker reads it too)
 import { slowLogMiddleware, slowLog } from './lib/slowlog.js';
 import { playOnlyGuard } from './lib/playonly.js';
-import { visibleSql } from './lib/visibility.js';
+import { visibleSql, listedSql, unhiddenSql, refWithinLimitsSql } from './lib/visibility.js';
 import { clearDuplicateCache } from './lib/duplicates.js';
 import { usable, FAMILY_DEFAULTS } from './lib/colours.js';
 import multer from 'multer';
@@ -321,24 +321,24 @@ export function createApp() {
     return m;
   };
   // How many of each platform's games are part of a multi-disc set (by their names, or as an admin set them): only the rows whose names could say so are looked at.
-  const multiDiscCounts = () => {
+  const multiDiscCounts = (user) => {
     const n = {};
-    for (const r of db.prepare("SELECT p.slug, r.filename, r.multidisc_override FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND (r.multidisc_override IS NOT NULL OR lower(r.filename) LIKE '%dis%' OR lower(r.filename) LIKE '%cd%' OR lower(r.filename) LIKE '%.m3u%')").all()) {
+    for (const r of db.prepare(`SELECT p.slug, r.filename, r.multidisc_override FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.is_system = 0 AND ${unhiddenSql(user)} AND (r.multidisc_override IS NOT NULL OR lower(r.filename) LIKE '%dis%' OR lower(r.filename) LIKE '%cd%' OR lower(r.filename) LIKE '%.m3u%')`).all()) {
       const yes = r.multidisc_override === 1 || (r.multidisc_override == null && detectMultiDisc(r.filename));
       if (yes) n[r.slug] = (n[r.slug] || 0) + 1;
     }
     return n;
   };
   api.get('/platforms', (req, res) => {
-    const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap(), md = multiDiscCounts();
+    const fc = familyColourMap(), fl = familyLogoMap(), fp = familyPlateMap(), md = multiDiscCounts(req.user);
     res.json({
       items: db.prepare(`
         SELECT p.*, COUNT(r.id) AS count,
-               COUNT(CASE WHEN ${playableSql()} AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
-               COUNT(CASE WHEN r.is_system = 0 AND r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
+               COUNT(CASE WHEN ${playableSql()} AND ${unhiddenSql(req.user)} AND NOT EXISTS (SELECT 1 FROM hidden_roms hp WHERE hp.rom_id = r.id AND hp.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS playable_count,
+               COUNT(CASE WHEN r.is_system = 0 AND ${unhiddenSql(req.user)} AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${req.user ? Number(req.user.id) : -1}) THEN r.id END) AS visible_count
         , (SELECT updated FROM platform_logos pl WHERE pl.slug = p.slug) AS logo_v
         , COALESCE((SELECT plate FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_plate, COALESCE((SELECT blade_text FROM platform_logos pl WHERE pl.slug = p.slug), 0) AS logo_text
-        FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id${req.user?.role === 'admin' ? ' AND r.source_hidden = 0' : ' AND r.hidden_all = 0 AND r.source_hidden = 0'}
+        FROM platforms p LEFT JOIN roms r ON r.platform_id = p.id AND ${listedSql(req.user)}
         GROUP BY p.id ORDER BY p.family COLLATE NOCASE, p.name COLLATE NOCASE
       `).all().map((p) => ({ ...p, short_default: PLATFORM_BY_SLUG.get(p.slug)?.short_name ?? null, multidisc_count: md[p.slug] || 0, family_colour: fc[p.family] || '#6b7280', family_logo_v: fl[p.family] || null, family_logo_plate: fp[p.family] || 0 }))
     });
@@ -610,21 +610,21 @@ export function createApp() {
                COUNT(DISTINCT platform_id) AS platforms,
                ${req.user?.role === 'admin' ? 'SUM(CASE WHEN missing = 1 THEN 1 ELSE 0 END)' : '0'} AS missing,   -- the games whose file is gone from its folder (an admin's own list to clean up)
                (SELECT COUNT(*) FROM favorites fc JOIN roms fr ON fr.id = fc.rom_id WHERE fc.user_id = ${mine == null ? -1 : mine} AND ${visibleSql(req.user, 'fr')}) AS favorites
-        FROM roms${req.user?.role === 'admin' ? ' WHERE source_hidden = 0' : ' WHERE hidden_all = 0 AND source_hidden = 0'}
+        FROM roms r WHERE ${listedSql(req.user)}
       `).get(),
       mine: mine == null ? { favorites: 0, downloads: 0 } : {
         favorites: db.prepare(`SELECT COUNT(*) AS n FROM favorites f JOIN roms r ON r.id = f.rom_id WHERE f.user_id = ? AND ${visibleSql(req.user)}`).get(mine).n,
-        downloads: db.prepare("SELECT COUNT(*) AS n FROM downloads WHERE user_id = ? AND kind = 'download'").get(mine).n
+        downloads: db.prepare(`SELECT COUNT(*) AS n FROM downloads WHERE user_id = ? AND kind = 'download' AND ${refWithinLimitsSql(req.user, 'downloads.rom_id')}`).get(mine).n
       },
       recent: db.prepare(`
         SELECT r.id, r.title, EXISTS (SELECT 1 FROM favorites fv WHERE fv.rom_id = r.id AND fv.user_id = ${mine == null ? -1 : mine}) AS favorite, r.cover_path, r.created_at,
                p.short_name AS platform_short, p.badge AS platform_badge, p.accent AS platform_accent,
                p.slug AS platform
         FROM roms r JOIN platforms p ON p.id = r.platform_id
-        WHERE r.hidden_all = 0 AND r.source_hidden = 0 AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${mine == null ? -1 : mine})
+        WHERE ${unhiddenSql(req.user)} AND NOT EXISTS (SELECT 1 FROM hidden_roms hr WHERE hr.rom_id = r.id AND hr.user_id = ${mine == null ? -1 : mine})
         ORDER BY r.created_at DESC LIMIT 24
       `).all().map(({ cover_path, ...r }) => ({ ...r, cover_url: cover_path ? `/api/roms/${r.id}/cover` : null })),
-      downloads: db.prepare('SELECT COUNT(*) AS n FROM downloads WHERE kind = \'download\'').get().n,
+      downloads: db.prepare(`SELECT COUNT(*) AS n FROM downloads WHERE kind = 'download' AND ${refWithinLimitsSql(req.user, 'downloads.rom_id')}`).get().n,
       // Most-downloaded counts ACTUAL manual downloads only (kind='download').
       // Browser-play streams are kind='play' and excluded, so this number is
       // real downloads, not fetch events.
