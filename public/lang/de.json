@@ -2274,5 +2274,15 @@
  "Estimate saving": "Ersparnis schätzen",
  "Show converted pictures": "Konvertierte Bilder anzeigen",
  "Hide converted pictures": "Konvertierte Bilder ausblenden",
- "Delete originals": "Originale löschen"
+ "Delete originals": "Originale löschen",
+ "Choose the platform": "Plattform wählen",
+ "Add your files": "Dateien hinzufügen",
+ "Fetch game details": "Spieldetails abrufen",
+ "With no provider set up, the title, region, revision and year still come from the file name.": "Ohne eingerichteten Anbieter kommen Titel, Region, Revision und Jahr trotzdem aus dem Dateinamen.",
+ "Pick a platform first": "Zuerst eine Plattform wählen",
+ "Drop {a} files or a folder here": "{a}-Dateien oder einen Ordner hier ablegen",
+ "Browse files": "Dateien auswählen",
+ "Browse folder": "Ordner auswählen",
+ "Files are copied into your library and duplicates are skipped. To leave them where they are,": "Dateien werden in deine Bibliothek kopiert, Duplikate werden übersprungen. Sollen sie an ihrem Ort bleiben,",
+ "use Sources": "nutze Quellen"
 }

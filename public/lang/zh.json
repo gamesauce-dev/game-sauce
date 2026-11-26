@@ -2272,5 +2272,15 @@
  "Estimate saving": "估算节省空间",
  "Show converted pictures": "显示已转换的图片",
  "Hide converted pictures": "隐藏已转换的图片",
- "Delete originals": "删除原图"
+ "Delete originals": "删除原图",
+ "Choose the platform": "选择平台",
+ "Add your files": "添加文件",
+ "Fetch game details": "获取游戏信息",
+ "With no provider set up, the title, region, revision and year still come from the file name.": "未设置数据来源时，标题、地区、版本和年份仍会从文件名中读取。",
+ "Pick a platform first": "请先选择平台",
+ "Drop {a} files or a folder here": "将 {a} 文件或文件夹拖到这里",
+ "Browse files": "选择文件",
+ "Browse folder": "选择文件夹",
+ "Files are copied into your library and duplicates are skipped. To leave them where they are,": "文件会复制到你的游戏库，重复文件会被跳过。如果想让文件保留在原处，",
+ "use Sources": "请使用“来源”"
 }

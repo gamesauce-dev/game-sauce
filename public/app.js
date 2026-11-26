@@ -3932,7 +3932,7 @@ const fileInput = $('#file-input');
 const folderInput = $('#folder-input');
 $('#browse').addEventListener('click', () => fileInput.click());
 $('#browse-folder').addEventListener('click', () => folderInput.click());
-dz.addEventListener('click', (e) => { if (e.target === dz || e.target.classList.contains('dz-ico') || e.target.classList.contains('dz-title')) fileInput.click(); });
+dz.addEventListener('click', (e) => { if (!dz.classList.contains('up-locked') && (e.target === dz || e.target.classList.contains('dz-ico') || e.target.closest('.dz-title'))) fileInput.click(); });
 fileInput.addEventListener('change', () => { uploadFiles([...fileInput.files]); fileInput.value = ''; });
 folderInput.addEventListener('change', () => {
   const files = [...folderInput.files].filter((f) => !/(^|\/)\./.test(f.webkitRelativePath || f.name));
@@ -5620,8 +5620,8 @@ async function loadEmulators() {
   }
 
   // Platform picker for vault upload (admin only) + source create + ROM upload:
-  // one cache, three dropdowns. Vault + source REQUIRE a platform; ROM upload
-  // keeps auto-detect (extensions disambiguate single files well).
+  // one cache, three dropdowns, and every one of them REQUIRES a platform
+  // (.chd and .iso are used by many platforms, so a file type cannot say which).
   const platSel = $('#emu-upload-platform');
   const upSel = $('#upload-platform');
   if ((platSel && platSel.options.length <= 1) || (upSel && upSel.options.length <= 1)) {
@@ -5631,7 +5631,7 @@ async function loadEmulators() {
         window.__platformsCache = items;
       }
       if (platSel && platSel.options.length <= 1) platSel.innerHTML = '<option value="">— pick one —</option>' + platformOptions();
-      if (upSel && upSel.options.length <= 1) upSel.innerHTML = '<option value="auto">Detect from extension</option>' + platformOptions();
+      if (upSel && upSel.options.length <= 1) upSel.innerHTML = '<option value="">— pick a platform —</option>' + platformOptions();
     } catch { /* pickers are a nicety */ }
   }
 

@@ -243,7 +243,7 @@
         <h1 class="page-title">Add ROMs</h1>
       </header>
 
-      <div class="panel" style="max-width:760px;margin-bottom:14px">
+      <div class="panel up-classic" style="max-width:760px;margin-bottom:14px">
         <h3>How adding ROMs works here</h3>
         <p class="hint">Add ROMs <strong>copies the file into the library</strong> — it does not link
           or watch the original location. Pick files (or a folder of files) in the dropzone below;
@@ -255,29 +255,35 @@
       </div>
 
       <div class="upload-layout">
+        <!-- The wrapper does nothing in Classic; in Modern it is the "step 2" card. -->
+        <div class="up-card">
+        <div class="up-step up-modern"><span class="up-num" data-n="2"></span><span>Add your files</span></div>
         <div class="dropzone" id="dropzone">
           <input type="file" id="file-input" multiple hidden />
           <input type="file" id="folder-input" webkitdirectory hidden />
           <div class="dz-ico">⤒</div>
-          <div class="dz-title">Drop ROM files or a folder here</div>
-          <div class="dz-sub">or <button class="link" id="browse">browse files</button> · <button class="link" id="browse-folder">browse a folder</button> — hashed on upload (CRC32 + MD5 + SHA1), duplicates rejected</div>
+          <div class="dz-title"><span class="up-classic">Drop ROM files or a folder here</span><span class="up-modern" id="up-title">Pick a platform first</span></div>
+          <div class="dz-sub">or <button class="link" id="browse"><span class="up-classic">browse files</span><span class="up-modern">Browse files</span></button> · <button class="link" id="browse-folder"><span class="up-classic">browse a folder</span><span class="up-modern">Browse folder</span></button> — hashed on upload (CRC32 + MD5 + SHA1), duplicates rejected</div>
+        </div>
         </div>
 
-        <div class="panel">
-          <h3>Options</h3>
+        <div class="panel up-options">
+          <h3 class="up-classic">Options</h3>
+          <div class="up-step up-modern"><span class="up-num" data-n="1"></span><span>Choose the platform</span></div>
           <label class="field">
             <span>Platform</span>
             <select id="upload-platform" class="select wide">
-              <option value="auto">Detect from extension</option>
+              <option value="">— pick a platform —</option>
             </select>
           </label>
           <label class="field checkbox">
             <input type="checkbox" id="upload-enrich" checked />
-            <span>Fetch metadata from configured providers</span>
+            <span><span class="up-classic">Fetch metadata from configured providers</span><span class="up-modern" title="With no provider set up, the title, region, revision and year still come from the file name.">Fetch game details</span></span>
           </label>
-          <p class="hint">With no provider credentials set, the library falls back to parsing the filename: title, region, revision and year are still extracted.</p>
+          <p class="hint up-classic">With no provider credentials set, the library falls back to parsing the filename: title, region, revision and year are still extracted.</p>
         </div>
       </div>
+      <p class="hint up-note up-modern"><span>Files are copied into your library and duplicates are skipped. To leave them where they are,</span> <a href="#" id="up-sources">use Sources</a></p>
 
       <div id="upload-progress" class="progress-list"></div>
       <div id="upload-results" class="results"></div>

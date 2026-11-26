@@ -861,3 +861,19 @@ test('Shorter button wording is translated in every language', () => {
     for (const w of wording) assert.ok(words[w], `${lang}: ${w}`);
   }
 });
+
+test('Add ROMs: the platform is required, and Modern shows it as step 1 before the files', () => {
+  const html = read('public/index.html'), app = read('public/app.js'), js = read('public/modern.js'), css = read('public/modern.css');
+  // both places that fill the list start it with "pick a platform": nothing may offer to guess it from the file type
+  assert.doesNotMatch(html + app, /Detect from extension<\/option>/);
+  assert.match(js, /locked = on && !picked;/);
+  assert.match(js, /syncUpload\(\);\s+\/\/ Classic: its buttons are never switched off/);
+  assert.match(read('public/styles.css'), /\.up-modern, \.up-step \{ display: none; \}\s+\.up-card \{ display: contents; \}/, 'Classic sees none of it');
+  assert.match(css, /#view-upload \.up-options \{ order: -1; \}/);
+  for (const lang of ['de', 'es', 'fr', 'it', 'ja', 'pt', 'zh']) {
+    const words = JSON.parse(read(`public/lang/${lang}.json`));
+    for (const w of ['Choose the platform', 'Add your files', 'Fetch game details', 'Pick a platform first', 'Drop {a} files or a folder here', 'Browse files', 'Browse folder', 'use Sources']) assert.ok(words[w], `${lang}: ${w}`);
+    assert.ok(words['Drop {a} files or a folder here'].includes('{a}'), lang);
+  }
+});
+

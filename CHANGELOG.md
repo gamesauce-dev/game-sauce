@@ -12,10 +12,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 ### Changed
 
 - **Text buttons in the Modern look have a new style.** Where a button keeps its words, in Settings and elsewhere, it is now small and squared, softly tinted, with an icon: green for the main action, red for delete, stop and cancel, neutral for the rest. Pointing at one deepens the tint and makes its edge glow. **Check latest releases** on the Emulators page is now an icon. The Classic look keeps its buttons.
+- **A tidier Add ROMs page in the Modern look**, in two steps: choose the platform, then add the files. The second step stays greyed out until a platform is picked, and the drop area names it. The Classic page is unchanged.
 - **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
 
 ### Fixed
 
+- **Add ROMs** could offer **Detect from extension** again after the Emulators page had been opened, though a platform is required there (many platforms share file types such as CHD and ISO).
 - In the Modern look, some buttons that should have been hidden were shown, such as **Remove logo** for a platform with no logo, and **Reset password** on your own account.
 
 ## [0.25.0] - 2026-11-27

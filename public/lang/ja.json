@@ -2274,5 +2274,15 @@
  "Estimate saving": "節約量を見積もる",
  "Show converted pictures": "変換した画像を表示",
  "Hide converted pictures": "変換した画像を隠す",
- "Delete originals": "元の画像を削除"
+ "Delete originals": "元の画像を削除",
+ "Choose the platform": "プラットフォームを選ぶ",
+ "Add your files": "ファイルを追加",
+ "Fetch game details": "ゲーム情報を取得",
+ "With no provider set up, the title, region, revision and year still come from the file name.": "プロバイダーが未設定でも、タイトル、地域、リビジョン、年はファイル名から取得されます。",
+ "Pick a platform first": "先にプラットフォームを選んでください",
+ "Drop {a} files or a folder here": "{a}のファイルまたはフォルダーをここにドロップ",
+ "Browse files": "ファイルを選択",
+ "Browse folder": "フォルダーを選択",
+ "Files are copied into your library and duplicates are skipped. To leave them where they are,": "ファイルはライブラリにコピーされ、重複はスキップされます。元の場所に置いたままにするには、",
+ "use Sources": "「ソース」を使ってください"
 }

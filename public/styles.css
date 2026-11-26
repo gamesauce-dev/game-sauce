@@ -2032,3 +2032,7 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .emu-group-head .plat-count { color: var(--muted); }
 .emu-group-files { display: grid; gap: 0.4286rem; margin: 0.1429rem 0 0.2857rem 1.2857rem; }
 .emu-group-files[hidden] { display: none; }
+
+/* Add ROMs: parts that only the other look shows. Here they take no room, and the wrapper round the drop area changes nothing. */
+.up-modern, .up-step { display: none; }
+.up-card { display: contents; }

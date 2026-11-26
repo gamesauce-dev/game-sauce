@@ -752,3 +752,36 @@ body.ui-modern .lang-opt[aria-pressed="true"] { background: var(--tb-hover); bor
 body.ui-modern .lang-opt[aria-pressed="true"]:hover { box-shadow: 0 0 0 1px var(--tb-glow) inset, 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
 /* Emulators: the release check is an icon; it turns while it works. */
 body.ui-modern #emu-refresh-latest:disabled::before { animation: ibspin .8s linear infinite; }
+
+/* ───────────── Add ROMs: step 1 the platform, step 2 the files ───────────── */
+body.ui-modern .up-classic { display: none !important; }
+body.ui-modern span.up-modern { display: inline; }
+body.ui-modern p.up-modern { display: block; }
+body.ui-modern #view-upload > :is(.upload-layout, .up-note, #upload-progress, #upload-results) { width: 100%; max-width: 44rem; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+body.ui-modern #view-upload .upload-layout { display: flex; flex-direction: column; gap: 0.9rem; flex: 0 0 auto; }
+body.ui-modern #view-upload .up-options { order: -1; }
+body.ui-modern #view-upload .up-card { display: block; background: var(--panel); border: 1px solid var(--line-2); border-radius: 0.8rem; padding: 1rem; }
+body.ui-modern #view-upload .up-step { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.8rem; font-size: 1rem; font-weight: 600; color: var(--text); }
+body.ui-modern .up-num { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; font-size: 0.82rem; background: color-mix(in srgb, var(--accent) 22%, var(--panel)); color: var(--tb-glow); }
+body.ui-modern .up-num::before { content: attr(data-n); }
+body.ui-modern .up-picked .up-options .up-num { background: var(--tb-go-bg); color: var(--tb-go-text); }
+body.ui-modern .up-picked .up-options .up-num::before { content: '✓'; }
+/* step 1: the list and the tick box side by side; the list glows until a platform is picked */
+body.ui-modern #view-upload .up-options { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 1.2rem; }
+body.ui-modern #view-upload .up-options .up-step { grid-column: 1 / -1; }
+body.ui-modern #view-upload .up-options .field { margin: 0; }
+body.ui-modern #view-upload .up-options .field:not(.checkbox) > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+body.ui-modern #view-upload:not(.up-picked) #upload-platform { border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
+/* step 2: the drop area, with the two browse buttons centred under its title */
+body.ui-modern #view-upload .dropzone { min-height: 14rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; margin: 0; }
+body.ui-modern #view-upload .dz-ico { margin: 0; width: 3.4rem; height: 3.4rem; border-radius: 50%; display: grid; place-items: center; font-size: 0; background: color-mix(in srgb, var(--accent) 22%, var(--panel)); color: var(--tb-glow); }
+body.ui-modern #view-upload .dz-ico::before { content: ''; width: 1.8rem; height: 1.8rem; background: currentColor; -webkit-mask: url(/modern/icons/add-roms.svg) center / contain no-repeat; mask: url(/modern/icons/add-roms.svg) center / contain no-repeat; }
+body.ui-modern #view-upload .dropzone.up-locked .dz-ico::before { -webkit-mask-image: url(/modern/icons/lock.svg); mask-image: url(/modern/icons/lock.svg); }
+body.ui-modern #view-upload .dz-title { margin: 0; text-align: center; }
+body.ui-modern #view-upload .dz-sub { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; font-size: 0; }
+body.ui-modern #view-upload .dropzone.up-locked { cursor: default; }
+body.ui-modern #view-upload:not(.up-picked) .up-card { opacity: .5; }
+body.ui-modern #view-upload .dz-sub [data-mt]:not(#_):not(#__):not(#___):disabled { opacity: .7; }
+body.ui-modern #view-upload .up-note { text-align: center; margin-top: 0.8rem; margin-bottom: 0.8rem; }
+body.ui-modern #view-upload .up-note a { color: var(--tb-glow); }
+@media (max-width: 640px) { body.ui-modern #view-upload .up-options { grid-template-columns: minmax(0, 1fr); row-gap: 0.8rem; } }

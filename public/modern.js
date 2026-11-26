@@ -879,7 +879,7 @@ const TEXT_ICONS = [
 ];
 const TEXT_STOP = new Set(['delete', 'cancel', 'close', 'stop', 'database-backup-delete', 'clear-covers', 'user-disable', 'folder-disable']);
 const TEXT_CALM = '#lib-clear-platform, [data-dg-clear], [data-ph-clear], [data-mv-close]';   // an X that only closes or clears a filter is not red
-const TEXT_GO = '.btn-primary, #artfolders-save, #hash-save, #img-save, #imgc-save';
+const TEXT_GO = '#browse, .btn-primary, #artfolders-save, #hash-save, #img-save, #imgc-save';
 // A symbol or emoji at the start of a button's words: arrows, shapes and dingbats, a plus, the bin.
 const GLYPH = /^\s*(?:[←-⇿■-➿⤀-⯿+＋]|\ud83d[\uddc0-\uddd1])️?\s*/;
 const matches = (el, sel) => { try { return el.matches(sel); } catch { return false; } };
@@ -908,9 +908,26 @@ function textify(el) {
   if (el.dataset.mk !== kind) el.dataset.mk = kind;
   miRule(name);
 }
+/* ───────────── Add ROMs: two steps ─────────────
+   The platform comes first (.chd and .iso are used by many platforms, so a file type cannot say which). Until one is picked the second step is
+   greyed out and its buttons are off; after that the drop area names the platform. Classic is put back as it was. */
+function syncUpload() {
+  const view = $('#view-upload'), sel = $('#upload-platform'), title = $('#up-title');
+  if (!view || !sel || !title) return;
+  const on = isModern(), picked = Boolean(sel.value), locked = on && !picked;
+  view.classList.toggle('up-picked', on && picked);
+  $('#dropzone')?.classList.toggle('up-locked', locked);
+  for (const id of ['#browse', '#browse-folder']) { const b = $(id); if (b && b.disabled !== locked) b.disabled = locked; }
+  // Written only when the English changes: the translation replaces it on screen, and writing it again would undo that.
+  const words = picked ? `Drop ${sel.selectedOptions[0].textContent.trim()} files or a folder here` : 'Pick a platform first';
+  if (title.dataset.en !== words) { title.dataset.en = words; title.textContent = words; }
+}
+document.addEventListener('change', (e) => { if (e.target.id === 'upload-platform') syncUpload(); });
+document.addEventListener('click', (e) => { if (e.target.closest('#up-sources')) { e.preventDefault(); go('sources'); } });
 export function iconize(root = document) {
   if (!isModern()) return;
   alignSubtiles();
+  syncUpload();
   promoteDetailActions(root);
   buildDetailHero(root);
   for (const t of $$('.detail-actions [data-tip]', root)) { const tip = t.getAttribute('data-tip'); if (tip && t.title !== tip) t.title = tip; }
@@ -1015,6 +1032,7 @@ export async function applyMode(mode, { fresh = false } = {}) {
   } else {
     untipify();
     restorePinIcon();
+    syncUpload();   // Classic: its buttons are never switched off
     const onHome = document.body.dataset.mview === 'home';   // on Modern's Home: Classic's own Home page
     hideHome();
     delete document.body.dataset.mview;
