@@ -494,7 +494,7 @@
         <label class="policy-row">
           <input type="checkbox" id="policy-members-download" />
           <span><b>Let members download ROM files</b>
-            <small>The default for everyone who has no personal setting below. Off by default. Members can always browse and play in the browser; this only controls the Download button. Admins can always download.</small></span>
+            <small>The default for everyone who has no personal setting below. Off by default. Members can always browse and play in the browser; this only controls the Download button, and BIOS and firmware files in the Emulators vault. Admins can always download.</small></span>
         </label>
         <label class="policy-row">
           <input type="number" id="policy-save-quota" min="0.1" step="0.1" class="search" style="width:6rem" />
@@ -1117,6 +1117,7 @@
           The <strong>vault</strong> at the top holds <em>your own</em> emulator installers:
           upload one manually, or save the official GitHub release with one click and the server
           downloads it into <code>storage/emulators</code> for safekeeping.
+          <span>The vault also keeps BIOS and firmware files that you supply, each tied to a platform. game-sauce never fetches them and does not hand them to an emulator itself.</span>
           game-sauce asks GitHub about each project once a day; nightly-only projects
           report that instead of a version number.
         </p>
@@ -1124,15 +1125,14 @@
 
       <div class="panel" style="margin-bottom:14px;max-width:980px">
         <h3>Vault <span class="pill warn admin-only">admin writes</span></h3>
-        <p class="hint" style="margin-top:0">Your stored installers. Anyone signed in can download;
-          only admins can add or remove. Saving a newer release keeps the old one —
-          delete the stale row when you're happy with the new build.</p>
+        <p class="hint" style="margin-top:0">Your stored emulator installers, and BIOS and firmware files. Only admins can add or remove. Full members can download installers; BIOS and firmware files follow the ROM download setting under User accounts. Saving a newer release keeps the old one: delete the stale entry when you are happy with the new build.</p>
         <div class="emu-vault-filters">
           <input id="emu-vault-q" class="search" type="search" placeholder="Search vault… name, version, OS" title="Filter stored installers" />
         </div>
         <div id="emu-vault" class="results"></div>
         <form id="emu-upload-form" class="edit-form admin-only" style="margin-top:12px;grid-template-columns:1fr 1fr 1fr;gap:10px;display:grid">
-          <label class="field"><span>Installer file *</span><input type="file" name="file" required class="file-input" /></label>
+          <label class="field"><span>What it is</span><select name="kind" id="emu-upload-kind"><option value="emulator">Emulator installer</option><option value="bios">BIOS or firmware</option></select></label>
+          <label class="field"><span id="emu-upload-filelabel">Installer file *</span><input type="file" name="file" required class="file-input" /></label>
           <label class="field"><span>Display name</span><input name="name" placeholder="Dolphin for Windows" /></label>
           <label class="field"><span>Platform *</span><select name="platform_slug" id="emu-upload-platform" required><option value="">— pick one —</option></select></label>
           <label class="field"><span>Version</span><input name="version" placeholder="2506" /></label>

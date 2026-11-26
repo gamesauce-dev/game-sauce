@@ -5650,8 +5650,8 @@ function renderEmuGuide() {
     // their explicit slug instead.
     const key = e.platforms[0] || e.slug;
     const latest = emuState.latest[key];
-    const vaulted = emuState.vault.filter((v) =>
-      v.name === e.name || (v.platform_slug && e.platforms.includes(v.platform_slug)));
+    const vaulted = emuState.vault.filter((v) => v.kind !== 'bios' && (
+      v.name === e.name || (v.platform_slug && e.platforms.includes(v.platform_slug))));
     return `
     <div class="emu-card" data-emu="${esc(key)}">
       <div class="emu-top">
@@ -5738,22 +5738,22 @@ function renderEmuGuide() {
 function renderEmuVault() {
   const wrap = $('#emu-vault');
   if (!emuState.vault.length) {
-    wrap.innerHTML = '<div class="side-empty">Vault is empty — upload an installer or save an official release above.</div>';
+    wrap.innerHTML = '<div class="side-empty">The vault is empty. Upload a file below, or save an official release.</div>';
     return;
   }
   // Client-side search over name/version/OS/filename/platform. The vault is
   // small (tens of rows), so no server round-trip is needed.
   const q = ($('#emu-vault-q')?.value || '').trim().toLowerCase();
   const shown = !q ? emuState.vault : emuState.vault.filter((v) =>
-    [v.name, v.version, v.os, v.arch, v.filename, v.platform_slug, v.notes]
+    [v.name, v.version, v.os, v.arch, v.filename, v.platform_slug, v.notes, v.kind === 'bios' ? 'bios firmware' : '']
       .filter(Boolean).some((s) => String(s).toLowerCase().includes(q)));
   if (!shown.length) {
     wrap.innerHTML = `<div class="side-empty">No vault entries match “${esc($('#emu-vault-q').value.trim())}”. <button class="link" id="emu-vault-clear">Clear search</button></div>`;
     $('#emu-vault-clear')?.addEventListener('click', () => { $('#emu-vault-q').value = ''; renderEmuVault(); });
     return;
   }
-  wrap.innerHTML = shown.map((v) => `
-    <div class="result-row ok emu-vault-row" data-vault="${v.id}">
+  const row = (v) => `
+    <div class="result-row ok emu-vault-row" data-vault="${v.id}" data-kind="${v.kind === 'bios' ? 'bios' : 'emulator'}">
       <span class="status"></span>
       <span class="name">${esc(v.name)}${v.version ? ` <span class="note">${esc(v.version)}</span>` : ''}${v.os ? ` <span class="note">· ${esc(v.os)}</span>` : ''}
         <br /><span class="note">${esc(v.filename)} · ${fmtBytes(v.size_bytes)} · ${esc(v.source)}${v.downloaded_at ? ` · saved ${esc(v.downloaded_at.slice(0, 10))}` : ''}${v.platform_slug ? ` · ${esc(v.platform_slug)}` : ''}${v.notes ? ` — ${esc(v.notes)}` : ''}</span></span>
@@ -5761,11 +5761,16 @@ function renderEmuVault() {
         <a class="btn btn-sm btn-primary" href="${esc(v.download_url)}">⤓ Download</a>
         ${authState.user?.role === 'admin' ? '<button class="btn btn-sm btn-danger" data-vault-del>Remove</button>' : ''}
       </span>
-    </div>`).join('');
+    </div>`;
+  // installers first, then BIOS and firmware files; the headings only show when there is something of the second kind
+  const installers = shown.filter((v) => v.kind !== 'bios'), bios = shown.filter((v) => v.kind === 'bios');
+  wrap.innerHTML = bios.length
+    ? `${installers.length ? `<h4 class="emu-vault-head">Emulator installers</h4>${installers.map(row).join('')}` : ''}<h4 class="emu-vault-head">BIOS and firmware</h4>${bios.map(row).join('')}`
+    : installers.map(row).join('');
   $$('[data-vault-del]', wrap).forEach((btn) => btn.addEventListener('click', async () => {
     const id = Number(btn.closest('[data-vault]').dataset.vault);
     const ok = await confirmDialog({
-      title: 'Remove this installer?',
+      title: btn.closest('[data-vault]').dataset.kind === 'bios' ? 'Remove this file?' : 'Remove this installer?',
       body: 'Deletes the vault entry and its stored file. Your ROMs are untouched.',
       okLabel: 'Remove',
       danger: true
@@ -5820,28 +5825,61 @@ $('#emu-refresh-latest')?.addEventListener('click', async (e) => {
   }
 });
 
+/** The upload form for the kind of file chosen. BIOS files often come as a set, so several can be chosen at once; each keeps its own file name. */
+function syncEmuUploadKind() {
+  const form = $('#emu-upload-form'); if (!form) return;
+  const bios = $('#emu-upload-kind').value === 'bios';
+  const file = form.elements.file, name = form.elements.name;
+  file.multiple = bios;
+  $('#emu-upload-filelabel').textContent = bios ? 'BIOS or firmware files *' : 'Installer file *';
+  const several = bios && file.files.length > 1;
+  name.disabled = several;
+  name.placeholder = bios ? (several ? 'Each file keeps its own name' : 'Leave empty to use the file name') : 'Dolphin for Windows';
+  if (several) name.value = '';
+}
+$('#emu-upload-kind')?.addEventListener('change', () => { $('#emu-upload-form').elements.file.value = ''; syncEmuUploadKind(); });
+$('#emu-upload-form')?.elements.file.addEventListener('change', syncEmuUploadKind);
+$('#emu-upload-form')?.addEventListener('reset', () => setTimeout(syncEmuUploadKind));
+
 $('#emu-upload-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const fd = new FormData(e.target);
-  if (!fd.get('file')?.size) return toast('Choose a file first', true);
-  if (!String(fd.get('platform_slug') || '').trim()) return toast('Pick the platform for this installer', true);
-  const msg = $('#emu-upload-msg');
-  if (msg) msg.textContent = 'Uploading…';
+  const form = e.target;
+  const base = new FormData(form);
+  const files = [...form.elements.file.files].filter((f) => f.size);
+  if (!files.length) return toast('Choose a file first', true);
+  if (!String(base.get('platform_slug') || '').trim()) return toast('Pick the platform for this file', true);
+  const msg = $('#emu-upload-msg'), button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  const saved = [], there = [], failed = [];
+  for (const [i, file] of files.entries()) {
+    if (msg) msg.textContent = files.length > 1 ? `Uploading file ${i + 1} of ${files.length}…` : 'Uploading…';
+    const fd = new FormData();
+    for (const [k, v] of base.entries()) if (k !== 'file') fd.append(k, v);
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/emulators/vault/upload', { method: 'POST', body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      (data.duplicate ? there : saved).push(data);
+    } catch (err) { failed.push(`${file.name}: ${err.message}`); }
+  }
+  button.disabled = false;
+  if (!failed.length) form.reset();
+  // what happened, in the order that matters: anything that failed, then a file that was there already (it stays as it was), then success
+  const notes = [
+    ...failed,
+    ...there.map((d) => `Already in the vault as ${d.name} (${d.platform_slug}). It was left as it is.`)
+  ];
+  if (msg) msg.textContent = notes.join(' ') || (saved.length ? 'Saved to vault.' : '');
+  if (failed.length) toast(failed[0], true);
+  else if (saved.length === 1) toast(`Saved ${saved[0].name} to the vault`);
+  else if (saved.length) toast(`Saved ${saved.length} files to the vault`);
+  else if (there.length) toast(notes[0], true);
   try {
-    const res = await fetch('/api/emulators/vault/upload', { method: 'POST', body: fd });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Upload failed');
-    e.target.reset();
-    if (msg) msg.textContent = 'Saved to vault.';
-    const vault = await api('/emulators/vault');
-    emuState.vault = vault.items || [];
+    emuState.vault = (await api('/emulators/vault')).items || [];
     renderEmuGuide();
     renderEmuVault();
-    toast(`Saved ${data.name} to the vault`);
-  } catch (err) {
-    if (msg) msg.textContent = '';
-    toast(err.message, true);
-  }
+  } catch (err) { toast(err.message, true); }
 });
 
 $('#emu-vault-q')?.addEventListener('input', () => renderEmuVault());

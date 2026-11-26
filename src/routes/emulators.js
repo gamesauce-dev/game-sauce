@@ -9,6 +9,7 @@ import db from '../db.js';
 import { requireAdmin } from './auth.js';
 import { EMULATORS, emulatorFor } from '../lib/emulators.js';
 import { storageDir } from '../lib/storage.js';
+import { canDownload } from '../lib/policy.js';
 
 const router = express.Router();
 
@@ -116,7 +117,9 @@ router.get('/latest/:platform', async (req, res) => {
   res.json({ entry, latest: out.payload, cached: Boolean(out.cached), stale: out.stale || null });
 });
 
-/* ── vault: your own emulator installers (admin writes, anyone reads) ── */
+/* ── vault: your own emulator installers, and BIOS and firmware files (the admin adds and removes) ──
+ * Installers: any full member may download them. BIOS and firmware files (kind 'bios') are treated like ROM files: only people allowed to download
+ * those see or download them (src/lib/policy.js). Play-only accounts reach none of the vault. */
 
 // Newer-than-vault check: compare every vault entry against the live GitHub
 // latest tag and report (a) which tracked emulators have something newer than
@@ -127,7 +130,7 @@ router.get('/latest/:platform', async (req, res) => {
 router.get('/updates', async (req, res) => {
   const { EMULATORS } = await import('../lib/emulators.js');
   const tracked = EMULATORS.filter((e) => e.github);
-  const vaulted = db.prepare('SELECT name, version, platform_slug FROM emulators').all();
+  const vaulted = db.prepare("SELECT name, version, platform_slug FROM emulators WHERE kind = 'emulator'").all();   // a BIOS file is not an emulator you have saved
   const vaultTags = new Set(vaulted.map((v) => `${v.name}@@${v.version || ''}`));
   const vaultNames = new Set(vaulted.map((v) => v.name));
   const vaultPlatforms = new Set(vaulted.map((v) => v.platform_slug).filter(Boolean));
@@ -210,48 +213,55 @@ function moveIntoPlace(tmp, dest) {
   }
 }
 
-function insertVault({ platform_slug, name, version, os, arch, source, source_url, filename, storage_path, size_bytes, sha1, notes }) {
+function insertVault({ kind = 'emulator', platform_slug, name, version, os, arch, source, source_url, filename, storage_path, size_bytes, sha1, notes }) {
   const info = db.prepare(`
-    INSERT INTO emulators (platform_slug, name, version, os, arch, source, source_url, filename, storage_path, size_bytes, sha1, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO emulators (kind, platform_slug, name, version, os, arch, source, source_url, filename, storage_path, size_bytes, sha1, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    platform_slug || null, name, version || null, os || null, arch || null,
+    kind, platform_slug || null, name, version || null, os || null, arch || null,
     source || 'upload', source_url || null, filename, storage_path, size_bytes, sha1 || null, notes || null
   );
   return db.prepare('SELECT * FROM emulators WHERE id = ?').get(info.lastInsertRowid);
 }
 
 router.get('/vault', (req, res) => {
-  res.json({ items: db.prepare('SELECT * FROM emulators ORDER BY platform_slug, name').all().map(vaultRow) });
+  const bios = canDownload(req.user);
+  res.json({ items: db.prepare('SELECT * FROM emulators ORDER BY platform_slug, name').all().filter((e) => bios || e.kind !== 'bios').map(vaultRow) });
 });
 
 router.get('/vault/:id/download', (req, res) => {
   const e = db.prepare('SELECT * FROM emulators WHERE id = ?').get(req.params.id);
   if (!e) return res.status(404).json({ error: 'No such vault entry' });
+  if (e.kind === 'bios' && !canDownload(req.user)) return res.status(403).json({ error: 'Downloading BIOS and firmware files is turned off for this account. Ask the admin.' });
   if (!fs.existsSync(e.storage_path)) return res.status(410).json({ error: 'File missing from storage' });
   res.download(e.storage_path, e.filename);
 });
 
-/** Manual upload (admin). Fields: file + name, platform_slug (required), version?, os?, arch?, notes? */
+/** Manual upload (admin). Fields: file + platform_slug (required), kind? ('emulator', the default, or 'bios'), name?, version?, os?, arch?, notes? */
 router.post('/vault/upload', requireAdmin, takeVaultFile, async (req, res, next) => {   // checked before the file is received
   const tmp = req.file?.path;
   try {
     if (!tmp) return res.status(400).json({ error: 'Send multipart/form-data with a "file" field' });
     const fields = req.body || {};
     const file = { filename: path.basename(req.file.originalname) };
+    const kind = String(fields.kind || 'emulator');
+    if (kind !== 'emulator' && kind !== 'bios') return res.status(400).json({ error: 'Unknown kind of file.' });
     const platform = String(fields.platform_slug || '').trim();
     if (!platform) {
-      return res.status(400).json({ error: 'Platform is required: pick the platform this installer is for' });
+      return res.status(400).json({ error: kind === 'bios' ? 'Platform is required: pick the platform this file is for' : 'Platform is required: pick the platform this installer is for' });
     }
-    const name = String(fields.name || file.filename.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ')).trim() || 'Emulator';
+    // an emulator looks for a BIOS file by its exact name, so that is what it is shown as unless the admin says otherwise
+    const name = String(fields.name || (kind === 'bios' ? file.filename : file.filename.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '))).trim() || 'Emulator';
     const sha1 = await sha1Of(tmp);
-    const dupe = db.prepare('SELECT id FROM emulators WHERE sha1 = ?').get(sha1);
+    const dupe = db.prepare('SELECT * FROM emulators WHERE sha1 = ?').get(sha1);
     if (dupe) {
-      return res.status(200).json(vaultRow(db.prepare('SELECT * FROM emulators WHERE id = ?').get(dupe.id)));
+      // one copy of each file: the answer says what it is already kept as
+      return res.status(200).json({ ...vaultRow(dupe), duplicate: true });
     }
     const dest = path.join(emuDir(), `${sha1.slice(0, 2)}`, `${sha1}-${file.filename}`);
     moveIntoPlace(tmp, dest);
     const row = insertVault({
+      kind,
       platform_slug: fields.platform_slug || null,
       name,
       version: fields.version || null,

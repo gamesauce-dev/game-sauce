@@ -797,3 +797,9 @@ if (!db.prepare('PRAGMA table_info(rating_dirty)').all().some((c) => c.name === 
   END`);
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '74') ON CONFLICT(key) DO UPDATE SET value = '74'").run();
+
+/* ── v75: the Emulators vault also keeps BIOS and firmware files (src/routes/emulators.js): kind is 'emulator' or 'bios'. ── */
+if (!db.prepare('PRAGMA table_info(emulators)').all().some((c) => c.name === 'kind')) {
+  db.exec("ALTER TABLE emulators ADD COLUMN kind TEXT NOT NULL DEFAULT 'emulator'");
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '75') ON CONFLICT(key) DO UPDATE SET value = '75'").run();

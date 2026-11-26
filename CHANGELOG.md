@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Added
+
+- **BIOS and firmware files in the Emulators vault.** When uploading to the vault, an admin now chooses **BIOS or firmware** and the platform it is for; several files can be chosen at once, and each is downloaded under its own file name. They are listed apart from the emulator installers. They follow the ROM download setting: admins, and members allowed to download, see and download them; others do not see them, and play-only accounts reach none of the vault. game-sauce only stores your own files: it never fetches them and does not hand them to Play in browser or Play locally.
+
 ## [0.25.0] - 2026-11-27
 
 ### Added

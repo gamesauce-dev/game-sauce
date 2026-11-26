@@ -2023,3 +2023,4 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 /* an account row has more controls than fit on one line: they wrap under the name */
 .user-list-row { flex-wrap: wrap; }
 .user-list-row .grow { min-width: 14rem; }
+.emu-vault-head { margin: 0.7143rem 0 0.2857rem; font-size: 0.8571rem; color: var(--muted); }
