@@ -4,6 +4,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-26
+
 ### Added
 
 - **A limit on save space, and My saves.** Each account has 1 GB for browser-play saves and their screenshots (the admin can change it under **Settings > User accounts**). When it is full new saves are refused and the player says why; nothing is deleted to make room, and an in-game save that is no bigger than the one it replaces is still kept. **Settings > My account > My saves** lists all of your own saves and deletes them, including those of games you can no longer open.
