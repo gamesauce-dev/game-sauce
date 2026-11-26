@@ -479,8 +479,25 @@ body:has(#bulk-bar:not(.hidden)) .card-playbtn { display: none; }
 .collection-count { margin-top: auto; font-size: 0.8571rem; color: var(--accent-2); padding-top: 0.5714rem; }
 
 /* ───────────────────────── upload ───────────────────────── */
-.upload-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.1429rem; align-items: start; }
-@media (max-width: 900px) { .upload-layout { grid-template-columns: 1fr; } }
+/* Two steps in one centred column: the platform, then the files. */
+#view-upload > :is(.upload-layout, .up-note, #upload-progress, #upload-results) { width: 100%; max-width: 44rem; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+.upload-layout { display: flex; flex-direction: column; gap: 0.9rem; flex: 0 0 auto; }
+.panel h3.up-step { display: flex; align-items: center; gap: 0.6rem; }
+.up-num { display: grid; place-items: center; flex: 0 0 auto; width: 1.6rem; height: 1.6rem; border-radius: 50%; font-size: 0.8571rem; letter-spacing: 0; background: rgba(124, 92, 255, .18); color: var(--accent-2); }
+.up-num::before { content: attr(data-n); }
+.up-picked .up-options .up-num { background: rgba(52, 211, 153, .16); color: var(--good); }
+.up-picked .up-options .up-num::before { content: '✓'; }
+.up-options { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 1.2rem; }
+.up-options .up-step { grid-column: 1 / -1; }
+.up-options .field { margin: 0; }
+.up-options .field:not(.checkbox) > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#view-upload:not(.up-picked) #upload-platform { border-color: var(--accent); }
+#view-upload:not(.up-picked) .up-card { opacity: .5; }
+#view-upload .dropzone.up-locked { cursor: default; }
+#view-upload .dz-sub .btn:disabled { cursor: default; }
+#view-upload > .up-note { text-align: center; margin-top: 0.9rem; margin-bottom: 0.9rem; }
+.up-note a { color: var(--accent-2); }
+@media (max-width: 640px) { .up-options { grid-template-columns: minmax(0, 1fr); row-gap: 0.8rem; } }
 
 .dropzone {
   border: 0.1071rem dashed var(--line-2); border-radius: var(--radius);
@@ -490,7 +507,7 @@ body:has(#bulk-bar:not(.hidden)) .card-playbtn { display: none; }
 .dropzone.dragover { border-color: var(--accent); background: rgba(124, 92, 255, .07); }
 .dz-ico { font-size: 2.2857rem; color: var(--accent-2); margin-bottom: 0.5714rem; }
 .dz-title { font-size: 1.1429rem; font-weight: 600; margin-bottom: 0.2857rem; }
-.dz-sub { font-size: 0.8929rem; color: var(--dim); }
+.dz-sub { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin-top: 0.9rem; }
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1429rem; display: grid; gap: 0.8571rem; align-content: start; }
 .panel h3 { margin: 0; font-size: 0.9286rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
@@ -2032,7 +2049,3 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .emu-group-head .plat-count { color: var(--muted); }
 .emu-group-files { display: grid; gap: 0.4286rem; margin: 0.1429rem 0 0.2857rem 1.2857rem; }
 .emu-group-files[hidden] { display: none; }
-
-/* Add ROMs: parts that only the other look shows. Here they take no room, and the wrapper round the drop area changes nothing. */
-.up-modern, .up-step { display: none; }
-.up-card { display: contents; }

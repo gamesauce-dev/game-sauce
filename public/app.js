@@ -3927,6 +3927,21 @@ async function uploadFiles(files) {
   }
 }
 
+/* Two steps, the platform first. Until one is picked the second step is greyed out and its buttons are off; then the drop area names the platform. */
+function syncUploadSteps() {
+  const view = $('#view-upload'), sel = $('#upload-platform'), title = $('#up-title');
+  if (!view || !sel || !title) return;
+  const picked = Boolean(sel.value);
+  view.classList.toggle('up-picked', picked);
+  $('#dropzone').classList.toggle('up-locked', !picked);
+  $('#browse').disabled = $('#browse-folder').disabled = !picked;
+  // Written only when the English changes: the translation replaces it on screen, and writing it again would undo that.
+  const words = picked ? `Drop ${sel.selectedOptions[0].textContent.trim()} files or a folder here` : 'Pick a platform first';
+  if (title.dataset.en !== words) { title.dataset.en = words; title.textContent = words; }
+}
+$('#upload-platform').addEventListener('change', syncUploadSteps);
+$('#up-sources').addEventListener('click', (e) => { e.preventDefault(); if (modern.isModern()) modern.go('sources'); else setView('sources'); });
+
 const dz = $('#dropzone');
 const fileInput = $('#file-input');
 const folderInput = $('#folder-input');

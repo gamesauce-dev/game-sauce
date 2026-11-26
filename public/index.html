@@ -243,33 +243,10 @@
         <h1 class="page-title">Add ROMs</h1>
       </header>
 
-      <div class="panel up-classic" style="max-width:760px;margin-bottom:14px">
-        <h3>How adding ROMs works here</h3>
-        <p class="hint">Add ROMs <strong>copies the file into the library</strong> — it does not link
-          or watch the original location. Pick files (or a folder of files) in the dropzone below;
-          each file is hashed, deduplicated and stored under
-          <code>storage/roms/&lt;platform&gt;/&lt;sha1&gt;</code>. Nothing is ever executed or
-          auto-run. Want game-sauce to <strong>watch your existing folders without moving
-          anything</strong>? Use <strong>Sources</strong> instead — those stay exactly where they
-          are and only get re-scanned.</p>
-      </div>
-
+      <!-- Two steps, the same in both looks: the platform first (many platforms share file types such as .chd and .iso), then the files. -->
       <div class="upload-layout">
-        <!-- The wrapper does nothing in Classic; in Modern it is the "step 2" card. -->
-        <div class="up-card">
-        <div class="up-step up-modern"><span class="up-num" data-n="2"></span><span>Add your files</span></div>
-        <div class="dropzone" id="dropzone">
-          <input type="file" id="file-input" multiple hidden />
-          <input type="file" id="folder-input" webkitdirectory hidden />
-          <div class="dz-ico">⤒</div>
-          <div class="dz-title"><span class="up-classic">Drop ROM files or a folder here</span><span class="up-modern" id="up-title">Pick a platform first</span></div>
-          <div class="dz-sub">or <button class="link" id="browse"><span class="up-classic">browse files</span><span class="up-modern">Browse files</span></button> · <button class="link" id="browse-folder"><span class="up-classic">browse a folder</span><span class="up-modern">Browse folder</span></button> — hashed on upload (CRC32 + MD5 + SHA1), duplicates rejected</div>
-        </div>
-        </div>
-
         <div class="panel up-options">
-          <h3 class="up-classic">Options</h3>
-          <div class="up-step up-modern"><span class="up-num" data-n="1"></span><span>Choose the platform</span></div>
+          <h3 class="up-step"><span class="up-num" data-n="1"></span><span>Choose the platform</span></h3>
           <label class="field">
             <span>Platform</span>
             <select id="upload-platform" class="select wide">
@@ -278,12 +255,22 @@
           </label>
           <label class="field checkbox">
             <input type="checkbox" id="upload-enrich" checked />
-            <span><span class="up-classic">Fetch metadata from configured providers</span><span class="up-modern" title="With no provider set up, the title, region, revision and year still come from the file name.">Fetch game details</span></span>
+            <span title="With no provider set up, the title, region, revision and year still come from the file name.">Fetch game details</span>
           </label>
-          <p class="hint up-classic">With no provider credentials set, the library falls back to parsing the filename: title, region, revision and year are still extracted.</p>
+        </div>
+
+        <div class="panel up-card">
+          <h3 class="up-step"><span class="up-num" data-n="2"></span><span>Add your files</span></h3>
+          <div class="dropzone up-locked" id="dropzone">
+            <input type="file" id="file-input" multiple hidden />
+            <input type="file" id="folder-input" webkitdirectory hidden />
+            <div class="dz-ico">⤒</div>
+            <div class="dz-title" id="up-title">Pick a platform first</div>
+            <div class="dz-sub"><button class="btn btn-primary" id="browse" type="button" disabled>Browse files</button><button class="btn" id="browse-folder" type="button" disabled>Browse folder</button></div>
+          </div>
         </div>
       </div>
-      <p class="hint up-note up-modern"><span>Files are copied into your library and duplicates are skipped. To leave them where they are,</span> <a href="#" id="up-sources">use Sources</a></p>
+      <p class="hint up-note"><span>Files are copied into your library and duplicates are skipped. To leave them where they are,</span> <a href="#" id="up-sources">use Sources</a></p>
 
       <div id="upload-progress" class="progress-list"></div>
       <div id="upload-results" class="results"></div>

@@ -346,12 +346,6 @@ test('Settings icon swaps (upload-cover, replace-text, covers, database-check, p
   for (const n of ['covers', 'database-check', 'replace-text', 'providers-2', 'upload-cover', 'Library', 'game-controller', 'database-backup-save']) assert.ok(fs.existsSync(new URL(`../public/modern/icons/${n}.svg`, import.meta.url)), n);
 });
 
-test('Add ROMs: the dropzone stretches to the height of the Options panel', () => {
-  const css = read('public/modern.css');
-  assert.match(css, /\.upload-layout \{ align-items: stretch; \}/);
-  assert.match(css, /\.upload-layout \.dropzone \{ display: flex; flex-direction: column;/);
-});
-
 test('Emulators: Save to vault and Download are icons in Modern', () => {
   const js = read('public/modern.js'), app = read('public/app.js');
   assert.ok(js.includes("['[data-save-release]', 'save-to-vault']"));
@@ -862,18 +856,17 @@ test('Shorter button wording is translated in every language', () => {
   }
 });
 
-test('Add ROMs: the platform is required, and Modern shows it as step 1 before the files', () => {
-  const html = read('public/index.html'), app = read('public/app.js'), js = read('public/modern.js'), css = read('public/modern.css');
+test('Add ROMs: the platform is required, and both looks show it as step 1 before the files', () => {
+  const html = read('public/index.html'), app = read('public/app.js'), css = read('public/styles.css');
   // both places that fill the list start it with "pick a platform": nothing may offer to guess it from the file type
   assert.doesNotMatch(html + app, /Detect from extension<\/option>/);
-  assert.match(js, /locked = on && !picked;/);
-  assert.match(js, /syncUpload\(\);\s+\/\/ Classic: its buttons are never switched off/);
-  assert.match(read('public/styles.css'), /\.up-modern, \.up-step \{ display: none; \}\s+\.up-card \{ display: contents; \}/, 'Classic sees none of it');
-  assert.match(css, /#view-upload \.up-options \{ order: -1; \}/);
+  assert.ok(html.indexOf('id="upload-platform"') < html.indexOf('id="dropzone"'), 'the platform comes first on the page');
+  assert.match(html, /id="browse" type="button" disabled>Browse files<\/button><button class="btn" id="browse-folder" type="button" disabled>/);
+  assert.match(app, /\$\('#browse'\)\.disabled = \$\('#browse-folder'\)\.disabled = !picked;/);
+  assert.match(css, /#view-upload:not\(\.up-picked\) \.up-card \{ opacity: \.5; \}/);
   for (const lang of ['de', 'es', 'fr', 'it', 'ja', 'pt', 'zh']) {
     const words = JSON.parse(read(`public/lang/${lang}.json`));
     for (const w of ['Choose the platform', 'Add your files', 'Fetch game details', 'Pick a platform first', 'Drop {a} files or a folder here', 'Browse files', 'Browse folder', 'use Sources']) assert.ok(words[w], `${lang}: ${w}`);
     assert.ok(words['Drop {a} files or a folder here'].includes('{a}'), lang);
   }
 });
-
