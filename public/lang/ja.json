@@ -2267,5 +2267,6 @@
  "Already in the vault as {a} ({b}). It was left as it is.": "保管庫に {a}（{b}）としてすでにあります。変更していません。",
  "Saved {a} files to the vault": "{a}個のファイルを保管庫に保存しました",
  "Downloading BIOS and firmware files is turned off for this account. Ask the admin.": "このアカウントではBIOS・ファームウェアファイルのダウンロードがオフです。管理者に確認してください。",
- "Platform is required: pick the platform this file is for": "プラットフォームは必須です。このファイルのプラットフォームを選んでください"
+ "Platform is required: pick the platform this file is for": "プラットフォームは必須です。このファイルのプラットフォームを選んでください",
+ "Multi-system": "マルチシステム"
 }

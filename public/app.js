@@ -5598,7 +5598,7 @@ for (const id of ['#audit-action']) {
 
 /* ─────────────────────────── emulators ─────────────────────────── */
 
-const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false, saving: new Set(), openBios: new Set() };   // saving: releases on their way into the vault
+const emuState = { guide: [], vault: [], latest: {}, why: {}, latestFetchStarted: false, saving: new Set(), openGroups: new Set() };   // openGroups: the vault's platform headers left open   // saving: releases on their way into the vault
 
 async function loadEmulators() {
   const isAdmin = authState.user?.role === 'admin';
@@ -5706,6 +5706,7 @@ function renderEmuGuide() {
         method: 'POST',
         body: JSON.stringify({ platform: key, asset: sel?.value || undefined })
       });
+      emuState.openGroups.add(vaultGroupKey(r));
       toast(`Saved ${r.name} ${r.version || ''} to the vault`);
       const vault = await api('/emulators/vault');
       emuState.vault = vault.items || [];
@@ -5735,24 +5736,28 @@ function renderEmuGuide() {
   });
 }
 
-/** The BIOS and firmware files under a header for each platform, in the order every platform list uses. A header opens and closes its files; they
- *  start closed, and stay as they were left. A search shows what it found. */
-function biosGroups(files, row, searching) {
+/** One kind of vault entry under a header for each platform, in the order every platform list uses. A header opens and closes its files; they
+ *  start closed, and stay as they were left. A search shows what it found. Entries for no one platform (RetroArch) come last. */
+const vaultGroupKey = (v) => `${v.kind === 'bios' ? 'bios' : 'emulator'}:${v.platform_slug || ''}`;
+function vaultGroups(kind, files, row, searching) {
   const by = new Map();
   for (const v of files) { const slug = v.platform_slug || ''; if (!by.has(slug)) by.set(slug, []); by.get(slug).push(v); }
   const known = new Map((window.__platformsCache || []).map((p) => [p.slug, p]));
-  const platforms = orderPlatforms([...by.keys()].map((slug) => known.get(slug) || { slug, name: slug || 'Others' }));
+  const platforms = orderPlatforms([...by.keys()].filter(Boolean).map((slug) => known.get(slug) || { slug, name: slug }));
+  if (by.has('')) platforms.push({ slug: '', name: '' });
   const name = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
   return platforms.map((p) => {
-    const mine = by.get(p.slug).sort((a, b) => name(a.name, b.name));
-    const open = searching || emuState.openBios.has(p.slug);
-    return `<button type="button" class="emu-bios-head" data-bios-group="${esc(p.slug)}" aria-expanded="${open}">
+    // by name, and the newest version of one name first
+    const mine = by.get(p.slug).sort((a, b) => name(a.name, b.name) || name(b.version || '', a.version || ''));
+    const key = `${kind}:${p.slug}`;
+    const open = searching || emuState.openGroups.has(key);
+    return `<button type="button" class="emu-group-head" data-vault-group="${esc(key)}" aria-expanded="${open}">
         <span class="chev" aria-hidden="true">${open ? '▾' : '▸'}</span>
         <span class="plat-ico-wrap" aria-hidden="true">${known.has(p.slug) ? platformIconSvg(p, 16) : ''}</span>
-        <span class="emu-bios-name" translate="no">${esc(p.name)}</span>
+        ${p.slug ? `<span class="emu-group-name" translate="no">${esc(p.name)}</span>` : '<span class="emu-group-name">Multi-system</span>'}
         <span class="plat-count">${mine.length}</span>
       </button>
-      <div class="emu-bios-files"${open ? '' : ' hidden'}>${mine.map(row).join('')}</div>`;
+      <div class="emu-group-files"${open ? '' : ' hidden'}>${mine.map(row).join('')}</div>`;
   }).join('');
 }
 
@@ -5783,14 +5788,13 @@ function renderEmuVault() {
         ${authState.user?.role === 'admin' ? '<button class="btn btn-sm btn-danger" data-vault-del>Remove</button>' : ''}
       </span>
     </div>`;
-  // installers first, then BIOS and firmware files; the headings only show when there is something of the second kind
+  // installers first, then BIOS and firmware files, each under a header for each platform
   const installers = shown.filter((v) => v.kind !== 'bios'), bios = shown.filter((v) => v.kind === 'bios');
-  wrap.innerHTML = bios.length
-    ? `${installers.length ? `<h4 class="emu-vault-head">Emulator installers</h4>${installers.map(row).join('')}` : ''}<h4 class="emu-vault-head">BIOS and firmware</h4>${biosGroups(bios, row, Boolean(q))}`
-    : installers.map(row).join('');
-  $$('[data-bios-group]', wrap).forEach((head) => head.addEventListener('click', () => {
-    const slug = head.dataset.biosGroup, open = head.getAttribute('aria-expanded') !== 'true';
-    if (open) emuState.openBios.add(slug); else emuState.openBios.delete(slug);
+  const section = (title, kind, files) => (files.length ? `<h4 class="emu-vault-head">${title}</h4>${vaultGroups(kind, files, row, Boolean(q))}` : '');
+  wrap.innerHTML = section('Emulator installers', 'emulator', installers) + section('BIOS and firmware', 'bios', bios);
+  $$('[data-vault-group]', wrap).forEach((head) => head.addEventListener('click', () => {
+    const key = head.dataset.vaultGroup, open = head.getAttribute('aria-expanded') !== 'true';
+    if (open) emuState.openGroups.add(key); else emuState.openGroups.delete(key);
     head.setAttribute('aria-expanded', String(open));
     head.querySelector('.chev').textContent = open ? '▾' : '▸';
     head.nextElementSibling.hidden = !open;
@@ -5889,7 +5893,7 @@ $('#emu-upload-form')?.addEventListener('submit', async (e) => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       (data.duplicate ? there : saved).push(data);
-      if (data.kind === 'bios') emuState.openBios.add(data.platform_slug);
+      emuState.openGroups.add(vaultGroupKey(data));
     } catch (err) { failed.push(`${file.name}: ${err.message}`); }
   }
   button.disabled = false;

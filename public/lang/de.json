@@ -2267,5 +2267,6 @@
  "Already in the vault as {a} ({b}). It was left as it is.": "Schon im Tresor als {a} ({b}). Nichts wurde geändert.",
  "Saved {a} files to the vault": "{a} Dateien im Tresor gespeichert",
  "Downloading BIOS and firmware files is turned off for this account. Ask the admin.": "Das Herunterladen von BIOS- und Firmware-Dateien ist für dieses Konto ausgeschaltet. Frag einen Admin.",
- "Platform is required: pick the platform this file is for": "Plattform erforderlich: Wähle die Plattform für diese Datei"
+ "Platform is required: pick the platform this file is for": "Plattform erforderlich: Wähle die Plattform für diese Datei",
+ "Multi-system": "Mehrere Systeme"
 }

@@ -2265,5 +2265,6 @@
  "Already in the vault as {a} ({b}). It was left as it is.": "Déjà dans le coffre sous le nom {a} ({b}). Rien n’a été modifié.",
  "Saved {a} files to the vault": "{a} fichiers enregistrés dans le coffre",
  "Downloading BIOS and firmware files is turned off for this account. Ask the admin.": "Le téléchargement des fichiers BIOS et firmware est désactivé pour ce compte. Demandez à un administrateur.",
- "Platform is required: pick the platform this file is for": "La plateforme est obligatoire : choisissez celle de ce fichier"
+ "Platform is required: pick the platform this file is for": "La plateforme est obligatoire : choisissez celle de ce fichier",
+ "Multi-system": "Multisystème"
 }

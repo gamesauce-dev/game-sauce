@@ -2267,5 +2267,6 @@
  "Already in the vault as {a} ({b}). It was left as it is.": "Já está no cofre como {a} ({b}). Foi mantido como estava.",
  "Saved {a} files to the vault": "{a} arquivos salvos no cofre",
  "Downloading BIOS and firmware files is turned off for this account. Ask the admin.": "O download de arquivos de BIOS e firmware está desativado para esta conta. Fale com o administrador.",
- "Platform is required: pick the platform this file is for": "A plataforma é obrigatória: escolha a deste arquivo"
+ "Platform is required: pick the platform this file is for": "A plataforma é obrigatória: escolha a deste arquivo",
+ "Multi-system": "Multissistema"
 }

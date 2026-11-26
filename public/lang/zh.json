@@ -2265,5 +2265,6 @@
  "Already in the vault as {a} ({b}). It was left as it is.": "仓库中已有此文件：{a}（{b}）。保持原样。",
  "Saved {a} files to the vault": "已将 {a} 个文件保存到仓库",
  "Downloading BIOS and firmware files is turned off for this account. Ask the admin.": "此账户已关闭 BIOS 和固件文件下载。请联系管理员。",
- "Platform is required: pick the platform this file is for": "必须选择平台：请选择此文件所属的平台"
+ "Platform is required: pick the platform this file is for": "必须选择平台：请选择此文件所属的平台",
+ "Multi-system": "多系统"
 }
