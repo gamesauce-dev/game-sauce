@@ -181,7 +181,9 @@ test('ratings: an unrated version shows the strictest rating of the versions on 
   await call(`/api/roms/${c}`, { method: 'PATCH', body: { title: 'Something Else' } });
   assert.equal(await age(c), null, 'retitled: no longer a version');
   db.prepare('DELETE FROM roms WHERE id = ?').run(b);
-  assert.equal((await age(later)).label, 'PG', 'what is inherited follows the versions that are there');
+  const kept = await age(later);
+  assert.deepEqual([kept.label, kept.inherited], ['MA 15+', false], 'removing the stricter copy does not make the others milder: they keep what they had');
+  assert.equal((await age(a)).label, 'PG', 'a version with its own rating still keeps that one');
 });
 
 /* ───────── remembered apart from the game ───────── */

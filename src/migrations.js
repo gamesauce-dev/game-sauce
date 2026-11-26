@@ -787,3 +787,13 @@ db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '72') ON CON
   if (first) db.exec("INSERT INTO memory_dirty (rom_id, event) SELECT id, 'hidden' FROM roms WHERE hidden_all = 1");
 }
 db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '73') ON CONFLICT(key) DO UPDATE SET value = '73'").run();
+
+/* ── v74: the note of a removed game says that it was removed, so the versions that took their age rating from it keep that rating (src/lib/ratings.js). ── */
+if (!db.prepare('PRAGMA table_info(rating_dirty)').all().some((c) => c.name === 'removed')) {
+  db.exec('ALTER TABLE rating_dirty ADD COLUMN removed INTEGER NOT NULL DEFAULT 0');
+  db.exec('DROP TRIGGER IF EXISTS roms_rating_removed');
+  db.exec(`CREATE TRIGGER roms_rating_removed AFTER DELETE ON roms BEGIN
+    INSERT INTO rating_dirty (rom_id, platform_id, sort_title, removed) VALUES (old.id, old.platform_id, old.sort_title, 1);
+  END`);
+}
+db.prepare("INSERT INTO meta (key, value) VALUES ('schema_version', '74') ON CONFLICT(key) DO UPDATE SET value = '74'").run();

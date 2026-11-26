@@ -9,6 +9,8 @@
 //   age_inherited  1 when the game has no rating of its own and shows the strictest one of the other versions (same title) on the SAME platform
 //
 // An admin's rating always wins and no lookup touches it. A fetched rating may get stricter with a later lookup and is never lowered or removed.
+// When a version is removed from the Library, the versions that took their rating from it keep it, as their own: tidying up copies never takes a
+// rating away. (An admin taking a rating away, or retitling a game away from the others, does take what was inherited with it.)
 //
 // The copy is brought up to date by flushRatings(). Database triggers (src/migrations.js) note every game that is added, removed, retitled, moved
 // to another platform or given a fingerprint, so no code that writes games has to remember this.
@@ -103,6 +105,26 @@ function recomputeGroup(rows) {
   });
 }
 
+/** Make this rating the game's own: what it was shown with before, in the record that the admin's or a lookup's rating would be in. */
+function hold(rom, was, at = new Date().toISOString()) {
+  const records = recordsFor(rom);
+  const own = ownRecord(rom, records);
+  if (was.age_source === 'admin') {
+    const write = db.prepare("UPDATE game_ratings SET admin_level = ?, admin_board = ?, admin_at = ?, updated_at = datetime('now') WHERE id = ?");
+    for (const id of new Set([own.id, ...records.map((x) => x.id)])) write.run(was.age_level, was.age_board, at, id);
+  } else {
+    db.prepare("UPDATE game_ratings SET level = ?, board = ?, source = ?, updated_at = datetime('now') WHERE id = ?").run(was.age_level, was.age_board, was.age_source, own.id);
+  }
+  markRelated(rom);
+}
+
+/** A version has been removed. `rows` are those left, still showing what they showed with it there: any that inherited more than the versions left
+ *  can now give it keeps what it had. */
+function keepInherited(rows) {
+  const most = Math.max(0, ...rows.map((r) => resolve(recordsFor(r))?.level || 0));
+  for (const r of rows) if (r.age_inherited && r.age_level > most) hold(r, r);
+}
+
 /** Bring the games up to date with the rating records. Cheap when nothing has changed. */
 export function flushRatings() {
   if (!db.prepare('SELECT 1 FROM rating_dirty LIMIT 1').get()) return;
@@ -132,8 +154,10 @@ export function flushRatings() {
         if (n.platform_id) addGroup(n.platform_id, n.sort_title, n.rom_id);   // where it was before
       }
       const members = db.prepare(`SELECT ${ROM_FIELDS} FROM roms r JOIN platforms p ON p.id = r.platform_id WHERE r.platform_id = ? AND r.sort_title = ?`);
-      for (const g of groups.values()) {
+      const lostOne = new Set(notes.filter((n) => n.removed && n.sort_title).map((n) => `${n.platform_id}|${n.sort_title}`));
+      for (const [key, g] of groups) {
         const rows = g.title ? members.all(g.platformId, g.title) : [romRow(g.romId)].filter(Boolean);
+        if (lostOne.has(key)) keepInherited(rows);
         recomputeGroup(rows);
       }
     }
@@ -223,15 +247,7 @@ export function holdRatings(before) {
   for (const was of before) {
     const rom = romRow(was.id);
     if (!rom || (rom.age_level ?? 0) >= was.age_level) continue;
-    const records = recordsFor(rom);
-    const own = ownRecord(rom, records);
-    if (was.age_source === 'admin') {
-      const write = db.prepare("UPDATE game_ratings SET admin_level = ?, admin_board = ?, admin_at = ?, updated_at = datetime('now') WHERE id = ?");
-      for (const id of new Set([own.id, ...records.map((x) => x.id)])) write.run(was.age_level, was.age_board, at, id);
-    } else {
-      db.prepare("UPDATE game_ratings SET level = ?, board = ?, source = ?, updated_at = datetime('now') WHERE id = ?").run(was.age_level, was.age_board, was.age_source, own.id);
-    }
-    markRelated(rom);
+    hold(rom, was, at);
   }
   flushRatings();
 }

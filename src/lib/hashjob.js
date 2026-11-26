@@ -90,7 +90,7 @@ async function one(r) {
   const dupe = db.prepare('SELECT id FROM roms WHERE sha1 = ? AND id != ?').get(h.sha1, r.id);
   if (dupe) {
     // The same bytes are already in the library. Remove this entry unless it has been worked on (a title from a provider or by hand): then keep it, unhashed.
-    if (r.meta_source === 'filename' || r.meta_source === null) { db.prepare('DELETE FROM roms WHERE id = ?').run(r.id); job.duplicates++; }
+    if (r.meta_source === 'filename' || r.meta_source === null) { flushRecords(); db.prepare('DELETE FROM roms WHERE id = ?').run(r.id); job.duplicates++; }
     else db.prepare("UPDATE roms SET hash_failed = 2, updated_at = datetime('now') WHERE id = ?").run(r.id);
     return;
   }

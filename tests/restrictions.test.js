@@ -356,3 +356,43 @@ test('what a provider said when it failed goes to the admin only', () => {
   assert.match(source, /reason: errorFor\(req\.user, result\.error\)/);
   assert.doesNotMatch(source, /json\(\{[^\n]*error: hits\.error(,| \|\|)/);
 });
+
+test('removing the rated copy of a game leaves its other versions rated', async () => {
+  for (const source of ['admin', 'igdb']) {
+    const rate = (id, level) => (source === 'admin' ? ratings.setAdminRating([id], level) : ratings.addFetched(id, [{ board: 'acb', level, source: 'igdb' }]));
+    for (const how of ['by the admin', 'with its source']) {
+      const name = `Tidy ${source} ${how}`, sort = name.toLowerCase();
+      const rated = addRom(name, { sort }), one = addRom(name, { sort }), two = addRom(name, { sort });
+      rate(rated, 5);
+      restrictions.flushRecords();
+      assert.deepEqual([column(one, 'age_level'), column(one, 'age_inherited')], [5, 1]);
+      if (how === 'by the admin') await ok('admin', 'DELETE', `/roms/${rated}`);
+      else remove(rated);
+      restrictions.flushRecords();
+      for (const id of [one, two]) assert.deepEqual([column(id, 'age_level'), column(id, 'age_source'), column(id, 'age_inherited')], [5, source, 0], `${name}: ${id}`);
+      await ok('admin', 'PATCH', `/auth/users/${ids.kid}`, { age_limit: 3 });
+      assert.equal(await sees('kid', one), false, name);
+      await ok('admin', 'PATCH', `/auth/users/${ids.kid}`, { age_limit: null });
+      // the one kept is now an ordinary rating of that file: it stays when the file is added again, and the admin can take it away
+      remove(two);
+      const back = addRom(name, { sort: `${sort} alone`, filename: db.prepare('SELECT filename FROM roms WHERE id = ?').get(one).filename });
+      restrictions.flushRecords();
+      assert.equal(column(back, 'age_level'), 5, name);
+      ratings.setAdminRating([back], null);
+      assert.equal(column(back, 'age_level'), null, name);
+    }
+  }
+});
+
+test('only what nothing else still gives is kept when a version is removed', () => {
+  const sort = 'tidy mixed';
+  const strict = addRom('Tidy Mixed', { sort }), same = addRom('Tidy Mixed', { sort }), plain = addRom('Tidy Mixed', { sort });
+  ratings.setAdminRating([strict, same], 4);
+  restrictions.flushRecords();
+  remove(strict);
+  restrictions.flushRecords();
+  assert.deepEqual([column(plain, 'age_level'), column(plain, 'age_inherited')], [4, 1], 'another version still gives it, so it is still inherited');
+  // taking the rating away is not a removal: what was inherited goes with it
+  ratings.setAdminRating([same], null);
+  assert.equal(column(plain, 'age_level'), null);
+});
