@@ -777,3 +777,11 @@ body.ui-modern .dat-row .filepick { width: auto; }
 body.ui-modern .filepick-btn { display: inline-flex; align-items: center; min-height: 1.95rem; box-sizing: border-box; padding: 0.25rem 0.65rem; background: var(--tb-bg); border: 1px solid var(--tb-edge); color: var(--tb-text); border-radius: 0.36rem; font-size: 0.79rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; transition: background .15s, border-color .15s, box-shadow .15s; }
 body.ui-modern .filepick:hover .filepick-btn { background: var(--tb-hover); border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
 
+/* Tools > Emulators in Modern: each card's platform sits on a pill (like "In vault"), and its links are a calm colour of their own, not the accent purple. */
+body.ui-modern #view-emulators { --emu-link: #7cc4ff; --emu-link-hover: #b5deff; }
+html[data-theme="light"] body.ui-modern #view-emulators { --emu-link: #0b5f9e; --emu-link-hover: #083f6b; }
+body.ui-modern .emu-top { align-items: center; }
+body.ui-modern .emu-top .emu-plat { padding: 0.1rem 0.55rem; border: 1px solid; border-radius: 999px; font-size: 0.7857rem; font-weight: 600; color: var(--emu-link); border-color: color-mix(in srgb, var(--emu-link) 40%, transparent); background: color-mix(in srgb, var(--emu-link) 10%, transparent); }
+body.ui-modern .emu-links a, body.ui-modern .emu-latest .emu-notes { color: var(--emu-link); }
+body.ui-modern .emu-latest .emu-notes { border-bottom-color: color-mix(in srgb, var(--emu-link) 50%, transparent); }
+body.ui-modern .emu-links a:hover, body.ui-modern .emu-latest .emu-notes:hover { color: var(--emu-link-hover); }

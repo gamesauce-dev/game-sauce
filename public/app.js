@@ -5647,6 +5647,13 @@ async function loadEmulators() {
   renderEmuVault();
 }
 
+/** Why a card has no latest release to show, as a whole sentence in the chosen language. */
+function emuWhy(why) {
+  if (!why) return t('No GitHub release tracked — use the download page above (often nightly/rolling).');
+  if (/nightly\/rolling/.test(why)) return t('This project publishes {what}: use the download page above.', { what: t(why.replace(/^no published latest release \(|\)$/g, '')) });
+  return t('Could not get the latest release: {why}. Press “Check latest releases” to try again, or use the download page above.', { why: t(why) });
+}
+
 function renderEmuGuide() {
   const wrap = $('#emu-guide');
   if (!emuState.guide.length) {
@@ -5672,7 +5679,7 @@ function renderEmuGuide() {
 		${e.bios_needed === 'retroarch' ? '<span class="emu-bios">Some cores need BIOS files placing in system folder</span>' : ''}
 		${e.bios_needed === 'bios' ? '<span class="emu-bios">BIOS files required from your console</span>' : ''}
       </div>
-      <p class="emu-note">${esc(e.notes)}</p>
+      <p class="emu-note">${esc(t(e.notes))}</p>
       <div class="emu-links">
         <a href="${esc(e.homepage)}" target="_blank" rel="noreferrer">Official site ↗</a>
         <a href="${esc(e.download)}" target="_blank" rel="noreferrer">Download page ↗</a>
@@ -5684,8 +5691,8 @@ function renderEmuGuide() {
           : latest === undefined
           ? `<span class="hint">Latest release unknown — press “Check latest releases”.</span>`
           : latest
-            ? `<span class="tag">${esc(latest.tag || latest.name || 'release')}</span>
-               <span>${esc(latest.published_at ? `published ${latest.published_at.slice(0, 10)}` : '')}</span>
+            ? `<span class="tag">${esc(latest.tag || latest.name || t('release'))}</span>
+               <span>${esc(latest.published_at ? t('published on {date}', { date: latest.published_at.slice(0, 10) }) : '')}</span>
                <a class="emu-notes" href="${esc(latest.url)}" target="_blank" rel="noreferrer">📄 release notes ↗</a>
                ${latest.assets?.length ? `
                  <span class="emu-assets">
@@ -5694,9 +5701,9 @@ function renderEmuGuide() {
                    </select>
                    ${authState.user?.role === 'admin' ? `<button class="btn btn-sm" data-save-release="${esc(key)}"${emuState.saving.has(key) ? ' disabled' : ''}>Save to vault</button>` : ''}
                  </span>` : `<span class="hint">${(e.github && !latest.assets?.length) ? 'Latest release has no downloadable assets — use the download page above.' : ''}</span>`}
-               ${vaulted.length ? `<span class="pill ok">in vault: ${vaulted.map((v) => esc(v.version || v.filename)).join(', ')}</span>` : ''}`
-            : `<span class="hint">${esc(emuState.why[key] ? (/nightly\/rolling/.test(emuState.why[key]) ? `This project publishes ${emuState.why[key].replace(/^no published latest release \(|\)$/g, '')}: use the download page above.` : `Could not get the latest release: ${emuState.why[key]}. Press “Check latest releases” to try again, or use the download page above.`) : 'No GitHub release tracked — use the download page above (often nightly/rolling).')}</span>`}
-        ${latest && emuState.why[key] ? `<span class="hint">(showing the last answer GitHub gave: ${esc(emuState.why[key])})</span>` : ''}
+               ${vaulted.length ? `<span class="pill ok">${esc(t('in vault: {list}', { list: vaulted.map((v) => v.version || v.filename).join(', ') }))}</span>` : ''}`
+            : `<span class="hint">${esc(emuWhy(emuState.why[key]))}</span>`}
+        ${latest && emuState.why[key] ? `<span class="hint">${esc(t('(showing the last answer GitHub gave: {why})', { why: t(emuState.why[key]) }))}</span>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5790,7 +5797,7 @@ function renderEmuVault() {
     <div class="result-row ok emu-vault-row" data-vault="${v.id}" data-kind="${v.kind === 'bios' ? 'bios' : 'emulator'}">
       <span class="status"></span>
       <span class="name">${esc(v.name)}${v.version ? ` <span class="note">${esc(v.version)}</span>` : ''}${v.os ? ` <span class="note">· ${esc(v.os)}</span>` : ''}
-        <br /><span class="note">${esc(v.filename)} · ${fmtBytes(v.size_bytes)} · ${esc(v.source)}${v.downloaded_at ? ` · saved ${esc(v.downloaded_at.slice(0, 10))}` : ''}${v.platform_slug ? ` · ${esc(v.platform_slug)}` : ''}${v.notes ? ` — ${esc(v.notes)}` : ''}</span></span>
+        <br /><span class="note">${esc(v.filename)} · ${fmtBytes(v.size_bytes)} · ${esc(t(v.source === 'github-release' ? 'from a GitHub release' : v.source === 'upload' ? 'uploaded' : v.source))}${v.downloaded_at ? ` · ${esc(t('saved on {date}', { date: v.downloaded_at.slice(0, 10) }))}` : ''}${v.platform_slug ? ` · ${esc(v.platform_slug)}` : ''}${v.notes ? ` — ${esc(v.notes)}` : ''}</span></span>
       <span class="emu-vault-actions">
         <a class="btn btn-sm btn-primary" href="${esc(v.download_url)}">⤓ Download</a>
         ${authState.user?.role === 'admin' ? '<button class="btn btn-sm btn-danger" data-vault-del>Remove</button>' : ''}

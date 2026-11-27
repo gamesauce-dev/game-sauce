@@ -41,3 +41,12 @@ test('import problem lines and results are whole sentences, with their own trans
     assert.match(dict['= yes, or'], /yes/, `${code}: the CSV only accepts yes, so the word stays as it is`);
   }
 });
+
+test('every emulator description is translated in every language, and the page shows it through the translator', async () => {
+  const { EMULATORS } = await import('../src/lib/emulators.js');
+  for (const { code } of LANGS.filter((l) => l.code !== 'en')) {
+    const dict = JSON.parse(read(`public/lang/${code}.json`));
+    for (const e of EMULATORS) assert.ok(dict[e.notes], `${code}: ${e.name}`);
+  }
+  assert.match(read('public/app.js'), /esc\(t\(e\.notes\)\)/);
+});

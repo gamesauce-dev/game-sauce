@@ -372,7 +372,7 @@ test('Play-only accounts do not get the promoted management buttons on the detai
 });
 
 test('Emulators: a rolling-build project is explained, not offered a pointless retry', () => {
-  assert.match(read('public/app.js'), /This project publishes \$\{emuState\.why\[key\]/);
+  assert.match(read('public/app.js'), /t\('This project publishes \{what\}: use the download page above\.'/);
 });
 
 test('Admin-only play-only preview, avatar on sign-in, Settings sub-icons under their parent', () => {
