@@ -959,7 +959,7 @@ export function openManual(g) {
 
 /* ───────────── add a game / import a CSV (both in the details window) ───────────── */
 
-// What was last typed in the add form, kept for as long as the form stays open (pinned, or "Add and another") and forgotten when it closes.
+// What was last typed in the add form, kept for as long as the form stays open (pinned, or "Add another") and forgotten when it closes.
 let lastAdd = { platform: '', region: '' };
 
 function openAdd() {
@@ -979,7 +979,7 @@ function openAdd() {
       <label class="field"><span>Notes (optional)</span><input name="notes" placeholder="Edition, where it is kept…" /></label>
       ${purchaseFields({})}
       <p class="hint" style="margin:0">An Xbox One or Series disc is only added to your Digital library if you switch on the disc to digital icon in the game's details.</p>
-      <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add and another</button></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to shelf</button><button class="btn" type="button" id="ph-add-more" title="Add this game and keep the form open">Add another</button></div>
     </form>`;
   const form = $('#ph-add');
   wireCombo(form, 'platform', platformOptions());

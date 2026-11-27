@@ -551,7 +551,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
 // the families A to Z (as in every platform picker), the consoles in each A to Z
 const consoleOptions = () => orderStores(['nintendo', 'playstation', 'xbox'].map((store) => ({ store }))).map((x) => x.store).flatMap((s) => Object.entries(DG_PLATFORM).filter(([, p]) => p.store === s).map(([id, p]) => ({ value: id, label: p.label, hint: DG_STORE[s].label })).sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true })));
 
-let lastAdd = { platform: '', country: '' };   // kept while the form stays open (pinned, or "Add and another"), forgotten when it closes
+let lastAdd = { platform: '', country: '' };   // kept while the form stays open (pinned, or "Add another"), forgotten when it closes
 
 function openAdd() {
   if ($('#drawer')?.classList.contains('hidden') || !$('#dg-add')) lastAdd = { platform: '', country: '' };
@@ -566,7 +566,7 @@ function openAdd() {
         <label class="field"><span>Platform</span>${comboHtml({ options: consoleOptions(), selected: first, placeholder: 'Type to find a platform…' })}</label>
         <label class="field"><span>Store country (optional)</span><input name="country" placeholder="Australia or AU" value="${esc(lastAdd.country)}" /></label>
       </div>
-      <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to Digital Library</button><button class="btn" type="button" id="dg-add-more" title="Add this game and keep the form open">Add and another</button></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Add to Digital Library</button><button class="btn" type="button" id="dg-add-more" title="Add this game and keep the form open">Add another</button></div>
     </form>`;
   const form = $('#dg-add');
   wireCombo(form, 'platform', consoleOptions(), 'console');

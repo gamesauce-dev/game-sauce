@@ -20,6 +20,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Tools buttons show their words in the Modern look**, including Preview and Import under Add My Games and Game Assets, and the three Steam buttons.
 - **Read manual** and **Upload manual** are text buttons in the Modern look of a Physical game's details.
 - **The buttons for adding a game by hand** to the Physical or Digital library show their words in the Modern look.
+- **Add and another** is now **Add another**, when adding a game by hand.
 - **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
 
 ### Fixed

@@ -479,7 +479,7 @@ The Library holds games that have a ROM file. **Physical** is for the ones that 
 
 ### Putting games on the shelf
 
-- **Add a game** (top right of the page): a title, a platform from the Library's list, and optionally a region and notes. **Add and another** keeps the form open.
+- **Add a game** (top right of the page): a title, a platform from the Library's list, and optionally a region and notes. **Add another** keeps the form open.
 - **Import CSV**: a file with the columns `Platform` and `Game`, and optionally `Region`, `Notes` and `Year` (the first row names the columns, in any order). The platform can be any name from the Library's platform list: *SNES*, *Mega Drive*, *PS2*, *Game Boy* and so on, not only consoles. Preview shows what would change, then **Import games**. Importing the same file again adds nothing twice. A second copy of a game (another region, say) is kept when the region or note differs.
 - Admins can do the same from **Settings → Library tools → CSV tools**: choose **Physical** instead of **Digital** at the top of the console import box.
 
