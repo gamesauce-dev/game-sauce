@@ -229,6 +229,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          note="**Mac:** the .dmg installer is signed and notarised by Apple, so it opens with only the usual \"downloaded from the internet\" question. The portable .tar.gz is not: if macOS refuses to open **Start game-sauce.command**, run \`xattr -dr com.apple.quarantine\` on the unpacked folder once. Details in the README."
+          note="**Before 0.26.0, do not use Delete orphans:** it could permanently delete games added through Add ROMs. Update first. If you have used it, check your library and your backups.
+
+          **Mac:** the .dmg installer is signed and notarised by Apple, so it opens with only the usual \"downloaded from the internet\" question. The portable .tar.gz is not: if macOS refuses to open **Start game-sauce.command**, run \`xattr -dr com.apple.quarantine\` on the unpacked folder once. Details in the README."
           gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --notes "$note" --generate-notes --notes-start-tag "$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)" \
             || gh release create "${GITHUB_REF_NAME}" dist/* --title "game-sauce ${GITHUB_REF_NAME}" --notes "$note" --generate-notes

@@ -131,7 +131,7 @@ Two modes, and the difference matters:
 
 ## Add ROMs vs Sources (which one do I want?)
 
-- **Add ROMs** = **copy into the library**. Drop files (or a folder of files) in the dropzone and
+- **Add ROMs** = **copy into the library**. Choose the platform, drop files (or a folder of files) on the drop area, and
   game-sauce hashes each file, rejects duplicates, and **moves a copy** into
   `storage/roms/<platform>/<sha1>/…`. Your original file stays wherever it was; the library keeps
   its own copy. Best for one-off additions. Tiles can be multi-selected (`☐ Select`) and deleted

@@ -166,9 +166,9 @@ Drives that vanish are flagged **missing**, not deleted. Reconnect and rescan; t
 
 ## 7. Add ROMs (import copies)
 
-1. **Add ROMs →** drop files or a folder into the zone.
-2. Choose a platform (or leave auto-detect, which only trusts unambiguous file extensions).
-   Untick metadata lookup to skip it.
+1. **Add ROMs →** choose the platform. It is required: many platforms share file types such as
+   CHD and ISO. Untick **Fetch game details** to skip the metadata lookup.
+2. Drop files or a folder onto the drop area, or use **Browse files** or **Browse folder**.
 3. game-sauce hashes each file, skips duplicates ("duplicate of …"), and keeps a copy under
    `storage/roms/<platform>/<sha1>/…`.
 
@@ -253,9 +253,12 @@ re-runs matching after importing new DATs.
 ## 12. Emulators
 
 The **Emulators** section recommends one emulator per popular platform, with official links, a
-BIOS note (none / optional / required), and a **Check latest releases** button. Admins can **Save to
-vault** to keep the official installer on your server, or upload one by hand. Anyone signed in can
-download from the vault. game-sauce never bundles emulator binaries.
+BIOS note (none / optional / required), and a **Check latest releases** button (an icon in the Modern
+look). Admins can **Save to vault** to keep the official installer on your server, or upload one by
+hand. The vault also keeps **BIOS or firmware** files that an admin uploads for a platform. Accounts
+other than play-only ones can download installers from the vault; BIOS and firmware files are only
+for admins and members allowed to download ROMs. game-sauce never bundles emulator binaries or
+fetches BIOS files.
 
 ---
 

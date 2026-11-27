@@ -4,6 +4,10 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-27
+
+**Do not use Delete orphans on a version before 0.26.0.** On those versions it can permanently delete games added through Add ROMs. Update first: see the first fix below.
+
 ### Added
 
 - **The Emulators vault is grouped by platform.** Installers, and BIOS and firmware files, each sit under a header for each platform that opens and closes, so a platform with several does not make one long list.
@@ -25,9 +29,9 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Fixed
 
-- **Add ROMs** could offer **Detect from extension** again after the Emulators page had been opened, though a platform is required there (many platforms share file types such as CHD and ISO).
-- **Delete orphans could delete games added through Add ROMs, files and all,** even with “also delete the imported copies” unticked, and **Cancel** on its second popup did not cancel. Uploaded games are no longer counted as orphans: an orphan is now only a game scanned from your folders that has lost its source. **Delete orphans** asks once, **Cancel** stops it, and it deletes no game files.
+- **Delete orphans could permanently delete games added through Add ROMs.** It counted them as orphans and removed their stored files, even with **Also delete the imported copies from storage** left unticked, and **Cancel** on its second popup did not stop it. This was in every version from 0.2.0 to 0.25.0. Uploaded games are no longer orphans: an orphan is only a game scanned from your folders that has lost its source. **Delete orphans** now asks once, **Cancel** stops it, and it deletes no game files. Updating cannot bring back files already deleted: if you have used Delete orphans, check your library and your backups.
 - Asking to keep files when deleting games through the API (`keep_file`) now keeps uploaded copies too, and **Delete missing** removes entries only.
+- **Add ROMs** could offer **Detect from extension** again after the Emulators page had been opened, though a platform is required there (many platforms share file types such as CHD and ISO).
 - The counts on **Settings > Maintenance > Database maintenance** were never shown.
 - The **No source** and **Needs match** filters in the Library were hidden from the admin even when games belonged in them: the counts that decide this were never sent.
 - In the Modern look, the icon buttons in the **Manual** box of a Physical game had no hover text.
