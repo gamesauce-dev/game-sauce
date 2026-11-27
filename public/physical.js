@@ -763,7 +763,7 @@ export async function openDetail(id) {
     </div>
     <div class="detail-head"><div style="flex:1">
       <h2 class="detail-title">${esc(g.title)}</h2>
-      <div class="detail-plat"><i style="background:${esc(col)}"></i>${esc(g.platform_name)} · on your shelf${g.release_year ? ` · ${esc(g.release_year)}` : ''}</div>
+      <div class="detail-plat"><i style="background:${esc(col)}"></i>${esc(g.platform_name)} · ${t('on your shelf')}${g.release_year ? ` · ${esc(g.release_year)}` : ''}</div>
     </div></div>
     <div class="detail-actions">
       <button class="ibtn${g.favourite ? ' is-on fav' : ''}" data-d="fav" data-tip="${g.favourite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${g.favourite ? I.starFill : I.star}</button>
@@ -821,7 +821,7 @@ function bindDetail(g) {
   $('[data-d="hide"]', body).onclick = async () => { try { await ctx.api(`/physical/games/${id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !g.hidden }) }); } catch (err) { ctx.toast(err.message, true); return; } ctx.toast(g.hidden ? 'Shown again' : 'Hidden: Show hidden brings it back'); await refreshAll(); };
   $('[data-d="auto"]', body).onclick = async (e) => {
     const b = e.currentTarget; b.disabled = true; b.classList.add('spin');
-    try { const r = await ctx.api(`/physical/games/${id}/auto-match`, { method: 'POST' }); const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : ''; ctx.toast((r.matched ? `Details found (${r.game.meta_source}).` : 'No match found: search for it below.') + added, !r.matched && !added); await refreshAll(); }
+    try { const r = await ctx.api(`/physical/games/${id}/auto-match`, { method: 'POST' }); const added = r.assets?.got?.length ? t('Added: {list}.', { list: assetWords(r.assets.got) }) : ''; ctx.toast([r.matched ? t('Details found ({source}).', { source: r.game.meta_source }) : t('No match found: search for it below.'), added].filter(Boolean).join(' '), !r.matched && !added); await refreshAll(); }
     catch (err) { ctx.toast(err.message, true); b.disabled = false; b.classList.remove('spin'); }
   };
   $('[data-d="clear"]', body)?.addEventListener('click', async () => {
@@ -847,7 +847,7 @@ function bindDetail(g) {
     catch (err) { ctx.toast(err.message, true); }
   });
   $('[data-d="delete"]', body).onclick = async () => {
-    const ok = await ctx.confirmDialog({ title: `Remove ${g.title}?`, body: 'It is taken off your shelf' + (g.digital_made ? ' and out of your Digital library' : '') + '. Importing a CSV that lists it brings it back.', okLabel: 'Remove', danger: true });
+    const ok = await ctx.confirmDialog({ title: `Remove ${g.title}?`, body: t(g.digital_made ? 'It is taken off your shelf and out of your Digital library. Importing a CSV that lists it brings it back.' : 'It is taken off your shelf. Importing a CSV that lists it brings it back.'), okLabel: 'Remove', danger: true });
     if (!ok) return;
     try { await ctx.api(`/physical/games/${id}`, { method: 'DELETE' }); } catch (err) { ctx.toast(err.message, true); return; }
     ctx.closeDrawer(); ctx.toast('Removed from your shelf'); load(true);
@@ -1019,7 +1019,7 @@ function purchaseRows(g) {
   if (g.bought_on) rows.push(['Bought on', esc(g.bought_on)]);
   if (g.condition) rows.push(['Condition', esc(cap(g.condition))]);
   const has = [g.inc_box === 1 && 'Box', g.inc_manual === 1 && 'Manual', g.inc_media === 1 && (isCart(g.platform) ? 'Cartridge' : 'Disc'), g.inc_inserts === 1 && 'Inserts'].filter(Boolean);
-  if (g.complete != null) rows.push(['Comes with', g.complete ? 'Complete in box' : (has.length ? esc(has.join(', ')) : 'Nothing')]);
+  if (g.complete != null) rows.push(['Comes with', g.complete ? 'Complete in box' : (has.length ? esc(has.map((w) => t(w)).join(', ')) : 'Nothing')]);
   return rows;
 }
 

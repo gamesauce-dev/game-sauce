@@ -74,3 +74,12 @@ test('hover words that Modern has moved into its own hover box are still transla
   assert.match(read('public/i18n.js'), /const ATTRS = \[[^\]]*'data-mtip'\]/);
   assert.match(read('public/modern.js'), /el\.dataset\.mtip = /);
 });
+
+test('the game details windows: labels, menu and messages are translated in every language', () => {
+  const words = ['Source', 'File', 'Location', 'Size', 'Revision', 'Rating', 'Full name: {name}', 'Browser play: on', 'Multi-disc set: no', 'Added: {list}.', 'Not available: {list}.', 'cover', 'manual', 'on your shelf', 'Add manual', 'Read the manual ({name})'];
+  for (const { code } of LANGS.filter((l) => l.code !== 'en')) {
+    const dict = JSON.parse(read(`public/lang/${code}.json`));
+    for (const s of words) assert.ok(dict[s], `${code}: ${s}`);
+  }
+  assert.match(read('public/video.js'), /list\.map\(\(k\) => t\(ASSET_NAME\[k\] \|\| k\)\)/);
+});

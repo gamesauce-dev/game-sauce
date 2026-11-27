@@ -5,6 +5,7 @@
 //    button asks for it. Nothing is downloaded by opening a window.
 //  * tiles: a tile of a game that already has a video carries data-vid="rom:12" / "physical:7" / "digital:xbox:halo-infinite-xone"; hovering it
 //    for a moment opens a small pop-out window beside it with the video playing: the game's theme video when it has one (data-theme="1"), else its gameplay video. Tiles never download anything: only videos already kept play.
+import { t } from './i18n.js';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const query = (slot) => new URLSearchParams({ kind: slot.dataset.kind, id: slot.dataset.id, ...(slot.dataset.store ? { store: slot.dataset.store } : {}) }).toString();
 /* Sound is on by default in the details window. If the person turns it off (or on again) with the video's own control, that choice is remembered on this device. */
@@ -84,21 +85,22 @@ function playInCover(slot, src) {
 /* ───── Find assets: this game's video, covers, spine, disc art, back and manual, whatever is missing (one game, when asked) ───── */
 const ASSET_NAME = { video: 'video', cover: 'cover', spine: 'spine', disc: 'disc art', back: 'back', manual: 'manual', logo: 'logo', marquee: 'marquee', fanart: 'background' };
 const FIND_TIP = "Look for this game's video, cover, spine, disc art, back and manual, and keep whatever is missing. Nothing you added yourself is replaced.";
-const names = (list) => list.map((k) => ASSET_NAME[k] || k).join(', ');
+const names = (list) => list.map((k) => t(ASSET_NAME[k] || k)).join(', ');
 /** "video, cover": the words for what was added, for a message (used by the look-up-again buttons too). */
 export const assetWords = (got) => names(got || []);
 
 async function findAssets(slot, btn, msg) {
-  btn.disabled = true; msg.textContent = 'looking…';
+  btn.disabled = true; msg.textContent = t('looking…');
   try {
     const r = await call('/api/videos/assets?' + query(slot), { method: 'POST', body: JSON.stringify({ force: true }) });
     const got = r.got || [], res = r.results || {};
     const none = Object.keys(res).filter((k) => res[k] === 'none'), failed = Object.keys(res).filter((k) => res[k] === 'failed');
     const parts = [];
-    if (got.length) parts.push('Added: ' + names(got));
-    if (failed.length) parts.push('Could not keep: ' + names(failed) + (r.errors ? ' (' + Object.values(r.errors).join('; ') + ')' : ''));
-    if (none.length) parts.push('Not available: ' + names(none) + (r.why ? ' (' + r.why + ')' : ''));
-    const message = parts.length ? parts.join('. ') + '.' : 'Nothing is missing.';
+    // each part is a whole sentence of its own; a reason from the server is translated on its own
+    if (got.length) parts.push(t('Added: {list}.', { list: names(got) }));
+    if (failed.length) parts.push(t('Could not keep: {list}.', { list: names(failed) + (r.errors ? ' (' + Object.values(r.errors).map((e) => t(e)).join('; ') + ')' : '') }));
+    if (none.length) parts.push(t('Not available: {list}.', { list: names(none) + (r.why ? ' (' + t(r.why) + ')' : '') }));
+    const message = parts.length ? parts.join(' ') : t('Nothing is missing.');
     if (got.length) { document.dispatchEvent(new CustomEvent('gs-assets-changed', { detail: { kind: slot.dataset.kind, id: slot.dataset.id, store: slot.dataset.store || '', message } })); return; }   // the window is drawn again with what arrived
     msg.textContent = message; btn.disabled = false;
   } catch (err) { btn.disabled = false; msg.textContent = err.message; }
@@ -111,8 +113,8 @@ function show(slot, s) {
     const src = `/api/videos/file?${query(slot)}`;
     const inCover = playInCover(slot, src);
     slot.innerHTML = inCover
-      ? `<p class="hint vid-note">Video${s.bytes ? ` (${esc(mb(s.bytes))})` : ''}${s.source ? `, from ${esc(s.source)}` : ''}. <button type="button" class="btn btn-sm vid-toggle">Show cover</button> ${s.can_fetch ? finder('Find missing assets', 'btn btn-sm') : ''}</p>`
-      : `<div class="section-label">Video</div><video class="vid-player" controls preload="metadata" playsinline src="${esc(src)}"></video>${s.bytes ? `<p class="hint">${esc(mb(s.bytes))}${s.source ? `, from ${esc(s.source)}` : ''}</p>` : ''}${s.can_fetch ? `<p class="hint">${finder('Find missing assets', 'btn btn-sm')}</p>` : ''}`;
+      ? `<p class="hint vid-note">${esc(t('Video'))}${s.bytes ? ` (${esc(mb(s.bytes))})` : ''}${s.source ? ` · ${esc(s.source)}` : ''} <button type="button" class="btn btn-sm vid-toggle">Show cover</button> ${s.can_fetch ? finder('Find missing assets', 'btn btn-sm') : ''}</p>`
+      : `<div class="section-label">Video</div><video class="vid-player" controls preload="metadata" playsinline src="${esc(src)}"></video>${s.bytes ? `<p class="hint">${esc(mb(s.bytes))}${s.source ? ` · ${esc(s.source)}` : ''}</p>` : ''}${s.can_fetch ? `<p class="hint">${finder('Find missing assets', 'btn btn-sm')}</p>` : ''}`;
     const tg = slot.querySelector('.vid-toggle');
     tg?.addEventListener('click', () => {
       const cover = slot.closest('#drawer-body')?.querySelector('.detail-cover'), v = cover?.querySelector('.vid-cover'); if (!cover || !v) return;

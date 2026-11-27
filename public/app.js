@@ -1276,7 +1276,7 @@ async function clearMatchFor(ids, { fromDetail = false } = {}) {
   if (!ok) return;
   try {
     const r = await api('/roms/bulk/clear-match', { method: 'POST', body: JSON.stringify({ ids }) });
-    toast(`Cleared ${r.cleared} match${r.cleared === 1 ? '' : 'es'}`);
+    toast(t('Matches cleared: {count}', { count: r.cleared }));
     state.selected.clear();
     await Promise.all([loadLibrary(), loadPlatforms()]);
     syncSelectUI();
@@ -1638,7 +1638,7 @@ async function openDetail(id) {
     ['SHA1', `<span class="mono">${esc(rom.sha1 || '—')}</span>`],
     ['Metadata', rom.meta_source ? esc(rom.meta_source) : 'filename only'],
     ['DAT check', rom.dat_status
-      ? `<span class="badge-dat ${rom.dat_status === 'verified' ? '' : rom.dat_status}" style="position:static;display:inline-block">${esc(rom.dat_status)}</span>`
+      ? `<span class="badge-dat ${rom.dat_status === 'verified' ? '' : rom.dat_status}" style="position:static;display:inline-block">${esc(t(DAT_STATUS_META[rom.dat_status]?.label || rom.dat_status))}</span>`
       : '—'],
     ...(rom.dat_title ? [['Canonical title', esc(rom.dat_title)]] : [])
   ];
@@ -1653,7 +1653,7 @@ async function openDetail(id) {
     <div class="detail-head">
       <div style="flex:1">
         <h2 class="detail-title">${esc(rom.title)}</h2>
-        ${rom.long_title ? `<p class="hint detail-fullname">Full name: ${esc(rom.long_title)}</p>` : ''}
+        ${rom.long_title ? `<p class="hint detail-fullname">${esc(t('Full name: {name}', { name: rom.long_title }))}</p>` : ''}
         <div class="detail-plat"><i style="background:${rom.platform_accent}"></i>${esc(rom.platform_name)}${rom.release_year ? ` · ${esc(rom.release_year)}` : ''}</div>
       </div>
     </div>
@@ -1668,7 +1668,7 @@ async function openDetail(id) {
         <div class="more-menu hidden" id="more-menu" role="menu">
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.keep_override === 1 ? ' on' : ''}" role="menuitem" data-act="keep" aria-pressed="${rom.keep_override === 1}">${rom.keep_override === 1 ? ICON.keepOn : ICON.keep}<span><b>${rom.keep_override === 1 ? 'Locked: click to unlock' : 'Lock this game'}</b><small>Protects it from deletion and prefers it in the duplicate finder</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="addcoll">${ICON.collection}<span><b>Add to a collection</b></span></button>
-          ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>Click to switch for this game${rom.play_override !== null && rom.play_override !== undefined ? ' (overrides the default)' : ''}</small></span></button>` : ''}
+          ${rom.play_capable && authState.user?.role === 'admin' ? `<button class="mi${rom.playable ? ' on' : ''}" role="menuitem" data-act="playtoggle">${rom.playable ? ICON.gamepad : ICON.gamepadOff}<span><b>Browser play: ${rom.playable ? 'on' : 'off'}</b><small>${t('Click to switch for this game')}${rom.play_override !== null && rom.play_override !== undefined ? ` ${t('(overrides the default)')}` : ''}</small></span></button>` : ''}
           ${authState.user?.role === 'admin' ? `<button class="mi${rom.multidisc ? ' on' : ''}" role="menuitem" data-act="multidisc">${ICON.disc || ICON.desktop}<span><b>Multi-disc set: ${rom.multidisc ? 'yes' : 'no'}</b><small>${rom.multidisc_override == null ? 'Decided from its file name. Click to say the opposite' : 'Set by hand. Click to go by its file name again'}</small></span></button>` : ''}
           <button class="mi" role="menuitem" data-act="hide">${rom.hidden ? ICON.eye : ICON.eyeOff}<span><b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? 'Show this game again' : 'Unhide for me') : 'Hide this game'}</b>${rom.hidden ? (authState.user?.role === 'admin' && rom.hidden_all ? '<small>Hidden from members too</small>' : '') : (authState.user?.role === 'admin' ? '<small>Members will not see it either; you find it under Hidden</small>' : '<small>Only from your view; others still see it</small>')}</span></button>
           ${canEdit ? `<button class="mi" role="menuitem" data-act="refresh">${ICON.refresh}<span><b>Refresh metadata</b><small>Look the game up again</small></span></button>` : ''}
@@ -1681,7 +1681,7 @@ async function openDetail(id) {
       ${isAdmin ? `<button class="ibtn ibtn-danger${rom.keep_override === 1 ? ' is-locked' : ''}" data-act="delete" data-tip="${rom.keep_override === 1 ? 'Locked: unlock this game first (⋯ More)' : 'Delete from library'}" aria-label="Delete" aria-disabled="${rom.keep_override === 1}">${ICON.trash}</button>` : ''}
     </div>
 
-    ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.${rom.multidisc_override == null ? ' (Decided from its file name.)' : ' (Set by hand.)'}</p>` : ''}
+    ${rom.multidisc ? `<p class="hint md-note" style="margin:8px 0 0">${t('💿 Part of a multi-disc set. Play on this PC cannot start it, and Big Screen leaves it out, but it stays here and can be downloaded for an emulator that handles multi-disc sets.')} ${t(rom.multidisc_override == null ? '(Decided from its file name.)' : '(Set by hand.)')}</p>` : ''}
     ${canEdit ? `
     <div class="section-label">Identify this game</div>
     <div class="panel" style="padding:12px">
@@ -1734,7 +1734,7 @@ async function openDetail(id) {
           <button class="result-row ok" data-variant="${v.id}">
             <span class="status"></span>
             <span class="name">${esc(v.title)}</span>
-            <span class="note">${esc(v.region || '')} ${esc(v.revision ? `Rev ${v.revision}` : '')}</span>
+            <span class="note">${esc(v.region || '')} ${esc(v.revision ? t('Rev {rev}', { rev: v.revision }) : '')}</span>
           </button>`).join('')}
       </div>` : ''}
 
@@ -1890,8 +1890,8 @@ async function openDetail(id) {
     btn.classList.add('spin'); promo()?.classList.add('spin');
     try {
       const r = await api(`/metadata/${id}/refresh`, { method: 'POST' });
-      const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : '';   // the refresh also fills what the game is missing
-      toast((r.updated ? `Metadata updated from ${r.source}.` : `No match: ${r.reason}.`) + added, !r.updated && !added);
+      const added = r.assets?.got?.length ? t('Added: {list}.', { list: assetWords(r.assets.got) }) : '';   // the refresh also fills what the game is missing
+      toast([r.updated ? t('Metadata updated from {source}.', { source: r.source }) : t('No match: {reason}.', { reason: t(r.reason) }), added].filter(Boolean).join(' '), !r.updated && !added);
       if (r.updated || added) await refresh();
     } catch (err) {
       toast(err.message, true);
@@ -3777,7 +3777,7 @@ async function openAddToCollection(romIds, label) {
     if (!created) return;
     try {
       await api(`/collections/${created.id}/roms`, { method: 'POST', body: JSON.stringify({ rom_ids: romIds }) });
-      toast(`Created “${created.name}” and added ${romIds.length} game${romIds.length === 1 ? '' : 's'}`);
+      toast(t('Created “{name}”. Games added: {count}', { name: created.name, count: romIds.length }));
       loadCollections();
       close();
     } catch (err) { toast(err.message, true); }

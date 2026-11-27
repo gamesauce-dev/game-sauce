@@ -508,7 +508,7 @@ function renderConsoleDetail(g, d, store, appId, custom) {
   const refreshAll = async () => { await afterChange(); await openDigitalDetail(store, appId); };
   $('[data-d="lookup"]', body).onclick = async (e) => {
     const b = e.currentTarget; b.disabled = true; b.classList.add('spin');
-    try { const r = await ctx.api(`${gameUrl(store, appId)}/lookup`, { method: 'POST' }); const added = r.assets?.got?.length ? ` Added: ${assetWords(r.assets.got)}.` : ''; ctx.toast((r.found ? 'Details found.' : 'No match found: search for it below.') + added, !r.found && !added); await refreshAll(); }
+    try { const r = await ctx.api(`${gameUrl(store, appId)}/lookup`, { method: 'POST' }); const added = r.assets?.got?.length ? t('Added: {list}.', { list: assetWords(r.assets.got) }) : ''; ctx.toast([t(r.found ? 'Details found.' : 'No match found: search for it below.'), added].filter(Boolean).join(' '), !r.found && !added); await refreshAll(); }
     catch (err) { ctx.toast(err.message, true); b.disabled = false; b.classList.remove('spin'); }
   };
   // Your own cover: choose a picture, or go back to the automatic one. It is yours alone.
