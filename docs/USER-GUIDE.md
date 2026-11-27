@@ -24,7 +24,7 @@ setup lives in [DEPLOYMENT.md](DEPLOYMENT.md).
 | **Add ROMs** | Imports a *copy* into game-sauce (`storage/roms/…`). Your original stays put. Best for one-off additions. |
 | **Platform** | Every source is tied to one platform (you pick it; there is no guessing). |
 | **Missing** | A file that could not be reached at the last scan (for example an unplugged drive). It is flagged, never deleted, and clears itself on the next scan that finds it. |
-| **No source** (orphan) | A catalogue row that belongs to no source folder (a source was removed with "keep ROMs", or a game was locked when its source was removed). Add the folder as a source again and scan: the game is reconnected. Purge what is left. |
+| **No source** (orphan) | A game scanned from one of your folders that has lost its source (the source was removed with "keep ROMs", or the game was locked when its source was removed). Add the folder as a source again and scan: the game is reconnected. Purge what is left: this removes the entries, never the game files in your folders. Games added through Add ROMs are not orphans. |
 | **Locked** | A game marked Keep (padlock). It cannot be deleted until you unlock it. Admins can lock and unlock in bulk. |
 | **Needs match** | A ROM no provider has ever matched: your manual-identify worklist. |
 | **DAT** | A No-Intro / Redump catalogue of known-good dumps, used to verify ROMs locally. |

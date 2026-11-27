@@ -1,4 +1,5 @@
 // Library figures for Settings > Stats. Read-only; every number is counted straight from the database.
+import { orphanSql } from './orphans.js';
 import db from '../db.js';
 
 const n = (sql, ...args) => Number(db.prepare(sql).get(...args)?.n || 0);
@@ -25,7 +26,7 @@ export function collectStats() {
     filename_only: roms - matched,
     with_covers: n('SELECT COUNT(*) AS n FROM roms WHERE cover_path IS NOT NULL'),
     no_covers: n('SELECT COUNT(*) AS n FROM roms WHERE cover_path IS NULL AND is_system = 0'),
-    orphans: n('SELECT COUNT(*) AS n FROM roms WHERE source_id IS NULL OR source_id NOT IN (SELECT id FROM sources)'),
+    orphans: n(`SELECT COUNT(*) AS n FROM roms r WHERE ${orphanSql('r')}`),
     missing_files: n('SELECT COUNT(*) AS n FROM roms WHERE missing = 1'),
     hidden: n('SELECT COUNT(*) AS n FROM roms WHERE hidden_all = 1 OR id IN (SELECT rom_id FROM hidden_roms)'),
     system_items: n('SELECT COUNT(*) AS n FROM roms WHERE is_system = 1'),

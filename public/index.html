@@ -147,6 +147,7 @@
           <div id="recent-row" class="recent-row"></div>
         </div>
       </div>
+      <div id="home-notices" class="hidden"></div>
       <p class="empty-hint hidden" id="home-empty">Nothing to show yet. Add some games, and what you play and what was added last will appear here.</p>
     </section>
 
@@ -724,12 +725,7 @@
 
       <div class="panel hidden" id="mod-db">
         <h3>Database maintenance <span class="pill warn admin-only">admin</span></h3>
-        <p class="hint" style="margin-top:0">
-          ROMs can outlive their folder: removing a source with “keep ROMs”, or deleting a
-          source whose ROMs were already imported, leaves <strong>orphaned</strong> rows with no
-          valid source. They still appear in the library and in the platform list. Missing files
-          (a scan could not find the file in its folder) are different: they still have a source and come back on a rescan that finds the file, or you can remove them here.
-        </p>
+        <p class="hint" style="margin-top:0">An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.</p>
         <div id="db-health" class="counts"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <button class="btn btn-sm" id="db-health-refresh">Re-check</button>

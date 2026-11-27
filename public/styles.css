@@ -2049,3 +2049,10 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .emu-group-head .plat-count { color: var(--muted); }
 .emu-group-files { display: grid; gap: 0.4286rem; margin: 0.1429rem 0 0.2857rem 1.2857rem; }
 .emu-group-files[hidden] { display: none; }
+
+/* Home, under the two rows: what an admin should look at (missing files). */
+.home-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5714rem 0.8571rem; margin-top: 0.8571rem; padding: 0.7143rem 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.home-notice-text { flex: 1 1 14rem; min-width: 0; }
+.home-notice-text .hint { margin-left: 0.4rem; }
+.home-notice .pill { flex: 0 0 auto; }
+

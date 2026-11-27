@@ -499,9 +499,6 @@ async function loadPlatforms() {
     window.__orphanCount = orphaned;
     window.__unmatchedCount = neverEnriched;
     usage.innerHTML = `${fmtBytes(stats.library.bytes)} across ${stats.library.roms} ROMs
-      ${missing ? `<span class="pill warn" style="margin-left:6px${authState.user?.role === 'admin' ? ';cursor:pointer' : ''}"${authState.user?.role === 'admin' ? ' data-open-missing title="Show the games whose file is gone from its folder"' : ''}>${missing} missing</span>` : ''}
-      ${orphaned ? `<span class="pill bad" style="margin-left:6px" title="ROMs with no valid source folder">${orphaned} orphaned</span>` : ''}
-      ${neverEnriched ? `<span class="pill warn" style="margin-left:6px" title="ROMs no provider has ever matched">${neverEnriched} need match</span>` : ''}
       <div class="usage-bar"><i style="width:${Math.min(100, (stats.library.bytes / (50 * 1024 ** 3)) * 100)}%"></i></div>`;
   }
   syncOrphanToggle();
@@ -687,10 +684,15 @@ async function loadLibrary() {
   if (keepPlace) params.set('limit', String(Math.min(500, Math.max(PAGE, wantLoaded))));
   state.libKey = libKey;
 
+  // Several loads can be on their way at once (opening the Library starts one, a filter another), and a big list can answer after a small
+  // one asked for later. Only the newest may draw, or the grid shows a list that no longer matches the filters.
+  const request = (state.libRequest = (state.libRequest || 0) + 1);
   let data;
   try {
     data = await api(`/roms?${params}`);
+    if (request !== state.libRequest) return;
   } catch (err) {
+    if (request !== state.libRequest) return;
     grid.innerHTML = '';
     toast(err.message, true);
     return;
@@ -902,9 +904,20 @@ document.addEventListener('click', (e) => {
 applyStrips();
 
 /** Classic's Home page: the ticker, then Continue playing and Recently added, one under the other. */
+/** Under the two rows of Home, for admins only: games whose file is gone from its folder. (The server only counts them for an admin.) */
+function paintHomeNotice(host, stats) {
+  if (!host) return;
+  const admin = authState.user?.role === 'admin' && !authState.user?.play_only;
+  const missing = admin ? Number(stats?.library?.missing || 0) : 0;
+  host.classList.toggle('hidden', !missing);
+  host.innerHTML = missing ? `<div class="home-notice"><span class="pill warn">${missing.toLocaleString()}</span>
+    <span class="home-notice-text"><b>Missing files</b> <span class="hint">These games' files are no longer in their folders.</span></span>
+    <button type="button" class="btn btn-sm" data-open-missing title="Show the games whose file is gone from its folder">Show missing</button></div>` : '';
+}
+
 async function loadHome() {
   applyStrips($('#view-home'), false);   // there is no grid below to save room for, so a short window does not fold them away
-  await Promise.all([renderOverview().catch(() => {}), renderPlayedRow()]);
+  await Promise.all([renderOverview().catch(() => {}), renderPlayedRow(), api('/stats').then((st) => paintHomeNotice($('#home-notices'), st)).catch(() => {})]);
   const any = ['#lib-played-wrap', '#lib-recent-wrap'].some((s) => $(s) && !$(s).classList.contains('hidden'));
   $('#home-empty')?.classList.toggle('hidden', any);
 }
@@ -3029,16 +3042,9 @@ $('#dat-rematch-force').addEventListener('click', async () => {
 /* ─────────────────────────── database tools (admin) ─────────────────────────── */
 
 function renderDbTools(facets) {
-  const panel = $('#db-tools');
   const box = $('#db-health');
-  if (!panel || !box) return;
-
-  // Only admins ever see the Settings view, and only admins can call the purge
-  // endpoint — but double-check the role anyway so a stale session can't render
-  // a button that will just 403.
-  const isAdmin = authState.user?.role === 'admin';
-  panel.classList.toggle('hidden', !isAdmin);
-  if (!isAdmin) return;
+  // Whether the panel itself shows is the Settings tiles' business; the counts are only filled in for an admin.
+  if (!box || authState.user?.role !== 'admin') return;
 
   const stats = facets.stats || {};
   const orphaned = stats.orphaned || 0;
@@ -3052,18 +3058,8 @@ function renderDbTools(facets) {
     <div><span>Missing files (drive offline)</span><b>${missingSourced}</b></div>
     <div><span>Orphaned (no valid source)</span><b>${orphaned}</b></div>
     <div><span>Never enriched</span><b>${neverEnriched}</b></div>
-    <div><span>Imported copies / seed rows</span><b>${importedSeed}</b></div>
+    <div><span>Added through Add ROMs</span><b>${importedSeed}</b></div>
   `;
-
-  $('#db-show-orphans').onclick = () => {
-    setView('library');
-    state.platform = 'all';
-    state.q = '';
-    state.orphan = true;
-    $('#search').value = '';
-    window.__orphanOnly = true;
-    loadLibrary();
-  };
 }
 
 /**
@@ -3079,7 +3075,6 @@ async function loadLibraryOrphans(options = {}) {
   if (!keepSelection) { state.q = ''; $('#search').value = ''; }
   if (keepSelection) state.selected = new Set(selectedBefore);
   await loadLibrary();
-  window.__orphanOnly = false;
 }
 
 $('#db-health-refresh')?.addEventListener('click', async () => {
@@ -3092,16 +3087,7 @@ $('#db-health-refresh')?.addEventListener('click', async () => {
   }
 });
 
-$('#db-show-orphans')?.addEventListener('click', () => {
-  // Wired in renderDbTools too; this covers the first paint.
-  setView('library');
-  state.platform = 'all';
-  state.q = '';
-  $('#search').value = '';
-  state.orphan = true;
-  window.__orphanOnly = true;
-  loadLibrary();
-});
+$('#db-show-orphans')?.addEventListener('click', () => openLibraryFor('orphan'));
 
 // Clear cover art for one chosen platform (counts first, then confirms).
 async function fillClearCoversPlatforms() {
@@ -3173,7 +3159,7 @@ This cannot be undone. Games, ROMs, saves and your own folders are not touched.`
 
 // Games whose file is gone from its folder: look at them, or take them out (admin; locked games stay).
 $('#db-show-missing')?.addEventListener('click', () => openLibraryFor('missing'));
-document.addEventListener('click', (e) => { if (e.target.closest('[data-open-missing]')) openLibraryFor('missing'); });   // the count in the sidebar
+document.addEventListener('click', (e) => { if (e.target.closest('[data-open-missing]')) openLibraryFor('missing'); });   // the notice under the Home rows
 $('#db-purge-missing')?.addEventListener('click', async () => {
   let info;
   try { info = await api('/roms/missing', { method: 'DELETE' }); } catch (err) { return toast(err.message, true); }
@@ -3195,31 +3181,19 @@ $('#db-purge-missing')?.addEventListener('click', async () => {
 
 $('#db-purge-orphans')?.addEventListener('click', async () => {
   let info;
-  try {
-    info = await api('/roms?orphan=only&limit=1');
-  } catch (err) {
-    return toast(err.message, true);
-  }
-  if (!info.total) return toast('No orphaned ROMs — nothing to purge');
-  const first = await confirmDialog({
-    title: `Purge ${info.total} orphaned ROM${info.total === 1 ? '' : 's'}?`,
-    body: 'Catalogue rows are always removed. Imported copies in storage/roms are removed too.\nFiles in your own folders are NEVER touched.',
+  try { info = await api('/roms', { method: 'DELETE' }); } catch (err) { return toast(err.message, true); }   // only counts: the very games it would take out
+  if (!info.orphans) return toast('No orphaned ROMs — nothing to purge');
+  // One question. (There was a second one about deleting files, whose Cancel did not cancel.)
+  const ok = await confirmDialog({
+    title: `Purge ${info.orphans} orphaned ROM${info.orphans === 1 ? '' : 's'}?`,
+    body: 'This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.',
     okLabel: 'Purge',
     danger: true
   });
-  if (!first) return;
-  // Deleting imported copies from disk is the destructive half — confirm separately.
-  const { checked: deleteFiles } = await confirmDialog({
-    title: 'Also delete imported copies?',
-    body: 'Tick the box to remove imported files from storage/roms as well.\nUnticked = catalogue rows only, every file stays on disk.',
-    okLabel: 'Purge',
-    danger: true,
-    checkLabel: 'Also delete the imported copies from storage'
-  });
-  if (deleteFiles === undefined) return;
+  if (!ok) return;
   try {
-    const r = await api(`/roms?dry_run=0${deleteFiles ? '&delete_file=1' : ''}`, { method: 'DELETE' });
-    toast(`Purged ${r.deleted} orphaned ROM${r.deleted === 1 ? '' : 's'}${r.files_deleted ? ` (${r.files_deleted} files removed)` : ''}`);
+    const r = await api('/roms?dry_run=0', { method: 'DELETE' });
+    toast(`Purged ${r.deleted} orphaned ROM${r.deleted === 1 ? '' : 's'}`);
     const facets = await api('/roms/facets');
     renderDbTools(facets);
     await Promise.all([loadLibrary(), loadPlatforms()]);
@@ -4266,7 +4240,7 @@ function showApp(user, { restore = false } = {}) {
   physical.initPhysical({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showToolsModule });
   messages.initMessages({ api, toast, confirmDialog, state, ICON, user: () => authState.user, openRom: (id) => openDetail(id) });
   digital.initDigital({ api, toast, confirmDialog, closeDrawer, syncPin, pinned, state, ICON, setView, showSettingsModule, showToolsModule, user: () => authState.user });
-  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView, openPhysicalDetail: physical.openDetail, openDigitalDetail: digital.openDigitalDetail });
+  modern.initModern({ closeDrawer, resetDigital: digital.reset, resetPhysical: physical.reset, api, user: () => authState.user, state: () => state, setView, openDetail, cardHtml, paintHomeNotice, bindCards, paintAvatar, applyStrips, loadLibrary, loadPlatforms, platformIconSvg, openAccount: () => showSettingsModule('profile'), setPref: (k, v) => { state.prefs = { ...(state.prefs || {}), [k]: v }; }, resetFilters, filtersActive, openCarousel: openCarouselView, openBigScreen: openBigScreenView, openPhysicalDetail: physical.openDetail, openDigitalDetail: digital.openDigitalDetail });
   api('/prefs').then((p) => { state.prefs = p || {}; applyChipPlate(); syncLanguage(p); try { localStorage.setItem('gamesauce_last_look', p?.ui_mode === 'modern' ? 'modern' : 'classic'); } catch { /* private mode */ } document.body.classList.remove('login-modern'); return modern.applyMode(p?.ui_mode === 'modern' ? 'modern' : 'classic', { fresh: !restore }); }).then(() => { if (location.hash === '#/bigscreen' || new URLSearchParams(location.search).has('bigscreen')) openBigScreenView(true); else if (startsInBigScreen()) openBigScreenView(); }).catch(() => {});
   $('#user-role').textContent = user.role === 'admin' ? 'admin' : (playOnly ? 'player' : 'member');
 
@@ -4457,7 +4431,7 @@ const SETTINGS_MODULES = [
   { id: 'duplicates', label: 'Duplicate finder', mi: 'duplicate-finder', ico: '🧬', adminOnly: true },
   { id: 'health',    label: 'Health',          mi: 'heart', ico: '🩺', adminOnly: true },
   { id: 'hashing',   label: 'Fingerprints',    mi: 'database-check', ico: '🔍', adminOnly: true },
-  { id: 'images',    label: 'Pictures',        mi: 'covers', ico: '🖼', adminOnly: true },
+  { id: 'images',    label: 'Pictures',        mi: 'rematch', ico: '🖼', adminOnly: true },
   { id: 'reports',   label: 'Reports & stats', mi: 'stats', ico: '📈', adminOnly: true }
 ];
 
@@ -4465,8 +4439,8 @@ const SETTINGS_MODULES = [
 // Two levels: a few group tiles on top, and under the selected group the individual settings.
 const SETTINGS_GROUPS = [
   { id: 'account',  label: 'My account',          mi: 'my-account', ico: '👤', modules: ['profile', 'welcome', 'password', 'saves'] },
-  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'ratings', 'duplicates', 'covers', 'artfolders'], adminOnly: true },
-  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing', 'images'], adminOnly: true },
+  { id: 'tools',    label: 'Library tools',       mi: 'maintenance', ico: '🧰', modules: ['dat', 'names', 'ratings', 'duplicates', 'covers', 'artfolders', 'images'], adminOnly: true },
+  { id: 'maint',    label: 'Maintenance',         mi: 'database-maintenance', ico: '🛠', modules: ['db', 'backup', 'hashing'], adminOnly: true },
   { id: 'status',   label: 'System health',       mi: 'health', ico: '🩺', modules: ['health', 'reports'], adminOnly: true },
   { id: 'security', label: 'Security & activity', mi: 'security', ico: '🛡', modules: ['sessions', 'audit'] },
   { id: 'server',   label: 'System setup',        mi: 'system', ico: '⚙', modules: ['users', 'groups', 'providers', 'platforms'], adminOnly: true }
@@ -4650,7 +4624,7 @@ async function loadImageConvert(fillForm = true) {
   }
   if (activeSettingsModule === 'images' && s.running) imgcTimer = setTimeout(() => loadImageConvert(false).catch(() => {}), 3000);
 }
-/** Settings > Maintenance > Pictures: WebP copies for faster loading (the stored pictures are never changed). */
+/** Settings > Library tools > Pictures: WebP copies for faster loading (the stored pictures are never changed). */
 async function loadImages() {
   const box = $('#img-status'); if (!box) return;
   const s = await api('/admin/images');

@@ -15,11 +15,18 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **A tidier Add ROMs page**, in two steps in both looks: choose the platform, then add the files. The second step stays greyed out until a platform is picked, and the drop area names it. A short note replaces the long explanations.
 - **The Xbox 360 Big Screen look is no longer used for Xbox One and Xbox Series.** It covers Xbox, Xbox 360 and Xbox Live Arcade; Xbox One and Series now have the Standard look.
 - **New wording for the choices under My account > Preferences.** The Modern look shows their names in capitals.
+- **The Pictures page (WebP copies and conversion) is now under Settings > Library tools**, not Maintenance.
+- **Missing files are now shown on Home, under Continue playing and Recently added**, to admins only, in both looks, with a button that lists them. They were a tag in the Classic sidebar, where there was no room for it.
 - **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
 
 ### Fixed
 
 - **Add ROMs** could offer **Detect from extension** again after the Emulators page had been opened, though a platform is required there (many platforms share file types such as CHD and ISO).
+- **Delete orphans could delete games added through Add ROMs, files and all,** even with “also delete the imported copies” unticked, and **Cancel** on its second popup did not cancel. Uploaded games are no longer counted as orphans: an orphan is now only a game scanned from your folders that has lost its source. **Delete orphans** asks once, **Cancel** stops it, and it deletes no game files.
+- Asking to keep files when deleting games through the API (`keep_file`) now keeps uploaded copies too, and **Delete missing** removes entries only.
+- The counts on **Settings > Maintenance > Database maintenance** were never shown.
+- The **No source** and **Needs match** filters in the Library were hidden from the admin even when games belonged in them: the counts that decide this were never sent.
+- **Show orphans** could list the whole library the first time after signing in: the library asked for before the filter was set could arrive last and replace the filtered list. (This was a fault in what the list showed, not in which games count as orphans.) The Library now ignores any reply that a newer request has overtaken.
 - In the Modern look, some buttons that should have been hidden were shown, such as **Remove logo** for a platform with no logo, and **Reset password** on your own account.
 
 ## [0.25.0] - 2026-11-27

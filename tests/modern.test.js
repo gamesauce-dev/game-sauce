@@ -877,3 +877,33 @@ test('Modern shows the name of each Settings choice in capitals by styling, so t
   assert.ok(app.includes("['off', 'Library', 'the normal screen']"));
 });
 
+test('Show orphans: the filter is on before the Library loads, and a late reply to an older request is never drawn', () => {
+  const app = read('public/app.js');
+  assert.equal(app.split("$('#db-show-orphans')").length - 1, 1, 'one handler: there used to be two, and each loaded the whole library first');
+  assert.ok(app.includes("$('#db-show-orphans')?.addEventListener('click', () => openLibraryFor('orphan'));"));
+  const open = app.slice(app.indexOf('function openLibraryFor(kind)'), app.indexOf('function openRatingList') > 0 ? app.indexOf('async function openRatingList') : undefined);
+  assert.ok(open.indexOf("state.orphan = true") < open.indexOf("setView('library')"), 'filter first, then the view (opening it starts a load)');
+  const load = app.slice(app.indexOf('async function loadLibrary() {'), app.indexOf('async function renderOverview'));
+  assert.match(load, /const request = \(state\.libRequest = \(state\.libRequest \|\| 0\) \+ 1\);/);
+  assert.match(load, /data = await api\(`\/roms\?\$\{params\}`\);\s+if \(request !== state\.libRequest\) return;/);
+});
+
+test('Settings: the Pictures page (WebP) is under Library tools, with an icon of its own', () => {
+  const app = read('public/app.js');
+  assert.match(app, /id: 'tools',\s+label: 'Library tools',[^\n]*'images'\]/);
+  assert.doesNotMatch(app.match(/id: 'maint',[^\n]*/)[0], /'images'/);
+  const icons = [...app.slice(app.indexOf('const SETTINGS_MODULES'), app.indexOf('const SETTINGS_GROUPS')).matchAll(/id: '(\w+)',[^\n]*mi: '([\w-]+)'/g)];
+  const mine = icons.find((m) => m[1] === 'images')[2];
+  assert.equal(icons.filter((m) => m[2] === mine).length, 1);
+  assert.ok(fs.existsSync(new URL(`../public/modern/icons/${mine}.svg`, import.meta.url)));
+});
+
+test('Missing files: a notice under the Home rows in both looks, for admins only, no longer a tag in the sidebar', () => {
+  const app = read('public/app.js'), html = read('public/index.html'), js = read('public/modern.js');
+  assert.doesNotMatch(app, /\$\{missing\} missing<\/span>/);
+  assert.match(app, /const admin = authState\.user\?\.role === 'admin' && !authState\.user\?\.play_only;/);
+  assert.ok(html.indexOf('id="home-notices"') > html.indexOf('id="lib-recent-wrap"'), 'Classic: under the two rows');
+  assert.ok(js.indexOf('id="mh-notices"') > js.indexOf('id="mh-recent"'), 'Modern: under the two rows');
+  assert.match(js, /ctx\.paintHomeNotice\?\.\(\$\('#mh-notices'\), stats\);/);
+});
+

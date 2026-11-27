@@ -226,13 +226,15 @@ async function renderHome() {
     <div class="strips mh-strips">
       <div class="strip" data-strip="played"><button type="button" class="strip-head" data-strip-toggle="played" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Continue playing</span></button><div class="recent-row" id="mh-played"></div></div>
       <div class="strip" data-strip="recent"><button type="button" class="strip-head" data-strip-toggle="recent" aria-expanded="true" title="Show or hide this row"><span class="strip-caret">▾</span><span class="section-label" style="margin:0">Recently added</span></button><div class="recent-row" id="mh-recent"></div></div>
-    </div>`;
+    </div>
+    <div class="mh-notices hidden" id="mh-notices"></div>`;
   ctx.applyStrips?.(host, false);
   fillHomePlatforms();
   $('#mh-search')?.addEventListener('submit', (e) => { e.preventDefault(); submitHomeSearch(); });
   try {
     const [stats, played] = await Promise.all([api('/stats'), api('/roms/recently-played?limit=24').catch(() => ({ items: [] }))]);
     fillRow('#mh-recent', stats.recent || []);
+    ctx.paintHomeNotice?.($('#mh-notices'), stats);
     fillRow('#mh-played', played.items || [], 'Nothing played yet');
   } catch { /* the home page degrades to empty rows */ }
 }
@@ -875,7 +877,7 @@ const TEXT_ICONS = [
   ['#age-show-unrated, #age-show-converted, #group-show-unrated, #art-shared-show', 'visible'], ['#age-fetch', 'fetch'],
   ['#db-show-missing', 'show-orphans'], ['#db-purge-missing, #imgc-remove, [data-art-remove]', 'delete'],
   ['#artfolders-save, #hash-save, #img-save, #imgc-save', 'save'], ['#hash-run, #imgc-run', 'play'], ['#hash-stop, #imgc-stop, #enrich-stop, #plat-fill-stop', 'stop'],
-  ['#imgc-estimate', 'stats'], ['#imgc-restore, #restore-apply', 'restore'], ['[data-imgc-cmp], .rp-find .btn', 'search']
+  ['[data-open-missing]', 'search'], ['#imgc-estimate', 'stats'], ['#imgc-restore, #restore-apply', 'restore'], ['[data-imgc-cmp], .rp-find .btn', 'search']
 ];
 const TEXT_STOP = new Set(['delete', 'cancel', 'close', 'stop', 'database-backup-delete', 'clear-covers', 'user-disable', 'folder-disable']);
 const TEXT_CALM = '#lib-clear-platform, [data-dg-clear], [data-ph-clear], [data-mv-close]';   // an X that only closes or clears a filter is not red

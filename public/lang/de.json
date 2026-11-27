@@ -2310,5 +2310,10 @@
  "Teal": "Blaugrün",
  "Gold": "Gold",
  "Chips": "Chips",
- "Logos": "Logos"
+ "Logos": "Logos",
+ "These games' files are no longer in their folders.": "Die Dateien dieser Spiele sind nicht mehr in ihren Ordnern.",
+ "Show missing": "Fehlende anzeigen",
+ "An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.": "Verwaist ist ein Spiel, das aus einem deiner Ordner eingelesen wurde und seine Quelle verloren hat: Die Quelle wurde entfernt und die Spiele behalten, oder das Spiel war gesperrt. Findet ein Scan dieselbe Datei wieder, übernimmt er das Spiel. Über „ROMs hinzufügen“ hinzugefügte Spiele sind nicht verwaist. Fehlende Dateien sind etwas anderes: Ein Scan hat die Datei in ihrem Ordner nicht gefunden. Sie haben weiterhin eine Quelle und kommen zurück, wenn ein neuer Scan die Datei findet, oder du kannst sie hier entfernen.",
+ "This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.": "Diese Spiele werden aus der Bibliothek entfernt, mit ihren Spielständen sowie importierten Bildern und Anleitungen. Ihre Spieldateien in deinen eigenen Ordnern bleiben unangetastet. Gesperrte Spiele bleiben.",
+ "Added through Add ROMs": "Über „ROMs hinzufügen“ hinzugefügt"
 }

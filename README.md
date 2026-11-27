@@ -140,10 +140,11 @@ Two modes, and the difference matters:
   scan only records path + size + date + hashes, then fetches metadata. Rescans hash only what
   changed; a file on an unplugged drive is flagged `missing`, never deleted. Best for a big
   multi-location collection you already organise yourself.
-- **No source** (formerly "Orphans"): deleting a source with "keep ROMs" leaves catalogue rows that belong to
-  no folder. Games you had locked (Keep) survive a source removal this way. Add the folder as a source again and
-  scan it: the games are reconnected, with their locks. Anything still left is found with the `⛁ No source` pill
-  (Modern: ⋯ More filters) or Settings → Database maintenance → Show orphans, and can be purged there.
+- **No source** (formerly "Orphans"): a game scanned from one of your folders that has lost its source, because the source
+  was removed with "keep ROMs" or the game was locked. Scanning a source that covers its folder reconnects it. Games added
+  through **Add ROMs** are not orphans. Find orphans under the **No source** filter
+  (Modern: ⋯ More filters) or Settings → Database maintenance → Show orphans, and purge them there: purging removes
+  entries only, never a game file.
 
 ## Sources (multiple folders)
 
@@ -255,11 +256,10 @@ POST   /api/dats/rematch             { platform?, force? }
 GET    /api/dats/:id/coverage
 GET    /api/dats/:id/have-want?want=missing|have|all&group=game&q=&limit=&offset=
 GET    /api/roms?dat_status=verified|bad|variant|not-in-dat
-GET    /api/roms?orphan=only                      rows with no valid source (hidden included)
+GET    /api/roms?orphan=only                      scanned games that have lost their source (hidden included)
 GET    /api/roms?hidden=only|all                 default hides hidden rows
-DELETE /api/roms?dry_run=1                       ADMIN: count orphaned rows (default)
-DELETE /api/roms?dry_run=0                       ADMIN: purge orphans (rows; in-place files never touched)
-DELETE /api/roms?dry_run=0&delete_file=1        ADMIN: purge orphans + delete imported copies from storage
+DELETE /api/roms?dry_run=1                       ADMIN: count the orphans a purge would take (default)
+DELETE /api/roms?dry_run=0                        ADMIN: purge orphans (entries only; no game file is deleted)
 ```
 
 How matching works:

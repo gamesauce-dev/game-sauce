@@ -1,3 +1,4 @@
+import { orphanSql } from './lib/orphans.js';
 import path from 'node:path';
 import { uploadLimits } from './lib/uploads.js';
 import { LANGS } from '../public/i18n.js';   // the one list of languages (the Settings picker reads it too)
@@ -199,7 +200,7 @@ export function createApp() {
     req.auditDetail = { enabled: req.body?.enabled, quality: req.body?.quality };
     res.json(await imagesStatus());
   });
-  // Convert the stored pictures themselves (Settings > Maintenance > Pictures): the schedule, an estimate, run now, stop, put the originals back.
+  // Convert the stored pictures themselves (Settings > Library tools > Pictures): the schedule, an estimate, run now, stop, put the originals back.
   api.get('/admin/images/convert', requireAuth, requireAdmin, async (req, res) => { const j = await import('./lib/webpjob.js'); res.json(j.jobStatus()); });
   api.put('/admin/images/convert', requireAuth, requireAdmin, async (req, res) => {
     const j = await import('./lib/webpjob.js');
@@ -606,14 +607,19 @@ export function createApp() {
 
   api.get('/stats', (req, res) => {
     const mine = req.user ? Number(req.user.id) : null;
+    // How many games the Library's "No source" and "Needs match" filters hold, so it knows whether to offer them (an admin's troubleshooting
+    // lists). Counted as those lists are made: without System items, with hidden games.
+    const listSize = (where) => (req.user?.role === 'admin' ? db.prepare(`SELECT COUNT(*) AS n FROM roms r WHERE r.is_system = 0 AND ${where}`).get().n : 0);
+    const orphaned = listSize(orphanSql('r'));
+    const neverEnriched = listSize("(r.meta_source IS NULL OR r.meta_source IN ('filename','seed',''))");
     res.json({
-      library: db.prepare(`
+      library: Object.assign(db.prepare(`
         SELECT COUNT(*) AS roms, COALESCE(SUM(size_bytes),0) AS bytes,
                COUNT(DISTINCT platform_id) AS platforms,
                ${req.user?.role === 'admin' ? 'SUM(CASE WHEN missing = 1 THEN 1 ELSE 0 END)' : '0'} AS missing,   -- the games whose file is gone from its folder (an admin's own list to clean up)
                (SELECT COUNT(*) FROM favorites fc JOIN roms fr ON fr.id = fc.rom_id WHERE fc.user_id = ${mine == null ? -1 : mine} AND ${visibleSql(req.user, 'fr')}) AS favorites
         FROM roms r WHERE ${listedSql(req.user)}
-      `).get(),
+      `).get(), { orphaned, never_enriched: neverEnriched }),
       mine: mine == null ? { favorites: 0, downloads: 0 } : {
         favorites: db.prepare(`SELECT COUNT(*) AS n FROM favorites f JOIN roms r ON r.id = f.rom_id WHERE f.user_id = ? AND ${visibleSql(req.user)}`).get(mine).n,
         downloads: db.prepare(`SELECT COUNT(*) AS n FROM downloads WHERE user_id = ? AND kind = 'download' AND ${refWithinLimitsSql(req.user, 'downloads.rom_id')}`).get(mine).n

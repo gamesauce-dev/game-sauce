@@ -62,8 +62,10 @@ test('Stats: orphans, covers, hidden, platforms, sources, most active user', asy
   const memberId = db.prepare("SELECT id FROM users WHERE username = 'smember'").get().id;
   const ins = db.prepare("INSERT INTO downloads (rom_id, bytes, user_id, kind) VALUES (?, 0, ?, 'play')");
   ins.run(x, memberId); ins.run(x, memberId); ins.run(x, adminId);
+  assert.equal((await call('/api/admin/stats')).body.orphans, 0, 'none has a source, but none was scanned from a folder either (as with Add ROMs): not orphans');
+  db.prepare("UPDATE roms SET in_place = 1 WHERE title IN ('Matched By IGDB', 'Hidden One')").run();   // two scanned games that have lost their source
   const s = (await call('/api/admin/stats')).body;
-  assert.equal(s.orphans, 5, 'none of the test games has a source folder');
+  assert.equal(s.orphans, 2);
   assert.equal(s.no_covers, 5);
   assert.equal(s.with_covers, 0);
   assert.ok(s.hidden >= 1);
@@ -91,7 +93,7 @@ test('Settings groups: "System health" holds Health and Reports & stats, and a C
   assert.match(ui, /label: 'System health'/);
   assert.match(ui, /id: 'reports',\s+label: 'Reports & stats'/);
   assert.doesNotMatch(ui, /id: 'coverage'/, 'Stats is part of Reports now');
-  assert.match(ui, /modules: \['dat', 'names', 'ratings', 'duplicates', 'covers', 'artfolders'\]/);
+  assert.match(ui, /modules: \['dat', 'names', 'ratings', 'duplicates', 'covers', 'artfolders', 'images'\]/);
   assert.doesNotMatch(ui, /label: 'Health & coverage'/);
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   const stats = html.slice(html.indexOf('id="mod-reports"'), html.indexOf('id="mod-covers"'));

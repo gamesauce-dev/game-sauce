@@ -2310,5 +2310,10 @@
  "Teal": "Verde azulado",
  "Gold": "Dorado",
  "Chips": "Etiquetas",
- "Logos": "Logotipos"
+ "Logos": "Logotipos",
+ "These games' files are no longer in their folders.": "Los archivos de estos juegos ya no están en sus carpetas.",
+ "Show missing": "Mostrar ausentes",
+ "An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.": "Un huérfano es un juego escaneado de una de tus carpetas que ha perdido su origen: se quitó el origen conservando los juegos, o el juego estaba bloqueado. Un escaneo que vuelva a encontrar el mismo archivo lo recupera. Los juegos añadidos con Añadir ROM no son huérfanos. Los archivos ausentes son otra cosa: un escaneo no encontró el archivo en su carpeta. Siguen teniendo origen y vuelven cuando un nuevo escaneo encuentra el archivo, o puedes quitarlos aquí.",
+ "This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.": "Esto quita estos juegos de la biblioteca, con sus partidas guardadas y las imágenes y manuales importados. Los archivos de los juegos en tus carpetas no se tocan. Los juegos bloqueados se quedan.",
+ "Added through Add ROMs": "Añadidos con Añadir ROM"
 }

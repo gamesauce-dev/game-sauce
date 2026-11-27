@@ -2308,5 +2308,10 @@
  "Teal": "青色",
  "Gold": "金色",
  "Chips": "标签",
- "Logos": "徽标"
+ "Logos": "徽标",
+ "These games' files are no longer in their folders.": "这些游戏的文件已不在原文件夹中。",
+ "Show missing": "显示缺失项",
+ "An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.": "孤立游戏是指从你的文件夹中扫描到、后来失去来源的游戏：删除来源时保留了游戏，或游戏处于锁定状态。只要扫描再次找到同一个文件，它就会被重新收回。通过“添加 ROM”添加的游戏不算孤立游戏。缺失文件则是另一回事：扫描时在原文件夹中找不到该文件。它们仍有来源，重新扫描找到文件后就会恢复，你也可以在这里移除它们。",
+ "This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.": "这会将这些游戏连同存档以及导入的图片和手册从游戏库中移除。你自己文件夹中的游戏文件不会被改动。锁定的游戏会保留。",
+ "Added through Add ROMs": "通过“添加 ROM”添加"
 }

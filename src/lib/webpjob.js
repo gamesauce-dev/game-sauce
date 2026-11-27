@@ -1,4 +1,4 @@
-// Convert the stored pictures themselves to WebP (Settings > Maintenance > Pictures), on a schedule the admin sets.
+// Convert the stored pictures themselves to WebP (Settings > Library tools > Pictures), on a schedule the admin sets.
 //
 // This is the step that REPLACES files, so it is careful:
 //   - only pictures inside the storage folder (never a file in a person's own folder), only PNG and JPEG, never an animation;

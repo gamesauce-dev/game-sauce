@@ -1,3 +1,4 @@
+import { orphanSql } from '../lib/orphans.js';
 import { uploadLimits } from '../lib/uploads.js';
 import { isMultiDisc, MULTIDISC_MESSAGE } from '../lib/multidisc.js';
 import express from 'express';
@@ -253,8 +254,8 @@ export async function applyMetadataRecord(id, meta, uid = null, { picked = false
  * produced "count went down but a shell was still there".
  *
  * @param {object} rom  full rom row
- * @param {object} opts { deleteFile?: boolean } — only ever true for imported
- *   copies (in_place = 0/NULL) or when the caller explicitly passed delete_file=1
+ * @param {object} opts { deleteFile?: boolean } — the game's file goes ONLY when this is true. Each caller decides: it is never assumed
+ *   from where the file came from (that once deleted uploaded games a caller had asked to keep)
  * @returns {{ fileDeleted: boolean }}
  */
 function deleteRomRow(rom, { deleteFile = false } = {}) {
@@ -273,9 +274,7 @@ function deleteRomRow(rom, { deleteFile = false } = {}) {
   txn();
 
   let fileDeleted = false;
-  // Never delete a scanned file from a user's own folder unless explicitly asked.
-  const mayDeleteFile = deleteFile || !rom.in_place;
-  if (mayDeleteFile && rom.storage_path) {
+  if (deleteFile && rom.storage_path) {
     try {
       const before = fs.existsSync(rom.storage_path);
       removeRomFile(rom.storage_path);
@@ -452,7 +451,8 @@ bulkRouter.post('/delete', requireAdmin, (req, res) => {
         if (label) sample.push({ rom_id: label.id, title: label.title, platform: label.platform_name });
       } catch { /* labels are decorative; the delete still counts */ }
     }
-    const { fileDeleted } = deleteRomRow(rom, { deleteFile: !keepFile && deleteFile });
+    // An uploaded copy goes with its entry (the confirmation says so); a file in your own folder only when asked.
+    const { fileDeleted } = deleteRomRow(rom, { deleteFile: !keepFile && (deleteFile || !rom.in_place) });
     deleted++;
     if (fileDeleted) filesDeleted++;
   }
@@ -543,10 +543,9 @@ router.get('/', (req, res) => {
   }
   // Locked (admin only): games marked Keep, which cannot be deleted until they are unlocked. Shows hidden and System ones too.
   if ((req.query.locked === '1' || req.query.locked === 'only') && req.user?.role === 'admin') where.push('r.keep_override = 1');
-  // Orphans: ROMs whose source row is gone (or was never set). These can never
-  // be re-scanned — this is the "platforms with no source" the sidebar shows.
+  // Orphans: scanned games that have lost their source (see lib/orphans.js).
   if (req.query.orphan === '1' || req.query.orphan === 'only' || req.query.orphaned === '1') {
-    where.push('(r.source_id IS NULL OR r.source_id NOT IN (SELECT id FROM sources))');
+    where.push(orphanSql('r'));
   }
   // playable=1: only games that can be played in the browser (the same rule as the Play button: a platform with a core,
   // MAME's year cut-off, and the admin's per-game on / off), and not missing. Done in the query so search and paging only see these.
@@ -664,7 +663,7 @@ router.get('/facets', (req, res) => {
            SUM(missing) AS missing,
            (SELECT COUNT(*) FROM hidden_roms WHERE user_id = ${req.user ? Number(req.user.id) : -1} AND ${refWithinLimitsSql(req.user, 'hidden_roms.rom_id')}) + ${req.user?.role === 'admin' ? '(SELECT COUNT(*) FROM roms r2 WHERE r2.hidden_all = 1 AND NOT EXISTS (SELECT 1 FROM hidden_roms h2 WHERE h2.rom_id = r2.id AND h2.user_id = ' + Number(req.user.id) + '))' : '0'} AS hidden,
            SUM(CASE WHEN meta_source IN ('screenscraper','thegamesdb') THEN 1 ELSE 0 END) AS enriched,
-           SUM(CASE WHEN source_id IS NULL THEN 1 ELSE 0 END) AS orphaned,
+           SUM(CASE WHEN ${orphanSql('r')} THEN 1 ELSE 0 END) AS orphaned,
            SUM(CASE WHEN missing = 1 AND source_id IS NOT NULL THEN 1 ELSE 0 END) AS missing_sourced,
            SUM(CASE WHEN meta_source IN ('filename','seed','') OR meta_source IS NULL THEN 1 ELSE 0 END) AS never_enriched,
            SUM(CASE WHEN source_id IS NULL AND in_place = 0 THEN 1 ELSE 0 END) AS imported_or_seed
@@ -1540,14 +1539,11 @@ router.delete('/:id', requireAdmin, (req, res) => {
 });
 
 /**
- * Admin database maintenance: delete ROMs with no valid source. These are the
- * leftovers from "remove source but keep ROMs" — they can never be re-scanned
- * and have no folder to belong to.
+ * Admin database maintenance: take out the orphans (lib/orphans.js), scanned games that have lost their source.
+ * Their files are in the admin's own folders, so no game file is ever deleted here. Games added through Add ROMs are not orphans.
  *
  * Query params:
  *   dry_run=1  (default) — count only, delete nothing
- *   delete_file=1 — also delete imported copies from storage (in-place files
- *     are NEVER touched by this endpoint)
  */
 /* Admin: clear cover art for every ROM on one platform (e.g. wrong/duplicate
  * covers from title-based matching on MAME zips). Removes only cached cover
@@ -1566,12 +1562,7 @@ router.post('/clear-covers', requireAdmin, (req, res) => {
 });
 
 router.delete('/', requireAdmin, (req, res) => {
-  const orphans = db.prepare(`
-    SELECT * FROM roms
-    WHERE (source_id IS NULL
-       OR source_id NOT IN (SELECT id FROM sources))
-      AND COALESCE(keep_override, -1) <> 1
-  `).all(); // copies marked Keep are never purged
+  const orphans = db.prepare(`SELECT * FROM roms r WHERE ${orphanSql('r')} AND COALESCE(r.keep_override, -1) <> 1`).all(); // locked games are never purged
 
   if (req.query.dry_run !== '0' && req.query.dry_run !== 'false') {
     return res.json({
@@ -1583,21 +1574,16 @@ router.delete('/', requireAdmin, (req, res) => {
   }
 
   let deleted = 0;
-  let filesDeleted = 0;
   const errors = [];
   for (const rom of orphans) {
     try {
-      const { fileDeleted } = deleteRomRow(rom, {
-        // In-place orphans: catalogue row only, the user's own file stays put.
-        deleteFile: req.query.delete_file === '1' && !rom.in_place
-      });
+      deleteRomRow(rom, { deleteFile: false });
       deleted++;
-      if (fileDeleted) filesDeleted++;
     } catch (err) {
       errors.push({ id: rom.id, error: err.message });
     }
   }
-  res.json({ dry_run: false, deleted, files_deleted: filesDeleted, errors: errors.slice(0, 20) });
+  res.json({ dry_run: false, deleted, files_deleted: 0, errors: errors.slice(0, 20) });
 });
 
 /* -------------------------------------------------------- cover upload */

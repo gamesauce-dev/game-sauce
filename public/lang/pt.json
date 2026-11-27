@@ -2310,5 +2310,10 @@
  "Teal": "Verde-azulado",
  "Gold": "Dourado",
  "Chips": "Etiquetas",
- "Logos": "Logos"
+ "Logos": "Logos",
+ "These games' files are no longer in their folders.": "Os arquivos destes jogos não estão mais nas pastas.",
+ "Show missing": "Mostrar ausentes",
+ "An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.": "Um órfão é um jogo verificado em uma das suas pastas que perdeu a origem: a origem foi removida mantendo os jogos, ou o jogo estava bloqueado. Uma verificação que encontre o mesmo arquivo o recupera. Jogos adicionados em Adicionar ROMs não são órfãos. Arquivos ausentes são outra coisa: uma verificação não encontrou o arquivo na pasta. Eles ainda têm origem e voltam quando uma nova verificação encontra o arquivo, ou você pode removê-los aqui.",
+ "This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.": "Isto remove estes jogos da biblioteca, com os jogos salvos e as imagens e manuais importados. Os arquivos dos jogos nas suas pastas não são alterados. Os jogos bloqueados permanecem.",
+ "Added through Add ROMs": "Adicionados em Adicionar ROMs"
 }
