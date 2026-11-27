@@ -50,3 +50,11 @@ test('every emulator description is translated in every language, and the page s
   }
   assert.match(read('public/app.js'), /esc\(t\(e\.notes\)\)/);
 });
+
+test('the DAT page, which only fills once a DAT is imported, is translated in every language', () => {
+  for (const { code } of LANGS.filter((l) => l.code !== 'en')) {
+    const dict = JSON.parse(read(`public/lang/${code}.json`));
+    for (const s of ['Collection completeness', 'Whole', 'The whole bar counts a game under the first of these that holds it. A game counts once whatever its region, across everyone on this server.', 'Matched by name', 'Games: {count}', 'Have: {count}', 'Missing: {count}', 'Have / want: {name}', 'Entries imported: {count} ({platform}).', 'ROMs checked: {checked}. Matched: {matched}.']) assert.ok(dict[s], `${code}: ${s}`);
+  }
+  assert.match(read('public/app.js'), /t\('Collection completeness'\)/);
+});

@@ -2837,12 +2837,12 @@ async function loadDats() {
       <span class="hbar-track">${segs.map(([k, n, tot]) => `<i class="${k}" style="width:${(n / tot) * 100}%"></i>`).join('')}</span>
       <span class="hbar-num">${text}</span>
     </div>`;
-  const num = (n, tot) => `<b>${n.toLocaleString()}</b> of ${tot.toLocaleString()} <small>${tot ? Math.round((n / tot) * 1000) / 10 : 0}%</small>`;
-  $('#dat-chart').innerHTML = bars.length ? `<h3 style="margin:14px 0 8px">Collection completeness</h3>
+  const num = (n, tot) => `<b>${n.toLocaleString()}</b> / ${tot.toLocaleString()} <small>${tot ? Math.round((n / tot) * 1000) / 10 : 0}%</small>`;
+  $('#dat-chart').innerHTML = bars.length ? `<h3 style="margin:14px 0 8px">${t('Collection completeness')}</h3>
     ${bars.map((d) => `<div class="hbar-group" title="${esc(d.name)}">
       <div class="hbar-title">${esc(d.name)}</div>
-      ${row('Whole', [['k-rom', d.games_rom, d.games], ['k-phys', d.games_physical, d.games], ['k-dig', d.games_digital, d.games]], num(d.games_have, d.games))}
-      ${d.sets > 0 ? '' : row('ROMs', [['k-rom', d.in_rom, d.games]], num(d.in_rom, d.games)) + row('Physical', [['k-phys', d.in_physical, d.games]], num(d.in_physical, d.games)) + row('Digital', [['k-dig', d.in_digital, d.games]], num(d.in_digital, d.games))}
+      ${row(t('Whole'), [['k-rom', d.games_rom, d.games], ['k-phys', d.games_physical, d.games], ['k-dig', d.games_digital, d.games]], num(d.games_have, d.games))}
+      ${d.sets > 0 ? '' : row(t('ROMs'), [['k-rom', d.in_rom, d.games]], num(d.in_rom, d.games)) + row(t('Physical'), [['k-phys', d.in_physical, d.games]], num(d.in_physical, d.games)) + row(t('Digital'), [['k-dig', d.in_digital, d.games]], num(d.in_digital, d.games))}
     </div>`).join('')}
     <div class="hbar-legend"><span><b class="k-rom"></b>ROM library</span><span><b class="k-phys"></b>Physical shelf</span><span><b class="k-dig"></b>Digital</span><span>The whole bar counts a game under the first of these that holds it. A game counts once whatever its region, across everyone on this server.</span></div>` : '';
 
@@ -2853,7 +2853,7 @@ async function loadDats() {
     <div class="source-card" data-dat="${d.id}">
       <div class="source-top">
         <span class="source-name">${esc(d.name)}</span>
-        ${d.source ? `<span class="pill accent">${esc(d.source)}</span>` : ''}
+        ${d.source ? `<span class="pill accent">${esc(String(d.source).toLowerCase() === 'unknown' ? t('Unknown source') : d.source)}</span>` : ''}
         ${d.platform_short ? `<span class="pill">${esc(d.platform_short)}</span>` : ''}
         <div class="source-actions">
           <button class="btn btn-sm" data-act="have-want">Have/want</button>
@@ -2861,15 +2861,15 @@ async function loadDats() {
         </div>
       </div>
       <div class="source-stats">
-        ${d.games > 0 && !d.sets ? `<span><b>${d.games.toLocaleString()}</b> games</span>
-        <span><b style="color:var(--good)">${d.games_have.toLocaleString()}</b> have</span>
-        <span><b style="color:var(--warn)">${(d.games - d.games_have).toLocaleString()}</b> missing</span>
-        ${d.games_physical || d.games_digital ? `<span class="note">${d.games_rom.toLocaleString()} ROM${d.games_physical ? `, ${d.games_physical.toLocaleString()} on the shelf` : ''}${d.games_digital ? `, ${d.games_digital.toLocaleString()} digital` : ''}</span>` : ''}
-        <span class="note">${d.entries.toLocaleString()} releases</span>` : `<span><b>${d.entries.toLocaleString()}</b> entries</span>
-        <span><b style="color:var(--good)">${have.toLocaleString()}</b> have</span>
-        <span><b style="color:var(--warn)">${want.toLocaleString()}</b> missing</span>`}
-        ${d.version ? `<span>version ${esc(d.version)}</span>` : ''}
-        <span>imported ${esc(d.imported_at)} UTC</span>
+        ${d.games > 0 && !d.sets ? `<span>${t('Games: {count}', { count: `<b>${d.games.toLocaleString()}</b>` })}</span>
+        <span>${t('Have: {count}', { count: `<b style="color:var(--good)">${d.games_have.toLocaleString()}</b>` })}</span>
+        <span>${t('Missing: {count}', { count: `<b style="color:var(--warn)">${(d.games - d.games_have).toLocaleString()}</b>` })}</span>
+        ${d.games_physical || d.games_digital ? `<span class="note">${[t('As ROMs: {count}', { count: d.games_rom.toLocaleString() }), d.games_physical ? t('On the shelf: {count}', { count: d.games_physical.toLocaleString() }) : '', d.games_digital ? t('In Digital: {count}', { count: d.games_digital.toLocaleString() }) : ''].filter(Boolean).join(' · ')}</span>` : ''}
+        <span class="note">${t('Releases: {count}', { count: d.entries.toLocaleString() })}</span>` : `<span>${t('Entries: {count}', { count: `<b>${d.entries.toLocaleString()}</b>` })}</span>
+        <span>${t('Have: {count}', { count: `<b style="color:var(--good)">${have.toLocaleString()}</b>` })}</span>
+        <span>${t('Missing: {count}', { count: `<b style="color:var(--warn)">${want.toLocaleString()}</b>` })}</span>`}
+        ${d.version ? `<span>${esc(t('Version: {version}', { version: d.version }))}</span>` : ''}
+        <span>${esc(t('Imported: {when} UTC', { when: d.imported_at }))}</span>
       </div>
     </div>
   `}).join('') : '<div class="side-empty">No DAT files imported yet.</div>';
@@ -2932,22 +2932,24 @@ async function loadHaveWant(reset = false) {
   const have = data.datfile.roms_matched || 0;
   const want = data.datfile.missing_count ?? Math.max(0, (data.datfile.entries || 0) - have);
 
-  $('#hw-title').textContent = `Have / want — ${data.datfile.name}`;
-  $('#hw-summary').textContent =
-    `${data.datfile.entries.toLocaleString()} in DAT · ${have.toLocaleString()} have · ${want.toLocaleString()} missing. ` +
-    (hwState.want === 'missing'
+  $('#hw-title').textContent = t('Have / want: {name}', { name: data.datfile.name });
+  $('#hw-summary').textContent = [
+    t('In the DAT: {entries}. Have: {have}. Missing: {missing}.', { entries: data.datfile.entries.toLocaleString(), have: have.toLocaleString(), missing: want.toLocaleString() }),
+    t(hwState.want === 'missing'
       ? '“Missing” = in the DAT but matched by nothing in your library.'
       : hwState.want === 'have'
         ? '“Have” = DAT entries matched by a ROM in your library.'
-        : 'Everything this DAT lists, flagged by whether you hold it.');
+        : 'Everything this DAT lists, flagged by whether you hold it.')].join(' ');
 
   if (data.group === 'game') {
-    $('#hw-summary').textContent = `${data.games.toLocaleString()} games in DAT · ${data.games_have.toLocaleString()} have · ${(data.games - data.games_have).toLocaleString()} missing. A game counts once whatever its region, and is held as a ROM, on the Physical shelf or in Digital (anyone on this server).`;
+    $('#hw-summary').textContent = [
+      t('Games in the DAT: {games}. Have: {have}. Missing: {missing}.', { games: data.games.toLocaleString(), have: data.games_have.toLocaleString(), missing: (data.games - data.games_have).toLocaleString() }),
+      t('A game counts once whatever its region, and is held as a ROM, on the Physical shelf or in Digital (anyone on this server).')].join(' ');
   }
   const items = data.items.map((e) => `
     <div class="result-row ${e.have ? 'ok' : 'err'}">
       <span class="status"></span>
-      <span class="name">${esc(e.title)}${e.releases > 1 ? ` <span class="note">(${e.releases} releases)</span>` : ''}${e.rom_name && e.rom_name !== e.title ? ` <span class="note">(${esc(e.rom_name)})</span>` : ''}</span>
+      <span class="name">${esc(e.title)}${e.releases > 1 ? ` <span class="note">(${esc(t('Releases: {count}', { count: e.releases }))})</span>` : ''}${e.rom_name && e.rom_name !== e.title ? ` <span class="note">(${esc(e.rom_name)})</span>` : ''}</span>
       <span class="note">${e.have ? (e.libs || ['rom']).map((l) => `<span class="lib-chip k-${l === 'rom' ? 'rom' : l === 'physical' ? 'phys' : 'dig'}">${l === 'rom' ? 'ROM' : l === 'physical' ? 'Physical' : 'Digital'}</span>`).join(' ') : 'missing'}</span>
     </div>
   `).join('');
@@ -2984,7 +2986,10 @@ $('#hw-close').addEventListener('click', () => $('#have-want').classList.add('hi
 async function rematchDats({ force = false } = {}) {
   try {
     const r = await api('/dats/rematch', { method: 'POST', body: JSON.stringify({ force }) });
-    toast(`${r.matched} of ${r.checked} matched${r.mame_titled ? `, ${r.mame_titled} MAME titled from name list` : ''}${r.renamed ? `, ${r.renamed} retitled` : ''}${r.bad ? `, ${r.bad} bad dump(s)` : ''}`);
+    toast([t('ROMs checked: {checked}. Matched: {matched}.', { checked: r.checked, matched: r.matched }),
+      r.mame_titled ? t('MAME titles from the name list: {count}.', { count: r.mame_titled }) : '',
+      r.renamed ? t('Retitled: {count}.', { count: r.renamed }) : '',
+      r.bad ? t('Bad dumps: {count}.', { count: r.bad }) : ''].filter(Boolean).join(' '));
     await loadDats();
     loadLibrary();
   } catch (err) {
@@ -3012,9 +3017,12 @@ $('#dat-upload').addEventListener('click', async (e) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Import failed');
 
-    toast(data.kind === 'mame-names'
-      ? `MAME name list: ${data.names.toLocaleString()} names loaded, ${data.matched} of your ${data.mame_roms} MAME ROMs titled${data.dat_matched !== undefined ? `, ${data.dat_matched.toLocaleString()} arcade games matched` : ''}`
-      : `${data.entries.toLocaleString()} entries imported${data.sets ? ` and ${data.sets.toLocaleString()} sets by name` : ''} (${data.platform_name})`);
+    toast((data.kind === 'mame-names'
+      ? [t('MAME name list loaded. Names: {count}.', { count: data.names.toLocaleString() }),
+        t('MAME ROMs titled: {titled} / {total}.', { titled: data.matched, total: data.mame_roms }),
+        data.dat_matched !== undefined ? t('Arcade games matched: {count}.', { count: data.dat_matched.toLocaleString() }) : '']
+      : [t('Entries imported: {count} ({platform}).', { count: data.entries.toLocaleString(), platform: data.platform_name }),
+        data.sets ? t('Sets by name: {count}.', { count: data.sets.toLocaleString() }) : '']).filter(Boolean).join(' '));
     $('#dat-file').value = '';
     await loadDats();
     // A MAME name list is applied server-side already; the checksum re-match would
