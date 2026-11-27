@@ -58,3 +58,19 @@ test('the DAT page, which only fills once a DAT is imported, is translated in ev
   }
   assert.match(read('public/app.js'), /t\('Collection completeness'\)/);
 });
+
+test('the ROM Library menu and toolbar hover words are translated in every language', () => {
+  // every line of the "More filters" menu, its name and its explanation
+  const line = read('public/modern.js').split('\n').find((l) => l.includes("const items = [['locked'"));
+  const words = [...line.matchAll(/\['[a-z]+', '([^']+)', ic\.[a-z]+, '((?:[^'\\]|\\.)+)'/g)].flatMap((m) => [m[1], m[2].replace(/\\'/g, "'")]);
+  assert.equal(words.length, 14);
+  for (const { code } of LANGS.filter((l) => l.code !== 'en')) {
+    const dict = JSON.parse(read(`public/lang/${code}.json`));
+    for (const s of [...words, 'Sort: {name}', 'Jump to {letter}', 'No games under {letter}', 'Show the case of {title}', 'Selected: {count}']) assert.ok(dict[s], `${code}: ${s}`);
+  }
+});
+
+test('hover words that Modern has moved into its own hover box are still translated', () => {
+  assert.match(read('public/i18n.js'), /const ATTRS = \[[^\]]*'data-mtip'\]/);
+  assert.match(read('public/modern.js'), /el\.dataset\.mtip = /);
+});

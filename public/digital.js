@@ -141,7 +141,7 @@ function paintLetters(counts = {}) {
   const box = $('#dg-letters'); if (!box) return;
   const on = dg.sort === 'name' || dg.sort === '-name';   // a letter only means something in title order
   box.classList.toggle('off', !on);
-  box.innerHTML = on ? LETTERS.map((l) => `<button type="button" class="az-l${dg.letter === l ? ' on' : ''}" data-dg-letter="${l}"${counts[l] ? '' : ' disabled'} title="${counts[l] ? l + ': ' + n(counts[l]) + ' games' : 'No games under ' + l}">${l}</button>`).join('') : '';
+  box.innerHTML = on ? LETTERS.map((l) => `<button type="button" class="az-l${dg.letter === l ? ' on' : ''}" data-dg-letter="${l}"${counts[l] ? '' : ' disabled'} title="${counts[l] ? t('Games under {letter}: {count}', { letter: l, count: n(counts[l]) }) : t('No games under {letter}', { letter: l })}">${l}</button>`).join('') : '';
   $$('[data-dg-density]').forEach((b) => b.classList.toggle('is-on', b.dataset.dgDensity === dg.density));
 }
 

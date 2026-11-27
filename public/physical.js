@@ -225,7 +225,7 @@ function paintLetters(counts = {}) {
   const box = $('#ph-letters'); if (!box) return;
   const on = S.sort === 'title' || S.sort === '-title';
   box.classList.toggle('off', !on);
-  box.innerHTML = on ? LETTERS.map((l) => `<button type="button" class="az-l${S.letter === l ? ' on' : ''}" data-ph-letter="${l}"${counts[l] ? '' : ' disabled'} title="${counts[l] ? l + ': ' + n(counts[l]) + ' games' : 'No games under ' + l}">${l}</button>`).join('') : '';
+  box.innerHTML = on ? LETTERS.map((l) => `<button type="button" class="az-l${S.letter === l ? ' on' : ''}" data-ph-letter="${l}"${counts[l] ? '' : ' disabled'} title="${counts[l] ? t('Games under {letter}: {count}', { letter: l, count: n(counts[l]) }) : t('No games under {letter}', { letter: l })}">${l}</button>`).join('') : '';
 }
 
 /* ───────────── clicks ───────────── */

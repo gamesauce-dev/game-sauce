@@ -18,7 +18,7 @@ export const LANGS = [
   { code: 'it', name: 'Italiano', flag: 'it', html: 'it' }
 ];
 const KEY = 'gamesauce_lang';          // 'auto' (or nothing) follows the browser
-const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip'];
+const ATTRS = ['title', 'aria-label', 'placeholder', 'alt', 'data-tip', 'data-mtip'];   // data-mtip: where Modern's hover box keeps a title, which it can take before the title is translated
 const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'NOSCRIPT', 'CODE', 'PRE']);
 const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 const hasLetters = (s) => /[A-Za-zÀ-ɏ]/.test(s);

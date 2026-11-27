@@ -1,6 +1,7 @@
 // Select mode for the Digital and Physical tile lists: pick tiles (or Select all of what the filters show), then favourite, hide or delete them in one go.
 // Each list says how to read a tile's key, what "all" is, and how to delete; this file does the bar, the ticks and the confirmation.
 // While select mode is on, a click on a tile picks it instead of opening its details.
+import { t } from './i18n.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const n = (v) => Number(v || 0).toLocaleString();
@@ -20,7 +21,7 @@ export function attachBulk({ view, grid, tile, keyOf, allKeys, remove, reload, c
 
   const bar = document.createElement('div');
   bar.className = 'sel-bar hidden';
-  bar.innerHTML = `<span class="sel-count">0 selected</span>
+  bar.innerHTML = `<span class="sel-count">${t('Selected: {count}', { count: 0 })}</span>
     <button type="button" class="btn btn-sm" data-bulk="all" title="Select every game the filters show"></button>
     <button type="button" class="btn btn-sm" data-bulk="none" title="Clear the selection">Untick all</button>
     ${marks ? `<button type="button" class="btn btn-sm" data-bulk="fav-on" title="Add the selected games to your favourites" disabled>★ Favourite</button>
@@ -34,7 +35,7 @@ export function attachBulk({ view, grid, tile, keyOf, allKeys, remove, reload, c
   const paint = () => {
     $$(tile, grid).forEach((t) => { const k = keyOf(t); t.classList.toggle('bulk-picked', k != null && picked.has(k)); t.classList.toggle('bulk-off', on && k == null); });
     const total = allKeys().length;
-    $('.sel-count', bar).textContent = `${n(picked.size)} selected`;
+    $('.sel-count', bar).textContent = t('Selected: {count}', { count: n(picked.size) });
     const all = $('[data-bulk="all"]', bar); all.textContent = `Select all (${n(total)})`; all.title = `Select all ${n(total)} shown`;   // the title is what the icon-only look keeps
     $$('[data-bulk="delete"], [data-bulk="fav-on"], [data-bulk="fav-off"], [data-bulk="hide"], [data-bulk="unhide"]', bar).forEach((b) => { b.disabled = !picked.size; });
   };

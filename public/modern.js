@@ -454,10 +454,10 @@ function syncTools() {
   $('#tl-nocover')?.classList.toggle('is-on', on('[data-toggle="nocover"]'));
   $('#tl-select')?.classList.toggle('is-on', on('#select-toggle'));
   const more = $('#tl-more'); if (more) more.classList.toggle('is-on', ['system', 'orphan', 'locked', 'unmatched', 'unrated', 'converted', 'missing'].some((k) => on(`[data-toggle="${k}"]`)));
-  const sort = $('#tl-sort'); if (sort) { const s = q('#sort'); sort.classList.toggle('is-on', Boolean(s && s.value !== 'title')); sort.title = 'Sort: ' + (s?.selectedOptions?.[0]?.textContent || ''); }
+  const sort = $('#tl-sort'); if (sort) { const s = q('#sort'); sort.classList.toggle('is-on', Boolean(s && s.value !== 'title')); sort.title = t('Sort: {name}', { name: s?.selectedOptions?.[0]?.textContent || '' }); }
   const search = $('#tl-q'), real = q('#search'); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
   const f = $('#tl-fetch');
-  if (f) { const txt = q('#bulk-enrich')?.textContent || ''; const busy = /Fetching/.test(txt); f.classList.toggle('is-busy', busy); f.classList.toggle('is-on', busy); f.title = busy ? txt.replace('✦', '').trim() + ' (click to stop)' : 'Fetch metadata'; }
+  if (f) { const txt = q('#bulk-enrich')?.textContent || ''; const busy = /Fetching/.test(txt); f.classList.toggle('is-busy', busy); f.classList.toggle('is-on', busy); f.title = busy ? t('Fetching… {progress} (click to stop)', { progress: txt.split('Fetching…')[1]?.trim() || '' }) : t('Fetch metadata'); }
 }
 
 
@@ -541,7 +541,7 @@ function syncListTools(view) {
   const r = $('#tl-reset'); if (r) { const act = Boolean(q(T.reset) && !q(T.reset).classList.contains('hidden')); r.classList.toggle('is-dim', !act); r.disabled = !act; }
   for (const [id, sel] of [['tl-fav', T.fav], ['tl-hidden', T.hidden], ['tl-nocover', T.nocover], ['tl-select', T.select]]) $('#' + id)?.classList.toggle('is-on', lit(sel));
   for (const [k, , sel] of T.extras) { const x = $(`[data-x="${k}"]`); if (!x) continue; x.classList.toggle('hidden', !q(sel) || (k === 'fetchcovers' && q(sel).classList.contains('hidden'))); x.classList.toggle('is-on', lit(sel) && /toggle/.test(sel)); }   // Fetch missing covers shows while the page's own button does, that is, while a console game has no cover
-  const sel = q(T.sort), sort = $('#tl-sort'); if (sel && sort) { sort.classList.toggle('is-on', sel.value !== T.sortDefault); sort.title = 'Sort order: ' + (sel.selectedOptions?.[0]?.textContent || ''); }
+  const sel = q(T.sort), sort = $('#tl-sort'); if (sel && sort) { sort.classList.toggle('is-on', sel.value !== T.sortDefault); sort.title = t('Sort order: {name}', { name: sel.selectedOptions?.[0]?.textContent || '' }); }
   const search = $('#tl-q'), real = q(T.q); if (search && real && document.activeElement !== search && search.value !== real.value) search.value = real.value;
 }
 
@@ -679,7 +679,7 @@ async function refreshLetters() {
 function litLetter() { const s = ctx.state(); return s.azLetter && s.azFor === (s.libQuery?.toString() || '') + '|' + s.sort ? s.azLetter : ''; }
 function paintLetters() {
   const box = $('#az-letters'); if (!box || !azCounts) return;
-  box.innerHTML = LETTERS.map((l) => `<button class="az-l${litLetter() === l ? ' on' : ''}" data-letter="${l}"${azCounts[l] ? '' : ' disabled'} title="${azCounts[l] ? l + ': ' + azCounts[l].toLocaleString() + ' games' : 'No games under ' + l}" aria-label="Jump to ${l}">${l}</button>`).join('');
+  box.innerHTML = LETTERS.map((l) => `<button class="az-l${litLetter() === l ? ' on' : ''}" data-letter="${l}"${azCounts[l] ? '' : ' disabled'} title="${azCounts[l] ? t('Games under {letter}: {count}', { letter: l, count: azCounts[l].toLocaleString() }) : t('No games under {letter}', { letter: l })}" aria-label="${t('Jump to {letter}', { letter: l })}">${l}</button>`).join('');
 }
 
 /** Offset of the first game under a letter in the current order. */

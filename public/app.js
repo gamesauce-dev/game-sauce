@@ -618,7 +618,7 @@ function cardHtml(rom) {
         ${rom.keep_override === 1 ? `<span class="card-lock" title="Locked: protected from deletion" aria-label="Locked">${ICON.keepOn}</span>` : ''}
         <button type="button" class="card-fav ${rom.favorite ? 'on' : ''}" data-fav="${rom.id}" tabindex="-1" title="${rom.favorite ? 'Remove from favourites' : 'Add to favourites'}" aria-label="Favourite">${rom.favorite ? ICON.starFill : ICON.star}</button>
         <button type="button" class="card-hide" data-hide="${rom.id}" tabindex="-1" title="${rom.hidden ? 'Unhide' : (authState.user?.role === 'admin' ? 'Hide (members will not see it either)' : 'Hide from your view')}" aria-label="${rom.hidden ? 'Unhide' : 'Hide'}">${rom.hidden ? ICON.eye : ICON.eyeOff}</button>
-        ${physical.hasCase(rom.platform) ? `<button type="button" class="card-casebtn" data-case="${rom.id}" tabindex="-1" title="Show the case: open it, turn it over, read the manual" aria-label="Show the case of ${esc(rom.title)}"><span class="case-ico"></span></button>` : ''}
+        ${physical.hasCase(rom.platform) ? `<button type="button" class="card-casebtn" data-case="${rom.id}" tabindex="-1" title="Show the case: open it, turn it over, read the manual" aria-label="${esc(t('Show the case of {title}', { title: rom.title }))}"><span class="case-ico"></span></button>` : ''}
         ${rom.hidden ? '<span class="card-hidden-veil">hidden</span>' : ''}
       </div>
       <div class="card-title">${esc(rom.title)}</div>
@@ -1259,7 +1259,7 @@ function syncSelectUI() {
   $('#bulk-addcoll')?.classList.toggle('hidden', n === 0);
   $('#select-toggle')?.classList.toggle('is-active', on);
   const count = $('#bulk-count');
-  if (count) count.textContent = `${n} selected`;
+  if (count) count.textContent = t('Selected: {count}', { count: n });
   $$('#grid .card').forEach((card) => {
     const selected = state.selected.has(Number(card.dataset.rom));
     card.classList.toggle('selected', selected);
@@ -3253,7 +3253,9 @@ function renderEnrichJob(j) {
       $('#enrich-stop', pill).addEventListener('click', stopEnrichJob);
     }
     const pct = j.total ? Math.min(100, Math.round((j.done / j.total) * 100)) : 0;
-    $('.ep-text', pill).textContent = `${j.stop ? 'Stopping… ' : j.onlyMissingCovers ? 'Fetching missing covers ' : 'Fetching metadata '}${j.platform ? `(${String(j.platform).toUpperCase()}) ` : ''}${j.done} / ${j.total} · ${j.updated} updated${j.failed ? ` · ${j.failed} failed` : ''}`;
+    const platform = j.platform ? ` (${String(j.platform).toUpperCase()})` : '';
+    $('.ep-text', pill).textContent = [`${t(j.stop ? 'Stopping…' : j.onlyMissingCovers ? 'Fetching missing covers' : 'Fetching metadata')}${platform} ${j.done} / ${j.total}`,
+      t('Updated: {count}', { count: j.updated }), j.failed ? t('Failed: {count}', { count: j.failed }) : ''].filter(Boolean).join(' · ');
     $('.ep-bar i', pill).style.width = pct + '%';
     if (btn) btn.textContent = `✦ Fetching… ${j.done}/${j.total}`;
   } else {
