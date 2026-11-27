@@ -18,6 +18,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **The Pictures page (WebP copies and conversion) is now under Settings > Library tools**, not Maintenance.
 - **Missing files are now shown on Home, under Continue playing and Recently added**, to admins only, in both looks, with a button that lists them. They were a tag in the Classic sidebar, where there was no room for it.
 - **Tools buttons show their words in the Modern look**, including Preview and Import under Add My Games and Game Assets, and the three Steam buttons.
+- **Read manual** and **Upload manual** are text buttons in the Modern look of a Physical game's details.
 - **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
 
 ### Fixed
@@ -27,6 +28,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - Asking to keep files when deleting games through the API (`keep_file`) now keeps uploaded copies too, and **Delete missing** removes entries only.
 - The counts on **Settings > Maintenance > Database maintenance** were never shown.
 - The **No source** and **Needs match** filters in the Library were hidden from the admin even when games belonged in them: the counts that decide this were never sent.
+- In the Modern look, the icon buttons in the **Manual** box of a Physical game had no hover text.
 - **Show orphans** could list the whole library the first time after signing in: the library asked for before the filter was set could arrive last and replace the filtered list. (This was a fault in what the list showed, not in which games count as orphans.) The Library now ignores any reply that a newer request has overtaken.
 - In the Modern look, some buttons that should have been hidden were shown, such as **Remove logo** for a platform with no logo, and **Reset password** on your own account.
 

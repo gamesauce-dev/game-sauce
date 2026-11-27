@@ -2315,5 +2315,6 @@
  "Show missing": "不足分を表示",
  "An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.": "孤立ゲームとは、あなたのフォルダーからスキャンされ、ソースを失ったゲームです（ゲームを残してソースを削除した場合や、ゲームがロックされていた場合）。同じファイルがスキャンで再び見つかると、元に戻ります。「ROM を追加」で追加したゲームは孤立ゲームではありません。不足ファイルは別のものです。スキャンでフォルダー内にファイルが見つからなかった状態です。ソースは残っていて、再スキャンでファイルが見つかれば戻ります。ここで削除することもできます。",
  "This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.": "これらのゲームを、セーブデータ、取り込んだ画像や説明書とともにライブラリから削除します。あなたのフォルダー内のゲームファイルは変更されません。ロックされたゲームは残ります。",
- "Added through Add ROMs": "「ROM を追加」で追加"
+ "Added through Add ROMs": "「ROM を追加」で追加",
+ "Upload manual": "説明書をアップロード"
 }

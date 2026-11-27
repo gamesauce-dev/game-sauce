@@ -863,11 +863,12 @@ window.addEventListener('resize', () => { if (isModern()) alignSubtiles(); });
 /* ───────────── Text buttons: small, squared and tinted, with an icon ─────────────
    Where an icon cannot carry the meaning (and everywhere in Settings) a button keeps its words. Those buttons are tagged data-mt="<icon>" and
    data-mk="go | stop | plain" (the colour); modern.css draws them. As with data-mi, nothing a person reads is rewritten, and Classic ignores the tags. */
-const TEXT_CANDIDATES = '.btn, button.link';
+const TEXT_CANDIDATES = '.btn, button.link, #ph-man-open, #ph-man-upload';
 // These show words even where ICON_MAP gave them an icon: all of Settings and all of Tools, and the confirm popup's two answers.
-const TEXT_FORCE = '#view-settings .btn, #view-tools .btn, #modal-ok, #modal-cancel';
+const TEXT_FORCE = '#view-settings .btn, #view-tools .btn, #ph-man-open, #ph-man-upload, #modal-ok, #modal-cancel';
 // The first match wins. A button not listed here keeps the icon ICON_MAP gave it, else a tick (a bin when it destroys something).
 const TEXT_ICONS = [
+  ['#ph-man-upload', 'add-roms'],
   ['#drawer form button.btn-primary[type="submit"]', 'save'], ['label.btn:has(#cover-input)', 'upload-cover'], ['.vid-find', 'search'], ['.vid-toggle', 'preview'], ['[data-rom-manual], [data-msg-act="open-rom"]', 'arrow-right'],
   ['[data-art]', 'image-upload'], ['[data-art-reset], [data-w-reset], [data-act="clear-own-dev"], #img-clear, #mh-res-clear, #emu-vault-clear', 'clear-reset-2'], ['[data-mv-close], #art-bcancel, [data-fam-cancel]', 'close'],
   ['[data-mh-all]', 'arrow-right'], ['#lib-clear-platform, [data-dg-clear], [data-ph-clear]', 'close'],
@@ -881,7 +882,7 @@ const TEXT_ICONS = [
 ];
 const TEXT_STOP = new Set(['delete', 'cancel', 'close', 'stop', 'database-backup-delete', 'clear-covers', 'user-disable', 'folder-disable']);
 const TEXT_CALM = '#lib-clear-platform, [data-dg-clear], [data-ph-clear], [data-mv-close]';   // an X that only closes or clears a filter is not red
-const TEXT_GO = '.btn-primary, #artfolders-save, #hash-save, #img-save, #imgc-save';
+const TEXT_GO = '.btn-primary, #ph-man-open, #artfolders-save, #hash-save, #img-save, #imgc-save';
 // A symbol or emoji at the start of a button's words: arrows, shapes and dingbats, a plus, the bin.
 const GLYPH = /^\s*(?:[←-⇿■-➿⤀-⯿+＋]|\ud83d[\uddc0-\uddd1])️?\s*/;
 const matches = (el, sel) => { try { return el.matches(sel); } catch { return false; } };
@@ -915,7 +916,9 @@ export function iconize(root = document) {
   alignSubtiles();
   promoteDetailActions(root);
   buildDetailHero(root);
-  for (const t of $$('.detail-actions [data-tip]', root)) { const tip = t.getAttribute('data-tip'); if (tip && t.title !== tip) t.title = tip; }
+  const tipped = $$('.ibtn[data-tip], .detail-actions [data-tip]', root);
+  if (root.matches?.('.ibtn[data-tip]')) tipped.push(root);
+  for (const t of tipped) { const tip = t.getAttribute('data-tip'); if (tip && t.title !== tip && t.dataset.mtip !== tip) t.title = tip; }
   for (const [sel, name] of ICON_MAP) {
     const hits = $$(sel, root);
     try { if (root.matches && root.matches(sel)) hits.push(root); } catch { /* not an element */ }

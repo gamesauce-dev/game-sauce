@@ -914,3 +914,10 @@ test('Modern: every button on the Tools page keeps its words (Add My Games, Game
   for (const id of ['dgc-preview', 'dgc-apply', 'steam-save', 'steam-sync', 'steam-remove']) assert.ok(tools.includes(`id="${id}"`), id);
 });
 
+test('Modern: the Physical manual box has two text buttons, and every icon button with a tip gets hover words', () => {
+  const js = read('public/modern.js'), ph = read('public/physical.js');
+  for (const w of ['Read manual', 'Upload manual']) assert.ok(ph.includes(`<span class="mb-text">${w}</span>`), w);
+  assert.match(js, /\$\$\('\.ibtn\[data-tip\], \.detail-actions \[data-tip\]', root\)/);
+  for (const lang of ['de', 'es', 'fr', 'it', 'ja', 'pt', 'zh']) assert.ok(JSON.parse(read(`public/lang/${lang}.json`))['Upload manual'], lang);
+});
+

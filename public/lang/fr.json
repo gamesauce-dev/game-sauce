@@ -2313,5 +2313,6 @@
  "Show missing": "Afficher les manquants",
  "An orphan is a game scanned from one of your folders that has lost its source: the source was removed with its games kept, or the game was locked. A scan that finds the same file again takes it back. Games added through Add ROMs are not orphans. Missing files are different: a scan could not find the file in its folder. They still have a source and come back on a rescan that finds the file, or you can remove them here.": "Un orphelin est un jeu analysé depuis l’un de vos dossiers qui a perdu sa source : la source a été retirée en gardant les jeux, ou le jeu était verrouillé. Une analyse qui retrouve le même fichier le reprend. Les jeux ajoutés avec Ajouter des ROM ne sont pas orphelins. Les fichiers manquants, c’est autre chose : une analyse n’a pas trouvé le fichier dans son dossier. Ils ont toujours une source et reviennent dès qu’une nouvelle analyse retrouve le fichier, ou vous pouvez les retirer ici.",
  "This takes these games out of the library, with their saves and imported pictures and manuals. Their game files in your own folders are not touched. Locked games stay.": "Ces jeux sont retirés de la bibliothèque, avec leurs sauvegardes ainsi que les images et manuels importés. Leurs fichiers de jeu dans vos propres dossiers ne sont pas touchés. Les jeux verrouillés restent.",
- "Added through Add ROMs": "Ajoutés avec Ajouter des ROM"
+ "Added through Add ROMs": "Ajoutés avec Ajouter des ROM",
+ "Upload manual": "Téléverser un manuel"
 }

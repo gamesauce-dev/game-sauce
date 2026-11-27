@@ -913,8 +913,8 @@ function manualBlock(g) {
   return `<div class="section-label">${m ? 'Manual' : 'Add manual'}</div>
     <div class="panel ph-manual-box" style="padding:12px;display:grid;gap:10px">
       <div class="ph-man-actions">
-        ${m ? `<button type="button" class="ibtn ibtn-primary" id="ph-man-open" data-tip="Read the manual (${m.kind === 'file' ? esc(m.name) : esc(hostOf(m.url))})" aria-label="Read the manual">${BOOK}</button>` : ''}
-        <button type="button" class="ibtn" id="ph-man-upload" data-tip="Upload a PDF or pictures of the pages. It is kept privately with your shelf" aria-label="Upload a manual">${UP}</button>
+        ${m ? `<button type="button" class="ibtn ibtn-primary" id="ph-man-open" data-tip="Read the manual (${m.kind === 'file' ? esc(m.name) : esc(hostOf(m.url))})" aria-label="Read the manual">${BOOK}<span class="mb-text">Read manual</span></button>` : ''}
+        <button type="button" class="ibtn" id="ph-man-upload" data-tip="Upload a PDF or pictures of the pages. It is kept privately with your shelf" aria-label="Upload a manual">${UP}<span class="mb-text">Upload manual</span></button>
         <input type="file" id="ph-man-file" accept="application/pdf,image/png,image/jpeg,image/webp,.pdf" hidden />
         <button type="button" class="ibtn" id="ph-man-find" data-tip="Search the web for this game's manual (opens a search page)" aria-label="Look for one online">${WEB}</button>
         ${m ? `<button type="button" class="ibtn ibtn-danger" id="ph-man-remove" data-tip="Take this manual away from the game" aria-label="Remove the manual">${DEL}</button>` : ''}
