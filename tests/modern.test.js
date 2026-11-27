@@ -559,12 +559,12 @@ test('details window keeps its previous / next row when the opened game leaves t
   assert.ok((app.match(/state\.navSnap = null;/g) || []).length >= 5, 'every fresh open resets the snapshot');
 });
 
-test('Modern remembers Library vs Home across a refresh; refresh button on the left; bigger A-Z, add-folder icon; calm light close button', () => {
+test('Modern remembers Library vs Home across a refresh; refresh button on the left; bigger A-Z; calm light close button', () => {
   const js = read('public/modern.js'), css = read('public/modern.css');
   assert.match(js, /sessionStorage\.setItem\('gamesauce_mview', view\)/); assert.match(js, /was === 'library' \? 'library' : 'home'/);
   assert.match(read('public/app.js'), /removeItem\('gamesauce_mview'\)/);
   assert.match(css, /\.az-l \{[^}]*font-size: 1\.05rem/); assert.match(css, /\.emu-refresh-bar \{ display: flex; justify-content: flex-start;/);
-  assert.match(css, /\.source-addfolder \.btn\[data-mi\]::before \{ width: 1\.7rem/);
+  assert.doesNotMatch(css, /source-addfolder/);   // text buttons now: no oversized icon rule
   assert.match(css, /data-theme="light"\] body\.ui-modern #player-close \{ background: transparent/);
 });
 
@@ -928,3 +928,13 @@ test('Modern: the buttons for adding a game by hand keep their words, in Physica
   assert.match(read('public/digital.js'), /id="dg-add"/);
 });
 
+
+test('Sources: text buttons in Modern, and Add a folder sits full width between the explanation and the list', () => {
+  const html = read('public/index.html'), js = read('public/modern.js'), css = read('public/styles.css');
+  assert.match(js, /const TEXT_FORCE = '[^']*#view-sources \.btn,/);
+  const at = (s) => html.indexOf(s);
+  assert.ok(at('id="scan-all"') < at('id="add-source-panel"') && at('id="add-source-panel"') < at('id="sources-list"'));
+  assert.ok(!html.includes('sources-layout') && !css.includes('sources-layout'), 'no side column any more');
+  assert.match(css, /\.src-fields \{ display: grid; grid-template-columns:/);
+  assert.match(css, /@media \(max-width: 1100px\) \{ \.src-fields \{ grid-template-columns: 1fr; \} \}/);
+});

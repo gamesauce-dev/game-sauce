@@ -954,60 +954,67 @@
         </div>
       </div>
 
-      <!-- Two-column layout: sources list (narrow) left, Add-a-folder panel right,
-           both top-aligned so the add form is visible without scrolling past the
-           entire list. -->
-      <div class="sources-layout">
-        <div id="sources-list" class="sources"></div>
-
-        <div id="add-source-panel" class="panel">
-          <h3>Add a folder</h3>
-          <label class="field">
-            <span>Path</span>
-            <div style="display:flex;gap:8px">
-              <input id="source-path" placeholder="D:\ROMs\PlayStation 4" />
-              <button class="btn" id="browse-source">Browse…</button>
-            </div>
-          </label>
-
-          <!-- Folder browser lives INSIDE Add-a-folder, right under Path:
-               no separate overlay, no scrolling to find it. -->
-          <div id="browser" class="browser hidden" style="margin:0 0 12px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px">
-            <div class="browser-head">
-              <button class="btn btn-sm" id="browser-up">↑ Up</button>
-              <span class="mono" id="browser-path"></span>
-            </div>
-            <div id="browser-dirs" class="browser-dirs"></div>
-            <div class="browser-foot">
-              <button class="btn btn-sm btn-primary" id="browser-use">Use this folder</button>
-              <button class="btn btn-sm btn-ghost" id="browser-cancel">Cancel</button>
-            </div>
+      <!-- Add a folder: a wide, shallow panel between the explanation and the list, so it is in view without
+           scrolling past the sources and the list keeps the full width. -->
+      <div id="add-source-panel" class="panel">
+        <h3>Add a folder</h3>
+        <div class="src-fields">
+          <div>
+            <label class="field">
+              <span>Path</span>
+              <div class="src-path">
+                <input id="source-path" placeholder="D:\ROMs\PlayStation 4" />
+                <button class="btn" id="browse-source">Browse…</button>
+              </div>
+            </label>
           </div>
+          <div>
+            <label class="field">
+              <span>Name (optional)</span>
+              <input id="source-name" placeholder="Defaults to the folder name" />
+            </label>
+            <p class="hint">Just a label for the Sources list and filter chips
+              (e.g. “PS4 drive”, “NAS ROMs”) — it never renames your folder and doesn’t affect scanning.</p>
+          </div>
+          <div>
+            <label class="field">
+              <span>Platform *</span>
+              <select id="source-platform" class="select wide" required>
+              </select>
+            </label>
+            <p class="hint src-note" id="source-platform-note"></p>
+            <p class="hint">Required: every ROM in this folder is filed under this platform.
+              Point one source per console — no guessing, no mixed folders.</p>
+          </div>
+        </div>
 
-          <label class="field">
-            <span>Name (optional)</span>
-            <input id="source-name" placeholder="Defaults to the folder name" />
-          </label>
-          <p class="hint" style="margin:-4px 0 12px">Just a label for the Sources list and filter chips
-            (e.g. “PS4 drive”, “NAS ROMs”) — it never renames your folder and doesn’t affect scanning.</p>
-          <label class="field">
-            <span>Platform *</span>
-            <select id="source-platform" class="select wide" required>
-            </select>
-          </label>
-          <p class="hint" id="source-platform-note" style="margin:-6px 0 6px;color:var(--accent-2)"></p>
-          <p class="hint">Required: every ROM in this folder is filed under this platform.
-            Point one source per console — no guessing, no mixed folders.</p>
+        <!-- Folder browser lives INSIDE Add-a-folder, right under the fields:
+             no separate overlay, no scrolling to find it. -->
+        <div id="browser" class="browser hidden" style="border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px">
+          <div class="browser-head">
+            <button class="btn btn-sm" id="browser-up">↑ Up</button>
+            <span class="mono" id="browser-path"></span>
+          </div>
+          <div id="browser-dirs" class="browser-dirs"></div>
+          <div class="browser-foot">
+            <button class="btn btn-sm btn-primary" id="browser-use">Use folder</button>
+            <button class="btn btn-sm btn-ghost" id="browser-cancel">Cancel</button>
+          </div>
+        </div>
+
+        <div class="src-foot">
           <label class="field checkbox">
             <input type="checkbox" id="source-recursive" checked />
             <span>Scan subfolders recursively</span>
           </label>
-          <div style="display:flex;gap:8px">
+          <div class="src-go">
             <button class="btn btn-primary" id="create-source">Add and scan</button>
             <button class="btn btn-ghost" id="cancel-source">Cancel</button>
           </div>
         </div>
       </div>
+
+      <div id="sources-list" class="sources"></div>
     </section>
 
     <!-- ───────────── emulators ───────────── -->

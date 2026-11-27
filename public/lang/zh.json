@@ -2717,5 +2717,19 @@
   "Upload a manual": "上传说明书",
   "Remove the manual": "移除说明书",
   "Link to a manual: https://…": "说明书链接：https://…",
-  "A web link to this game's manual": "此游戏说明书的网页链接"
+  "A web link to this game's manual": "此游戏说明书的网页链接",
+  "Use folder": "使用文件夹",
+  "Folder moved?": "文件夹已移动？",
+  "Disable": "停用",
+  "Enable": "启用",
+  "recursive": "含子文件夹",
+  "last scan: {time} UTC": "上次扫描：{time} UTC",
+  "Added: {added}. Updated: {updated}. Missing: {missing}. Unchanged: {skipped}.": "新增：{added}。更新：{updated}。缺失：{missing}。未变：{skipped}。",
+  "Added: {added}. Unchanged: {skipped}.": "新增：{added}。未变：{skipped}。",
+  "Enriched: {enriched}.": "已补充信息：{enriched}。",
+  "Games found in the new folder: {found} of {moved}.": "在新文件夹中找到的游戏：{found} / {moved}。",
+  "Not there, shown as missing: {missing}.": "不在该处，显示为缺失：{missing}。",
+  "ROMs found in {name}: {added}.": "在 {name} 中找到的 ROM：{added}。",
+  "Sources scanned: {sources}. New ROMs: {added}.": "已扫描来源：{sources}。新增 ROM：{added}。",
+  ". ROMs stay exactly where they are on your disks — the scan only records the path, size, date and hashes, then pulls metadata. Use this for your multi-drive collection. Use": "。ROM 保持在磁盘上原来的位置，扫描只记录路径、大小、日期和哈希值，然后获取元数据。分布在多个硬盘上的收藏适合用这种方式。使用"
 }

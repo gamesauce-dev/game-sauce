@@ -627,11 +627,22 @@ button.result-row:hover { border-color: var(--accent); }
 }
 
 /* ───────────────────────── sources ───────────────────────── */
-.sources { display: grid; gap: 0.8571rem; align-content: start; max-width: 64.2857rem; }
-.sources-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(21.4286rem, 28.5714rem); gap: 1.2857rem; align-items: start; }
-@media (max-width: 1100px) { .sources-layout { grid-template-columns: 1fr; } }
-.sources-layout .sources { max-width: 100%; min-width: 0; }
-.sources-layout #add-source-panel { max-width: 100%; }
+.sources { display: grid; gap: 0.8571rem; align-content: start; max-width: 100%; min-width: 0; }
+/* Add a folder: as wide as the panel above it, with its three fields side by side. */
+#add-source-panel { max-width: 100%; margin: 0 0 1rem; flex: 0 0 auto; }
+.src-fields { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: 1.1429rem; align-items: start; }
+.src-fields > div { display: grid; gap: 0.4286rem; align-content: start; min-width: 0; }
+.src-fields .field { margin: 0; }
+.src-fields .hint { margin: 0; }
+.src-path { display: flex; gap: 0.5714rem; }
+.src-path input { flex: 1; min-width: 0; }
+.src-note { color: var(--accent-2); }
+.src-note:empty { display: none; }
+#add-source-panel .browser { max-width: none; }
+.src-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8571rem; }
+.src-foot .field { margin: 0; }
+.src-go { display: flex; gap: 0.5714rem; }
+@media (max-width: 1100px) { .src-fields { grid-template-columns: 1fr; } }
 .source-card {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 1rem 1.1429rem; display: grid; gap: 0.5714rem;

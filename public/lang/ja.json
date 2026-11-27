@@ -2717,5 +2717,19 @@
   "Upload a manual": "マニュアルをアップロード",
   "Remove the manual": "マニュアルを削除",
   "Link to a manual: https://…": "マニュアルへのリンク：https://…",
-  "A web link to this game's manual": "このゲームのマニュアルへのウェブリンク"
+  "A web link to this game's manual": "このゲームのマニュアルへのウェブリンク",
+  "Use folder": "フォルダーを使用",
+  "Folder moved?": "フォルダーを移動？",
+  "Disable": "無効にする",
+  "Enable": "有効にする",
+  "recursive": "サブフォルダーを含む",
+  "last scan: {time} UTC": "前回のスキャン: {time} UTC",
+  "Added: {added}. Updated: {updated}. Missing: {missing}. Unchanged: {skipped}.": "追加: {added}。更新: {updated}。見つからない: {missing}。変更なし: {skipped}。",
+  "Added: {added}. Unchanged: {skipped}.": "追加: {added}。変更なし: {skipped}。",
+  "Enriched: {enriched}.": "情報を追加: {enriched}。",
+  "Games found in the new folder: {found} of {moved}.": "新しいフォルダーで見つかったゲーム: {moved} 本中 {found} 本。",
+  "Not there, shown as missing: {missing}.": "そこになく、見つからないと表示: {missing}。",
+  "ROMs found in {name}: {added}.": "{name} で見つかった ROM: {added}。",
+  "Sources scanned: {sources}. New ROMs: {added}.": "スキャンしたソース: {sources}。新しい ROM: {added}。",
+  ". ROMs stay exactly where they are on your disks — the scan only records the path, size, date and hashes, then pulls metadata. Use this for your multi-drive collection. Use": "。ROM はディスク上の今の場所にそのまま残ります。スキャンはパス、サイズ、日付、ハッシュを記録するだけで、その後メタデータを取得します。複数のドライブに分かれたコレクションにはこの機能を使います。次の機能"
 }

@@ -6,6 +6,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ### Changed
 
+- **Sources page.** Add a folder is now a wide, shallow panel between the explanation and your list of folders, in both looks, and the list uses the full width. In the Modern look its buttons show words. "Folder renamed or moved?" is now "Folder moved?" and "Use this folder" in the folder list is now "Use folder". Disable, Enable, the last scan line and the scan results are now translated too.
 - **Emulators in the Modern look.** Each emulator's platform now sits on a pill, like "In vault", and the links are a calmer blue instead of purple. Classic looks as before.
 
 ### Fixed

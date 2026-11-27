@@ -2717,5 +2717,19 @@
   "Upload a manual": "Enviar um manual",
   "Remove the manual": "Remover o manual",
   "Link to a manual: https://…": "Link para um manual: https://…",
-  "A web link to this game's manual": "Um link da web para o manual deste jogo"
+  "A web link to this game's manual": "Um link da web para o manual deste jogo",
+  "Use folder": "Usar pasta",
+  "Folder moved?": "Pasta movida?",
+  "Disable": "Desativar",
+  "Enable": "Ativar",
+  "recursive": "com subpastas",
+  "last scan: {time} UTC": "última análise: {time} UTC",
+  "Added: {added}. Updated: {updated}. Missing: {missing}. Unchanged: {skipped}.": "Adicionados: {added}. Atualizados: {updated}. Ausentes: {missing}. Sem alterações: {skipped}.",
+  "Added: {added}. Unchanged: {skipped}.": "Adicionados: {added}. Sem alterações: {skipped}.",
+  "Enriched: {enriched}.": "Com detalhes adicionados: {enriched}.",
+  "Games found in the new folder: {found} of {moved}.": "Jogos encontrados na nova pasta: {found} de {moved}.",
+  "Not there, shown as missing: {missing}.": "Não estão lá e aparecem como ausentes: {missing}.",
+  "ROMs found in {name}: {added}.": "ROMs encontradas em {name}: {added}.",
+  "Sources scanned: {sources}. New ROMs: {added}.": "Origens analisadas: {sources}. ROMs novas: {added}.",
+  ". ROMs stay exactly where they are on your disks — the scan only records the path, size, date and hashes, then pulls metadata. Use this for your multi-drive collection. Use": ". As ROMs ficam exatamente onde estão nos seus discos: a análise só registra o caminho, o tamanho, a data e os hashes, e depois busca os metadados. Use isto para a sua coleção espalhada em vários discos. Use"
 }

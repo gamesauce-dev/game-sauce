@@ -2201,6 +2201,9 @@ function makeFoldable(container, headSelector, scope, nameOf) {
   }
 }
 
+// What a scan also looked up, as its own sentence after the counts.
+const enrichedNote = (n) => (n ? ' ' + t('Enriched: {enriched}.', { enriched: n }) : '');
+
 async function loadSourcesNow() {
   const [{ items }, roots, plats] = await Promise.all([api('/sources'), api('/sources/roots'), api('/platforms')]);
   const wrap = $('#sources-list');
@@ -2248,14 +2251,14 @@ async function loadSourcesNow() {
       </div>
       <div class="source-path">${esc(s.path)}</div>
       ${(s.extra_paths || []).map((x) => `<div class="source-path source-extra${x.exists ? '' : ' is-gone'}" data-extra="${x.id}"><span>${esc(x.path)}${x.exists ? '' : ' <em>(not reachable)</em>'}</span><button class="btn btn-sm btn-ghost" data-act="drop-folder" title="Stop scanning this folder (its games stay in the library)" aria-label="Remove this folder">✕</button></div>`).join('')}
-      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="relocate" title="Folder renamed or moved? Point this source at its new place: every game keeps its details, covers and saves">Folder renamed or moved?</button> <button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
+      <div class="source-addfolder"><button class="btn btn-sm btn-ghost" data-act="relocate" title="Folder renamed or moved? Point this source at its new place: every game keeps its details, covers and saves">Folder moved?</button> <button class="btn btn-sm btn-ghost" data-act="add-folder" title="Part of this collection lives on another drive or in another folder? Add it here: same name, same platform.">＋ Add another folder</button></div>
       <div class="scan-progress hidden" data-progress="${s.id}"></div>
       <div class="source-stats">
         <span><b>${s.rom_count}</b> ROMs</span>
         <span><b>${fmtBytes(s.total_bytes)}</b></span>
         ${s.missing_count ? `<span><b style="color:var(--warn)">${s.missing_count}</b> missing</span>` : ''}
         <span>${s.recursive ? 'recursive' : 'top level only'}</span>
-        <span>${s.last_scan_at ? `last scan ${s.last_scan_at} UTC${s.last_scan_ms ? ` · ${(s.last_scan_ms / 1000).toFixed(1)}s` : ''}` : 'never scanned'}</span>
+        <span>${s.last_scan_at ? `${esc(t('last scan: {time} UTC', { time: s.last_scan_at }))}${s.last_scan_ms ? ` · ${(s.last_scan_ms / 1000).toFixed(1)}s` : ''}` : 'never scanned'}</span>
       </div>
     </div>
   `).join('');
@@ -2276,7 +2279,7 @@ async function loadSourcesNow() {
           method: 'POST',
           body: JSON.stringify({ enrich: true })
         });
-        toast(`${r.added} added, ${r.updated} updated, ${r.missing} missing, ${r.skipped} unchanged${r.enriched ? `, ${r.enriched} enriched` : ''}`);
+        toast(t('Added: {added}. Updated: {updated}. Missing: {missing}. Unchanged: {skipped}.', { added: r.added, updated: r.updated, missing: r.missing, skipped: r.skipped }) + enrichedNote(r.enriched));
         await Promise.all([loadSources(), loadPlatforms()]);
         loadLibrary();
       } catch (err) {
@@ -2294,7 +2297,7 @@ async function loadSourcesNow() {
       if (!ok) return;
       try {
         const r = await api(`/sources/${id}/relocate`, { method: 'POST', body: JSON.stringify({ path: chosen }) });
-        toast(`Done: ${r.found.toLocaleString()} of ${r.moved.toLocaleString()} games found in the new folder${r.not_found ? ` (${r.not_found.toLocaleString()} not there: they show as missing)` : ''}`);
+        toast(t('Games found in the new folder: {found} of {moved}.', { found: r.found.toLocaleString(), moved: r.moved.toLocaleString() }) + (r.not_found ? ' ' + t('Not there, shown as missing: {missing}.', { missing: r.not_found.toLocaleString() }) : ''));
         await Promise.all([loadSources(), loadPlatforms()]);
         loadLibrary();
       } catch (err) { toast(err.message, true); }
@@ -2309,7 +2312,7 @@ async function loadSourcesNow() {
         await loadSources();
         startScanPolling();
         const r = await api(`/sources/${id}/scan`, { method: 'POST', body: JSON.stringify({ enrich: true }) });
-        toast(`${r.added} added, ${r.skipped} unchanged${r.enriched ? `, ${r.enriched} enriched` : ''}`);
+        toast(t('Added: {added}. Unchanged: {skipped}.', { added: r.added, skipped: r.skipped }) + enrichedNote(r.enriched));
         await Promise.all([loadSources(), loadPlatforms()]);
         loadLibrary();
       } catch (err) { toast(err.message, true); loadSources(); }
@@ -2475,7 +2478,7 @@ $('#create-source').addEventListener('click', async () => {
       method: 'POST',
       body: JSON.stringify({ enrich: true })
     });
-    toast(`${r.added} ROMs found in ${created.name}${r.enriched ? `, ${r.enriched} enriched` : ''}`);
+    toast(t('ROMs found in {name}: {added}.', { name: created.name, added: r.added }) + enrichedNote(r.enriched));
     await Promise.all([loadSources(), loadPlatforms()]);
     loadLibrary();
   } catch (err) {
@@ -2492,7 +2495,7 @@ $('#scan-all').addEventListener('click', async (e) => {
     const r = await api('/sources/scan', { method: 'POST', body: JSON.stringify({ enrich: true }) });
     const added = r.sources.reduce((n, s) => n + s.added, 0);
     const enriched = r.sources.reduce((n, s) => n + (s.enriched || 0), 0);
-    toast(`Scanned ${r.sources.length} source(s): ${added} new ROMs${enriched ? `, ${enriched} enriched` : ''}`);
+    toast(t('Sources scanned: {sources}. New ROMs: {added}.', { sources: r.sources.length, added }) + enrichedNote(enriched));
     await Promise.all([loadSources(), loadPlatforms()]);
     loadLibrary();
   } catch (err) {

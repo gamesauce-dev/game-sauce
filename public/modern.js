@@ -866,8 +866,8 @@ window.addEventListener('resize', () => { if (isModern()) alignSubtiles(); });
    Where an icon cannot carry the meaning (and everywhere in Settings) a button keeps its words. Those buttons are tagged data-mt="<icon>" and
    data-mk="go | stop | plain" (the colour); modern.css draws them. As with data-mi, nothing a person reads is rewritten, and Classic ignores the tags. */
 const TEXT_CANDIDATES = '.btn, button.link, #ph-man-open, #ph-man-upload';
-// These show words even where ICON_MAP gave them an icon: all of Settings and all of Tools, and the confirm popup's two answers.
-const TEXT_FORCE = '#view-settings .btn, #view-tools .btn, #ph-man-open, #ph-man-upload, #ph-add .btn, #dg-add .btn, #modal-ok, #modal-cancel';
+// These show words even where ICON_MAP gave them an icon: all of Settings, Tools and Sources, and the confirm popup's two answers.
+const TEXT_FORCE = '#view-settings .btn, #view-tools .btn, #view-sources .btn, #ph-man-open, #ph-man-upload, #ph-add .btn, #dg-add .btn, #modal-ok, #modal-cancel';
 // The first match wins. A button not listed here keeps the icon ICON_MAP gave it, else a tick (a bin when it destroys something).
 const TEXT_ICONS = [
   ['#ph-man-upload', 'add-roms'],

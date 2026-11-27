@@ -58,7 +58,7 @@ test('a renamed folder: the source is pointed at its new place and every game ke
   assert.equal(again.body.added, 0); assert.equal(db.prepare('SELECT COUNT(*) AS n FROM roms WHERE source_id = ? AND missing = 0').get(id).n, 2);
 });
 
-test('the screen: a "Folder renamed or moved?" button on each source', () => {
+test('the screen: a "Folder moved?" button on each source', () => {
   const app = fs.readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.ok(app.includes('data-act="relocate"') && app.includes('/relocate'));
 });
