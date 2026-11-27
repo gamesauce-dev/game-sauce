@@ -921,3 +921,10 @@ test('Modern: the Physical manual box has two text buttons, and every icon butto
   for (const lang of ['de', 'es', 'fr', 'it', 'ja', 'pt', 'zh']) assert.ok(JSON.parse(read(`public/lang/${lang}.json`))['Upload manual'], lang);
 });
 
+test('Modern: the buttons for adding a game by hand keep their words, in Physical and Digital', () => {
+  const js = read('public/modern.js');
+  assert.match(js, /const TEXT_FORCE = '[^']*#ph-add \.btn, #dg-add \.btn,/);
+  assert.ok(read('public/physical.js').includes('<form class="edit-form" id="ph-add">'));
+  assert.match(read('public/digital.js'), /id="dg-add"/);
+});
+

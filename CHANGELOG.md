@@ -19,6 +19,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Missing files are now shown on Home, under Continue playing and Recently added**, to admins only, in both looks, with a button that lists them. They were a tag in the Classic sidebar, where there was no room for it.
 - **Tools buttons show their words in the Modern look**, including Preview and Import under Add My Games and Game Assets, and the three Steam buttons.
 - **Read manual** and **Upload manual** are text buttons in the Modern look of a Physical game's details.
+- **The buttons for adding a game by hand** to the Physical or Digital library show their words in the Modern look.
 - **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
 
 ### Fixed
