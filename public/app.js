@@ -9,7 +9,7 @@ import * as modern from './modern.js';
 import * as physical from './physical.js';
 import * as digital from './digital.js';
 import { renderArtImport } from './artimport-ui.js';
-import { splitByLibrary } from './csvsplit.js';   // Add My Games: the Library column
+import { splitByLibrary, importLine } from './csvsplit.js';   // Add My Games: the Library column
 import { assetWords } from './video.js';   // the video in a game's details window
 import * as carousel from './carousel.js';
 import * as bigscreen from './bigscreen.js';
@@ -4952,24 +4952,24 @@ function initConsoleImport() {
       const split = splitByLibrary(csv, dest());
       const parts = split.hasColumn ? { digital: split.digital, physical: split.physical } : { [dest()]: csv };
       const notes = [], can = [];
-      if (split.problems.length) notes.push(split.problems.slice(0, 10).map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>'));
+      if (split.problems.length) notes.push(split.problems.slice(0, 10).map((p) => esc(importLine(p))).join('<br>'));
       for (const lib of ['digital', 'physical']) {
         if (!parts[lib]) continue;
-        const head = split.hasColumn ? `<b>${lib === 'digital' ? 'Digital Library' : 'Physical shelf'}</b> (${n(split.counts[lib])} ${split.counts[lib] === 1 ? 'game' : 'games'}): ` : '';
+        const head = split.hasColumn ? `<b>${t(lib === 'digital' ? 'Digital Library' : 'Physical shelf')}</b> (${t('Games: {count}', { count: n(split.counts[lib]) })}): ` : '';
         if (lib === 'physical') {
           // Onto the Physical shelf: any Library platform, not only the consoles Digital knows.
           const r = await api('/physical/import', { method: 'POST', body: JSON.stringify({ csv: parts.physical, apply, replace: $('#dgc-replace').checked, digital: $('#dgc-digital').checked }) });
           notes.push(head + physical.importSummary(r, platName));
           if (!apply && (r.added || r.updated || r.removed)) can.push(lib);
-          if (apply) toast(`${n(r.added)} games added to your Physical shelf`);
+          if (apply) toast(t('Games added to your Physical shelf: {count}', { count: n(r.added) }));
         } else {
           const r = await api('/digital/consoles/import', { method: 'POST', body: JSON.stringify({ csv: parts.digital, apply, replace: $('#dgc-replace').checked }) });
           notes.push(head + digital.importSummary(r));
           if (!apply && (r.added || r.updated || r.removed || r.physical_on || r.physical_off)) can.push(lib);
-          if (apply) toast(`${n(r.added)} console games added to Digital`);
+          if (apply) toast(t('Console games added to Digital: {count}', { count: n(r.added) }));
         }
       }
-      if (!notes.length) notes.push('There are no games in the file.');
+      if (!notes.length) notes.push(t('There are no games in the file.'));
       out.innerHTML = notes.join('<br><br>');
       applyBtn.disabled = apply || !can.length;
     } catch (err) { out.textContent = err.message; toast(err.message, true); }

@@ -7,6 +7,8 @@ import { assetWords } from './video.js';
 import { orderStores, orderConsoles } from './platform-order.js';
 import { landChips } from './chip-motion.js';
 import { thumb } from './thumb.js';
+import { t } from './i18n.js';
+import { importLine } from './csvsplit.js';
 import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { familyLabel, platformBadge, platformChip } from './platform-names.js';
 
@@ -586,13 +588,18 @@ function openAdd() {
 
 /** One line telling what an import did (or would do). */
 export function importSummary(r) {
+  // Each part is a whole sentence of its own, so every language can word it its own way (numbers go after a colon: no plural endings).
   const per = Object.entries(r.by_store || {}).map(([k, v]) => `${esc(storeLabel(k))} ${n(v)}`).join(', ');
+  const counts = { added: n(r.added), updated: n(r.updated), unchanged: n(r.unchanged) };
   const what = r.applied
-    ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
-    : `${n(r.games)} games in the file (${per || 'none'}): ${n(r.added)} would be added, ${n(r.updated)} updated, ${n(r.unchanged)} ${r.unchanged === 1 ? 'is' : 'are'} already there${r.removed ? `, ${n(r.removed)} would be removed` : ''}.`;
-  const notes = [r.physical_on ? `${n(r.physical_on)} marked as owned on disc or cartridge` : '', r.physical_off ? `${n(r.physical_off)} marked digital only` : '', r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
-  return what + (notes ? ` ${notes}.` : '')
-    + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
-    + (r.applied && r.details_job?.running ? `<br>Details and covers are being looked up now (${n(r.details_job.total)} games). They appear here as they are found.` : '');
+    ? [`<b>${t('Imported.')}</b>`, t('Added: {added}. Updated: {updated}. Already there: {unchanged}.', counts), r.removed ? t('Removed: {count}.', { count: n(r.removed) }) : '']
+    : [t('Games in the file: {games} ({list}).', { games: n(r.games), list: per || t('none') }), t('Would be added: {added}. Updated: {updated}. Already there: {unchanged}.', counts), r.removed ? t('Would be removed: {count}.', { count: n(r.removed) }) : ''];
+  const note = (count, text) => (count ? t(text, { count: n(count) }) : '');
+  const notes = [
+    note(r.physical_on, 'Marked as owned on disc or cartridge: {count}.'), note(r.physical_off, 'Marked digital only: {count}.'),
+    note(r.duplicates, 'Repeated rows counted once: {count}.'), note(r.skipped, 'Rows skipped: {count}.')];
+  return [...what, ...notes].filter(Boolean).join(' ')
+    + (r.problems?.length ? '<br>' + r.problems.map((p) => esc(importLine(p))).join('<br>') : '')
+    + (r.applied && r.details_job?.running ? `<br>${t('Details and covers are being looked up now. Games: {count}.', { count: n(r.details_job.total) })} ${t('They appear here as they are found.')}` : '');
 }
 

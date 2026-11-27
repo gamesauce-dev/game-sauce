@@ -30,3 +30,14 @@ test('file boxes use the app\'s own words, set up once the language is loaded', 
   assert.ok(app.indexOf('await initI18n();') < app.indexOf('initFilePickers();'));
   assert.match(read('public/filepick.js'), /t\('No file chosen'\)/);
 });
+
+test('import problem lines and results are whole sentences, with their own translation in every language', async () => {
+  const { importLine } = await import('../public/csvsplit.js');
+  assert.equal(importLine({ line: 4, reason: 'No platform' }), 'Line 4: No platform');
+  assert.equal(importLine({ line: 2, reason: 'The purchase details for "Zeta" were left out: Choose a currency from the list.' }), 'Line 2: The purchase details for "Zeta" were left out: Choose a currency from the list.');
+  for (const { code } of LANGS.filter((l) => l.code !== 'en')) {
+    const dict = JSON.parse(read(`public/lang/${code}.json`));
+    for (const s of ['Line {line}: {reason}', 'Added: {added}. Updated: {updated}. Already there: {unchanged}.', 'Games in the file: {games} ({list}).', 'Rows skipped: {count}.', 'Add My Games']) assert.ok(dict[s], `${code}: ${s}`);
+    assert.match(dict['= yes, or'], /yes/, `${code}: the CSV only accepts yes, so the word stays as it is`);
+  }
+});

@@ -1,6 +1,16 @@
 // Tools > Add My Games: one CSV can carry a "Library" column (Digital or Physical) that says which list each game goes in.
 // splitByLibrary() reads the file, and gives back one CSV for each list (the Library column is taken out; every other column is kept as it is), ready to send to the two importers.
 
+import { t } from './i18n.js';
+
+/** One "Line 4: why" of an import's problems, in the chosen language. */
+export function importLine({ line, reason }) {
+  // This one carries a second message inside it, which is translated on its own.
+  const m = /^The purchase details for "(.*)" were left out: (.+)$/.exec(reason);
+  const why = m ? t('The purchase details for "{title}" were left out: {why}', { title: m[1], why: t(m[2]) }) : t(reason);
+  return t('Line {line}: {reason}', { line, reason: why });
+}
+
 /** Minimal RFC-4180 CSV reader (quotes, doubled quotes, CRLF, BOM): the same reading the server does. */
 export function parseCsv(text) {
   const src = String(text).replace(/^﻿/, '');

@@ -9,6 +9,8 @@ import { platformSelect, identifyBlock, wireIdentify, platformOptions, comboHtml
 import { platformBadge, platformChip, familyName, familyLabel } from './platform-names.js';
 import { landChips } from './chip-motion.js';
 import { thumb } from './thumb.js';
+import { t } from './i18n.js';
+import { importLine } from './csvsplit.js';
 import { useLogos, familyLogoHtml, platformLogoHtml, chipFace } from './chip-face.js';   // platform logos instead of chips, when chosen
 import { drawPage, mountViewer, pdfReady } from './pdfview.js';
 import { attachBulk } from './bulk.js';
@@ -1062,12 +1064,17 @@ async function fillSellers(root) {
 
 /** One line telling what an import did (or would do), shared with Settings › CSV tools. */
 export function importSummary(r, platformName = (s) => s) {
+  // Each part is a whole sentence of its own, so every language can word it its own way (numbers go after a colon: no plural endings).
   const per = Object.entries(r.by_platform || {}).map(([k, v]) => `${esc(platformName(k))} ${n(v)}`).join(', ');
+  const counts = { added: n(r.added), updated: n(r.updated), unchanged: n(r.unchanged) };
   const what = r.applied
-    ? `<b>Imported.</b> ${n(r.added)} added, ${n(r.updated)} updated, ${n(r.unchanged)} already there${r.removed ? `, ${n(r.removed)} removed` : ''}.`
-    : `${n(r.games)} games in the file (${per || 'none'}): ${n(r.added)} would be added, ${n(r.updated)} updated, ${n(r.unchanged)} ${r.unchanged === 1 ? 'is' : 'are'} already there${r.removed ? `, ${n(r.removed)} would be removed` : ''}.`;
-  const notes = [r.digital_on ? `${n(r.digital_on)} Xbox disc${r.digital_on === 1 ? '' : 's'} ${r.applied ? 'also in' : 'would also go to'} Digital` : '', r.digital_off ? `${n(r.digital_off)} kept out of Digital` : '', r.duplicates ? `${n(r.duplicates)} repeated row${r.duplicates === 1 ? '' : 's'} counted once` : '', r.skipped ? `${n(r.skipped)} row${r.skipped === 1 ? '' : 's'} skipped` : ''].filter(Boolean).join('; ');
-  return what + (notes ? ` ${notes}.` : '')
-    + (r.problems?.length ? '<br>' + r.problems.map((p) => `Line ${p.line}: ${esc(p.reason)}`).join('<br>') : '')
-    + (r.applied && r.match_job?.running ? `<br>Details and covers are being looked up now (${n(r.match_job.total)} games). Open <b>Physical</b> to watch them arrive.` : '');
+    ? [`<b>${t('Imported.')}</b>`, t('Added: {added}. Updated: {updated}. Already there: {unchanged}.', counts), r.removed ? t('Removed: {count}.', { count: n(r.removed) }) : '']
+    : [t('Games in the file: {games} ({list}).', { games: n(r.games), list: per || t('none') }), t('Would be added: {added}. Updated: {updated}. Already there: {unchanged}.', counts), r.removed ? t('Would be removed: {count}.', { count: n(r.removed) }) : ''];
+  const note = (count, text) => (count ? t(text, { count: n(count) }) : '');
+  const notes = [
+    note(r.digital_on, r.applied ? 'Xbox discs also in Digital: {count}.' : 'Xbox discs that would also go to Digital: {count}.'), note(r.digital_off, 'Kept out of Digital: {count}.'),
+    note(r.duplicates, 'Repeated rows counted once: {count}.'), note(r.skipped, 'Rows skipped: {count}.')];
+  return [...what, ...notes].filter(Boolean).join(' ')
+    + (r.problems?.length ? '<br>' + r.problems.map((p) => esc(importLine(p))).join('<br>') : '')
+    + (r.applied && r.match_job?.running ? `<br>${t('Details and covers are being looked up now. Games: {count}.', { count: n(r.match_job.total) })} ${t('Open the Physical page to watch them arrive.')}` : '');
 }
