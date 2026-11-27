@@ -13,6 +13,8 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 - **Text buttons in the Modern look have a new style.** Where a button keeps its words, in Settings and elsewhere, it is now small and squared, softly tinted, with an icon: green for the main action, red for delete, stop and cancel, neutral for the rest. Pointing at one deepens the tint and makes its edge glow. **Check latest releases** on the Emulators page is now an icon. The Classic look keeps its buttons.
 - **A tidier Add ROMs page**, in two steps in both looks: choose the platform, then add the files. The second step stays greyed out until a platform is picked, and the drop area names it. A short note replaces the long explanations.
+- **The Xbox 360 Big Screen look is no longer used for Xbox One and Xbox Series.** It covers Xbox, Xbox 360 and Xbox Live Arcade; Xbox One and Series now have the Standard look.
+- **New wording for the choices under My account > Preferences.** The Modern look shows their names in capitals.
 - **Shorter button wording** in both looks, for example **Estimate saving**, **Clear cache** (was Clear the copies), **Fill gaps** and **Download launcher**.
 
 ### Fixed

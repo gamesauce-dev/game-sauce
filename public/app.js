@@ -4081,14 +4081,14 @@ function initProfilePanel() {
   const langBox = $('#lang-picker');
   if (langBox) {
     const now = chosenLanguage();
-    langBox.innerHTML = `<button type="button" class="lang-opt" data-lang="auto" aria-pressed="${now === 'auto'}"><span class="lang-globe" aria-hidden="true">🌐</span><span>Automatic (the browser's language)</span></button>`
+    langBox.innerHTML = `<button type="button" class="lang-opt" data-lang="auto" aria-pressed="${now === 'auto'}"><span class="lang-globe" aria-hidden="true">🌐</span><span>Automatic</span></button>`
       + LANGS.map((l) => `<button type="button" class="lang-opt" data-lang="${l.code}" aria-pressed="${now === l.code}"><img src="/flags/${l.flag}.svg" alt="" width="24" height="16"><span class="notranslate">${esc(l.name)}</span></button>`).join('');
     langBox.onclick = (ev) => { const b = ev.target.closest('.lang-opt'); if (!b) return; const v = b.dataset.lang; api('/prefs/lang', { method: 'PUT', body: JSON.stringify({ value: v }) }).catch(() => {}).finally(() => setLanguage(v)); };
   }
   // Big Screen look: the standard one, or a theme (Xbox 360). Kept with the account; Big Screen reads it when it opens.
   const bsBox = $('#bstheme-picker');
   if (bsBox) {
-    const BS_LOOKS = [['', 'Standard', 'the look Big Screen has always had'], ['xbox360', 'Xbox 360', 'green and glossy like the 2005 dashboard, on Xbox consoles'], ['ps3', 'PlayStation 3', 'a slow wave of light and a cross bar of platforms, on PlayStation consoles'], ['wii', 'Wii', 'pale channel tiles over a curved bar, on the Wii, GameCube and Wii U']];
+    const BS_LOOKS = [['', 'Standard', 'the Big Screen default'], ['xbox360', 'Xbox 360', 'classic blades on XBOX 360, XBLA, XBOX'], ['ps3', 'PlayStation 3', 'classic XMB for PlayStation 3 and prior consoles'], ['wii', 'Wii', 'channel tiles for Wii, Wii U and GameCube']];
     const looksOn = () => new Set(String(state.prefs?.bs_theme || '').split(',').filter(Boolean));   // the looks switched on: any of them together, none means Standard
     const paintBs = () => { const on = looksOn(); bsBox.innerHTML = BS_LOOKS.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bstheme="${k}" aria-pressed="${k ? on.has(k) : on.size === 0}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintBs();
@@ -4104,7 +4104,7 @@ function initProfilePanel() {
   // The pictures of the PlayStation 3 look: the best a game has (a clear logo, a screenshot, the box), or one kind only.
   const xmArtBox = $('#bsxmart-picker');
   if (xmArtBox) {
-    const XA = [['auto', 'Best available', 'a clear logo, else a screenshot, else the box'], ['logo', 'Clear logos', 'the name in text when a game has none'], ['screenshot', 'Screenshots', 'then the box'], ['box', 'Box art', 'as before']];
+    const XA = [['auto', 'Best available', 'clear logo, fallback to snap or box art'], ['logo', 'Clear logos', 'fallback game name'], ['screenshot', 'Snaps', 'fallback box art'], ['box', 'Box art', 'as before']];
     const paintXa = () => { const now = state.prefs?.bs_xmb_art || 'auto'; xmArtBox.innerHTML = XA.map(([k, label, sub]) => `<button type="button" class="lang-opt" data-xma="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintXa();
     xmArtBox.onclick = async (ev) => {
@@ -4130,7 +4130,7 @@ function initProfilePanel() {
   // Where to land after signing in: Big Screen (the default for a play-only account) or the normal screen.
   const bsStartBox = $('#bsstart-picker');
   if (bsStartBox) {
-    const paintStart = () => { const now = startsInBigScreen() ? 'on' : 'off'; bsStartBox.innerHTML = [['on', 'Big Screen', 'starts at once; B leaves it'], ['off', 'The normal screen', 'the Library']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bsstart="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    const paintStart = () => { const now = startsInBigScreen() ? 'on' : 'off'; bsStartBox.innerHTML = [['on', 'Big Screen', 'starts at once; B leaves it'], ['off', 'Library', 'the normal screen']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-bsstart="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintStart();
     bsStartBox.onclick = async (ev) => {
       const b = ev.target.closest('[data-bsstart]'); if (!b) return; const v = b.dataset.bsstart;
@@ -4154,7 +4154,7 @@ function initProfilePanel() {
   // Game names: short or long. Kept with the account; the Library is read again so every tile shows the one chosen.
   const nsBox = $('#namestyle-picker');
   if (nsBox) {
-    const paintNs = () => { const now = state.prefs?.name_style === 'long' ? 'long' : 'short'; nsBox.innerHTML = [['short', 'Short', 'without the bracketed part'], ['long', 'Long', 'the full name']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-namestyle="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
+    const paintNs = () => { const now = state.prefs?.name_style === 'long' ? 'long' : 'short'; nsBox.innerHTML = [['short', 'Short', 'drops the bracketed part'], ['long', 'Long', 'the full name']].map(([k, label, sub]) => `<button type="button" class="lang-opt" data-namestyle="${k}" aria-pressed="${now === k}"><span>${esc(label)} <small style="opacity:.7">${esc(sub)}</small></span></button>`).join(''); };
     paintNs();
     nsBox.onclick = async (ev) => {
       const b = ev.target.closest('[data-namestyle]'); if (!b) return; const v = b.dataset.namestyle;

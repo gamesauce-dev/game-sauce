@@ -327,7 +327,7 @@ export function openBigScreen(host) {
     return `<div class="bs-title">${g.favorite && st.src?.kind !== 'fav' ? '<span class="bs-favmark" aria-label="Favourite">★</span>' : ''}${esc(g.title)}${g.broken ? ' <em class="bs-flag">Issues</em>' : ''}</div><div class="bs-mid${logo ? ' has-logo' : ''}">${logo ? `<img class="bs-logo" src="${esc(logo)}" alt="" draggable="false" decoding="async" onerror="this.closest('.bs-mid').classList.remove('has-logo')" />` : ''}<div class="bs-cov${g.cover_url ? ' has-img' : ''}" style="--gc:${esc(HEX.test(g.platform_accent || '') ? g.platform_accent : '#5b6b88')}">${g.cover_url ? `<img src="${esc(g.cover_url)}" alt="" draggable="false" decoding="async" onerror="this.parentElement.classList.remove('has-img')" />` : ''}<span>${esc(g.title)}</span></div></div><div class="bs-year">${esc(st.src?.kind === 'platform' ? (g.release_year || '') : (g.platform_name || g.release_year || ''))}</div>`;
   };
   // ── the Blades layout (the Xbox 360 look): a list of games on the left, the highlighted game's picture and description on the right, a blade at each side ──
-  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries']), ps3: new Set(['ps1', 'ps2', 'ps3', 'psp']), wii: new Set(['gamecube', 'wii', 'wiiu']) };   // the consoles each look is for
+  const THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla']), ps3: new Set(['ps1', 'ps2', 'ps3', 'psp']), wii: new Set(['gamecube', 'wii', 'wiiu']) };   // the consoles each look is for
   const useTheme = (slug) => {
     const looks = String(host.theme?.() || '').split(',');   // several looks can be on at once: each is used on its own consoles only
     root.classList.remove('bs-bl-on');

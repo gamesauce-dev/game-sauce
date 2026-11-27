@@ -746,6 +746,9 @@ body.ui-modern .lang-opt { border-radius: 0.36rem; background: var(--tb-bg); bor
 body.ui-modern .lang-opt:hover, body.ui-modern .lang-opt:focus-visible { border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); outline: none; }
 body.ui-modern .lang-opt[aria-pressed="true"] { background: var(--tb-hover); border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow) inset; }
 body.ui-modern .lang-opt[aria-pressed="true"]:hover { box-shadow: 0 0 0 1px var(--tb-glow) inset, 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
+/* The name of each choice is shown in capitals; the description beside it keeps normal lettering. Type the words normally in the code. */
+body.ui-modern .lang-opt { text-transform: uppercase; }
+body.ui-modern .lang-opt small { text-transform: none; }
 /* Emulators: the release check is an icon; it turns while it works. */
 body.ui-modern #emu-refresh-latest:disabled::before { animation: ibspin .8s linear infinite; }
 

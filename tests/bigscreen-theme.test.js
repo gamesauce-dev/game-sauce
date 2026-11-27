@@ -47,7 +47,7 @@ test('Big Screen takes its look from the setting, and every theme rule stays ins
   assert.ok(app.includes("theme: () => state.prefs?.bs_theme") && app.includes('id="bstheme-picker"') === false && html.includes('id="bstheme-picker"'), 'the picker and the hand-over');
   assert.ok(html.includes('/bs-themes.css'));
   // the look is for its own consoles only: it is put on and taken off as the screens change
-  assert.ok(js.includes("THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla', 'xboxone', 'xboxseries'])"));
+  assert.ok(js.includes("THEME_CONSOLES = { xbox360: new Set(['xbox', 'xbox360', 'xbla'])"), 'the blades are not for Xbox One or Series: they had a different dashboard');
   for (const call of ["useTheme(null); st.screen = 'platforms'", "useTheme(srcSlug()); st.screen = 'games'", "useTheme(g.platform); st.screen = 'game'", "const backToWheel = () => { useTheme(srcSlug());"]) assert.ok(js.includes(call), call);
   assert.ok(!js.includes("root.classList.add('bs-theme-' + th); }"), 'no theme class is put on when Big Screen opens');
   // without a theme nothing changes: each selector in the theme file starts from the theme's class

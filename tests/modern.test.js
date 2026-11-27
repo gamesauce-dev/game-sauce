@@ -870,3 +870,10 @@ test('Add ROMs: the platform is required, and both looks show it as step 1 befor
     assert.ok(words['Drop {a} files or a folder here'].includes('{a}'), lang);
   }
 });
+
+test('Modern shows the name of each Settings choice in capitals by styling, so the words are typed and translated normally', () => {
+  const css = read('public/modern.css'), app = read('public/app.js');
+  assert.match(css, /body\.ui-modern \.lang-opt \{ text-transform: uppercase; \}\s+body\.ui-modern \.lang-opt small \{ text-transform: none; \}/);
+  assert.ok(app.includes("['off', 'Library', 'the normal screen']"));
+});
+
