@@ -770,3 +770,10 @@ body.ui-modern #view-upload .up-note a { color: var(--tb-glow); }
 /* In rows with tall boxes beside them, these keep the small height instead of stretching to match. The launcher download is only as wide as its words. */
 body.ui-modern :is(#ph-man-open, #ph-man-upload, #art-browse, #art-addbtn,#db-health-refresh, #db-show-orphans, #db-purge-orphans, #db-show-missing, #db-purge-missing) { align-self: center; }
 body.ui-modern #view-tools #playpc-download { justify-self: start; align-self: flex-start; }
+
+/* The page-drawn file box (styles.css, filepick.js) in Modern: the framed row, with the small tinted button inside. */
+body.ui-modern .filepick { width: 100%; box-sizing: border-box; padding: 0.4rem 0.6rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 0.65rem; }
+body.ui-modern .dat-row .filepick { width: auto; }
+body.ui-modern .filepick-btn { display: inline-flex; align-items: center; min-height: 1.95rem; box-sizing: border-box; padding: 0.25rem 0.65rem; background: var(--tb-bg); border: 1px solid var(--tb-edge); color: var(--tb-text); border-radius: 0.36rem; font-size: 0.79rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; transition: background .15s, border-color .15s, box-shadow .15s; }
+body.ui-modern .filepick:hover .filepick-btn { background: var(--tb-hover); border-color: var(--tb-glow); box-shadow: 0 0 0 1px var(--tb-glow), 0 0 0.8rem color-mix(in srgb, var(--tb-glow) 55%, transparent); }
+

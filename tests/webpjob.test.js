@@ -248,5 +248,5 @@ test('the progress bar and the list are wired into the Pictures panel', () => {
   // the destructive button asks twice, the second time with a tick box, and uses the figures as they are now
   const rm = app.slice(app.indexOf("$('#imgc-remove').addEventListener"), app.indexOf("$('#imgc-stop').addEventListener"));
   assert.equal((rm.match(/confirmDialog\(/g) || []).length, 2, 'two confirmations'); assert.match(rm, /checkLabel:/); assert.match(rm, /again\.checked/); assert.match(rm, /api\('\/admin\/images\/convert'\)/);
-  assert.ok(html.includes('>Return originals</button>') && html.includes('>Remove originals</button>'), 'the buttons are named Return originals and Remove originals'); assert.match(app, /about \$\{span\(left\)\} left/);
+  assert.ok(html.includes('>Return originals</button>') && html.includes('>Remove originals</button>'), 'the buttons are named Return originals and Remove originals'); assert.match(app, /t\('\{pct\}%, about \{time\} left', \{ pct, time: span\(left\) \}\)/);
 });

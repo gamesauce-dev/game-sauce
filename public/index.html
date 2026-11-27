@@ -625,7 +625,7 @@
             <button class="btn btn-primary" id="img-save" type="button">Save</button>
             <button class="btn" id="img-clear" type="button" title="Delete the WebP copies; they are made again when pictures are opened">Clear cache</button>
           </div>
-          <p class="hint" style="margin:.5rem 0 0"><b>Clear cache</b> deletes only the temporary display copies (thumbnails and full-size WebP copies kept in the <code>image-cache</code> folder). They are rebuilt on their own as pictures are shown, so the first view of each is a little slower. It does <b>not</b> touch your stored pictures, the pictures you have converted below, or the kept originals, and you rarely need it: changing the quality already clears the copies. Use it only to free disk space.</p>
+          <p class="hint" style="margin:.5rem 0 0"><b>Clear cache</b> deletes only the temporary display copies (thumbnails and full-size WebP copies kept in the <code>image-cache</code> folder). They are rebuilt on their own as pictures are shown, so the first view of each is a little slower. It does not touch your stored pictures, the pictures you have converted below, or the kept originals, and you rarely need it: changing the quality already clears the copies. Use it only to free disk space.</p>
           <p class="hint" id="img-msg"></p>
         </div>
 
@@ -635,7 +635,7 @@
           <label class="policy-row"><input type="radio" name="imgc-mode" value="off" /> <span><b>Not scheduled</b><br><small class="hint">Only when you press Run now.</small></span></label>
           <label class="policy-row"><input type="radio" name="imgc-mode" value="overnight" /> <span><b>Overnight</b><br><small class="hint">From <input type="time" id="imgc-from" /> to <input type="time" id="imgc-to" /> (this server's clock). One picture at a time; it stops when the window closes and carries on the next night.</small></span></label>
           <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="days" /> <span><b>Remove each original after</b> <input type="number" id="imgc-keep" min="1" max="90" step="1" /> <b>days</b><br><small class="hint">Counted from when that picture was converted. After that the original is gone for good and that conversion is final.</small></span></label>
-          <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="forever" /> <span><b>Keep the originals until I remove them</b><br><small class="hint">Nothing is removed automatically. They use the disk space of the originals until you press <i>Remove originals</i> below.</small></span></label>
+          <label class="policy-row"><input type="radio" name="imgc-keep-mode" value="forever" /> <span><b>Keep the originals until I remove them</b><br><small class="hint">Nothing is removed automatically. They use the disk space of the originals until you press Remove originals below.</small></span></label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <button class="btn btn-primary" id="imgc-save" type="button">Save schedule</button>
             <button class="btn btn-amber" id="imgc-estimate" type="button" title="Convert a sample in memory and say how much it would save; nothing changes">Estimate saving</button>

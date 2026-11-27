@@ -20,9 +20,11 @@ import { initGroupsPanel, userRestrictions, bindUserRestrictions, fillNewUserGro
 import { trackLaunch } from './launch-progress.js';   // the progress card for Play on this PC
 import { initDescScroll } from './descscroll.js';   // a long description scrolls itself
 import './pwreveal.js';   // the eye in password boxes
+import { initFilePickers } from './filepick.js';   // file boxes with their words in the chosen language
 import { initI18n, LANGS, chosenLanguage, setLanguage, t } from './i18n.js';   // the language of the page (public/lang/*.json)
 
 await initI18n();   // before anything is drawn, so the first screen is already in the person's language
+initFilePickers();
 initDescScroll();
 
 const state = {
@@ -804,7 +806,7 @@ async function renderOverview() {
       emuAlert = `
         <button class="overview-card" data-slide data-view="emulators" title="Head to Emulators to see which builds">
           <span class="ov-ico">🎮</span>
-          <span><b>${n}</b> emulator update${n === 1 ? '' : 's'}${newer ? ` · <span class="ov-sub">${newer} newer than vault</span>` : ''}</span>
+          <span>${t(n === 1 ? '{count} emulator update' : '{count} emulator updates', { count: `<b>${n}</b>` })}${newer ? ` · <span class="ov-sub">${t('{count} newer than vault', { count: newer })}</span>` : ''}</span>
         </button>`;
     }
   } catch { /* GitHub flakiness never breaks the library home */ }
@@ -812,9 +814,9 @@ async function renderOverview() {
   // Every slide uses the SAME structure/style (the "my favourites" one):
   // icon + bold number + plain label. No per-slide colours or badges.
   const slides = [
-    `<div class="overview-card" data-slide><span class="ov-ico">🕹</span><span><b>${lib.roms || 0}</b> games</span></div>`,
-    `<div class="overview-card" data-slide><span class="ov-ico">▦</span><span><b>${lib.platforms || 0}</b> platforms</span></div>`,
-    `<button class="overview-card" data-slide data-ov-favs title="Show my favourites"><span class="ov-ico">★</span><span><b>${mine.favorites || 0}</b> my favourites</span></button>`,
+    `<div class="overview-card" data-slide><span class="ov-ico">🕹</span><span>${t('{count} games in total', { count: `<b>${lib.roms || 0}</b>` })}</span></div>`,
+    `<div class="overview-card" data-slide><span class="ov-ico">▦</span><span>${t('{count} platforms in total', { count: `<b>${lib.platforms || 0}</b>` })}</span></div>`,
+    `<button class="overview-card" data-slide data-ov-favs title="Show my favourites"><span class="ov-ico">★</span><span>${t('{count} my favourites', { count: `<b>${mine.favorites || 0}</b>` })}</span></button>`,
     top ? `<button class="overview-card" data-slide data-open-rom="${top.id}" title="Most downloaded game — open it"><span class="ov-ico">⤓</span><span><b>${Number(top.dl_count).toLocaleString()}×</b> ${esc(top.title)} <span class="ov-sub">(${esc(top.platform_short)})</span></span></button>` : '',
     emuAlert
   ].filter(Boolean);
@@ -2605,7 +2607,9 @@ async function renderLaunchBox() {
       <a class="docs" href="https://gamesdb.launchbox-app.com/" target="_blank" rel="noreferrer">about ↗</a>
     </div>
     <p class="provider-note">A free game database that lives on this server: no key, no limit, and lookups are instant. It matches by exact name, so it fills in games the other providers cannot find. It is tried after IGDB. Download it once (about 110 MB), then update it whenever you like.</p>
-    ${s.available ? `<p class="hint">${esc(s.games.toLocaleString())} games indexed (${esc(s.covers.toLocaleString())} with covers${s.has_spines ? `, ${esc(s.spines.toLocaleString())} with spine art` : ''}${s.has_discs ? `, ${esc(s.discs.toLocaleString())} with disc art` : ''}${s.has_backs ? `, ${esc(s.backs.toLocaleString())} with box backs` : ''}) · ${esc(fmtBytes(s.bytes))} on disk · updated ${esc(when)}</p>${s.has_spines && s.has_discs && s.has_backs ? '' : `<p class="hint">This copy was made before ${s.has_spines && s.has_discs ? 'box backs' : s.has_spines ? 'disc and back' : 'spine, disc and back'} art was kept. Press Update database to get ${s.has_spines && s.has_discs ? 'the backs you can turn the cases over to see' : s.has_spines ? 'the disc and back pictures for the open cases' : 'spine, disc and back pictures'} on the Physical shelf.</p>`}` : ''}
+    ${s.available ? `<p class="hint">${esc([t('Games indexed: {games} (with covers {covers})', { games: s.games.toLocaleString(), covers: s.covers.toLocaleString() }),
+      s.has_spines ? t('with spine art: {count}', { count: s.spines.toLocaleString() }) : '', s.has_discs ? t('with disc art: {count}', { count: s.discs.toLocaleString() }) : '', s.has_backs ? t('with box backs: {count}', { count: s.backs.toLocaleString() }) : '',
+      t('{size} on disk', { size: fmtBytes(s.bytes) }), t('updated {when}', { when })].filter(Boolean).join(' · '))}</p>${s.has_spines && s.has_discs && s.has_backs ? '' : `<p class="hint">${esc(t('This copy was made before all the case pictures (spine, disc and box back) were kept. Press Update database to get them on the Physical shelf.'))}</p>`}` : ''}
     ${running ? `
       <div class="lb-progress"><span class="spin" aria-hidden="true"></span><span class="lb-msg">${esc(s.job.message || 'Working…')}</span>
         <div class="lb-bar"><i style="width:${Number(s.job.pct) || 0}%"></i></div><b>${Number(s.job.pct) || 0}%</b></div>`
@@ -2652,9 +2656,9 @@ function renderProviderForms(config, status = []) {
     const hasLogin = isSet(ssUser) && isSet(ssPass);
     const ssBanner = p.id === 'screenscraper' ? (
       !config.sharedDevDefault && !hasOwnDev
-        ? `<p class="provider-banner is-warn">No shared developer credentials on this server — all four fields are required. Leaving the Developer fields blank <em>cannot</em> work here. Get a free dev pair via “get credentials ↗” (forum request), or ask whoever runs this server to set <code>SS_DEV_ID_SHARED</code> / <code>SS_DEV_PASSWORD_SHARED</code>.</p>`
+        ? `<p class="provider-banner is-warn">${t('No shared developer credentials on this server, so all four fields are required: leaving the Developer fields blank cannot work here. Get a free dev pair via “get credentials” (a forum request), or ask whoever runs this server to set {first} and {second}.', { first: '<code>SS_DEV_ID_SHARED</code>', second: '<code>SS_DEV_PASSWORD_SHARED</code>' })}</p>`
         : usingSharedDev && !hasLogin
-          ? `<p class="provider-banner">Shared developer credentials are active — now just add <em>your own</em> screenscraper.fr account username + password below and Save. (A shared dev pair has a slower shared quota; your own pair later gets your own faster quota.)</p>`
+          ? `<p class="provider-banner">${t('Shared developer credentials are active: now add your own screenscraper.fr account username and password below, then Save. (A shared dev pair has a slower shared quota; your own pair later gets your own faster quota.)')}</p>`
           : usingSharedDev
             ? `<p class="provider-banner is-ok">Running on shared developer credentials + your login. Paste your own dev pair any time for your own faster quota.</p>`
             : ''
@@ -2666,14 +2670,14 @@ function renderProviderForms(config, status = []) {
         <span class="name">${esc(p.label)}</span>
         <a class="docs" href="${esc(p.docs)}" target="_blank" rel="noreferrer">get credentials ↗</a>
       </div>
-      <p class="provider-note">${esc(p.note)}</p>
+      <p class="provider-note">${esc(t(p.note))}</p>
       ${ssBanner}
       <div class="provider-fields">
         ${p.fields.map((f) => {
           const sharedActive = f.shared && f.source === 'shared';
           return `
           <div class="provider-field">
-            <span>${esc(f.label)}${f.required && !f.shared ? ' *' : ''}</span>
+            <span>${esc(t(f.label))}${f.required && !f.shared ? ' *' : ''}</span>
             <input
               type="${f.secret ? 'password' : 'text'}"
               name="${esc(f.key)}"
@@ -2710,12 +2714,10 @@ function renderProviderForms(config, status = []) {
   }).join('');
 
   renderLaunchBox().catch(() => {});
+  const keyName = '<code>GAMESAUCE_SECRET_KEY</code>';
   $('#encryption-note').innerHTML = config.encryption.key_source === 'env'
-    ? 'Credentials are encrypted at rest (AES-256-GCM) with the key from <code>GAMESAUCE_SECRET_KEY</code>.'
-    : `Credentials are encrypted at rest (AES-256-GCM). <strong>The key is currently kept in
-       <code>data/secret.key</code> next to the database</strong> — that protects against someone
-       reading a copy of the database, not against someone with access to the whole data folder.
-       Set <code>GAMESAUCE_SECRET_KEY</code> to move the key out.`;
+    ? t('Credentials are encrypted at rest (AES-256-GCM) with the key from {name}.', { name: keyName })
+    : `${t('Credentials are encrypted at rest (AES-256-GCM).')} <strong>${t('The key is currently kept in {file} next to the database.', { file: '<code>data/secret.key</code>' })}</strong> ${t('That protects against someone reading a copy of the database, not against someone with access to the whole data folder. Set {name} to move the key out.', { name: keyName })}`;
 
   $$('.provider-block', wrap).forEach((block) => {
     const providerId = block.dataset.provider;
@@ -2735,7 +2737,7 @@ function renderProviderForms(config, status = []) {
       try {
         const res = await api('/metadata/providers', { method: 'PUT', body: JSON.stringify({ fields }) });
         renderProviderForms({ ...res, encryption: res.encryption }, res.status);
-        toast(res.rejected?.length ? `Saved, ${res.rejected.length} field(s) refused` : 'Credentials saved', Boolean(res.rejected?.length));
+        toast(res.rejected?.length ? t('Saved. Fields refused: {count}', { count: res.rejected.length }) : t('Credentials saved'), Boolean(res.rejected?.length));
       } catch (err) {
         toast(err.message, true);
         btn.disabled = false;
@@ -4490,7 +4492,7 @@ function renderSettingsTiles(activeId = activeSettingsModule) {
 /** "game-sauce 0.5.1 · database version 53" at the foot of My account, for everyone (it is what to quote when something needs reporting). */
 async function loadVersionLine() {
   const el = $('#about-version'); if (!el) return;
-  try { const v = await api('/version'); el.textContent = `game-sauce ${v.version} · database version ${v.schema}`; } catch { el.textContent = ''; }
+  try { const v = await api('/version'); el.textContent = t('game-sauce {version} · database version {schema}', { version: v.version, schema: v.schema }); } catch { el.textContent = ''; }
 }
 
 /* ── Fingerprints module: the background job that reads new files for their CRC32 / MD5 / SHA1 ── */
@@ -4519,11 +4521,11 @@ async function loadImageLog() {
     ? `<table><thead><tr><th>Game</th><th>Picture</th><th class="num">Before</th><th class="num">After</th><th class="num">Saved</th><th>State</th><th></th></tr></thead><tbody>${r.items.map((i) => `<tr>
         <td>${esc(i.title)}${i.platform ? ` <span class="hint">${esc(i.platform)}${i.list ? `, ${esc(i.list)}` : ''}</span>` : ''}<div class="hint">${esc(i.file)}</div></td>
         <td>${esc(i.kind)}</td><td class="num">${kb(i.old_bytes)}</td><td class="num">${i.state === 'restored' ? '' : kb(i.new_bytes)}</td><td class="num">${i.state === 'restored' ? '' : `${i.saving_pct}%`}</td>
-        <td>${esc(label[i.state] || i.state)}<div class="hint">${esc(i.converted_at ? new Date(`${String(i.converted_at).replace(' ', 'T')}Z`).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '')}${i.quality ? `, quality ${i.quality}` : ''}</div></td>
+        <td>${esc(label[i.state] || i.state)}<div class="hint">${esc(i.converted_at ? new Date(`${String(i.converted_at).replace(' ', 'T')}Z`).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '')}${i.quality ? `, ${esc(t('quality {value}', { value: i.quality }))}` : ''}</div></td>
         <td>${i.can_compare ? `<button type="button" class="btn btn-sm" data-imgc-cmp="${i.id}" data-title="${esc(i.title)}" data-before="${i.old_bytes}" data-after="${i.new_bytes}">Compare</button>` : ''}</td></tr>`).join('')}</tbody></table>`
     : '<p class="hint">Nothing here yet.</p>';
   const from = r.total ? r.offset + 1 : 0, to = Math.min(r.offset + r.items.length, r.total);
-  $('#imgc-log-count').textContent = `${from.toLocaleString()} to ${to.toLocaleString()} of ${r.total.toLocaleString()}`;
+  $('#imgc-log-count').textContent = `${from.toLocaleString()}–${to.toLocaleString()} / ${r.total.toLocaleString()}`;
   $('#imgc-log-prev').disabled = r.offset <= 0; $('#imgc-log-next').disabled = r.offset + r.items.length >= r.total;
   $$('[data-imgc-cmp]', list).forEach((b) => b.addEventListener('click', () => {
     const id = b.dataset.imgcCmp;
@@ -4534,8 +4536,8 @@ async function loadImageLog() {
     setCmpSize(224);
     $('#imgc-cmp-range').value = 224;
     $('#imgc-cmp-orig-open').href = orig; $('#imgc-cmp-webp-open').href = now;
-    $('#imgc-cmp-orig-cap').textContent = `Before: ${kb(Number(b.dataset.before))}`;
-    $('#imgc-cmp-webp-cap').textContent = `Now (WebP): ${kb(Number(b.dataset.after))}`;
+    $('#imgc-cmp-orig-cap').textContent = t('Before: {size}', { size: kb(Number(b.dataset.before)) });
+    $('#imgc-cmp-webp-cap').textContent = t('Now (WebP): {size}', { size: kb(Number(b.dataset.after)) });
     $('#imgc-compare').classList.remove('hidden'); $('#imgc-cmp-close').focus({ preventScroll: true });
   }));
 }
@@ -4549,12 +4551,18 @@ async function loadImageConvert(fillForm = true) {
     $('#imgc-from').value = s.window_start; $('#imgc-to').value = s.window_end; $('#imgc-keep').value = s.keep_days;
     $$('[name="imgc-keep-mode"]').forEach((r) => { r.checked = r.value === (s.keep_forever ? 'forever' : 'days'); });
   }
-  const lines = [];
-  if (s.running) lines.push(`Running${s.limit ? ` (a trial: stops after ${s.limit.toLocaleString()} converted)` : ''}: ${s.done.toLocaleString()} of ${s.total.toLocaleString()} pictures looked at (${s.converted.toLocaleString()} converted, ${s.skipped.toLocaleString()} left as they were, ${s.failed.toLocaleString()} failed), ${mb(s.bytes_saved)} MB saved so far${s.current ? `, now ${s.current}` : ''}.`);
-  else if (s.mode === 'overnight') lines.push(`Scheduled ${s.window_start} to ${s.window_end} (server time now ${s.server_time}, ${s.server_tz}).${s.paused ? ' Stopped for now.' : ''}`);
-  else lines.push('Not scheduled.');
-  if (!s.running && s.limit_reached) lines.push(`The last run stopped after ${s.converted.toLocaleString()} pictures, as asked.`);
-  lines.push(`In total: ${s.converted_total.toLocaleString()} pictures converted, ${mb(s.before_total)} MB became ${mb(s.after_total)} MB (${mb(s.saved_total)} MB saved). ${s.originals_kept.toLocaleString()} originals are being kept (${mb(s.originals_kept_bytes)} MB${s.keep_forever ? ', until you remove them' : `, each removed ${s.keep_days} days after its conversion`}).`);
+  const lines = [], num = (v) => v.toLocaleString();
+  if (s.running) {
+    lines.push(t('Running: {done} of {total} pictures looked at (converted {converted}, left as they were {skipped}, failed {failed}), {saved} MB saved so far.', { done: num(s.done), total: num(s.total), converted: num(s.converted), skipped: num(s.skipped), failed: num(s.failed), saved: mb(s.bytes_saved) }));
+    if (s.limit) lines.push(t('This is a trial: it stops after {limit} converted.', { limit: num(s.limit) }));
+    if (s.current) lines.push(t('Now: {name}', { name: s.current }));
+  } else if (s.mode === 'overnight') {
+    lines.push(t('Scheduled from {start} to {end} (server time now {now}, {zone}).', { start: s.window_start, end: s.window_end, now: s.server_time, zone: s.server_tz }));
+    if (s.paused) lines.push(t('Stopped for now.'));
+  } else lines.push(t('Not scheduled.'));
+  if (!s.running && s.limit_reached) lines.push(t('The last run stopped after {count} pictures, as asked.', { count: num(s.converted) }));
+  lines.push(t('In total: pictures converted {count}, {before} MB became {after} MB ({saved} MB saved).', { count: num(s.converted_total), before: mb(s.before_total), after: mb(s.after_total), saved: mb(s.saved_total) }));
+  lines.push(t(s.keep_forever ? 'Originals being kept: {count} ({size} MB), until you remove them.' : 'Originals being kept: {count} ({size} MB), each removed {days} days after its conversion.', { count: num(s.originals_kept), size: mb(s.originals_kept_bytes), days: s.keep_days }));
   box.textContent = lines.join(' ');
   // The progress bar: a trial counts toward its limit, a full run toward every picture; the time left is worked out from the pace so far.
   const bar = $('#imgc-progress');
@@ -4563,9 +4571,9 @@ async function loadImageConvert(fillForm = true) {
     const pct = den ? Math.min(100, Math.round((100 * num) / den)) : 0;
     const secs = s.started_at ? (Date.now() - new Date(s.started_at).getTime()) / 1000 : 0;
     const left = num > 0 && secs > 3 ? Math.round((secs / num) * (den - num)) : null;
-    const span = (n) => (n >= 3600 ? `${Math.floor(n / 3600)} h ${Math.round((n % 3600) / 60)} min` : n >= 60 ? `${Math.round(n / 60)} min` : `${n} s`);
+    const span = (n) => (n >= 3600 ? `${Math.floor(n / 3600)} h ${Math.round((n % 3600) / 60)} min` : n >= 60 ? `${Math.round(n / 60)} min` : `${n} s`);   // unit symbols, not words
     bar.classList.remove('hidden'); $('#imgc-bar').value = pct;
-    $('#imgc-pct').textContent = `${pct}%${left !== null ? `, about ${span(left)} left` : ''}`;
+    $('#imgc-pct').textContent = left !== null ? t('{pct}%, about {time} left', { pct, time: span(left) }) : `${pct}%`;
   } else bar.classList.add('hidden');
   if (!s.running && $('#imgc-log-box') && !$('#imgc-log-box').classList.contains('hidden')) loadImageLog().catch(() => {});
   $('#imgc-run').disabled = s.running; $('#imgc-restore').disabled = s.running; $('#imgc-remove').disabled = s.running || !s.originals_kept;
@@ -4576,8 +4584,13 @@ async function loadImageConvert(fillForm = true) {
       try { await api('/admin/images/convert', { method: 'PUT', body: JSON.stringify({ mode: ($$('[name="imgc-mode"]').find((r) => r.checked) || {}).value, window_start: $('#imgc-from').value, window_end: $('#imgc-to').value, keep_days: Number($('#imgc-keep').value), keep_forever: ($$('[name="imgc-keep-mode"]').find((r) => r.checked) || {}).value === 'forever' }) }); say(t('Saved.')); loadImageConvert(true); } catch (err) { say(err.message); toast(err.message, true); }
     });
     $('#imgc-estimate').addEventListener('click', async () => {
-      say('Working it out…'); $('#imgc-estimate').disabled = true;
-      try { const e = await api('/admin/images/convert/estimate'); say(`${e.pictures.toLocaleString()} stored PNG and JPEG pictures, ${mb(e.bytes)} MB. Judging by ${e.sampled} of them at quality ${e.quality}, about ${e.would_convert_pct}% would be converted and the library would shrink by about ${mb(e.estimated_saving_bytes)} MB (${e.estimated_saving_pct}%). Nothing was changed.`); } catch (err) { say(err.message); } finally { $('#imgc-estimate').disabled = false; }
+      say(t('Working it out…')); $('#imgc-estimate').disabled = true;
+      try {
+        const e = await api('/admin/images/convert/estimate');
+        say([t('Stored PNG and JPEG pictures: {count}, {size} MB.', { count: e.pictures.toLocaleString(), size: mb(e.bytes) }),
+          t('Judging by a sample of {sampled} at quality {quality}, about {pct}% would be converted and the library would shrink by about {saving} MB ({savingPct}%).', { sampled: e.sampled, quality: e.quality, pct: e.would_convert_pct, saving: mb(e.estimated_saving_bytes), savingPct: e.estimated_saving_pct }),
+          t('Nothing was changed.')].join(' '));
+      } catch (err) { say(err.message); } finally { $('#imgc-estimate').disabled = false; }
     });
     $('#imgc-run').addEventListener('click', async () => {
       const ok = await confirmDialog({ title: 'Convert the stored pictures now?', body: 'Every stored PNG and JPEG that shrinks by at least 10% is replaced with a WebP at the quality chosen above. The originals are kept for the number of days set here, and Return originals undoes it.', okLabel: 'Convert' });
@@ -4605,20 +4618,20 @@ async function loadImageConvert(fillForm = true) {
     $('#imgc-remove').addEventListener('click', async () => {
       // This one cannot be taken back, so it asks twice, with the figures as they are now (not as they were when the page opened).
       let cur; try { cur = await api('/admin/images/convert'); } catch (err) { toast(err.message, true); return; }
-      if (!cur.originals_kept) { say('There are no kept originals to remove.'); return; }
-      const ok = await confirmDialog({ title: 'Remove the originals?', body: `${cur.originals_kept.toLocaleString()} original pictures (${mb(cur.originals_kept_bytes)} MB) will be deleted for good. The WebP pictures stay, and those conversions can no longer be undone.`, okLabel: 'Continue', danger: true });
+      if (!cur.originals_kept) { say(t('There are no kept originals to remove.')); return; }
+      const ok = await confirmDialog({ title: 'Remove the originals?', body: t('Original pictures to be deleted for good: {count} ({size} MB). The WebP pictures stay, and those conversions can no longer be undone.', { count: cur.originals_kept.toLocaleString(), size: mb(cur.originals_kept_bytes) }), okLabel: 'Continue', danger: true });
       if (!ok) return;
-      const again = await confirmDialog({ title: 'Are you sure?', body: `This deletes ${cur.originals_kept.toLocaleString()} original pictures and frees ${mb(cur.originals_kept_bytes)} MB. There is no recycle bin and no way back. Return originals will no longer work for them.`, okLabel: 'Delete originals', danger: true, checkLabel: 'I understand the originals cannot be recovered' });
+      const again = await confirmDialog({ title: 'Are you sure?', body: t('This deletes the kept originals ({count}) and frees {size} MB. There is no recycle bin and no way back. Return originals will no longer work for them.', { count: cur.originals_kept.toLocaleString(), size: mb(cur.originals_kept_bytes) }), okLabel: 'Delete originals', danger: true, checkLabel: 'I understand the originals cannot be recovered' });
       if (!again.ok) return;
       if (!again.checked) { toast('Tick the box to confirm; nothing was removed.', true); return; }
-      try { const r = await api('/admin/images/convert/remove-originals', { method: 'POST' }); say(`${r.removed.toLocaleString()} originals removed, ${mb(r.bytes)} MB freed.`); } catch (err) { toast(err.message, true); }
+      try { const r = await api('/admin/images/convert/remove-originals', { method: 'POST' }); say(t('Originals removed: {count}, {size} MB freed.', { count: r.removed.toLocaleString(), size: mb(r.bytes) })); } catch (err) { toast(err.message, true); }
       loadImageConvert(true);
     });
     $('#imgc-stop').addEventListener('click', async () => { await api('/admin/images/convert/stop', { method: 'POST' }).catch((e) => toast(e.message, true)); loadImageConvert(false); });
     $('#imgc-restore').addEventListener('click', async () => {
       const ok = await confirmDialog({ title: 'Return the originals?', body: 'Every converted picture is replaced by its original again, as long as the original is still kept. Pictures whose originals are already gone stay as WebP.', okLabel: 'Return them', danger: true });
       if (!ok) return;
-      try { const r = await api('/admin/images/convert/restore', { method: 'POST' }); say(`${r.restored.toLocaleString()} pictures put back${r.unavailable ? `; ${r.unavailable.toLocaleString()} could not be (their originals are gone)` : ''}.`); } catch (err) { toast(err.message, true); }
+      try { const r = await api('/admin/images/convert/restore', { method: 'POST' }); say([t('Pictures put back: {count}.', { count: r.restored.toLocaleString() }), r.unavailable ? t('Could not be put back (their originals are gone): {count}.', { count: r.unavailable.toLocaleString() }) : ''].filter(Boolean).join(' ')); } catch (err) { toast(err.message, true); }
       loadImageConvert(true);
     });
   }
@@ -4632,11 +4645,15 @@ async function loadImages() {
   $('#img-enabled').checked = s.enabled;
   const q = $('#img-quality'); q.min = s.min; q.max = s.max; q.value = s.quality;
   $('#img-qval').textContent = s.quality;
-  $('#img-range').textContent = `${s.min} to ${s.max}`;
+  $('#img-range').textContent = `${s.min}–${s.max}`;
   const saved = s.stats.bytes_in ? Math.round(100 - (100 * s.stats.bytes_out) / s.stats.bytes_in) : 0;
-  box.innerHTML = s.available
-    ? `${s.cache.files.toLocaleString()} WebP copies kept (${mb(s.cache.bytes)} MB). Since the server started: ${s.stats.thumbnails.toLocaleString()} thumbnails made, ${s.stats.converted.toLocaleString()} full-size pictures converted${s.stats.bytes_in ? `, ${saved}% smaller (${mb(s.stats.bytes_in)} MB to ${mb(s.stats.bytes_out)} MB)` : ''}; ${s.stats.kept_original.toLocaleString()} kept as they were (no real saving); ${s.stats.failed.toLocaleString()} failed${s.stats.queued ? `; ${s.stats.queued} waiting` : ''}.`
-    : 'The picture converter could not be loaded on this machine, so pictures are sent as they are.';
+  const st = s.stats, num = (v) => v.toLocaleString();
+  box.textContent = s.available
+    ? [t('WebP copies kept: {files} ({size} MB).', { files: num(s.cache.files), size: mb(s.cache.bytes) }),
+      t('Since the server started: thumbnails made {thumbnails}, full-size pictures converted {converted}, kept as they were (no real saving) {kept}, failed {failed}.', { thumbnails: num(st.thumbnails), converted: num(st.converted), kept: num(st.kept_original), failed: num(st.failed) }),
+      st.bytes_in ? t('The converted pictures are {saved}% smaller ({before} MB to {after} MB).', { saved, before: mb(st.bytes_in), after: mb(st.bytes_out) }) : '',
+      st.queued ? t('Waiting: {count}.', { count: st.queued }) : ''].filter(Boolean).join(' ')
+    : t('The picture converter could not be loaded on this machine, so pictures are sent as they are.');
   if (!$('#img-save').dataset.bound) {
     $('#img-save').dataset.bound = '1';
     let sample = null, timer = null, seq = 0;
@@ -4654,10 +4671,11 @@ async function loadImages() {
         const v = `&rom=${sample}&quality=${q.value}&t=${mine}`;
         $('#img-prev-orig').src = `/api/admin/images/preview/original.png?${v}`;
         $('#img-prev-webp').src = `/api/admin/images/preview/webp.png?${v}`;
-        $('#img-prev-orig-cap').textContent = `As stored: ${kb(info.original_bytes)}`;
-        $('#img-prev-webp-cap').textContent = info.would_convert
-          ? `WebP at ${info.quality}: ${kb(info.webp_bytes)} (${info.saving_pct}% smaller)`
-          : `WebP at ${info.quality}: ${kb(info.webp_bytes)} (${info.saving_pct < 0 ? `${-info.saving_pct}% larger` : `only ${info.saving_pct}% smaller`}: not worth it, so this cover would be left as it is)`;
+        $('#img-prev-orig-cap').textContent = t('As stored: {size}', { size: kb(info.original_bytes) });
+        const seen = { quality: info.quality, size: kb(info.webp_bytes), pct: Math.abs(info.saving_pct) };
+        $('#img-prev-webp-cap').textContent = t(info.would_convert ? 'WebP at {quality}: {size} ({pct}% smaller)'
+          : info.saving_pct < 0 ? 'WebP at {quality}: {size} ({pct}% larger): not worth it, so this cover would be left as it is'
+            : 'WebP at {quality}: {size} (only {pct}% smaller): not worth it, so this cover would be left as it is', seen);
       } catch (err) { if (mine === seq) { $('#img-prev-note').textContent = err.message; } }
     };
     q.addEventListener('input', () => { $('#img-qval').textContent = q.value; clearTimeout(timer); timer = setTimeout(() => preview(), 300); });
@@ -4716,12 +4734,13 @@ async function loadBackups() {
   $('#backup-keep').value = s.keep;
   $('#backup-dir').value = s.dir;
   $('#backup-dir').placeholder = s.default_dir;
-  $('#backup-hint').innerHTML = (s.dir ? '' : `Using the default folder <code>${esc(s.default_dir)}</code>. `)
-    + 'Point the folder at a network share or a mounted disk so backups survive the machine itself. '
-    + (s.key_in_env ? '<strong>The encryption key comes from <code>GAMESAUCE_SECRET_KEY</code> and is not in backups — keep it somewhere safe.</strong>' : '');
+  const path = `<code>${esc(s.default_dir)}</code>`;
+  $('#backup-hint').innerHTML = [s.dir ? '' : t('Using the default folder {path}.', { path }),
+    t('Point the folder at a network share or a mounted disk so backups survive the machine itself.'),
+    s.key_in_env ? `<strong>${t('The encryption key comes from {name} and is not in backups: keep it somewhere safe.', { name: '<code>GAMESAUCE_SECRET_KEY</code>' })}</strong>` : ''].filter(Boolean).join(' ');
   $('#backup-status').innerHTML = [
-    s.last_at ? `Last scheduled/server backup: ${esc(new Date(s.last_at).toLocaleString())}.` : 'No server backup has run yet.',
-    s.last_error ? `<span style="color:var(--warn)">Last error: ${esc(s.last_error)}</span>` : ''
+    s.last_at ? esc(t('Last scheduled or server backup: {when}.', { when: new Date(s.last_at).toLocaleString() })) : esc(t('No server backup has run yet.')),
+    s.last_error ? `<span style="color:var(--warn)">${esc(t('Last error: {error}', { error: s.last_error }))}</span>` : ''
   ].filter(Boolean).join(' ');
   $('#backup-list').innerHTML = data.items.length ? data.items.map((b) => `
     <div class="result-row ok" style="gap:10px">
@@ -5087,7 +5106,7 @@ async function loadDuplicates(reset = true, keepPlace = false) {
 function renderDuplicates() {
   const list = $('#dup-list');
   const g = dupState.groups;
-  $('#dup-summary').textContent = dupState.total ? `${dupState.total} game${dupState.total === 1 ? '' : 's'} with more than one version (${dupState.extra} extra cop${dupState.extra === 1 ? 'y' : 'ies'})` : '';
+  $('#dup-summary').textContent = dupState.total ? t('Games with more than one version: {count} (extra copies: {extra})', { count: dupState.total, extra: dupState.extra }) : '';
   $('#dup-hide-all').classList.toggle('hidden', !g.length);
   $('#dup-more').classList.toggle('hidden', g.length >= dupState.total);
   if (!g.length) { list.innerHTML = '<div class="side-empty">No duplicates found. Every game appears once.</div>'; return; }
@@ -5105,7 +5124,7 @@ function renderDuplicates() {
             <div class="dup-file">${esc(it.filename)}</div>
             ${it.path ? `<div class="dup-path" title="${esc(it.path)}">${esc(it.source_name ? it.source_name + ' · ' : '')}${esc(it.path)}</div>` : ''}
             <div class="sub">${[it.region, it.revision ? 'rev ' + it.revision : '', it.year, size(it.size_bytes), it.dat_status && it.dat_status !== 'not-in-dat' ? 'DAT: ' + it.dat_status : ''].filter(Boolean).map(esc).join(' · ')}</div>
-            ${it.tie ? `<div class="dup-tie">⚖ No clear winner: check both</div>` : it.keep ? `<div class="dup-keep">✓ ${it.chosen === 'keep' ? 'Locked: you chose this copy' : 'Suggested to keep: ' + esc(it.why)}</div>` : (it.chosen === 'drop' ? '<div class="sub">Not kept (an older choice). Click the padlock to reset</div>' : '')}
+            ${it.tie ? `<div class="dup-tie">⚖ No clear winner: check both</div>` : it.keep ? `<div class="dup-keep">✓ ${it.chosen === 'keep' ? 'Locked: you chose this copy' : esc(t('Suggested to keep: {why}', { why: String(it.why || '').split(', ').map((w) => t(w)).join(', ') }))}</div>` : (it.chosen === 'drop' ? '<div class="sub">Not kept (an older choice). Click the padlock to reset</div>' : '')}
           </div>
         </div>`).join('')}</div>
     </div>`).join('');
@@ -5113,9 +5132,9 @@ function renderDuplicates() {
 async function hideDuplicateExtras(groups) {
   const ids = groups.flatMap((grp) => grp.items.filter((i) => !i.keep).map((i) => i.id));
   if (!ids.length) return;
-  const ok = await confirmDialog({ title: `Hide ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}?`, body: 'Only the suggested copy of each game stays visible; members will not see the others either. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
+  const ok = await confirmDialog({ title: t('Hide extra copies: {count}?', { count: ids.length }), body: 'Only the suggested copy of each game stays visible; members will not see the others either. Nothing is deleted and no file is touched. You can bring them back any time from the Hidden filter in the Library.', okLabel: 'Hide them' });
   if (!ok) return;
-  try { await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: true }) }); toast(`Hid ${ids.length} extra cop${ids.length === 1 ? 'y' : 'ies'}`); loadDuplicates(true, true); loadPlatforms(); }
+  try { await api('/roms/bulk/hide', { method: 'POST', body: JSON.stringify({ ids, hidden: true }) }); toast(t('Extra copies hidden: {count}', { count: ids.length })); loadDuplicates(true, true); loadPlatforms(); }
   catch (err) { toast(err.message, true); }
 }
 document.addEventListener('click', (e) => {

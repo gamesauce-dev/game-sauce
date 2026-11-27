@@ -4,6 +4,12 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Less English showing in other languages.** The top bar's ticker, the search across all libraries on the home screen, Preferences, DAT files, CSV tools, Duplicate finder, Pictures, Backups, Metadata providers, and the Steam row and Big Screen art note under Platforms are now translated in all seven languages. Sentences that include a number or a name are now translated whole, so each language can use its own word order.
+- **"Choose file" and "No file chosen" follow your language.** The browser words its own file box in the browser's language, so game-sauce now draws it.
+- **Some sentences could be worded wrongly.** In German, a few whole sentences had a word changed by the step that makes plurals. In every language, a general sentence pattern could be used in place of a more exact one.
+
 ## [0.26.0] - 2026-11-27
 
 **Do not use Delete orphans on a version before 0.26.0.** On those versions it can permanently delete games added through Add ROMs. Update first: see the first fix below.

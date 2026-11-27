@@ -35,10 +35,10 @@ export function makeTranslator(strings = {}, lang = '') {
       // A {name} straight after a letter is a plural ending the code adds ("game{b}": "" for one, "s" for several), so it may be empty; any other {name} stands for something.
       const esc = key.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
       const src = esc.replace(/\{([a-z0-9_]+)\}/gi, (all, n, at) => { names.push(n); return /[A-Za-z]/.test(esc[at - 1] || '') ? '(.*?)' : '(.+?)'; });
-      patterns.push({ re: new RegExp('^' + src + '$'), names, tr });
+      patterns.push({ re: new RegExp('^' + src + '$'), names, tr, fixed: key.replace(/\{[a-z0-9_]+\}/gi, '').length });
     } else words.set(key, tr);
   }
-  patterns.sort((a, b) => b.re.source.length - a.re.source.length);   // the longest (most specific) pattern first
+  patterns.sort((a, b) => b.fixed - a.fixed);   // the one with the most words of its own (the most specific) first
   // The code adds an "s" to make a plural (game + s), which is not how every language does it: jeu + s is jeux in French; Spiel + s is Spiele in German.
   const plurals = {
     fr: [[/\bjeus\b/g, 'jeux']],
@@ -52,7 +52,7 @@ export function makeTranslator(strings = {}, lang = '') {
       const n = norm(text);
       if (!n) return null;
       const w = words.get(n);
-      if (w !== undefined) return fix(w);
+      if (w !== undefined) return w;   // a whole sentence is written by hand: the plural fix is only for the ones put together below
       for (const p of patterns) {
         const m = p.re.exec(n);
         if (m) return fix(p.tr.replace(/\{([a-z0-9_]+)\}/gi, (all, name) => {

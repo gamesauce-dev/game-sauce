@@ -2056,3 +2056,14 @@ html:not([data-theme="light"]) .chip-logo-img.lib-logo.on-plate, html:not([data-
 .home-notice-text .hint { margin-left: 0.4rem; }
 .home-notice .pill { flex: 0 0 auto; }
 
+/* A file box drawn by the page (filepick.js), so its words follow the chosen language. The real input lies invisible over the drawing. */
+.filepick { position: relative; display: block; max-width: 100%; min-width: 0; }
+.filepick-face { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.filepick-btn { flex: 0 0 auto; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); border-radius: var(--radius-sm); padding: 0.4286rem 0.7857rem; }
+.filepick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8929rem; color: var(--muted); }
+.filepick > input[type="file"].file-input[data-picked] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.filepick > input[type="file"].file-input[data-picked]::file-selector-button { cursor: pointer; }
+.filepick:hover .filepick-btn { border-color: var(--accent); }
+.filepick:focus-within .filepick-face { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+.dat-row .filepick { flex: 0 1 22rem; }
+

@@ -280,9 +280,9 @@ async function searchEverywhere(text) {
   const n = (x) => (x == null ? 0 : x.total ?? (x.items || []).length);
   const initials = (t) => String(t || '').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
   const tile = (key, title, sub, cover) => `<button type="button" class="mh-res-tile" data-mh-open="${esc(key)}" title="${esc(title)}"><span class="mh-res-cover">${cover ? `<img loading="lazy" src="${esc(thumb(cover))}" alt="" onerror="this.style.display='none'" />` : ''}<span class="mh-res-ini">${esc(initials(title))}</span></span><span class="mh-res-title">${esc(title)}</span><span class="mh-res-sub">${esc(sub || '')}</span></button>`;
-  const group = (id, label, total, body) => `<section class="mh-res-group" data-group="${id}"><div class="mh-res-head"><b>${label}</b> <span class="hint">${total.toLocaleString()} ${total === 1 ? 'game' : 'games'}</span>${total ? ` <button type="button" class="btn btn-sm" data-mh-all="${id}">Show all</button>` : ''}</div>${total ? `<div class="mh-res-row${id === 'rom' ? ' browse-only' : ''}" id="mh-res-${id}">${body}</div>` : '<p class="hint" style="margin:.2rem 0 0">No match.</p>'}</section>`;
+  const group = (id, label, total, body) => `<section class="mh-res-group" data-group="${id}"><div class="mh-res-head"><b>${label}</b> <span class="hint">${t(total === 1 ? 'Found: 1 game' : 'Found: {count} games', { count: total.toLocaleString() })}</span>${total ? ` <button type="button" class="btn btn-sm" data-mh-all="${id}">Show all</button>` : ''}</div>${total ? `<div class="mh-res-row${id === 'rom' ? ' browse-only' : ''}" id="mh-res-${id}">${body}</div>` : '<p class="hint" style="margin:.2rem 0 0">No match.</p>'}</section>`;
   const total = n(rom) + n(phys) + n(dig);
-  host.innerHTML = `<div class="mh-res-top"><b>${total.toLocaleString()} ${total === 1 ? 'match' : 'matches'} for “${esc(text)}”</b> <button type="button" class="btn btn-sm" id="mh-res-clear">Clear search</button></div>`
+  host.innerHTML = `<div class="mh-res-top"><b>${t(total === 1 ? '1 match for “{words}”' : '{count} matches for “{words}”', { count: total.toLocaleString(), words: esc(text) })}</b> <button type="button" class="btn btn-sm" id="mh-res-clear">Clear search</button></div>`
     + group('rom', 'ROM Library', n(rom), (rom?.items || []).slice(0, HOME_HITS).map(ctx.cardHtml).join(''))
     + group('phys', 'Physical Library', n(phys), (phys?.items || []).slice(0, HOME_HITS).map((g) => tile(`phys:${g.id}`, g.title, g.platform_name || g.platform, g.cover_url)).join(''))
     + group('dig', 'Digital Library', n(dig), (dig?.items || []).slice(0, HOME_HITS).map((g) => tile(`dig:${g.store}|${g.app_id}`, g.name, g.platform_label || g.platform || g.store, g.cover_url)).join(''));
@@ -338,29 +338,31 @@ async function fillTicker(stats) {
   const top = stats.topDownloaded;
   const cache = window.__platformsCache || [];
   const shown = cache.reduce((n, p) => n + pc(p), 0), all = cache.reduce((n, p) => n + (p.count || 0), 0);
+  // Each line is one whole sentence, so a language can put the figure where its own grammar wants it.
+  const bold = (v) => `<b>${v}</b>`;
   if (cache.length && shown) {
-    lines.push(`<b>${shown.toLocaleString()}</b> games across <b>${cache.filter((p) => pc(p) > 0).length}</b> platforms`);
-    if (all > shown) lines.push(`<b>${(all - shown).toLocaleString()}</b> more are System entries or hidden`);
-  } else lines.push(`<b>${Number(lib.roms || 0).toLocaleString()}</b> games across <b>${lib.platforms || 0}</b> platforms`);
-  if (lib.bytes) lines.push(`<b>${bytesText(lib.bytes)}</b> of ROMs stored`);
-  if (stats.mine) lines.push(`<b>${stats.mine.favorites || 0}</b> in your favourites`);
-  if (top) lines.push(`Most downloaded: <b>${String(top.title || '').replace(/</g, '&lt;')}</b>`);
+    lines.push(t('{count} games across {platforms} platforms', { count: bold(shown.toLocaleString()), platforms: bold(cache.filter((p) => pc(p) > 0).length) }));
+    if (all > shown) lines.push(t('{count} more are System entries or hidden', { count: bold((all - shown).toLocaleString()) }));
+  } else lines.push(t('{count} games across {platforms} platforms', { count: bold(Number(lib.roms || 0).toLocaleString()), platforms: bold(lib.platforms || 0) }));
+  if (lib.bytes) lines.push(t('{size} of ROMs stored', { size: bold(bytesText(lib.bytes)) }));
+  if (stats.mine) lines.push(t('{count} in your favourites', { count: bold(stats.mine.favorites || 0) }));
+  if (top) lines.push(t('Most downloaded: {title}', { title: bold(String(top.title || '').replace(/</g, '&lt;')) }));
   try {
     const u = await api('/emulators/updates').catch(() => ({ updates: [] }));
-    if ((u.updates || []).length) lines.push(`<b>${u.updates.length}</b> emulator update${u.updates.length === 1 ? '' : 's'} available`);
+    if ((u.updates || []).length) lines.push(t(u.updates.length === 1 ? '{count} emulator update available' : '{count} emulator updates available', { count: `<b>${u.updates.length}</b>` }));
   } catch { /* optional */ }
   try {
     if (ctx.user()?.role === 'admin') {
       const j = await api('/roms/bulk/enrich-job').catch(() => null);
-      if (j?.running) lines.unshift(`Fetching metadata: <b>${j.done}</b> of <b>${j.total}</b>`);
+      if (j?.running) lines.unshift(t('Fetching metadata: {done} of {total}', { done: `<b>${j.done}</b>`, total: `<b>${j.total}</b>` }));
       const up = await api('/admin/update-check').catch(() => null);
       if (up?.newer) {
-        const text = `Update available: game-sauce <b>${String(up.latest).replace(/^v/i, '').replace(/</g, '&lt;')}</b> (you have <b>${String(up.current).replace(/</g, '&lt;')}</b>)`;
+        const text = t('Update available: game-sauce {latest} (you have {current})', { latest: `<b>${String(up.latest).replace(/^v/i, '').replace(/</g, '&lt;')}</b>`, current: `<b>${String(up.current).replace(/</g, '&lt;')}</b>` });
         // A link to the release page (only ever a github.com address, checked again here), and what to do about it as the hover text.
         lines.unshift(/^https:\/\/github\.com\//.test(up.url || '') ? `<a class="mh-link" href="${String(up.url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" title="${String(up.how || '').replace(/[<>"]/g, '')}">${text}</a>` : text);
       }
       const h = await api('/admin/health').catch(() => null);
-      if (h && h.status && h.status !== 'ok') lines.unshift(`System health: <b>${h.status === 'bad' ? 'needs a look' : 'a few notes to read'}</b>`);
+      if (h && h.status && h.status !== 'ok') lines.unshift(t('System health: {state}', { state: `<b>${t(h.status === 'bad' ? 'needs a look' : 'a few notes to read')}</b>` }));
     }
   } catch { /* optional */ }
   lines.unshift(brand);
