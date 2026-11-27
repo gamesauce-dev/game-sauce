@@ -907,3 +907,10 @@ test('Missing files: a notice under the Home rows in both looks, for admins only
   assert.match(js, /ctx\.paintHomeNotice\?\.\(\$\('#mh-notices'\), stats\);/);
 });
 
+test('Modern: every button on the Tools page keeps its words (Add My Games, Game Assets, Steam)', () => {
+  const js = read('public/modern.js'), html = read('public/index.html');
+  assert.match(js, /const TEXT_FORCE = '#view-settings \.btn, #view-tools \.btn, /);
+  const tools = html.slice(html.indexOf('id="view-tools"'), html.indexOf('id="view-settings"'));
+  for (const id of ['dgc-preview', 'dgc-apply', 'steam-save', 'steam-sync', 'steam-remove']) assert.ok(tools.includes(`id="${id}"`), id);
+});
+

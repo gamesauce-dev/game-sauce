@@ -767,3 +767,6 @@ body.ui-modern #view-upload .dz-title { margin: 0; text-align: center; }
 body.ui-modern #view-upload .dz-sub { margin: 0; }
 body.ui-modern #view-upload .dz-sub [data-mt]:not(#_):not(#__):not(#___):disabled { opacity: .7; }
 body.ui-modern #view-upload .up-note a { color: var(--tb-glow); }
+/* In rows with tall boxes beside them, these keep the small height instead of stretching to match. The launcher download is only as wide as its words. */
+body.ui-modern :is(#art-browse, #art-addbtn, #db-health-refresh, #db-show-orphans, #db-purge-orphans, #db-show-missing, #db-purge-missing) { align-self: center; }
+body.ui-modern #view-tools #playpc-download { justify-self: start; align-self: flex-start; }

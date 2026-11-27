@@ -864,8 +864,8 @@ window.addEventListener('resize', () => { if (isModern()) alignSubtiles(); });
    Where an icon cannot carry the meaning (and everywhere in Settings) a button keeps its words. Those buttons are tagged data-mt="<icon>" and
    data-mk="go | stop | plain" (the colour); modern.css draws them. As with data-mi, nothing a person reads is rewritten, and Classic ignores the tags. */
 const TEXT_CANDIDATES = '.btn, button.link';
-// These show words even where ICON_MAP gave them an icon: all of Settings, the confirm popup's two answers and the launcher download.
-const TEXT_FORCE = '#view-settings .btn, #modal-ok, #modal-cancel, #view-tools a.btn[download]';
+// These show words even where ICON_MAP gave them an icon: all of Settings and all of Tools, and the confirm popup's two answers.
+const TEXT_FORCE = '#view-settings .btn, #view-tools .btn, #modal-ok, #modal-cancel';
 // The first match wins. A button not listed here keeps the icon ICON_MAP gave it, else a tick (a bin when it destroys something).
 const TEXT_ICONS = [
   ['#drawer form button.btn-primary[type="submit"]', 'save'], ['label.btn:has(#cover-input)', 'upload-cover'], ['.vid-find', 'search'], ['.vid-toggle', 'preview'], ['[data-rom-manual], [data-msg-act="open-rom"]', 'arrow-right'],
