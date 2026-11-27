@@ -68,4 +68,5 @@ the backup and the test proves nothing. Use a release with a lower number: **0.6
   System health, and open an issue.
 
 Record of runs (add a line each time): date, from version, to version, result.
+- 2026-11-28: Docker on Unraid, 0.11.1 to the `latest` image of that day (`main`, df1918b): upgrade passed, and restoring the 0.11.1 backup brought the data back. The container did not start again by itself after the restore and had to be started by hand (the template had no restart setting). With `--restart=on-failure` added to the container's Extra Parameters, a second restore restarted by itself.
 - 2026-11-16: 0.6.3, 0.9.0 and 0.11.0 to 0.11.1: upgrade and restore passed (all database version 57, so no migration was exercised). 0.6.0 (database version 56) refused the version 57 backup, as it should.

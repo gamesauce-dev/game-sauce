@@ -15,6 +15,7 @@ All notable changes to game-sauce. Newest first. Dates are `YYYY-MM-DD`.
 - **Hover text in the Modern look.** Hover text that appeared while you used the app, such as on game tiles, could stay in English even when a translation existed.
 - **"Choose file" and "No file chosen" follow your language.** The browser words its own file box in the browser's language, so game-sauce now draws it.
 - **CSV tools told people to type a translated "yes".** The System columns only accept `yes`, so the hint now shows that word in every language. Some awkward Spanish, Japanese and Chinese wording is also corrected.
+- **Unraid: the container stayed stopped after restoring a backup.** The browser then reported a refused connection until the container was started again, which finished the restore. The Unraid template now has Docker start it again (`--restart=on-failure`). A container added earlier does not change by itself: see [the Unraid guide](docs/UNRAID.md).
 - **Some sentences could be worded wrongly.** In German, a few whole sentences had a word changed by the step that makes plurals. In every language, a general sentence pattern could be used in place of a more exact one.
 
 ## [0.26.0] - 2026-11-27

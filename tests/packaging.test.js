@@ -16,6 +16,9 @@ test('the Unraid template matches the Docker image: same image, port and folders
   assert.match(target('/roms'), /Mode="ro"/, 'ROMs are mounted read-only');
   assert.match(target('GAMESAUCE_ADMIN_PASSWORD'), /Mask="true"/); assert.match(target('GAMESAUCE_ADMIN_PASSWORD'), /Required="false"/, 'blank is allowed: one is generated');
   assert.match(xml, /<ExtraParams>[^<]*--user 99:100/, 'runs as nobody:users so it can write Unraid shares');
+  // A restore ends by exiting with an error code for Docker to start it again: without a restart policy the container stays stopped.
+  assert.match(xml, /<ExtraParams>[^<]*--restart=on-failure/, 'Docker starts it again after a restore');
+  assert.match(read('src/lib/restore.js'), /process\.exit\(75\)/, 'the exit that on-failure answers');
   assert.match(xml, /<WebUI>http:\/\/\[IP\]:\[PORT:8080\]\/<\/WebUI>/);
   const raw = 'https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/';
   for (const tag of ['TemplateURL', 'Icon']) { const u = new RegExp(`<${tag}>([^<]+)</${tag}>`).exec(xml)[1]; assert.ok(u.startsWith(raw) && exists(u.slice(raw.length)), `${tag} points at a file in the repo`); }

@@ -25,4 +25,5 @@ A template fills in the ports, folders and settings; you only choose where your 
 - **Updating:** on the **Docker** tab choose **Check for Updates**, then **apply update** for game-sauce. Your library is kept.
 - **The container runs as Unraid's usual `nobody:users` (99:100)**, the same as most Unraid apps, so it can read your shares and write its own folders.
 - **Games are never changed:** the ROM folder is mounted read-only.
+- **Restoring a backup restarts game-sauce.** The template's `--restart=on-failure` setting lets Docker start it again. If you added game-sauce before the template had it, edit the container, switch to **Advanced View**, add `--restart=on-failure` to the end of **Extra Parameters** and click **Apply**. Without it the container stops after a restore: start it again from the **Docker** tab and the restore finishes.
 - It is **not yet in the Community Applications list**, which is why step 1 adds the template by hand.

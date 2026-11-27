@@ -14,7 +14,7 @@
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/install/unraid/game-sauce.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/gamesauce-dev/game-sauce/main/public/logo.svg</Icon>
-  <ExtraParams>--user 99:100 --init</ExtraParams>
+  <ExtraParams>--user 99:100 --init --restart=on-failure</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <DateInstalled/>
